@@ -8,7 +8,7 @@ import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.sbtree.OLocalSBTree;
+import com.orientechnologies.orient.core.index.sbtree.local.OLocalSBTree;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
@@ -52,6 +52,7 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   }
 
   @Override
+  @Test(enabled = false)
   public void deinit() throws Exception {
     index.delete();
     databaseDocumentTx.close();

@@ -1,7 +1,8 @@
-package com.orientechnologies.orient.core.index.sbtree;
+package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -292,6 +293,171 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
     }
   }
 
+  public Collection<ORID> getValuesMinor(K key, boolean inclusive, int maxValuesToFetch) {
+    List<ORID> results = new ArrayList<ORID>();
+
+    acquireSharedLock();
+    try {
+      BucketSearchResult bucketSearchResult = findBucket(key);
+      long pageIndex = bucketSearchResult.getLastPathItem();
+      int index;
+      if (bucketSearchResult.index >= 0) {
+        index = inclusive ? bucketSearchResult.index : bucketSearchResult.index - 1;
+      } else {
+        index = -bucketSearchResult.index - 2;
+      }
+
+      boolean firstBucket = true;
+      resultsLoop: while (true) {
+        long nextPageIndex = -1;
+        final OCachePointer pointer = diskCache.load(fileId, pageIndex);
+        try {
+          OSBTreeBucket<K> bucket = new OSBTreeBucket<K>(pointer.getDataPointer(), keySerializer);
+          if (!firstBucket)
+            index = bucket.size() - 1;
+
+          for (int i = index; i >= 0; i--) {
+            results.add(bucket.getEntry(i).value);
+            if (maxValuesToFetch > -1 && results.size() >= maxValuesToFetch)
+              break resultsLoop;
+          }
+
+          if (bucket.getLeftSibling() >= 0)
+            nextPageIndex = bucket.getLeftSibling();
+          else
+            break;
+
+        } finally {
+          diskCache.release(fileId, pageIndex);
+        }
+
+        pageIndex = nextPageIndex;
+        firstBucket = false;
+      }
+
+      return results;
+    } catch (IOException ioe) {
+      throw new OIndexException("Error during fetch of minor values for key " + key + " in sbtree " + name);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public Collection<ORID> getValuesMajor(K key, boolean inclusive, int maxValuesToFetch) {
+    List<ORID> results = new ArrayList<ORID>();
+
+    acquireSharedLock();
+    try {
+      BucketSearchResult bucketSearchResult = findBucket(key);
+      long pageIndex = bucketSearchResult.getLastPathItem();
+      int index;
+      if (bucketSearchResult.index >= 0) {
+        index = inclusive ? bucketSearchResult.index : bucketSearchResult.index + 1;
+      } else {
+        index = -bucketSearchResult.index - 1;
+      }
+
+      resultsLoop: while (true) {
+        long nextPageIndex = -1;
+        final OCachePointer pointer = diskCache.load(fileId, pageIndex);
+        try {
+          OSBTreeBucket<K> bucket = new OSBTreeBucket<K>(pointer.getDataPointer(), keySerializer);
+          int bucketSize = bucket.size();
+          for (int i = index; i < bucketSize; i++) {
+            results.add(bucket.getEntry(i).value);
+            if (maxValuesToFetch > -1 && results.size() >= maxValuesToFetch)
+              break resultsLoop;
+          }
+
+          if (bucket.getRightSibling() >= 0)
+            nextPageIndex = bucket.getRightSibling();
+          else
+            break;
+        } finally {
+          diskCache.release(fileId, pageIndex);
+        }
+
+        pageIndex = nextPageIndex;
+        index = 0;
+      }
+
+      return results;
+    } catch (IOException ioe) {
+      throw new OIndexException("Error during fetch of major values for key " + key + " in sbtree " + name);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public Collection<ORID> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, int maxValuesToFetch) {
+    List<ORID> results = new ArrayList<ORID>();
+
+    acquireSharedLock();
+    try {
+      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
+      long pageIndexFrom = bucketSearchResultFrom.getLastPathItem();
+
+      int indexFrom;
+      if (bucketSearchResultFrom.index >= 0) {
+        indexFrom = fromInclusive ? bucketSearchResultFrom.index : bucketSearchResultFrom.index + 1;
+      } else {
+        indexFrom = -bucketSearchResultFrom.index - 1;
+      }
+
+      BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
+      long pageIndexTo = bucketSearchResultTo.getLastPathItem();
+
+      int indexTo;
+      if (bucketSearchResultTo.index >= 0) {
+        indexTo = toInclusive ? bucketSearchResultTo.index : bucketSearchResultTo.index - 1;
+      } else {
+        indexTo = -bucketSearchResultTo.index - 2;
+      }
+
+      int startIndex = indexFrom;
+      int endIndex;
+      long pageIndex = pageIndexFrom;
+
+      resultsLoop: while (true) {
+        long nextPageIndex = -1;
+        final OCachePointer pointer = diskCache.load(fileId, pageIndex);
+        try {
+          OSBTreeBucket<K> bucket = new OSBTreeBucket<K>(pointer.getDataPointer(), keySerializer);
+          if (pageIndex != pageIndexTo)
+            endIndex = bucket.size() - 1;
+          else
+            endIndex = indexTo;
+
+          for (int i = startIndex; i <= endIndex; i++) {
+            results.add(bucket.getEntry(i).value);
+            if (maxValuesToFetch > -1 && results.size() >= maxValuesToFetch)
+              break resultsLoop;
+          }
+
+          if (pageIndex == pageIndexTo)
+            break;
+
+          if (bucket.getRightSibling() >= 0)
+            nextPageIndex = bucket.getRightSibling();
+          else
+            break;
+
+        } finally {
+          diskCache.release(fileId, pageIndex);
+        }
+
+        pageIndex = nextPageIndex;
+        startIndex = 0;
+      }
+
+      return results;
+    } catch (IOException ioe) {
+      throw new OIndexException("Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree " + name);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   private BucketSearchResult splitBucket(List<Long> path, int keyIndex, K keyToInsert) throws IOException {
     long pageIndex = path.get(path.size() - 1);
     OCachePointer bucketPointer = diskCache.load(fileId, pageIndex);
@@ -322,6 +488,28 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           newRightBucket.addAll(rightEntries);
 
           bucketToSplit.shrink(indexToSplit);
+
+          if (splitLeaf) {
+            long rightSiblingPageIndex = bucketToSplit.getRightSibling();
+
+            newRightBucket.setRightSibling(rightSiblingPageIndex);
+            newRightBucket.setLeftSibling(pageIndex);
+
+            bucketToSplit.setRightSibling(rightBucketPageIndex);
+
+            if (rightSiblingPageIndex >= 0) {
+              final OCachePointer rightSiblingPointer = diskCache.load(fileId, rightSiblingPageIndex);
+              rightSiblingPointer.acquireExclusiveLock();
+              OSBTreeBucket<K> rightSiblingBucket = new OSBTreeBucket<K>(rightSiblingPointer.getDataPointer(), keySerializer);
+              try {
+                rightSiblingBucket.setLeftSibling(rightBucketPageIndex);
+                diskCache.markDirty(fileId, rightSiblingPageIndex);
+              } finally {
+                rightSiblingPointer.releaseExclusiveLock();
+                diskCache.release(fileId, rightSiblingPageIndex);
+              }
+            }
+          }
 
           long parentIndex = path.get(path.size() - 2);
           OCachePointer parentPointer = diskCache.load(fileId, parentIndex);
@@ -383,11 +571,15 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
 
         long leftBucketPageIndex = diskCache.getFilledUpTo(fileId);
         OCachePointer leftBucketPointer = diskCache.load(fileId, leftBucketPageIndex);
-        leftBucketPointer.acquireExclusiveLock();
 
+        long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
+        leftBucketPointer.acquireExclusiveLock();
         try {
           OSBTreeBucket<K> newLeftBucket = new OSBTreeBucket<K>(leftBucketPointer.getDataPointer(), splitLeaf, keySerializer);
           newLeftBucket.addAll(leftEntries);
+
+          if (splitLeaf)
+            newLeftBucket.setRightSibling(rightBucketPageIndex);
 
           diskCache.markDirty(fileId, leftBucketPageIndex);
         } finally {
@@ -395,12 +587,14 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           diskCache.release(fileId, leftBucketPageIndex);
         }
 
-        long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
         OCachePointer rightBucketPointer = diskCache.load(fileId, rightBucketPageIndex);
         rightBucketPointer.acquireExclusiveLock();
         try {
           OSBTreeBucket<K> newRightBucket = new OSBTreeBucket<K>(rightBucketPointer.getDataPointer(), splitLeaf, keySerializer);
           newRightBucket.addAll(rightEntries);
+
+          if (splitLeaf)
+            newRightBucket.setLeftSibling(leftBucketPageIndex);
 
           diskCache.markDirty(fileId, rightBucketPageIndex);
         } finally {
@@ -420,6 +614,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         }
 
         resultPath.add(rightBucketPageIndex);
+
         if (splitLeaf)
           return new BucketSearchResult(keyIndex - indexToSplit, resultPath);
 

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.index.sbtree;
+package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.util.ArrayList;
 import java.util.Comparator;

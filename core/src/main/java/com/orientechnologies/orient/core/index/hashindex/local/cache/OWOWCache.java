@@ -278,8 +278,9 @@ public class OWOWCache {
       if (isOpen(fileId))
         truncateFile(fileId);
 
-      files.get(fileId).delete();
-      files.remove(fileId);
+      final OFileClassic fileClassic = files.remove(fileId);
+      if (fileClassic != null)
+        fileClassic.delete();
     }
   }
 
