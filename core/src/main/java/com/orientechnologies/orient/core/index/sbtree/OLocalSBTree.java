@@ -128,7 +128,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
       } else {
         int insertionIndex = -bucketSearchResult.index - 1;
 
-        while (!keyBucket.addEntry(insertionIndex, new OSBTreeBucket.SBTreeEntry<K>(-1, -1, key, value))) {
+        while (!keyBucket.addEntry(insertionIndex, new OSBTreeBucket.SBTreeEntry<K>(-1, -1, key, value), true)) {
           keyBucketPointer.releaseExclusiveLock();
           diskCache.release(fileId, bucketSearchResult.getLastPathItem());
 
@@ -335,7 +335,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
             assert insertionIndex < 0;
 
             insertionIndex = -insertionIndex - 1;
-            while (!parentBucket.addEntry(insertionIndex, parentEntry)) {
+            while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
               parentPointer.releaseExclusiveLock();
               diskCache.release(fileId, parentIndex);
 
@@ -409,7 +409,8 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         }
 
         bucketToSplit = new OSBTreeBucket<K>(bucketPointer.getDataPointer(), false, keySerializer);
-        bucketToSplit.addEntry(0, new OSBTreeBucket.SBTreeEntry<K>(leftBucketPageIndex, rightBucketPageIndex, separationKey, null));
+        bucketToSplit.addEntry(0, new OSBTreeBucket.SBTreeEntry<K>(leftBucketPageIndex, rightBucketPageIndex, separationKey, null),
+            true);
 
         ArrayList<Long> resultPath = new ArrayList<Long>(path.subList(0, path.size() - 1));
 

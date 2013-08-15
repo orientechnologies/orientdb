@@ -193,7 +193,7 @@ public class OSBTreeBucket<K> {
 
   public void addAll(List<SBTreeEntry<K>> entries) {
     for (int i = 0; i < entries.size(); i++)
-      addEntry(i, entries.get(i));
+      addEntry(i, entries.get(i), false);
   }
 
   public void shrink(int newSize) {
@@ -208,12 +208,12 @@ public class OSBTreeBucket<K> {
 
     int index = 0;
     for (SBTreeEntry<K> entry : treeEntries) {
-      addEntry(index, entry);
+      addEntry(index, entry, false);
       index++;
     }
   }
 
-  public boolean addEntry(int index, SBTreeEntry<K> treeEntry) {
+  public boolean addEntry(int index, SBTreeEntry<K> treeEntry, boolean updateNeighbors) {
     final int keySize = keySerializer.getObjectSize(treeEntry.key);
     int entrySize = keySize;
 
@@ -254,7 +254,8 @@ public class OSBTreeBucket<K> {
       keySerializer.serializeInDirectMemory(treeEntry.key, directMemory, cachePointer + freePointer);
 
       size++;
-      if (size > 1) {
+
+      if (updateNeighbors && size > 1) {
         if (index < size - 1) {
           final int nextEntryPosition = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory,
               POSITIONS_ARRAY_OFFSET + cachePointer + (index + 1) * OIntegerSerializer.INT_SIZE);

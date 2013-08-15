@@ -56,7 +56,8 @@ public class SBTreeNonLeafBucketTest {
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
-          new OSBTreeBucket.SBTreeEntry<Long>(random.nextInt(Integer.MAX_VALUE), random.nextInt(Integer.MAX_VALUE), key, null)))
+          new OSBTreeBucket.SBTreeEntry<Long>(random.nextInt(Integer.MAX_VALUE), random.nextInt(Integer.MAX_VALUE), key, null),
+          true))
         break;
 
       keyIndexMap.put(key, index);
@@ -109,7 +110,7 @@ public class SBTreeNonLeafBucketTest {
 
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long>(index, index + 1, key, null)))
+      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long>(index, index + 1, key, null), true))
         break;
 
       index++;
@@ -147,7 +148,7 @@ public class SBTreeNonLeafBucketTest {
     while (keysIterator.hasNext() && index < originalSize) {
       Long key = keysIterator.next();
 
-      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long>(index, index + 1, key, null)))
+      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long>(index, index + 1, key, null), true))
         break;
 
       keyIndexMap.put(key, index);
