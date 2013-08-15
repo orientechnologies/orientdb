@@ -6,6 +6,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OAlwaysGreaterKey;
+import com.orientechnologies.common.collection.OAlwaysLessKey;
+import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -14,6 +17,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
@@ -22,24 +26,30 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 8/7/13
  */
 public class OLocalSBTree<K> extends OSharedResourceAdaptive {
-  private final static long           ROOT_INDEX = 0;
+  private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
+  private final static long              ROOT_INDEX         = 0;
 
-  private OStorageLocalAbstract       storage;
-  private String                      name;
+  private final Comparator<? super K>    comparator         = ODefaultComparator.INSTANCE;
 
-  private final String                dataFileExtension;
+  private OStorageLocalAbstract          storage;
+  private String                         name;
 
-  private ODiskCache                  diskCache;
+  private final String                   dataFileExtension;
 
-  private long                        fileId;
+  private ODiskCache                     diskCache;
 
-  private OBinarySerializer<K>        keySerializer;
+  private long                           fileId;
 
-  public OLocalSBTree(String dataFileExtension) {
+  private int                            keySize;
+
+  private OBinarySerializer<K>           keySerializer;
+
+  public OLocalSBTree(String dataFileExtension, int keySize) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     this.dataFileExtension = dataFileExtension;
+    this.keySize = keySize;
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OStorageLocalAbstract storageLocal) {
@@ -60,6 +70,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         OSBTreeBucket<K> rootBucket = new OSBTreeBucket<K>(rootPointer.getDataPointer(), true, keySerializer);
         rootBucket.setKeySerializerId(keySerializer.getId());
         rootBucket.setTreeSize(0);
+        rootBucket.setKeySize((byte) keySize);
 
         diskCache.markDirty(fileId, ROOT_INDEX);
       } finally {
@@ -95,7 +106,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
   public ORID get(K key) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
       if (bucketSearchResult.index < 0)
         return null;
 
@@ -118,7 +129,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
   public void put(K key, ORID value) {
     acquireExclusiveLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
 
       OCachePointer keyBucketPointer = diskCache.load(fileId, bucketSearchResult.getLastPathItem());
       keyBucketPointer.acquireExclusiveLock();
@@ -224,6 +235,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         OSBTreeBucket<K> rootBucket = new OSBTreeBucket<K>(rootPointer.getDataPointer(), true, keySerializer);
         keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(rootBucket
             .getKeySerializerId());
+        keySize = rootBucket.getKeySize();
       } finally {
         diskCache.release(fileId, ROOT_INDEX);
       }
@@ -267,7 +279,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
   public ORID remove(K key) {
     acquireExclusiveLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
       if (bucketSearchResult.index < 0)
         return null;
 
@@ -293,12 +305,57 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
     }
   }
 
-  public Collection<ORID> getValuesMinor(K key, boolean inclusive, int maxValuesToFetch) {
-    List<ORID> results = new ArrayList<ORID>();
+  public Collection<ORID> getValuesMinor(K key, boolean inclusive, final int maxValuesToFetch) {
+    final List<ORID> result = new ArrayList<ORID>();
 
+    loadValuesMinor(key, inclusive, new RangeResultListener<K>() {
+      @Override
+      public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry) {
+        result.add(entry.value);
+        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+          return false;
+
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  public Collection<ODocument> getEntitiesMinor(K key, boolean inclusive, final int maxValuesToFetch) {
+    final List<ODocument> result = new ArrayList<ODocument>();
+
+    loadValuesMinor(key, inclusive, new RangeResultListener<K>() {
+      @Override
+      public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry) {
+        final ODocument document = new ODocument();
+        document.field("key", entry.key);
+        document.field("rid", entry.value);
+        document.unsetDirty();
+
+        result.add(document);
+
+        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+          return false;
+
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  private void loadValuesMinor(K key, boolean inclusive, RangeResultListener<K> listener) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      final PartialSearchMode partialSearchMode;
+      if (inclusive)
+        partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+      else
+        partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
+
+      BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+
       long pageIndex = bucketSearchResult.getLastPathItem();
       int index;
       if (bucketSearchResult.index >= 0) {
@@ -317,8 +374,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
             index = bucket.size() - 1;
 
           for (int i = index; i >= 0; i--) {
-            results.add(bucket.getEntry(i).value);
-            if (maxValuesToFetch > -1 && results.size() >= maxValuesToFetch)
+            if (!listener.addResult(bucket.getEntry(i)))
               break resultsLoop;
           }
 
@@ -334,8 +390,6 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         pageIndex = nextPageIndex;
         firstBucket = false;
       }
-
-      return results;
     } catch (IOException ioe) {
       throw new OIndexException("Error during fetch of minor values for key " + key + " in sbtree " + name);
     } finally {
@@ -343,12 +397,56 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
     }
   }
 
-  public Collection<ORID> getValuesMajor(K key, boolean inclusive, int maxValuesToFetch) {
-    List<ORID> results = new ArrayList<ORID>();
+  public Collection<ORID> getValuesMajor(K key, boolean inclusive, final int maxValuesToFetch) {
+    final List<ORID> result = new ArrayList<ORID>();
 
+    loadValuesMajor(key, inclusive, new RangeResultListener<K>() {
+      @Override
+      public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry) {
+        result.add(entry.value);
+        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+          return false;
+
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  public Collection<ODocument> getEntriesMajor(K key, boolean inclusive, final int maxValuesToFetch) {
+    final List<ODocument> result = new ArrayList<ODocument>();
+
+    loadValuesMajor(key, inclusive, new RangeResultListener<K>() {
+      @Override
+      public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry) {
+        final ODocument document = new ODocument();
+        document.field("key", entry.key);
+        document.field("rid", entry.value);
+        document.unsetDirty();
+
+        result.add(document);
+
+        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+          return false;
+
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  private void loadValuesMajor(K key, boolean inclusive, RangeResultListener<K> listener) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key);
+      final PartialSearchMode partialSearchMode;
+      if (inclusive)
+        partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
+      else
+        partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+
+      BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
       long pageIndex = bucketSearchResult.getLastPathItem();
       int index;
       if (bucketSearchResult.index >= 0) {
@@ -364,8 +462,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           OSBTreeBucket<K> bucket = new OSBTreeBucket<K>(pointer.getDataPointer(), keySerializer);
           int bucketSize = bucket.size();
           for (int i = index; i < bucketSize; i++) {
-            results.add(bucket.getEntry(i).value);
-            if (maxValuesToFetch > -1 && results.size() >= maxValuesToFetch)
+            if (!listener.addResult(bucket.getEntry(i)))
               break resultsLoop;
           }
 
@@ -381,7 +478,6 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         index = 0;
       }
 
-      return results;
     } catch (IOException ioe) {
       throw new OIndexException("Error during fetch of major values for key " + key + " in sbtree " + name);
     } finally {
@@ -389,12 +485,57 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
     }
   }
 
-  public Collection<ORID> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, int maxValuesToFetch) {
-    List<ORID> results = new ArrayList<ORID>();
+  public Collection<ORID> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      final int maxValuesToFetch) {
+    final List<ORID> result = new ArrayList<ORID>();
+    loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, new RangeResultListener<K>() {
+      @Override
+      public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry) {
+        result.add(entry.value);
+        if (maxValuesToFetch > 0 && result.size() >= maxValuesToFetch)
+          return false;
 
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  public Collection<ODocument> getEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      final int maxValuesToFetch) {
+    final List<ODocument> result = new ArrayList<ODocument>();
+    loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, new RangeResultListener<K>() {
+      @Override
+      public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry) {
+        final ODocument document = new ODocument();
+        document.field("key", entry.key);
+        document.field("rid", entry.value);
+        document.unsetDirty();
+
+        result.add(document);
+
+        if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
+          return false;
+
+        return true;
+      }
+    });
+
+    return result;
+  }
+
+  private void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K> listener) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
+      PartialSearchMode partialSearchModeFrom;
+      if (fromInclusive)
+        partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+      else
+        partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+
+      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, partialSearchModeFrom);
+
       long pageIndexFrom = bucketSearchResultFrom.getLastPathItem();
 
       int indexFrom;
@@ -404,7 +545,13 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         indexFrom = -bucketSearchResultFrom.index - 1;
       }
 
-      BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
+      PartialSearchMode partialSearchModeTo;
+      if (toInclusive)
+        partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+      else
+        partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+
+      BucketSearchResult bucketSearchResultTo = findBucket(keyTo, partialSearchModeTo);
       long pageIndexTo = bucketSearchResultTo.getLastPathItem();
 
       int indexTo;
@@ -429,8 +576,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
             endIndex = indexTo;
 
           for (int i = startIndex; i <= endIndex; i++) {
-            results.add(bucket.getEntry(i).value);
-            if (maxValuesToFetch > -1 && results.size() >= maxValuesToFetch)
+            if (!listener.addResult(bucket.getEntry(i)))
               break resultsLoop;
           }
 
@@ -450,7 +596,6 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         startIndex = 0;
       }
 
-      return results;
     } catch (IOException ioe) {
       throw new OIndexException("Error during fetch of values between key " + keyFrom + " and key " + keyTo + " in sbtree " + name);
     } finally {
@@ -629,9 +774,25 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
     }
   }
 
-  private BucketSearchResult findBucket(K key) throws IOException {
+  private BucketSearchResult findBucket(K key, PartialSearchMode partialSearchMode) throws IOException {
     long pageIndex = ROOT_INDEX;
     final ArrayList<Long> path = new ArrayList<Long>();
+
+    if (!(keySize == 1 || ((OCompositeKey) key).getKeys().size() == keySize || partialSearchMode.equals(PartialSearchMode.NONE))) {
+      final OCompositeKey fullKey = new OCompositeKey((Comparable<? super K>) key);
+      int itemsToAdd = keySize - fullKey.getKeys().size();
+
+      final Comparable<?> keyItem;
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
+        keyItem = ALWAYS_GREATER_KEY;
+      else
+        keyItem = ALWAYS_LESS_KEY;
+
+      for (int i = 0; i < itemsToAdd; i++)
+        fullKey.addKey(keyItem);
+
+      key = (K) fullKey;
+    }
 
     while (true) {
       path.add(pageIndex);
@@ -678,4 +839,31 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
       return path.get(path.size() - 1);
     }
   }
+
+  /**
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+   * or highest partially matched key should be used.
+   * 
+   * 
+   */
+  private static enum PartialSearchMode {
+    /**
+     * Any partially matched key will be used as search result.
+     */
+    NONE,
+    /**
+     * The biggest partially matched key will be used as search result.
+     */
+    HIGHEST_BOUNDARY,
+
+    /**
+     * The smallest partially matched key will be used as search result.
+     */
+    LOWEST_BOUNDARY
+  }
+
+  private static interface RangeResultListener<K> {
+    public boolean addResult(OSBTreeBucket.SBTreeEntry<K> entry);
+  }
+
 }

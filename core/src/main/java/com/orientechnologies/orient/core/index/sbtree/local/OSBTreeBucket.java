@@ -34,7 +34,8 @@ public class OSBTreeBucket<K> {
   private static final int            RIGHT_SIBLING_OFFSET   = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int            TREE_SIZE_OFFSET       = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            KEY_SERIALIZER_OFFSET  = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            KEY_SIZE_OFFSET        = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            KEY_SERIALIZER_OFFSET  = KEY_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
 
   private static final int            POSITIONS_ARRAY_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
@@ -66,6 +67,14 @@ public class OSBTreeBucket<K> {
     this.isLeaf = directMemory.getByte(cachePointer + IS_LEAF_OFFSET) > 0;
     this.cachePointer = cachePointer;
     this.keySerializer = keySerializer;
+  }
+
+  public byte getKeySize() {
+    return directMemory.getByte(cachePointer + KEY_SIZE_OFFSET);
+  }
+
+  public void setKeySize(byte keySize) {
+    directMemory.setByte(cachePointer + KEY_SIZE_OFFSET, keySize);
   }
 
   public byte getKeySerializerId() {

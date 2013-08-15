@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -48,10 +47,7 @@ public class LocalSBTreeTest {
 
     databaseDocumentTx.create();
 
-    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
-    murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
-
-    localSBTree = new OLocalSBTree<Integer>(".sbt");
+    localSBTree = new OLocalSBTree<Integer>(".sbt", 1);
     localSBTree.create("localSBTree", OIntegerSerializer.INSTANCE, (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
