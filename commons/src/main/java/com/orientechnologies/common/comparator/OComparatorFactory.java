@@ -17,7 +17,6 @@ package com.orientechnologies.common.comparator;
 
 import java.util.Comparator;
 
-
 /**
  * Creates comparators for classes that does not implement {@link Comparable} but logically can be compared.
  * 
@@ -53,8 +52,10 @@ public class OComparatorFactory {
    */
   @SuppressWarnings("unchecked")
   public <T> Comparator<T> getComparator(Class<T> clazz) {
+    boolean useUnsafe = Boolean.valueOf(System.getProperty("memory.useUnsafe"));
+
     if (clazz.equals(byte[].class)) {
-      if (unsafeWasDetected)
+      if (useUnsafe && unsafeWasDetected)
         return (Comparator<T>) OUnsafeByteArrayComparator.INSTANCE;
 
       return (Comparator<T>) OByteArrayComparator.INSTANCE;
