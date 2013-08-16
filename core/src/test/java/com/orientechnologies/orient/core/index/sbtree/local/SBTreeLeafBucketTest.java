@@ -23,14 +23,16 @@ import com.orientechnologies.orient.core.id.ORecordId;
 public class SBTreeLeafBucketTest {
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  public void testInitialization() {
+  public void testInitialization() throws Exception {
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
 
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBucket<Long>(pointer, OLongSerializer.INSTANCE);
+    treeBucket = new OSBTreeBucket<Long>(pointer, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
@@ -39,7 +41,7 @@ public class SBTreeLeafBucketTest {
     directMemory.free(pointer);
   }
 
-  public void testSearch() {
+  public void testSearch() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testSearch seed : " + seed);
 
@@ -51,7 +53,8 @@ public class SBTreeLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
 
     int index = 0;
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
@@ -73,7 +76,7 @@ public class SBTreeLeafBucketTest {
     directMemory.free(pointer);
   }
 
-  public void testUpdateValue() {
+  public void testUpdateValue() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testUpdateValue seed : " + seed);
 
@@ -85,7 +88,8 @@ public class SBTreeLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
 
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     int index = 0;
@@ -115,7 +119,7 @@ public class SBTreeLeafBucketTest {
     directMemory.free(pointer);
   }
 
-  public void testShrink() {
+  public void testShrink() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testShrink seed : " + seed);
 
@@ -127,7 +131,8 @@ public class SBTreeLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
 
     int index = 0;
     for (Long key : keys) {
@@ -186,7 +191,7 @@ public class SBTreeLeafBucketTest {
     directMemory.free(pointer);
   }
 
-  public void testRemove() {
+  public void testRemove() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testRemove seed : " + seed);
 
@@ -198,7 +203,8 @@ public class SBTreeLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
 
     int index = 0;
     for (Long key : keys) {
@@ -261,18 +267,20 @@ public class SBTreeLeafBucketTest {
     directMemory.free(pointer);
   }
 
-  public void testSetLeftSibling() {
+  public void testSetLeftSibling() throws Exception {
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
     treeBucket.setLeftSibling(123);
     Assert.assertEquals(treeBucket.getLeftSibling(), 123);
 
     directMemory.free(pointer);
   }
 
-  public void testSetRightSibling() {
+  public void testSetRightSibling() throws Exception {
     long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
-    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE);
+    OSBTreeBucket<Long> treeBucket = new OSBTreeBucket<Long>(pointer, true, OLongSerializer.INSTANCE,
+        com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
     treeBucket.setRightSibling(123);
     Assert.assertEquals(treeBucket.getRightSibling(), 123);
 

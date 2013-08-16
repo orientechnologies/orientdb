@@ -21,19 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OBinaryFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OBinaryPageDiff;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OIntFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OIntPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OLongFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OLongPageDiff;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -42,57 +34,31 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Andrey Lomakin
  * @since 19.03.13
  */
-public class OLocalPage {
-  public static enum TrackMode {
-    NONE, FORWARD, BOTH
-  }
+public class OPLocalPage extends OAbstractPLocalPage {
 
-  private static final int    VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
+  private static final int VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
 
-  private static final int    MAGIC_NUMBER_OFFSET        = 0;
-  private static final int    CRC32_OFFSET               = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_PAGE_OFFSET           = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int    WAL_SEGMENT_OFFSET         = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int    WAL_POSITION_OFFSET        = WAL_SEGMENT_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FREE_SPACE_COUNTER_OFFSET  = FREE_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int ENTRIES_COUNT_OFFSET       = FREE_SPACE_COUNTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int    NEXT_PAGE_OFFSET           = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int    PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
+  private static final int MARKED_AS_DELETED_FLAG     = 1 << 16;
+  private static final int POSITION_MASK              = 0xFFFF;
+  public static final int  PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  private static final int    FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int    FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int    FREE_SPACE_COUNTER_OFFSET  = FREE_POSITION_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int    ENTRIES_COUNT_OFFSET       = FREE_SPACE_COUNTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int    PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int    PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int  MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
-  private static final int    INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
-  private static final int    MARKED_AS_DELETED_FLAG     = 1 << 16;
-  private static final int    POSITION_MASK              = 0xFFFF;
-  public static final int     PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public static final int     MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
-
-  public static final int     MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
-
-  private final long          pagePointer;
-  private final ODirectMemory directMemory               = ODirectMemoryFactory.INSTANCE.directMemory();
-
-  private List<OPageDiff<?>>  pageChanges                = new ArrayList<OPageDiff<?>>();
-
-  private final TrackMode     trackMode;
-
-  public static OLogSequenceNumber getLogSequenceNumberFromPage(ODirectMemory directMemory, long dataPointer) {
-    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + (2 * OIntegerSerializer.INT_SIZE));
-    final int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
-
-    return new OLogSequenceNumber(segment, position);
-  }
-
-  public OLocalPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
-    this.pagePointer = pagePointer;
-    this.trackMode = trackMode;
+  public OPLocalPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
+    super(pagePointer, trackMode);
 
     if (newPage) {
       setLongValue(NEXT_PAGE_OFFSET, -1);
@@ -104,8 +70,8 @@ public class OLocalPage {
   }
 
   public OLogSequenceNumber getLsn() {
-    int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + WAL_SEGMENT_OFFSET);
-    long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + WAL_POSITION_OFFSET);
+    final int segment = getIntValue(WAL_SEGMENT_OFFSET);
+    final long position = getLongValue(WAL_POSITION_OFFSET);
 
     return new OLogSequenceNumber(segment, position);
   }
@@ -479,73 +445,4 @@ public class OLocalPage {
     }
   }
 
-  public int getIntValue(int pageOffset) {
-    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
-  }
-
-  public long getLongValue(int pageOffset) {
-    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
-  }
-
-  public byte[] getBinaryValue(int pageOffset, int valLen) {
-    return directMemory.get(pagePointer + pageOffset, valLen);
-  }
-
-  public byte getByteValue(int pageOffset) {
-    return directMemory.getByte(pagePointer + pageOffset);
-  }
-
-  public void setIntValue(int pageOffset, int value) throws IOException {
-    if (trackMode.equals(TrackMode.FORWARD))
-      pageChanges.add(new OIntPageDiff(value, pageOffset));
-    else if (trackMode.equals(TrackMode.BOTH)) {
-      int oldValue = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
-      pageChanges.add(new OIntFullPageDiff(value, pageOffset, oldValue));
-    }
-
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
-  }
-
-  public void setLongValue(int pageOffset, long value) throws IOException {
-    if (trackMode.equals(TrackMode.FORWARD))
-      pageChanges.add(new OLongPageDiff(value, pageOffset));
-    else if (trackMode.equals(TrackMode.BOTH)) {
-      long oldValue = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
-      pageChanges.add(new OLongFullPageDiff(value, pageOffset, oldValue));
-    }
-
-    OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
-  }
-
-  public void setBinaryValue(int pageOffset, byte[] value) throws IOException {
-    if (value.length == 0)
-      return;
-
-    if (trackMode.equals(TrackMode.FORWARD))
-      pageChanges.add(new OBinaryPageDiff(value, pageOffset));
-    else if (trackMode.equals(TrackMode.BOTH)) {
-      byte[] oldValue = directMemory.get(pagePointer + pageOffset, value.length);
-      pageChanges.add(new OBinaryFullPageDiff(value, pageOffset, oldValue));
-      directMemory.set(pagePointer + pageOffset, value, 0, value.length);
-    }
-
-    directMemory.set(pagePointer + pageOffset, value, 0, value.length);
-  }
-
-  public void copyData(int from, int to, int len) throws IOException {
-    if (len == 0)
-      return;
-
-    if (trackMode.equals(TrackMode.FORWARD)) {
-      byte[] content = directMemory.get(pagePointer + from, len);
-      pageChanges.add(new OBinaryPageDiff(content, to));
-    } else if (trackMode.equals(TrackMode.BOTH)) {
-      byte[] content = directMemory.get(pagePointer + from, len);
-      byte[] oldContent = directMemory.get(pagePointer + to, len);
-
-      pageChanges.add(new OBinaryFullPageDiff(content, to, oldContent));
-    }
-
-    directMemory.copyData(pagePointer + from, pagePointer + to, len);
-  }
 }

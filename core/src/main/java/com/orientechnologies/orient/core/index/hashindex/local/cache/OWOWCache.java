@@ -49,7 +49,7 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -384,7 +384,7 @@ public class OWOWCache {
       fileClassic.read(startPosition, content, content.length);
       final long pointer = directMemory.allocate(content);
 
-      final OLogSequenceNumber storedLSN = OLocalPage.getLogSequenceNumberFromPage(directMemory, pointer);
+      final OLogSequenceNumber storedLSN = OAbstractPLocalPage.getLogSequenceNumberFromPage(directMemory, pointer);
       dataPointer = new OCachePointer(pointer, storedLSN);
     } else {
       fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
@@ -398,7 +398,7 @@ public class OWOWCache {
 
   private void flushPage(long fileId, long pageIndex, long dataPointer) throws IOException {
     if (writeAheadLog != null) {
-      OLogSequenceNumber lsn = OLocalPage.getLogSequenceNumberFromPage(directMemory, dataPointer);
+      OLogSequenceNumber lsn = OAbstractPLocalPage.getLogSequenceNumberFromPage(directMemory, dataPointer);
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
       if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
@@ -673,7 +673,7 @@ public class OWOWCache {
                   flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                   flushedPages++;
 
-                  final OLogSequenceNumber flushedLSN = OLocalPage.getLogSequenceNumberFromPage(directMemory,
+                  final OLogSequenceNumber flushedLSN = OAbstractPLocalPage.getLogSequenceNumberFromPage(directMemory,
                       pagePointer.getDataPointer());
                   pagePointer.setLastFlushedLsn(flushedLSN);
                 } finally {

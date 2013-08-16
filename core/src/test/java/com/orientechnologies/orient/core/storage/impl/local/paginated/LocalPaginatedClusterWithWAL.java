@@ -9,6 +9,13 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -24,13 +31,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -365,8 +365,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
       Assert.assertEquals(fileOne.length(), fileTwo.length());
 
-      byte[] expectedContent = new byte[OLocalPage.PAGE_SIZE];
-      byte[] actualContent = new byte[OLocalPage.PAGE_SIZE];
+      byte[] expectedContent = new byte[OPLocalPage.PAGE_SIZE];
+      byte[] actualContent = new byte[OPLocalPage.PAGE_SIZE];
 
       fileOne.seek(OAbstractFile.HEADER_SIZE);
       fileTwo.seek(OAbstractFile.HEADER_SIZE);
@@ -377,8 +377,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
         Assert.assertEquals(expectedContent, actualContent);
 
-        expectedContent = new byte[OLocalPage.PAGE_SIZE];
-        actualContent = new byte[OLocalPage.PAGE_SIZE];
+        expectedContent = new byte[OPLocalPage.PAGE_SIZE];
+        actualContent = new byte[OPLocalPage.PAGE_SIZE];
         bytesRead = fileOne.read(expectedContent);
       }
 
