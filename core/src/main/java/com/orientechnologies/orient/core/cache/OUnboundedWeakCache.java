@@ -16,13 +16,22 @@
 
 package com.orientechnologies.orient.core.cache;
 
+import java.util.WeakHashMap;
+
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 /**
- * @author Andrey Lomakin
- * @since 05.07.13
+ * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OCacheLevelOneLocatorImpl implements OCacheLevelOneLocator {
+public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, ORecordInternal<?>>> implements OCache {
+
+  public OUnboundedWeakCache() {
+    super(new WeakHashMap<ORID, ORecordInternal<?>>());
+  }
+
   @Override
-  public OCache threadLocalCache() {
-    return new OUnboundedWeakCache();
+  public int limit() {
+    return Integer.MAX_VALUE;
   }
 }
