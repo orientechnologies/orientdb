@@ -51,6 +51,8 @@ public enum OGlobalConfiguration {
   MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
       Float.class, 0.70),
 
+  MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
+
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
@@ -609,5 +611,7 @@ public enum OGlobalConfiguration {
     } else {
       // 32 BIT, USE THE DEFAULT CONFIGURATION
     }
+
+    System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
   }
 }
