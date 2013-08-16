@@ -47,16 +47,17 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
       final String rid = db.getClusterIdByName(urlParts[2]) + ":" + urlParts[3];
       rec = db.load(new ORecordId(rid), fetchPlan);
 
+      if (rec == null)
+        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + rid
+            + "' was not found.", null);
+      else
+        iResponse.writeRecord(rec, fetchPlan, null);
+
     } finally {
       if (db != null)
         db.close();
     }
 
-    if (rec == null)
-      iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + urlParts[2]
-          + "' was not found.", null);
-    else
-      iResponse.writeRecord(rec, fetchPlan, null);
     return false;
   }
 
