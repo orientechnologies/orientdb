@@ -111,7 +111,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
     clientTxId = 0;
 
-    final long timer;
+    long timer = 0;
 
     try {
       requestType = channel.readByte();
