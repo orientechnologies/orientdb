@@ -111,11 +111,13 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
     clientTxId = 0;
 
-    final long timer = Orient.instance().getProfiler().startChrono();
+    final long timer;
 
     try {
       requestType = channel.readByte();
       clientTxId = channel.readInt();
+
+      timer = Orient.instance().getProfiler().startChrono();
 
       onBeforeRequest();
 
