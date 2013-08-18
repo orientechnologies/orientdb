@@ -17,12 +17,10 @@ package com.orientechnologies.orient.server.journal;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -324,7 +322,6 @@ public class ODatabaseJournal {
   public Iterator<Long> browseLastOperations(final long[] iRemoteLastOperationId, final OPERATION_STATUS iStatus, final int iMax)
       throws IOException {
     final LinkedList<Long> result = new LinkedList<Long>();
-    final Set<ORID> rids = new HashSet<ORID>();
 
     lock.acquireExclusiveLock();
     try {
@@ -335,13 +332,9 @@ public class ODatabaseJournal {
       while ((localOperationId[0] > iRemoteLastOperationId[0])
           || (localOperationId[0] == iRemoteLastOperationId[0] && localOperationId[1] > iRemoteLastOperationId[1])) {
 
-        final ORID rid = getOperationRID(fileOffset);
-
-        if ((rid == null || !rids.contains(rid)) && (iStatus == null || iStatus == getOperationStatus(fileOffset))) {
-
+        if (iStatus == null || iStatus == getOperationStatus(fileOffset)) {
           // COLLECT CURRENT POSITION AS GOOD
           result.add(fileOffset);
-          rids.add(rid);
 
           if (iMax > -1 && result.size() >= iMax)
             // MAX LIMIT REACHED
