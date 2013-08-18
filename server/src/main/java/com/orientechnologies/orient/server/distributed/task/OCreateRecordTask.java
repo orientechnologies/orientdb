@@ -109,8 +109,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
 
     final OPhysicalPosition remote = (OPhysicalPosition) remoteResult;
 
-    resolver.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(),
-        remote.clusterPosition), remote.recordVersion.getCounter());
+    resolver.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(), remote == null ? null
+        : remote.clusterPosition), remote == null ? null : remote.recordVersion.getCounter());
   }
 
   @Override

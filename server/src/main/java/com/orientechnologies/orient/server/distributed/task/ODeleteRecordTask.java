@@ -63,6 +63,12 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
       final ORecordInternal<?> record = database.load(rid);
       if (record != null) {
         record.getRecordVersion().copyFrom(version);
+
+        if (align) {
+          // UPDATE THE RECORD TO FORCE THE SETTING OF VERSION
+          record.setDirty();
+          record.save();
+        }
         record.delete();
         return Boolean.TRUE;
       }
