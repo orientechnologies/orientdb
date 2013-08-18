@@ -260,4 +260,17 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
         "Error on saving CONFLICT for record %s/%s...", database.getName(), doc);
   }
 
+  protected boolean areRecordContentIdentical(final ORecordInternal<?> rec1, final ORecordInternal<?> rec2) {
+    final byte[] rec1Stream = rec1.toStream();
+    final byte[] rec2Stream = rec2.toStream();
+
+    if (rec1Stream.length != rec2Stream.length)
+      return false;
+
+    for (int i = 0; i < rec1Stream.length; ++i)
+      if (rec1Stream[i] != rec2Stream[i])
+        return false;
+    return true;
+  }
+
 }
