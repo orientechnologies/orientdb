@@ -92,7 +92,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
   }
 
   protected Float getDistance(final Vertex node, final Vertex target) {
-    final Iterator<Edge> edges = ((OrientVertex) node).getEdges(target, paramDirection).iterator();
+    final Iterator<Edge> edges = ((OrientVertex) node).getEdges((OrientVertex) target, paramDirection).iterator();
     if (edges.hasNext()) {
       final Edge e = edges.next();
       if (e != null) {
