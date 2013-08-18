@@ -64,8 +64,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
       if (record != null) {
         record.getRecordVersion().copyFrom(version);
 
-        if (align) {
+        if (align && !version.isUntracked()) {
           // UPDATE THE RECORD TO FORCE THE SETTING OF VERSION
+          record.getRecordVersion().setRollbackMode();
           record.setDirty();
           record.save();
         }
