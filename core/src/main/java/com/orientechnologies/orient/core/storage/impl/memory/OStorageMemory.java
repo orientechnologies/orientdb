@@ -16,7 +16,14 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -35,7 +42,14 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -319,6 +333,12 @@ public class OStorageMemory extends OStorageEmbedded {
 
       if (iCallback != null)
         iCallback.call(iRid, iRid.clusterPosition);
+
+      if (iRecordVersion.getCounter() > -1 && iRecordVersion.compareTo(ppos.recordVersion) != 0) {
+        // OVERWRITE THE VERSION
+        cluster.updateVersion(iRid.clusterPosition, iRecordVersion);
+        ppos.recordVersion = iRecordVersion;
+      }
 
       return new OStorageOperationResult<OPhysicalPosition>(ppos);
     } catch (IOException e) {
@@ -853,7 +873,7 @@ public class OStorageMemory extends OStorageEmbedded {
     return size;
   }
 
-	@Override
+  @Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     if (ppos.dataSegmentId > 0)
       return false;

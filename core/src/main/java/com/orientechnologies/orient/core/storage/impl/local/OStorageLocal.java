@@ -1734,7 +1734,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
         cluster.updateDataSegmentPosition(ppos.clusterPosition, ppos.dataSegmentId, ppos.dataSegmentPos);
 
-        if (recordVersion.getCounter() > -1 && recordVersion.compareTo(ppos.recordVersion) > 0) {
+        if (recordVersion.getCounter() > -1 && recordVersion.compareTo(ppos.recordVersion) != 0) {
           // OVERWRITE THE VERSION
           cluster.updateVersion(rid.clusterPosition, recordVersion);
           ppos.recordVersion = recordVersion;
