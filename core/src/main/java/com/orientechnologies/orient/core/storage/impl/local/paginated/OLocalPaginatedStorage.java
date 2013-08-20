@@ -757,7 +757,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (writeAheadLog != null)
         writeAheadLog.delete();
 
-      diskCache.delete();
+      if (diskCache != null)
+        diskCache.delete();
 
       // RETRIES
       for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {

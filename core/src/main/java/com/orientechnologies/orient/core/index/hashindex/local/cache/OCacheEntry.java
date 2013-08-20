@@ -28,6 +28,14 @@ public class OCacheEntry {
     return dataPointer;
   }
 
+  public long getFileId() {
+    return fileId;
+  }
+
+  public long getPageIndex() {
+    return pageIndex;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o)

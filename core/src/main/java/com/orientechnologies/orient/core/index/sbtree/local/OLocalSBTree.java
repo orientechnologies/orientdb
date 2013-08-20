@@ -659,8 +659,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         rightEntries.add(bucketToSplit.getEntry(i));
 
       if (pageIndex != ROOT_INDEX) {
-        long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
-        OCacheEntry rightBucketEntry = diskCache.load(fileId, rightBucketPageIndex);
+        OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
         OCachePointer rightBucketPointer = rightBucketEntry.getCachePointer();
 
         rightBucketPointer.acquireExclusiveLock();
@@ -678,7 +677,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
             newRightBucket.setRightSibling(rightSiblingPageIndex);
             newRightBucket.setLeftSibling(pageIndex);
 
-            bucketToSplit.setRightSibling(rightBucketPageIndex);
+            bucketToSplit.setRightSibling(rightBucketEntry.getPageIndex());
 
             if (rightSiblingPageIndex >= 0) {
               final OCacheEntry rightSiblingBucketEntry = diskCache.load(fileId, rightSiblingPageIndex);
@@ -688,7 +687,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
               OSBTreeBucket<K> rightSiblingBucket = new OSBTreeBucket<K>(rightSiblingPointer.getDataPointer(), keySerializer,
                   com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
               try {
-                rightSiblingBucket.setLeftSibling(rightBucketPageIndex);
+                rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
                 rightSiblingBucketEntry.markDirty();
               } finally {
                 rightSiblingPointer.releaseExclusiveLock();
@@ -705,7 +704,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           try {
             OSBTreeBucket<K> parentBucket = new OSBTreeBucket<K>(parentPointer.getDataPointer(), keySerializer,
                 com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
-            OSBTreeBucket.SBTreeEntry<K> parentEntry = new OSBTreeBucket.SBTreeEntry<K>(pageIndex, rightBucketPageIndex,
+            OSBTreeBucket.SBTreeEntry<K> parentEntry = new OSBTreeBucket.SBTreeEntry<K>(pageIndex, rightBucketEntry.getPageIndex(),
                 separationKey, null);
 
             int insertionIndex = parentBucket.find(separationKey);
@@ -748,12 +747,12 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           return new BucketSearchResult(keyIndex, resultPath);
         }
 
-        resultPath.add(rightBucketPageIndex);
+        resultPath.add(rightBucketEntry.getPageIndex());
         if (splitLeaf) {
           return new BucketSearchResult(keyIndex - indexToSplit, resultPath);
         }
 
-        resultPath.add(rightBucketPageIndex);
+        resultPath.add(rightBucketEntry.getPageIndex());
         return new BucketSearchResult(keyIndex - indexToSplit - 1, resultPath);
 
       } else {
@@ -762,11 +761,10 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
         for (int i = 0; i < indexToSplit; i++)
           leftEntries.add(bucketToSplit.getEntry(i));
 
-        long leftBucketPageIndex = diskCache.getFilledUpTo(fileId);
-        OCacheEntry leftBucketEntry = diskCache.load(fileId, leftBucketPageIndex);
+        OCacheEntry leftBucketEntry = diskCache.allocateNewPage(fileId);
         OCachePointer leftBucketPointer = leftBucketEntry.getCachePointer();
 
-        long rightBucketPageIndex = diskCache.getFilledUpTo(fileId);
+        OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
         leftBucketPointer.acquireExclusiveLock();
         try {
           OSBTreeBucket<K> newLeftBucket = new OSBTreeBucket<K>(leftBucketPointer.getDataPointer(), splitLeaf, keySerializer,
@@ -774,7 +772,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           newLeftBucket.addAll(leftEntries);
 
           if (splitLeaf)
-            newLeftBucket.setRightSibling(rightBucketPageIndex);
+            newLeftBucket.setRightSibling(rightBucketEntry.getPageIndex());
 
           leftBucketEntry.markDirty();
         } finally {
@@ -782,7 +780,6 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           diskCache.release(leftBucketEntry);
         }
 
-        OCacheEntry rightBucketEntry = diskCache.load(fileId, rightBucketPageIndex);
         OCachePointer rightBucketPointer = rightBucketEntry.getCachePointer();
         rightBucketPointer.acquireExclusiveLock();
         try {
@@ -791,7 +788,7 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
           newRightBucket.addAll(rightEntries);
 
           if (splitLeaf)
-            newRightBucket.setLeftSibling(leftBucketPageIndex);
+            newRightBucket.setLeftSibling(leftBucketEntry.getPageIndex());
 
           rightBucketEntry.markDirty();
         } finally {
@@ -801,17 +798,17 @@ public class OLocalSBTree<K> extends OSharedResourceAdaptive {
 
         bucketToSplit = new OSBTreeBucket<K>(bucketPointer.getDataPointer(), false, keySerializer,
             com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage.TrackMode.BOTH);
-        bucketToSplit.addEntry(0, new OSBTreeBucket.SBTreeEntry<K>(leftBucketPageIndex, rightBucketPageIndex, separationKey, null),
-            true);
+        bucketToSplit.addEntry(0, new OSBTreeBucket.SBTreeEntry<K>(leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(),
+            separationKey, null), true);
 
         ArrayList<Long> resultPath = new ArrayList<Long>(path.subList(0, path.size() - 1));
 
         if (comparator.compare(keyToInsert, separationKey) < 0) {
-          resultPath.add(leftBucketPageIndex);
+          resultPath.add(leftBucketEntry.getPageIndex());
           return new BucketSearchResult(keyIndex, resultPath);
         }
 
-        resultPath.add(rightBucketPageIndex);
+        resultPath.add(rightBucketEntry.getPageIndex());
 
         if (splitLeaf)
           return new BucketSearchResult(keyIndex - indexToSplit, resultPath);

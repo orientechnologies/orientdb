@@ -15,6 +15,8 @@ public interface ODiskCache {
 
   OCacheEntry load(long fileId, long pageIndex) throws IOException;
 
+  OCacheEntry allocateNewPage(long fileId) throws IOException;
+
   void release(OCacheEntry cacheEntry);
 
   long getFilledUpTo(long fileId) throws IOException;

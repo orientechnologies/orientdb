@@ -92,6 +92,14 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public OCacheEntry allocateNewPage(long fileId) throws IOException {
+    synchronized (syncObject) {
+      final long filledUpTo = getFilledUpTo(fileId);
+      return load(fileId, filledUpTo);
+    }
+  }
+
+  @Override
   public void release(OCacheEntry cacheEntry) {
     synchronized (syncObject) {
       if (cacheEntry != null)
