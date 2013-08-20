@@ -13,11 +13,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirty
 public interface ODiskCache {
   long openFile(String fileName) throws IOException;
 
-  void markDirty(long fileId, long pageIndex);
+  OCacheEntry load(long fileId, long pageIndex) throws IOException;
 
-  OCachePointer load(long fileId, long pageIndex) throws IOException;
-
-  void release(long fileId, long pageIndex);
+  void release(OCacheEntry cacheEntry);
 
   long getFilledUpTo(long fileId) throws IOException;
 
@@ -42,6 +40,8 @@ public interface ODiskCache {
   void clear() throws IOException;
 
   void close() throws IOException;
+
+  void delete() throws IOException;
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
 

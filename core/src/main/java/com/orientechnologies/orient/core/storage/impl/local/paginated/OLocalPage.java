@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Andrey Lomakin
  * @since 19.03.13
  */
-public class OPLocalPage extends OAbstractPLocalPage {
+public class OLocalPage extends OAbstractPLocalPage {
 
   private static final int VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
 
@@ -57,7 +57,7 @@ public class OPLocalPage extends OAbstractPLocalPage {
 
   public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OPLocalPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
+  public OLocalPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
     super(pagePointer, trackMode);
 
     if (newPage) {

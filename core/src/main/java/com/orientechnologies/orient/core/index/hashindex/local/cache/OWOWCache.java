@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -43,9 +46,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -59,50 +64,60 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 7/23/13
  */
 public class OWOWCache {
-  public static final int                                   MIN_CACHE_SIZE = 16;
+  public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
 
-  public static final long                                  MAGIC_NUMBER   = 0xFACB03FEL;
+  private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups    = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  public static final int                                   MIN_CACHE_SIZE        = 16;
+
+  public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
+
+  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+
+  private Map<String, Long>                                 nameIdMap;
+
+  private RandomAccessFile                                  nameIdMapHolder;
 
   private final Map<Long, OFileClassic>                     files;
 
-  private final ODirectMemory                               directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
+  private final ODirectMemory                               directMemory          = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
   private final long                                        groupTTL;
   private final OWriteAheadLog                              writeAheadLog;
 
-  private final AtomicInteger                               cacheSize      = new AtomicInteger();
-  private final OLockManager<GroupKey, Thread>              lockManager    = new OLockManager<GroupKey, Thread>(
-                                                                               true,
-                                                                               OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
-                                                                                   .getValueAsInteger());
+  private final AtomicInteger                               cacheSize             = new AtomicInteger();
+  private final OLockManager<GroupKey, Thread>              lockManager           = new OLockManager<GroupKey, Thread>(
+                                                                                      true,
+                                                                                      OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
+                                                                                          .getValueAsInteger());
 
   private volatile int                                      cacheMaxSize;
 
   private final OStorageLocalAbstract                       storageLocal;
 
-  private final Object                                      syncObject     = new Object();
-  private long                                              fileCounter    = 1;
+  private final Object                                      syncObject            = new Object();
+  private long                                              fileCounter           = 0;
 
-  private GroupKey                                          lastGroupKey   = new GroupKey(0, -1);
+  private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
 
-  private final ScheduledExecutorService                    commitExecutor = Executors
-                                                                               .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                 @Override
-                                                                                 public Thread newThread(Runnable r) {
-                                                                                   Thread thread = new Thread(r);
-                                                                                   thread.setDaemon(true);
-                                                                                   thread.setName("Write Cache Flush Task");
-                                                                                   return thread;
-                                                                                 }
-                                                                               });
+  private final ScheduledExecutorService                    commitExecutor        = Executors
+                                                                                      .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                                        @Override
+                                                                                        public Thread newThread(Runnable r) {
+                                                                                          Thread thread = new Thread(r);
+                                                                                          thread.setDaemon(true);
+                                                                                          thread.setName("Write Cache Flush Task");
+                                                                                          return thread;
+                                                                                        }
+                                                                                      });
+  private File                                              nameIdMapHolderFile;
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
       int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
-    this.files = new HashMap<Long, OFileClassic>();
+    this.files = new ConcurrentHashMap<Long, OFileClassic>();
+
     this.syncOnPageFlush = syncOnPageFlush;
     this.pageSize = pageSize;
     this.groupTTL = groupTTL;
@@ -119,7 +134,23 @@ public class OWOWCache {
 
   public long openFile(String fileName) throws IOException {
     synchronized (syncObject) {
-      long fileId = fileCounter++;
+      if (nameIdMapHolder == null) {
+        final File storagePath = new File(storageLocal.getStoragePath());
+        if (!storagePath.exists())
+          if (!storagePath.mkdirs())
+            throw new OStorageException("Can not create directories for the path " + storagePath);
+
+        nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
+
+        nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
+        readNameIdMap();
+      }
+
+      Long fileId = nameIdMap.get(fileName);
+      if (fileId == null) {
+        fileId = ++fileCounter;
+        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+      }
 
       OFileClassic fileClassic = new OFileClassic();
       String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
@@ -134,6 +165,59 @@ public class OWOWCache {
 
       return fileId;
     }
+  }
+
+  private void readNameIdMap() throws IOException {
+    nameIdMap = new HashMap<String, Long>();
+    long localFileCounter = -1;
+
+    nameIdMapHolder.seek(0);
+
+    NameFileIdEntry nameFileIdEntry;
+    while ((nameFileIdEntry = readNextNameIdEntry()) != null) {
+      if (localFileCounter < nameFileIdEntry.fileId)
+        localFileCounter = nameFileIdEntry.fileId;
+
+      if (nameFileIdEntry.fileId >= 0)
+        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+      else
+        nameIdMap.remove(nameFileIdEntry.name);
+    }
+
+    if (localFileCounter > 0)
+      fileCounter = localFileCounter;
+  }
+
+  private NameFileIdEntry readNextNameIdEntry() throws IOException {
+    try {
+      final int nameSize = nameIdMapHolder.readInt();
+      byte[] serializedName = new byte[nameSize];
+
+      nameIdMapHolder.readFully(serializedName);
+
+      final String name = OStringSerializer.INSTANCE.deserialize(serializedName, 0);
+      final long fileId = nameIdMapHolder.readLong();
+
+      return new NameFileIdEntry(name, fileId);
+    } catch (EOFException eof) {
+      return null;
+    }
+  }
+
+  private void writeNameIdEntry(NameFileIdEntry nameFileIdEntry, boolean sync) throws IOException {
+
+    nameIdMapHolder.seek(nameIdMapHolder.length());
+
+    final int nameSize = OStringSerializer.INSTANCE.getObjectSize(nameFileIdEntry.name);
+    byte[] serializedName = new byte[nameSize];
+    OStringSerializer.INSTANCE.serialize(nameFileIdEntry.name, serializedName, 0);
+
+    nameIdMapHolder.writeInt(nameSize);
+    nameIdMapHolder.write(serializedName);
+    nameIdMapHolder.writeLong(nameFileIdEntry.fileId);
+
+    if (sync)
+      nameIdMapHolder.getFD().sync();
   }
 
   public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
@@ -279,8 +363,14 @@ public class OWOWCache {
         truncateFile(fileId);
 
       final OFileClassic fileClassic = files.remove(fileId);
-      if (fileClassic != null)
+      if (fileClassic != null) {
+
+        nameIdMap.remove(fileClassic.getName());
+        writeNameIdEntry(new NameFileIdEntry(fileClassic.getName(), -1), true);
+
         fileClassic.delete();
+      }
+
     }
   }
 
@@ -307,6 +397,12 @@ public class OWOWCache {
           renamed = file.renameTo(newFile);
         }
       }
+
+      writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
+      writeNameIdEntry(new NameFileIdEntry(newFileName, fileId), true);
+
+      nameIdMap.remove(oldFileName);
+      nameIdMap.put(newFileName, fileId);
     }
   }
 
@@ -330,6 +426,15 @@ public class OWOWCache {
       for (OFileClassic fileClassic : files.values()) {
         if (fileClassic.isOpen())
           fileClassic.close();
+      }
+
+      if (nameIdMapHolder != null) {
+        nameIdMapHolder.setLength(0);
+        for (Map.Entry<String, Long> entry : nameIdMap.entrySet()) {
+          writeNameIdEntry(new NameFileIdEntry(entry.getKey(), entry.getValue()), false);
+        }
+        nameIdMapHolder.getFD().sync();
+        nameIdMapHolder.close();
       }
     }
   }
@@ -518,6 +623,20 @@ public class OWOWCache {
       }
 
       return errors.toArray(new OPageDataVerificationError[errors.size()]);
+    }
+  }
+
+  public void delete() throws IOException {
+    synchronized (syncObject) {
+      for (long fileId : files.keySet())
+        deleteFile(fileId);
+
+      if (nameIdMapHolderFile != null) {
+        nameIdMapHolder.close();
+
+        if (!nameIdMapHolderFile.delete())
+          throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+      }
     }
   }
 
@@ -792,6 +911,40 @@ public class OWOWCache {
       }
 
       return null;
+    }
+  }
+
+  private class NameFileIdEntry {
+    private final String name;
+    private final long   fileId;
+
+    private NameFileIdEntry(String name, long fileId) {
+      this.name = name;
+      this.fileId = fileId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      NameFileIdEntry that = (NameFileIdEntry) o;
+
+      if (fileId != that.fileId)
+        return false;
+      if (!name.equals(that.name))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + (int) (fileId ^ (fileId >>> 32));
+      return result;
     }
   }
 }

@@ -415,6 +415,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
     lock.acquireExclusiveLock();
     try {
 
+      if (diskCache != null)
+        diskCache.delete();
+
       // RETRIES
       for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
         if (dbDir.exists() && dbDir.isDirectory()) {
@@ -456,6 +459,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
 
+    } catch (IOException ioe) {
+      throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ".", ioe);
     } finally {
       lock.releaseExclusiveLock();
 
