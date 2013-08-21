@@ -13,7 +13,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirty
 public interface ODiskCache {
   long openFile(String fileName) throws IOException;
 
-  OCacheEntry load(long fileId, long pageIndex) throws IOException;
+  void openFile(long fileId) throws IOException;
+
+  OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException;
+
+  void pinPage(OCacheEntry cacheEntry) throws IOException;
+
+  void loadPinnedPage(OCacheEntry cacheEntry) throws IOException;
 
   OCacheEntry allocateNewPage(long fileId) throws IOException;
 
@@ -53,4 +59,5 @@ public interface ODiskCache {
 
   boolean isOpen(long fileId);
 
+  boolean exists(String name);
 }

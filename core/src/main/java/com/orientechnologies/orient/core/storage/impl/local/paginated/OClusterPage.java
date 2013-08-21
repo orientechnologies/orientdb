@@ -19,14 +19,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -34,7 +30,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Andrey Lomakin
  * @since 19.03.13
  */
-public class OLocalPage extends OAbstractPLocalPage {
+public class OClusterPage extends ODurablePage {
 
   private static final int VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
 
@@ -57,7 +53,7 @@ public class OLocalPage extends OAbstractPLocalPage {
 
   public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OLocalPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
+  public OClusterPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
     super(pagePointer, trackMode);
 
     if (newPage) {
@@ -67,18 +63,6 @@ public class OLocalPage extends OAbstractPLocalPage {
       setIntValue(FREE_POSITION_OFFSET, PAGE_SIZE);
       setIntValue(FREE_SPACE_COUNTER_OFFSET, PAGE_SIZE - PAGE_INDEXES_OFFSET);
     }
-  }
-
-  public OLogSequenceNumber getLsn() {
-    final int segment = getIntValue(WAL_SEGMENT_OFFSET);
-    final long position = getLongValue(WAL_POSITION_OFFSET);
-
-    return new OLogSequenceNumber(segment, position);
-  }
-
-  public void setLsn(OLogSequenceNumber lsn) {
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
-    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
   }
 
   public int appendRecord(ORecordVersion recordVersion, byte[] record, boolean keepTombstoneVersion) throws IOException {
@@ -382,24 +366,6 @@ public class OLocalPage extends OAbstractPLocalPage {
 
   public void setPrevPage(long prevPage) throws IOException {
     setLongValue(PREV_PAGE_OFFSET, prevPage);
-  }
-
-  public List<OPageDiff<?>> getPageChanges() {
-    return pageChanges;
-  }
-
-  public void restoreChanges(List<OPageDiff<?>> changes) {
-    for (OPageDiff<?> diff : changes)
-      diff.restorePageData(pagePointer);
-  }
-
-  public void revertChanges(List<OFullPageDiff<?>> changes) {
-    ListIterator<OFullPageDiff<?>> listIterator = changes.listIterator(changes.size());
-
-    while (listIterator.hasPrevious()) {
-      OFullPageDiff<?> diff = listIterator.previous();
-      diff.revertPageData(pagePointer);
-    }
   }
 
   private void incrementEntriesCount() throws IOException {

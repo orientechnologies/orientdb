@@ -13,13 +13,13 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 
 /**
  * @author Andrey Lomakin
  * @since 8/7/13
  */
-public class OSBTreeBucket<K> extends OAbstractPLocalPage {
+public class OSBTreeBucket<K> extends ODurablePage {
   private static final int            FREE_POINTER_OFFSET    = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            SIZE_OFFSET            = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            IS_LEAF_OFFSET         = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;

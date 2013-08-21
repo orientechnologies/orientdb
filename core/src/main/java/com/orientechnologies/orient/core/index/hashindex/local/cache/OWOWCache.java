@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OAbstractPLocalPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -134,36 +134,80 @@ public class OWOWCache {
 
   public long openFile(String fileName) throws IOException {
     synchronized (syncObject) {
-      if (nameIdMapHolder == null) {
-        final File storagePath = new File(storageLocal.getStoragePath());
-        if (!storagePath.exists())
-          if (!storagePath.mkdirs())
-            throw new OStorageException("Can not create directories for the path " + storagePath);
-
-        nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
-
-        nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
-        readNameIdMap();
-      }
+      initNameIdMapping();
 
       Long fileId = nameIdMap.get(fileName);
-      if (fileId == null) {
+      OFileClassic fileClassic;
+      if (fileId == null)
+        fileClassic = null;
+      else
+        fileClassic = files.get(fileId);
+
+      if (fileClassic == null) {
         fileId = ++fileCounter;
+
+        fileClassic = createFile(fileName);
+
+        files.put(fileId, fileClassic);
+        nameIdMap.put(fileName, fileId);
         writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
       }
 
-      OFileClassic fileClassic = new OFileClassic();
-      String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
-      fileClassic.init(path, storageLocal.getMode());
-
-      if (fileClassic.exists())
-        fileClassic.open();
-      else
-        fileClassic.create(-1);
-
-      files.put(fileId, fileClassic);
+      openFile(fileClassic);
 
       return fileId;
+    }
+  }
+
+  private void openFile(OFileClassic fileClassic) throws IOException {
+    if (fileClassic.exists()) {
+      if (!fileClassic.isOpen())
+        fileClassic.open();
+    } else
+      fileClassic.create(-1);
+  }
+
+  private void initNameIdMapping() throws IOException {
+    if (nameIdMapHolder == null) {
+      final File storagePath = new File(storageLocal.getStoragePath());
+      if (!storagePath.exists())
+        if (!storagePath.mkdirs())
+          throw new OStorageException("Can not create directories for the path " + storagePath);
+
+      nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
+
+      nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
+      readNameIdMap();
+    }
+  }
+
+  private OFileClassic createFile(String fileName) {
+    OFileClassic fileClassic = new OFileClassic();
+    String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
+    fileClassic.init(path, storageLocal.getMode());
+    return fileClassic;
+  }
+
+  public void openFile(long fileId) throws IOException {
+    synchronized (syncObject) {
+      initNameIdMapping();
+
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null)
+        throw new OStorageException("File with id " + fileId + " does not exist.");
+
+      openFile(fileClassic);
+    }
+  }
+
+  public boolean exists(String fileName) {
+    synchronized (syncObject) {
+      if (nameIdMap != null && nameIdMap.containsKey(fileName))
+        return true;
+
+      final File file = new File(storageLocal.getVariableParser().resolveVariables(
+          storageLocal.getStoragePath() + File.separator + fileName));
+      return file.exists();
     }
   }
 
@@ -186,6 +230,13 @@ public class OWOWCache {
 
     if (localFileCounter > 0)
       fileCounter = localFileCounter;
+
+    for (Map.Entry<String, Long> nameIdEntry : nameIdMap.entrySet()) {
+      if (!files.containsKey(nameIdEntry.getValue())) {
+        OFileClassic fileClassic = createFile(nameIdEntry.getKey());
+        files.put(nameIdEntry.getValue(), fileClassic);
+      }
+    }
   }
 
   private NameFileIdEntry readNextNameIdEntry() throws IOException {
@@ -359,19 +410,29 @@ public class OWOWCache {
 
   public void deleteFile(long fileId) throws IOException {
     synchronized (syncObject) {
-      if (isOpen(fileId))
-        truncateFile(fileId);
-
-      final OFileClassic fileClassic = files.remove(fileId);
-      if (fileClassic != null) {
-
-        nameIdMap.remove(fileClassic.getName());
-        writeNameIdEntry(new NameFileIdEntry(fileClassic.getName(), -1), true);
-
-        fileClassic.delete();
+      final String name = doDeleteFile(fileId);
+      if (name != null) {
+        nameIdMap.remove(name);
+        writeNameIdEntry(new NameFileIdEntry(name, -1), true);
       }
-
     }
+  }
+
+  private String doDeleteFile(long fileId) throws IOException {
+    if (isOpen(fileId))
+      truncateFile(fileId);
+
+    final OFileClassic fileClassic = files.remove(fileId);
+
+    String name = null;
+    if (fileClassic != null) {
+      name = fileClassic.getName();
+
+      if (fileClassic.exists())
+        fileClassic.delete();
+    }
+
+    return name;
   }
 
   public void truncateFile(long fileId) throws IOException {
@@ -489,7 +550,7 @@ public class OWOWCache {
       fileClassic.read(startPosition, content, content.length);
       final long pointer = directMemory.allocate(content);
 
-      final OLogSequenceNumber storedLSN = OAbstractPLocalPage.getLogSequenceNumberFromPage(directMemory, pointer);
+      final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(directMemory, pointer);
       dataPointer = new OCachePointer(pointer, storedLSN);
     } else {
       fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
@@ -503,7 +564,7 @@ public class OWOWCache {
 
   private void flushPage(long fileId, long pageIndex, long dataPointer) throws IOException {
     if (writeAheadLog != null) {
-      OLogSequenceNumber lsn = OAbstractPLocalPage.getLogSequenceNumberFromPage(directMemory, dataPointer);
+      OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(directMemory, dataPointer);
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
       if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
@@ -629,7 +690,7 @@ public class OWOWCache {
   public void delete() throws IOException {
     synchronized (syncObject) {
       for (long fileId : files.keySet())
-        deleteFile(fileId);
+        doDeleteFile(fileId);
 
       if (nameIdMapHolderFile != null) {
         nameIdMapHolder.close();
@@ -792,7 +853,7 @@ public class OWOWCache {
                   flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                   flushedPages++;
 
-                  final OLogSequenceNumber flushedLSN = OAbstractPLocalPage.getLogSequenceNumberFromPage(directMemory,
+                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(directMemory,
                       pagePointer.getDataPointer());
                   pagePointer.setLastFlushedLsn(flushedLSN);
                 } finally {

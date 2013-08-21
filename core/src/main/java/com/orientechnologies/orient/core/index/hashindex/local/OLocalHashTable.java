@@ -1741,7 +1741,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private OCacheEntry loadPageEntry(long pageIndex, int fileLevel) throws IOException {
-    return diskCache.load(fileLevelIds[fileLevel], pageIndex);
+    return diskCache.load(fileLevelIds[fileLevel], pageIndex, false);
   }
 
   private BucketPath getBucket(final long hashCode) {

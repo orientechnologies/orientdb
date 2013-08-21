@@ -37,9 +37,9 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(long pageIndex, int clusterId, OOperationUnitId operationUnitId, List<OPageDiff<?>> diffs,
+  public OUpdatePageRecord(long pageIndex, long fileId, OOperationUnitId operationUnitId, List<OPageDiff<?>> diffs,
       OLogSequenceNumber prevLsn) {
-    super(pageIndex, clusterId, operationUnitId);
+    super(pageIndex, fileId, operationUnitId);
     this.diffs = diffs;
     this.prevLsn = prevLsn;
 

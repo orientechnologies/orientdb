@@ -47,16 +47,10 @@ public class OWALRecordsFactory {
       content[0] = 4;
     else if (walRecord instanceof OCheckpointEndRecord)
       content[0] = 5;
-    else if (walRecord instanceof OAddNewPageRecord)
-      content[0] = 6;
-    else if (walRecord instanceof OClusterStateRecord)
-      content[0] = 7;
     else if (walRecord instanceof OAtomicUnitStartRecord)
       content[0] = 8;
     else if (walRecord instanceof OAtomicUnitEndRecord)
       content[0] = 9;
-    else if (walRecord instanceof OFreePageChangeRecord)
-      content[0] = 10;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -88,20 +82,11 @@ public class OWALRecordsFactory {
     case 5:
       walRecord = new OCheckpointEndRecord();
       break;
-    case 6:
-      walRecord = new OAddNewPageRecord();
-      break;
-    case 7:
-      walRecord = new OClusterStateRecord();
-      break;
     case 8:
       walRecord = new OAtomicUnitStartRecord();
       break;
     case 9:
       walRecord = new OAtomicUnitEndRecord();
-      break;
-    case 10:
-      walRecord = new OFreePageChangeRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

@@ -56,13 +56,6 @@ public class TransactionConsistencyTest {
 
   public static final String    NAME = "name";
 
-  // static {
-  // boolean assertsEnabled = false;
-  // assert assertsEnabled = true; // Intentional side effect!!!
-  // if (!assertsEnabled)
-  // throw new RuntimeException("Asserts must be enabled for this test");
-  // }
-
   @Parameters(value = "url")
   public TransactionConsistencyTest(@Optional(value = "memory:test") String iURL) throws IOException {
     url = iURL;
@@ -287,79 +280,6 @@ public class TransactionConsistencyTest {
     database1.close();
     database2.close();
   }
-
-  // @Test
-  // public void test2RollbackOnRuntimeException() throws IOException {
-  // database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
-  //
-  // if (database1.getURL().startsWith("remote"))
-  // // ONLY NOT-REMOTE TESTS
-  // return;
-  //
-  // database1.begin(TXTYPE.OPTIMISTIC);
-  //
-  // // Create docA.
-  // ODocument vDocA = database1.newInstance();
-  // vDocA.field(NAME, "docA");
-  // vDocA.save();
-  //
-  // // Create docB.
-  // ODocument vDocB = database1.newInstance();
-  // vDocB.field(NAME, "docB");
-  // vDocB.save();
-  //
-  // database1.commit();
-  //
-  // // Keep the IDs.
-  // final ORID vDocA_Rid = vDocA.getIdentity().copy();
-  // final ORID vDocB_Rid = vDocB.getIdentity().copy();
-  //
-  // // Inject exception on second writeRecord().
-  // TestSimulateError.onDataLocalWriteRecord = new TestSimulateError() {
-  // protected int fCountRecordWritten = 0;
-  //
-  // @Override
-  // public boolean checkDataLocalWriteRecord(ODataLocal iODataLocal, long[] iFilePosition, int iClusterSegment,
-  // long iClusterPosition, byte[] iContent) {
-  // fCountRecordWritten++;
-  // if (fCountRecordWritten == 2)
-  // throw new RuntimeException("checkDataLocalWriteRecord on #" + iClusterSegment + ":" + iClusterPosition);
-  // return true;
-  // }
-  // };
-  //
-  // try {
-  // database1.begin(TXTYPE.OPTIMISTIC);
-  // vDocA.field(NAME, "docA_v2");
-  // vDocA.save();
-  // vDocB.field(NAME, "docB_v2");
-  // vDocB.save();
-  // database1.commit();
-  // Assert.fail("Should throw Exception");
-  // } catch (Exception e) {
-  // // Catch Exception and reload records
-  // vDocA = database1.load(vDocA_Rid);
-  // vDocB = database1.load(vDocB_Rid);
-  // }
-  //
-  // // Check values.
-  // Assert.assertEquals(vDocA.field(NAME), "docA");
-  // Assert.assertEquals(vDocB.field(NAME), "docB");
-  //
-  // // Force reload all (to be sure it is not a cache problem)
-  // database1.close();
-  // database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
-  //
-  // //
-  // ODocument vDocA_db2 = database2.load(vDocA_Rid);
-  // Assert.assertEquals(vDocA_db2.field(NAME), "docA");
-  //
-  // ODocument vDocB_db2 = database2.load(vDocB_Rid);
-  // Assert.assertEquals(vDocB_db2.field(NAME), "docB");
-  //
-  // database2.close();
-  //
-  // }
 
   @SuppressWarnings("unchecked")
   @Test
@@ -644,56 +564,6 @@ public class TransactionConsistencyTest {
       db.close();
     }
   }
-
-  //
-  // @SuppressWarnings("unchecked")
-  // @Test
-  // public void testTransactionPopulatePartialDelete() {
-  // System.out.println("************ testTransactionPopulatePartialDelete *******************");
-  // ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-  // db.open("admin", "admin");
-  //
-  // if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
-  // OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit");
-  // fruitClass.createProperty("name", OType.STRING);
-  // fruitClass.createProperty("color", OType.STRING);
-  //
-  // db.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.UNIQUE);
-  //
-  // db.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-  // }
-  //
-  // db.declareIntent(new OIntentMassiveInsert());
-  //
-  // int passCount = 10;
-  // int chunkSize = 1000;
-  // for (int pass = 0; pass < passCount; pass++) {
-  // System.out.println("pass = " + pass);
-  //
-  // // do insert
-  // Vector<ODocument> recordsToDelete = new Vector<ODocument>();
-  // db.begin();
-  // for (int i = 0; i < chunkSize; i++) {
-  // ODocument d = new ODocument( "MyFruit").field("name", "ABC" + pass + 'K' + i).field("color", "FOO" + pass);
-  // d.save();
-  // if (i < chunkSize / 2)
-  // recordsToDelete.addElement(d);
-  // }
-  // db.commit();
-  //
-  // // do delete
-  // db.begin();
-  // for (int i = 0; i < recordsToDelete.size(); i++) {
-  // db.delete((ODocument) recordsToDelete.elementAt(i));
-  // }
-  // db.commit();
-  // }
-  //
-  // db.declareIntent(null);
-  //
-  // db.close();
-  // System.out.println("************ end testTransactionPopulatePartialDelete *******************");
-  // }
 
   public void TransactionRollbackConstistencyTest() {
     System.out.println("**************************TransactionRollbackConsistencyTest***************************************");

@@ -16,6 +16,7 @@ public class OCacheEntry {
   public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
+
     this.dataPointer = dataPointer;
     isDirty = dirty;
   }
