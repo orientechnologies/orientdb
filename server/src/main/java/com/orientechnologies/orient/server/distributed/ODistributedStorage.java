@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
@@ -61,7 +62,7 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedStorage implements OStorage {
+public class ODistributedStorage implements OStorage, OFreezableStorage {
   protected final OServer                   serverInstance;
   protected final ODistributedServerManager dManager;
   protected final OStorageEmbedded          wrapped;
@@ -466,7 +467,7 @@ public class ODistributedStorage implements OStorage {
     return wrapped.getStatus();
   }
 
-	@Override
+  @Override
   public void checkForClusterPermissions(final String iClusterName) {
     wrapped.checkForClusterPermissions(iClusterName);
   }
@@ -516,5 +517,22 @@ public class ODistributedStorage implements OStorage {
     if (t instanceof OException)
       throw (OException) t;
     throw new OStorageException(String.format(iMessage, iParams), e);
+  }
+
+  @Override
+  public void freeze(boolean throwException) {
+    getFreezableStorage().freeze(throwException);
+  }
+
+  @Override
+  public void release() {
+    getFreezableStorage().release();
+  }
+
+  private OFreezableStorage getFreezableStorage() {
+    if (wrapped instanceof OFreezableStorage)
+      return ((OFreezableStorage) wrapped);
+    else
+      throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
 }
