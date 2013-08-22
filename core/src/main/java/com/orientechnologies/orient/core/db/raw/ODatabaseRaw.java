@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.db.raw;
 
 import java.util.ArrayList;
@@ -58,7 +59,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -800,8 +800,8 @@ public class ODatabaseRaw implements ODatabase {
 
   private OFreezableStorage getFreezableStorage() {
     OStorage s = getStorage();
-    if (s instanceof OStorageLocalAbstract)
-      return ((OStorageLocalAbstract) s);
+    if (s instanceof OFreezableStorage)
+      return (OFreezableStorage) s;
     else {
       OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
       return null;

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.db.document;
 
 import java.util.ArrayList;
@@ -43,7 +44,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
@@ -100,7 +100,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void freeze(final boolean throwException) {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
@@ -146,7 +146,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void release() {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
       return;
