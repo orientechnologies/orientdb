@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public abstract class AbstractServerClusterInsertTest extends AbstractServerClusterTest {
   protected static final int delayWriter = 0;
   protected static final int delayReader = 1000;
+  protected static final int writerCount = 5;
   protected int              count       = 1000;
   protected long             beginInstances;
 
@@ -145,8 +146,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
     int i = 0;
     for (ServerRun server : serverInstance) {
-      Writer writer = new Writer(i++, getDatabaseURL(server));
-      writerExecutor.submit(writer);
+      for (int j = 0; j < writerCount; j++) {
+        Writer writer = new Writer(i++, getDatabaseURL(server));
+        writerExecutor.submit(writer);
+      }
 
       Reader reader = new Reader(getDatabaseURL(server));
       readerExecutor.submit(reader);
@@ -232,11 +235,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
     @Override
     public void run() {
-      String name = null;
+      String name = Integer.toString(serverId);
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
         try {
-          if ((i + 1) % 1 == 0)
+          if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
           createRecord(database, i);
