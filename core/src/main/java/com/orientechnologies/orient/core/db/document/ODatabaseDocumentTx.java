@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
@@ -100,7 +99,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void freeze(final boolean throwException) {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
@@ -146,7 +145,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void release() {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
       return;
