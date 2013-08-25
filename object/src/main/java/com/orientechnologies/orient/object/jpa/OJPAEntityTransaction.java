@@ -18,35 +18,41 @@ package com.orientechnologies.orient.object.jpa;
 import javax.persistence.EntityTransaction;
 
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.orientechnologies.orient.object.db.ODatabaseObjectTx;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 public class OJPAEntityTransaction implements EntityTransaction {
-	private ODatabaseObjectTx	database;
+	private final OObjectDatabaseTx	database;
 
-	public OJPAEntityTransaction(final ODatabaseObjectTx iDatabase) {
+	public OJPAEntityTransaction(final OObjectDatabaseTx iDatabase) {
 		database = iDatabase;
 	}
 
+	@Override
 	public void begin() {
 		database.getTransaction().begin();
 	}
 
+	@Override
 	public void commit() {
 		database.getTransaction().commit();
 	}
 
+	@Override
 	public void rollback() {
 		database.getTransaction().rollback();
 	}
 
+	@Override
 	public void setRollbackOnly() {
 		throw new UnsupportedOperationException("merge");
 	}
 
+	@Override
 	public boolean getRollbackOnly() {
 		return false;
 	}
 
+	@Override
 	public boolean isActive() {
 		return !(database.getTransaction() instanceof OTransactionNoTx);
 	}

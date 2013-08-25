@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.object.jpa;
 
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -31,199 +33,276 @@ import javax.persistence.metamodel.Metamodel;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.object.db.ODatabaseObjectTx;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 public class OJPAEntityManager implements EntityManager {
-  private ODatabaseObjectTx database;
-  private FlushModeType     flushMode = FlushModeType.AUTO;
-  private EntityTransaction transaction;
+	/** the log used by this class. */
+	private static Logger								logger		= Logger.getLogger(OJPAPersistenceProvider.class.getName());
 
-  public OJPAEntityManager(final Map<?, ?> map) {
-    final String url = (String) map.get("url");
-    database = new ODatabaseObjectTx(url);
-    transaction = new OJPAEntityTransaction(database);
-  }
+	private final EntityManagerFactory	emFactory;
+	private final OObjectDatabaseTx			database;
+	private final EntityTransaction			transaction;
+	private final OJPAProperties	properties;
+	private FlushModeType								flushMode	= FlushModeType.AUTO;
 
-  public void persist(Object entity) {
-    database.save(entity);
-  }
+	OJPAEntityManager(EntityManagerFactory entityManagerFactory, OJPAProperties properties) {
+		this.properties = properties;
+		this.emFactory = entityManagerFactory;
 
-  public <T> T merge(T entity) {
-    throw new UnsupportedOperationException("merge");
-  }
+		this.database = new OObjectDatabaseTx(properties.getURL());
+		database.open(properties.getUser(), properties.getPassword());
+		if (properties.isEntityClasses()) {
+			database.getEntityManager().registerEntityClasses(properties.getEntityClasses());
+		}
+		transaction = new OJPAEntityTransaction(database);
 
-  public void remove(Object entity) {
-    database.delete(entity);
-  }
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("EntityManager created for persistence unit : " + entityManagerFactory.toString());
+		}
+	}
 
-  @SuppressWarnings("unchecked")
-  public <T> T find(Class<T> entityClass, Object primaryKey) {
-    final ORecordId rid;
+	@Override
+	public void persist(Object entity) {
+		database.save(entity);
+	}
 
-    if (primaryKey instanceof ORecordId)
-      rid = (ORecordId) primaryKey;
-    else if (primaryKey instanceof String)
-      rid = new ORecordId((String) primaryKey);
-    else if (primaryKey instanceof Number) {
-      // COMPOSE THE RID
-      OClass cls = database.getMetadata().getSchema().getClass(entityClass);
-      if (cls == null)
-        throw new IllegalArgumentException("Class '" + entityClass + "' is not configured in the database");
-      rid = new ORecordId(cls.getDefaultClusterId(), OClusterPositionFactory.INSTANCE.valueOf(((Number) primaryKey).longValue()));
-    } else
-      throw new IllegalArgumentException("PrimaryKey '" + primaryKey + "' type (" + primaryKey.getClass() + ") is not supported");
+	@Override
+	public <T> T merge(T entity) {
+		throw new UnsupportedOperationException("merge");
+	}
 
-    return (T) database.load(rid);
-  }
+	@Override
+	public void remove(Object entity) {
+		database.delete(entity);
+	}
 
-  public <T> T getReference(Class<T> entityClass, Object primaryKey) {
-    throw new UnsupportedOperationException("merge");
-  }
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T find(Class<T> entityClass, Object primaryKey) {
+		final ORecordId rid;
 
-  public void flush() {
-    if (flushMode == FlushModeType.COMMIT)
-      database.commit();
-  }
+		if (primaryKey instanceof ORecordId) {
+			rid = (ORecordId) primaryKey;
+		} else if (primaryKey instanceof String) {
+			rid = new ORecordId((String) primaryKey);
+		} else if (primaryKey instanceof Number) {
+			// COMPOSE THE RID
+			OClass cls = database.getMetadata().getSchema().getClass(entityClass);
+			if (cls == null) {
+				throw new IllegalArgumentException("Class '" + entityClass + "' is not configured in the database");
+			}
+			rid = new ORecordId(cls.getDefaultClusterId(), OClusterPositionFactory.INSTANCE.valueOf(((Number) primaryKey).longValue()));
+		} else {
+			throw new IllegalArgumentException("PrimaryKey '" + primaryKey + "' type (" + primaryKey.getClass() + ") is not supported");
+		}
 
-  public void setFlushMode(FlushModeType flushMode) {
-    this.flushMode = flushMode;
-  }
+		return (T) database.load(rid);
+	}
 
-  public FlushModeType getFlushMode() {
-    return flushMode;
-  }
+	@Override
+	public <T> T getReference(Class<T> entityClass, Object primaryKey) {
+		throw new UnsupportedOperationException("merge");
+	}
 
-  public void lock(Object entity, LockModeType lockMode) {
-    throw new UnsupportedOperationException("lock");
-  }
+	@Override
+	public void flush() {
+		if (flushMode == FlushModeType.COMMIT) {
+			database.commit();
+			if (logger.isLoggable(Level.FINEST)) {
+				logger.info("EntityManager flushed. " + toString());
+			}
+		}
+	}
 
-  public void refresh(Object entity) {
-    database.load(entity);
-  }
+	@Override
+	public void setFlushMode(FlushModeType flushMode) {
+		this.flushMode = flushMode;
+	}
 
-  public void clear() {
-    if (flushMode == FlushModeType.COMMIT)
-      database.rollback();
-  }
+	@Override
+	public FlushModeType getFlushMode() {
+		return flushMode;
+	}
 
-  public boolean contains(Object entity) {
-    return database.isManaged(entity);
-  }
+	@Override
+	public void lock(Object entity, LockModeType lockMode) {
+		throw new UnsupportedOperationException("lock");
+	}
 
-  public Query createQuery(String qlString) {
-    throw new UnsupportedOperationException("createQuery");
-  }
+	@Override
+	public void refresh(Object entity) {
+		database.load(entity);
+		if (logger.isLoggable(Level.FINEST)) {
+			logger.info("EntityManager refreshed. " + toString());
+		}
+	}
 
-  public Query createNamedQuery(String name) {
-    throw new UnsupportedOperationException("createNamedQuery");
-  }
+	@Override
+	public void clear() {
+		if (flushMode == FlushModeType.COMMIT) {
+			database.rollback();
+			if (logger.isLoggable(Level.FINEST)) {
+				logger.info("EntityManager cleared. " + toString());
+			}
+		}
+	}
 
-  public Query createNativeQuery(String sqlString) {
-    throw new UnsupportedOperationException("createNativeQuery");
-  }
+	@Override
+	public boolean contains(Object entity) {
+		return database.isManaged(entity);
+	}
 
-  @SuppressWarnings("rawtypes")
-  public Query createNativeQuery(String sqlString, Class resultClass) {
-    throw new UnsupportedOperationException("createNativeQuery");
-  }
+	@Override
+	public Query createQuery(String qlString) {
+		throw new UnsupportedOperationException("createQuery");
+	}
 
-  public Query createNativeQuery(String sqlString, String resultSetMapping) {
-    throw new UnsupportedOperationException("createNativeQuery");
-  }
+	@Override
+	public Query createNamedQuery(String name) {
+		throw new UnsupportedOperationException("createNamedQuery");
+	}
 
-  public void joinTransaction() {
-    throw new UnsupportedOperationException("joinTransaction");
-  }
+	@Override
+	public Query createNativeQuery(String sqlString) {
+		throw new UnsupportedOperationException("createNativeQuery");
+	}
 
-  public <T> T find(Class<T> entityClass, Object primaryKey, Map<String, Object> properties) {
-    throw new UnsupportedOperationException("find(Class<T>, LockModeType, Map<String, Object>)");
-  }
+	@Override
+	@SuppressWarnings("rawtypes")
+	public Query createNativeQuery(String sqlString, Class resultClass) {
+		throw new UnsupportedOperationException("createNativeQuery");
+	}
 
-  public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode) {
-    throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType");
-  }
+	@Override
+	public Query createNativeQuery(String sqlString, String resultSetMapping) {
+		throw new UnsupportedOperationException("createNativeQuery");
+	}
 
-  public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
-    throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType, Map<String, Object>)");
-  }
+	@Override
+	public void joinTransaction() {
+		throw new UnsupportedOperationException("joinTransaction");
+	}
 
-  public void lock(Object entity, LockModeType lockMode, Map<String, Object> properties) {
-    throw new UnsupportedOperationException("lock");
+	@Override
+	public <T> T find(Class<T> entityClass, Object primaryKey, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("find(Class<T>, LockModeType, Map<String, Object>)");
+	}
 
-  }
+	@Override
+	public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode) {
+		throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType");
+	}
 
-  public void refresh(Object entity, Map<String, Object> properties) {
-    throw new UnsupportedOperationException("refresh");
+	@Override
+	public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("find(Class<T>, Object, LockModeType, Map<String, Object>)");
+	}
 
-  }
+	@Override
+	public void lock(Object entity, LockModeType lockMode, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("lock");
 
-  public void refresh(Object entity, LockModeType lockMode) {
-    throw new UnsupportedOperationException("refresh");
+	}
 
-  }
+	@Override
+	public void refresh(Object entity, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("refresh");
 
-  public void refresh(Object entity, LockModeType lockMode, Map<String, Object> properties) {
-    throw new UnsupportedOperationException("refresh");
+	}
 
-  }
+	@Override
+	public void refresh(Object entity, LockModeType lockMode) {
+		throw new UnsupportedOperationException("refresh");
 
-  public void detach(Object entity) {
-    throw new UnsupportedOperationException("detach");
-  }
+	}
 
-  public LockModeType getLockMode(Object entity) {
-    throw new UnsupportedOperationException("getLockMode");
-  }
+	@Override
+	public void refresh(Object entity, LockModeType lockMode, Map<String, Object> properties) {
+		throw new UnsupportedOperationException("refresh");
 
-  public void setProperty(String propertyName, Object value) {
-    throw new UnsupportedOperationException("setProperty");
-  }
+	}
 
-  public Map<String, Object> getProperties() {
-    throw new UnsupportedOperationException("getProperties");
-  }
+	@Override
+	public void detach(Object entity) {
+		throw new UnsupportedOperationException("detach");
+	}
 
-  public <T> TypedQuery<T> createQuery(CriteriaQuery<T> criteriaQuery) {
-    throw new UnsupportedOperationException("createQuery");
-  }
+	@Override
+	public LockModeType getLockMode(Object entity) {
+		throw new UnsupportedOperationException("getLockMode");
+	}
 
-  public <T> TypedQuery<T> createQuery(String qlString, Class<T> resultClass) {
-    throw new UnsupportedOperationException("createQuery");
-  }
+	@Override
+	public void setProperty(String propertyName, Object value) {
+		throw new UnsupportedOperationException("setProperty");
+	}
 
-  public <T> TypedQuery<T> createNamedQuery(String name, Class<T> resultClass) {
-    throw new UnsupportedOperationException("createNamedQuery");
-  }
+	@Override
+	public Map<String, Object> getProperties() {
+		return properties.getUnmodifiableProperties();
+	}
 
-  public <T> T unwrap(Class<T> cls) {
-    throw new UnsupportedOperationException("unwrap");
-  }
+	@Override
+	public <T> TypedQuery<T> createQuery(CriteriaQuery<T> criteriaQuery) {
+		throw new UnsupportedOperationException("createQuery");
+	}
 
-  public EntityManagerFactory getEntityManagerFactory() {
-    return OJPAEntityManagerFactory.getInstance();
-  }
+	@Override
+	public <T> TypedQuery<T> createQuery(String qlString, Class<T> resultClass) {
+		throw new UnsupportedOperationException("createQuery");
+	}
 
-  public CriteriaBuilder getCriteriaBuilder() {
-    throw new UnsupportedOperationException("getCriteriaBuilder");
-  }
+	@Override
+	public <T> TypedQuery<T> createNamedQuery(String name, Class<T> resultClass) {
+		throw new UnsupportedOperationException("createNamedQuery");
+	}
 
-  public Metamodel getMetamodel() {
-    throw new UnsupportedOperationException("getMetamodel");
-  }
+	@Override
+	public <T> T unwrap(Class<T> cls) {
+		throw new UnsupportedOperationException("unwrap");
+	}
 
-  public Object getDelegate() {
-    return database;
-  }
+	@Override
+	public EntityManagerFactory getEntityManagerFactory() {
+		return emFactory;
+	}
 
-  public EntityTransaction getTransaction() {
-    return transaction;
-  }
+	@Override
+	public CriteriaBuilder getCriteriaBuilder() {
+		throw new UnsupportedOperationException("getCriteriaBuilder");
+	}
 
-  public void close() {
-    database.close();
-  }
+	@Override
+	public Metamodel getMetamodel() {
+		throw new UnsupportedOperationException("getMetamodel");
+	}
 
-  public boolean isOpen() {
-    return !database.isClosed();
-  }
+	@Override
+	public Object getDelegate() {
+		return database;
+	}
+
+	@Override
+	public EntityTransaction getTransaction() {
+		return transaction;
+	}
+
+	@Override
+	public void close() {
+		database.close();
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("EntityManager closed. " + toString());
+		}
+	}
+
+	@Override
+	public boolean isOpen() {
+		return !database.isClosed();
+	}
+
+	@Override
+	public String toString() {
+		return "EntityManager for User@Database:" + database.getUser() + "@" + database.getURL() + ", " + super.toString();
+	}
+
 }
