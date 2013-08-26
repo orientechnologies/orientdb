@@ -1,20 +1,13 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OBinaryFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OIntFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OLongFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 
 /**
  * @author Andrey Lomakin
@@ -29,7 +22,7 @@ public class ODurablePage {
 
   protected final ODirectMemory directMemory        = ODirectMemoryFactory.INSTANCE.directMemory();
 
-  protected List<OPageDiff<?>>  pageChanges         = new ArrayList<OPageDiff<?>>();
+  protected OPageChanges        pageChanges         = new OPageChanges();
 
   protected final long          pagePointer;
   protected final TrackMode     trackMode;
@@ -70,30 +63,34 @@ public class ODurablePage {
 
   public void setIntValue(int pageOffset, int value) throws IOException {
     if (trackMode.equals(TrackMode.FULL)) {
-      int oldValue = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
-      pageChanges.add(new OIntFullPageDiff(value, pageOffset, oldValue));
-    }
-
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
+      byte[] oldValues = directMemory.get(pagePointer + pageOffset, OIntegerSerializer.INT_SIZE);
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
+      byte[] newValues = directMemory.get(pagePointer + pageOffset, OIntegerSerializer.INT_SIZE);
+      pageChanges.addChanges(pageOffset, newValues, oldValues);
+    } else
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
   }
 
   public void setByteValue(int pageOffset, byte value) {
     if (trackMode.equals(TrackMode.FULL)) {
-      byte oldValue = directMemory.getByte(pagePointer + pageOffset);
+      byte[] oldValues = new byte[] { directMemory.getByte(pagePointer + pageOffset) };
+      directMemory.setByte(pagePointer + pageOffset, value);
+      byte[] newValues = new byte[] { directMemory.getByte(pagePointer + pageOffset) };
 
-      pageChanges.add(new OBinaryFullPageDiff(new byte[] { value }, pageOffset, new byte[] { oldValue }));
-    }
-
-    directMemory.setByte(pagePointer + pageOffset, value);
+      pageChanges.addChanges(pageOffset, newValues, oldValues);
+    } else
+      directMemory.setByte(pagePointer + pageOffset, value);
   }
 
   public void setLongValue(int pageOffset, long value) throws IOException {
     if (trackMode.equals(TrackMode.FULL)) {
-      long oldValue = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + pageOffset);
-      pageChanges.add(new OLongFullPageDiff(value, pageOffset, oldValue));
-    }
+      byte[] oldValues = directMemory.get(pagePointer + pageOffset, OLongSerializer.LONG_SIZE);
+      OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
+      byte[] newValues = directMemory.get(pagePointer + pageOffset, OLongSerializer.LONG_SIZE);
 
-    OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
+      pageChanges.addChanges(pageOffset, newValues, oldValues);
+    } else
+      OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
   }
 
   public void setBinaryValue(int pageOffset, byte[] value) throws IOException {
@@ -101,12 +98,12 @@ public class ODurablePage {
       return;
 
     if (trackMode.equals(TrackMode.FULL)) {
-      byte[] oldValue = directMemory.get(pagePointer + pageOffset, value.length);
-      pageChanges.add(new OBinaryFullPageDiff(value, pageOffset, oldValue));
+      byte[] oldValues = directMemory.get(pagePointer + pageOffset, value.length);
       directMemory.set(pagePointer + pageOffset, value, 0, value.length);
-    }
 
-    directMemory.set(pagePointer + pageOffset, value, 0, value.length);
+      pageChanges.addChanges(pageOffset, value, oldValues);
+    } else
+      directMemory.set(pagePointer + pageOffset, value, 0, value.length);
   }
 
   public void copyData(int from, int to, int len) throws IOException {
@@ -117,28 +114,23 @@ public class ODurablePage {
       byte[] content = directMemory.get(pagePointer + from, len);
       byte[] oldContent = directMemory.get(pagePointer + to, len);
 
-      pageChanges.add(new OBinaryFullPageDiff(content, to, oldContent));
-    }
+      directMemory.copyData(pagePointer + from, pagePointer + to, len);
 
-    directMemory.copyData(pagePointer + from, pagePointer + to, len);
+      pageChanges.addChanges(to, content, oldContent);
+    } else
+      directMemory.copyData(pagePointer + from, pagePointer + to, len);
   }
 
-  public List<OPageDiff<?>> getPageChanges() {
+  public OPageChanges getPageChanges() {
     return pageChanges;
   }
 
-  public void restoreChanges(List<OPageDiff<?>> changes) {
-    for (OPageDiff<?> diff : changes)
-      diff.restorePageData(pagePointer);
+  public void restoreChanges(OPageChanges pageChanges) {
+    pageChanges.applyChanges(pagePointer);
   }
 
-  public void revertChanges(List<OFullPageDiff<?>> changes) {
-    ListIterator<OFullPageDiff<?>> listIterator = changes.listIterator(changes.size());
-
-    while (listIterator.hasPrevious()) {
-      OFullPageDiff<?> diff = listIterator.previous();
-      diff.revertPageData(pagePointer);
-    }
+  public void revertChanges(OPageChanges pageChanges) {
+    pageChanges.revertChanges(pagePointer);
   }
 
   public OLogSequenceNumber getLsn() {

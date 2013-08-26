@@ -56,18 +56,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePoint
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.serialization.compression.OCompression;
 import com.orientechnologies.orient.core.serialization.compression.OCompressionFactory;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -1188,7 +1178,7 @@ public class OPaginatedCluster extends OSharedResourceAdaptive implements OClust
 
   private void logPageChanges(ODurablePage localPage, long pageIndex, boolean isNewPage) throws IOException {
     if (config.useWal && writeAheadLog != null) {
-      List<OPageDiff<?>> pageChanges = localPage.getPageChanges();
+      OPageChanges pageChanges = localPage.getPageChanges();
       if (pageChanges.isEmpty())
         return;
 

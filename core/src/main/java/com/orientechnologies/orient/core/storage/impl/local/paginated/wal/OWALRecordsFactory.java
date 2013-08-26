@@ -19,8 +19,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
-
 /**
  * @author Andrey Lomakin
  * @since 25.04.13

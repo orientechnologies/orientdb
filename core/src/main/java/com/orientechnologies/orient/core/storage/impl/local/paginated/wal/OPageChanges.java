@@ -82,6 +82,10 @@ public class OPageChanges {
     }
   }
 
+  public boolean isEmpty() {
+    return size == 0;
+  }
+
   public void applyChanges(long pointer) {
     for (int i = 0; i < size; i++) {
       ChangesBucket bucket = changesBuckets[i];
@@ -137,16 +141,19 @@ public class OPageChanges {
 
   private void collapse(int shiftBackFrom, int shiftBackTo) {
     assert shiftBackTo >= shiftBackFrom;
+    int sizeDiff = shiftBackTo - shiftBackFrom + 1;
+
     if (shiftBackTo < size - 1) {
-      System.arraycopy(changesBuckets, shiftBackTo + 1, changesBuckets, shiftBackFrom, size - shiftBackTo);
-      for (int i = size - shiftBackTo; i < size; i++)
+      System.arraycopy(changesBuckets, shiftBackTo + 1, changesBuckets, shiftBackFrom, size - (shiftBackTo + 1));
+
+      for (int i = size - sizeDiff; i < size; i++)
         changesBuckets[i] = null;
     } else {
       for (int i = shiftBackFrom; i <= shiftBackTo; i++)
         changesBuckets[i] = null;
     }
 
-    size -= (shiftBackTo - shiftBackFrom + 1);
+    size -= sizeDiff;
   }
 
   public int serializedSize() {
@@ -220,7 +227,7 @@ public class OPageChanges {
       offset += changesSize;
 
       System.arraycopy(content, offset, oldValues, 0, changesSize);
-			offset += changesSize;
+      offset += changesSize;
 
       changesBuckets[i] = new ChangesBucket(startPosition, newValues, oldValues);
     }

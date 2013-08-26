@@ -1,12 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -14,8 +9,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OFullPageDiff;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OPageDiff;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -24,7 +18,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 20.03.13
  */
 @Test
-public class LocalPageTest {
+public class ClusterPageTest {
   private static final int SYSTEM_OFFSET = 24;
   private ODirectMemory    directMemory  = ODirectMemoryFactory.INSTANCE.directMemory();
 
@@ -883,14 +877,11 @@ public class LocalPageTest {
     try {
       OClusterPage restoredPage = new OClusterPage(restoredPagePointer, false, ODurablePage.TrackMode.FULL);
 
-      restoredPage.restoreChanges(localPage.getPageChanges());
+      OPageChanges changes = localPage.getPageChanges();
+      restoredPage.restoreChanges(changes);
 
       Assert.assertEquals(directMemory.get(restoredPagePointer + SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
           directMemory.get(pagePointer + SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET));
-
-      List<OFullPageDiff<?>> changes = new ArrayList<OFullPageDiff<?>>();
-      for (OPageDiff<?> pageDiff : localPage.getPageChanges())
-        changes.add((OFullPageDiff<?>) pageDiff);
 
       restoredPage.revertChanges(changes);
 
