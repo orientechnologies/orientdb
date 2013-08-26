@@ -186,7 +186,7 @@ DocController.controller("DocumentModalBrowseController",['$scope','$routeParams
 function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,DocumentApi,Database,Notification,CommandApi){
 	 $scope.database = $routeParams.database;
 	 $scope.rid = $routeParams.rid;
-
+     $scope.label = 'Document';
 
 
 	 $scope.save = function(){
@@ -225,7 +225,7 @@ function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,Docu
 		var clazz = $scope.doc['@class'];
 		Utilities.confirm($scope,$dialog,{
 			title : 'Warning!',
-			body : 'You are removing Vertex '+ recordID + '. Are you sure?',
+			body : 'You are removing ' + $scope.label + ' '+ recordID + '. Are you sure?',
 			success : function() {
 				var command = "DELETE Vertex " + recordID;
 				CommandApi.queryText({database : $scope.database, language : 'sql', text : command},function(data){
@@ -239,7 +239,7 @@ function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,Docu
 	$scope.deleteField = function(name){
 		Utilities.confirm($scope,$dialog,{
 			title : 'Warning!',
-			body : 'You are removing field '+ name + ' from Vertex ' + $scope.doc['@rid'] + '. Are you sure?',
+			body : 'You are removing field '+ name + ' from ' + $scope.label + ' ' + $scope.doc['@rid'] + '. Are you sure?',
 			success : function() {
 				delete $scope.doc[name];
 				var idx = $scope.headers.indexOf(name);

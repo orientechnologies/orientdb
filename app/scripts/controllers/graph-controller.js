@@ -2,6 +2,7 @@ var  GrapgController = angular.module('vertex.controller',['ui.bootstrap']);
 GrapgController.controller("VertexEditController",['$scope','$injector','$routeParams','$location','$modal','$q','$dialog','DocumentApi','Database','CommandApi','Notification',function($scope,$injector,$routeParams,$location,$modal,$q,$dialog,DocumentApi,Database,CommandApi,Notification){
 
 	$injector.invoke(BaseEditController, this, {$scope: $scope});
+    $scope.label = 'Vertex';
 	$scope.fixed = Database.header;
 	$scope.canSave = true;
 	$scope.canDelete = true;
