@@ -32,9 +32,8 @@ public class GiantFileTest {
 
   public static void main(final String[] args) throws Exception {
 
-    OGlobalConfiguration.WAL_CACHE_SIZE.setValue(1500);
-    OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.setValue(1500);
-    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(750);
+    OGlobalConfiguration.USE_WAL.setValue(false);
+    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(1024);
     try {
       db = new ODatabaseDocumentTx("plocal:" + DATABASE_NAME);
       if (db.exists() && RECREATE_DATABASE) {

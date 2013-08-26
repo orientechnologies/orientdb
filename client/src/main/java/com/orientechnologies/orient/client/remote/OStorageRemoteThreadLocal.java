@@ -18,15 +18,16 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 
 public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession> {
-	public static OStorageRemoteThreadLocal	INSTANCE	= new OStorageRemoteThreadLocal();
+  public static OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
 
-	public class OStorageRemoteSession {
-		public boolean	commandExecuting	= false;
-		public Integer	sessionId					= -1;
-	}
+  public class OStorageRemoteSession {
+    public boolean commandExecuting = false;
+    public Integer sessionId        = -1;
+    public String  serverURL        = null;
+  }
 
-	@Override
-	protected OStorageRemoteSession initialValue() {
-		return new OStorageRemoteSession();
-	}
+  @Override
+  protected OStorageRemoteSession initialValue() {
+    return new OStorageRemoteSession();
+  }
 }

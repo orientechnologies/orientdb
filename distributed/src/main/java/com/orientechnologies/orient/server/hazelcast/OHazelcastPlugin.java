@@ -567,6 +567,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return nodeCfg;
   }
 
+  public boolean isEnabled() {
+    return enabled;
+  }
+
   public String getStatus() {
     return status;
   }
@@ -648,10 +652,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             // AVOID TO SEND THE REQUEST IF THE LOG IS EMPTY
             continue;
 
-          ODistributedServerLog
-              .warn(this, getLocalNodeId(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
-                  "sending align request in broadcast for database %s from %d:%d", databaseName, lastOperationId[0],
-                  lastOperationId[1]);
+          ODistributedServerLog.warn(this, getLocalNodeId(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
+              "sending align request in broadcast for database '%s' from operation %d:%d", databaseName, lastOperationId[0],
+              lastOperationId[1]);
 
           synchronized (pendingAlignments) {
             for (String node : remoteClusterNodes.keySet()) {

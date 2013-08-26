@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.journal;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -27,6 +26,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -173,7 +173,7 @@ public class ODatabaseJournal {
         final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
         if (record != null) {
           final ORecordVersion version = record.version.copy();
-          version.decrement();
+          version.setRollbackMode();
           task = new OUpdateRecordTask(runId, operationId, rid, record.buffer, version, record.recordType);
         }
         break;
@@ -206,6 +206,45 @@ public class ODatabaseJournal {
       lock.releaseExclusiveLock();
     }
     return task;
+  }
+
+  public ORID getOperationRID(final long iOffsetEndOperation) throws IOException {
+    lock.acquireExclusiveLock();
+    try {
+
+      final long runId = file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID);
+      final long operationId = file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID);
+      final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
+      final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
+
+      final OPERATION_TYPES operationType = OPERATION_TYPES.values()[file.readByte(offset + OFFSET_OPERATION_TYPE)];
+
+      switch (operationType) {
+      case RECORD_CREATE:
+        final ORecordId rid = new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file
+            .readLong(offset + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
+
+        if (rid.isNew())
+          // GET LAST RID
+          rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
+
+        return rid;
+
+      case RECORD_UPDATE:
+        return new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file.readLong(offset
+            + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
+
+      case RECORD_DELETE:
+        return new ORecordId(file.readShort(offset + OFFSET_VARDATA), OClusterPositionFactory.INSTANCE.valueOf(file.readLong(offset
+            + OFFSET_VARDATA + OBinaryProtocol.SIZE_SHORT)));
+
+      default:
+        return null;
+      }
+
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   public long[] getLastExecutedOperationId() {
@@ -283,7 +322,6 @@ public class ODatabaseJournal {
   public Iterator<Long> browseLastOperations(final long[] iRemoteLastOperationId, final OPERATION_STATUS iStatus, final int iMax)
       throws IOException {
     final LinkedList<Long> result = new LinkedList<Long>();
-    final HashSet<Long> rids = new HashSet<Long>();
 
     lock.acquireExclusiveLock();
     try {
@@ -294,12 +332,11 @@ public class ODatabaseJournal {
       while ((localOperationId[0] > iRemoteLastOperationId[0])
           || (localOperationId[0] == iRemoteLastOperationId[0] && localOperationId[1] > iRemoteLastOperationId[1])) {
 
-        if ((iStatus == null || iStatus == getOperationStatus(fileOffset)) && !rids.contains(fileOffset)) {
+        if (iStatus == null || iStatus == getOperationStatus(fileOffset)) {
           // COLLECT CURRENT POSITION AS GOOD
           result.add(fileOffset);
-          rids.add(fileOffset);
 
-          if (iMax > -1 && rids.size() >= iMax)
+          if (iMax > -1 && result.size() >= iMax)
             // MAX LIMIT REACHED
             break;
         }

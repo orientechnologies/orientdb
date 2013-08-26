@@ -15,7 +15,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.exception.OAllLRUListEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -33,10 +33,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test
-public class O2QCacheTest {
+public class ReadWriteDiskCacheTest {
   private int                    systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
 
-  private O2QCache               buffer;
+  private OReadWriteDiskCache    buffer;
   private OLocalPaginatedStorage storageLocal;
   private ODirectMemory          directMemory;
   private String                 fileName;
@@ -45,7 +45,6 @@ public class O2QCacheTest {
 
   @BeforeClass
   public void beforeClass() throws IOException {
-
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
@@ -53,9 +52,9 @@ public class O2QCacheTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/O2QCacheTest");
+    storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
 
-    fileName = "o2QCacheTest.tst";
+    fileName = "readWriteDiskCacheTest.tst";
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
@@ -81,7 +80,7 @@ public class O2QCacheTest {
       writeAheadLog = null;
     }
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
     if (file.exists()) {
       boolean delete = file.delete();
       Assert.assertTrue(delete);
@@ -102,7 +101,7 @@ public class O2QCacheTest {
 
     storageLocal.delete();
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
     if (file.exists()) {
       Assert.assertTrue(file.delete());
       file.getParentFile().delete();
@@ -111,23 +110,23 @@ public class O2QCacheTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new O2QCache(4 * (8 + systemOffset), 15000, directMemory, null, 8 + systemOffset, storageLocal, true);
-
-    final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
-    segmentConfiguration.fileType = OFileFactory.CLASSIC;
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 15000 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        writeAheadLog, true, false);
   }
 
   public void testAddFourItems() throws IOException {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[4];
+    OCachePointer[] pointers = new OCachePointer[4];
 
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      pointers[i].releaseExclusiveLock();
+
       buffer.release(fileId, i);
     }
 
@@ -139,7 +138,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -154,14 +153,17 @@ public class O2QCacheTest {
   public void testFrequentlyReadItemsAreMovedInAm() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[10];
+    OCachePointer[] pointers = new OCachePointer[10];
 
     for (int i = 0; i < 10; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
-      setLsn(pointers[i], new OLogSequenceNumber(1, i));
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      setLsn(pointers[i].getDataPointer(), new OLogSequenceNumber(1, i));
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -189,17 +191,17 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 2; i < 4; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OReadCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 6; i < 8; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
   }
@@ -207,7 +209,7 @@ public class O2QCacheTest {
   public void testCacheShouldCreateFileIfItIsNotExisted() throws Exception {
     buffer.openFile(fileName);
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst");
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
 
     Assert.assertTrue(file.exists());
     Assert.assertTrue(file.isFile());
@@ -216,14 +218,17 @@ public class O2QCacheTest {
   public void testFrequentlyAddItemsAreMovedInAm() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[10];
+    OCachePointer[] pointers = new OCachePointer[10];
 
     for (int i = 0; i < 10; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
-      setLsn(pointers[i], new OLogSequenceNumber(1, i));
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      setLsn(pointers[i].getDataPointer(), new OLogSequenceNumber(1, i));
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -236,12 +241,12 @@ public class O2QCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 6; i < 10; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
     for (int i = 4; i < 6; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OReadCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
@@ -255,17 +260,17 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 4; i < 6; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
     for (int i = 6; i < 8; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OReadCacheEntry lruEntry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(fileId, i), lruEntry);
     }
 
     for (int i = 8; i < 10; i++) {
-      LRUEntry lruEntry = generateEntry(fileId, i, pointers[i], true, new OLogSequenceNumber(0, 0));
+      OReadCacheEntry lruEntry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
@@ -279,14 +284,17 @@ public class O2QCacheTest {
   public void testReadFourItems() throws IOException {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[4];
+    OCachePointer[] pointers = new OCachePointer[4];
 
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
-      setLsn(pointers[i], new OLogSequenceNumber(1, i));
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      setLsn(pointers[i].getDataPointer(), new OLogSequenceNumber(1, i));
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -309,7 +317,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateEntry(fileId, i, pointers[i], false, new OLogSequenceNumber(1, i));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(1, i));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -319,7 +327,7 @@ public class O2QCacheTest {
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long pointer = buffer.load(fileId, 0);
+    OCachePointer pointer = buffer.load(fileId, 0);
     buffer.release(fileId, 0);
 
     LRUList am = buffer.getAm();
@@ -328,34 +336,7 @@ public class O2QCacheTest {
 
     Assert.assertEquals(am.size(), 0);
     Assert.assertEquals(a1out.size(), 0);
-    LRUEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
-
-    Assert.assertEquals(a1in.size(), 1);
-    Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
-  }
-
-  public void testFlushFileShouldClearDirtyPagesFlag() throws Exception {
-    long fileId = buffer.openFile(fileName);
-    byte[] value = { (byte) 0, 1, 2, seed, 4, 5, 3, (byte) 0 };
-
-    long pointer = buffer.load(fileId, 0);
-    buffer.markDirty(fileId, 0);
-
-    directMemory.set(pointer + systemOffset, value, 0, 8);
-    buffer.release(fileId, 0);
-
-    Assert.assertFalse(pointer == ODirectMemory.NULL_POINTER);
-
-    LRUList am = buffer.getAm();
-    LRUList a1in = buffer.getA1in();
-    LRUList a1out = buffer.getA1out();
-
-    Assert.assertEquals(am.size(), 0);
-    Assert.assertEquals(a1out.size(), 0);
-
-    buffer.flushFile(fileId);
-
-    LRUEntry entry = generateEntry(fileId, 0, pointer, false, new OLogSequenceNumber(0, 0));
+    OReadCacheEntry entry = generateEntry(fileId, 0, pointer.getDataPointer(), false, new OLogSequenceNumber(0, 0));
 
     Assert.assertEquals(a1in.size(), 1);
     Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
@@ -364,13 +345,16 @@ public class O2QCacheTest {
   public void testCloseFileShouldFlushData() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[4];
+    OCachePointer[] pointers = new OCachePointer[4];
 
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -382,7 +366,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -397,14 +381,17 @@ public class O2QCacheTest {
   public void testCloseFileShouldRemoveFilePagesFromBuffer() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[4];
+    OCachePointer[] pointers = new OCachePointer[4];
 
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
 
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -416,7 +403,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -431,14 +418,17 @@ public class O2QCacheTest {
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[4];
+    OCachePointer[] pointers = new OCachePointer[4];
 
     byte[][] content = new byte[4][];
 
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
-      content[i] = directMemory.get(pointers[i] + systemOffset, 8);
+      pointers[i].acquireExclusiveLock();
+
+      content[i] = directMemory.get(pointers[i].getDataPointer() + systemOffset, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -446,7 +436,7 @@ public class O2QCacheTest {
     buffer.flushBuffer();
 
     for (int i = 0; i < 4; i++) {
-      File file = new File(storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.0.tst");
+      File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
       Assert.assertFalse(file.exists());
     }
   }
@@ -454,15 +444,19 @@ public class O2QCacheTest {
   public void testFlushData() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[4];
+    OCachePointer[] pointers = new OCachePointer[4];
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; ++j) {
         pointers[i] = buffer.load(fileId, i);
+        pointers[i].acquireExclusiveLock();
+
         buffer.markDirty(fileId, i);
 
-        directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i }, 0, 8);
+        directMemory.set(pointers[i].getDataPointer() + systemOffset,
+            new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i }, 0, 8);
+
+        pointers[i].releaseExclusiveLock();
         buffer.release(fileId, i);
       }
     }
@@ -475,7 +469,7 @@ public class O2QCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     for (int i = 0; i < 4; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -492,13 +486,16 @@ public class O2QCacheTest {
   public void testIfNotEnoughSpaceOldPagesShouldBeMovedToA1Out() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[6];
+    OCachePointer[] pointers = new OCachePointer[6];
 
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -509,12 +506,12 @@ public class O2QCacheTest {
     Assert.assertEquals(am.size(), 0);
 
     for (int i = 0; i < 2; i++) {
-      LRUEntry entry = generateEntry(fileId, i, ODirectMemory.NULL_POINTER, false, null);
+      OReadCacheEntry entry = generateRemovedEntry(fileId, i);
       Assert.assertEquals(a1out.get(entry.fileId, entry.pageIndex), entry);
     }
 
     for (int i = 2; i < 6; i++) {
-      LRUEntry entry = generateDirtyEntry(fileId, i, pointers[i], new OLogSequenceNumber(0, 0));
+      OReadCacheEntry entry = generateEntry(fileId, i, pointers[i].getDataPointer(), false, new OLogSequenceNumber(0, 0));
       Assert.assertEquals(a1in.get(entry.fileId, entry.pageIndex), entry);
     }
 
@@ -527,25 +524,29 @@ public class O2QCacheTest {
   }
 
   public void testIfAllPagesAreUsedInA1InCacheSizeShouldBeIncreased() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[5];
+    OCachePointer[] pointers = new OCachePointer[5];
 
     for (int i = 0; i < 5; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       if (i - 4 >= 0) {
         buffer.load(fileId, i - 4);
-        directMemory.set(pointers[i - 4] + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+        directMemory.set(pointers[i - 4].getDataPointer() + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0,
+            8);
       }
     }
 
     for (int i = 0; i < 5; i++) {
+      pointers[i].releaseExclusiveLock();
+
       buffer.release(fileId, i);
       if (i - 4 >= 0) {
         buffer.release(fileId, i - 4);
@@ -554,78 +555,90 @@ public class O2QCacheTest {
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
   public void testIfAllPagesAreUsedInAmCacheSizeShouldBeIncreased() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(true);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(true);
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[20];
+    OCachePointer[] pointers = new OCachePointer[20];
 
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
     for (int i = 0; i < 4; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
     }
 
     for (int i = 0; i < 4; i++) {
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
     int maxSize = buffer.getMaxSize();
     Assert.assertEquals(maxSize, 5);
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
   }
 
-  @Test(expectedExceptions = OAllLRUListEntriesAreUsedException.class)
+  @Test(expectedExceptions = OAllCacheEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
-    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.getValueAsBoolean();
+    boolean oldIncreaseOnDemand = OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean();
 
-    OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(false);
+    OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(false);
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[5];
+    OCachePointer[] pointers = new OCachePointer[5];
     try {
       for (int i = 0; i < 5; i++) {
         pointers[i] = buffer.load(fileId, i);
+        pointers[i].acquireExclusiveLock();
+
         buffer.markDirty(fileId, i);
-        directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+        directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
         if (i - 4 >= 0) {
           buffer.load(fileId, i - 4);
-          directMemory.set(pointers[i - 4] + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+          directMemory.set(pointers[i - 4].getDataPointer() + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 },
+              0, 8);
         }
       }
     } finally {
       for (int i = 0; i < 4; i++) {
+        pointers[i].releaseExclusiveLock();
         buffer.release(fileId, i);
       }
 
-      OGlobalConfiguration.SERVER_CACHE_2Q_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
+      OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.setValue(oldIncreaseOnDemand);
     }
   }
 
   public void testDataVerificationOK() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[6];
+    OCachePointer[] pointers = new OCachePointer[6];
 
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -635,13 +648,16 @@ public class O2QCacheTest {
   public void testMagicNumberIsBroken() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[6];
+    OCachePointer[] pointers = new OCachePointer[6];
 
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -659,24 +675,27 @@ public class O2QCacheTest {
     Assert.assertTrue(pageErrors[0].incorrectMagicNumber);
     Assert.assertFalse(pageErrors[0].incorrectCheckSum);
     Assert.assertEquals(2, pageErrors[0].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[0].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[0].fileName);
 
     Assert.assertTrue(pageErrors[1].incorrectMagicNumber);
     Assert.assertFalse(pageErrors[1].incorrectCheckSum);
     Assert.assertEquals(4, pageErrors[1].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[1].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
   public void testCheckSumIsBroken() throws Exception {
     long fileId = buffer.openFile(fileName);
 
-    long[] pointers;
-    pointers = new long[6];
+    OCachePointer[] pointers = new OCachePointer[6];
 
     for (int i = 0; i < 6; i++) {
       pointers[i] = buffer.load(fileId, i);
+      pointers[i].acquireExclusiveLock();
+
       buffer.markDirty(fileId, i);
-      directMemory.set(pointers[i] + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      directMemory.set(pointers[i].getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+
+      pointers[i].releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -694,12 +713,12 @@ public class O2QCacheTest {
     Assert.assertFalse(pageErrors[0].incorrectMagicNumber);
     Assert.assertTrue(pageErrors[0].incorrectCheckSum);
     Assert.assertEquals(2, pageErrors[0].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[0].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[0].fileName);
 
     Assert.assertFalse(pageErrors[1].incorrectMagicNumber);
     Assert.assertTrue(pageErrors[1].incorrectCheckSum);
     Assert.assertEquals(4, pageErrors[1].pageIndex);
-    Assert.assertEquals("o2QCacheTest.tst", pageErrors[1].fileName);
+    Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
   public void testFlushTillLSN() throws Exception {
@@ -712,23 +731,27 @@ public class O2QCacheTest {
     writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
+        "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
-    buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        writeAheadLog, true, false);
 
     long fileId = buffer.openFile(fileName);
     OLogSequenceNumber lsnToFlush = null;
     for (int i = 0; i < 8; i++) {
-      long dataPointer = buffer.load(fileId, i);
+      OCachePointer dataPointer = buffer.load(fileId, i);
+      dataPointer.acquireExclusiveLock();
+
       OLogSequenceNumber pageLSN = writeAheadLog.log(new WriteAheadLogTest.TestRecord(30, false));
 
-      setLsn(dataPointer, pageLSN);
+      setLsn(dataPointer.getDataPointer(), pageLSN);
 
       if (i == 5)
         lsnToFlush = pageLSN;
 
       buffer.markDirty(fileId, i);
+      dataPointer.releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -747,17 +770,22 @@ public class O2QCacheTest {
     OLogSequenceNumber pageLSN = writeAheadLog.logFuzzyCheckPointEnd();
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "o2QCacheTest", 0);
+        "readWriteDiskCacheTest.tst", 0);
     segmentConfiguration.fileType = OFileFactory.CLASSIC;
 
-    buffer = new O2QCache(4 * (8 + systemOffset), 2, directMemory, writeAheadLog, 8 + systemOffset, storageLocal, true);
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+        writeAheadLog, true, false);
 
     long fileId = buffer.openFile(fileName);
     for (int i = 0; i < 8; i++) {
-      long dataPointer = buffer.load(fileId, i);
-      setLsn(dataPointer, pageLSN);
+      OCachePointer dataPointer = buffer.load(fileId, i);
+      dataPointer.acquireExclusiveLock();
+
+      setLsn(dataPointer.getDataPointer(), pageLSN);
 
       buffer.markDirty(fileId, i);
+
+      dataPointer.releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
@@ -770,17 +798,21 @@ public class O2QCacheTest {
     OLogSequenceNumber lsn = writeAheadLog.logFuzzyCheckPointEnd();
 
     for (int i = 0; i < 8; i++) {
-      long dataPointer = buffer.load(fileId, i);
-      setLsn(dataPointer, lsn);
+      OCachePointer dataPointer = buffer.load(fileId, i);
+      dataPointer.acquireExclusiveLock();
+
+      setLsn(dataPointer.getDataPointer(), lsn);
 
       buffer.markDirty(fileId, i);
+
+      dataPointer.releaseExclusiveLock();
       buffer.release(fileId, i);
     }
 
     Set<ODirtyPage> dirtyPages = buffer.logDirtyPagesTable();
     Set<ODirtyPage> expectedDirtyPages = new HashSet<ODirtyPage>();
-    for (int i = 7; i >= 2; i--)
-      expectedDirtyPages.add(new ODirtyPage("o2QCacheTest.tst", i, pageLSN));
+    for (int i = 7; i >= 6; i--)
+      expectedDirtyPages.add(new ODirtyPage("readWriteDiskCacheTest.tst", i, pageLSN));
 
     Assert.assertEquals(dirtyPages, expectedDirtyPages);
 
@@ -796,7 +828,7 @@ public class O2QCacheTest {
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "rw");
@@ -808,7 +840,7 @@ public class O2QCacheTest {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn) throws IOException {
-    String path = storageLocal.getConfiguration().getDirectory() + "/o2QCacheTest.tst";
+    String path = storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst";
 
     OFileClassic fileClassic = new OFileClassic();
     fileClassic.init(path, "r");
@@ -820,7 +852,7 @@ public class O2QCacheTest {
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
 
-    Assert.assertEquals(magicNumber, O2QCache.MAGIC_NUMBER);
+    Assert.assertEquals(magicNumber, OWOWCache.MAGIC_NUMBER);
     CRC32 crc32 = new CRC32();
     crc32.update(content, OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE, content.length - OIntegerSerializer.INT_SIZE
         - OLongSerializer.LONG_SIZE);
@@ -839,18 +871,12 @@ public class O2QCacheTest {
     fileClassic.close();
   }
 
-  private LRUEntry generateDirtyEntry(long fileId, long pageIndex, long pointer, OLogSequenceNumber lsn) {
-    return generateEntry(fileId, pageIndex, pointer, true, lsn);
+  private OReadCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
+    return new OReadCacheEntry(fileId, pageIndex, new OCachePointer(pointer, lsn), dirty);
   }
 
-  private LRUEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
-    LRUEntry entry = new LRUEntry();
-    entry.fileId = fileId;
-    entry.pageIndex = pageIndex;
-    entry.dataPointer = pointer;
-    entry.isDirty = dirty;
-    entry.loadedLSN = lsn;
-    return entry;
+  private OReadCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
+    return new OReadCacheEntry(fileId, pageIndex, null, false);
   }
 
   private void setLsn(long dataPointer, OLogSequenceNumber lsn) {

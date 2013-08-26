@@ -54,7 +54,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       currentTx.rollback();
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : underlying.getListeners())
+    for (ODatabaseListener listener : underlying.browseListeners())
       try {
         listener.onBeforeTxBegin(underlying);
       } catch (Throwable t) {
@@ -82,7 +82,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     currentTx.rollback();
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : underlying.getListeners())
+    for (ODatabaseListener listener : underlying.browseListeners())
       try {
         listener.onBeforeTxBegin(underlying);
       } catch (Throwable t) {
@@ -98,7 +98,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public ODatabaseRecord commit() {
     setCurrentDatabaseinThreadLocal();
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : underlying.getListeners())
+    for (ODatabaseListener listener : underlying.browseListeners())
       try {
         listener.onBeforeTxCommit(this);
       } catch (Throwable t) {
@@ -114,7 +114,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       currentTx.commit();
     } catch (RuntimeException e) {
       // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : underlying.getListeners())
+      for (ODatabaseListener listener : underlying.browseListeners())
         try {
           listener.onBeforeTxRollback(underlying);
         } catch (Throwable t) {
@@ -123,7 +123,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback();
       // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : underlying.getListeners())
+      for (ODatabaseListener listener : underlying.browseListeners())
         try {
           listener.onAfterTxRollback(underlying);
         } catch (Throwable t) {
@@ -133,7 +133,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     }
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : underlying.getListeners())
+    for (ODatabaseListener listener : underlying.browseListeners())
       try {
         listener.onAfterTxCommit(underlying);
       } catch (Throwable t) {
@@ -151,7 +151,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public ODatabaseRecord rollback() {
     if (currentTx.isActive()) {
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : underlying.getListeners())
+      for (ODatabaseListener listener : underlying.browseListeners())
         try {
           listener.onBeforeTxRollback(underlying);
         } catch (Throwable t) {
@@ -161,7 +161,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       currentTx.rollback();
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : underlying.getListeners())
+      for (ODatabaseListener listener : underlying.browseListeners())
         try {
           listener.onAfterTxRollback(underlying);
         } catch (Throwable t) {

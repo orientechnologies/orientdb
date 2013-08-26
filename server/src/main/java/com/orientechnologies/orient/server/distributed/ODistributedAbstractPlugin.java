@@ -83,8 +83,9 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       } else if (param.name.equalsIgnoreCase("alias"))
         alias = param.value;
       else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
-        if (loadDatabaseConfiguration("*", OSystemVariableResolver.resolveSystemVariables(param.value)) == null)
-          throw new OConfigurationException("Error on loading distributed database configuration");
+        final String path = OSystemVariableResolver.resolveSystemVariables(param.value);
+        if (loadDatabaseConfiguration("*", path) == null)
+          throw new OConfigurationException("Error on loading distributed database configuration from " + path);
       } else if (param.name.equalsIgnoreCase("conflict.resolver.impl"))
         try {
           confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);

@@ -181,7 +181,7 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     }
 
     inheritedDatabase = false;
-    OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+    final OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
     return (ODatabaseDocumentTx) serverInstance
         .openDatabase("document", databaseName, replicatorUser.name, replicatorUser.password);
   }

@@ -91,7 +91,7 @@ public class OSharedResourceAdaptive {
   }
 
   protected boolean tryAcquireExclusiveLock() {
-    return concurrent || lock.writeLock().tryLock();
+    return !concurrent || lock.writeLock().tryLock();
   }
 
   protected void acquireSharedLock() {
@@ -124,7 +124,7 @@ public class OSharedResourceAdaptive {
   }
 
   protected boolean tryAcquireSharedLock() {
-    return concurrent || lock.readLock().tryLock();
+    return !concurrent || lock.readLock().tryLock();
   }
 
   protected void releaseExclusiveLock() {

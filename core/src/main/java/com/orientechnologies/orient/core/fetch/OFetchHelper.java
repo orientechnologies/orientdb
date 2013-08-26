@@ -345,7 +345,8 @@ public class OFetchHelper {
         // EMBEDDED, GO DEEPER
         fetch = true;
 
-      if (iFormat.contains("shallow") || fieldValue == null
+      if (iFormat.contains("shallow")
+          || fieldValue == null
           || (!fetch && fieldValue instanceof OIdentifiable)
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)

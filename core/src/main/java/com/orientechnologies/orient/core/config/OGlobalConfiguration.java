@@ -51,11 +51,24 @@ public enum OGlobalConfiguration {
   MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
       Float.class, 0.70),
 
+  MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
+
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
-  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 4 * 1024),
+
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 30),
+
+  DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
+      "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
+
+  DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
+      "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
+
+  DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
+      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, 300000),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
@@ -94,13 +107,6 @@ public enum OGlobalConfiguration {
       "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
-
-  DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
-      + "this queue is used to accumulate all pages that "
-      + "should be written to the disk and then flush them in batch mode to minimize random IO overhead.", Integer.class, 15000),
-
-  DISK_PAGE_CACHE_LOCK_TIMEOUT("storage.diskPageCache.lockTimeOut",
-      "Timeout till page lock will wait in case of multi threading operations", Integer.class, 1000),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
@@ -423,9 +429,9 @@ public enum OGlobalConfiguration {
 
   SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
 
-  SERVER_CACHE_2Q_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
+  SERVER_CACHE_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
 
-  SERVER_CACHE_2Q_INCREASE_STEP("server.cache.2q.increaseStep",
+  SERVER_CACHE_INCREASE_STEP("server.cache.2q.increaseStep",
       "Increase 2q cache step in percent. Will only work if server.cache.2q.increaseOnDemand is true", Float.class, 0.1f),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
@@ -609,5 +615,7 @@ public enum OGlobalConfiguration {
     } else {
       // 32 BIT, USE THE DEFAULT CONFIGURATION
     }
+
+    System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
   }
 }

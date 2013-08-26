@@ -38,6 +38,8 @@ public interface ODistributedServerManager {
     SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
   }
 
+  public boolean isEnabled();
+
   public String getStatus();
 
   public boolean checkStatus(String string);

@@ -61,7 +61,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   protected void invokeCommitAgainstListeners() {
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
       try {
         listener.onBeforeTxCommit(database.getUnderlying());
       } catch (Throwable t) {
@@ -71,7 +71,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   protected void invokeRollbackAgainstListeners() {
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).getListeners())
+    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
       try {
         listener.onBeforeTxRollback(database.getUnderlying());
       } catch (Throwable t) {

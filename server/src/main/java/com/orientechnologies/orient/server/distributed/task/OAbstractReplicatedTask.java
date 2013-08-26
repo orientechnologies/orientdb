@@ -37,6 +37,8 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
 public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> {
   private static final long serialVersionUID = 1L;
 
+  protected boolean         align            = false;
+
   /**
    * Constructor used from unmarshalling.
    */
@@ -51,6 +53,7 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
    */
   public OAbstractReplicatedTask(final long iRunId, final long iOperationId) {
     super(iRunId, iOperationId);
+    this.align = true;
   }
 
   public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
@@ -102,6 +105,7 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     out.writeLong(runId);
     out.writeLong(operationSerial);
     out.writeByte(mode.ordinal());
+    out.writeBoolean(align);
   }
 
   @Override
@@ -113,6 +117,7 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     runId = in.readLong();
     operationSerial = in.readLong();
     mode = EXECUTION_MODE.values()[in.readByte()];
+    align = in.readBoolean();
   }
 
   public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {

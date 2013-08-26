@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.common.util.OCaseIncentiveComparator;
+import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -142,7 +142,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 
     final ODatabaseRecord database = getDatabase();
     for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
-      if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
+      if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
         result.add(oIndex);
       }
     }

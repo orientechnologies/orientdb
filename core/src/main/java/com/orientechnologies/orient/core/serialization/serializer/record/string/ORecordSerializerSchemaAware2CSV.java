@@ -261,17 +261,16 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                 // LINK: GET THE CLASS
                 linkedType = OType.LINK;
                 type = OType.LINKMAP;
-              } else {
-                type = OType.EMBEDDEDMAP;
               }
             }
-          } else
+          }
+
+          if (type == null)
             type = OType.EMBEDDEDMAP;
 
-          if (fieldValue instanceof ORecordLazyMap && autoConvertLinks) {
+          if (fieldValue instanceof ORecordLazyMap && autoConvertLinks)
             // REPLACE PREVIOUS SETTINGS
             ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(true);
-          }
         }
       }
 

@@ -48,9 +48,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
   public OUpdateRecordTask() {
   }
 
-  public OUpdateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
-      final byte iRecordType) {
+  public OUpdateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
@@ -71,8 +70,6 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
 
     final ODatabaseDocumentTx database = openDatabase();
     try {
-      if (version.getCounter() > -1)
-        version.setRollbackMode();
       record.fill(rid, version, content, true);
       record.save();
 

@@ -236,17 +236,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
         try {
-          if (name == null)
-            name = database.getURL();
-
           if ((i + 1) % 1 == 0)
-            System.out.println("\nWriter " + name + " created " + (i + 1) + "/" + count + " records so far");
+            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
-          final int uniqueId = count * serverId + i;
-
-          ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId,
-              "surname", "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
-          database.save(person);
+          createRecord(database, i);
+          updateRecord(database, i);
+          checkRecord(database, i);
 
           Thread.sleep(delayWriter);
 
@@ -264,6 +259,38 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       }
 
       System.out.println("\nWriter " + name + " END");
+    }
+
+    private void createRecord(ODatabaseDocumentTx database, int i) {
+      final int uniqueId = count * serverId + i;
+
+      ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
+          "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
+      database.save(person);
+    }
+
+    private void updateRecord(ODatabaseDocumentTx database, int i) {
+      ODocument doc = loadRecord(database, i);
+      doc.field("updated", true);
+      doc.save();
+    }
+
+    private void checkRecord(ODatabaseDocumentTx database, int i) {
+      ODocument doc = loadRecord(database, i);
+      Assert.assertEquals(doc.field("updated"), true);
+    }
+
+    private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
+      final int uniqueId = count * serverId + i;
+
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
+          + "'"));
+      if (result.size() == 0)
+        Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
+      else if (result.size() > 1)
+        Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
+
+      return result.get(0);
     }
   }
 

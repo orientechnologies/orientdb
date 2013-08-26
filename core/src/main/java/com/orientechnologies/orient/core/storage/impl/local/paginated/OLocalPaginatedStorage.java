@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,9 +61,9 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -95,6 +95,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -194,9 +195,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } else
       writeAheadLog = null;
 
-    diskCache = new O2QCache(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * ONE_KB * ONE_KB,
-        OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.getValueAsInteger(), directMemory, writeAheadLog,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, this, false);
+    long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+    long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
+        * diskCacheSize);
+    long readCacheSize = diskCacheSize - writeCacheSize;
+
+    diskCache = new OReadWriteDiskCache(readCacheSize, writeCacheSize,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, writeAheadLog, false, true);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -941,6 +948,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       cluster = new OLocalPaginatedCluster();
       cluster.configure(this, clusterPos, clusterName, location, -1, parameters);
+
+      if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase())) {
+        cluster.set(OCluster.ATTRIBUTES.USE_WAL, false);
+        cluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 5);
+        cluster.set(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR, 2);
+      }
+
     } else {
       cluster = null;
     }
@@ -1471,11 +1485,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
           clientTx.clearRecordEntries();
 
-          if (!tmpEntries.isEmpty()) {
-            for (ORecordOperation txEntry : tmpEntries)
-              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-              commitEntry(clientTx, txEntry);
-          }
+          for (ORecordOperation txEntry : tmpEntries)
+            // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+            commitEntry(clientTx, txEntry);
         }
 
         writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), false));
