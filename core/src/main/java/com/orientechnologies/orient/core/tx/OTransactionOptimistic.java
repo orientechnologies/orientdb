@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,8 +201,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       // DELETED IN TX
       return null;
 
-    if (txRecord != null)
+    if (txRecord != null) {
+      if (iRecord != null && txRecord != iRecord)
+        OLogManager.instance().warn(
+            this,
+            "Found record in transaction with the same RID %s but different instance. "
+                + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
+                + "from current transaction before to update or delete it", iRecord.getIdentity());
       return txRecord;
+    }
 
     if (iRid.isTemporary())
       return null;
