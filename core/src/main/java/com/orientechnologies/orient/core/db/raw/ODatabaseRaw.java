@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -759,39 +759,34 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public void freeze() {
-    final OStorageLocalAbstract storage;
-    if (getStorage() instanceof OStorageLocalAbstract)
-      storage = ((OStorageLocalAbstract) getStorage());
-    else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
-      return;
+    final OFreezableStorage storage = getFreezableStorage();
+    if (storage != null) {
+      storage.freeze(false);
     }
-
-    storage.freeze(false);
   }
 
   public void freeze(final boolean throwException) {
-    final OStorageLocalAbstract storage;
-    if (getStorage() instanceof OStorageLocalAbstract)
-      storage = ((OStorageLocalAbstract) getStorage());
-    else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
-      return;
+    final OFreezableStorage storage = getFreezableStorage();
+    if (storage != null) {
+      storage.freeze(throwException);
     }
-
-    storage.freeze(throwException);
   }
 
   public void release() {
-    final OStorageLocalAbstract storage;
-    if (getStorage() instanceof OStorageLocalAbstract)
-      storage = ((OStorageLocalAbstract) getStorage());
-    else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
-      return;
+    final OFreezableStorage storage = getFreezableStorage();
+    if (storage != null) {
+      storage.release();
     }
+  }
 
-    storage.release();
+  private OFreezableStorage getFreezableStorage() {
+    OStorage s = getStorage();
+    if (s instanceof OFreezableStorage)
+      return (OFreezableStorage) s;
+    else {
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
+      return null;
+    }
   }
 
   @Override

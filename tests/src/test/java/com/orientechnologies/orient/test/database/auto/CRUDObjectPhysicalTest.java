@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 
 import javassist.util.proxy.Proxy;
 
@@ -1870,7 +1869,7 @@ public class CRUDObjectPhysicalTest {
   @Test(dependsOnMethods = "testNoGenericCollections")
   public void testNoGenericCollectionsWrongAdding() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    OLogManager.instance().log(this, Level.INFO, "Serialization error test, this will log errors.", null);
+    OLogManager.instance().setErrorEnabled(false);
     try {
       JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
       // OBJECT ADDING
@@ -1948,7 +1947,7 @@ public class CRUDObjectPhysicalTest {
           throwedEx = true;
       }
       Assert.assertTrue(throwedEx);
-      OLogManager.instance().log(this, Level.INFO, "Serialization error test ended.", null);
+      OLogManager.instance().setErrorEnabled(true);
     } finally {
       database.close();
     }

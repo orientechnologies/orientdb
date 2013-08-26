@@ -283,14 +283,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "List all the databases available on the connected server")
   public void listDatabases() throws IOException {
-    if (serverAdmin != null) {
+    if (serverAdmin != null && serverAdmin.isConnected()) {
       final Map<String, String> databases = serverAdmin.listDatabases();
       out.printf("\nFound %d databases:\n", databases.size());
       for (Entry<String, String> database : databases.entrySet()) {
         out.printf("\n* %s (%s)", database.getKey(), database.getValue().substring(0, database.getValue().indexOf(":")));
       }
     } else {
-      out.println("Not connected to the Server instance");
+      out.println("Not connected to the Server instance. You've to connect to the Server using server's credentials (look at orientdb-*server-config.xml file)");
     }
     out.println();
   }
@@ -1045,7 +1045,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         out.println(" | NAME                          | VALUE                                            |");
         out.println(" +-------------------------------+--------------------------------------------------+");
         for (OStorageEntryConfiguration cfg : dbCfg.properties)
-          out.println(String.format( " | %-29s | %-49s|", cfg.name, format(cfg.value, 49)));
+          out.println(String.format(" | %-29s | %-49s|", cfg.name, format(cfg.value, 49)));
         out.println(" +-------------------------------+--------------------------------------------------+");
       }
     }

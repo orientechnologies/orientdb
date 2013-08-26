@@ -697,4 +697,8 @@ public class OServerAdmin {
       }
     return null;
   }
+
+  public boolean isConnected() {
+    return storage != null && !storage.isClosed();
+  }
 }

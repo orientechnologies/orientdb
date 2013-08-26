@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 /**
  * @author luca.molino
- *
+ * 
  */
 public class OObjectSchemaGenerator {
 
@@ -42,8 +43,11 @@ public class OObjectSchemaGenerator {
     if (iClass == null || iClass.isInterface() || iClass.isPrimitive() || iClass.isEnum() || iClass.isAnonymousClass())
       return;
     OObjectEntitySerializer.registerClass(iClass);
-    List<String> fields = OObjectEntitySerializer.allFields.get(iClass);
     OClass schema = database.getMetadata().getSchema().getClass(iClass);
+    if (schema == null) {
+      generateOClass(iClass, database);
+    }
+    List<String> fields = OObjectEntitySerializer.allFields.get(iClass);
     for (String field : fields) {
       if (schema.existsProperty(field))
         continue;
@@ -62,7 +66,7 @@ public class OObjectSchemaGenerator {
         }
       }
       switch (t) {
-  
+
       case LINK:
         Class<?> linkedClazz = f.getType();
         OObjectSchemaGenerator.generateLinkProperty(database, schema, field, t, linkedClazz);
@@ -74,7 +78,7 @@ public class OObjectSchemaGenerator {
         if (linkedClazz != null)
           OObjectSchemaGenerator.generateLinkProperty(database, schema, field, t, linkedClazz);
         break;
-  
+
       case EMBEDDED:
         linkedClazz = f.getType();
         if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
@@ -84,7 +88,7 @@ public class OObjectSchemaGenerator {
           OObjectSchemaGenerator.generateLinkProperty(database, schema, field, t, linkedClazz);
         }
         break;
-  
+
       case EMBEDDEDLIST:
       case EMBEDDEDSET:
       case EMBEDDEDMAP:
@@ -102,11 +106,47 @@ public class OObjectSchemaGenerator {
           }
         }
         break;
-  
+
       default:
         schema.createProperty(field, t);
         break;
       }
+    }
+  }
+
+  protected static void generateOClass(Class<?> iClass, ODatabaseRecord database) {
+    boolean reloadSchema = false;
+    for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+      String iClassName = currentClass.getSimpleName();
+      currentClass = currentClass.getSuperclass();
+
+      if (currentClass == null || currentClass.equals(ODocument.class))
+        // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+        // ODOCUMENT FIELDS
+        currentClass = Object.class;
+
+      if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
+          && !currentClass.equals(Object.class)) {
+        OClass oSuperClass;
+        OClass currentOClass = database.getMetadata().getSchema().getClass(iClassName);
+        if (!database.getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
+          oSuperClass = database.getMetadata().getSchema().createClass(currentClass.getSimpleName());
+          reloadSchema = true;
+        } else {
+          oSuperClass = database.getMetadata().getSchema().getClass(currentClass.getSimpleName());
+          reloadSchema = true;
+        }
+
+        if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
+          currentOClass.setSuperClass(oSuperClass);
+          reloadSchema = true;
+        }
+
+      }
+    }
+    if (reloadSchema) {
+      database.getMetadata().getSchema().save();
+      database.getMetadata().getSchema().reload();
     }
   }
 

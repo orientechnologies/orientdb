@@ -1818,6 +1818,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             OLogManager.instance().info(this,
                 "Network connection pool is full (max=%d): increase max size to avoid such bottleneck on connections", maxPool);
 
+            removeDeadConnections();
+
             final long startToWait = System.currentTimeMillis();
 
             // TEMPORARY UNLOCK
@@ -1847,6 +1849,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
     }
     return network;
+  }
+
+  private void removeDeadConnections() {
+    // FREE DEAD CONNECTIONS
+    int removedDeadConnections = 0;
+    for (OChannelBinaryClient n : new ArrayList<OChannelBinaryClient>(networkPool)) {
+      if (n != null && !n.isConnected())
+        try {
+          n.close();
+        } catch (Exception e) {
+        }
+      networkPool.remove(n);
+      removedDeadConnections++;
+    }
+
+    OLogManager.instance().debug(this, "Found and removed %d dead connections from the network pool", removedDeadConnections);
   }
 
   /**

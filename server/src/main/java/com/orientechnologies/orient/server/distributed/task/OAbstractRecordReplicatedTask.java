@@ -41,6 +41,9 @@ public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicat
     this.version = iVersion;
   }
 
+  /**
+   * Constructor called on aligning
+   */
   public OAbstractRecordReplicatedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
       final ORecordVersion iVersion) {
     super(iRunId, iOperationId);

@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public abstract class OStorageLocalAbstract extends OStorageEmbedded {
+public abstract class OStorageLocalAbstract extends OStorageEmbedded implements OFreezableStorage {
   public OStorageLocalAbstract(String name, String filePath, String mode) {
     super(name, filePath, mode);
   }
@@ -44,10 +44,6 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded {
 
   protected abstract OPhysicalPosition createRecord(ODataLocal dataSegment, OCluster cluster, byte[] recordContent,
       byte recordType, ORecordId rid, ORecordVersion recordVersion);
-
-  public abstract void freeze(boolean b);
-
-  public abstract void release();
 
   public abstract ODiskCache getDiskCache();
 

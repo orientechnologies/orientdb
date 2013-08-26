@@ -46,7 +46,7 @@ import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
-@Test(groups = { "object", "detachingSchemaFull" })
+@Test(groups = { "object", "detachingSchemaFull" }, dependsOnGroups = "treeSchemaFull")
 public class ObjectDetachingTestSchemaFull {
   private OObjectDatabaseTx database;
   private String            url;
@@ -115,6 +115,8 @@ public class ObjectDetachingTestSchemaFull {
   @SuppressWarnings("unchecked")
   @Test(dependsOnMethods = "testOrientStringIdAnnotation")
   public void testOrientObjectIdPlusVersionAnnotationsNotInTx() {
+    // DELETE PREVIOUS TESTS DATA
+    database.command(new OCommandSQL("delete from Country where name = 'Austria v1'")).execute();
     // BROWSE ALL THE OBJECTS
     Assert.assertTrue(database.countClass(Country.class) > 0);
     for (Country c : (List<Country>) database.query(new OSQLSynchQuery<Object>("select from Country where name = 'Austria'"))) {
@@ -691,6 +693,8 @@ public class ObjectDetachingTestSchemaFull {
 
   @Test(dependsOnMethods = "testDetachAllNonProxied")
   public void testReloadAndDetachAll() {
+    // DELETE PREVIOUS TEST DATA
+    database.command(new OCommandSQL("delete from Profile where nick = 'Jack'")).execute();
     // Open db
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {

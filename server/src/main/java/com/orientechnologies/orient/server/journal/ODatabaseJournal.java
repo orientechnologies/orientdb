@@ -173,7 +173,7 @@ public class ODatabaseJournal {
         final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
         if (record != null) {
           final ORecordVersion version = record.version.copy();
-          version.decrement();
+          version.setRollbackMode();
           task = new OUpdateRecordTask(runId, operationId, rid, record.buffer, version, record.recordType);
         }
         break;
@@ -332,10 +332,10 @@ public class ODatabaseJournal {
       while ((localOperationId[0] > iRemoteLastOperationId[0])
           || (localOperationId[0] == iRemoteLastOperationId[0] && localOperationId[1] > iRemoteLastOperationId[1])) {
 
-        if ((iStatus == null || iStatus == getOperationStatus(fileOffset))) {
-
+        if (iStatus == null || iStatus == getOperationStatus(fileOffset)) {
           // COLLECT CURRENT POSITION AS GOOD
           result.add(fileOffset);
+
           if (iMax > -1 && result.size() >= iMax)
             // MAX LIMIT REACHED
             break;
