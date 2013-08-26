@@ -1,7 +1,7 @@
 var database = angular.module('database.services', ['ngResource']);
 
 DatabaseResolve = {
-	current : function (Database,$q,$route,$location){
+	current : function (Database,$q,$route,$location,Spinner){
 		var deferred = $q.defer();
 		Database.refreshMetadata($route.current.params.database,function(){
 			deferred.resolve();

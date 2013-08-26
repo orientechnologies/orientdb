@@ -42,7 +42,6 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
             if(!formScope.options[header]){
                 CommandApi.getAll(scope.database,property.linkedClass,function(data){
                     formScope.options[header] = data.result;
-                    console.log(formScope.options[header]);
                 });
             }
         }

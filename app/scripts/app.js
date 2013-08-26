@@ -3,6 +3,7 @@
 
 var deps = ['header.controller',
 'breadcrumb.controller',
+'spinner.controller',
 'login.controller',
 'database.controller',
 'document.controller',

@@ -33,7 +33,9 @@
     <div ng-controller="HeaderController">
       <div ng-include src="'views/header.html'"></div>
      </div>
-
+    <div ng-controller="SpinnerController">
+        <div ng-include src="'views/spinner.html'"></div>
+    </div>
     <!-- Add your site or application content here -->
     <div class="container-fluid container-studio" >
       <!--  <div class="row-fluid">
@@ -56,6 +58,7 @@
     <script src="components/angular-resource/angular-resource.js"></script>
     <script src="components/angular-cookies/angular-cookies.js"></script>
     <script src="components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="components/spin.js/spin.js"></script>
     <script src="components/js-base64/base64.js"></script>
     <script src="components/moment/moment.js"></script>
     <script src="components/angular-strap/dist/angular-strap.js"></script>
@@ -74,6 +77,7 @@
     <script src="scripts/controllers/main.js"></script>
     <script src="scripts/controllers/header-controller.js"></script>
     <script src="scripts/controllers/breadcrumb-controller.js"></script>
+    <script src="scripts/controllers/spinner-controller.js"></script>
     <script src="scripts/controllers/schema-controller.js"></script>
     <script src="scripts/controllers/login-controller.js"></script>
     <script src="scripts/controllers/database-controller.js"></script>
@@ -83,6 +87,7 @@
     <script src="scripts/services/database-services.js"></script>
     <script src="scripts/services/notification-services.js"></script>
     <script src="scripts/services/breadcrumb-service.js"></script>
+    <script src="scripts/services/spinner-service.js"></script>
     <script src="scripts/filters/filter.js"></script>
     <script src="scripts/widgets/widget.js"></script>
     <script src="scripts/util/library.js"></script>

@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller',['database.services']);
-dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
+dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi','Spinner',function($scope,$routeParams,$location,Database,CommandApi,Spinner){
 
 	$scope.database = Database;
 	$scope.limit = 20;
