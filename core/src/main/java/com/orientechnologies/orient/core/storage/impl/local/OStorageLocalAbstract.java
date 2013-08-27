@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -50,4 +51,6 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   public abstract boolean wasClusterSoftlyClosed(String clusterIndexName);
 
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
+
+  public abstract OStorageTransaction getStorageTransaction();
 }

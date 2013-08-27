@@ -1,10 +1,6 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -18,20 +14,20 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
  * @since 12.08.13
  */
 @Test
-public class LocalSBTreeTest {
-  private static final int      KEYS_COUNT = 500000;
+public class SBTreeTest {
+  private static final int    KEYS_COUNT = 500000;
 
-  private ODatabaseDocumentTx   databaseDocumentTx;
+  private ODatabaseDocumentTx databaseDocumentTx;
 
-  private OLocalSBTree<Integer> localSBTree;
-  private String                buildDirectory;
+  private OSBTree<Integer>    localSBTree;
+  private String              buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
@@ -39,7 +35,7 @@ public class LocalSBTreeTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localSBTreeTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -47,8 +43,8 @@ public class LocalSBTreeTest {
 
     databaseDocumentTx.create();
 
-    localSBTree = new OLocalSBTree<Integer>(".sbt", 1);
-    localSBTree.create("localSBTree", OIntegerSerializer.INSTANCE, (OStorageLocal) databaseDocumentTx.getStorage());
+    localSBTree = new OSBTree<Integer>(".sbt", 1);
+    localSBTree.create("localSBTree", OIntegerSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
   @AfterMethod

@@ -6,11 +6,7 @@ import static org.testng.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -25,11 +21,11 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @since 15.08.13
  */
 @Test
-public class LocalSBTreeCompositeKeyTest {
-  private ODatabaseDocumentTx         databaseDocumentTx;
+public class SBTreeCompositeKeyTest {
+  private ODatabaseDocumentTx    databaseDocumentTx;
 
-  private OLocalSBTree<OCompositeKey> localSBTree;
-  private String                      buildDirectory;
+  private OSBTree<OCompositeKey> localSBTree;
+  private String                 buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
@@ -45,7 +41,7 @@ public class LocalSBTreeCompositeKeyTest {
 
     databaseDocumentTx.create();
 
-    localSBTree = new OLocalSBTree<OCompositeKey>(".sbt", 2);
+    localSBTree = new OSBTree<OCompositeKey>(".sbt", 2);
     localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE,
         (OStorageLocal) databaseDocumentTx.getStorage());
   }
