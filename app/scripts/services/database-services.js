@@ -1,7 +1,7 @@
 var database = angular.module('database.services', ['ngResource']);
 
 DatabaseResolve = {
-	current : function (Database,$q,$route,$location){
+	current : function (Database,$q,$route,$location,Spinner){
 		var deferred = $q.defer();
 		Database.refreshMetadata($route.current.params.database,function(){
 			deferred.resolve();
@@ -28,7 +28,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 
 		listTypes : ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAP','LINKSET','LONG','SHORT','STRING'],
 
-		mapping : { 'BINARY' : 'b','DATE' : 'a','DATETIME' : 't'},
+		mapping : { 'BINARY' : 'b','DATE' : 'a','DATETIME' : 't','INTEGER' : 'i'},
 		getMetadata : function() {
 			if(current.metadata ==null){
 				var tmp = localStorageService.get("CurrentDB");
@@ -146,7 +146,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			return type;
 		},
 		isLink : function(type){
-			return type == "LINKSET" || type == "LINK"
+			return type == "LINKSET";
 		},
 		listField : function(clazz){
 			var metadata = this.getMetadata();
@@ -412,6 +412,14 @@ database.factory('CommandApi', function($http,$resource,Notification){
 			if(error) error(data);
 		});
 	}
+    resource.getAll = function(database,clazz,callback){
+        var text = '/api/command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
+        var query = "select * from " + clazz;
+        $http.post(text,query).success(function(data){
+          callback(data);
+        });
+
+    }
 	return resource;
 }) ;
 database.factory('DocumentApi', function($http,$resource,Database){

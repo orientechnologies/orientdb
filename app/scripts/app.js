@@ -3,6 +3,7 @@
 
 var deps = ['header.controller',
 'breadcrumb.controller',
+'spinner.controller',
 'login.controller',
 'database.controller',
 'document.controller',
@@ -10,6 +11,7 @@ var deps = ['header.controller',
 'notification.controller',
 '$strap.directives',
 'ui.codemirror',
+'ui.select2',
 'LocalStorageModule',
 'filters',
 'rendering','schema.controller'];

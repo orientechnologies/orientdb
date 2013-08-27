@@ -9,7 +9,7 @@
             <img src="images/orient_db.png" alt="logo" />
             </a>
             <ul class = "nav">
-            <li data-match-route="{{menu.link}}"  ng-repeat="menu in menus">
+            <li data-match-route="{{menu.link}}" ng-class="getClass(menu)"  ng-repeat="menu in menus">
                <a href="{{menu.link}}"><i class="icon-home icon-white"></i>{{menu.name | capitalize}}</a>
             </li>
             </ul>

@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller',['database.services']);
-dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi',function($scope,$routeParams,$location,Database,CommandApi){
+dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi','Spinner',function($scope,$routeParams,$location,Database,CommandApi,Spinner){
 
 	$scope.database = Database;
 	$scope.limit = 20;
@@ -15,6 +15,7 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
   		}
     };
 	$scope.query = function(){
+        Spinner.loading = true;
 		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit},function(data){
 			if(data.result){
 				$scope.headers = Database.getPropertyTableFromResults(data.result);
@@ -22,6 +23,7 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
 			}
 			if($scope.queries.indexOf($scope.queryText)==-1)
 				$scope.queries.push($scope.queryText);
+            Spinner.loading = false;
 		});
 	}
 	$scope.openRecord = function(doc){
