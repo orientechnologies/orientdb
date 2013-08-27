@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -216,19 +217,24 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false);
+    return reload(iRecord, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord, String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
+    return reload(iRecord, iFetchPlan, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+    ORecordInternal<?> record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+    if (record != null && iRecord != record) {
+      iRecord.fromStream(record.toStream());
+      iRecord.getRecordVersion().copyFrom(record.getRecordVersion());
+    }
+    return (RET) record;
   }
 
   @SuppressWarnings("unchecked")
