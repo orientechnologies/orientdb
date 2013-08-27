@@ -13,8 +13,10 @@ import sun.misc.Unsafe;
  */
 @SuppressWarnings("restriction")
 public class OUnsafeBinaryConverter implements OBinaryConverter {
-  private static final Unsafe theUnsafe;
-  private static final long   BYTE_ARRAY_OFFSET;
+  public static final OUnsafeBinaryConverter INSTANCE = new OUnsafeBinaryConverter();
+
+  private static final Unsafe                theUnsafe;
+  private static final long                  BYTE_ARRAY_OFFSET;
 
   static {
     theUnsafe = (Unsafe) AccessController.doPrivileged(new PrivilegedAction<Object>() {

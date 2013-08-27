@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.cache;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.collection.OLimitedMap;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -35,116 +31,27 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * 
  * @author Maxim Fedorov
  */
-public class ODefaultCache implements OCache {
-  private static final int                      DEFAULT_LIMIT = 1000;
+public class ODefaultCache extends OAbstractMapCache<ODefaultCache.OLinkedHashMapCache> {
+  private static final int           DEFAULT_LIMIT = 1000;
 
-  private final OSharedResourceAdaptiveExternal lock          = new OSharedResourceAdaptiveExternal(
-                                                                  OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-                                                                  0, true);
-  private final AtomicBoolean                   enabled       = new AtomicBoolean(false);
-
-  private final OLinkedHashMapCache             cache;
-  private final int                             limit;
-
-  protected OMemoryWatchDog.Listener            lowMemoryListener;
+  protected final int                limit;
+  protected OMemoryWatchDog.Listener lowMemoryListener;
 
   public ODefaultCache(final String iName, final int initialLimit) {
-    final int initialCapacity = initialLimit > 0 ? initialLimit : DEFAULT_LIMIT;
+    super(new OLinkedHashMapCache(initialLimit > 0 ? initialLimit : DEFAULT_LIMIT, 0.75f, initialLimit));
     limit = initialLimit;
-    cache = new OLinkedHashMapCache(initialCapacity, 0.75f, limit);
   }
 
+  @Override
   public void startup() {
     lowMemoryListener = Orient.instance().getMemoryWatchDog().addListener(new OLowMemoryListener());
-    enable();
+    super.startup();
   }
 
+  @Override
   public void shutdown() {
     Orient.instance().getMemoryWatchDog().removeListener(lowMemoryListener);
-    disable();
-  }
-
-  public boolean isEnabled() {
-    return enabled.get();
-  }
-
-  public boolean enable() {
-    return enabled.compareAndSet(false, true);
-  }
-
-  public boolean disable() {
-    clear();
-    return enabled.compareAndSet(true, false);
-  }
-
-  public ORecordInternal<?> get(final ORID id) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.get(id);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  public ORecordInternal<?> put(final ORecordInternal<?> record) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.put(record.getIdentity(), record);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  public ORecordInternal<?> remove(final ORID id) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.remove(id);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  public void clear() {
-    if (!isEnabled())
-      return;
-
-    lock.acquireExclusiveLock();
-    try {
-      cache.clear();
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  public int size() {
-    lock.acquireSharedLock();
-    try {
-      return cache.size();
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
-  public int limit() {
-    return limit;
-  }
-
-  public Collection<ORID> keys() {
-    lock.acquireExclusiveLock();
-    try {
-      return new ArrayList<ORID>(cache.keySet());
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    super.shutdown();
   }
 
   private void removeEldest(final int threshold) {
@@ -156,12 +63,9 @@ public class ODefaultCache implements OCache {
     }
   }
 
-  public void lock(final ORID id) {
-    lock.acquireExclusiveLock();
-  }
-
-  public void unlock(final ORID id) {
-    lock.releaseExclusiveLock();
+  @Override
+  public int limit() {
+    return limit;
   }
 
   /**
