@@ -20,7 +20,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 		username : null,
 		metadata : null
 	}
-	return { 
+	return {
 
 		header : ["@rid","@version","@class"],
 
@@ -50,7 +50,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 					type = elem;
 				}
 			});
-			
+
 			return type;
 		},
 		currentUser : function() {
@@ -69,7 +69,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			return this.listTypes;
 		},
 		refreshMetadata : function(database,callback){
-			var currentDb = DatabaseApi.get({database : database},function(){ 
+			var currentDb = DatabaseApi.get({database : database},function(){
 				current.name = database;
 				current.username = currentDb.currentUser;
 				current.metadata = currentDb;
@@ -100,7 +100,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				console.log(document.cookie);
 				callback();
 			});
-			
+
 		},
 		findType : function(clazz,value,field){
 			var metadata = this.getMetadata();
@@ -112,7 +112,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 					for (var f in props) {
 						if(field == props[f].name){
 							return props[f].type;
-						}	
+						}
 					};
 				}
 			}
@@ -142,7 +142,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 						});
 					}
 				}
-			});	
+			});
 			return type;
 		},
 		isLink : function(type){
@@ -160,7 +160,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 						fields.push(props[f].name);
 					};
 					break;
-				}				
+				}
 			}
 			return fields;
 		},
@@ -176,7 +176,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 						fields.push(props[f]);
 					};
 					break;
-				}				
+				}
 			}
 			return fields;
 		},
@@ -194,7 +194,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 						});
 					}
 				}
-			});	
+			});
 			return property;
 		},
 		listIndexesForClass : function(clazz){
@@ -206,12 +206,12 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				if(clazz.toUpperCase() == classes[entry].name.toUpperCase()){
 					var props = classes[entry]['indexes'];
 					for (var f in props) {
-						
+
 				console.log(props[f])
 						fields.push(props[f]);
 					};
 					break;
-				}				
+				}
 			}
 			return fields;
 		},
@@ -221,7 +221,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			var fields = new Array
 			for (var entry in classes){
 				var claq = classes[entry].name
-				fields.push(classes[entry])					
+				fields.push(classes[entry])
 			}
 			return fields;
 		},
@@ -231,7 +231,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			var fields = new Array
 			for (var entry in classes){
 				var claq = classes[entry]['name']
-				fields.push(claq)					
+				fields.push(claq)
 			}
 			return fields;
 		},
@@ -244,7 +244,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				if(cluster == defaultCluster){
 					clazz =  classes[entry].name;
 					break;
-				}				
+				}
 			}
 			return clazz;
 		},
@@ -257,12 +257,12 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				if(clazz == name){
 					clazzReturn =  classes[entry].superClass;
 					break;
-				}				
+				}
 			}
 			return clazzReturn;
 		},
 		isGraph : function(clazz){
-			var sup=clazz; 
+			var sup=clazz;
 			var iterator = clazz;
 			while( (iterator = this.getSuperClazz(iterator)) != "") {
 			 	sup = iterator;
@@ -270,7 +270,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			return sup == 'V' || sup == 'E';
 		},
 		isVertex : function(clazz){
-			var sup=clazz; 
+			var sup=clazz;
 			var iterator = clazz;
 			while( (iterator = this.getSuperClazz(iterator)) != "") {
 			 	sup = iterator;
@@ -278,7 +278,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			return sup == 'V';
 		},
 		isEdge : function(clazz){
-			var sup=clazz; 
+			var sup=clazz;
 			var iterator = clazz;
 			while( (iterator = this.getSuperClazz(iterator)) != "") {
 			 	sup = iterator;
@@ -293,7 +293,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 				var name = classes[entry]['name'];
 				if(this.isEdge(name)){
 					clazzes.push(name);
-				} 			
+				}
 			}
 			return clazzes;
 		},
@@ -319,7 +319,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			return all;
 		},
 		getEdge : function(doc,direction){
-			
+
 			var all = Object.keys(doc).filter(function(element,index,array){
 				return element.startsWith(direction);
 			});
@@ -359,7 +359,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			});
 			return all;
 		}
-		
+
 	};
 }) ;
 
@@ -378,9 +378,9 @@ database.factory('DatabaseApi', function($http,$resource){
 		$http.post('/api/database/' + name + "/" + stype + "/"+ type).success(function(data){
 			$http.defaults.headers.common['Authorization'] = null;
 			callback(data);
-		});	
+		});
 	}
-	resource.disconnect = function(callback) {	
+	resource.disconnect = function(callback) {
 		$http.get('/api/disconnect').success(function(){
 			$http.defaults.headers.common['Authorization'] = null;
 			callback();
@@ -404,7 +404,7 @@ database.factory('CommandApi', function($http,$resource,Notification){
 		$http.post(text,query).success(function(data){
 			var time = ((new Date().getTime() - startTime) / 1000);
 			var records = data.result ? data.result.length : "";
-			var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)"; 
+			var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
 			Notification.push({content : noti});
 			callback(data);
 		}).error(function(data){
@@ -418,10 +418,10 @@ database.factory('DocumentApi', function($http,$resource,Database){
 
 	var resource = $resource('/api/document/:database/:document');
 	resource.updateDocument = function (database,rid,doc,callback){
-		$http.put('/api/document/' + database + "/" + rid.replace('#',''),doc).success(callback).error(callback);		
+		$http.put('/api/document/' + database + "/" + rid.replace('#',''),doc).success(callback).error(callback);
 	}
 	resource.createDocument = function (database,rid,doc,callback){
-		$http.post('/api/document/' + database + "/" + rid.replace('#',''),doc).success(callback).error(callback);		
+		$http.post('/api/document/' + database + "/" + rid.replace('#',''),doc).success(callback).error(callback);
 	}
 	resource.createNewDoc = function(clazz){
 		var r = new resource
@@ -438,7 +438,7 @@ database.factory('DocumentApi', function($http,$resource,Database){
 }) ;
 database.factory('FunctionApi', function($http,$resource){
 
-	
+
 	var resource = $resource('/api/tournaments/:id');
 	return resource;
 }) ;
