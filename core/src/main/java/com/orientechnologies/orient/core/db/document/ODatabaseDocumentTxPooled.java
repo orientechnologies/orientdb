@@ -108,9 +108,11 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
     getLevel1Cache().clear();
 
-    final ODatabaseDocumentPool localCopy = ownerPool;
-    ownerPool = null;
-    localCopy.release(this);
+    if (ownerPool != null) {
+      final ODatabaseDocumentPool localCopy = ownerPool;
+      ownerPool = null;
+      localCopy.release(this);
+    }
   }
 
   public void forceClose() {
