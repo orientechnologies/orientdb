@@ -77,9 +77,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     public boolean attribSameRow;
     public boolean alwaysFetchEmbeddedDocuments;
     public int     indentLevel;
-    public String  fetchPlan  = null;
-    public boolean keepTypes;
-    public boolean dateAsLong = false;
+    public String  fetchPlan   = null;
+    public boolean keepTypes   = true;
+    public boolean dateAsLong  = false;
+    public boolean prettyPrint = false;
 
     public FormatSettings(final String iFormat) {
       if (iFormat == null) {
@@ -99,8 +100,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         includeClazz = false;
         attribSameRow = false;
         alwaysFetchEmbeddedDocuments = false;
-        indentLevel = 0;
-        keepTypes = true;
+        indentLevel = 1;
+        keepTypes = false;
 
         final String[] format = iFormat.split(",");
         for (String f : format)

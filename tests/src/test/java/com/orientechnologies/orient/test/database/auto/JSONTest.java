@@ -324,7 +324,7 @@ public class JSONTest {
         .command(new OSQLSynchQuery<ODocument>("select * from Profile where name = 'Barack' and surname = 'Obama'")).execute();
 
     for (ODocument doc : result) {
-      String jsonFull = doc.toJSON("type,rid,version,class,attribSameRow,indent:0,fetchPlan:*:-1");
+      String jsonFull = doc.toJSON("type,rid,version,class,keepTypes,attribSameRow,indent:0,fetchPlan:*:-1");
       ODocument loadedDoc = new ODocument().fromJSON(jsonFull);
 
       Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
