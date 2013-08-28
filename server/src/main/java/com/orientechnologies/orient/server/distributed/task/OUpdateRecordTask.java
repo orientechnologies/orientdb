@@ -65,13 +65,17 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
   @Override
   public ORecordVersion executeOnLocalNode() {
     ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "update record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+        "updating record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase();
     try {
       record.fill(rid, version, content, true);
       record.save();
+
+      ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "updated record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), record.getRecordVersion().toString(), runId,
+          operationSerial);
 
       return record.getRecordVersion();
 

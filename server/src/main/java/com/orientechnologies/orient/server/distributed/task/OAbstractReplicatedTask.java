@@ -58,9 +58,14 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
 
   public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
       final String databaseName, final EXECUTION_MODE iMode) {
+    this(iServer, iDistributedSrvMgr, databaseName, iMode, iDistributedSrvMgr.incrementDistributedSerial(databaseName));
+  }
+
+  public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
+      final String databaseName, final EXECUTION_MODE iMode, final long iOperationSerial) {
     super(iServer, iDistributedSrvMgr, databaseName, iMode);
     // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED
-    this.operationSerial = iDistributedSrvMgr.incrementDistributedSerial(databaseName);
+    this.operationSerial = iOperationSerial;
 
     ODistributedServerLog.debug(this, getNodeSource(), nodeDestination, DIRECTION.OUT,
         "creating operation id %d.%d for db=%s class=%s", runId, operationSerial, databaseName, getClass().getSimpleName());
