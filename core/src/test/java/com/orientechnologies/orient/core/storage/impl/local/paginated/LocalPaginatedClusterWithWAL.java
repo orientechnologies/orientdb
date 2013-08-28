@@ -36,8 +36,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   private ODiskCache             testDiskCache;
   private OLocalPaginatedStorage testStorage;
 
-  private String                 storageDirOne;
-  private String                 storageDirTwo;
+  private String                 storageDir;
+  private String                 testStorageDir;
   private OLocalPaginatedStorage storage;
 
   @BeforeMethod
@@ -57,15 +57,15 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
-    storageDirOne = buildDirectory + "/localPaginatedClusterWithWALTestOne";
-    when(storage.getStoragePath()).thenReturn(storageDirOne);
+    storageDir = buildDirectory + "/localPaginatedClusterWithWALTestOne";
+    when(storage.getStoragePath()).thenReturn(storageDir);
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
       buildDir.mkdirs();
 
-    File storageDirOneFile = new File(storageDirOne);
+    File storageDirOneFile = new File(storageDir);
     if (!storageDirOneFile.exists())
       storageDirOneFile.mkdirs();
 
@@ -74,15 +74,16 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
+    OStorageVariableParser variableParser = new OStorageVariableParser(storageDir);
 
+    when(storage.getStorageTransaction()).thenReturn(null);
     when(storage.getDiskCache()).thenReturn(diskCache);
     when(storage.getWALInstance()).thenReturn(writeAheadLog);
     when(storage.getVariableParser()).thenReturn(variableParser);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
+    when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
     paginatedCluster = new OPaginatedCluster();
     paginatedCluster.configure(storage, 5, "localPaginatedClusterWithWALTest", buildDirectory, -1);
@@ -95,8 +96,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
-    storageDirTwo = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
-    when(testStorage.getStoragePath()).thenReturn(storageDirTwo);
+    testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
+    when(testStorage.getStoragePath()).thenReturn(testStorageDir);
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
 
@@ -104,22 +105,23 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     if (!buildDir.exists())
       buildDir.mkdirs();
 
-    File storageDirTwoFile = new File(storageDirTwo);
+    File storageDirTwoFile = new File(testStorageDir);
     if (!storageDirTwoFile.exists())
       storageDirTwoFile.mkdirs();
 
     testDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, testStorage, null, false, false);
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
+    OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
 
+    when(testStorage.getStorageTransaction()).thenReturn(null);
     when(testStorage.getDiskCache()).thenReturn(testDiskCache);
     when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getVariableParser()).thenReturn(variableParser);
     when(testStorage.getConfiguration()).thenReturn(storageConfiguration);
     when(testStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
+    when(storageConfiguration.getDirectory()).thenReturn(testStorageDir);
 
     testCluster = new OPaginatedCluster();
     testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
@@ -135,10 +137,10 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     testCluster.delete();
     testDiskCache.delete();
 
-    File file = new File(storageDirOne);
+    File file = new File(storageDir);
     Assert.assertTrue(file.delete());
 
-    file = new File(storageDirTwo);
+    file = new File(testStorageDir);
     Assert.assertTrue(file.delete());
 
     file = new File(buildDirectory);
@@ -390,9 +392,9 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   private void assertClusterContentIsTheSame(String expectedCluster, String actualCluster) throws IOException {
-    File expectedFile = new File(storageDirTwo, expectedCluster + ".pcl");
+    File expectedFile = new File(testStorageDir, expectedCluster + ".pcl");
     RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(storageDirOne, actualCluster + ".pcl"), "r");
+    RandomAccessFile fileTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".pcl"), "r");
 
     Assert.assertEquals(fileOne.length(), fileTwo.length());
 

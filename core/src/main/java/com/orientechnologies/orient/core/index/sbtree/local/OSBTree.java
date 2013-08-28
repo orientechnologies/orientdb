@@ -113,6 +113,15 @@ public class OSBTree<K> extends ODurableComponent {
     init(writeAheadLog);
   }
 
+  public String getName() {
+    acquireSharedLock();
+    try {
+      return name;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   public void open(String name, OBinarySerializer<K> keySerializer, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
@@ -293,7 +302,7 @@ public class OSBTree<K> extends ODurableComponent {
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
       try {
         OSBTreeBucket<K> rootBucket = new OSBTreeBucket<K>(rootPointer.getDataPointer(), true, keySerializer,
-            ODurablePage.TrackMode.FULL);
+            ODurablePage.TrackMode.NONE);
         keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(rootBucket
             .getKeySerializerId());
         keySize = rootBucket.getKeySize();

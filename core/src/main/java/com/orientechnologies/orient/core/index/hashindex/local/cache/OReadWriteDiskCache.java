@@ -1,12 +1,7 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -298,7 +293,8 @@ public class OReadWriteDiskCache implements ODiskCache {
     am.clear();
     a1in.clear();
 
-    filePages.clear();
+    for (Set<Long> pages : filePages.values())
+      pages.clear();
 
     clearPinnedPages();
   }
