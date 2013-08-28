@@ -209,8 +209,8 @@ function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,Docu
 		$scope.doc = DocumentApi.get({ database : $scope.database , document : $scope.rid},function(){
 			$scope.headers = Database.getPropertyFromDoc($scope.doc);
 			$scope.isGraph = Database.isGraph($scope.doc['@class']);
-			$scope.incomings = Database.getEdge($scope.doc,'in');
-			$scope.outgoings = Database.getEdge($scope.doc,'out');
+			$scope.incomings = Database.getEdge($scope.doc,'in_');
+			$scope.outgoings = Database.getEdge($scope.doc,'out_');
 			$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
 		}, function(error){
 			Notification.push({content : JSON.stringify(error)});
@@ -218,7 +218,10 @@ function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,Docu
 		});
 	}
 
-
+    $scope.getLabelFor = function(label){
+        var props = Database.listPropertyForClass($scope.doc['@class'],label);
+        return label + (props.linkedClass!= undefined ? " (" + (props.linkedClass) +")" : "" ) ;
+    }
 	$scope.delete = function(){
 
 		var recordID = $scope.doc['@rid'];
@@ -275,6 +278,9 @@ function BaseEditController($scope,$routeParams,$location,$modal,$dialog,$q,Docu
 		}
 		
 	}
+    $scope.follow= function(rid) {
+        $scope.navigate(rid);
+    }
 	$scope.navigate = function(rid){
 		$location.path('/database/'+$scope.database + '/browse/edit/' + rid.replace('#',''));
 	}

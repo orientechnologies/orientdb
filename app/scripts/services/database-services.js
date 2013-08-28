@@ -28,7 +28,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 
 		listTypes : ['BINARY','BOOLEAN','EMBEDDED','EMBEDDEDLIST','EMBEDDEDMAP','EMBEDDEDSET','DECIMAL','FLOAT','DATE','DATETIME','DOUBLE','INTEGER','LINK','LINKLIST','LINKMAP','LINKSET','LONG','SHORT','STRING'],
 
-		mapping : { 'BINARY' : 'b','DATE' : 'a','DATETIME' : 't','INTEGER' : 'i'},
+		mapping : { 'BINARY' : 'b','DATE' : 'a','DATETIME' : 't','INTEGER' : 'i','FLOAT' : 'f','DECIMAL' : 'c','LONG' : 'l','DOUBLE' : 'd','SHORT' : 's'},
 		getMetadata : function() {
 			if(current.metadata ==null){
 				var tmp = localStorageService.get("CurrentDB");
@@ -207,7 +207,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 					var props = classes[entry]['indexes'];
 					for (var f in props) {
 						
-				console.log(props[f])
+
 						fields.push(props[f]);
 					};
 					break;
@@ -310,7 +310,7 @@ database.factory('Database', function(DatabaseApi,localStorageService){
 			var self = this;
 			var all = Object.keys(doc).filter(function(element,index,array){
 				if(isGraph){
-					return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in") && !element.startsWith("out"))&& !self.isLink(type));
+					return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in_") && !element.startsWith("out_"))&& !self.isLink(type));
 				}else {
 					var type = self.getFieldType(c,element);
 					return (fixedHeader.indexOf(element) == -1 && !self.isLink(type));
@@ -398,14 +398,17 @@ database.factory('CommandApi', function($http,$resource,Notification){
 	resource.queryText = function(params,callback,error){
 		var startTime = new Date().getTime();
 		var limit = params.limit || 20;
+        var verbose = params.verbose != undefined  ? params.verbose :  true;
 		//rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
 		var text = '/api/command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version,class,shallow,graph' ;
 		var query = params.text ;
 		$http.post(text,query).success(function(data){
 			var time = ((new Date().getTime() - startTime) / 1000);
 			var records = data.result ? data.result.length : "";
-			var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)"; 
-			Notification.push({content : noti});
+            if(verbose){
+			    var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
+                Notification.push({content : noti});
+            }
 			callback(data);
 		}).error(function(data){
 			Notification.push({content : data});

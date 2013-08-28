@@ -12,6 +12,7 @@ var deps = ['header.controller',
 '$strap.directives',
 'ui.codemirror',
 'ui.select2',
+'ngTable',
 'LocalStorageModule',
 'filters',
 'rendering','schema.controller'];

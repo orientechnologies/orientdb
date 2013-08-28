@@ -9,7 +9,7 @@
 				<div class="accordion-group" ng-repeat="i in outgoings">
 					<div class="accordion-heading">
 						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{i}}">
-							{{i}}
+                            {{getLabelFor(i)}}
 							<i class="icon-plus-sign" data-placement="left" ng-click="showModalConnection(i)"></i>
 						</a>
 					</div>
@@ -18,11 +18,12 @@
 							<table>
 								<tbody>
 									<tr ng-repeat="out in filterArray(doc[i])">
-										<td><a href="javascript:void(0)" ng-click="showModal(out)">{{out}}</a></td>
-										<td>
-											<a href="javascript:void(0)"><i class="icon-remove" ng-click="deleteLink(i,out)"></i></a> 
-											<a href="javascript:void(0)"><i class="icon-chevron-right" ng-click="navigate(out)"></i></a> 
 
+										<td>
+                                            <div class="tag-rid">
+                                                <a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>
+                                                <a href="javascript:void(0)"><i class="icon-remove" ng-click="deleteLink(i,out)"></i></a>
+                                            </div>
 										</td>
 									</tr>
 								</tbody>
