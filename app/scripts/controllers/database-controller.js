@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 var dbModule = angular.module('database.controller', ['database.services']);
 dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, Spinner) {
-=======
-var dbModule = angular.module('database.controller',['database.services']);
-dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi','Spinner','ngTableParams',function($scope,$routeParams,$location,Database,CommandApi,Spinner,ngTableParams){
->>>>>>> 58548cd2e7c273acb91ad28e11ac4fd270918b75
 
     $scope.database = Database;
     $scope.limit = 20;
