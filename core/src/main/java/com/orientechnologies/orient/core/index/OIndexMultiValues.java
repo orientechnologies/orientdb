@@ -27,6 +27,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -92,7 +93,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null) {
-          values = new OMVRBTreeRIDSet(8);
+          values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
           ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
         }
 
