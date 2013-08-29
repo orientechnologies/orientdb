@@ -41,11 +41,11 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
  * @author luca.molino
  * 
  */
-public class OObjectSchemaProxy implements OSchema {
+public class OSchemaProxyObject implements OSchema {
 
   protected OSchema underlying;
 
-  public OObjectSchemaProxy(OSchema iUnderlying) {
+  public OSchemaProxyObject(OSchema iUnderlying) {
     underlying = iUnderlying;
   }
 
@@ -197,7 +197,7 @@ public class OObjectSchemaProxy implements OSchema {
       for (Class<?> currentClass = iClass; currentClass != Object.class;) {
 
         if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
-          ((OObjectSchemaProxy) database.getMetadata().getSchema()).generateSchema(currentClass, database.getUnderlying());
+          ((OSchemaProxyObject) database.getMetadata().getSchema()).generateSchema(currentClass, database.getUnderlying());
         }
         String iClassName = currentClass.getSimpleName();
         currentClass = currentClass.getSuperclass();

@@ -24,22 +24,22 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
-import com.orientechnologies.orient.object.metadata.schema.OObjectSchemaProxy;
+import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 
 /**
  * @author luca.molino
  * 
  */
-public class OObjectMetadata implements OMetadata {
+public class OMetadataObject implements OMetadata {
 
   protected OMetadata          underlying;
-  protected OObjectSchemaProxy schema;
+  protected OSchemaProxyObject schema;
 
-  public OObjectMetadata(OMetadata iUnderlying) {
+  public OMetadataObject(OMetadata iUnderlying) {
     underlying = iUnderlying;
   }
 
-  public OObjectMetadata(OMetadata iUnderlying, OObjectSchemaProxy iSchema) {
+  public OMetadataObject(OMetadata iUnderlying, OSchemaProxyObject iSchema) {
     underlying = iUnderlying;
     schema = iSchema;
   }
@@ -58,7 +58,7 @@ public class OObjectMetadata implements OMetadata {
   @Override
   public OSchema getSchema() {
     if (schema == null)
-      schema = new OObjectSchemaProxy(underlying.getSchema());
+      schema = new OSchemaProxyObject(underlying.getSchema());
     return schema;
   }
 

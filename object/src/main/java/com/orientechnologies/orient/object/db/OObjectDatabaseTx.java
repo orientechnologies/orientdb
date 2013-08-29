@@ -64,8 +64,8 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
-import com.orientechnologies.orient.object.metadata.OObjectMetadata;
-import com.orientechnologies.orient.object.metadata.schema.OObjectSchemaProxy;
+import com.orientechnologies.orient.object.metadata.OMetadataObject;
+import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
@@ -84,7 +84,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   protected boolean             saveOnlyDirty;
   protected boolean             lazyLoading;
   protected boolean             automaticSchemaGeneration;
-  protected OObjectMetadata     metadata;
+  protected OMetadataObject     metadata;
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
@@ -109,7 +109,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     super.open(iUserName, iUserPassword);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
-    metadata = new OObjectMetadata(underlying.getMetadata());
+    metadata = new OMetadataObject(underlying.getMetadata());
     return (THISDB) this;
   }
 
@@ -121,7 +121,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public void synchronizeSchema() {
     checkOpeness();
-    ((OObjectSchemaProxy) metadata.getSchema()).synchronizeSchema();
+    ((OSchemaProxyObject) metadata.getSchema()).synchronizeSchema();
   }
 
   /**
@@ -508,7 +508,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
-    ((OObjectSchemaProxy) getMetadata().getSchema()).generateSchema(iClass, underlying);
+    ((OSchemaProxyObject) getMetadata().getSchema()).generateSchema(iClass, underlying);
     return this;
   }
 

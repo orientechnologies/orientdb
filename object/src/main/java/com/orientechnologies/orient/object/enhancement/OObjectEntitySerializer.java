@@ -76,7 +76,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
-import com.orientechnologies.orient.object.metadata.schema.OObjectSchemaProxy;
+import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
@@ -550,7 +550,7 @@ public class OObjectEntitySerializer {
       }
 
       if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
-        ((OObjectSchemaProxy) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner().getMetadata().getSchema())
+        ((OSchemaProxyObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner().getMetadata().getSchema())
             .generateSchema(currentClass, ODatabaseRecordThreadLocal.INSTANCE.get());
       }
       String iClassName = currentClass.getSimpleName();
