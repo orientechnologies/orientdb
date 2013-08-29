@@ -310,13 +310,14 @@ public class OConsoleApplication {
     if (lastMethodInvoked != null)
       syntaxError(lastCommandInvoked.toString(), lastMethodInvoked);
 
-    out.println("!Unrecognized command: '" + iCommand + "'");
+    error("\n!Unrecognized command: '%s'", iCommand);
     return RESULT.ERROR;
   }
 
   protected void syntaxError(String iCommand, Method m) {
-    out.print("!Wrong syntax. If you're using a file make sure all commands are delimited by semicolon (;) or a linefeed (\\n)\n\r\n\r Expected: "
-        + iCommand + " ");
+    error(
+        "\n!Wrong syntax. If you're using a file make sure all commands are delimited by semicolon (;) or a linefeed (\\n)\n\r\n\r Expected: %s ",
+        iCommand);
 
     String paramName = null;
     String paramDescription = null;
@@ -337,9 +338,9 @@ public class OConsoleApplication {
         paramName = "?";
 
       if (paramOptional)
-        out.print("[<" + paramName + ">] ");
+        message("[<%s>] ", paramName);
       else
-        out.print("<" + paramName + "> ");
+        message("<%s> ", paramName);
 
       buffer.append("* ");
       buffer.append(String.format("%-15s", paramName));
@@ -349,7 +350,7 @@ public class OConsoleApplication {
       buffer.append("\n");
     }
 
-    out.println(buffer);
+    message(buffer.toString());
   }
 
   /**
@@ -406,9 +407,7 @@ public class OConsoleApplication {
   }
 
   protected void help() {
-    out.println();
-    out.println("AVAILABLE COMMANDS:");
-    out.println();
+    message("\nAVAILABLE COMMANDS:\n");
 
     for (Method m : getConsoleMethods().keySet()) {
       com.orientechnologies.common.console.annotation.ConsoleCommand annotation = m
@@ -417,10 +416,10 @@ public class OConsoleApplication {
       if (annotation == null)
         continue;
 
-      System.out.print(String.format("* %-70s%s\n", getCorrectMethodName(m), annotation.description()));
+      message("* %-70s%s\n", getCorrectMethodName(m), annotation.description());
     }
-    System.out.print(String.format("* %-70s%s\n", getClearName("help"), "Print this help"));
-    System.out.print(String.format("* %-70s%s\n", getClearName("exit"), "Close the console"));
+    message("* %-70s%s\n", getClearName("help"), "Print this help");
+    message("* %-70s%s\n", getClearName("exit"), "Close the console");
 
   }
 
@@ -479,5 +478,23 @@ public class OConsoleApplication {
 
   protected void onException(Throwable throwable) {
     throwable.printStackTrace();
+  }
+
+  public void message(final String iMessage, final Object... iArgs) {
+    final int verboseLevel = getVerboseLevel();
+    if (verboseLevel > 1)
+      out.printf(iMessage, iArgs);
+  }
+
+  public void error(final String iMessage, final Object... iArgs) {
+    final int verboseLevel = getVerboseLevel();
+    if (verboseLevel > 0)
+      out.printf(iMessage, iArgs);
+  }
+
+  public int getVerboseLevel() {
+    final String v = properties.get("verbose");
+    final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
+    return verboseLevel;
   }
 }

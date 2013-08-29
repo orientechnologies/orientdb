@@ -39,8 +39,8 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
   public OAlignResponseTask() {
   }
 
-  public OAlignResponseTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final int iAligned) {
+  public OAlignResponseTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final EXECUTION_MODE iMode, final int iAligned) {
     super(iServer, iDistributedSrvMgr, iDbName, iMode);
     aligned = iAligned;
   }
@@ -51,14 +51,14 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
 
     if (aligned == -1) {
       // ALIGNMENT POSTPONED
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "alignment postponed for db '%s'", databaseName);
+      ODistributedServerLog.info(this, dManager.getLocalNodeId(), getNodeSource(), DIRECTION.IN, "alignment postponed for db '%s'",
+          databaseName);
 
       dManager.postponeAlignment(getNodeSource(), databaseName);
 
     } else {
       // ALIGNMENT DONE
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+      ODistributedServerLog.info(this, dManager.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
           "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
 
       dManager.endAlignment(getNodeSource(), databaseName);

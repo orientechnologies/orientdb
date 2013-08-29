@@ -114,9 +114,11 @@ public class OGraphDatabasePooled extends OGraphDatabase implements ODatabasePoo
 
     getLevel1Cache().clear();
 
-    final OGraphDatabasePool pool = ownerPool;
-    ownerPool = null;
-    pool.release(this);
+    if (ownerPool != null) {
+      final OGraphDatabasePool pool = ownerPool;
+      ownerPool = null;
+      pool.release(this);
+    }
   }
 
   public void forceClose() {

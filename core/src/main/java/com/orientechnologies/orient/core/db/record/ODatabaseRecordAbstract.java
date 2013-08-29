@@ -731,6 +731,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
+    iRecord.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
       final boolean wasNew = iForceCreate || rid.isNew();
       if (wasNew && rid.clusterId == -1 && iClusterName != null)
@@ -759,15 +760,21 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (wasNew) {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED)
+            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED) {
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              iRecord.unsetDirty();
+              iRecord.setDirty();
               stream = iRecord.toStream();
+            }
           } else {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED)
+            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED) {
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              iRecord.unsetDirty();
+              iRecord.setDirty();
               stream = iRecord.toStream();
+            }
           }
       }
 
@@ -823,6 +830,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } catch (Throwable t) {
       // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on saving record in cluster #" + iRecord.getIdentity().getClusterId(), t);
+    } finally {
+      iRecord.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
     }
     return (RET) iRecord;
   }
