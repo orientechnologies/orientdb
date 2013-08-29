@@ -23,6 +23,8 @@ import java.util.Set;
 
 import javassist.util.proxy.Proxy;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -179,56 +181,33 @@ public class OSchemaProxyObject implements OSchema {
     return underlying;
   }
 
-  public synchronized void synchronizeSchema() {
-    OObjectDatabaseTx database = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
-    Collection<Class<?>> registeredEntities = database.getEntityManager().getRegisteredEntities();
-    boolean automaticSchemaGeneration = database.isAutomaticSchemaGeneration();
-    boolean reloadSchema = false;
-    for (Class<?> iClass : registeredEntities) {
-      if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
-          || iClass.isAnonymousClass())
-        return;
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized void generateSchema(final String iPackageName) {
+    generateSchema(iPackageName, Thread.currentThread().getContextClassLoader());
+  }
 
-      if (!database.getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
-        database.getMetadata().getSchema().createClass(iClass.getSimpleName());
-        reloadSchema = true;
-      }
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized void generateSchema(final String iPackageName, final ClassLoader iClassLoader) {
+    OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
 
-      for (Class<?> currentClass = iClass; currentClass != Object.class;) {
-
-        if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
-          ((OSchemaProxyObject) database.getMetadata().getSchema()).generateSchema(currentClass, database.getUnderlying());
-        }
-        String iClassName = currentClass.getSimpleName();
-        currentClass = currentClass.getSuperclass();
-
-        if (currentClass == null || currentClass.equals(ODocument.class))
-          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
-          // ODOCUMENT FIELDS
-          currentClass = Object.class;
-
-        if (database != null && !database.isClosed() && !currentClass.equals(Object.class)) {
-          OClass oSuperClass;
-          OClass currentOClass = database.getMetadata().getSchema().getClass(iClassName);
-          if (!database.getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
-            oSuperClass = database.getMetadata().getSchema().createClass(currentClass.getSimpleName());
-            reloadSchema = true;
-          } else {
-            oSuperClass = database.getMetadata().getSchema().getClass(currentClass.getSimpleName());
-            reloadSchema = true;
-          }
-
-          if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
-            currentOClass.setSuperClass(oSuperClass);
-            reloadSchema = true;
-          }
-
-        }
-      }
+    List<Class<?>> classes = null;
+    try {
+      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+    } catch (ClassNotFoundException e) {
+      throw new OException(e);
     }
-    if (database != null && !database.isClosed() && reloadSchema) {
-      database.getMetadata().getSchema().save();
-      database.getMetadata().getSchema().reload();
+    for (Class<?> c : classes) {
+      generateSchema(c);
     }
   }
 
@@ -320,6 +299,62 @@ public class OSchemaProxyObject implements OSchema {
         schema.createProperty(field, t);
         break;
       }
+    }
+  }
+
+  /**
+   * Checks if all registered entities has schema generated, if not it generates it
+   */
+  public synchronized void synchronizeSchema() {
+    OObjectDatabaseTx database = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+    Collection<Class<?>> registeredEntities = database.getEntityManager().getRegisteredEntities();
+    boolean automaticSchemaGeneration = database.isAutomaticSchemaGeneration();
+    boolean reloadSchema = false;
+    for (Class<?> iClass : registeredEntities) {
+      if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
+          || iClass.isAnonymousClass())
+        return;
+
+      if (!database.getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
+        database.getMetadata().getSchema().createClass(iClass.getSimpleName());
+        reloadSchema = true;
+      }
+
+      for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+
+        if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
+          ((OSchemaProxyObject) database.getMetadata().getSchema()).generateSchema(currentClass, database.getUnderlying());
+        }
+        String iClassName = currentClass.getSimpleName();
+        currentClass = currentClass.getSuperclass();
+
+        if (currentClass == null || currentClass.equals(ODocument.class))
+          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+          // ODOCUMENT FIELDS
+          currentClass = Object.class;
+
+        if (database != null && !database.isClosed() && !currentClass.equals(Object.class)) {
+          OClass oSuperClass;
+          OClass currentOClass = database.getMetadata().getSchema().getClass(iClassName);
+          if (!database.getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
+            oSuperClass = database.getMetadata().getSchema().createClass(currentClass.getSimpleName());
+            reloadSchema = true;
+          } else {
+            oSuperClass = database.getMetadata().getSchema().getClass(currentClass.getSimpleName());
+            reloadSchema = true;
+          }
+
+          if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
+            currentOClass.setSuperClass(oSuperClass);
+            reloadSchema = true;
+          }
+
+        }
+      }
+    }
+    if (database != null && !database.isClosed() && reloadSchema) {
+      database.getMetadata().getSchema().save();
+      database.getMetadata().getSchema().reload();
     }
   }
 

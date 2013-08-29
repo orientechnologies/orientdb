@@ -501,43 +501,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return this;
   }
 
-  public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
-    ((OSchemaProxyObject) getMetadata().getSchema()).generateSchema(iClass, underlying);
-    return this;
-  }
-
-  /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
-   */
-  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName) {
-    return generateSchema(iPackageName, Thread.currentThread().getContextClassLoader());
-  }
-
-  /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
-   */
-  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
-
-    List<Class<?>> classes = null;
-    try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
-    } catch (ClassNotFoundException e) {
-      throw new OException(e);
-    }
-    for (Class<?> c : classes) {
-      generateSchema(c);
-    }
-
-    return this;
-  }
-
   private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
     checkOpeness();
 
