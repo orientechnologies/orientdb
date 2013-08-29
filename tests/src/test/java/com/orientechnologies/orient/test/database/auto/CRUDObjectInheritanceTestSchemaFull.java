@@ -128,7 +128,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
   @Test
   public void create() {
     database.open("admin", "admin");
-    database.synchronizeSchema();
+    database.getMetadata().getSchema().synchronizeSchema();
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     if (url.startsWith(OEngineRemote.NAME)) {
@@ -290,7 +290,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
   public void testSchemaGeneration() {
     database.open("admin", "admin");
 
-    database.generateSchema("com.orientechnologies.orient.test.domain.base");
+    database.getMetadata().getSchema().generateSchema("com.orientechnologies.orient.test.domain.base");
     if (url.startsWith(OEngineRemote.NAME)) {
       database.getMetadata().reload();
     }
@@ -364,9 +364,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
   public void testMultipleSchemaGeneration() {
     database.open("admin", "admin");
     try {
-      database.generateSchema(Musician.class);
-      database.generateSchema(JavaTestSchemaGeneration.class);
-      database.generateSchema(TestSchemaGenerationChild.class);
+      database.getMetadata().getSchema().generateSchema(Musician.class);
+      database.getMetadata().getSchema().generateSchema(JavaTestSchemaGeneration.class);
+      database.getMetadata().getSchema().generateSchema(TestSchemaGenerationChild.class);
       if (url.startsWith(OEngineRemote.NAME)) {
         database.getMetadata().reload();
       }
