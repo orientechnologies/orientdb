@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.entity;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -177,6 +178,10 @@ public class OEntityManager {
       iClassHandler.registerEntityClass(entry.getValue());
     }
     this.classHandler = iClassHandler;
+  }
+
+  public synchronized Collection<Class<?>> getRegisteredEntities() {
+    return classHandler.getRegisteredEntities();
   }
 
   protected Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,
