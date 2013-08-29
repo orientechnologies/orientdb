@@ -68,6 +68,9 @@ public class JavaComplexTestClass {
   @Embedded
   private Map<String, Child>        embeddedChildren   = new HashMap<String, Child>();
 
+  @Embedded
+  private Map<String, Object>       embeddedObjectMap  = new HashMap<String, Object>();
+
   public String getName() {
     return name;
   }
@@ -242,5 +245,13 @@ public class JavaComplexTestClass {
 
   public void setDuplicationTestSet(Set<IdentityChild> duplicationTestSet) {
     this.duplicationTestSet = duplicationTestSet;
+  }
+
+  public Map<String, Object> getEmbeddedObjectMap() {
+    return embeddedObjectMap;
+  }
+
+  public void setEmbeddedObjectMap(Map<String, Object> embeddedObjectMap) {
+    this.embeddedObjectMap = embeddedObjectMap;
   }
 }
