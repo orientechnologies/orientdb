@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -114,14 +113,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public OMetadata getMetadata() {
+  public OMetadataObject getMetadata() {
     checkOpeness();
     return metadata;
-  }
-
-  public void synchronizeSchema() {
-    checkOpeness();
-    ((OSchemaProxyObject) metadata.getSchema()).synchronizeSchema();
   }
 
   /**

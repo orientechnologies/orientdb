@@ -56,7 +56,7 @@ public class OMetadataObject implements OMetadata {
   }
 
   @Override
-  public OSchema getSchema() {
+  public OSchemaProxyObject getSchema() {
     if (schema == null)
       schema = new OSchemaProxyObject(underlying.getSchema());
     return schema;
