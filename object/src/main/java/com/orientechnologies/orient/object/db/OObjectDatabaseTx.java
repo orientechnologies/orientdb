@@ -60,10 +60,10 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
-import com.orientechnologies.orient.object.enhancement.OObjectSchemaGenerator;
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.object.metadata.schema.OObjectSchemaProxy;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
@@ -493,7 +493,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
-    OObjectSchemaGenerator.generateSchema(iClass, underlying);
+    ((OObjectSchemaProxy) getMetadata().getSchema()).generateSchema(iClass, underlying);
     return this;
   }
 

@@ -128,7 +128,6 @@ public class CRUDObjectInheritanceTestSchemaFull {
   @Test
   public void create() {
     database.open("admin", "admin");
-    database.getEntityManager().deregisterEntityClasses("com.orientechnologies.orient.test.domain");
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     if (url.startsWith(OEngineRemote.NAME)) {

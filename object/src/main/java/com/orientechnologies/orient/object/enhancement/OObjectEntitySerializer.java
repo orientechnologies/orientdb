@@ -76,6 +76,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
+import com.orientechnologies.orient.object.metadata.schema.OObjectSchemaProxy;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
@@ -86,7 +87,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 public class OObjectEntitySerializer {
 
   private static final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
-  static final HashMap<Class<?>, List<String>>                 allFields           = new HashMap<Class<?>, List<String>>();
+  private static final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         embeddedFields      = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         directAccessFields  = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
@@ -549,7 +550,8 @@ public class OObjectEntitySerializer {
       }
 
       if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
-        OObjectSchemaGenerator.generateSchema(currentClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+        ((OObjectSchemaProxy) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema()).generateSchema(currentClass,
+            ODatabaseRecordThreadLocal.INSTANCE.get());
       }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
@@ -716,6 +718,10 @@ public class OObjectEntitySerializer {
       }
     }
     return iFieldValue;
+  }
+
+  public static List<String> getClassFields(final Class<?> iClass) {
+    return allFields.get(iClass);
   }
 
   public static boolean hasBoundedDocumentField(final Class<?> iClass) {
@@ -885,7 +891,7 @@ public class OObjectEntitySerializer {
     return getTypeByClass(iClass, fieldName, f);
   }
 
-  protected static OType getTypeByClass(final Class<?> iClass, final String fieldName, Field f) {
+  public static OType getTypeByClass(final Class<?> iClass, final String fieldName, Field f) {
     if (f == null)
       return null;
     if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
