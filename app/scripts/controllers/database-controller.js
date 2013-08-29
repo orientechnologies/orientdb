@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 var dbModule = angular.module('database.controller', ['database.services']);
 dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, Spinner) {
+=======
+var dbModule = angular.module('database.controller',['database.services']);
+dbModule.controller("BrowseController",['$scope','$routeParams','$location','Database','CommandApi','Spinner','ngTableParams',function($scope,$routeParams,$location,Database,CommandApi,Spinner,ngTableParams){
+>>>>>>> 58548cd2e7c273acb91ad28e11ac4fd270918b75
 
     $scope.database = Database;
     $scope.limit = 20;
@@ -16,21 +21,38 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             }
         }
     };
-    $scope.query = function () {
+
+
+	$scope.query = function(){
         Spinner.loading = true;
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: $scope.queryText, limit: $scope.limit}, function (data) {
-            if (data.result) {
-                $scope.headers = Database.getPropertyTableFromResults(data.result);
-                        $scope.results = data.result;
-            }
-            if ($scope.queries.indexOf($scope.queryText) == -1)
-                $scope.queries.push($scope.queryText);
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit},function(data){
+			if(data.result){
+				$scope.headers = Database.getPropertyTableFromResults(data.result);
+                $scope.resultTotal = data.result;
+				$scope.results = data.result.slice(0,10);
+                $scope.currentPage = 1;
+                $scope.countPage = 10;
+                $scope.numberOfPage = new Array( Math.round(data.result.length / 10));
+
+			}
+			if($scope.queries.indexOf($scope.queryText)==-1)
+				$scope.queries.push($scope.queryText);
             Spinner.loading = false;
-        });
+		});
+	}
+    $scope.switchPage= function(index){
+        if(index != $scope.currentPage){
+        $scope.currentPage = index;
+        $scope.results = $scope.resultTotal.slice(
+            (index - 1) * $scope.countPage,
+            index * $scope.countPage
+        );
+        }
     }
-    $scope.openRecord = function (doc) {
-        $location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#', ''));
-    }
+	$scope.openRecord = function(doc){
+		$location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#',''));
+	}
+>>>>>>> 58548cd2e7c273acb91ad28e11ac4fd270918b75
 
     if ($routeParams.query) {
         $scope.queryText = $routeParams.query;

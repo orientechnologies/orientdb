@@ -10,6 +10,18 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
         formScope.headers = scope.headers;
         formScope.deleteField = scope.deleteField;
         formScope.options = new Array;
+        formScope.editorOptions = {
+            lineWrapping : true,
+            lineNumbers: true,
+            readOnly: false,
+            mode: 'application/json',
+            onChange : function(_editor) {
+                console.log(_editor);
+            }
+        };
+        formScope.onLoadEditor = function(_editor){
+            console.log(_editor);
+        }
         formScope.getTemplate = function (header) {
             if (formScope.doc['@class']) {
                 var type = findType(formScope,header)
@@ -27,6 +39,9 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
             } else {
                 return "STRING";
             }
+        }
+        formScope.requiredString = function (header){
+            return formScope.isRequired(header) ? "*" : "";
         }
         formScope.isRequired = function (header) {
 
@@ -106,6 +121,84 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
 });
 
 Widget.directive('jsontext', function() {
+
+    var formatter = (function () {
+
+        function repeat(s, count) {
+            return new Array(count + 1).join(s);
+        }
+
+        function formatJson(json, indentChars) {
+            var i           = 0,
+                il          = 0,
+                tab         = (typeof indentChars !== "undefined") ? indentChars : "    ",
+                newJson     = "",
+                indentLevel = 0,
+                inString    = false,
+                currentChar = null;
+
+            for (i = 0, il = json.length; i < il; i += 1) {
+                currentChar = json.charAt(i);
+
+                switch (currentChar) {
+                    case '{':
+                    case '[':
+                        if (!inString) {
+                            newJson += currentChar + "\n" + repeat(tab, indentLevel + 1);
+                            indentLevel += 1;
+                        } else {
+                            newJson += currentChar;
+                        }
+                        break;
+                    case '}':
+                    case ']':
+                        if (!inString) {
+                            indentLevel -= 1;
+                            newJson += "\n" + repeat(tab, indentLevel) + currentChar;
+                        } else {
+                            newJson += currentChar;
+                        }
+                        break;
+                    case ',':
+                        if (!inString) {
+                            newJson += ",\n" + repeat(tab, indentLevel);
+                        } else {
+                            newJson += currentChar;
+                        }
+                        break;
+                    case ':':
+                        if (!inString) {
+                            newJson += ": ";
+                        } else {
+                            newJson += currentChar;
+                        }
+                        break;
+                    case ' ':
+                    case "\n":
+                    case "\t":
+                        if (inString) {
+                            newJson += currentChar;
+                        }
+                        break;
+                    case '"':
+                        if (i > 0 && json.charAt(i - 1) !== '\\') {
+                            inString = !inString;
+                        }
+                        newJson += currentChar;
+                        break;
+                    default:
+                        newJson += currentChar;
+                        break;
+                }
+            }
+
+            return newJson;
+        }
+
+        return { "formatJson": formatJson };
+
+    }());
+
     return {
         restrict: 'A',
         require: 'ngModel',
@@ -114,7 +207,8 @@ Widget.directive('jsontext', function() {
                 return JSON.parse(input);
             }
             function out(data) {
-                return JSON.stringify(data);
+                var string =  JSON.stringify(data);
+                return formatter.formatJson(string);
             }
             ngModel.$parsers.push(into);
             ngModel.$formatters.push(out);

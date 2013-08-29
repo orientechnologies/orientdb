@@ -25,7 +25,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 	$scope.showModalConnection = function(label) {
 		var modalScope = $scope.$new(true);	
 		modalScope.db = $scope.database;
-		modalScope.originRid = rid;
+		modalScope.originRid = $scope.rid;
 		modalScope.container = $scope;	
 		modalScope.label = label
 		var modalPromise = $modal({template: '/views/vertex/modalConnection.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'createEdge'});
@@ -38,8 +38,8 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 	}else {
 		$scope.headers = Database.getPropertyFromDoc($scope.doc);
 		$scope.isGraph = Database.isGraph($scope.doc['@class']);
-		$scope.incomings = Database.getEdge($scope.doc,'in');
-		$scope.outgoings = Database.getEdge($scope.doc,'out');
+		$scope.incomings = Database.getEdge($scope.doc,'in_');
+		$scope.outgoings = Database.getEdge($scope.doc,'out_');
 		$scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
 	}
 	
@@ -68,6 +68,21 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 		}
 
 	}
+    $scope.follow= function(rid) {
+        var edgeDoc = DocumentApi.get({ database : $scope.database , document : rid},function(){
+            if(Database.isEdge(edgeDoc['@class'])){
+                $scope.showModal(rid);
+            }
+            else {
+                $scope.navigate(rid);
+            }
+
+        }, function(error){
+            Notification.push({content : JSON.stringify(error)});
+            $location.path('/404');
+        });
+
+    }
 	$scope.deleteLink = function(group,edge) {
 		
 		Utilities.confirm($scope,$dialog,{
@@ -81,9 +96,9 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 					}
 					else {
 						if(group.contains('in_')){
-							command = "DELETE EDGE FROM " + edge + " TO " + rid;
+							command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid;
 						}else {
-							command = "DELETE EDGE FROM " + rid + " TO " + edge;
+							command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge;
 						}
 					}
 					CommandApi.queryText({database : $scope.database, language : 'sql', text : command},function(data){
@@ -171,7 +186,7 @@ GrapgController.controller("VertexModalBrowseController",['$scope','$routeParams
 		}
 	};
 	$scope.query = function(){
-		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit},function(data){
+		CommandApi.queryText({database : $routeParams.database, language : 'sql', text : $scope.queryText, limit : $scope.limit, verbose : false },function(data){
 			if(data.result){
 				$scope.headers = Database.getPropertyTableFromResults(data.result);
 				$scope.results = data.result;
