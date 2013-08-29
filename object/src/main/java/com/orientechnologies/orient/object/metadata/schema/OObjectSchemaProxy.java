@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javassist.util.proxy.Proxy;
+
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -32,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 /**
@@ -170,6 +173,73 @@ public class OObjectSchemaProxy implements OSchema {
   @Override
   public Set<OClass> getClassesRelyOnCluster(String iClusterName) {
     return underlying.getClassesRelyOnCluster(iClusterName);
+  }
+
+  public OSchema getUnderlying() {
+    return underlying;
+  }
+
+  public synchronized void synchronizeSchema() {
+    OObjectDatabaseTx database = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+    Collection<Class<?>> registeredEntities = database.getEntityManager().getRegisteredEntities();
+    boolean automaticSchemaGeneration = database.isAutomaticSchemaGeneration();
+    boolean reloadSchema = false;
+    for (Class<?> iClass : registeredEntities) {
+      if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
+          || iClass.isAnonymousClass())
+        return;
+
+      if (!database.getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
+        database.getMetadata().getSchema().createClass(iClass.getSimpleName());
+        reloadSchema = true;
+      }
+
+      for (Class<?> currentClass = iClass; currentClass != Object.class;) {
+
+        if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
+          ((OObjectSchemaProxy) database.getMetadata().getSchema()).generateSchema(currentClass, database.getUnderlying());
+        }
+        String iClassName = currentClass.getSimpleName();
+        currentClass = currentClass.getSuperclass();
+
+        if (currentClass == null || currentClass.equals(ODocument.class))
+          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+          // ODOCUMENT FIELDS
+          currentClass = Object.class;
+
+        if (database != null && !database.isClosed() && !currentClass.equals(Object.class)) {
+          OClass oSuperClass;
+          OClass currentOClass = database.getMetadata().getSchema().getClass(iClassName);
+          if (!database.getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
+            oSuperClass = database.getMetadata().getSchema().createClass(currentClass.getSimpleName());
+            reloadSchema = true;
+          } else {
+            oSuperClass = database.getMetadata().getSchema().getClass(currentClass.getSimpleName());
+            reloadSchema = true;
+          }
+
+          if (currentOClass.getSuperClass() == null || !currentOClass.getSuperClass().equals(oSuperClass)) {
+            currentOClass.setSuperClass(oSuperClass);
+            reloadSchema = true;
+          }
+
+        }
+      }
+    }
+    if (database != null && !database.isClosed() && reloadSchema) {
+      database.getMetadata().getSchema().save();
+      database.getMetadata().getSchema().reload();
+    }
+  }
+
+  /**
+   * Generate/updates the SchemaClass and properties from given Class<?>.
+   * 
+   * @param iClass
+   *          :- the Class<?> to generate
+   */
+  public synchronized void generateSchema(final Class<?> iClass) {
+    generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
   }
 
   /**

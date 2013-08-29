@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -295,27 +295,27 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
             ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
             try {
               // DROP AND RE-CREATE 'INDEX' DATA-SEGMENT AND CLUSTER IF ANY
-              final int dataId = newDb.getStorage().getDataSegmentIdByName(OMetadata.DATASEGMENT_INDEX_NAME);
+              final int dataId = newDb.getStorage().getDataSegmentIdByName(OMetadataDefault.DATASEGMENT_INDEX_NAME);
               if (dataId > -1)
-                newDb.getStorage().dropDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
+                newDb.getStorage().dropDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
-              final int clusterId = newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
+              final int clusterId = newDb.getStorage().getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
               if (clusterId > -1)
                 newDb.dropCluster(clusterId, false);
 
-              newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
-              newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadata.CLUSTER_INDEX_NAME, null,
-                  OMetadata.DATASEGMENT_INDEX_NAME, true);
+              newDb.addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME, null);
+              newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadataDefault.CLUSTER_INDEX_NAME, null,
+                  OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
             } catch (IllegalArgumentException ex) {
               // OLD DATABASE: CREATE SEPARATE DATASEGMENT AND LET THE INDEX CLUSTER TO POINT TO IT
               OLogManager.instance().info(this, "Creating 'index' data-segment to store all the index content...");
 
-              newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
+              newDb.addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME, null);
               final OCluster indexCluster = newDb.getStorage().getClusterById(
-                  newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME));
+                  newDb.getStorage().getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME));
               try {
-                indexCluster.set(ATTRIBUTES.DATASEGMENT, OMetadata.DATASEGMENT_INDEX_NAME);
+                indexCluster.set(ATTRIBUTES.DATASEGMENT, OMetadataDefault.DATASEGMENT_INDEX_NAME);
                 OLogManager.instance().info(this,
                     "Data-segment 'index' create correctly. Indexes will store content into this data-segment");
               } catch (IOException e) {
@@ -449,7 +449,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     OStorage storage = database.getStorage();
 
     if (storage instanceof OStorageLocal)
-      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
+      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadataDefault.CLUSTER_INDEX_NAME);
     else if (storage instanceof OLocalPaginatedStorage) {
       return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
     }

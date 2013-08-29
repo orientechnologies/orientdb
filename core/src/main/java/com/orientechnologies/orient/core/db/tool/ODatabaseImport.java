@@ -48,7 +48,7 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -591,8 +591,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       if (name != null
-          && !(name.equalsIgnoreCase(OMetadata.CLUSTER_MANUAL_INDEX_NAME) || name.equalsIgnoreCase(OMetadata.CLUSTER_INTERNAL_NAME) || name
-              .equalsIgnoreCase(OMetadata.CLUSTER_INDEX_NAME)))
+          && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
+              .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME)))
         database.getStorage().getClusterById(clusterId).truncate();
 
       listener.onMessage("OK, assigned id=" + clusterId);
@@ -604,7 +604,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
     if (recreateManualIndex) {
-      database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null);
+      database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null);
       database.getMetadata().getIndexManager().create();
 
       listener.onMessage("\nManual index cluster was recreated.");
@@ -614,7 +614,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     if (database.load(new ORecordId(database.getStorage().getConfiguration().indexMgrRecordId)) == null) {
       ODocument indexDocument = new ODocument();
-      indexDocument.save(OMetadata.CLUSTER_INTERNAL_NAME);
+      indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
 
       database.getStorage().getConfiguration().indexMgrRecordId = indexDocument.getIdentity().toString();
       database.getStorage().getConfiguration().update();
@@ -632,7 +632,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     // In v4 new cluster for manual indexes has been implemented. To keep database consistent we should shift back
     // all clusters and recreate cluster for manual indexes in the end.
-    database.dropCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME, true);
+    database.dropCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, true);
 
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.existsClass(OUser.CLASS_NAME))
@@ -737,16 +737,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (exporterVersion >= 3) {
         int oridsId = database.getClusterIdByName(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
-        int indexId = database.getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
+        int indexId = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
 
         if (record.getIdentity().getClusterId() == indexId || record.getIdentity().getClusterId() == oridsId)
           // JUMP INDEX RECORDS
           return null;
       }
 
-      final int manualIndexCluster = database.getClusterIdByName(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
-      final int internalCluster = database.getClusterIdByName(OMetadata.CLUSTER_INTERNAL_NAME);
-      final int indexCluster = database.getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
+      final int manualIndexCluster = database.getClusterIdByName(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+      final int internalCluster = database.getClusterIdByName(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      final int indexCluster = database.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
 
       if (exporterVersion >= 4) {
         if (record.getIdentity().getClusterId() == manualIndexCluster)
@@ -893,8 +893,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     Collection<String> clusterNames = database.getClusterNames();
     for (String clusterName : clusterNames) {
-      if (OMetadata.CLUSTER_INDEX_NAME.equals(clusterName) || OMetadata.CLUSTER_INTERNAL_NAME.equals(clusterName)
-          || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(clusterName))
+      if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(clusterName) || OMetadataDefault.CLUSTER_INTERNAL_NAME.equals(clusterName)
+          || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(clusterName))
         continue;
 
       long documents = 0;

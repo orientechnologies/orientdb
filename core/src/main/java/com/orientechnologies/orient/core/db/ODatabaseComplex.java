@@ -81,7 +81,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * Set user for current database instance
    */
   public void setUser(OUser user);
-   
+
   /**
    * Loads the entity and return it.
    * 

@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -63,6 +64,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.object.metadata.OObjectMetadata;
 import com.orientechnologies.orient.object.metadata.schema.OObjectSchemaProxy;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
@@ -82,6 +84,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   protected boolean             saveOnlyDirty;
   protected boolean             lazyLoading;
   protected boolean             automaticSchemaGeneration;
+  protected OObjectMetadata     metadata;
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
@@ -106,7 +109,19 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     super.open(iUserName, iUserPassword);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
+    metadata = new OObjectMetadata(underlying.getMetadata());
     return (THISDB) this;
+  }
+
+  @Override
+  public OMetadata getMetadata() {
+    checkOpeness();
+    return metadata;
+  }
+
+  public void synchronizeSchema() {
+    checkOpeness();
+    ((OObjectSchemaProxy) metadata.getSchema()).synchronizeSchema();
   }
 
   /**

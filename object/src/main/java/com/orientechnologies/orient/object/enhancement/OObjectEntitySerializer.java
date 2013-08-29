@@ -550,8 +550,8 @@ public class OObjectEntitySerializer {
       }
 
       if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
-        ((OObjectSchemaProxy) ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema()).generateSchema(currentClass,
-            ODatabaseRecordThreadLocal.INSTANCE.get());
+        ((OObjectSchemaProxy) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner().getMetadata().getSchema())
+            .generateSchema(currentClass, ODatabaseRecordThreadLocal.INSTANCE.get());
       }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
@@ -945,6 +945,24 @@ public class OObjectEntitySerializer {
     return getField(fieldName, iClass.getSuperclass());
   }
 
+  @SuppressWarnings("unchecked")
+  public static <T> T getNonProxiedInstance(T iObject) {
+    try {
+      return (T) iObject.getClass().getSuperclass().newInstance();
+    } catch (InstantiationException ie) {
+      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+    } catch (IllegalAccessException ie) {
+      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+    }
+    return null;
+  }
+
+  public static void synchronizeSchema() {
+    for (Class<?> clazz : classes) {
+      registerClass(clazz);
+    }
+  }
+
   /**
    * Serialize the user POJO to a ORecordDocument instance.
    * 
@@ -1257,18 +1275,6 @@ public class OObjectEntitySerializer {
     }
 
     return result;
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> T getNonProxiedInstance(T iObject) {
-    try {
-      return (T) iObject.getClass().getSuperclass().newInstance();
-    } catch (InstantiationException ie) {
-      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
-    } catch (IllegalAccessException ie) {
-      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
-    }
-    return null;
   }
 
   private static boolean isEmbeddedObject(Field f) {
