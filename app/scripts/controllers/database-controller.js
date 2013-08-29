@@ -52,7 +52,6 @@ dbModule.controller("BrowseController",['$scope','$routeParams','$location','Dat
 	$scope.openRecord = function(doc){
 		$location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#',''));
 	}
->>>>>>> 58548cd2e7c273acb91ad28e11ac4fd270918b75
 
     if ($routeParams.query) {
         $scope.queryText = $routeParams.query;
