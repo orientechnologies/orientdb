@@ -183,7 +183,7 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
 }]);
 
 
-function BaseEditController($scope, $routeParams, $location, $modal, $dialog, $q, DocumentApi, Database, Notification, CommandApi) {
+function BaseEditController($scope, $routeParams,$route, $location, $modal, $dialog, $q, DocumentApi, Database, Notification, CommandApi) {
     $scope.database = $routeParams.database;
     $scope.rid = $routeParams.rid;
     $scope.label = 'Document';
@@ -191,10 +191,9 @@ function BaseEditController($scope, $routeParams, $location, $modal, $dialog, $q
 
     $scope.save = function () {
         if (!$scope.isNew) {
-            delete $scope.doc['@fieldTypes'];
             DocumentApi.updateDocument($scope.database, $scope.rid, $scope.doc, function (data) {
                 Notification.push({content: data});
-                $scope.reload();
+                $route.reload();
             });
         } else {
             DocumentApi.createDocument($scope.database, $scope.doc['@rid'], $scope.doc, function (data) {
@@ -258,6 +257,9 @@ function BaseEditController($scope, $routeParams, $location, $modal, $dialog, $q
             var types = $scope.doc['@fieldTypes'];
             if (type == 'BOOLEAN') {
                 $scope.doc[name] = false;
+            }
+            if (type == 'INTEGER') {
+                $scope.doc[name] = 0;
             }
             if (Database.getMappingFor(type)) {
                 if (types) {

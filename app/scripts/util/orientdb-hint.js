@@ -12,8 +12,8 @@
     }
     var Pos = CodeMirror.Pos;
 
-    function forEach(arr, f) {
-        for (var i = 0, e = arr.length; i < e; ++i) f(arr[i]);
+    function forEach(arr, f,render) {
+        for (var i = 0, e = arr.length; i < e; ++i) f(arr[i],render);
     }
 
     function arrayContains(arr, item) {
@@ -29,22 +29,19 @@
         return arr.indexOf(item) != -1;
     }
 
-    function scriptHint(editor, keywords,props, getToken, options) {
+    function scriptHint(editor, keywords, getToken, options) {
         // Find the token at the cursor
         var cur = editor.getCursor(), token = getToken(editor, cur), tprop = token;
         token.state = CodeMirror.innerMode(editor.getMode(), token.state).state;
         var context = undefined;
-        return {list: getCompletions(token, context, keywords,props, options),
+        return {list: getCompletions(editor,token, context, keywords, options),
             from: Pos(cur.line, token.start),
             to: Pos(cur.line, token.end)};
     }
 
     function sqlHint(editor, options) {
         console.log("HINT");
-        var props = editor.getOption('metadata').listNameOfClasses();
-
-        props = props.concat(editor.getOption('metadata').listNameOfProperties());
-        return scriptHint(editor, sqlKeywords,props,
+        return scriptHint(editor, sqlKeywords,
             function (e, cur) {
                 return e.getTokenAt(cur);
             },
@@ -58,24 +55,51 @@
     var arrayProps = ("length concat join splice push pop shift unshift slice reverse sort indexOf " +
         "lastIndexOf every some filter forEach map reduce reduceRight ").split(" ");
     var funcProps = "prototype apply call bind".split(" ");
-    var sqlKeywords = ("and select from where in delete create alter delete insert vertex edge " +
+    var sqlKeywords = ("and select from where in delete create alter delete insert vertex edge" +
         "grant revoke drop rebuild index truncate property traverse explain between contains").split(" ");
 
 
-    function getCompletions(token, context, keywords,props, options) {
+    function getCompletions(editor,token, context, keywords, options) {
         var found = [], start = token.string.trim();
-
-        function maybeAdd(str) {
-            if (str.toLowerCase().indexOf(start.toLowerCase()) == 0 && !arrayContains(found, str)) found.push(str);
+        function maybeAdd(str,render) {
+            var obj = {};
+            obj.displayText  = str;
+            obj.text  = str;
+            obj.render = render;
+            if (str.toLowerCase().indexOf(start.toLowerCase()) == 0 && !arrayContains(found, obj)) found.push(obj);
         }
 
         // If not, just look in the window object and any local scope
         // (reading into JS mode internals to get at the local and global variables)
-
-        forEach(keywords, maybeAdd);
-        forEach(props, maybeAdd);
-        found.sort();
+        var classes = editor.getOption('metadata').listNameOfClasses();
+        var props = editor.getOption('metadata').listNameOfProperties();
+        forEach(keywords, maybeAdd,renderKeyword);
+        forEach(classes, maybeAdd,renderClass);
+        forEach(props, maybeAdd,renderField);
+        found.sort(function(a,b){
+            if(a.text.toLowerCase() < b.text.toLowerCase()) return -1;
+            if(a.text.toLowerCase() > b.text.toLowerCase()) return 1;
+            return 0;
+        });
         return found;
+    }
+    function renderKeyword(etl,data,cur){
+        etl.appendChild(createLabel("(K)  "));
+        etl.appendChild(document.createTextNode(cur.text));
+
+    }
+    function createLabel(label){
+        var italic = document.createElement('i');
+        italic.innerHTML = label;
+        return italic;
+    }
+    function renderClass(etl,data,cur){
+        etl.appendChild(createLabel("(C)  "));
+        etl.appendChild(document.createTextNode(cur.text));
+    }
+    function renderField(etl,data,cur){
+        etl.appendChild(createLabel("(F)  "));
+        etl.appendChild(document.createTextNode(cur.text));
     }
 })();
 

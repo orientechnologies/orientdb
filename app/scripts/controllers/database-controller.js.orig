@@ -1,5 +1,9 @@
 var dbModule = angular.module('database.controller', ['database.services']);
+<<<<<<< HEAD
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'ngTableParams', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, ngTableParams) {
+=======
 dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, Spinner) {
+>>>>>>> 93008909ab31b713764e37f1ee2a3210063beab3
 
     $scope.database = Database;
     $scope.limit = 20;
@@ -14,6 +18,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         extraKeys: {
             "Ctrl-Enter": function (instance) {
                 $scope.query()
+<<<<<<< HEAD
             },
             "Ctrl-Space": "autocomplete"
 
@@ -21,6 +26,14 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     };
 
     $scope.query = function () {
+=======
+            }
+        }
+    };
+
+
+	$scope.query = function(){
+>>>>>>> 93008909ab31b713764e37f1ee2a3210063beab3
         Spinner.loading = true;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: $scope.queryText, limit: $scope.limit}, function (data) {
             if (data.result) {
