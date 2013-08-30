@@ -228,4 +228,9 @@ form .required label:after {
     position: relative;
 }
 
+a > i {
+    vertical-align: middle !important;
+    margin-top: 0px !important;
+}
+
 

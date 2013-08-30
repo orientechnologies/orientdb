@@ -1,12 +1,13 @@
 var Widget = angular.module('rendering', []);
 
 
-Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
+Widget.directive('docwidget', function ($compile, $http, Database,CommandApi,DocumentApi) {
 
 
     var compileForm = function (response, scope, element, attrs) {
         var formScope = scope.$new(true);
         formScope.doc = scope.doc;
+        formScope.database = scope.database;
         formScope.headers = scope.headers;
         formScope.deleteField = scope.deleteField;
         formScope.options = new Array;
@@ -63,7 +64,20 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi) {
         formScope.$watch('formID.$valid', function (validity) {
             scope.docValid = validity;
         });
+        formScope.handleFile = function(header,files){
 
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                object = {};
+                object.filename = files[0].name;
+                object.data = event.target.result;
+                var blobInput = [event.target.result];
+                var blob = new Blob(blobInput);
+                formScope.doc[header] =  "$file";
+                DocumentApi.uploadFileDocument(formScope.database,formScope.doc,blob,files[0].name);
+            };
+            reader.readAsDataURL(files[0]);
+        }
         var el = angular.element($compile(response.data)(formScope));
         element.empty();
         element.append(el);
