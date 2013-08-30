@@ -85,15 +85,14 @@ div.scroll-editclass, div.scroll-indexes{
     -moz-border-top-colors: none;
     border-color: -moz-use-text-color -moz-use-text-color #E5E5E5;
     border-image: none;
-    border-style: none none solid;
-    border-width: 0 0 1px;
     color: #333333;
     display: block;
     font-size: 21px;
     line-height: 40px;
     margin-bottom: 20px;
+    margin-top: 10px;
     margin-left: 0px !important;
-    padding: 0;
+
 
 }
 .doc-header > label  {
@@ -119,9 +118,32 @@ div.edge form.bs-docs-example:after {
 }
 
 .edgesList {
-    padding-top: 60px;
+
 }
 
+.record-header {
+    background-color: #F5F5F5;
+    border: 1px solid #DDDDDD;
+    border-radius: 4px 0 4px 0;
+    color: #9DA0A4;
+    font-size: 13px;
+    font-weight: bold;
+    left: -1px;
+    padding: 3px 7px;
+    position: absolute;
+    top: -1px;
+}
+form.record-header {
+
+}
+.record {
+    background-color: #FFFFFF;
+    border: 1px solid #DDDDDD;
+    border-radius: 4px 4px 4px 4px;
+    margin: 15px 0;
+    padding: 0px 19px 14px;
+    position: relative;
+}
 .createEdge {
   width: 80%; /* desired relative width */
   left: 10%; /* (100%-width)/2 */

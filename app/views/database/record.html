@@ -1,9 +1,11 @@
 <div class="row-fluid"> 
-	<form  class="form-horizontal bs-docs-example css-form" name="docForm" >
+	<form class="form-horizontal record css-form" name="docForm" >
+        <div class="record-header"><h5> {{ label }}: {{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</h5></div>
+
 		<fieldset>
 			<div class="control-group">
 				<div class="controls controls-row doc-header controls-row">
-					<label class="span9">{{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</label>
+					<label class="span9"></label>
 					<div class="span3">
 						<button type="submit" class="btn btn-primary" ng-show="canSave" ng-click="save(docForm)" ng-disabled="!docValid" tooltip="Save"><i class="icon-ok icon-white" ></i> Save</button>
 						<div class="btn-group" ng-show="canAdd">

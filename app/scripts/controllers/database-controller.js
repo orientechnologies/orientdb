@@ -4,6 +4,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.database = Database;
     $scope.limit = 20;
     $scope.queries = new Array;
+    $scope.language = 'sql';
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -20,9 +21,17 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         }
     };
 
+
     $scope.query = function () {
         Spinner.loading = true;
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: $scope.queryText, limit: $scope.limit}, function (data) {
+        $scope.queryText = $scope.queryText.trim();
+        if($scope.queryText.startsWith('g.')){
+            $scope.language = 'gremlin';
+        }
+        if($scope.queryText.startsWith('#')){
+            $location.path('/database/' + $routeParams.database + '/browse/edit/' + $scope.queryText.replace('#', ''));
+        }
+        CommandApi.queryText({database: $routeParams.database, language: $scope.language, text: $scope.queryText, limit: $scope.limit}, function (data) {
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
                 $scope.resultTotal = data.result;
