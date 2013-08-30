@@ -31,6 +31,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
+ * 
+ * DEPRECATED since v1.0
+ * 
  * Lazy implementation of Set. It's bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
  * hand when the set is changed.
  * 

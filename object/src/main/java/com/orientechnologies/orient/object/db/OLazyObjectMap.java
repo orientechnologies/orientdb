@@ -28,6 +28,10 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * DEPRECATED since v1.0
+ * 
+ */
 @Deprecated
 public class OLazyObjectMap<TYPE> extends HashMap<Object, Object> implements Serializable,
     OLazyObjectMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
