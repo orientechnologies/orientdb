@@ -52,10 +52,13 @@ public class OSBTree<K> extends ODurableComponent {
 
   private OBinarySerializer<K>           keySerializer;
 
-  public OSBTree(String dataFileExtension, int keySize) {
+  private final boolean                  durableInNonTxMode;
+
+  public OSBTree(String dataFileExtension, int keySize, boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     this.dataFileExtension = dataFileExtension;
     this.keySize = keySize;
+    this.durableInNonTxMode = durableInNonTxMode;
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OStorageLocalAbstract storageLocal) {
@@ -77,7 +80,7 @@ public class OSBTree<K> extends ODurableComponent {
 
       rootPointer.acquireExclusiveLock();
       try {
-        startDurableOperation(null);
+        super.startDurableOperation(null);
 
         OSBTreeBucket<K> rootBucket = new OSBTreeBucket<K>(rootPointer.getDataPointer(), true, keySerializer,
             ODurablePage.TrackMode.FULL);
@@ -85,17 +88,17 @@ public class OSBTree<K> extends ODurableComponent {
         rootBucket.setTreeSize(0);
         rootBucket.setKeySize((byte) keySize);
 
-        logPageChanges(rootBucket, fileId, ROOT_INDEX, true);
+        super.logPageChanges(rootBucket, fileId, ROOT_INDEX, true);
         rootCacheEntry.markDirty();
       } finally {
         rootPointer.releaseExclusiveLock();
         diskCache.release(rootCacheEntry);
       }
 
-      endDurableOperation(null, false);
+      super.endDurableOperation(null, false);
     } catch (IOException e) {
       try {
-        endDurableOperation(null, true);
+        super.endDurableOperation(null, true);
       } catch (IOException e1) {
         OLogManager.instance().error(this, "Error during sbtree data rollback", e1);
       }
@@ -390,6 +393,40 @@ public class OSBTree<K> extends ODurableComponent {
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  protected void endDurableOperation(OStorageTransaction transaction, boolean rollback) throws IOException {
+    if (transaction == null && !durableInNonTxMode)
+      return;
+
+    super.endDurableOperation(transaction, rollback);
+  }
+
+  @Override
+  protected void startDurableOperation(OStorageTransaction transaction) throws IOException {
+    if (transaction == null && !durableInNonTxMode)
+      return;
+
+    super.startDurableOperation(transaction);
+  }
+
+  @Override
+  protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
+    final OStorageTransaction transaction = storage.getStorageTransaction();
+    if (transaction == null && !durableInNonTxMode)
+      return;
+
+    super.logPageChanges(localPage, fileId, pageIndex, isNewPage);
+  }
+
+  @Override
+  protected ODurablePage.TrackMode getTrackMode() {
+    final OStorageTransaction transaction = storage.getStorageTransaction();
+    if (transaction == null && !durableInNonTxMode)
+      return ODurablePage.TrackMode.NONE;
+
+    return super.getTrackMode();
   }
 
   public Collection<ORID> getValuesMinor(K key, boolean inclusive, final int maxValuesToFetch) {

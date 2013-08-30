@@ -39,7 +39,7 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
-    index = new OSBTree<String>(".sbt", 1);
+    index = new OSBTree<String>(".sbt", 1, false);
     index.create("uniqueSBTreeIndexTest", OStringSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
