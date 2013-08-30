@@ -17,10 +17,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
@@ -34,19 +36,19 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  */
 @Test
 public class SBTreeWAL extends SBTreeTest {
-  private String                 buildDirectory;
+  private String                          buildDirectory;
 
-  private String                 actualStorageDir;
-  private String                 expectedStorageDir;
+  private String                          actualStorageDir;
+  private String                          expectedStorageDir;
 
-  private OWriteAheadLog         writeAheadLog;
+  private OWriteAheadLog                  writeAheadLog;
 
-  private ODiskCache             actualDiskCache;
-  private ODiskCache             expectedDiskCache;
+  private ODiskCache                      actualDiskCache;
+  private ODiskCache                      expectedDiskCache;
 
-  private OLocalPaginatedStorage actualStorage;
+  private OLocalPaginatedStorage          actualStorage;
 
-  private OSBTree<Integer>       expectedSBTree;
+  private OSBTree<Integer, OIdentifiable> expectedSBTree;
 
   @BeforeClass
   @Override
@@ -118,8 +120,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer>(".sbt", 1, false);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, actualStorage);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
   private void createExpectedSBTree() {
@@ -154,8 +156,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer>(".sbt", 1, false);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, expectedStorage);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
   }
 
   @Override

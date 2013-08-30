@@ -6,9 +6,11 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
@@ -16,9 +18,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 14.08.13
  */
 public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
-  private ODatabaseDocumentTx databaseDocumentTx;
-  private OSBTree<String>     index;
-  private MersenneTwisterFast random = new MersenneTwisterFast();
+  private ODatabaseDocumentTx            databaseDocumentTx;
+  private OSBTree<String, OIdentifiable> index;
+  private MersenneTwisterFast            random = new MersenneTwisterFast();
 
   public SBTreeInsertionSpeedTest() {
     super(5000000);
@@ -39,8 +41,9 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
 
     databaseDocumentTx.create();
 
-    index = new OSBTree<String>(".sbt", 1, false);
-    index.create("uniqueSBTreeIndexTest", OStringSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+    index = new OSBTree<String, OIdentifiable>(".sbt", 1, false);
+    index.create("uniqueSBTreeIndexTest", OStringSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
   @Override

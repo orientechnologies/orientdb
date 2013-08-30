@@ -10,11 +10,12 @@ import org.testng.annotations.*;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -22,10 +23,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  */
 @Test
 public class SBTreeCompositeKeyTest {
-  private ODatabaseDocumentTx    databaseDocumentTx;
+  private ODatabaseDocumentTx                   databaseDocumentTx;
 
-  private OSBTree<OCompositeKey> localSBTree;
-  private String                 buildDirectory;
+  private OSBTree<OCompositeKey, OIdentifiable> localSBTree;
+  private String                                buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
@@ -41,9 +42,9 @@ public class SBTreeCompositeKeyTest {
 
     databaseDocumentTx.create();
 
-    localSBTree = new OSBTree<OCompositeKey>(".sbt", 2, false);
-    localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE,
-        (OStorageLocal) databaseDocumentTx.getStorage());
+    localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", 2, false);
+    localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE,
+        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
   @BeforeMethod
@@ -71,7 +72,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), true, -1);
     assertEquals(orids.size(), 18);
 
     for (int i = 2; i <= 3; i++) {
@@ -82,7 +83,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesFromInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), false, -1);
 
     assertEquals(orids.size(), 9);
 
@@ -92,7 +93,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesToInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), true, -1);
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
@@ -101,7 +102,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesNonInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), false, -1);
 
     assertEquals(orids.size(), 0);
 
@@ -115,7 +116,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesInclusivePartialKey() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, -1);
 
     assertEquals(orids.size(), 15);
 
@@ -129,7 +130,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesFromInclusivePartialKey() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, -1);
 
     assertEquals(orids.size(), 6);
 
@@ -139,7 +140,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testBetweenValuesToInclusivePartialKey() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, -1);
 
     assertEquals(orids.size(), 14);
 
@@ -154,7 +155,7 @@ public class SBTreeCompositeKeyTest {
 
   @Test
   public void testBetweenValuesNonInclusivePartial() {
-    Collection<ORID> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, -1);
     assertEquals(orids.size(), 5);
 
     for (int i = 5; i <= 9; i++) {
@@ -163,7 +164,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMajorInclusivePartial() {
-    Collection<ORID> orids = localSBTree.getValuesMajor(compositeKey(2.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0), true, -1);
     assertEquals(orids.size(), 18);
 
     for (int i = 2; i <= 3; i++)
@@ -174,7 +175,7 @@ public class SBTreeCompositeKeyTest {
 
   @Test
   public void testValuesMajorNonInclusivePartial() {
-    Collection<ORID> orids = localSBTree.getValuesMajor(compositeKey(2.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0), false, -1);
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
@@ -183,7 +184,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMajorInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), true, -1);
 
     assertEquals(orids.size(), 16);
 
@@ -196,7 +197,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMajorNonInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), false, -1);
     assertEquals(orids.size(), 15);
 
     for (int i = 2; i <= 3; i++)
@@ -208,7 +209,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMinorInclusivePartial() {
-    Collection<ORID> orids = localSBTree.getValuesMinor(compositeKey(3.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0), true, -1);
     assertEquals(orids.size(), 27);
 
     for (int i = 1; i <= 3; i++)
@@ -218,7 +219,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMinorNonInclusivePartial() {
-    Collection<ORID> orids = localSBTree.getValuesMinor(compositeKey(3.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0), false, -1);
     assertEquals(orids.size(), 18);
 
     for (int i = 1; i < 3; i++)
@@ -228,7 +229,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMinorInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), true, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), true, -1);
     assertEquals(orids.size(), 20);
 
     for (int i = 1; i <= 3; i++)
@@ -241,7 +242,7 @@ public class SBTreeCompositeKeyTest {
   }
 
   public void testValuesMinorNonInclusive() {
-    Collection<ORID> orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), false, -1);
+    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), false, -1);
     assertEquals(orids.size(), 19);
 
     for (int i = 1; i < 3; i++)

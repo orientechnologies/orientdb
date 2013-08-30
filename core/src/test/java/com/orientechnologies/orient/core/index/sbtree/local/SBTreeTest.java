@@ -11,9 +11,11 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
@@ -22,12 +24,12 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  */
 @Test
 public class SBTreeTest {
-  private static final int    KEYS_COUNT = 500000;
+  private static final int                  KEYS_COUNT = 500000;
 
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private ODatabaseDocumentTx               databaseDocumentTx;
 
-  protected OSBTree<Integer>  sbTree;
-  private String              buildDirectory;
+  protected OSBTree<Integer, OIdentifiable> sbTree;
+  private String                            buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
@@ -43,8 +45,9 @@ public class SBTreeTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTree<Integer>(".sbt", 1, false);
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
   @AfterMethod
@@ -277,9 +280,9 @@ public class SBTreeTest {
       }
 
       int maxValuesToFetch = 10000;
-      Collection<ORID> orids = sbTree.getValuesMajor(fromKey, keyInclusive, maxValuesToFetch);
+      Collection<OIdentifiable> orids = sbTree.getValuesMajor(fromKey, keyInclusive, maxValuesToFetch);
 
-      Set<ORID> result = new HashSet<ORID>(orids);
+      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
 
       Iterator<ORID> valuesIterator = keyValues.tailMap(fromKey, keyInclusive).values().iterator();
 
@@ -316,9 +319,9 @@ public class SBTreeTest {
       }
 
       int maxValuesToFetch = 10000;
-      Collection<ORID> orids = sbTree.getValuesMinor(toKey, keyInclusive, maxValuesToFetch);
+      Collection<OIdentifiable> orids = sbTree.getValuesMinor(toKey, keyInclusive, maxValuesToFetch);
 
-      Set<ORID> result = new HashSet<ORID>(orids);
+      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
 
       Iterator<ORID> valuesIterator = keyValues.headMap(toKey, keyInclusive).descendingMap().values().iterator();
 
@@ -372,8 +375,8 @@ public class SBTreeTest {
 
       int maxValuesToFetch = 10000;
 
-      Collection<ORID> orids = sbTree.getValuesBetween(fromKey, fromInclusive, toKey, toInclusive, maxValuesToFetch);
-      Set<ORID> result = new HashSet<ORID>(orids);
+      Collection<OIdentifiable> orids = sbTree.getValuesBetween(fromKey, fromInclusive, toKey, toInclusive, maxValuesToFetch);
+      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
 
       Iterator<ORID> valuesIterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).values().iterator();
 
