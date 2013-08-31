@@ -215,7 +215,7 @@ public class OScheduler implements Runnable {
 			    scriptManager.unbind(binding);
 			OLogManager.instance().warn(this, "Job : " + this.toString() + " Finished!");
 			isRunning = false;
-			this.document.field(PROP_STATUS, SCHEDULER_STATUS.WAITTING);
+			this.document.field(PROP_STATUS, SCHEDULER_STATUS.WAITING);
 			this.document.save();
 		}
 	}
