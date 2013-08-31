@@ -86,17 +86,19 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
       else
         database = serverInstance.openDatabase("document", iDatabaseName, replicatorUser.name, replicatorUser.password);
 
-      OClass cls = database.getMetadata().getSchema().getClass(DISTRIBUTED_CONFLICT_CLASS);
-      final OProperty p;
-      if (cls == null) {
-        cls = database.getMetadata().getSchema().createClass(DISTRIBUTED_CONFLICT_CLASS);
-        index = cls.createProperty(FIELD_RECORD, OType.LINK).createIndex(INDEX_TYPE.UNIQUE);
-      } else {
-        p = cls.getProperty(FIELD_RECORD);
-        if (p == null)
+      if (database.getMetadata() != null) {
+        OClass cls = database.getMetadata().getSchema().getClass(DISTRIBUTED_CONFLICT_CLASS);
+        final OProperty p;
+        if (cls == null) {
+          cls = database.getMetadata().getSchema().createClass(DISTRIBUTED_CONFLICT_CLASS);
           index = cls.createProperty(FIELD_RECORD, OType.LINK).createIndex(INDEX_TYPE.UNIQUE);
-        else {
-          index = p.getIndex();
+        } else {
+          p = cls.getProperty(FIELD_RECORD);
+          if (p == null)
+            index = cls.createProperty(FIELD_RECORD, OType.LINK).createIndex(INDEX_TYPE.UNIQUE);
+          else {
+            index = p.getIndex();
+          }
         }
       }
     }
