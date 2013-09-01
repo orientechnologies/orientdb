@@ -273,6 +273,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     } else {
       // LOCAL CONNECTION
+      if (iStorageType != null) {
+        // CHECK STORAGE TYPE
+        if (!iDatabaseURL.toLowerCase().startsWith(iStorageType.toLowerCase()))
+          throw new IllegalArgumentException("Storage type '" + iStorageType + "' is different by storage type in URL");
+      }
       currentDatabase = Orient.instance().getDatabaseFactory().createDatabase(iDatabaseType, iDatabaseURL);
       currentDatabase.create();
       currentDatabaseName = currentDatabase.getName();
