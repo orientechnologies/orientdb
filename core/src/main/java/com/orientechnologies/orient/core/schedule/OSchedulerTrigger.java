@@ -41,7 +41,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
         }
 		boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean)iDocument.field(OScheduler.PROP_STARTED));
 		if(start)
-			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITTING.name());
+			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
 		else
 			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
 		iDocument.field(OScheduler.PROP_STARTED, start);
@@ -67,7 +67,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
 				}
 				String currentStatus = iDocument.field(OScheduler.PROP_STATUS);
 				if(currentStatus.equals(SCHEDULER_STATUS.STOPPED.name())) {
-					iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITTING.name());
+					iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
 				}
 			} else {
 				if(scheduler != null) {

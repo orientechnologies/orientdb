@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -76,6 +76,11 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
   }
 
   @Override
+  public void onCreate(final ODatabase iDatabase) {
+    onOpen(iDatabase);
+  }
+
+  @Override
   public void onOpen(final ODatabase iDatabase) {
     if (iDatabase instanceof ODatabaseComplex<?>) {
       iDatabase.replaceStorage(new OAutoshardedStorageImpl(serverInstance, (OStorageEmbedded) iDatabase.getStorage(),
@@ -97,9 +102,9 @@ public class OAutoshardingPlugin extends OServerHandlerAbstract implements OData
       undistributableClusters = new HashSet<String>();
 
       undistributableClusters.add(OStorage.CLUSTER_DEFAULT_NAME.toLowerCase());
-      undistributableClusters.add(OMetadata.CLUSTER_INTERNAL_NAME.toLowerCase());
-      undistributableClusters.add(OMetadata.CLUSTER_INDEX_NAME.toLowerCase());
-      undistributableClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME.toLowerCase());
+      undistributableClusters.add(OMetadataDefault.CLUSTER_INTERNAL_NAME.toLowerCase());
+      undistributableClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME.toLowerCase());
+      undistributableClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.toLowerCase());
       undistributableClusters.add(ORole.CLASS_NAME.toLowerCase());
       undistributableClusters.add(OUser.CLASS_NAME.toLowerCase());
       undistributableClusters.add(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase());

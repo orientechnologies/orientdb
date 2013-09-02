@@ -52,7 +52,7 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
- * DEPRECATED -- USE {@link OObjectDatabaseTx} instead
+ * DEPRECATED since v1.0 -- USE {@link OObjectDatabaseTx} instead
  * 
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx but handle the conversion between ODocument instances
  * and POJOs.

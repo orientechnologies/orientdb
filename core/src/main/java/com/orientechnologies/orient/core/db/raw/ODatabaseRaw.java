@@ -129,7 +129,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onOpen(getDatabaseOwner());
+        it.next().onCreate(getDatabaseOwner());
 
       // WAKE UP LISTENERS
       for (ODatabaseListener listener : browseListeners())
