@@ -24,7 +24,7 @@ import java.util.Map;
 
 public interface OSchedulerListener {
 	public enum SCHEDULER_STATUS {
-	    RUNNING, STOPPED, WAITTING
+	    RUNNING, STOPPED, WAITING
 	  }
 	
 	public void addScheduler(OScheduler scheduler);

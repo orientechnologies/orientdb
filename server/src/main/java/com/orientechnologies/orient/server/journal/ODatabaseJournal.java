@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
@@ -77,34 +77,34 @@ public class ODatabaseJournal {
   }
 
   public enum OPERATION_TYPES {
-    RECORD_CREATE, RECORD_UPDATE, RECORD_DELETE, SQL_COMMAND
+    RECORD_CREATE, RECORD_UPDATE, RECORD_DELETE, SQL_COMMAND, NOOP
   }
 
-  private static final long[]             BEGIN_POSITION        = new long[] { -1, -1 };
+  private static final long[]       BEGIN_POSITION        = new long[] { -1, -1 };
 
-  public static final String              DIRECTORY             = "log";
-  public static final String              FILENAME              = "journal.olj";
-  private static final int                DEF_START_SIZE        = 262144;
+  public static final String        DIRECTORY             = "log";
+  public static final String        FILENAME              = "journal.olj";
+  private static final int          DEF_START_SIZE        = 262144;
 
-  private static final int                OFFSET_STATUS         = 0;
-  private static final int                OFFSET_OPERATION_TYPE = OFFSET_STATUS + OBinaryProtocol.SIZE_BYTE;
-  private static final int                OFFSET_VARDATA        = OFFSET_OPERATION_TYPE + OBinaryProtocol.SIZE_BYTE;
+  private static final int          OFFSET_STATUS         = 0;
+  private static final int          OFFSET_OPERATION_TYPE = OFFSET_STATUS + OBinaryProtocol.SIZE_BYTE;
+  private static final int          OFFSET_VARDATA        = OFFSET_OPERATION_TYPE + OBinaryProtocol.SIZE_BYTE;
 
-  private static final int                OFFSET_BACK_OPERATID  = OBinaryProtocol.SIZE_LONG;
-  private static final int                OFFSET_BACK_RUNID     = OFFSET_BACK_OPERATID + OBinaryProtocol.SIZE_LONG;
-  private static final int                OFFSET_BACK_SIZE      = OFFSET_BACK_RUNID + OBinaryProtocol.SIZE_INT;
+  private static final int          OFFSET_BACK_OPERATID  = OBinaryProtocol.SIZE_LONG;
+  private static final int          OFFSET_BACK_RUNID     = OFFSET_BACK_OPERATID + OBinaryProtocol.SIZE_LONG;
+  private static final int          OFFSET_BACK_SIZE      = OFFSET_BACK_RUNID + OBinaryProtocol.SIZE_INT;
 
-  private static final int                FIXED_SIZE            = 22;
+  private static final int          FIXED_SIZE            = 22;
 
-  private OServer                         server;
-  private ODistributedServerManager       cluster;
-  private OSharedResourceAdaptiveExternal lock                  = new OSharedResourceAdaptiveExternal(
-                                                                    OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
-                                                                    0, true);
-  private OStorage                        storage;
-  private OFile                           file;
-  private boolean                         synchEnabled          = false;
-  private long[]                          lastExecuted          = new long[] { -1, -1 };
+  private OServer                   server;
+  private ODistributedServerManager cluster;
+  private OAdaptiveLock             lock                  = new OAdaptiveLock(
+                                                              OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0,
+                                                              true);
+  private OStorage                  storage;
+  private OFile                     file;
+  private boolean                   synchEnabled          = false;
+  private final long[]              lastExecuted          = new long[] { -1, -1 };
 
   public ODatabaseJournal(final OServer iServer, final ODistributedServerManager iCluster, final OStorage iStorage,
       final String iStartingDirectory) throws IOException {
@@ -123,14 +123,21 @@ public class ODatabaseJournal {
       file.open();
     else
       file.create(DEF_START_SIZE);
+
+    final long[] lastOp = getLastJournaledOperationId(null);
+    lastExecuted[0] = lastOp[0];
+    lastExecuted[1] = lastOp[1];
+
+    ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+        "Loaded journal for database '%s', last operation=%d.%d", iStorage.getName(), lastExecuted[0], lastExecuted[1]);
   }
 
   public void reset() throws IOException {
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
       file.shrink(0);
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -141,7 +148,7 @@ public class ODatabaseJournal {
   public OAbstractReplicatedTask<?> getOperation(final long iOffsetEndOperation) throws IOException {
     OAbstractReplicatedTask<?> task = null;
 
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
 
       final long runId = file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID);
@@ -203,17 +210,15 @@ public class ODatabaseJournal {
         task.setServerInstance(server);
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
     return task;
   }
 
   public ORID getOperationRID(final long iOffsetEndOperation) throws IOException {
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
 
-      final long runId = file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID);
-      final long operationId = file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID);
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
@@ -243,16 +248,16 @@ public class ODatabaseJournal {
       }
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
   public long[] getLastExecutedOperationId() {
-    lock.acquireSharedLock();
+    lock.lock();
     try {
-      return lastExecuted;
+      return new long[] { lastExecuted[0], lastExecuted[1] };
     } finally {
-      lock.releaseSharedLock();
+      lock.unlock();
     }
   }
 
@@ -260,7 +265,7 @@ public class ODatabaseJournal {
    * Returns the last operation id with passed status
    */
   public long[] getLastJournaledOperationId(final OPERATION_STATUS iStatus) throws IOException {
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
       final int filled = (int) file.getFilledUpTo();
       if (filled == 0)
@@ -281,7 +286,7 @@ public class ODatabaseJournal {
       }
       return ids;
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -289,7 +294,7 @@ public class ODatabaseJournal {
    * Returns the last operation id.
    */
   public long[] getOperationId(final long iOffset) throws IOException {
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
       final int filled = (int) file.getFilledUpTo();
       if (filled == 0 || iOffset <= 0 || iOffset > filled)
@@ -302,7 +307,7 @@ public class ODatabaseJournal {
       return ids;
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -323,7 +328,7 @@ public class ODatabaseJournal {
       throws IOException {
     final LinkedList<Long> result = new LinkedList<Long>();
 
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
       long fileOffset = file.getFilledUpTo();
 
@@ -348,7 +353,7 @@ public class ODatabaseJournal {
       return result.descendingIterator();
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -384,7 +389,7 @@ public class ODatabaseJournal {
    */
   public void setOperationStatus(final long iOffsetEndOperation, final ORecordId iRid, final OPERATION_STATUS iStatus)
       throws IOException {
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
@@ -402,7 +407,7 @@ public class ODatabaseJournal {
       file.synch();
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
@@ -427,7 +432,7 @@ public class ODatabaseJournal {
     final long iRunId = task.getRunId();
     final long iOperationId = task.getOperationSerial();
 
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
 
       long offset = 0;
@@ -469,6 +474,10 @@ public class ODatabaseJournal {
         file.write(offset + OFFSET_VARDATA, cmdText.getBytes());
         break;
       }
+
+      case NOOP:
+        offset = appendOperationLogHeader(iOperationType, varSize);
+
       }
 
       file.writeLong(offset + OFFSET_VARDATA + varSize + OBinaryProtocol.SIZE_INT, iRunId);
@@ -477,21 +486,17 @@ public class ODatabaseJournal {
       if (synchEnabled)
         file.synch();
 
-      // SAVE LAST
-      lastExecuted[0] = iRunId;
-      lastExecuted[1] = iOperationId;
-
       return offset + OFFSET_VARDATA + varSize + OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_LONG;
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
   }
 
   public Iterable<ODocument> query(final OPERATION_STATUS iStatus, final int iMaxItems) throws IOException {
     LinkedList<ODocument> result = new LinkedList<ODocument>();
 
-    lock.acquireExclusiveLock();
+    lock.lock();
     try {
 
       final Iterator<Long> iter = browseLastOperations(new long[] { -1, -1 }, null, iMaxItems);
@@ -573,7 +578,7 @@ public class ODatabaseJournal {
           result.add(0, doc);
       }
     } finally {
-      lock.releaseExclusiveLock();
+      lock.unlock();
     }
 
     return result;
@@ -651,5 +656,34 @@ public class ODatabaseJournal {
   protected long getPreviousOperation(final long iPosition) throws IOException {
     final int size = file.readInt(iPosition - OFFSET_BACK_SIZE);
     return iPosition - OFFSET_BACK_SIZE - size - OFFSET_VARDATA;
+  }
+
+  /**
+   * Resets the last operation. This is invoked during an alignment.
+   * 
+   * @param iRunId
+   * @param iOperationSerial
+   * @param iForce
+   */
+  public void updateLastOperation(final long iRunId, final long iOperationSerial, final boolean iForce) {
+    lock.lock();
+    try {
+      if (!iForce && lastExecuted[0] == iRunId && lastExecuted[1] >= iOperationSerial) {
+        // ALREADY UPDATED
+        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+            "skipped updating journal last task db='%s' op=%d.%d found=%d.%d", storage.getName(), iRunId, iOperationSerial,
+            lastExecuted[0], lastExecuted[1]);
+        return;
+      }
+
+      ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+          "updating journal last task db='%s' op=%d.%d", storage.getName(), iRunId, iOperationSerial);
+
+      lastExecuted[0] = iRunId;
+      lastExecuted[1] = iOperationSerial;
+
+    } finally {
+      lock.unlock();
+    }
   }
 }

@@ -53,7 +53,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
@@ -81,7 +81,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-  private OMetadata                                   metadata;
+  private OMetadataDefault                                   metadata;
   private OUser                                       user;
   private static final String                         DEF_RECORD_FORMAT   = "csv";
   private byte                                        recordType;
@@ -119,7 +119,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       super.open(iUserName, iUserPassword);
       level1Cache.startup();
 
-      metadata = new OMetadata();
+      metadata = new OMetadataDefault();
       metadata.load();
 
       recordFormat = DEF_RECORD_FORMAT;
@@ -191,7 +191,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-      metadata = new OMetadata();
+      metadata = new OMetadataDefault();
       metadata.create();
 
       user = getMetadata().getSecurity().getUser(OUser.ADMIN);
@@ -528,7 +528,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return super.countClusterElements(iClusterName);
   }
 
-  public OMetadata getMetadata() {
+  public OMetadataDefault getMetadata() {
     checkOpeness();
     return metadata;
   }

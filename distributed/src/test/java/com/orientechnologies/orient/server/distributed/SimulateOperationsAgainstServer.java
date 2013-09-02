@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 public class SimulateOperationsAgainstServer {
   protected static final int delay           = 0;
-  private static final int   MAX_RETRY       = 10;
+  private static final int   MAX_RETRY       = 30;
   protected final AtomicLong totalOperations = new AtomicLong();
   protected int              count           = 1000;
   protected int              threads         = 20;
@@ -140,7 +140,8 @@ public class SimulateOperationsAgainstServer {
 
   protected void updateDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
     final ODatabaseDocumentTx db = getDatabase(dbUrl);
-    for (int retry = 0; retry < MAX_RETRY; ++retry)
+    for (int retry = 0; retry < MAX_RETRY; ++retry) {
+      ODocument doc = null;
       try {
         List<OIdentifiable> result = db
             .query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
@@ -148,7 +149,7 @@ public class SimulateOperationsAgainstServer {
         if (result == null || result.isEmpty())
           log(threadId, iCycle, dbUrl, " update no item " + iSkip + " because out of range");
         else {
-          final ODocument doc = (ODocument) result.get(0);
+          doc = (ODocument) result.get(0);
           doc.field("updated", "" + (doc.getVersion() + 1));
           doc.save();
           log(threadId, iCycle, dbUrl, " updated item " + iSkip + " RID=" + result.get(0));
@@ -156,8 +157,12 @@ public class SimulateOperationsAgainstServer {
 
         // OK
         break;
+
       } catch (OConcurrentModificationException e) {
-        log(threadId, iCycle, dbUrl, " concurrent update, retrying " + retry + "/" + MAX_RETRY + "...");
+        log(threadId, iCycle, dbUrl, " concurrent update against record " + doc + ", reload it and retry " + retry + "/"
+            + MAX_RETRY + "...");
+        if (doc != null)
+          doc.reload(null, true);
 
       } catch (ORecordNotFoundException e) {
         log(threadId, iCycle, dbUrl, " update no item " + iSkip + " because not found");
@@ -166,23 +171,35 @@ public class SimulateOperationsAgainstServer {
       } finally {
         db.close();
       }
+    }
   }
 
   protected void deleteDocument(final int threadId, final int iCycle, final String dbUrl, final String className, final int iSkip) {
     final ODatabaseDocumentTx db = getDatabase(dbUrl);
-    try {
-      List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
+    for (int retry = 0; retry < MAX_RETRY; ++retry) {
+      ODocument doc = null;
+      try {
+        List<OIdentifiable> result = db
+            .query(new OSQLSynchQuery<Object>("select from " + className + " skip " + iSkip + " limit 1"));
 
-      if (result == null || result.isEmpty())
-        log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because out of range");
-      else {
-        result.get(0).getRecord().delete();
-        log(threadId, iCycle, dbUrl, " deleted item " + iSkip + " RID=" + result.get(0));
+        if (result == null || result.isEmpty())
+          log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because out of range");
+        else {
+          doc = result.get(0).getRecord();
+          doc.delete();
+          log(threadId, iCycle, dbUrl, " deleted item " + iSkip + " RID=" + result.get(0));
+        }
+        break;
+      } catch (OConcurrentModificationException e) {
+        log(threadId, iCycle, dbUrl, " concurrent delete against record " + doc + ", reload it and retry " + retry + "/"
+            + MAX_RETRY + "...");
+        if (doc != null)
+          doc.reload(null, true);
+      } catch (ORecordNotFoundException e) {
+        log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because not found");
+      } finally {
+        db.close();
       }
-    } catch (ORecordNotFoundException e) {
-      log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because not found");
-    } finally {
-      db.close();
     }
   }
 

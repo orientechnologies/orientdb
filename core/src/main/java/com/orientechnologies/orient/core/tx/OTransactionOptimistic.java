@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -285,7 +285,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         } else if (txRecord.record != iRecord) {
           // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
           final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
-          if (!clusterName.equals(OMetadata.CLUSTER_MANUAL_INDEX_NAME) && !clusterName.equals(OMetadata.CLUSTER_INDEX_NAME))
+          if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
             OLogManager
                 .instance()
                 .warn(

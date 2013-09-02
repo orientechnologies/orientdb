@@ -78,7 +78,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     public boolean alwaysFetchEmbeddedDocuments;
     public int     indentLevel;
     public String  fetchPlan   = null;
-    public boolean keepTypes;
+    public boolean keepTypes   = true;
     public boolean dateAsLong  = false;
     public boolean prettyPrint = false;
 
@@ -101,7 +101,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         attribSameRow = false;
         alwaysFetchEmbeddedDocuments = false;
         indentLevel = 1;
-        keepTypes = true;
+        keepTypes = false;
 
         final String[] format = iFormat.split(",");
         for (String f : format)

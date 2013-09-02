@@ -143,6 +143,10 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     super.shutdown();
   }
 
+  @Override
+  public void onCreate(final ODatabase iDatabase) {
+  }
+
   /**
    * Auto register myself as hook.
    */
@@ -162,7 +166,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       if (synch == null || synch) {
         final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iDatabase.getName());
 
-        if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage))
+        if (dbSynchronizer != null && iDatabase instanceof ODatabaseComplex<?>
+            && !(iDatabase.getStorage() instanceof ODistributedStorage))
           ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance, dbSynchronizer,
               (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
       }
@@ -234,16 +239,16 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         try {
           sync = new OStorageSynchronizer(serverInstance, this, iDatabaseName);
           synchronizers.put(iDatabaseName, sync);
+          sync.config();
           sync.recoverUncommited(this, iDatabaseName);
-        } catch (IllegalArgumentException e) {
-          synchronizers.remove(iDatabaseName);
-          return null;
-        } catch (IOException e) {
+        } catch (Exception e) {
           synchronizers.remove(iDatabaseName);
           throw new ODistributedException("Cannot get the storage synchronizer for database " + iDatabaseName, e);
         }
       }
+
       return sync;
+      // return sync.isConfigured() ? sync : null;
     }
   }
 

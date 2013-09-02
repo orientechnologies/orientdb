@@ -25,6 +25,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
+ * 
+ * DEPRECATED since v1.0
+ * 
  * Lazy implementation of Iterator that load the records only when accessed. It keep also track of changes to the source record
  * avoiding to call setDirty() by hand.
  * 
@@ -36,56 +39,56 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Deprecated
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectIterator<TYPE> implements Iterator<TYPE>, Serializable {
-	private static final long									serialVersionUID	= -4012483076050044405L;
+  private static final long                 serialVersionUID = -4012483076050044405L;
 
-	private final ORecord<?>									sourceRecord;
-	private final ODatabasePojoAbstract<TYPE>	database;
-	private final Iterator<Object>						underlying;
-	private String														fetchPlan;
-	final private boolean											autoConvert2Object;
+  private final ORecord<?>                  sourceRecord;
+  private final ODatabasePojoAbstract<TYPE> database;
+  private final Iterator<Object>            underlying;
+  private String                            fetchPlan;
+  final private boolean                     autoConvert2Object;
 
-	public OLazyObjectIterator(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
-			final Iterator<Object> iIterator, final boolean iConvertToRecord) {
-		this.database = database;
-		this.sourceRecord = iSourceRecord;
-		this.underlying = iIterator;
-		autoConvert2Object = iConvertToRecord;
-	}
+  public OLazyObjectIterator(final ODatabasePojoAbstract<TYPE> database, final ORecord<?> iSourceRecord,
+      final Iterator<Object> iIterator, final boolean iConvertToRecord) {
+    this.database = database;
+    this.sourceRecord = iSourceRecord;
+    this.underlying = iIterator;
+    autoConvert2Object = iConvertToRecord;
+  }
 
-	public TYPE next() {
-		return next(fetchPlan);
-	}
+  public TYPE next() {
+    return next(fetchPlan);
+  }
 
-	public TYPE next(final String iFetchPlan) {
-		final Object value = underlying.next();
+  public TYPE next(final String iFetchPlan) {
+    final Object value = underlying.next();
 
-		if (value == null)
-			return null;
+    if (value == null)
+      return null;
 
-		if (value instanceof ORID && autoConvert2Object)
-			return database.getUserObjectByRecord(
-					(ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
-		else if (value instanceof ODocument && autoConvert2Object)
-			return database.getUserObjectByRecord((ODocument) value, iFetchPlan);
+    if (value instanceof ORID && autoConvert2Object)
+      return database.getUserObjectByRecord(
+          (ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan), iFetchPlan);
+    else if (value instanceof ODocument && autoConvert2Object)
+      return database.getUserObjectByRecord((ODocument) value, iFetchPlan);
 
-		return (TYPE) value;
-	}
+    return (TYPE) value;
+  }
 
-	public boolean hasNext() {
-		return underlying.hasNext();
-	}
+  public boolean hasNext() {
+    return underlying.hasNext();
+  }
 
-	public void remove() {
-		underlying.remove();
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
-	}
+  public void remove() {
+    underlying.remove();
+    if (sourceRecord != null)
+      sourceRecord.setDirty();
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public void setFetchPlan(String fetchPlan) {
-		this.fetchPlan = fetchPlan;
-	}
+  public void setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+  }
 }

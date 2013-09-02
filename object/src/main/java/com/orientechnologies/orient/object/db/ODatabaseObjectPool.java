@@ -17,9 +17,13 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 
+/**
+ * DEPRECATED since v1.0
+ * 
+ */
 @Deprecated
 public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
-	private static ODatabaseObjectPool	globalInstance	= new ODatabaseObjectPool();
+  private static ODatabaseObjectPool globalInstance = new ODatabaseObjectPool();
 
   public ODatabaseObjectPool() {
     super();
@@ -29,14 +33,14 @@ public class ODatabaseObjectPool extends ODatabasePoolBase<ODatabaseObjectTx> {
     super(iURL, iUserName, iUserPassword);
   }
 
-	public static ODatabaseObjectPool global() {
-		globalInstance.setup();
-		return globalInstance;
-	}
+  public static ODatabaseObjectPool global() {
+    globalInstance.setup();
+    return globalInstance;
+  }
 
-	@Override
-	protected ODatabaseObjectTx createResource(final Object owner, final String iDatabaseName, final Object... iAdditionalArgs) {
-		return new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName, (String) iAdditionalArgs[0],
-				(String) iAdditionalArgs[1]);
-	}
+  @Override
+  protected ODatabaseObjectTx createResource(final Object owner, final String iDatabaseName, final Object... iAdditionalArgs) {
+    return new ODatabaseObjectTxPooled((ODatabaseObjectPool) owner, iDatabaseName, (String) iAdditionalArgs[0],
+        (String) iAdditionalArgs[1]);
+  }
 }
