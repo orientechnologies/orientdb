@@ -26,9 +26,15 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.5.1 - (September, 2nd 2013)
+---------------------------------------------------------------------------------------------------
+This is a minor release, only bug fixing.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=9&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.5.0 - (July, 30th 2013)
 ---------------------------------------------------------------------------------------------------
-
 - New PLOCAL (Paginated Local) storage engine. In comparison with LOCAL it's more durable (no usage
   of MMAP) and supports better concurrency on parallel transactions
 - New Hash Index type with better performance on lookups. It does not support ranges
