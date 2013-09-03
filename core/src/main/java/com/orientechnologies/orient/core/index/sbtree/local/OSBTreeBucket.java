@@ -41,8 +41,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   private static final int            RIGHT_SIBLING_OFFSET    = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int            TREE_SIZE_OFFSET        = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            KEY_SIZE_OFFSET         = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            KEY_SERIALIZER_OFFSET   = KEY_SIZE_OFFSET + OByteSerializer.BYTE_SIZE;
+
+  private static final int            KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
   private static final int            POSITIONS_ARRAY_OFFSET  = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
@@ -72,7 +72,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setLongValue(RIGHT_SIBLING_OFFSET, -1);
 
     setLongValue(TREE_SIZE_OFFSET, 0);
-    setByteValue(KEY_SIZE_OFFSET, (byte) -1);
 
     setByteValue(KEY_SERIALIZER_OFFSET, (byte) -1);
     setByteValue(VALUE_SERIALIZER_OFFSET, (byte) -1);
@@ -85,14 +84,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
-  }
-
-  public byte getKeySize() {
-    return getByteValue(KEY_SIZE_OFFSET);
-  }
-
-  public void setKeySize(byte keySize) {
-    setByteValue(KEY_SIZE_OFFSET, keySize);
   }
 
   public byte getKeySerializerId() {
@@ -164,15 +155,11 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     size--;
     setIntValue(SIZE_OFFSET, size);
 
-    if (size > 0) {
-      int freePointer = getIntValue(FREE_POINTER_OFFSET);
-
-      if (entryPosition > freePointer) {
-        copyData(freePointer, freePointer + entrySize, entryPosition - freePointer);
-      }
-
-      setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
+    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    if (size > 0 && entryPosition > freePointer) {
+      copyData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
+    setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
 
@@ -318,10 +305,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public void updateValue(int index, V value) throws IOException {
-    final V oldValue = getEntry(index).value;
-    if (oldValue.equals(value))
-      return;
-
     if (valueSerializer.isFixedLength()) {
       int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 

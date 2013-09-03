@@ -71,13 +71,16 @@ public class SBTreeTest {
       Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)), i
           + " key is absent");
 
+    Assert.assertEquals(0, (int) sbTree.firstKey());
+    Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
+
     for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++)
       Assert.assertNull(sbTree.get(i));
 
   }
 
   public void testKeyPutRandomUniform() throws Exception {
-    final Set<Integer> keys = new HashSet<Integer>();
+    final NavigableSet<Integer> keys = new TreeSet<Integer>();
     final MersenneTwisterFast random = new MersenneTwisterFast();
 
     while (keys.size() < KEYS_COUNT) {
@@ -88,13 +91,16 @@ public class SBTreeTest {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
+    Assert.assertEquals(sbTree.firstKey(), keys.first());
+    Assert.assertEquals(sbTree.lastKey(), keys.last());
+
     for (int key : keys)
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
-    Set<Integer> keys = new HashSet<Integer>();
-    long seed = 1376477211861L;
+    NavigableSet<Integer> keys = new TreeSet<Integer>();
+    long seed = System.currentTimeMillis();
 
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
@@ -111,21 +117,31 @@ public class SBTreeTest {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
+    Assert.assertEquals(sbTree.firstKey(), keys.first());
+    Assert.assertEquals(sbTree.lastKey(), keys.last());
+
     for (int key : keys)
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
   }
 
   public void testKeyDeleteRandomUniform() throws Exception {
-    HashSet<Integer> keys = new HashSet<Integer>();
+    NavigableSet<Integer> keys = new TreeSet<Integer>();
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
       keys.add(i);
     }
 
-    for (int key : keys) {
-      if (key % 3 == 0)
+    Iterator<Integer> keysIterator = keys.iterator();
+    while (keysIterator.hasNext()) {
+      int key = keysIterator.next();
+      if (key % 3 == 0) {
         sbTree.remove(key);
+        keysIterator.remove();
+      }
     }
+
+    Assert.assertEquals(sbTree.firstKey(), keys.first());
+    Assert.assertEquals(sbTree.lastKey(), keys.last());
 
     for (int key : keys) {
       if (key % 3 == 0) {
@@ -137,7 +153,7 @@ public class SBTreeTest {
   }
 
   public void testKeyDeleteRandomGaussian() throws Exception {
-    HashSet<Integer> keys = new HashSet<Integer>();
+    NavigableSet<Integer> keys = new TreeSet<Integer>();
 
     long seed = System.currentTimeMillis();
 
@@ -155,10 +171,19 @@ public class SBTreeTest {
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
-    for (int key : keys) {
-      if (key % 3 == 0)
+    Iterator<Integer> keysIterator = keys.iterator();
+
+    while (keysIterator.hasNext()) {
+      int key = keysIterator.next();
+
+      if (key % 3 == 0) {
         sbTree.remove(key);
+        keysIterator.remove();
+      }
     }
+
+    Assert.assertEquals(sbTree.firstKey(), keys.first());
+    Assert.assertEquals(sbTree.lastKey(), keys.last());
 
     for (int key : keys) {
       if (key % 3 == 0) {
@@ -178,6 +203,9 @@ public class SBTreeTest {
       if (i % 3 == 0)
         Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
     }
+
+    Assert.assertEquals((int) sbTree.firstKey(), 1);
+    Assert.assertEquals((int) sbTree.lastKey(), (KEYS_COUNT - 1) % 3 == 0 ? KEYS_COUNT - 2 : KEYS_COUNT - 1);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
@@ -203,6 +231,9 @@ public class SBTreeTest {
             new ORecordId((KEYS_COUNT + i) % 32000, OClusterPositionFactory.INSTANCE.valueOf(KEYS_COUNT + i)));
     }
 
+    Assert.assertEquals((int) sbTree.firstKey(), 1);
+    Assert.assertEquals((int) sbTree.lastKey(), 2 * KEYS_COUNT - 2);
+
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
         Assert.assertNull(sbTree.get(i));
@@ -216,7 +247,7 @@ public class SBTreeTest {
   }
 
   public void testValuesMajor() {
-    TreeMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     MersenneTwisterFast random = new MersenneTwisterFast();
 
     while (keyValues.size() < KEYS_COUNT) {
@@ -228,10 +259,13 @@ public class SBTreeTest {
 
     assertMajorValues(keyValues, random, true);
     assertMajorValues(keyValues, random, false);
+
+    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
   public void testValuesMinor() {
-    TreeMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     MersenneTwisterFast random = new MersenneTwisterFast();
 
     while (keyValues.size() < KEYS_COUNT) {
@@ -243,10 +277,13 @@ public class SBTreeTest {
 
     assertMinorValues(keyValues, random, true);
     assertMinorValues(keyValues, random, false);
+
+    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
   public void testValuesBetween() {
-    TreeMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     MersenneTwisterFast random = new MersenneTwisterFast();
 
     while (keyValues.size() < KEYS_COUNT) {
@@ -260,9 +297,12 @@ public class SBTreeTest {
     assertBetweenValues(keyValues, random, true, false);
     assertBetweenValues(keyValues, random, false, true);
     assertBetweenValues(keyValues, random, false, false);
+
+    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
-  private void assertMajorValues(TreeMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
+  private void assertMajorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
@@ -301,7 +341,7 @@ public class SBTreeTest {
     }
   }
 
-  private void assertMinorValues(TreeMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
+  private void assertMinorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int toKey;
@@ -340,7 +380,7 @@ public class SBTreeTest {
     }
   }
 
-  private void assertBetweenValues(TreeMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean fromInclusive,
+  private void assertBetweenValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean fromInclusive,
       boolean toInclusive) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;

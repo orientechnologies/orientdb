@@ -290,7 +290,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     return wrapped.getLevel2Cache();
   }
 
-  public void commit(final OTransaction iTx) {
+  public void commit(final OTransaction iTx, Runnable callback) {
     throw new ODistributedException("Transactions are not supported in distributed environment");
   }
 
@@ -515,7 +515,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
   private OFreezableStorage getFreezableStorage() {
     if (wrapped instanceof OFreezableStorage)
-      return  ((OFreezableStorage) wrapped);
+      return ((OFreezableStorage) wrapped);
     else
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }

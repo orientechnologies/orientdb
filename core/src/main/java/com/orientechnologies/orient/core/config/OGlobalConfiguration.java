@@ -218,6 +218,13 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
 
+  INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
+      "Indicates whether index implementation for plocal storage will be durable in non-Tx mode, false by default", Boolean.class,
+      false),
+
+  INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
+      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, false),
+
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 

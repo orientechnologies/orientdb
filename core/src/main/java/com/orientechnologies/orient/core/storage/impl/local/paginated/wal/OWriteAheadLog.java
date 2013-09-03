@@ -16,24 +16,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -43,45 +28,48 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
  * @since 25.04.13
  */
 public class OWriteAheadLog {
-  private static final long            ONE_KB               = 1024L;
+  private static final long           ONE_KB                  = 1024L;
 
-  private OLogSequenceNumber           lastCheckpoint;
+  public static final String          MASTER_RECORD_EXTENSION = ".wmr";
+  public static final String          WAL_SEGMENT_EXTENSION   = ".wal";
 
-  private final Object                 syncObject           = new Object();
+  private OLogSequenceNumber          lastCheckpoint;
 
-  private final List<LogSegment>       logSegments          = new ArrayList<LogSegment>();
+  private final Object                syncObject              = new Object();
 
-  private boolean                      useFirstMasterRecord = true;
+  private final List<LogSegment>      logSegments             = new ArrayList<LogSegment>();
 
-  private final int                    maxPagesCacheSize;
-  private final int                    commitDelay;
+  private boolean                     useFirstMasterRecord    = true;
 
-  private final long                   maxSegmentSize;
-  private final long                   maxLogSize;
+  private final int                   maxPagesCacheSize;
+  private final int                   commitDelay;
 
-  private long                         logSize;
+  private final long                  maxSegmentSize;
+  private final long                  maxLogSize;
 
-  private final File                   walLocation;
+  private long                        logSize;
 
-  private File                         masterRecordFile;
-  private final RandomAccessFile       masterRecordLSNHolder;
+  private final File                  walLocation;
 
-  private OLogSequenceNumber           firstMasterRecord;
-  private OLogSequenceNumber           secondMasterRecord;
+  private File                        masterRecordFile;
+  private final RandomAccessFile      masterRecordLSNHolder;
 
-  private volatile OLogSequenceNumber  flushedLsn;
-  private final OLocalPaginatedStorage paginatedStorage;
+  private OLogSequenceNumber          firstMasterRecord;
+  private OLogSequenceNumber          secondMasterRecord;
 
-  private boolean                      closed;
+  private volatile OLogSequenceNumber flushedLsn;
+  private final OStorageLocalAbstract storage;
 
-  private static String calculateWalPath(OLocalPaginatedStorage storage) {
+  private boolean                     closed;
+
+  private static String calculateWalPath(OStorageLocalAbstract storage) {
     String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
     if (walPath == null)
       walPath = storage.getStoragePath();
@@ -89,22 +77,22 @@ public class OWriteAheadLog {
     return walPath;
   }
 
-  public OWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
+  public OWriteAheadLog(OStorageLocalAbstract storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_MAX_SIZE
             .getValueAsInteger() * ONE_KB * ONE_KB, storage);
   }
 
-  public OWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize, OLocalPaginatedStorage storage)
+  public OWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize, OStorageLocalAbstract storage)
       throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
     this.maxLogSize = maxLogSize;
-    this.paginatedStorage = storage;
+    this.storage = storage;
 
     try {
-      this.walLocation = new File(calculateWalPath(paginatedStorage));
+      this.walLocation = new File(calculateWalPath(this.storage));
 
       File[] walFiles = this.walLocation.listFiles(new FilenameFilter() {
         @Override
@@ -138,12 +126,12 @@ public class OWriteAheadLog {
         flushedLsn = readFlushedLSN();
       }
 
-      masterRecordFile = new File(walLocation, paginatedStorage.getName() + ".wmr");
+      masterRecordFile = new File(walLocation, this.storage.getName() + MASTER_RECORD_EXTENSION);
       masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rws");
 
       if (masterRecordLSNHolder.length() > 0) {
-        firstMasterRecord = readMasterRecord(paginatedStorage.getName(), 0);
-        secondMasterRecord = readMasterRecord(paginatedStorage.getName(), 1);
+        firstMasterRecord = readMasterRecord(this.storage.getName(), 0);
+        secondMasterRecord = readMasterRecord(this.storage.getName(), 1);
 
         if (firstMasterRecord == null) {
           useFirstMasterRecord = true;
@@ -166,8 +154,8 @@ public class OWriteAheadLog {
 
     } catch (FileNotFoundException e) {
       // never happened
-      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, paginatedStorage.getName());
-      throw new IllegalStateException("Error during file initialization for storage " + paginatedStorage.getName(), e);
+      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, this.storage.getName());
+      throw new IllegalStateException("Error during file initialization for storage " + this.storage.getName(), e);
     }
   }
 
@@ -299,7 +287,7 @@ public class OWriteAheadLog {
   }
 
   private String getSegmentName(int order) {
-    return paginatedStorage.getName() + "." + order + ".wal";
+    return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
   }
 
   public OLogSequenceNumber logFuzzyCheckPointStart() throws IOException {
@@ -419,10 +407,10 @@ public class OWriteAheadLog {
       for (LogSegment logSegment : logSegments)
         if (!logSegment.delete(false))
           OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(),
-              paginatedStorage.getName());
+              storage.getName());
 
       if (!masterRecordFile.delete())
-        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", paginatedStorage.getName());
+        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", storage.getName());
     }
   }
 

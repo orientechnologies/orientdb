@@ -24,8 +24,6 @@ import java.util.concurrent.*;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
@@ -82,18 +80,14 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private int                                  defaultClusterId                     = -1;
 
   private static String[]                      ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh",
-      ".otx", ".ocs", ".oef", ".oem", ".oet", ".wal", ".wmr", OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION, OLocalHashTableIndexEngine.TREE_FILE_EXTENSION };
+      ".otx", ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
+      OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION                               };
 
   private OModificationLock                    modificationLock                     = new OModificationLock();
 
-  private ODiskCache                           diskCache;
-  private OWriteAheadLog                       writeAheadLog;
-
   private ScheduledExecutorService             fuzzyCheckpointExecutor;
   private ExecutorService                      checkpointExecutor;
-
-  private OStorageTransaction                  transaction                          = null;
 
   private volatile boolean                     wereDataRestoredAfterOpen            = false;
 
@@ -123,8 +117,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void initWal() throws IOException {
-    final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
     if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
       fuzzyCheckpointExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
@@ -498,40 +490,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
-    boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
-    if (isAtomicUnitStartRecord && index != 0) {
-      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
-          OAtomicUnitStartRecord.class.getName());
-      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
-    }
-
-    if (index == 0 && !isAtomicUnitStartRecord) {
-      OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
-          OAtomicUnitStartRecord.class.getName());
-      assert false : "Record " + OAtomicUnitStartRecord.class.getName() + " should be the first record in WAL record list.";
-    }
-
-    return isAtomicUnitStartRecord;
-  }
-
-  private boolean checkLastAtomicUnitRecord(int index, OWALRecord record, int size) {
-    boolean isAtomicUnitEndRecord = record instanceof OAtomicUnitEndRecord;
-    if (isAtomicUnitEndRecord && index != size - 1) {
-      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
-          OAtomicUnitEndRecord.class.getName());
-      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
-    }
-
-    if (index == size - 1 && !isAtomicUnitEndRecord) {
-      OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
-          OAtomicUnitEndRecord.class.getName());
-      assert false : "Record " + OAtomicUnitEndRecord.class.getName() + " should be the last record in WAL record list.";
-    }
-
-    return isAtomicUnitEndRecord;
-  }
-
   private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OWALRecord>> operationUnits) throws IOException {
     for (List<OWALRecord> operationUnit : operationUnits.values()) {
       if (operationUnit.isEmpty())
@@ -546,48 +504,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       operationUnit.add(atomicUnitEndRecord);
 
       undoOperation(operationUnit);
-    }
-  }
-
-  private void undoOperation(List<OWALRecord> operationUnit) throws IOException {
-    for (int i = operationUnit.size() - 1; i >= 0; i--) {
-      OWALRecord record = operationUnit.get(i);
-      if (checkFirstAtomicUnitRecord(i, record)) {
-        assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
-        continue;
-      }
-
-      if (checkLastAtomicUnitRecord(i, record, operationUnit.size())) {
-        assert ((OAtomicUnitEndRecord) record).isRollback();
-        continue;
-      }
-
-      if (record instanceof OUpdatePageRecord) {
-        OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) record;
-        final long fileId = updatePageRecord.getFileId();
-        final long pageIndex = updatePageRecord.getPageIndex();
-
-        if (!diskCache.isOpen(fileId))
-          diskCache.openFile(fileId);
-
-        OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
-        cachePointer.acquireExclusiveLock();
-        try {
-          ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
-
-          OPageChanges pageChanges = updatePageRecord.getChanges();
-          durablePage.revertChanges(pageChanges);
-
-          durablePage.setLsn(updatePageRecord.getPrevLsn());
-        } finally {
-          cachePointer.releaseExclusiveLock();
-        }
-      } else {
-        OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-            record.getClass());
-        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
-      }
     }
   }
 
@@ -1456,7 +1372,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return null;
   }
 
-  public void commit(final OTransaction clientTx) {
+  public void commit(final OTransaction clientTx, Runnable callback) {
     modificationLock.requestModificationLock();
     try {
       lock.acquireExclusiveLock();
@@ -1464,13 +1380,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         if (writeAheadLog == null)
           throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-        if (transaction != null && transaction.getClientTx().getId() != clientTx.getId())
-          rollback(clientTx);
-
-        transaction = new OStorageTransaction(clientTx, OOperationUnitId.generateId());
-
-        OLogSequenceNumber startLSN = writeAheadLog.log(new OAtomicUnitStartRecord(true, transaction.getOperationUnitId()));
-        transaction.setStartLSN(startLSN);
+        startStorageTx(clientTx);
 
         final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
@@ -1485,7 +1395,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
             commitEntry(clientTx, txEntry);
         }
 
-        writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), false));
+        if (callback != null)
+          callback.run();
+
+        endStorageTx();
 
         OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
@@ -1615,51 +1528,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           throw new OStorageException(
               "Passed in and active transaction are different transactions. Passed in transaction can not be rolled back.");
 
-        writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), true));
-        final List<OWALRecord> operationUnit = readOperationUnit(transaction.getStartLSN(), transaction.getOperationUnitId());
-        undoOperation(operationUnit);
+        rollbackStorageTx();
 
         OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
-        transaction = null;
+
       } catch (IOException e) {
         throw new OStorageException("Error during transaction rollback.", e);
       } finally {
+        transaction = null;
         lock.releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
     }
-  }
-
-  private List<OWALRecord> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
-    final OLogSequenceNumber beginSequence = writeAheadLog.begin();
-
-    if (startLSN == null)
-      startLSN = beginSequence;
-
-    if (startLSN.compareTo(beginSequence) < 0)
-      startLSN = beginSequence;
-
-    List<OWALRecord> operationUnit = new ArrayList<OWALRecord>();
-
-    OLogSequenceNumber lsn = startLSN;
-    while (lsn != null) {
-      OWALRecord record = writeAheadLog.read(lsn);
-      if (!(record instanceof OOperationUnitRecord)) {
-        lsn = writeAheadLog.next(lsn);
-        continue;
-      }
-
-      OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
-      if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
-        operationUnit.add(record);
-        if (record instanceof OAtomicUnitEndRecord)
-          break;
-      }
-      lsn = writeAheadLog.next(lsn);
-    }
-
-    return operationUnit;
   }
 
   @Override
@@ -1739,25 +1620,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
 
       return cluster;
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
-  public OWriteAheadLog getWALInstance() {
-    lock.acquireSharedLock();
-    try {
-      return writeAheadLog;
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
-  @Override
-  public OStorageTransaction getStorageTransaction() {
-    lock.acquireSharedLock();
-    try {
-      return transaction;
     } finally {
       lock.releaseSharedLock();
     }

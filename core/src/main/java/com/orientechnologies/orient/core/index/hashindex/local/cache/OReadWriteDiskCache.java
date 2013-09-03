@@ -189,7 +189,7 @@ public class OReadWriteDiskCache implements ODiskCache {
                 cacheEntry = pinnedPages.remove(new PinnedPage(fileId, pageIndex));
             } else
               throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
-                  + "can not be freed because it is used.");
+                  + " can not be freed because it is used.");
 
             cacheEntry.dataPointer.decrementReferrer();
             cacheEntry.dataPointer = null;

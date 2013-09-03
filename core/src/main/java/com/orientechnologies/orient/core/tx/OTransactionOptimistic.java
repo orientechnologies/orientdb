@@ -16,13 +16,8 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -66,7 +61,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (database.getStorage() instanceof OStorageProxy)
-      database.getStorage().commit(this);
+      database.getStorage().commit(this, null);
     else {
       final List<String> involvedIndexes = getInvolvedIndexes();
 
@@ -124,13 +119,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 index.acquireExclusiveLock();
             }
 
-            database.getStorage().callInLock(new Callable<Void>() {
-
-              public Void call() throws Exception {
-
-                database.getStorage().commit(OTransactionOptimistic.this);
-
-                // COMMIT INDEX CHANGES
+            final Runnable callback = new Runnable() {
+              @Override
+              public void run() {
                 final ODocument indexEntries = getIndexChanges();
                 if (indexEntries != null) {
                   for (Entry<String, Object> indexEntry : indexEntries) {
@@ -138,11 +129,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                     index.commit((ODocument) indexEntry.getValue());
                   }
                 }
-                return null;
               }
+            };
 
-            }, true);
-
+            database.getStorage().commit(OTransactionOptimistic.this, callback);
             // OK
             break;
 
