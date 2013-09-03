@@ -476,6 +476,28 @@ database.factory('DocumentApi', function ($http, $resource, Database) {
     }
     return resource;
 });
+database.factory('ServerApi', function ($http, $resource) {
+
+
+    var resource = $resource('/api/server');
+    resource.getServerInfo=function(callback) {
+
+        $http.get('/api/server').success(function(data){
+           callback(data);
+        });
+    }
+    resource.killConnection = function(n,callback){
+        $http.post('/api/connection/kill/'+n).success(function(){
+            callback();
+        });
+    }
+    resource.interruptConnection = function(n,callback){
+        $http.post('/api/connection/interrupt/'+n).success(function(){
+            callback();
+        });
+    }
+    return resource;
+});
 database.factory('FunctionApi', function ($http, $resource) {
 
 

@@ -1,6 +1,7 @@
 angular.module('header.controller',['database.services']).controller("HeaderController",['$scope','$routeParams','$http','$location','Database',function($scope,$routeParams,$http,$location,Database){
 	$scope.database = Database;
     $scope.selectedMenu = null;
+    $scope.menus = [];
 	$scope.$watch(Database.getName,function(data){
 		if(data!=null){
 			$scope.menus = [
