@@ -1,10 +1,13 @@
 var dbModule = angular.module('database.controller', ['database.services']);
+<<<<<<< HEAD
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'ngTableParams', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, ngTableParams) {
+=======
 dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, Spinner) {
+>>>>>>> 93008909ab31b713764e37f1ee2a3210063beab3
 
     $scope.database = Database;
     $scope.limit = 20;
     $scope.queries = new Array;
-    $scope.language = 'sql';
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -15,23 +18,24 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         extraKeys: {
             "Ctrl-Enter": function (instance) {
                 $scope.query()
+<<<<<<< HEAD
             },
             "Ctrl-Space": "autocomplete"
 
         }
     };
 
-
     $scope.query = function () {
+=======
+            }
+        }
+    };
+
+
+	$scope.query = function(){
+>>>>>>> 93008909ab31b713764e37f1ee2a3210063beab3
         Spinner.loading = true;
-        $scope.queryText = $scope.queryText.trim();
-        if($scope.queryText.startsWith('g.')){
-            $scope.language = 'gremlin';
-        }
-        if($scope.queryText.startsWith('#')){
-            $location.path('/database/' + $routeParams.database + '/browse/edit/' + $scope.queryText.replace('#', ''));
-        }
-        CommandApi.queryText({database: $routeParams.database, language: $scope.language, text: $scope.queryText, limit: $scope.limit}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: $scope.queryText, limit: $scope.limit}, function (data) {
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
                 $scope.resultTotal = data.result;

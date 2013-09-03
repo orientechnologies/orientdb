@@ -7,6 +7,7 @@ var deps = ['header.controller',
     'login.controller',
     'database.controller',
     'document.controller',
+    'server.controller',
     'vertex.controller',
     'function.controller',
     'notification.controller',
@@ -39,14 +40,15 @@ App.config(function ($routeProvider) {
             templateUrl: 'views/database/schema.html',
             controller: 'SchemaController',
             resolve: DatabaseResolve
-        }).when('/database/:database/functions', {
-            templateUrl: 'views/database/functions.html',
-            controller: 'FunctionController',
-            resolve: DatabaseResolve
         })
         .when('/database/:database/browse/edit/:rid', {
             templateUrl: 'views/database/edit.html',
             controller: 'EditController',
+            resolve: DatabaseResolve
+        })
+		.when('/database/:database/functions', {
+            templateUrl: 'views/database/functions.html',
+            controller: 'FunctionController',
             resolve: DatabaseResolve
         })
         .when('/database/:database/browse/create/:clazz', {
@@ -58,6 +60,14 @@ App.config(function ($routeProvider) {
             templateUrl: 'views/database/editclass.html',
             controller: 'ClassEditController',
             resolve: DatabaseResolve
+        })
+        .when('/server', {
+            templateUrl: 'views/server/info.html',
+            controller: 'ServerController'
+        })
+        .when('/server/:tab', {
+            templateUrl: 'views/server/info.html',
+            controller: 'ServerController'
         })
         .when('/404', {
             templateUrl: 'views/404.html'

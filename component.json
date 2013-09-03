@@ -11,6 +11,7 @@
     "angular-strap" : "~0.7.4",
     "js-base64":"~2.1.2",
     "angular-ui-codemirror": "latest",
+    "codemirror": "~3.16.0",
     "angular-localstorage" : "latest",
     "bootstrap-datepicker" : "1.0.2",
     "moment" : "latest",

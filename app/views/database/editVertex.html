@@ -6,7 +6,7 @@
                 <div class="accordion-group" ng-repeat="i in incomings">
                     <div class="accordion-heading">
                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{i}}">
-                            {{i}}
+                            {{i}} ({{filterArray(doc[i]).length}})
                             <i class="icon-plus-sign" data-placement="right" ng-click="showModalConnection(i)"></i>
                         </a>
                     </div>
@@ -31,7 +31,7 @@
         </form>
     </div>
     <div class="span8 vertex">
-        <ng-include src="'/views/database/record.html'"  onload=""></ng-include>
+        <ng-include src="'views/database/record.html'"  onload=""></ng-include>
     </div>
     <div class="span2 edgesList">
         <form>
@@ -40,7 +40,7 @@
                 <div class="accordion-group" ng-repeat="i in outgoings">
                     <div class="accordion-heading">
                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{i}}">
-                            {{i}}
+                            {{i}} ({{filterArray(doc[i]).length}})
                             <i class="icon-plus-sign" data-placement="left" ng-click="showModalConnection(i)"></i>
                         </a>
                     </div>
