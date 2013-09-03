@@ -50,7 +50,7 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 		modalScope.parentScope = $scope;
 		// modalScope.propertiesName = $scope.propertyNames ;
 		// modalScope.rid = rid;
-		var modalPromise = $modal({template: '/views/database/newClass.html', scope: modalScope});
+		var modalPromise = $modal({template: 'views/database/newClass.html', scope: modalScope});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});
@@ -132,7 +132,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		modalScope.parentScope = $scope;
 		modalScope.propertiesName = $scope.propertyNames ;
 		// modalScope.rid = rid;
-		var modalPromise = $modal({template: '/views/database/newIndex.html', scope: modalScope});
+		var modalPromise = $modal({template: 'views/database/newIndex.html', scope: modalScope});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});
@@ -144,7 +144,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		modalScope.parentScope = $scope;
 		modalScope.propertiesName = $scope.propertyNames ;
 		// modalScope.rid = rid;
-		var modalPromise = $modal({template: '/views/database/newProperty.html', scope: modalScope});
+		var modalPromise = $modal({template: 'views/database/newProperty.html', scope: modalScope});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});

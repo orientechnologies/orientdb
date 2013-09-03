@@ -17,7 +17,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 		var modalScope = $scope.$new(true);
 		modalScope.db = $scope.database;
 		modalScope.rid = rid;
-		var modalPromise = $modal({template: '/views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'editEdge'});
+		var modalPromise = $modal({template: 'views/database/modalEdit.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'editEdge'});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});
@@ -28,7 +28,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 		modalScope.originRid = $scope.rid;
 		modalScope.container = $scope;	
 		modalScope.label = label
-		var modalPromise = $modal({template: '/views/vertex/modalConnection.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'createEdge'});
+		var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : 'createEdge'});
 		$q.when(modalPromise).then(function(modalEl) {
 			modalEl.modal('show');
 		});
@@ -52,7 +52,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 				var command = "DELETE Vertex " + recordID;
 				CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
 					var clazz = $scope.doc['@class'];
-					$location.path('/database/'+database + '/browse/' + 'select * from ' + clazz);
+					$location.path('#/database/'+database + '/browse/' + 'select * from ' + clazz);
 				});
 			}
 		});
@@ -106,7 +106,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 					});
 				}, function(error){
 					Notification.push({content : JSON.stringify(error)});
-					$location.path('/404');
+					$location.path('#/404');
 				});
 				
 			}
@@ -124,7 +124,7 @@ GrapgController.controller("VertexCreateController",['$scope','$routeParams','$l
 	$scope.save = function(){
 		DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
 			Notification.push({content : JSON.stringify(data)});
-			$location.path('/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
+			$location.path('#/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
 		});
 		
 	}
@@ -137,7 +137,7 @@ GrapgController.controller("VertexModalController",['$scope','$routeParams','$lo
 			$scope.headers = Database.getPropertyFromDoc($scope.doc);
 		}, function(error){
 			Notification.push({content : JSON.stringify(error)});
-			$location.path('/404');
+			$location.path('#/404');
 		});
 	}
 	$scope.save = function(){

@@ -1,6 +1,8 @@
 var database = angular.module('database.services', ['ngResource']);
 
-DatabaseResolve = {
+var API = '/api/';
+//var API = '/';
+var DatabaseResolve = {
     current: function (Database, $q, $route, $location, Spinner) {
         var deferred = $q.defer();
         Database.refreshMetadata($route.current.params.database, function () {
@@ -384,23 +386,23 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
 database.factory('DatabaseApi', function ($http, $resource) {
 
-    var resource = $resource('/api/database/:database');
+    var resource = $resource(API + 'database/:database');
     resource.listDatabases = function (callback) {
-        $http.get('/api/listDatabases').success(callback);
+        $http.get(API + 'listDatabases').success(callback);
     }
     resource.connect = function (database, username, password, callback, error) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
-        $http.get('/api/connect/' + database).success(callback).error(error);
+        $http.get(API + 'connect/' + database).success(callback).error(error);
     }
     resource.createDatabase = function (name, type, stype, username, password, callback) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
-        $http.post('/api/database/' + name + "/" + stype + "/" + type).success(function (data) {
+        $http.post(API + 'database/' + name + "/" + stype + "/" + type).success(function (data) {
             $http.defaults.headers.common['Authorization'] = null;
             callback(data);
         });
     }
     resource.disconnect = function (callback) {
-        $http.get('/api/disconnect').success(function () {
+        $http.get(API + 'disconnect').success(function () {
             $http.defaults.headers.common['Authorization'] = null;
             callback();
         }).error(function () {
@@ -412,14 +414,14 @@ database.factory('DatabaseApi', function ($http, $resource) {
 });
 database.factory('CommandApi', function ($http, $resource, Notification) {
 
-    var resource = $resource('/api/command/:database');
+    var resource = $resource(API + 'command/:database');
 
     resource.queryText = function (params, callback, error) {
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
-        var text = '/api/command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version,class,shallow,graph';
+        var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version,class,shallow,graph';
         var query = params.text;
         $http.post(text, query).success(function (data) {
             var time = ((new Date().getTime() - startTime) / 1000);
@@ -435,7 +437,7 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
             });
     }
     resource.getAll = function (database, clazz, callback) {
-        var text = '/api/command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
+        var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
         var query = "select * from " + clazz;
         $http.post(text, query).success(function (data) {
             callback(data);
@@ -446,21 +448,21 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
 });
 database.factory('DocumentApi', function ($http, $resource, Database) {
 
-    var resource = $resource('/api/document/:database/:document');
+    var resource = $resource(API + 'document/:database/:document');
     resource.updateDocument = function (database, rid, doc, callback) {
-        $http.put('/api/document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
+        $http.put(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
     }
     resource.uploadFileDocument = function (database, doc, blob, name, callback) {
 
         var fd = new FormData();
         fd.append("linkValue", JSON.stringify(doc));
         fd.append("file", blob, name);
-        //$.post('/api/uploadSingleFile/'+database,fd);
-        $http.post('/api/uploadSingleFile/' + database, fd, { headers: { 'Content-Type': undefined }, transformRequest: angular.identity });
-        //$http.put('/api/document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
+        //$.post(API + 'uploadSingleFile/'+database,fd);
+        $http.post(API + 'uploadSingleFile/' + database, fd, { headers: { 'Content-Type': undefined }, transformRequest: angular.identity });
+        //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
     }
     resource.createDocument = function (database, rid, doc, callback) {
-        $http.post('/api/document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
+        $http.post(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
     }
     resource.createNewDoc = function (clazz) {
         var r = new resource
@@ -479,20 +481,20 @@ database.factory('DocumentApi', function ($http, $resource, Database) {
 database.factory('ServerApi', function ($http, $resource) {
 
 
-    var resource = $resource('/api/server');
+    var resource = $resource(API + 'server');
     resource.getServerInfo=function(callback) {
 
-        $http.get('/api/server').success(function(data){
+        $http.get(API + 'server').success(function(data){
            callback(data);
         });
     }
     resource.killConnection = function(n,callback){
-        $http.post('/api/connection/kill/'+n).success(function(){
+        $http.post(API + 'connection/kill/'+n).success(function(){
             callback();
         });
     }
     resource.interruptConnection = function(n,callback){
-        $http.post('/api/connection/interrupt/'+n).success(function(){
+        $http.post(API + 'connection/interrupt/'+n).success(function(){
             callback();
         });
     }
@@ -501,6 +503,6 @@ database.factory('ServerApi', function ($http, $resource) {
 database.factory('FunctionApi', function ($http, $resource) {
 
 
-    var resource = $resource('/api/tournaments/:id');
+    var resource = $resource(API + 'tournaments/:id');
     return resource;
 });

@@ -13,7 +13,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
         modalScope = $scope.$new(true);
         modalScope.db = $scope.database;
         modalScope.rid = rid;
-        var modalPromise = $modal({template: '/views/document/modalEdit.html', persist: true, show: false, backdrop: 'static', modalClass: 'editEdge', scope: modalScope});
+        var modalPromise = $modal({template: 'views/document/modalEdit.html', persist: true, show: false, backdrop: 'static', modalClass: 'editEdge', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });
@@ -51,7 +51,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
         modalScope.originRid = $scope.rid;
         modalScope.container = $scope;
         modalScope.label = label
-        var modalPromise = $modal({template: '/views/document/modalConnection.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
+        var modalPromise = $modal({template: 'views/document/modalConnection.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });
@@ -68,7 +68,7 @@ DocController.controller("DocumentCreateController", ['$scope', '$routeParams', 
     $scope.save = function () {
         DocumentApi.createDocument(database, $scope.doc['@rid'], $scope.doc, function (data) {
             Notification.push({content: JSON.stringify(data)});
-            $location.path('/database/' + database + '/browse/edit/' + data['@rid'].replace('#', ''));
+            $location.path('#/database/' + database + '/browse/edit/' + data['@rid'].replace('#', ''));
         });
 
     }
@@ -116,10 +116,10 @@ DocController.controller("EditController", ['$scope', '$routeParams', '$location
     var rid = $routeParams.rid;
     $scope.doc = DocumentApi.get({ database: database, document: rid}, function () {
 
-        $scope.template = Database.isGraph($scope.doc['@class']) ? '/views/database/editVertex.html' : '/views/database/editDocument.html'
+        $scope.template = Database.isGraph($scope.doc['@class']) ? 'views/database/editVertex.html' : 'views/database/editDocument.html'
     }, function (error) {
         Notification.push({content: JSON.stringify(error)});
-        $location.path('/404');
+        $location.path('404');
     });
 
 
@@ -132,7 +132,7 @@ DocController.controller("CreateController", ['$scope', '$routeParams', '$locati
     $scope.doc = DocumentApi.createNewDoc(clazz);
     $scope.headers = Database.getPropertyFromDoc($scope.doc);
     $scope.isNew = true;
-    $scope.template = Database.isGraph(clazz) ? '/views/database/editVertex.html' : '/views/database/editDocument.html'
+    $scope.template = Database.isGraph(clazz) ? 'views/database/editVertex.html' : 'views/database/editDocument.html'
 
 }]);
 DocController.controller("DocumentModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', function ($scope, $routeParams, $location, Database, CommandApi) {
@@ -198,7 +198,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
         } else {
             DocumentApi.createDocument($scope.database, $scope.doc['@rid'], $scope.doc, function (data) {
                 Notification.push({content: JSON.stringify(data)});
-                $location.path('/database/' + $scope.database + '/browse/edit/' + data['@rid'].replace('#', ''));
+                $location.path('database/' + $scope.database + '/browse/edit/' + data['@rid'].replace('#', ''));
             });
         }
     }
@@ -214,7 +214,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
             $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
         }, function (error) {
             Notification.push({content: JSON.stringify(error)});
-            $location.path('/404');
+            $location.path('404');
         });
     }
 
@@ -233,7 +233,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
                 var command = "DELETE Vertex " + recordID;
                 CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
                     var clazz = $scope.doc['@class'];
-                    $location.path('/database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
+                    $location.path('database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
                 });
             }
         });
@@ -274,7 +274,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
             var modalScope = $scope.$new(true);
             modalScope.addField = $scope.addField;
             modalScope.types = Database.getSupportedTypes();
-            var modalPromise = $modal({template: '/views/database/newField.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+            var modalPromise = $modal({template: 'views/database/newField.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
             $q.when(modalPromise).then(function (modalEl) {
                 modalEl.modal('show');
             });
@@ -285,9 +285,9 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
         $scope.navigate(rid);
     }
     $scope.navigate = function (rid) {
-        $location.path('/database/' + $scope.database + '/browse/edit/' + rid.replace('#', ''));
+        $location.path('database/' + $scope.database + '/browse/edit/' + rid.replace('#', ''));
     }
     $scope.create = function () {
-        $location.path('/database/' + $scope.database + '/browse/create/' + $scope.doc['@class']);
+        $location.path('database/' + $scope.database + '/browse/create/' + $scope.doc['@class']);
     }
 }

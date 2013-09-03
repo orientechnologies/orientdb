@@ -75,7 +75,7 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi,Doc
                 var blob = new Blob(blobInput);
                 formScope.doc[header] =  "$file";
                 DocumentApi.uploadFileDocument(formScope.database,formScope.doc,blob,files[0].name);
-            };
+            }
             reader.readAsDataURL(files[0]);
         }
         var el = angular.element($compile(response.data)(formScope));
