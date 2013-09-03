@@ -1,0 +1,53 @@
+<div class="row-fluid" xmlns="http://www.w3.org/1999/html">
+
+    <div class="span12 nomargin">
+        <div>
+            <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-plus"></i> New</a>
+            <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-trash"></i> Delete</a>
+            <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-refresh"></i> Clear</a>
+            <a href="javascript:void(0)" class="btn btn-primary" ng-click=""> <i class="icon-white icon-ok"></i>
+                Save</a>
+
+
+            Name:<input type="text">
+
+            <select>
+
+                <option ng-repeat="lang in languages" value="{{lang}}"> {{lang}}
+
+
+                </option>
+            </select>
+
+        </div>
+
+        <div class="row-fluid">
+
+            <div class="span3 document">
+                <label>Stored functions in database:</label>
+                <select size="20">
+                    <option ng-repeat="func in functions" ng-click="" value="{{func}}"> {{func}}
+
+
+                    </option>
+                </select>
+
+
+            </div>
+            <div class="span9 document">Console
+
+
+                <div class="row-fluid">
+                    <form ng-submit="query()" class="form-inline">
+                        <textarea ui-codemirror="editorOptions" ng-model="queryText"></textarea>
+                    </form>
+                </div>
+            </div>
+            <div class="row-fluid">
+                <form ng-submit="query()" class="form-inline">
+                    <textarea ></textarea>
+                </form>
+
+            </div>
+    </div>
+</div>
