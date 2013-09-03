@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.tx;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -26,6 +27,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -132,7 +135,20 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
               }
             };
 
-            database.getStorage().commit(OTransactionOptimistic.this, callback);
+            final String storageType = database.getStorage().getType();
+
+            if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME))
+              database.getStorage().commit(OTransactionOptimistic.this, callback);
+            else {
+              database.getStorage().callInLock(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  database.getStorage().commit(OTransactionOptimistic.this, null);
+                  callback.run();
+                  return null;
+                }
+              }, true);
+            }
             // OK
             break;
 
