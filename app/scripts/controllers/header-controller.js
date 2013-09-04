@@ -7,7 +7,7 @@ angular.module('header.controller',['database.services']).controller("HeaderCont
             { name : "browse", link : '#/database/'+ data +'/browse'},
             { name : "schema", link : '#/database/'+ data +'/schema'},
             { name : "users" , link : '#/database/'+ data +'/users'},
-            { name: "functions", link: '#/database/' + data + '/functions'}
+            { name: "functions", link: '#/database/' + data + '/functions'},
             { name: "info", link: '#/database/' + data + '/info'}
 
         ];

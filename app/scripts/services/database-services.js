@@ -1,7 +1,7 @@
 var database = angular.module('database.services', ['ngResource']);
 
-//var API = '/api/';
-var API = '/';
+var API = '/api/';
+//var API = '/';
 var DatabaseResolve = {
     current: function (Database, $q, $route, $location, Spinner) {
         var deferred = $q.defer();
@@ -516,7 +516,7 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
         var startTime = new Date().getTime();
         var verbose = params.verbose != undefined ? params.verbose : true;
         console.log(params.functionName);
-        var text = 'function/' + params.database + "/" + params.functionName +'/c/d/' ;
+        var text =  API +  'function/' + params.database + "/" + params.functionName +'/c/d/' ;
 
 
         $http.post(text).success(function (data) {
