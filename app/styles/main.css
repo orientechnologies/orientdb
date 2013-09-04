@@ -254,5 +254,20 @@ a > i {
     vertical-align: middle !important;
     margin-top: 0px !important;
 }
+button.exportButton {
+    background: none repeat scroll 0 0 #3399FF;
+    border: 1px solid #2E6E9E;
+    border-radius: 10px 10px 10px 10px;
+    color: #333333;
+    cursor: pointer;
+    direction: ltr;
+    font-weight: bold;
+    height: 2.5em;
+    line-height: 2.5em;
+    overflow: hidden;
+    position: relative;
+    text-align: center !important;
+    width: 15em;
+}
 
 

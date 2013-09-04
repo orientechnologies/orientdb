@@ -11,6 +11,7 @@ var deps = ['header.controller',
     'vertex.controller',
     'function.controller',
     'notification.controller',
+    'configuration.controller',
     '$strap.directives',
     'ui.codemirror',
     'LocalStorageModule',
@@ -59,6 +60,16 @@ App.config(function ($routeProvider) {
         when('/database/:database/browse/editclass/:clazz', {
             templateUrl: 'views/database/editclass.html',
             controller: 'ClassEditController',
+            resolve: DatabaseResolve
+        })
+        .when('/database/:database/configuration', {
+            templateUrl: 'views/database/configuration.html',
+            controller: 'ConfigurationController',
+            resolve: DatabaseResolve
+        })
+        .when('/database/:database/configuration/:tab', {
+            templateUrl: 'views/database/configuration.html',
+            controller: 'ConfigurationController',
             resolve: DatabaseResolve
         })
         .when('/server', {
