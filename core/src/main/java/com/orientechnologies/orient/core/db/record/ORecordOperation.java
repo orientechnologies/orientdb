@@ -67,7 +67,8 @@ public class ORecordOperation implements OSerializableStream {
 
   @Override
   public String toString() {
-    return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type)).append("]").toString();
+    return new StringBuilder().append("ORecordOperation [record=").append(record).append(", type=").append(getName(type))
+        .append("]").toString();
   }
 
   public ORecordInternal<?> getRecord() {
@@ -128,6 +129,9 @@ public class ORecordOperation implements OSerializableStream {
     case ORecordOperation.DELETED:
       operation = "DELETE";
       break;
+    case ORecordOperation.LOADED:
+      operation = "READ";
+      break;
     }
     return operation;
   }
@@ -141,6 +145,8 @@ public class ORecordOperation implements OSerializableStream {
       return ORecordOperation.UPDATED;
     else if (iName.startsWith("DELET"))
       return ORecordOperation.DELETED;
+    else if (iName.startsWith("READ"))
+      return ORecordOperation.LOADED;
     return -1;
   }
 }

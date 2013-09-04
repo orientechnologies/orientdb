@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
+ * DEPRECATED since v1.0 
+ * 
  * Pooled wrapper to the ODatabaseObjectTx class. Allows to being reused across calls. The close() method does not close the
  * database for real but release it to the owner pool. The database born as opened and will leave open until the pool is closed.
  * 
@@ -114,9 +116,11 @@ public class ODatabaseObjectTxPooled extends ODatabaseObjectTx implements ODatab
 
     getLevel1Cache().clear();
 
-    final ODatabaseObjectPool localCopy = ownerPool;
-    ownerPool = null;
-    localCopy.release(this);
+    if (ownerPool != null) {
+      final ODatabaseObjectPool localCopy = ownerPool;
+      ownerPool = null;
+      localCopy.release(this);
+    }
   }
 
   public void forceClose() {

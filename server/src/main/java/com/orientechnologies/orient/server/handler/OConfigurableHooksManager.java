@@ -32,6 +32,11 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
       Orient.instance().addDbLifecycleListener(this);
   }
 
+  @Override
+  public void onCreate(final ODatabase iDatabase) {
+    onOpen(iDatabase);
+  }
+
   public void onOpen(ODatabase iDatabase) {
     if (iDatabase instanceof ODatabaseComplex) {
       final ODatabaseComplex<?> db = (ODatabaseComplex<?>) iDatabase;

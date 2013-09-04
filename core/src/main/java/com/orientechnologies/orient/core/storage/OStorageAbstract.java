@@ -47,7 +47,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   protected volatile STATUS                       status  = STATUS.CLOSED;
   protected final OSharedResourceAdaptiveExternal lock;
 
-  public OStorageAbstract(final String name, final String URL, final String mode, final int timeout, final OCacheLevelTwoLocator cacheLocator) {
+  public OStorageAbstract(final String name, final String URL, final String mode, final int timeout,
+      final OCacheLevelTwoLocator cacheLocator) {
     if (OStringSerializerHelper.contains(name, '/'))
       this.name = name.substring(name.lastIndexOf("/") + 1);
     else
@@ -65,7 +66,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
   }
 
-	public OStorageConfiguration getConfiguration() {
+  public OStorageConfiguration getConfiguration() {
     return configuration;
   }
 

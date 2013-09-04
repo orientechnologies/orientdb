@@ -30,6 +30,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
+/**
+ * DEPRECATED since v1.0
+ * 
+ */
 @Deprecated
 @SuppressWarnings({ "unchecked" })
 public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OLazyObjectMultivalueElement<List<TYPE>>,

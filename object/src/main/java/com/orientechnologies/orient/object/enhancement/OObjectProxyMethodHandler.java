@@ -626,7 +626,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     if (value instanceof ORecordLazyMap
         || (value instanceof OTrackedMap<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
             .isEnum())) {
-      value = new OObjectLazyMap(self, (ORecordLazyMap) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+      value = new OObjectLazyMap(self, (OTrackedMap<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
           f.getName()));
     } else if (customSerialization) {
       value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, (Map<Object, Object>) value);

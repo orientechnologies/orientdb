@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -207,8 +207,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       // DELETED IN TX
       return null;
 
-    if (txRecord != null)
+    if (txRecord != null) {
+      if (iRecord != null && txRecord != iRecord)
+        OLogManager.instance().warn(
+            this,
+            "Found record in transaction with the same RID %s but different instance. "
+                + "Probably the record has been loaded from another transaction and reused on the current one: reload it "
+                + "from current transaction before to update or delete it", iRecord.getIdentity());
       return txRecord;
+    }
 
     if (iRid.isTemporary())
       return null;
@@ -284,7 +291,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         } else if (txRecord.record != iRecord) {
           // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
           final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
-          if (!clusterName.equals(OMetadata.CLUSTER_MANUAL_INDEX_NAME) && !clusterName.equals(OMetadata.CLUSTER_INDEX_NAME))
+          if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
             OLogManager
                 .instance()
                 .warn(
