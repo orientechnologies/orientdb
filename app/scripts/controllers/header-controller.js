@@ -3,14 +3,15 @@ angular.module('header.controller',['database.services']).controller("HeaderCont
     $scope.selectedMenu = null;
     $scope.menus = [];
 	$scope.$watch(Database.getName,function(data){
-		if(data!=null){
-			$scope.menus = [
-			{ name : "browse", link : '#/database/'+ data +'/browse'},
-			{ name : "schema", link : '#/database/'+ data +'/schema'},
-			{ name : "users" , link : '#/database/'+ data +'/users'},
+        $scope.menus = [
+            { name : "browse", link : '#/database/'+ data +'/browse'},
+            { name : "schema", link : '#/database/'+ data +'/schema'},
+            { name : "users" , link : '#/database/'+ data +'/users'},
             { name: "functions", link: '#/database/' + data + '/functions'}
-			
-];
+            { name: "info", link: '#/database/' + data + '/info'}
+
+        ];
+        if(data!=null){
             $scope.setSelected();
 		}
 	});
