@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$dialog', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, $dialog, $modal, $q) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', '$dialog', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, $dialog, $modal, $q) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -16,7 +16,12 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             }
         }
     });
+    FunctionApi.executeFunction({database: $routeParams.database, functionName: 'prova', text: sqlText, limit: $scope.limit}, function (data) {
 
+        if (data.result) {
+            console.log(data.result);
+        }
+    });
 
     $scope.editorOptions = {
         lineWrapping: true,
