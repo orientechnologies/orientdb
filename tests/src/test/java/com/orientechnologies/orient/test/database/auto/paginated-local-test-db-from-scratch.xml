@@ -107,7 +107,6 @@
     </test>
     <test name="Query">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.NativeQueryTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.WrongQueryTest"/>
         </classes>
     </test>
