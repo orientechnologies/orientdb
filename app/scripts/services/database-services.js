@@ -506,3 +506,32 @@ database.factory('FunctionApi', function ($http, $resource) {
     var resource = $resource(API + 'tournaments/:id');
     return resource;
 });
+database.factory('FunctionApi', function ($http, $resource, Notification) {
+
+//    var resource = $resource(API + 'command/:database');
+
+    var resource = $resource('function/:database');
+    console.log(resource);
+    resource.executeFunction = function (params, callback, error) {
+        var startTime = new Date().getTime();
+        var verbose = params.verbose != undefined ? params.verbose : true;
+        console.log(params.functionName);
+        var text = 'function/' + params.database + "/" + params.functionName +'/c/d/' ;
+
+
+        $http.post(text).success(function (data) {
+            var time = ((new Date().getTime() - startTime) / 1000);
+            var records = data.result ? data.result.length : "";
+            if (verbose) {
+                var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
+                Notification.push({content: noti});
+            }
+            callback(data);
+        }).error(function (data) {
+                Notification.push({content: data});
+                if (error) error(data);
+            });
+    }
+
+    return resource;
+});
