@@ -14,19 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.db.object;
+package com.orientechnologies.orient.object.serialization;
+
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 
 /**
  * @author luca.molino
  * 
  */
-public interface OLazyObjectMultivalueElement<T> {
+public interface OObjectLazyCustomSerializer<T> extends OObjectLazyMultivalueElement<T> {
 
-  public void detach(boolean nonProxiedInstance);
-
-  public void detachAll(boolean nonProxiedInstance);
-
-  public T getNonOrientInstance();
-
-  public Object getUnderlying();
 }

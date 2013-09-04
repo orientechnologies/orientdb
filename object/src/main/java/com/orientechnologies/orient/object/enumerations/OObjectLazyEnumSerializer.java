@@ -16,12 +16,12 @@
  */
 package com.orientechnologies.orient.object.enumerations;
 
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 
 /**
  * @author luca.molino
  * 
  */
-public interface OLazyObjectEnumSerializer<T> extends OLazyObjectMultivalueElement<T> {
+public interface OObjectLazyEnumSerializer<T> extends OObjectLazyMultivalueElement<T> {
 
 }
