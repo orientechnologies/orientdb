@@ -570,7 +570,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private boolean exists(String path) {
-    return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OLocalPaginatedCluster.DEF_EXTENSION).exists();
+    return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
   @Override
@@ -1435,7 +1435,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     final OPaginatedCluster cluster = getClusterById(rid.clusterId);
 
-    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME) || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
+    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
+        || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
       // AVOID TO COMMIT INDEX STUFF
       return;
 
@@ -1900,8 +1901,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
     configuration.load();
 
-    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length, OMetadataDefault.CLUSTER_INDEX_NAME,
-        null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
         OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
