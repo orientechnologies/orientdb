@@ -87,14 +87,6 @@ public interface ODatabase extends Closeable {
   public void drop();
 
   /**
-   * Deletes a database.
-   * 
-   * @see #drop()
-   */
-  @Deprecated
-  public void delete();
-
-  /**
    * Declares an intent to the database. Intents aim to optimize common use cases.
    * 
    * @param iIntent
@@ -343,23 +335,6 @@ public interface ODatabase extends Closeable {
      * @return Cluster id
      */
     public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, final String iDataSegmentName, Object... iParameters);
-
-  /**
-   * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size
-   * is higher and more files are requires. This matters in some OS where a single process has limitation for the number of files
-   * can open. Most accessed entities should be stored inside a physical cluster.
-   * 
-   * @param iClusterName
-   *          Cluster name
-   * @param iLocation
-   *          Location where to put the cluster
-   * @param iStartSize
-   *          This is not used anymore
-   * @return Cluster id
-   * @deprecated use the more generic addCluster that uses the cluster factory
-   */
-  @Deprecated
-  public int addPhysicalCluster(String iClusterName, String iLocation, int iStartSize);
 
   /**
    * 
