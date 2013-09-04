@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javassist.util.proxy.Proxy;
-
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -55,7 +53,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.object.db.ODatabaseObjectTx;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
@@ -64,14 +61,11 @@ import com.orientechnologies.orient.test.domain.base.Agenda;
 import com.orientechnologies.orient.test.domain.base.EmbeddedChild;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.Event;
-import com.orientechnologies.orient.test.domain.base.IdObject;
-import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
-import com.orientechnologies.orient.test.domain.base.Musician;
 import com.orientechnologies.orient.test.domain.base.Parent;
 import com.orientechnologies.orient.test.domain.base.PersonTest;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -2719,56 +2713,6 @@ public class CRUDObjectPhysicalTestSchemaFull {
   // database.close();
   // }
   // }
-
-  @SuppressWarnings("deprecation")
-  @Test(dependsOnMethods = "update")
-  public void testOldObjectImplementation() {
-    ODatabaseObjectTx db = new ODatabaseObjectTx(url).open("admin", "admin");
-    try {
-      db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-      db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-      db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
-      // insert some instruments
-      Instrument instr = new Instrument("Fender Stratocaster");
-      db.save(instr);
-      Instrument instr2 = new Instrument("Music Man");
-      db.save(instr2);
-      // Insert some musicians
-      Musician man = new Musician();
-      man.setName("Jack");
-      OObjectIteratorClass<Object> list = db.browseClass("Instrument");
-      for (Object anInstrument : list) {
-        man.getInstruments().add((Instrument) anInstrument);
-      }
-      db.save(man);
-      Musician man2 = new Musician();
-      man2.setName("Roger");
-      String query = "select from Instrument where name like 'Fender%'";
-      List<IdObject> list2 = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertTrue(!(list2.get(0) instanceof Proxy));
-      man2.getInstruments().add((Instrument) list2.get(0));
-      db.save(man2);
-      //
-      db.close();
-      db = new ODatabaseObjectTx(url).open("admin", "admin");
-      db.getEntityManager().registerEntityClasses("com.e_soa.dbobjects");
-      query = "select from Musician limit 1";
-      List<IdObject> list3 = db.query(new OSQLSynchQuery<ODocument>(query));
-      man = (Musician) list3.get(0);
-      Assert.assertTrue(!(man instanceof Proxy));
-      for (Object aObject : man.getInstruments()) {
-        Assert.assertTrue(!(aObject instanceof Proxy));
-      }
-      db.close();
-      db = new ODatabaseObjectTx(url).open("admin", "admin");
-      list3 = db.query(new OSQLSynchQuery<ODocument>(query));
-      man = (Musician) list3.get(0);
-      man.setName("Big Jack");
-      db.save(man); // here is the exception
-    } finally {
-      db.close();
-    }
-  }
 
   @Test(dependsOnMethods = "oidentifableFieldsTest")
   public void testEmbeddedDeletion() throws Exception {

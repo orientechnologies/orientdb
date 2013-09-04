@@ -41,113 +41,113 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
  */
 public class OObjectFetchContext implements OFetchContext {
 
-	protected final String										fetchPlan;
-	protected final boolean										lazyLoading;
-	protected final OEntityManager						entityManager;
-	protected final OUserObject2RecordHandler	obj2RecHandler;
+  protected final String                    fetchPlan;
+  protected final boolean                   lazyLoading;
+  protected final OEntityManager            entityManager;
+  protected final OUserObject2RecordHandler obj2RecHandler;
 
-	public OObjectFetchContext(final String iFetchPlan, final boolean iLazyLoading, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler) {
-		fetchPlan = iFetchPlan;
-		lazyLoading = iLazyLoading;
-		obj2RecHandler = iObj2RecHandler;
-		entityManager = iEntityManager;
-	}
+  public OObjectFetchContext(final String iFetchPlan, final boolean iLazyLoading, final OEntityManager iEntityManager,
+      final OUserObject2RecordHandler iObj2RecHandler) {
+    fetchPlan = iFetchPlan;
+    lazyLoading = iLazyLoading;
+    obj2RecHandler = iObj2RecHandler;
+    entityManager = iEntityManager;
+  }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-		final Map<Object, Object> map = (Map<Object, Object>) iRootRecord.field(iFieldName);
-		final Map<Object, Object> target;
-		if (lazyLoading)
-			target = new OLazyObjectMap<Object>(iRootRecord, map).setFetchPlan(fetchPlan);
-		else {
-			target = new HashMap();
-		}
-		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
-	}
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+    final Map<Object, Object> map = (Map<Object, Object>) iRootRecord.field(iFieldName);
+    final Map<Object, Object> target;
+    if (lazyLoading)
+      target = new OLazyObjectMap<Object>(iRootRecord, map).setFetchPlan(fetchPlan);
+    else {
+      target = new HashMap();
+    }
+    OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
+  }
 
-	public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
-			throws OFetchException {
-		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName,
-				Array.newInstance(iRootRecord.getSchemaClass().getProperty(iFieldName).getLinkedClass().getJavaClass(), iArray.length));
-	}
+  public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+      throws OFetchException {
+    OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName,
+        Array.newInstance(iRootRecord.getSchemaClass().getProperty(iFieldName).getLinkedClass().getJavaClass(), iArray.length));
+  }
 
-	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, ORecordSchemaAware<?> iDocument, String iFieldName,
-			Object iUserObject) throws OFetchException {
-	}
+  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, ORecordSchemaAware<?> iDocument, String iFieldName,
+      Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, ORecordSchemaAware<?> iDocument, String iFieldName, Object iUserObject)
-			throws OFetchException {
-	}
+  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, ORecordSchemaAware<?> iDocument, String iFieldName, Object iUserObject)
+      throws OFetchException {
+  }
 
-	public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
-	}
+  public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
+  }
 
-	public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-	}
+  public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-	}
+  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
 
-	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-			throws OFetchException {
-	}
+  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {
+  }
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
-			final Collection<?> iCollection) throws OFetchException {
-		final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
-		final Collection target;
-		if (type != null && Set.class.isAssignableFrom(type)) {
-			if (lazyLoading)
-				target = new OLazyObjectSet<Object>(iRootRecord, (Collection<Object>) iCollection).setFetchPlan(fetchPlan);
-			else {
-				target = new HashSet();
-			}
-		} else {
-			final Collection<Object> list = (Collection<Object>) iCollection;
-			if (lazyLoading)
-				target = new OLazyObjectList<Object>(iRootRecord, list).setFetchPlan(fetchPlan);
-			else {
-				target = new ArrayList();
-			}
-		}
-		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
-	}
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
+      final Collection<?> iCollection) throws OFetchException {
+    final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
+    final Collection target;
+    if (type != null && Set.class.isAssignableFrom(type)) {
+      if (lazyLoading)
+        target = new OLazyObjectSet<Object>(iRootRecord, (Collection<Object>) iCollection).setFetchPlan(fetchPlan);
+      else {
+        target = new HashSet();
+      }
+    } else {
+      final Collection<Object> list = (Collection<Object>) iCollection;
+      if (lazyLoading)
+        target = new OLazyObjectList<Object>(iRootRecord, list).setFetchPlan(fetchPlan);
+      else {
+        target = new ArrayList();
+      }
+    }
+    OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
+  }
 
-	public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-			throws OFetchException {
-	}
+  public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {
+  }
 
-	public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
-	}
+  public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  }
 
-	public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
-	}
+  public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  }
 
-	public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
-	}
+  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  }
 
-	public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
-	}
+  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  }
 
-	public OUserObject2RecordHandler getObj2RecHandler() {
-		return obj2RecHandler;
-	}
+  public OUserObject2RecordHandler getObj2RecHandler() {
+    return obj2RecHandler;
+  }
 
-	public OEntityManager getEntityManager() {
-		return entityManager;
-	}
+  public OEntityManager getEntityManager() {
+    return entityManager;
+  }
 
-	public boolean isLazyLoading() {
-		return lazyLoading;
-	}
+  public boolean isLazyLoading() {
+    return lazyLoading;
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public boolean fetchEmbeddedDocuments() {
-		return true;
-	}
+  public boolean fetchEmbeddedDocuments() {
+    return true;
+  }
 }
