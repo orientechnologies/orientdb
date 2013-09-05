@@ -264,19 +264,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
           doc.setLazyLoad(false);
 
+          final OIdentifiable oldRid = doc.<OIdentifiable> field("rid");
           if (!doc.<Boolean> field("binary")) {
-            final ORID newRid = exportImportHashTable.get(doc.<OIdentifiable> field("rid")).getIdentity();
-            assert newRid != null;
+            final OIdentifiable newRid = exportImportHashTable.get(oldRid);
 
-            index.put(doc.field("key"), newRid);
+            index.put(doc.field("key"), newRid != null ? newRid.getIdentity() : oldRid.getIdentity());
           } else {
             ORuntimeKeyIndexDefinition<?> runtimeKeyIndexDefinition = (ORuntimeKeyIndexDefinition<?>) index.getDefinition();
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
 
             final ORID newRid = exportImportHashTable.get(doc.<OIdentifiable> field("rid")).getIdentity();
-            assert newRid != null;
 
-            index.put(binarySerializer.deserialize(doc.<byte[]> field("key"), 0), newRid);
+            index.put(binarySerializer.deserialize(doc.<byte[]> field("key"), 0), newRid != null ? newRid : oldRid);
           }
           tot++;
         }
@@ -591,8 +590,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       if (name != null
-          && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
-              .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME)))
+          && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
+              || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
+                .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME)))
         database.getStorage().getClusterById(clusterId).truncate();
 
       listener.onMessage("OK, assigned id=" + clusterId);
@@ -768,7 +768,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
         record.save(database.getClusterNameById(clusterId));
 
-        exportImportHashTable.put(rid, record.getIdentity());
+        if (!rid.equals(record.getIdentity()))
+          // SAVE IT ONLY IF DIFFERENT
+          exportImportHashTable.put(rid, record.getIdentity());
       }
 
     } catch (Exception t) {
@@ -1168,8 +1170,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       final OIdentifiable result = exportImportHashTable.get(value);
 
-      assert result != null;
-      return result.getIdentity();
+      return result != null ? result.getIdentity() : null;
     }
   }
 }

@@ -378,7 +378,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
             if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
               OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
-              assert identifiable != null;
 
               if (identifiable != null)
                 indexOneValue = identifiable.getIdentity();
