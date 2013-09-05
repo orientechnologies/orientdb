@@ -1527,7 +1527,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     final OLocalPaginatedCluster cluster = getClusterById(rid.clusterId);
 
-    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME) || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
+    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
+        || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
       // AVOID TO COMMIT INDEX STUFF
       return;
 
@@ -1610,11 +1611,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
+        if (transaction == null)
+          return;
+
         if (writeAheadLog == null)
           throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
-        if (transaction == null)
-          throw new OStorageException("There is no active transaction, rollback can not be performed.");
 
         if (transaction.getClientTx().getId() != clientTx.getId())
           throw new OStorageException(
@@ -2029,8 +2030,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
     configuration.load();
 
-    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length, OMetadataDefault.CLUSTER_INDEX_NAME,
-        null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
         OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
