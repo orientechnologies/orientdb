@@ -53,13 +53,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -294,8 +288,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null, OMetadataDefault.DATASEGMENT_INDEX_NAME,
-          true);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
+          OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
@@ -370,6 +364,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       if (diskCache != null)
         diskCache.close();
+
+      if (writeAheadLog != null) {
+        writeAheadLog.shrinkTill(writeAheadLog.end());
+        writeAheadLog.close();
+      }
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
@@ -1321,6 +1320,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         } finally {
           try {
             txManager.clearLogEntries(iTx);
+            if (writeAheadLog != null)
+              writeAheadLog.shrinkTill(writeAheadLog.end());
           } catch (Exception e) {
             // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
             // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL

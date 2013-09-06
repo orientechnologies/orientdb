@@ -103,6 +103,7 @@ public class OServerShutdownMain {
         channel = new OChannelBinaryClientSynch(networkAddress, port, contextConfig);
         break;
       } catch (Exception e) {
+        e.printStackTrace();
       }
 
     if (channel == null)

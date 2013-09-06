@@ -17,8 +17,8 @@ public class ODurablePage {
   protected static final int    MAGIC_NUMBER_OFFSET = 0;
   protected static final int    CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected static final int    WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  protected static final int    WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int       WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int       WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
 
   protected final ODirectMemory directMemory        = ODirectMemoryFactory.INSTANCE.directMemory();
 
@@ -33,10 +33,8 @@ public class ODurablePage {
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ODirectMemory directMemory, long dataPointer) {
-    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + (2 * OIntegerSerializer.INT_SIZE));
-    final int segment = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer
-        + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    final long segment = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer + WAL_SEGMENT_OFFSET);
+    final long position = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, dataPointer + WAL_POSITION_OFFSET);
 
     return new OLogSequenceNumber(segment, position);
   }
@@ -134,14 +132,14 @@ public class ODurablePage {
   }
 
   public OLogSequenceNumber getLsn() {
-    final int segment = getIntValue(WAL_SEGMENT_OFFSET);
+    final long segment = getLongValue(WAL_SEGMENT_OFFSET);
     final long position = getLongValue(WAL_POSITION_OFFSET);
 
     return new OLogSequenceNumber(segment, position);
   }
 
   public void setLsn(OLogSequenceNumber lsn) {
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
+    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, pagePointer + WAL_SEGMENT_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, pagePointer + WAL_POSITION_OFFSET);
   }
 }

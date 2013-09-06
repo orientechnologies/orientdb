@@ -204,7 +204,7 @@ public class OWriteAheadLog {
 
   private void fixMasterRecords() throws IOException {
     if (firstMasterRecord != null) {
-      int index = firstMasterRecord.getSegment() - logSegments.get(0).getOrder();
+      int index = (int) (firstMasterRecord.getSegment() - logSegments.get(0).getOrder());
       if (logSegments.size() <= index || index < 0) {
         firstMasterRecord = null;
       } else {
@@ -215,7 +215,7 @@ public class OWriteAheadLog {
     }
 
     if (secondMasterRecord != null) {
-      int index = secondMasterRecord.getSegment() - logSegments.get(0).getOrder();
+      int index = (int) (secondMasterRecord.getSegment() - logSegments.get(0).getOrder());
       if (logSegments.size() <= index || index < 0) {
         secondMasterRecord = null;
       } else {
@@ -248,15 +248,15 @@ public class OWriteAheadLog {
   private OLogSequenceNumber readMasterRecord(String storageName, int index) throws IOException {
     CRC32 crc32 = new CRC32();
     try {
-      masterRecordLSNHolder.seek(index * (2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE));
+      masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
 
       int firstCRC = masterRecordLSNHolder.readInt();
-      int segment = masterRecordLSNHolder.readInt();
+      long segment = masterRecordLSNHolder.readLong();
       long position = masterRecordLSNHolder.readLong();
 
-      byte[] serializedLSN = new byte[OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE];
-      OIntegerSerializer.INSTANCE.serialize(segment, serializedLSN, 0);
-      OLongSerializer.INSTANCE.serialize(position, serializedLSN, OIntegerSerializer.INT_SIZE);
+      byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
+      OLongSerializer.INSTANCE.serialize(segment, serializedLSN, 0);
+      OLongSerializer.INSTANCE.serialize(position, serializedLSN, OLongSerializer.LONG_SIZE);
       crc32.update(serializedLSN);
 
       if (firstCRC != ((int) crc32.getValue())) {
@@ -273,20 +273,20 @@ public class OWriteAheadLog {
   }
 
   private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
-    masterRecordLSNHolder.seek(index * (2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE));
+    masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
     CRC32 crc32 = new CRC32();
 
-    byte[] serializedLSN = new byte[OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE];
-    OIntegerSerializer.INSTANCE.serialize(masterRecord.getSegment(), serializedLSN, 0);
-    OLongSerializer.INSTANCE.serialize(masterRecord.getPosition(), serializedLSN, OIntegerSerializer.INT_SIZE);
+    byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serialize(masterRecord.getSegment(), serializedLSN, 0);
+    OLongSerializer.INSTANCE.serialize(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
     crc32.update(serializedLSN);
 
     masterRecordLSNHolder.writeInt((int) crc32.getValue());
-    masterRecordLSNHolder.writeInt(masterRecord.getSegment());
+    masterRecordLSNHolder.writeLong(masterRecord.getSegment());
     masterRecordLSNHolder.writeLong(masterRecord.getPosition());
   }
 
-  private String getSegmentName(int order) {
+  private String getSegmentName(long order) {
     return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
   }
 
@@ -372,6 +372,23 @@ public class OWriteAheadLog {
     }
   }
 
+  public void shrinkTill(OLogSequenceNumber lsn) throws IOException {
+    if (lsn == null)
+      return;
+
+    synchronized (syncObject) {
+      ListIterator<LogSegment> iterator = logSegments.listIterator(logSegments.size());
+      while (iterator.hasPrevious()) {
+        final LogSegment logSegment = iterator.previous();
+        if (logSegment.end().compareTo(lsn) >= 0)
+          continue;
+
+        logSegment.delete(false);
+        iterator.remove();
+      }
+    }
+  }
+
   public void close() throws IOException {
     close(true);
   }
@@ -434,8 +451,8 @@ public class OWriteAheadLog {
     synchronized (syncObject) {
       checkForClose();
 
-      int segment = lsn.getSegment();
-      int index = segment - logSegments.get(0).getOrder();
+      long segment = lsn.getSegment();
+      int index = (int) (segment - logSegments.get(0).getOrder());
 
       if (index < 0 || index >= logSegments.size())
         return null;
@@ -456,8 +473,8 @@ public class OWriteAheadLog {
     synchronized (syncObject) {
       checkForClose();
 
-      int order = lsn.getSegment();
-      int index = order - logSegments.get(0).getOrder();
+      long order = lsn.getSegment();
+      int index = (int) (order - logSegments.get(0).getOrder());
 
       if (index < 0 || index >= logSegments.size())
         return null;
@@ -541,7 +558,7 @@ public class OWriteAheadLog {
 
     private long                                  filledUpTo;
 
-    private final int                             order;
+    private final long                            order;
     private final int                             maxPagesCacheSize;
     private boolean                               closed;
 
@@ -598,7 +615,7 @@ public class OWriteAheadLog {
       }
     }
 
-    public int getOrder() {
+    public long getOrder() {
       return order;
     }
 
@@ -659,13 +676,13 @@ public class OWriteAheadLog {
       }
     }
 
-    private int extractOrder(String name) {
+    private long extractOrder(String name) {
       int walOrderStartIndex = name.indexOf('.') + 1;
 
       int walOrderEndIndex = name.indexOf('.', walOrderStartIndex);
       String walOrder = name.substring(walOrderStartIndex, walOrderEndIndex);
       try {
-        return Integer.parseInt(walOrder);
+        return Long.parseLong(walOrder);
       } catch (NumberFormatException e) {
         // never happen
         throw new IllegalStateException(e);
@@ -674,7 +691,7 @@ public class OWriteAheadLog {
 
     @Override
     public int compareTo(LogSegment other) {
-      final int otherOrder = other.order;
+      final long otherOrder = other.order;
 
       if (order > otherOrder)
         return 1;
