@@ -190,8 +190,9 @@ configModule.controller("AllocationController", ['$scope', '$routeParams', '$loc
     ];
     $scope.db = $routeParams.database;
     DatabaseApi.getAllocation($scope.db,function(datas){
-        datas['segments'].forEach(function(val,idx,arr){
 
+        datas['segments'].forEach(function(val,idx,arr){
+            var color = val.type == 'd' ?  :
         });
 
     });
