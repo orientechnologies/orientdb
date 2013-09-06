@@ -1,41 +1,46 @@
-
-
 html {
     height: 100%;
 }
+
 body {
     height: 100%;
 }
+
 body div.container-studio {
-	padding-top :20px
+    padding-top: 20px
 }
+
 .pointer {
-	cursor : pointer;
+    cursor: pointer;
 }
 
 .CodeMirror {
-  border: 1px solid #eee;
-  height: 200px;
+    border: 1px solid #eee;
+    height: 200px;
 }
+
 .CodeMirror-scroll {
-  overflow-y: hidden;
-  overflow-x: auto;
+    overflow-y: hidden;
+    overflow-x: auto;
 }
+
 .nomargin {
-    margin : 0px !important;
-}
-table.pointer>tbody>tr>td input, table.pointer>tbody>tr>td select{
-
-  width: 110px;
+    margin: 0px !important;
 }
 
-div.scroll-editclass, div.scroll-indexes{
-  overflow: auto;
-  max-height: 300px;
-  margin-top: 26px;
-  /*border-top: 1px solid grey;*/
-  /*border-bottom: 1px solid grey;*/
+table.pointer>tbody>tr>td input, table.pointer>tbody>tr>td select {
+
+    width: 110px;
 }
+
+div.scroll-editclass, div.scroll-indexes {
+    overflow: auto;
+    max-height: 300px;
+    margin-top: 26px;
+    /*border-top: 1px solid grey;*/
+    /*border-bottom: 1px solid grey;*/
+}
+
 .accordion-scroll {
     height: 150px;
     overflow: auto;
@@ -48,10 +53,10 @@ div.scroll-editclass, div.scroll-indexes{
     padding: 0;
 }
 
-
 .sidenav > li:first-child > a {
     border-radius: 6px 6px 0 0;
 }
+
 .sidenav > .active > a {
     border: 0 none;
     box-shadow: 1px 0 0 rgba(0, 0, 0, 0.1) inset, -1px 0 0 rgba(0, 0, 0, 0.1) inset;
@@ -60,16 +65,19 @@ div.scroll-editclass, div.scroll-indexes{
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
     z-index: 2;
 }
+
 .sidenav > li > a {
     border: 1px solid #E5E5E5;
     display: block;
     margin: 0 0 -1px;
     padding: 8px 14px;
 }
+
 .sidenav .active .icon-chevron-right, .sidenav .active a:hover .icon-chevron-right {
     background-image: url("../img/glyphicons-halflings-white.png");
     opacity: 1;
 }
+
 .sidenav .icon-chevron-right {
     float: right;
     margin-right: -6px;
@@ -77,8 +85,7 @@ div.scroll-editclass, div.scroll-indexes{
     opacity: 0.25;
 }
 
-
-.doc-header  {
+.doc-header {
     -moz-border-bottom-colors: none;
     -moz-border-left-colors: none;
     -moz-border-right-colors: none;
@@ -93,9 +100,9 @@ div.scroll-editclass, div.scroll-indexes{
     margin-top: 10px;
     margin-left: 0px !important;
 
-
 }
-.doc-header > label  {
+
+.doc-header > label {
     color: #333333;
     font-size: 21px;
     line-height: 40px;
@@ -104,15 +111,19 @@ div.scroll-editclass, div.scroll-indexes{
 div.document form.bs-docs-example:after {
     content: "Document";
 }
+
 div.properties .bs-docs-example:after {
     content: "Properties";
 }
+
 div.indexes .bs-docs-example:after {
     content: "Indexes";
 }
+
 div.vertex form.bs-docs-example:after {
     content: "Vertex";
 }
+
 div.edge form.bs-docs-example:after {
     content: "Edge";
 }
@@ -133,9 +144,11 @@ div.edge form.bs-docs-example:after {
     position: absolute;
     top: -1px;
 }
+
 form.record-header {
 
 }
+
 .record {
     background-color: #FFFFFF;
     border: 1px solid #DDDDDD;
@@ -144,96 +157,109 @@ form.record-header {
     padding: 0px 19px 14px;
     position: relative;
 }
+
 .createEdge {
-  width: 80%; /* desired relative width */
-  left: 10%; /* (100%-width)/2 */
-  /* place center */
-  margin-left:auto;
-  margin-right:auto; 
+    width: 80%; /* desired relative width */
+    left: 10%; /* (100%-width)/2 */
+    /* place center */
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .createEdge .modal-body {
-  width: 96%;
-  max-height: 200px; 
+    width: 96%;
+    max-height: 200px;
 }
+
 .createEdge .modal-body .CodeMirror {
-  height: 100px;
+    height: 100px;
 }
-.createEdge .modal-body .table{
-  width: 96%; 
-  height: 100px;
-  overflow: auto;
+
+.createEdge .modal-body .table {
+    width: 96%;
+    height: 100px;
+    overflow: auto;
 }
 
 .editEdge {
-  width: 60%; /* desired relative width */
-  left: 20%; /* (100%-width)/2 */
-  /* place center */
-  margin-left:auto;
-  margin-right:auto; 
+    width: 60%; /* desired relative width */
+    left: 20%; /* (100%-width)/2 */
+    /* place center */
+    margin-left: auto;
+    margin-right: auto;
 }
+
 .css-form input.ng-invalid.ng-dirty {
-        background-color: #FA787E;
+    background-color: #FA787E;
 }
-    
+
 .css-form input.ng-valid.ng-dirty {
-        background-color: #78FA89;
+    background-color: #78FA89;
 }
 
 .breadcrumb > li + li:before {
-padding: 0 5px;
-color: #cccccc;
-content: "/\00a0";
+    padding: 0 5px;
+    color: #cccccc;
+    content: "/\00a0";
 }
+
 .input-xlarge-auto {
     width: 90%;
 }
+
 form .required {
     font-weight: bold;
 }
+
 form .required label:after {
     color: #e32;
     content: '*';
-    display:inline;
+    display: inline;
 }
+
 #loader {
     text-align: center;
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    z-index:1000;
-    background-color:grey;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background-color: grey;
     opacity: .8;
 }
+
 .ajax-loader {
     position: absolute;
     left: 50%;
     top: 50%;
     margin-left: -32px; /* -1 * image width / 2 */
-    margin-top: -32px;  /* -1 * image height / 2 */
+    margin-top: -32px; /* -1 * image height / 2 */
     display: block;
 }
+
 .fade-hide, .fade-show {
-    -webkit-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
-    -moz-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
-    -o-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
-    transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
-}
-.fade-hide {
-    opacity:1;
-}
-.fade-hide.fade-hide-active {
-    opacity:0;
-}
-.fade-show {
-    opacity:0;
-}
-.fade-show.fade-show-active {
-    opacity:1;
+    -webkit-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
+    -moz-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
+    -o-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
+    transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
 }
 
+.fade-hide {
+    opacity: 1;
+}
+
+.fade-hide.fade-hide-active {
+    opacity: 0;
+}
+
+.fade-show {
+    opacity: 0;
+}
+
+.fade-show.fade-show-active {
+    opacity: 1;
+}
 
 .tag-rid {
     -moz-box-sizing: border-box;
@@ -243,7 +269,7 @@ form .required label:after {
     color: #000000;
     cursor: pointer;
     float: left;
-    font: 12px "lucida grande",tahoma,verdana,arial,sans-serif;
+    font: 12px "lucida grande", tahoma, verdana, arial, sans-serif;
     height: 16px;
     margin: 0 2px 2px 0;
     padding: 0 17px 0 3px;
@@ -255,4 +281,13 @@ a > i {
     margin-top: 0px !important;
 }
 
+.horizontallist li {
+    display: inline;
+
+    /*float: left;*/
+}
+
+.functions_consoleresult textarea {
+    width: 97%;
+}
 

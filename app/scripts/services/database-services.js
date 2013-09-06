@@ -420,8 +420,9 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
+        var shallow = params.shallow != undefined ? '' : 'shallow,';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
-        var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version,class,shallow,graph';
+        var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
         var query = params.text;
         $http.post(text, query).success(function (data) {
             var time = ((new Date().getTime() - startTime) / 1000);
@@ -482,19 +483,19 @@ database.factory('ServerApi', function ($http, $resource) {
 
 
     var resource = $resource(API + 'server');
-    resource.getServerInfo=function(callback) {
+    resource.getServerInfo = function (callback) {
 
-        $http.get(API + 'server').success(function(data){
-           callback(data);
+        $http.get(API + 'server').success(function (data) {
+            callback(data);
         });
     }
-    resource.killConnection = function(n,callback){
-        $http.post(API + 'connection/kill/'+n).success(function(){
+    resource.killConnection = function (n, callback) {
+        $http.post(API + 'connection/kill/' + n).success(function () {
             callback();
         });
     }
-    resource.interruptConnection = function(n,callback){
-        $http.post(API + 'connection/interrupt/'+n).success(function(){
+    resource.interruptConnection = function (n, callback) {
+        $http.post(API + 'connection/interrupt/' + n).success(function () {
             callback();
         });
     }
@@ -516,7 +517,7 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
         var startTime = new Date().getTime();
         var verbose = params.verbose != undefined ? params.verbose : true;
         console.log(params.functionName);
-        var text =  API +  'function/' + params.database + "/" + params.functionName +'/c/d/' ;
+        var text = API + 'function/' + params.database + "/" + params.functionName + '/' + params.parameters;
 
 
         $http.post(text).success(function (data) {

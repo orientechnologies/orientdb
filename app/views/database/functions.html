@@ -2,21 +2,17 @@
 
     <div class="span12 nomargin">
         <div>
-            <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-plus"></i> New</a>
+            <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i class="icon-plus"></i> New</a>
             <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-trash"></i> Delete</a>
             <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-refresh"></i> Clear</a>
-            <a href="javascript:void(0)" class="btn btn-primary" ng-click=""> <i class="icon-white icon-ok"></i>
+            <a href="javascript:void(0)" class="btn btn-primary" ng-click="prova()"> <i class="icon-white icon-ok"></i>
                 Save</a>
 
 
-            Name:<input type="text">
+            Name:<input type="text" ng-model="nameFunction">
 
-            <select>
+            <select ng-options="lang for lang in languages" ng-model="selectedLanguage">
 
-                <option ng-repeat="lang in languages" value="{{lang}}"> {{lang}}
-
-
-                </option>
             </select>
 
         </div>
@@ -26,28 +22,63 @@
             <div class="span3 document">
                 <label>Stored functions in database:</label>
                 <select size="20">
-                    <option ng-repeat="func in functions" ng-click="" value="{{func}}"> {{func}}
-
+                    <option ng-repeat="func in functions" ng-click="showInConsole(func)" value="{{func['name']}}">
+                        {{func['name']}}
 
                     </option>
                 </select>
 
+            </div>
+            <div>
 
+
+            </div>
+
+            Parameters:
+            <a href="javascript:void(0)" class="btn  btn-small" ng-click="addParam()"> <i
+                    class=" icon-plus"></i> Parameter</a>
+
+            <div>
+
+                <ul class="horizontallist">
+
+                    <li ng-repeat="param in functionToExecute.parameters  track by $index">
+                        <input type="text" ng-model="functionToExecute['parameters'][$index]">
+                        <a href="javascript:void(0)" class="btn  btn-small" ng-click="removeParam($index)"> <i
+                                class=" icon-trash"></i> </a>
+                    </li>
+                </ul>
             </div>
             <div class="span9 document">Console
 
 
                 <div class="row-fluid">
                     <form ng-submit="query()" class="form-inline">
-                        <textarea ui-codemirror="editorOptions" ng-model="queryText"></textarea>
+                        <textarea ui-codemirror="editorOptions" ng-model="consoleValue"></textarea>
+                    </form>
+                </div>
+                <div class="row-fluid">
+                    <ul class="horizontallist">
+                        <b>{{nameFunction}}(</b>
+
+                        <li ng-repeat="ppppp in parametersToExecute track by $index">
+                            <input type="text" ng-model="parametersToExecute[$index]">
+                        </li>
+                        <b>)</b>
+                    </ul>
+                    <form class="form-inline">
+                        <a href="javascript:void(0)" class="btn btn-success" ng-click="executeFunction()"> <i
+                                class="icon-white icon-ok"></i>
+                            Execute</a>
+                        <br>
+                    </form>
+                    <form class="form-inline functions_consoleresult">
+                        <textarea ng-model="resultExecute" value="{{resultExecute}}"></textarea>
                     </form>
                 </div>
             </div>
-            <div class="row-fluid">
-                <form ng-submit="query()" class="form-inline">
-                    <textarea ></textarea>
-                </form>
 
-            </div>
+
+        </div>
     </div>
 </div>

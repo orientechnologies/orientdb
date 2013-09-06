@@ -46,7 +46,7 @@ App.config(function ($routeProvider) {
             controller: 'EditController',
             resolve: DatabaseResolve
         })
-		.when('/database/:database/functions', {
+        .when('/database/:database/functions', {
             templateUrl: 'views/database/functions.html',
             controller: 'FunctionController',
             resolve: DatabaseResolve

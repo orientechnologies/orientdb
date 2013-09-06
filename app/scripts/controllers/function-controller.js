@@ -5,21 +5,23 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.listClasses = $scope.database.listClasses();
     $scope.functions = new Array;
 
-    $scope.languages = ['SQL', 'JavaScript'];
+    $scope.consoleValue = '';                           //code of the function
+    $scope.nameFunction = '';                           //name of the function
+    $scope.selectedLanguage = '';                       //language of the function
+    $scope.languages = ['SQL', 'Javascript'];
+    $scope.functionToExecute = undefined;
+
+    $scope.resultExecute= undefined;
+
+    $scope.parametersToExecute = new Array;
+    $scope.parametersToExecute1 = {0: '', 1: ''};
     var sqlText = 'select * from oFunction';
 
-    CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sqlText, limit: $scope.limit}, function (data) {
-
+    CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
         if (data.result) {
             for (i in data.result) {
-                $scope.functions.push(data.result[i]['name']);
+                $scope.functions.push(data.result[i]);
             }
-        }
-    });
-    FunctionApi.executeFunction({database: $routeParams.database, functionName: 'prova', text: sqlText, limit: $scope.limit}, function (data) {
-
-        if (data.result) {
-            console.log(data.result);
         }
     });
 
@@ -36,10 +38,90 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         }
     };
 
+    $scope.removeParam = function (index) {
+        console.log('aaa')
+        if ($scope.functionToExecute != undefined) {
+            var numPar = parseInt($scope.functionToExecute['parameters']);
+
+            var result = numPar - 1
+
+            $scope.functionToExecute['parameters'].splice(index, 1);
+
+        }
+        return result;
+    }
+    $scope.addParam = function () {
+        $scope.functionToExecute['parameters'].push('');
+    }
     $scope.executeFunction = function () {
-        console.log('aaaa');
+
+
+        if ($scope.functionToExecute != undefined) {
+//            console.log($scope.parametersToExecute);
+            var functionNamee = $scope.nameFunction;
+            var buildedParams = '';
+            for (i in $scope.parametersToExecute) {
+
+                buildedParams = buildedParams.concat($scope.parametersToExecute[i] + '/');
+            }
+            console.log(buildedParams);
+//
+//
+// console.log($scope.parametersToExecute);
+
+            FunctionApi.executeFunction({database: $routeParams.database, functionName: $scope.nameFunction, parameters: buildedParams, limit: $scope.limit}, function (data) {
+                if (data.result) {
+//                    console.log(data.result);
+                    $scope.resultExecute = JSON.stringify(data.result);
+                }
+            });
+        }
+    }
+    $scope.calculateNumParameters = function () {
+        if ($scope.functionToExecute != undefined) {
+            console.log($scope.functionToExecute['parameters']);
+            var numPar = parseInt($scope.functionToExecute['parameters']);
+            var i = 0;
+            var result = new Array;
+            for (i = 0; i < numPar; i++) {
+
+                result.push(numPar[i]);
+            }
+        }
+        return result;
     }
 
-}
-])
-;
+    //when click on a function in list of functions
+    $scope.showInConsole = function (selectedFunction) {
+        $scope.consoleValue = selectedFunction['code'];
+        $scope.nameFunction = selectedFunction['name'];
+        $scope.selectedLanguage = selectedFunction['language'];
+        $scope.functionToExecute = selectedFunction;
+        $scope.inParams = $scope.functionToExecute['parameters'];
+        $scope.parametersToExecute = new Array;
+
+        $scope.$watch('inParams.length', function (data) {
+            $scope.parametersToExecute = new Array(data);
+        });
+    }
+    $scope.createNewFunction() = function(){
+        $scope.consoleValue = selectedFunction['code'];
+        $scope.nameFunction = selectedFunction['name'];
+        $scope.selectedLanguage = selectedFunction['language'];
+        $scope.functionToExecute = selectedFunction;
+        $scope.inParams = $scope.functionToExecute['parameters'];
+        $scope.parametersToExecute = new Array;
+
+        $scope.$watch('inParams.length', function (data) {
+            $scope.parametersToExecute = new Array(data);
+        });
+    }
+    $scope.prova = function () {
+//        console.log($scope.consoleValue);
+//        console.log($scope.nameFunction);
+//        console.log($scope.selectedLanguage);
+//        console.log($scope.parametersToExecute);
+        console.log($scope.resultExecute);
+    }
+
+}]);
