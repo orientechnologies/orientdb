@@ -3,15 +3,15 @@
     <div class="span12 nomargin">
         <div>
             <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i class="icon-plus"></i> New</a>
-            <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-trash"></i> Delete</a>
-            <a href="javascript:void(0)" class="btn" ng-click=""> <i class="icon-refresh"></i> Clear</a>
-            <a href="javascript:void(0)" class="btn btn-primary" ng-click="prova()"> <i class="icon-white icon-ok"></i>
+            <a href="javascript:void(0)" class="btn" ng-click="deleteFunction()"> <i class="icon-trash"></i> Delete</a>
+            <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i> Clear</a>
+            <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i class="icon-white icon-ok"></i>
                 Save</a>
 
 
-            Name:<input type="text" ng-model="nameFunction">
+            Name:<input type="text" ng-model="functionToExecute['name']">
 
-            <select ng-options="lang for lang in languages" ng-model="selectedLanguage">
+            <select ng-options="lang for lang in languages" ng-model="selectedLanguage" ng-change="modificataLang(selectedLanguage)">
 
             </select>
 
@@ -54,12 +54,12 @@
 
                 <div class="row-fluid">
                     <form ng-submit="query()" class="form-inline">
-                        <textarea ui-codemirror="editorOptions" ng-model="consoleValue"></textarea>
+                        <textarea ui-codemirror="editorOptions" ng-model="functionToExecute['code']"></textarea>
                     </form>
                 </div>
                 <div class="row-fluid">
                     <ul class="horizontallist">
-                        <b>{{nameFunction}}(</b>
+                        <b>{{functionToExecute['name']}}(</b>
 
                         <li ng-repeat="ppppp in parametersToExecute track by $index">
                             <input type="text" ng-model="parametersToExecute[$index]">
