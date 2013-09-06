@@ -405,6 +405,14 @@ database.factory('DatabaseApi', function ($http, $resource) {
     resource.exportDatabase = function(database){
          window.open(API+'export/' + database);
     }
+    resource.importDatabase = function(database,blob,file){
+        var fd = new FormData();
+        fd.append("databaseFile", blob, file.name);
+        $http.post(API+'import/' + database,fd,{ headers: { 'Content-Type': undefined }, transformRequest: angular.identity });
+    }
+    resource.getAllocation = function(database,callback){
+        $http.get(API+'allocation/' + database).success(callback);
+    }
     resource.disconnect = function (callback) {
         $http.get(API + 'disconnect').success(function () {
             $http.defaults.headers.common['Authorization'] = null;

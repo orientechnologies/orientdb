@@ -11,7 +11,7 @@ angular.module('header.controller',['database.services']).controller("HeaderCont
                 { name : "schema", link : '#/database/'+ data +'/schema'},
                 { name : "users" , link : '#/database/'+ data +'/users'},
                 { name: "functions", link: '#/database/' + data + '/functions'},
-                { name: "configuration", link: '#/database/' + data + '/configuration'}
+                { name: "settings", link: '#/database/' + data + '/settings'}
 
             ];
 		}

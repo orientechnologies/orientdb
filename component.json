@@ -16,7 +16,9 @@
     "bootstrap-datepicker" : "1.0.2",
     "moment" : "latest",
     "angular-ui-bootstrap-bower" : "latest",
-    "spin.js" : "latest"
+    "spin.js" : "latest",
+    "nnnick-chartjs" : "latest"
+
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",
