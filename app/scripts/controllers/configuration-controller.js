@@ -191,9 +191,25 @@ configModule.controller("AllocationController", ['$scope', '$routeParams', '$loc
     $scope.db = $routeParams.database;
     DatabaseApi.getAllocation($scope.db,function(datas){
 
+        var size = datas.size;
+        $scope.data.length = 0;
+        var lastSize = 0;
         datas['segments'].forEach(function(val,idx,arr){
-            var color = val.type == 'd' ?  :
+
+            lastSize += val.size;
+
         });
+        var percSum = 0;
+        datas['segments'].forEach(function(val,idx,arr){
+            var color = val.type == 'd' ?  '#F38630' : '#E0E4CC';
+            var value = (val.size * 200) / lastSize;
+            value = Math.round(value);
+            value = value == 0 ? 1 : value;
+            percSum += value;
+            $scope.data.push({ value : value , color : color});
+
+        });
+        console.log(percSum);
 
     });
 
