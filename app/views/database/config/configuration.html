@@ -1,9 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title></title>
-</head>
-<body>
+<div ng-controller="DbConfigController" class="container-fluid">
 
-</body>
-</html>
+
+    <table class="table table-striped table-bordered table-condensed">
+
+        <thead>
+        <tr>
+            <td>Name</td>
+            <td>Value</td>
+        </thead>
+        <tbody>
+        <tr ng-repeat="val in values">
+            <td>{{ val.name }}</td>
+            <td>{{ val.value }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

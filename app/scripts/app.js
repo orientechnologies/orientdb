@@ -62,12 +62,12 @@ App.config(function ($routeProvider) {
             controller: 'ClassEditController',
             resolve: DatabaseResolve
         })
-        .when('/database/:database/configuration', {
+        .when('/database/:database/settings', {
             templateUrl: 'views/database/configuration.html',
             controller: 'ConfigurationController',
             resolve: DatabaseResolve
         })
-        .when('/database/:database/configuration/:tab', {
+        .when('/database/:database/settings/:tab', {
             templateUrl: 'views/database/configuration.html',
             controller: 'ConfigurationController',
             resolve: DatabaseResolve

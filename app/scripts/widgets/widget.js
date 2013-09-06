@@ -230,3 +230,17 @@ Widget.directive('jsontext', function() {
         }
     };
 });
+
+Widget.directive('chartjs', function() {
+
+
+    return {
+        restrict: 'A',
+        link: function(scope, element, attr) {
+
+            var data = scope.$eval(attr.chartjs);
+            new Chart(element.get(0).getContext("2d")).Pie(data,{segmentShowStroke : false});
+
+        }
+    };
+});

@@ -150,7 +150,9 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
         mode: 'text/x-sql',
         extraKeys: {
             "Ctrl-Enter": function (instance) {
-                $scope.query()
+                $scope.$apply(function(){
+                    $scope.query();
+                });
             }
         }
     };

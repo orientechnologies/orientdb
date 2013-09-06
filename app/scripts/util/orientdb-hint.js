@@ -47,7 +47,7 @@
             },
             options);
     };
-//    CodeMirror.registerHelper("hint", "sql", sqlHint);
+    CodeMirror.registerHelper("hint", "sql", sqlHint);
 
 
     var stringProps = ("charAt charCodeAt indexOf lastIndexOf substring substr slice trim trimLeft trimRight " +
@@ -81,6 +81,7 @@
             if(a.text.toLowerCase() > b.text.toLowerCase()) return 1;
             return 0;
         });
+
         return found;
     }
     function renderKeyword(etl,data,cur){

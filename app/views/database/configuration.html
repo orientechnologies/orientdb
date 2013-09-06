@@ -2,7 +2,7 @@
 
 <ul class="nav nav-tabs">
     <li ng-repeat="tab in tabs" ng-class="{active : tab == active}">
-        <a href="#/database/{{ db }}/configuration/{{ tab }}">{{ tab }}</a>
+        <a href="#/database/{{ db }}/settings/{{ tab }}">{{ tabsI18n[tab] }}</a>
     </li>
 </ul>
 <div class="row-fluid" ng-repeat="tab in tabs" ng-show="tab == active">
