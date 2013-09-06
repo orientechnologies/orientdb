@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 
 /**
@@ -66,7 +67,25 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return null;
+    return new Iterator<OIdentifiable>() {
+      private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(
+                                                                                tree);
+
+      @Override
+      public boolean hasNext() {
+        return entryIterator.hasNext();
+      }
+
+      @Override
+      public OIdentifiable next() {
+        return entryIterator.next().getKey();
+      }
+
+      @Override
+      public void remove() {
+        entryIterator.remove();
+      }
+    };
   }
 
   @Override
@@ -101,7 +120,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    boolean modified = false;
+    for (OIdentifiable e : c)
+      if (add(e))
+        modified = true;
+    return modified;
   }
 
   @Override

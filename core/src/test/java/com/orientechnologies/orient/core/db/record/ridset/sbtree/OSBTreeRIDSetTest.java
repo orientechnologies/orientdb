@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 public class OSBTreeRIDSetTest {
   @BeforeMethod
   public void setUp() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:OSBTreeRIDSetTest");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRIDSetTest");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -73,6 +73,16 @@ public class OSBTreeRIDSetTest {
   }
 
   @Test
+  public void testEmptyIterator() throws Exception {
+    OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
+    Assert.assertEquals(ridSet.size(), 0);
+
+    for (OIdentifiable id : ridSet) {
+      Assert.fail();
+    }
+  }
+
+  @Test
   public void testAddAllAndIterator() throws Exception {
     Set<OIdentifiable> expected = new HashSet<OIdentifiable>(8);
 
@@ -84,7 +94,7 @@ public class OSBTreeRIDSetTest {
 
     OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
     ridSet.addAll(expected);
-    Assert.assertEquals(expected.size(), 5);
+    Assert.assertEquals(ridSet.size(), 5);
 
     Set<OIdentifiable> actual = new HashSet<OIdentifiable>(8);
     for (OIdentifiable id : ridSet) {
