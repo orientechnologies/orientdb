@@ -61,6 +61,7 @@
     </test>
     <test name="Index">
         <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLEscapingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectHashIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexCustomKeyTest"/>
