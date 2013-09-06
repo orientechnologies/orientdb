@@ -15,16 +15,28 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.parametersToExecute = new Array;
     $scope.parametersToExecute1 = {0: '', 1: ''};
+
+    $scope.isNewFunction = false;
+
+
     var sqlText = 'select * from oFunction';
 
-    CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
-        if (data.result) {
-            for (i in data.result) {
-                $scope.functions.push(data.result[i]);
-            }
-        }
-    });
 
+    $scope.getListFunction = function () {
+        $scope.functions = new Array;
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
+            if (data.result) {
+                for (i in data.result) {
+                    $scope.functions.push(data.result[i]);
+                }
+            }
+        });
+
+    }
+    $scope.clearConsole = function () {
+        $scope.functionToExecute['code'] = '';
+    }
+    $scope.getListFunction();
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -107,6 +119,13 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             $scope.parametersToExecute = new Array(data);
         });
         console.log(selectedFunction);
+
+        $scope.isNewFunction = false;
+    }
+
+    $scope.modificataLang = function (lang) {
+        console.log(lang);
+        $scope.functionToExecute['language'] = lang;
     }
     $scope.createNewFunction = function () {
 
@@ -114,33 +133,41 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         var newDoc = DocumentApi.createNewDoc('ofunction');
         $scope.showInConsole(newDoc);
         console.log(newDoc);
+        $scope.isNewFunction = true;
 
-//        $scope.consoleValue = '';
-//        $scope.nameFunction = '';
-//        $scope.selectedLanguage = '';
-//        $scope.functionToExecute = '';
-//        $scope.inParams = '';
-//        $scope.parametersToExecute = new Array;
-//
-//        $scope.$watch('inParams.length', function (data) {
-//            $scope.parametersToExecute = new Array(data);
-//        });
     }
-    $scope.prova = function () {
+    $scope.saveFunction = function () {
 
 
-        console.log($scope.database.getName());
-        console.log($scope.functionToExecute['@rid']);
-        console.log($scope.functionToExecute);
-        DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function(data){
+        if ($scope.isNewFunction == true) {
+            DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
 
-        }) ;
-//        console.log($scope.consoleValue);
-//        console.log('nameFunction: ' + $scope.nameFunction);
-//        console.log('language: ' + $scope.selectedLanguage);
-//        console.log('params: ' + $scope.parametersToExecute);
-//        console.log($scope.functionToExecute['parameters']) ;
-//        console.log($scope.resultExecute);
+                }
+            );
+        }
+        else {
+            DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
+
+            });
+        }
+        $scope.getListFunction();
+    }
+
+    $scope.deleteFunction = function () {
+
+        var recordID =$scope.functionToExecute['@rid'];
+        var clazz = $scope.functionToExecute['@class'];
+        Utilities.confirm($scope, $dialog, {
+            title: 'Warning!',
+            body: 'You are removing ' + $scope.functionToExecute['name'] + ' ' + recordID + '. Are you sure?',
+            success: function () {
+                var command = "DELETE Vertex " + recordID;
+                CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
+                });
+            }
+        });
+        $scope.getListFunction();
     }
 
 }]);
+
