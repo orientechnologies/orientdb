@@ -22,7 +22,7 @@
         <div class="pagination" ng-show="headers">
             <ul>
                 <li><a href="#">«</a></li>
-                <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage"><a href="javascript:void(0)"  ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
+                <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage  track by $index"><a href="javascript:void(0)"  ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
                 <li><a href="#">»</a></li>
             </ul>
         </div>
@@ -45,7 +45,7 @@
         <div class="pagination" ng-show="headers">
             <ul>
                 <li><a href="#">«</a></li>
-                <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage"><a href="javascript:void(0)"  ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
+                <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage track by $index"><a href="javascript:void(0)"  ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
                 <li><a href="#">»</a></li>
             </ul>
         </div>

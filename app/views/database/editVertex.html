@@ -5,7 +5,7 @@
             <div class="accordion row-fluid" id="accordion2">
                 <div class="accordion-group" ng-repeat="i in incomings">
                     <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{i}}">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" data-target="#{{i}}"  href="javascript:void(0)">
                             {{i}} ({{filterArray(doc[i]).length}})
                             <i class="icon-plus-sign" data-placement="right" ng-click="showModalConnection(i)"></i>
                         </a>
@@ -39,7 +39,7 @@
             <div class="accordion row-fluid" id="accordion1">
                 <div class="accordion-group" ng-repeat="i in outgoings">
                     <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#{{i}}">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" data-target="#{{i}}"  href="javascript:void(0)">
                             {{i}} ({{filterArray(doc[i]).length}})
                             <i class="icon-plus-sign" data-placement="left" ng-click="showModalConnection(i)"></i>
                         </a>

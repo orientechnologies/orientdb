@@ -14,7 +14,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         metadata : Database,
         extraKeys: {
             "Ctrl-Enter": function (instance) {
-                $scope.query()
+                $scope.$apply(function(){
+                    $scope.query();
+                });
+
             },
             "Ctrl-Space": "autocomplete"
 
@@ -31,6 +34,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         if($scope.queryText.startsWith('#')){
             $location.path('/database/' + $routeParams.database + '/browse/edit/' + $scope.queryText.replace('#', ''));
         }
+
         CommandApi.queryText({database: $routeParams.database, language: $scope.language, text: $scope.queryText, limit: $scope.limit}, function (data) {
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);

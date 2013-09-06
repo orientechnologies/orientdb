@@ -182,7 +182,11 @@ GrapgController.controller("VertexModalBrowseController",['$scope','$routeParams
 		theme : 'ambiance',
 		mode: 'text/x-sql',
 		extraKeys: {
-			"Ctrl-Enter": function(instance) { $scope.query() }
+			"Ctrl-Enter": function(instance) {
+                $scope.$apply(function(){
+                    $scope.query();
+                });
+            }
 		}
 	};
 	$scope.query = function(){

@@ -209,7 +209,7 @@ configModule.controller("AllocationController", ['$scope', '$routeParams', '$loc
             $scope.data.push({ value : value , color : color});
 
         });
-        console.log(percSum);
+
 
     });
 

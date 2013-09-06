@@ -26,7 +26,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         header: ["@rid", "@version", "@class"],
 
-        exclude: ["@type", "@fieldTypes"],
+        exclude: ["@type", "@fieldTypes","$then","$resolved"],
 
         listTypes: ['BINARY', 'BYTE', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'],
 
@@ -402,16 +402,16 @@ database.factory('DatabaseApi', function ($http, $resource) {
         });
     }
 
-    resource.exportDatabase = function(database){
-         window.open(API+'export/' + database);
+    resource.exportDatabase = function (database) {
+        window.open(API + 'export/' + database);
     }
-    resource.importDatabase = function(database,blob,file){
+    resource.importDatabase = function (database, blob, file) {
         var fd = new FormData();
         fd.append("databaseFile", blob, file.name);
-        $http.post(API+'import/' + database,fd,{ headers: { 'Content-Type': undefined }, transformRequest: angular.identity });
+        $http.post(API + 'import/' + database, fd, { headers: { 'Content-Type': undefined }, transformRequest: angular.identity });
     }
-    resource.getAllocation = function(database,callback){
-        $http.get(API+'allocation/' + database).success(callback);
+    resource.getAllocation = function (database, callback) {
+        $http.get(API + 'allocation/' + database).success(callback);
     }
     resource.disconnect = function (callback) {
         $http.get(API + 'disconnect').success(function () {
@@ -432,13 +432,14 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
-        var shallow = params.shallow != undefined ? '' : 'shallow,';
+        var shallow = params.shallow != undefined ? '' : ',shallow';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
         var query = params.text;
         $http.post(text, query).success(function (data) {
             var time = ((new Date().getTime() - startTime) / 1000);
             var records = data.result ? data.result.length : "";
+
             if (verbose) {
                 var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
                 Notification.push({content: noti});
@@ -447,7 +448,7 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
         }).error(function (data) {
                 Notification.push({content: data});
                 if (error) error(data);
-            });
+        });
     }
     resource.getAll = function (database, clazz, callback) {
         var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
