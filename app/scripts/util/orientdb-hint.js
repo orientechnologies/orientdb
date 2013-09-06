@@ -47,7 +47,7 @@
             },
             options);
     };
-    CodeMirror.registerHelper("hint", "sql", sqlHint);
+//    CodeMirror.registerHelper("hint", "sql", sqlHint);
 
 
     var stringProps = ("charAt charCodeAt indexOf lastIndexOf substring substr slice trim trimLeft trimRight " +
