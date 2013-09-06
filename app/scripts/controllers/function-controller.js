@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', '$dialog', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, $dialog, $modal, $q) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$dialog', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $dialog, $modal, $q) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -11,7 +11,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.languages = ['SQL', 'Javascript'];
     $scope.functionToExecute = undefined;
 
-    $scope.resultExecute= undefined;
+    $scope.resultExecute = undefined;
 
     $scope.parametersToExecute = new Array;
     $scope.parametersToExecute1 = {0: '', 1: ''};
@@ -51,6 +51,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         return result;
     }
     $scope.addParam = function () {
+        if ($scope.functionToExecute['parameters'] == undefined) {
+            $scope.functionToExecute['parameters'] = new Array;
+        }
         $scope.functionToExecute['parameters'].push('');
     }
     $scope.executeFunction = function () {
@@ -105,24 +108,39 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         });
         console.log(selectedFunction);
     }
-    $scope.createNewFunction = function(){
-        $scope.consoleValue = '';
-        $scope.nameFunction = '';
-        $scope.selectedLanguage = '';
-        $scope.functionToExecute = '';
-        $scope.inParams = '';
-        $scope.parametersToExecute = new Array;
+    $scope.createNewFunction = function () {
 
-        $scope.$watch('inParams.length', function (data) {
-            $scope.parametersToExecute = new Array(data);
-        });
+
+        var newDoc = DocumentApi.createNewDoc('ofunction');
+        $scope.showInConsole(newDoc);
+        console.log(newDoc);
+
+//        $scope.consoleValue = '';
+//        $scope.nameFunction = '';
+//        $scope.selectedLanguage = '';
+//        $scope.functionToExecute = '';
+//        $scope.inParams = '';
+//        $scope.parametersToExecute = new Array;
+//
+//        $scope.$watch('inParams.length', function (data) {
+//            $scope.parametersToExecute = new Array(data);
+//        });
     }
     $scope.prova = function () {
+
+
+        console.log($scope.database.getName());
+        console.log($scope.functionToExecute['@rid']);
+        console.log($scope.functionToExecute['doc']);
+//        DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute.doc, function(data){
+//
+//        })  ;
 //        console.log($scope.consoleValue);
-//        console.log($scope.nameFunction);
-//        console.log($scope.selectedLanguage);
-//        console.log($scope.parametersToExecute);
-        console.log($scope.resultExecute);
+//        console.log('nameFunction: ' + $scope.nameFunction);
+//        console.log('language: ' + $scope.selectedLanguage);
+//        console.log('params: ' + $scope.parametersToExecute);
+//        console.log($scope.functionToExecute['parameters']) ;
+//        console.log($scope.resultExecute);
     }
 
 }]);
