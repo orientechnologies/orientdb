@@ -254,7 +254,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     this.shortName = iShortName;
 
     // REGISTER IT
-    owner.classes.put(iShortName.toLowerCase(), this);
+    if(null != iShortName)
+        owner.classes.put(iShortName.toLowerCase(), this);
   }
 
   public String getStreamableName() {
