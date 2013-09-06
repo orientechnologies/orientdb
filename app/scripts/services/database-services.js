@@ -401,6 +401,10 @@ database.factory('DatabaseApi', function ($http, $resource) {
             callback(data);
         });
     }
+
+    resource.exportDatabase = function(database){
+         window.open(API+'export/' + database);
+    }
     resource.disconnect = function (callback) {
         $http.get(API + 'disconnect').success(function () {
             $http.defaults.headers.common['Authorization'] = null;
