@@ -766,7 +766,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         record.setDirty();
         record.setIdentity(new ORecordId());
 
-        record.save(database.getClusterNameById(clusterId));
+        if (!preserveRids && record instanceof ODocument && ((ODocument) record).getSchemaClass() != null)
+          record.save();
+        else
+          record.save(database.getClusterNameById(clusterId));
 
         if (!rid.equals(record.getIdentity()))
           // SAVE IT ONLY IF DIFFERENT
@@ -891,8 +894,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private void rewriteLinksInImportedDocuments() throws IOException {
-    listener.onMessage("\nLinks are going to be updated according to new RIDs");
+    listener.onMessage("\nLinks are going to be updated according to new RIDs:");
 
+    long totalDocuments = 0;
     Collection<String> clusterNames = database.getClusterNames();
     for (String clusterName : clusterNames) {
       if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(clusterName) || OMetadataDefault.CLUSTER_INTERNAL_NAME.equals(clusterName)
@@ -901,7 +905,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       long documents = 0;
 
-      listener.onMessage("\nRewrite links for " + clusterName + " cluster...");
+      listener.onMessage("\n- Cluster " + clusterName + "...");
 
       int clusterId = database.getClusterIdByName(clusterName);
       OCluster cluster = database.getStorage().getClusterById(clusterId);
@@ -913,7 +917,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (record instanceof ODocument) {
             ODocument document = (ODocument) record;
             rewriteLinksInDocument(document);
+
             documents++;
+            totalDocuments++;
 
             if (documents % 10000 == 0)
               listener.onMessage("\n" + documents + " documents were processed...");
@@ -922,10 +928,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
         positions = cluster.higherPositions(positions[positions.length - 1]);
       }
-      listener.onMessage("\nLinks for " + clusterName + " cluster were updated, " + documents + " were processed...");
+      listener.onMessage(" Processed: " + documents);
     }
 
-    listener.onMessage("\nLinks are successfully updated.");
+    listener.onMessage("\nTotal links updated: " + totalDocuments);
   }
 
   private void rewriteLinksInDocument(ODocument document) {
