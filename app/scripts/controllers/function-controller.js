@@ -103,13 +103,14 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.$watch('inParams.length', function (data) {
             $scope.parametersToExecute = new Array(data);
         });
+        console.log(selectedFunction);
     }
-    $scope.createNewFunction() = function(){
-        $scope.consoleValue = selectedFunction['code'];
-        $scope.nameFunction = selectedFunction['name'];
-        $scope.selectedLanguage = selectedFunction['language'];
-        $scope.functionToExecute = selectedFunction;
-        $scope.inParams = $scope.functionToExecute['parameters'];
+    $scope.createNewFunction = function(){
+        $scope.consoleValue = '';
+        $scope.nameFunction = '';
+        $scope.selectedLanguage = '';
+        $scope.functionToExecute = '';
+        $scope.inParams = '';
         $scope.parametersToExecute = new Array;
 
         $scope.$watch('inParams.length', function (data) {
