@@ -233,10 +233,15 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
             body: 'You are removing ' + $scope.label + ' ' + recordID + '. Are you sure?',
             success: function () {
                 var command = "DELETE Vertex " + recordID;
-                CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
+                console.log($scope.database);
+                DocumentApi.deleteDocument($scope.database,recordID,function(data){
+                    var clazz = $scope.doc['@class'];
+                    $location.path('/database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
+                });
+                /*CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
                     var clazz = $scope.doc['@class'];
                     $location.path('database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
-                });
+                });*/
             }
         });
     }

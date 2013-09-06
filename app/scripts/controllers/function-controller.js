@@ -131,10 +131,10 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
         console.log($scope.database.getName());
         console.log($scope.functionToExecute['@rid']);
-        console.log($scope.functionToExecute['doc']);
-//        DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute.doc, function(data){
-//
-//        })  ;
+        console.log($scope.functionToExecute);
+        DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function(data){
+
+        }) ;
 //        console.log($scope.consoleValue);
 //        console.log('nameFunction: ' + $scope.nameFunction);
 //        console.log('language: ' + $scope.selectedLanguage);

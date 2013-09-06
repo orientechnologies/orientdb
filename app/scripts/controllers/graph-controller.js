@@ -50,9 +50,9 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 			body : 'You are removing Vertex '+ recordID + '. Are you sure?',
 			success : function() {
 				var command = "DELETE Vertex " + recordID;
-				CommandApi.queryText({database : database, language : 'sql', text : command},function(data){
+				CommandApi.queryText({database : $scope.database, language : 'sql', text : command},function(data){
 					var clazz = $scope.doc['@class'];
-					$location.path('#/database/'+database + '/browse/' + 'select * from ' + clazz);
+					$location.path('/database/'+$scope.database + '/browse/' + 'select * from ' + clazz);
 				});
 			}
 		});
@@ -106,7 +106,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 					});
 				}, function(error){
 					Notification.push({content : JSON.stringify(error)});
-					$location.path('#/404');
+					$location.path('/404');
 				});
 				
 			}
@@ -124,7 +124,7 @@ GrapgController.controller("VertexCreateController",['$scope','$routeParams','$l
 	$scope.save = function(){
 		DocumentApi.createDocument(database,$scope.doc['@rid'],$scope.doc,function(data){
 			Notification.push({content : JSON.stringify(data)});
-			$location.path('#/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
+			$location.path('/database/'+database + '/browse/edit/' + data['@rid'].replace('#',''));
 		});
 		
 	}
