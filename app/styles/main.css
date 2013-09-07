@@ -280,6 +280,7 @@ a > i {
     vertical-align: middle !important;
     margin-top: 0px !important;
 }
+
 button.exportButton {
     background: none repeat scroll 0 0 #3399FF;
     border: 1px solid #2E6E9E;
@@ -302,7 +303,17 @@ button.exportButton {
     /*float: left;*/
 }
 
+ul.horizontallist , ol.horizontallist {
+    margin: 0px !important;
+    padding: 0px;
+}
+
 .functions_consoleresult textarea {
     width: 97%;
+}
+
+.functions_list {
+    max-height: 400px;
+    overflow-y: scroll;
 }
 

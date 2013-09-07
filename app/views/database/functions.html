@@ -1,89 +1,99 @@
-<div class="row-fluid" xmlns="http://www.w3.org/1999/html">
+<div class="container-fluid" xmlns="http://www.w3.org/1999/html">
+    <div class="row-fluid">
 
-    <div class="span12 nomargin">
-
-        <h1>Functions</h1>
-        <div>
-            <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i class="icon-plus"></i> New</a>
-            <a href="javascript:void(0)" class="btn" ng-click="deleteFunction()"> <i class="icon-trash"></i> Delete</a>
-            <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i> Clear</a>
-            <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i
-                    class="icon-white icon-ok"></i>
-                Save</a>
-
-
-            Name:<input type="text" ng-model="functionToExecute['name']">
-
-            Language:
-            <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
-                    ng-change="modificataLang(selectedLanguage)">
-
-            </select>
-
-            Idemopotent:
-            <input type="checkbox" ng-model="functionToExecute['idempotent']">
-
-
-        </div>
-
-        <div class="row-fluid">
-
-            <div class="span3 document">
-                <label>Stored functions in database:</label>
-                <select size="20">
-                    <option ng-repeat="func in functions" ng-click="showInConsole(func)" value="{{func['name']}}">
-                        {{func['name']}}
-
-                    </option>
-                </select>
-
-            </div>
-
-            Parameters:
-            <a href="javascript:void(0)" class="btn  btn-small" ng-click="addParam()"> <i
-                    class=" icon-plus"></i> Parameter</a>
-
-            <div>
-
-                <ul class="horizontallist">
-
-                    <li ng-repeat="param in functionToExecute.parameters  track by $index">
-                        <input type="text" ng-model="functionToExecute['parameters'][$index]">
-                        <a href="javascript:void(0)" class="btn  btn-small" ng-click="removeParam($index)"> <i
-                                class=" icon-trash"></i> </a>
-                    </li>
-                </ul>
-            </div>
-            <div class="span9 document">Console
-
-
-                <div class="row-fluid">
-                    <form ng-submit="query()" class="form-inline">
-                        <textarea ui-codemirror="editorOptions" ng-model="functionToExecute['code']"></textarea>
-                    </form>
-                </div>
-                <div class="row-fluid">
-                    <ul class="horizontallist">
-                        <b>{{functionToExecute['name']}}(</b>
-
-                        <li ng-repeat="ppppp in parametersToExecute track by $index">
-                            <input type="text" ng-model="parametersToExecute[$index]">
+        <div class="span12">
+            <h2>Functions:</h2>
+            <div class="row-fluid">
+                <div class="span2">
+                    <ul class="nav nav-list well functions_list">
+                        <li class="nav-header">
+                            Functions:
                         </li>
-                        <b>)</b>
+                        <li>
+                            <a ng-repeat="func in functions | orderBy: 'name'" ng-click="showInConsole(func)"
+                               value="{{func['name']}}">
+                                {{func['name']}}
+                            </a>
+                        </li>
                     </ul>
-                    <form class="form-inline">
-                        <a href="javascript:void(0)" class="btn btn-success" ng-click="executeFunction()"> <i
+                </div>
+                <div class="span6">
+                    <b>
+                        Parameters:
+
+                    </b>
+                    <a href="javascript:void(0)" class="btn  btn-small" ng-click="addParam()"> <i
+                            class=" icon-plus"></i> Parameter</a>
+
+                    <p>
+                    <ul class="horizontallist">
+
+                        <li ng-repeat="param in functionToExecute.parameters  track by $index">
+                            <input type="text" ng-model="functionToExecute['parameters'][$index]">
+                            <a href="javascript:void(0)" class="btn  btn-small" ng-click="removeParam($index)"> <i
+                                    class=" icon-trash"></i> </a>
+                        </li>
+                    </ul>
+                    </p>
+
+                    <p>
+
+                    <div class="row-fluid">
+                        <form ng-submit="query()" class="form-inline">
+                            <textarea ui-codemirror="editorOptions" ng-model="functionToExecute['code']"></textarea>
+                        </form>
+                    </div>
+                    <div class="row-fluid">
+                        <ul class="horizontallist">
+                            <b>{{functionToExecute['name']}}(</b>
+
+                            <li ng-repeat="ppppp in parametersToExecute track by $index">
+                                <input type="text" ng-model="parametersToExecute[$index]">
+                            </li>
+                            <b>)</b>
+                        </ul>
+                        <form class="form-inline">
+                            <a href="javascript:void(0)" class="btn btn-success" ng-click="executeFunction()"> <i
+                                    class="icon-white icon-ok"></i>
+                                Execute</a>
+                            <br>
+                        </form>
+                        <form class="form-inline functions_consoleresult">
+                            <textarea ng-model="resultExecute" value="{{resultExecute}}"></textarea>
+                        </form>
+                    </div>
+                    </p>
+                </div>
+                <div class="span4">
+                    <div class="btn-group">
+                        <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i
+                                class="icon-plus"></i> New</a>
+                        <a href="javascript:void(0)" class="btn" ng-click="deleteFunction()"> <i class="icon-trash"></i>
+                            Delete</a>
+                        <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i>
+                            Clear</a>
+                        <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i
                                 class="icon-white icon-ok"></i>
-                            Execute</a>
-                        <br>
+                            Save</a>
+                    </div>
+                    <form>
+                        <fieldset>
+                            <legend>{{functionToExecute['name']}}</legend>
+                            <label>Name</label><input type="text" ng-model="functionToExecute['name']">
+                            <label>Language:</label>
+                            <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
+                                    ng-change="modificataLang(selectedLanguage)">
+                            </select>
+                            <label>Idempotent</label><input type="checkbox" ng-model="functionToExecute['idempotent']">
+                        </fieldset>
                     </form>
-                    <form class="form-inline functions_consoleresult">
-                        <textarea ng-model="resultExecute" value="{{resultExecute}}"></textarea>
-                    </form>
+
                 </div>
             </div>
-
-
+            <div class="row-fluid">
+                <div class="span12">
+                </div>
+            </div>
         </div>
     </div>
 </div>
