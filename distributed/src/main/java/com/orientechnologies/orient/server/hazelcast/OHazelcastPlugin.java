@@ -42,6 +42,7 @@ import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberLeftException;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.OperationTimeoutException;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -430,6 +431,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 EXECUTION_MODE.SYNCHRONOUS);
             throw e;
           }
+        } catch (OperationTimeoutException e) {
+          ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+              "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
+              EXECUTION_MODE.SYNCHRONOUS);
+          throw e;
         }
       }
     } finally {

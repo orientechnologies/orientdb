@@ -1521,11 +1521,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
+        if (transaction == null)
+          return;
+
         if (writeAheadLog == null)
           throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
-        if (transaction == null)
-          throw new OStorageException("There is no active transaction, rollback can not be performed.");
 
         if (transaction.getClientTx().getId() != clientTx.getId())
           throw new OStorageException(

@@ -184,6 +184,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.ROLLBACKING;
 
+    database.getStorage().callInLock(new Callable<Void>() {
+
+      public Void call() throws Exception {
+
+        database.getStorage().rollback(OTransactionOptimistic.this);
+        return null;
+      }
+    }, true);
+
     // CLEAR THE CACHE MOVING GOOD RECORDS TO LEVEL-2 CACHE
     database.getLevel1Cache().clear();
 

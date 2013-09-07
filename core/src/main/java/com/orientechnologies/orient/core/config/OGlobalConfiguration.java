@@ -47,10 +47,6 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.TRUE),
 
   // MEMORY
-  @Deprecated
-  MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
-      Float.class, 0.70),
-
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
@@ -195,11 +191,6 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.FALSE),
 
   TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
-
-  // GRAPH
-  @Deprecated
-  BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
-      "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
   // INDEX
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
@@ -403,9 +394,6 @@ public enum OGlobalConfiguration {
           Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
         }
       }),
-
-  @Deprecated
-  PROFILER_AUTODUMP_RESET("profiler.autoDump.reset", "Resets the profiler at every auto dump", Boolean.class, true),
 
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {

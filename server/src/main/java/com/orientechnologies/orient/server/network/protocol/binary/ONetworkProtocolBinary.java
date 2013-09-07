@@ -298,8 +298,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       break;
 
     case OChannelBinaryProtocol.REQUEST_COUNT:
-      countCluster();
-      break;
+      throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
 
     case OChannelBinaryProtocol.REQUEST_COMMAND:
       command();
@@ -1218,30 +1217,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return false;
     }
     return true;
-  }
-
-  /**
-   * Use DATACLUSTER_COUNT
-   * 
-   * @throws IOException
-   */
-  @Deprecated
-  protected void countCluster() throws IOException {
-    setDataCommandInfo("Count cluster records");
-
-    if (!isConnectionAlive())
-      return;
-
-    final String clusterName = channel.readString();
-    final long size = connection.database.countClusterElements(clusterName);
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeLong(size);
-    } finally {
-      endResponse();
-    }
   }
 
   protected void deleteRecord() throws IOException {

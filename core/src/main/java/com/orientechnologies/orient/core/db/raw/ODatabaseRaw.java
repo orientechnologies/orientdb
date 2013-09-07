@@ -145,16 +145,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return (DB) this;
   }
 
-  /**
-   * Deprecated, use #drop() instead.
-   * 
-   * @see #drop()
-   */
-  @Deprecated
-  public void delete() {
-    drop();
-  }
-
   public void drop() {
     final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
     close();
@@ -417,10 +407,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       Object... iParameters) {
     return storage.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, false, iParameters);
-  }
-
-  public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iStartSize) {
-    return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, false, iLocation, iStartSize);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {

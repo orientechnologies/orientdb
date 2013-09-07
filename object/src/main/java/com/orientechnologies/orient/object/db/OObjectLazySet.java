@@ -24,7 +24,7 @@ import java.util.Set;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,7 +42,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
  */
 @SuppressWarnings("unchecked")
 public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSetInterface<TYPE>,
-    OLazyObjectMultivalueElement<Set<TYPE>>, Serializable {
+    OObjectLazyMultivalueElement<Set<TYPE>>, Serializable {
   private static final long        serialVersionUID = 1793910544017627989L;
 
   private final ProxyObject        sourceRecord;

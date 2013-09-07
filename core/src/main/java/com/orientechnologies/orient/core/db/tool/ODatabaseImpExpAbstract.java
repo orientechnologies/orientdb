@@ -48,6 +48,7 @@ public abstract class ODatabaseImpExpAbstract {
   protected boolean                includeIndexDefinitions   = true;
   protected boolean                includeManualIndexes      = true;
   protected boolean                useLineFeedForRecords     = false;
+  protected boolean                preserveRids              = false;
 
   protected OCommandOutputListener listener;
 
@@ -227,5 +228,13 @@ public abstract class ODatabaseImpExpAbstract {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
 
     }
+  }
+
+  public boolean isPreserveRids() {
+    return preserveRids;
+  }
+
+  public void setPreserveRids(boolean preserveRids) {
+    this.preserveRids = preserveRids;
   }
 }

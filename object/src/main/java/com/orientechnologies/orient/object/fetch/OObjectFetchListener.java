@@ -30,9 +30,10 @@ import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.object.db.OLazyObjectList;
-import com.orientechnologies.orient.object.db.OLazyObjectMap;
-import com.orientechnologies.orient.object.db.OLazyObjectSet;
+import com.orientechnologies.orient.object.db.OObjectLazyList;
+import com.orientechnologies.orient.object.db.OObjectLazyMap;
+import com.orientechnologies.orient.object.db.OObjectLazySet;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
@@ -41,15 +42,18 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
  */
 public class OObjectFetchListener implements OFetchListener {
 
-  @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iUserObject, final String iFormat) throws OFetchException {
     if (iFieldValue instanceof ORecordLazyList)
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OLazyObjectList(iRecord, (ORecordLazyList) iFieldValue));
+      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyList(iRecord, (ORecordLazyList) iFieldValue,
+          OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
     else if (iFieldValue instanceof ORecordLazySet)
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OLazyObjectSet(iRecord, (ORecordLazyList) iFieldValue));
+      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazySet(iRecord, (ORecordLazySet) iFieldValue,
+          OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
     else if (iFieldValue instanceof ORecordLazyMap)
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OLazyObjectMap(iRecord, (ORecordLazyMap) iFieldValue));
+      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyMap(iRecord, (ORecordLazyMap) iFieldValue,
+          OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
     else
       OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, iFieldValue);
   }

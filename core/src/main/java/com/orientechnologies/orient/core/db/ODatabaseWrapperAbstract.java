@@ -74,14 +74,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     underlying.replaceStorage(iNewStorage);
   }
 
-  /**
-   * Uses drop() instead.
-   */
-  @Deprecated
-  public void delete() {
-    drop();
-  }
-
   public void drop() {
     underlying.drop();
     Orient.instance().getDatabaseFactory().unregister(databaseOwner);
@@ -204,30 +196,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       Object... iParameters) {
     return underlying.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, iParameters);
-  }
-
-  /**
-   * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
-   * @param iClusterName
-   * @param iSize
-   * @return
-   */
-  @Deprecated
-  public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iSize) {
-    checkOpeness();
-    return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, null);
-  }
-
-  /**
-   * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
-   * @param iClusterName
-   * @param iSize
-   * @return
-   */
-  @Deprecated
-  public int addPhysicalCluster(final String iClusterName) {
-    checkOpeness();
-    return underlying.addPhysicalCluster(iClusterName, null, -1);
   }
 
   public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {

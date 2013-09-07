@@ -144,16 +144,33 @@ public abstract class OAbstractFile implements OFile {
 
       init();
 
-      final long fileSize = getFileSize();
       long filledUpTo = getFilledUpTo();
+
+      long fileSize = getFileSize();
+      if (fileSize == 0) {
+        // CORRUPTED? GET THE OS FILE SIZE
+        final long newFileSize = osFile.length() - HEADER_SIZE;
+        if (newFileSize != fileSize) {
+          OLogManager
+              .instance()
+              .error(
+                  this,
+                  "Invalid fileSize=%d for file %s. Resetting it to the os file size: %d. Probably the file was not closed correctly last time. The number of records has been set to the maximum value. It's strongly suggested to export and reimport the database before using it",
+                  fileSize, getOsFile().getAbsolutePath(), newFileSize);
+
+          setFilledUpTo(newFileSize, true);
+          setSize(newFileSize, true);
+          fileSize = newFileSize;
+        }
+      }
 
       if (filledUpTo > 0 && filledUpTo > fileSize) {
         OLogManager
             .instance()
             .error(
                 this,
-                "invalid filledUp value (%d) for file %s. Resetting the file size %d to the os file size: %d. Probably the file was not closed correctly last time. Please assure the right number of records in the cluster",
-                filledUpTo, getOsFile().getAbsolutePath(), fileSize, fileSize);
+                "Invalid filledUp=%d for file %s. Resetting it to the os file size: %d. Probably the file was not closed correctly last time. The number of records has been set to the maximum value. It's strongly suggested to export and reimport the database before using it",
+                filledUpTo, getOsFile().getAbsolutePath(), fileSize);
         setSize(fileSize);
         setFilledUpTo(fileSize);
         filledUpTo = getFilledUpTo();
