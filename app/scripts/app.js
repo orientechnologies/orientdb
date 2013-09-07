@@ -13,7 +13,7 @@ var deps = ['header.controller',
     'notification.controller',
     'configuration.controller',
     '$strap.directives',
-    'ui.codemirror',
+    'ui.CodeMirror',
     'LocalStorageModule',
     'filters',
     'rendering', 'schema.controller'];

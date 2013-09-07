@@ -26,7 +26,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.functions = new Array;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
             if (data.result) {
-                console.log(data.result);
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
                 }
@@ -161,17 +160,20 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
         var recordID = $scope.functionToExecute['@rid'];
         var clazz = $scope.functionToExecute['@class'];
+
         Utilities.confirm($scope, $dialog, {
             title: 'Warning!',
-            body: 'You are removing ' + $scope.functionToExecute['name'] + ' ' + recordID + '. Are you sure?',
+            body: 'You are removing ' + $scope.functionToExecute['name'] + '. Are you sure?',
             success: function () {
-                var command = "DELETE Vertex " + recordID;
-                CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
+                DocumentApi.deleteDocument($scope.database.getName(), recordID, function (data) {
+
+                    $scope.getListFunction();
                 });
             }
-        });
-        $scope.getListFunction();
-    }
+//        $scope.getListFunction();
 
+        });
+
+    }
 }]);
 
