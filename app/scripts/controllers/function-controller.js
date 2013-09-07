@@ -118,7 +118,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.$watch('inParams.length', function (data) {
             $scope.parametersToExecute = new Array(data);
         });
-        console.log(selectedFunction);
+        console.log(selectedFunction['idempotent']);
 
         $scope.isNewFunction = false;
     }

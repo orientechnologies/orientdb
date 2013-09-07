@@ -1,19 +1,28 @@
 <div class="row-fluid" xmlns="http://www.w3.org/1999/html">
 
     <div class="span12 nomargin">
+
+        <h1>Functions</h1>
         <div>
             <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i class="icon-plus"></i> New</a>
             <a href="javascript:void(0)" class="btn" ng-click="deleteFunction()"> <i class="icon-trash"></i> Delete</a>
             <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i> Clear</a>
-            <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i class="icon-white icon-ok"></i>
+            <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i
+                    class="icon-white icon-ok"></i>
                 Save</a>
 
 
             Name:<input type="text" ng-model="functionToExecute['name']">
 
-            <select ng-options="lang for lang in languages" ng-model="selectedLanguage" ng-change="modificataLang(selectedLanguage)">
+            Language:
+            <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
+                    ng-change="modificataLang(selectedLanguage)">
 
             </select>
+
+            Idemopotent:
+            <input type="checkbox" ng-model="functionToExecute['idempotent']">
+
 
         </div>
 
@@ -27,10 +36,6 @@
 
                     </option>
                 </select>
-
-            </div>
-            <div>
-
 
             </div>
 
