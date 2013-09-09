@@ -237,7 +237,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return shortName;
   }
 
-  public OClass setShortName(final String iShortName) {
+  public OClass setShortName(String iShortName) {
+    if (iShortName != null) {
+      iShortName = iShortName.trim();
+      if (iShortName.isEmpty())
+        iShortName = null;
+    }
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     final String cmd = String.format("alter class %s shortname %s", name, iShortName);
     getDatabase().command(new OCommandSQL(cmd)).execute();
@@ -254,7 +259,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     this.shortName = iShortName;
 
     // REGISTER IT
-    owner.classes.put(iShortName.toLowerCase(), this);
+    if(null != iShortName)
+        owner.classes.put(iShortName.toLowerCase(), this);
   }
 
   public String getStreamableName() {
