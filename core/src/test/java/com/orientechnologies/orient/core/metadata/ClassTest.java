@@ -46,7 +46,7 @@ public class ClassTest {
         Assert.assertEquals(shortName, oClass.getShortName());
         Assert.assertEquals(shortName, queryShortName());
 
-        //FAILS, save null value and store "null" string internally
+        //FAILS, saves null value and stores "null" string (not null value) internally
 //        shortName = "null";
 //        oClass.setShortName(shortName);
 //        Assert.assertEquals(shortName, oClass.getShortName());
@@ -56,10 +56,9 @@ public class ClassTest {
         Assert.assertNull(oClass.getShortName());
         Assert.assertNull(queryShortName());
 
-        //FAILS StringIndexOutOfBoundsException
-//        oClass.setShortName("");
-//        Assert.assertNull(oClass.getShortName());
-//        Assert.assertNull(queryShortName());
+        oClass.setShortName("");
+        Assert.assertNull(oClass.getShortName());
+        Assert.assertNull(queryShortName());
     }
 
     private String queryShortName(){
