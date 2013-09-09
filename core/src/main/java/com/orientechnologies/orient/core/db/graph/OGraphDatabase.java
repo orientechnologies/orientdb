@@ -44,9 +44,16 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  * instances and not regular ad-hoc POJO as for other implementations. You could use this one for bulk operations and the others for
  * regular graph access.
  * 
+ * This class has been deprecated strating from v1.4 in favor of TinkerPop Blueprints OrientGraph and OrientGraphNoTx classes. Take
+ * a look at: <a href="https://github.com/orientechnologies/orientdb/wiki/Migration-from-1.3.x-to-1.4.x#graphdb">Migration from
+ * 1.3.x to 1.4.x</a>
+ * 
  * @author Luca Garulli
+ * @see OrientGraph, OrientGraphNoTx
+ * @deprecated
  * 
  */
+@Deprecated
 public class OGraphDatabase extends ODatabaseDocumentTx {
   public enum LOCK_MODE {
     NO_LOCKING, DATABASE_LEVEL_LOCKING, RECORD_LEVEL_LOCKING
