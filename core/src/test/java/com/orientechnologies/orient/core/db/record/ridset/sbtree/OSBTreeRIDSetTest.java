@@ -27,6 +27,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
@@ -55,8 +59,8 @@ public class OSBTreeRIDSetTest {
     OSBTreeRIDSet set = new OSBTreeRIDSet();
 
     boolean result = set.add(new ORecordId("#77:1"));
-    Assert.assertTrue(result);
-    Assert.assertEquals(set.size(), 1);
+    assertTrue(result);
+    assertEquals(set.size(), 1);
   }
 
   @Test
@@ -64,18 +68,18 @@ public class OSBTreeRIDSetTest {
     OSBTreeRIDSet set = new OSBTreeRIDSet();
 
     boolean result = set.add(new ORecordId("#77:2"));
-    Assert.assertTrue(result);
-    Assert.assertEquals(set.size(), 1);
+    assertTrue(result);
+    assertEquals(set.size(), 1);
 
     result = set.add(new ORecordId("#77:2"));
-    Assert.assertFalse(result);
-    Assert.assertEquals(set.size(), 1);
+    assertFalse(result);
+    assertEquals(set.size(), 1);
   }
 
   @Test
   public void testEmptyIterator() throws Exception {
     OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
-    Assert.assertEquals(ridSet.size(), 0);
+    assertEquals(ridSet.size(), 0);
 
     for (OIdentifiable id : ridSet) {
       Assert.fail();
@@ -94,13 +98,26 @@ public class OSBTreeRIDSetTest {
 
     OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
     ridSet.addAll(expected);
-    Assert.assertEquals(ridSet.size(), 5);
+    assertEquals(ridSet.size(), 5);
 
     Set<OIdentifiable> actual = new HashSet<OIdentifiable>(8);
     for (OIdentifiable id : ridSet) {
       actual.add(id);
     }
 
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testContains() {
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
+
+    final ORecordId id1 = new ORecordId("#77:1");
+    set.add(id1);
+
+    final ORecordId id2 = new ORecordId("#77:2");
+
+    assertTrue(set.contains(id1));
+    assertFalse(set.contains(id2));
   }
 }

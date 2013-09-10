@@ -62,7 +62,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public boolean contains(Object o) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    return tree.get((OIdentifiable) o) != null;
+  }
+
+  public boolean contains(OIdentifiable o) {
+    return tree.get(o) != null;
   }
 
   @Override
