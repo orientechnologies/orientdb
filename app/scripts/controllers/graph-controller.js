@@ -1,5 +1,5 @@
 var  GrapgController = angular.module('vertex.controller',['ui.bootstrap']);
-GrapgController.controller("VertexEditController",['$scope','$injector','$routeParams','$location','$modal','$q','$dialog','DocumentApi','Database','CommandApi','Notification',function($scope,$injector,$routeParams,$location,$modal,$q,$dialog,DocumentApi,Database,CommandApi,Notification){
+GrapgController.controller("VertexEditController",['$scope','$injector','$routeParams','$location','$modal','$q','DocumentApi','Database','CommandApi','Notification',function($scope,$injector,$routeParams,$location,$modal,$q,DocumentApi,Database,CommandApi,Notification){
 
 	$injector.invoke(BaseEditController, this, {$scope: $scope});
     $scope.label = 'Vertex';
@@ -45,7 +45,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 	
 	$scope.delete = function(){
 		var recordID = $scope.doc['@rid']
-		Utilities.confirm($scope,$dialog,{
+		Utilities.confirm($scope,$modal,{
 			title : 'Warning!',
 			body : 'You are removing Vertex '+ recordID + '. Are you sure?',
 			success : function() {
@@ -85,7 +85,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
     }
 	$scope.deleteLink = function(group,edge) {
 		
-		Utilities.confirm($scope,$dialog,{
+		Utilities.confirm($scope,$modal,{
 			title : 'Warning!',
 			body : 'You are removing edge '+ edge + '. Are you sure?',
 			success : function() {

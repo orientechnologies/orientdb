@@ -29,7 +29,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.viewerOptions = {
         lineWrapping: true,
         lineNumbers: true,
-        readOnly: true  ,
+        readOnly: true,
         mode: 'javascript'
 
     };
@@ -70,6 +70,17 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 (index - 1) * $scope.countPage,
                 index * $scope.countPage
             );
+        }
+    }
+    $scope.previous = function () {
+        if ($scope.currentPage > 1) {
+            $scope.switchPage($scope.currentPage - 1);
+        }
+    }
+    $scope.next = function () {
+
+        if ($scope.currentPage < $scope.numberOfPage.length) {
+            $scope.switchPage($scope.currentPage + 1);
         }
     }
     $scope.$watch("countPage", function (data) {

@@ -1,5 +1,5 @@
 var DocController = angular.module('document.controller', []);
-DocController.controller("DocumentEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$dialog', '$q', 'DocumentApi', 'Database', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $dialog, $q, DocumentApi, Database, Notification) {
+DocController.controller("DocumentEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, Notification) {
 
     $injector.invoke(BaseEditController, this, {$scope: $scope});
     $scope.fixed = Database.header;
@@ -185,7 +185,7 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
 }]);
 
 
-function BaseEditController($scope, $routeParams,$route, $location, $modal, $dialog, $q, DocumentApi, Database, Notification, CommandApi) {
+function BaseEditController($scope, $routeParams,$route, $location, $modal, $q, DocumentApi, Database, Notification, CommandApi) {
     $scope.database = $routeParams.database;
     $scope.rid = $routeParams.rid;
     $scope.label = 'Document';
@@ -228,7 +228,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
 
         var recordID = $scope.doc['@rid'];
         var clazz = $scope.doc['@class'];
-        Utilities.confirm($scope, $dialog, {
+        Utilities.confirm($scope, $modal, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.label + ' ' + recordID + '. Are you sure?',
             success: function () {
@@ -247,7 +247,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $dia
     }
 
     $scope.deleteField = function (name) {
-        Utilities.confirm($scope, $dialog, {
+        Utilities.confirm($scope, $modal, {
             title: 'Warning!',
             body: 'You are removing field ' + name + ' from ' + $scope.label + ' ' + $scope.doc['@rid'] + '. Are you sure?',
             success: function () {

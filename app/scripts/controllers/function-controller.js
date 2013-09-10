@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$dialog', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $dialog, $modal, $q, $route) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -147,20 +147,22 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
     $scope.saveFunction = function () {
 
+        if ($scope.functionToExecute['language'] != undefined) {
 
-        if ($scope.isNewFunction == true) {
-            DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
+            if ($scope.isNewFunction == true) {
+                DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
+                        $scope.getListFunction();
+                        $scope.refreshPage();
+
+                    }
+                );
+            }
+            else {
+                DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                     $scope.getListFunction();
                     $scope.refreshPage();
-
-                }
-            );
-        }
-        else {
-            DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
-                $scope.getListFunction();
-                $scope.refreshPage();
-            });
+                });
+            }
         }
 
     }
@@ -170,7 +172,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         var recordID = $scope.functionToExecute['@rid'];
         var clazz = $scope.functionToExecute['@class'];
 
-        Utilities.confirm($scope, $dialog, {
+        Utilities.confirm($scope, $modal, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.functionToExecute['name'] + '. Are you sure?',
             success: function () {
