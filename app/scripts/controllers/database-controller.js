@@ -5,16 +5,19 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.limit = 20;
     $scope.queries = new Array;
     $scope.language = 'sql';
+    $scope.countPage = 10;
+    $scope.countPageOptions = [10, 20, 50, 100];
+    $scope.table = true;
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
         readOnly: false,
         theme: 'ambiance',
         mode: 'text/x-sql',
-        metadata : Database,
+        metadata: Database,
         extraKeys: {
             "Ctrl-Enter": function (instance) {
-                $scope.$apply(function(){
+                $scope.$apply(function () {
                     $scope.query();
                 });
 
@@ -23,30 +26,40 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
         }
     };
+    $scope.viewerOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        readOnly: true  ,
+        mode: 'javascript'
+
+    };
 
 
     $scope.query = function () {
         Spinner.loading = true;
         $scope.queryText = $scope.queryText.trim();
-        if($scope.queryText.startsWith('g.')){
+        if ($scope.queryText.startsWith('g.')) {
             $scope.language = 'gremlin';
         }
-        if($scope.queryText.startsWith('#')){
+        if ($scope.queryText.startsWith('#')) {
             $location.path('/database/' + $routeParams.database + '/browse/edit/' + $scope.queryText.replace('#', ''));
         }
 
         CommandApi.queryText({database: $routeParams.database, language: $scope.language, text: $scope.queryText, limit: $scope.limit}, function (data) {
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
+                $scope.rawData = JSON.stringify(data);
                 $scope.resultTotal = data.result;
-                $scope.results = data.result.slice(0, 10);
+                $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
-                $scope.countPage = 10;
-                $scope.numberOfPage = new Array(Math.round(data.result.length / 10));
+
+                $scope.numberOfPage = new Array(Math.round(data.result.length / $scope.countPage));
 
             }
             if ($scope.queries.indexOf($scope.queryText) == -1)
                 $scope.queries.push($scope.queryText);
+            Spinner.loading = false;
+        }, function (data) {
             Spinner.loading = false;
         });
     }
@@ -59,6 +72,13 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             );
         }
     }
+    $scope.$watch("countPage", function (data) {
+        if ($scope.resultTotal) {
+            $scope.results = $scope.resultTotal.slice(0, $scope.countPage);
+            $scope.currentPage = 1;
+            $scope.numberOfPage = new Array(Math.round($scope.resultTotal.length / $scope.countPage));
+        }
+    });
     $scope.openRecord = function (doc) {
         $location.path("/database/" + $scope.database.getName() + "/browse/edit/" + doc["@rid"].replace('#', ''));
     }

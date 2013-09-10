@@ -281,6 +281,11 @@ a > i {
     margin-top: 0px !important;
 }
 
+ul a > i {
+    vertical-align: inherit !important;
+    margin-top: auto !important;
+}
+
 button.exportButton {
     background: none repeat scroll 0 0 #3399FF;
     border: 1px solid #2E6E9E;
@@ -316,4 +321,23 @@ ul.horizontallist , ol.horizontallist {
     max-height: 400px;
     overflow-y: scroll;
 }
+.navbar.navbar-inverse .navbar-inner {
+    background: none repeat scroll 0 0 #262626;
+    border-bottom: 5px solid #FF6600;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
 
+.panelAlerts {
+   min-height: 58px;
+}
+
+
+.queryHelp {
+    list-style: none;
+    margin: 0;
+}
+.viewJson .CodeMirror {
+    height: 300px;
+    margin-bottom: 20px;
+}

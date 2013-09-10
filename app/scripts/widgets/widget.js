@@ -23,6 +23,9 @@ Widget.directive('docwidget', function ($compile, $http, Database,CommandApi,Doc
         formScope.onLoadEditor = function(_editor){
             console.log(_editor);
         }
+        formScope.inSchema = function(){
+
+        }
         formScope.getTemplate = function (header) {
             if (formScope.doc['@class']) {
                 var type = findType(formScope,header)
@@ -221,8 +224,10 @@ Widget.directive('jsontext', function() {
                 return JSON.parse(input);
             }
             function out(data) {
-                var string =  JSON.stringify(data);
-                return formatter.formatJson(string);
+                if(data){
+                    var string = data instanceof Object ?  JSON.stringify(data) : data;
+                    return formatter.formatJson(string);
+                }
             }
             ngModel.$parsers.push(into);
             ngModel.$formatters.push(out);

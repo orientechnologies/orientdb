@@ -7,11 +7,11 @@ angular.module('header.controller',['database.services']).controller("HeaderCont
         if(data!=null){
             $scope.setSelected();
             $scope.menus = [
-                { name : "browse", link : '#/database/'+ data +'/browse'},
-                { name : "schema", link : '#/database/'+ data +'/schema'},
-                { name : "users" , link : '#/database/'+ data +'/users'},
-                { name: "functions", link: '#/database/' + data + '/functions'},
-                { name: "settings", link: '#/database/' + data + '/settings'}
+                { name : "browse", link : '#/database/'+ data +'/browse',icon : "icon-eye-open"},
+                { name : "schema", link : '#/database/'+ data +'/schema',icon: "icon-tasks"},
+                { name : "users" , link : '#/database/'+ data +'/users',icon : 'icon-user'},
+                { name: "functions", link: '#/database/' + data + '/functions', icon : 'icon-signal'},
+                { name: "settings", link: '#/database/' + data + '/settings',icon :'icon-wrench'}
 
             ];
 		}

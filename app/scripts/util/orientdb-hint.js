@@ -85,7 +85,7 @@
         return found;
     }
     function renderKeyword(etl,data,cur){
-        etl.appendChild(createLabel("(K)  "));
+        //etl.appendChild(createLabel("(K)  "));
         etl.appendChild(document.createTextNode(cur.text));
 
     }
@@ -95,12 +95,12 @@
         return italic;
     }
     function renderClass(etl,data,cur){
-        etl.appendChild(createLabel("(C)  "));
         etl.appendChild(document.createTextNode(cur.text));
+        etl.appendChild(createLabel("  (C)"));
     }
     function renderField(etl,data,cur){
-        etl.appendChild(createLabel("(F)  "));
         etl.appendChild(document.createTextNode(cur.text));
+        etl.appendChild(createLabel("  (F)"));
     }
 })();
 
