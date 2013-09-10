@@ -228,7 +228,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $q, 
 
         var recordID = $scope.doc['@rid'];
         var clazz = $scope.doc['@class'];
-        Utilities.confirm($scope, $modal, {
+        Utilities.confirm($scope, $modal,$q, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.label + ' ' + recordID + '. Are you sure?',
             success: function () {
@@ -247,7 +247,7 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $q, 
     }
 
     $scope.deleteField = function (name) {
-        Utilities.confirm($scope, $modal, {
+        Utilities.confirm($scope, $modal,$q, {
             title: 'Warning!',
             body: 'You are removing field ' + name + ' from ' + $scope.label + ' ' + $scope.doc['@rid'] + '. Are you sure?',
             success: function () {

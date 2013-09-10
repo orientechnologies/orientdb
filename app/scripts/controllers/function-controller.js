@@ -172,7 +172,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         var recordID = $scope.functionToExecute['@rid'];
         var clazz = $scope.functionToExecute['@class'];
 
-        Utilities.confirm($scope, $modal, {
+        Utilities.confirm($scope, $modal,$q, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.functionToExecute['name'] + '. Are you sure?',
             success: function () {
