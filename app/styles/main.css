@@ -308,7 +308,7 @@ button.exportButton {
     /*float: left;*/
 }
 
-ul.horizontallist , ol.horizontallist {
+ul.horizontallist, ol.horizontallist {
     margin: 0px !important;
     padding: 0px;
 }
@@ -321,6 +321,7 @@ ul.horizontallist , ol.horizontallist {
     max-height: 400px;
     overflow-y: scroll;
 }
+
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #262626;
     border-bottom: 5px solid #FF6600;
@@ -329,15 +330,19 @@ ul.horizontallist , ol.horizontallist {
 }
 
 .panelAlerts {
-   min-height: 58px;
+    min-height: 58px;
 }
-
 
 .queryHelp {
     list-style: none;
     margin: 0;
 }
+
 .viewJson .CodeMirror {
     height: 300px;
     margin-bottom: 20px;
+}
+
+.console_class_functions {
+    margin-left: 0px !important;
 }
