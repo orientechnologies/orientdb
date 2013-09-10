@@ -57,12 +57,12 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public boolean isEmpty() {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    return tree.size() == 0L;
   }
 
   @Override
   public boolean contains(Object o) {
-    return tree.get((OIdentifiable) o) != null;
+    return o instanceof OIdentifiable && contains((OIdentifiable) o);
   }
 
   public boolean contains(OIdentifiable o) {
@@ -71,25 +71,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return new Iterator<OIdentifiable>() {
-      private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(
-                                                                                tree);
-
-      @Override
-      public boolean hasNext() {
-        return entryIterator.hasNext();
-      }
-
-      @Override
-      public OIdentifiable next() {
-        return entryIterator.next().getKey();
-      }
-
-      @Override
-      public void remove() {
-        entryIterator.remove();
-      }
-    };
+    return new TreeKeyIterator(tree);
   }
 
   @Override
@@ -114,12 +96,19 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public boolean remove(Object o) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    return o instanceof OIdentifiable && remove((OIdentifiable) o);
+  }
+
+  public boolean remove(OIdentifiable o) {
+    return tree.remove(o) != null;
   }
 
   @Override
   public boolean containsAll(Collection<?> c) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    for (Object e : c)
+      if (!contains(e))
+        return false;
+    return true;
   }
 
   @Override
@@ -133,17 +122,53 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public boolean retainAll(Collection<?> c) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    boolean modified = false;
+    Iterator<OIdentifiable> it = iterator();
+    while (it.hasNext()) {
+      if (!c.contains(it.next())) {
+        it.remove();
+        modified = true;
+      }
+    }
+    return modified;
   }
 
   @Override
   public boolean removeAll(Collection<?> c) {
-    return false; // To change body of implemented methods use File | Settings | File Templates.
+    boolean modified = false;
+    for (Object o : c) {
+      modified |= remove(o);
+    }
+
+    return modified;
   }
 
   @Override
   public void clear() {
-    // To change body of implemented methods use File | Settings | File Templates.
+    tree.clear();
+  }
+
+  private static class TreeKeyIterator implements Iterator<OIdentifiable> {
+    private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
+
+    public TreeKeyIterator(OSBTree<OIdentifiable, Boolean> tree) {
+      entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(tree);
+    }
+
+    @Override
+    public boolean hasNext() {
+      return entryIterator.hasNext();
+    }
+
+    @Override
+    public OIdentifiable next() {
+      return entryIterator.next().getKey();
+    }
+
+    @Override
+    public void remove() {
+      entryIterator.remove();
+    }
   }
 
   // public OSBTreeRIDSet(String fileId, long rootIndex) {
