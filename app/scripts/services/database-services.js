@@ -329,6 +329,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             var isGraph = this.isGraph(c);
             var fixedHeader = this.header.concat(this.exclude);
             var self = this;
+            var fields = this.listField(c);
             var all = Object.keys(doc).filter(function (element, index, array) {
                 if (isGraph) {
                     return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in_") && !element.startsWith("out_")) && !self.isLink(type));
@@ -337,7 +338,13 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                     return (fixedHeader.indexOf(element) == -1 && !self.isLink(type));
                 }
             });
-            return all;
+            var toAdd = new Array;
+            fields.forEach(function(elem,index,array){
+                if(all.indexOf(elem)==-1){
+                    toAdd.push(elem);
+                }
+            })
+            return all.concat(toAdd);
         },
         getEdge: function (doc, direction) {
 
