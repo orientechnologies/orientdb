@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller',['database.services']);
-schemaModule.controller("SchemaController",['$scope','$routeParams','$location','Database','CommandApi','$dialog','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$dialog,$modal,$q){
+schemaModule.controller("SchemaController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q){
 
 	$scope.database = Database;
 	$scope.listClasses = $scope.database.listClasses();
@@ -17,7 +17,7 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 
 	$scope.dropClass = function(nameClass){
 		
-		Utilities.confirm($scope,$dialog,{
+		Utilities.confirm($scope,$modal,{
 
 			title : 'Warning!',
 			body : 'You are dropping class '+ nameClass + '. Are you sure?',
@@ -64,7 +64,7 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 
 
 }]);
-schemaModule.controller("ClassEditController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$dialog','$route',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$dialog,$route){
+schemaModule.controller("ClassEditController",['$scope','$routeParams','$location','Database','CommandApi','$modal','$q','$route',function($scope,$routeParams,$location,Database,CommandApi,$modal,$q,$route){
 
 
 	var clazz = $routeParams.clazz;
@@ -185,7 +185,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		
 
 
-		Utilities.confirm($scope,$dialog,{
+		Utilities.confirm($scope,$modal,{
 
 			title : 'Warning!',
 			body : 'You are dropping index '+ nameIndex + '. Are you sure?',
@@ -207,7 +207,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 
 	$scope.dropProperty = function(result,elementName){
 		// console.log(result);
-		Utilities.confirm($scope,$dialog,{
+		Utilities.confirm($scope,$modal,{
 
 			title : 'Warning!',
 			body : 'You are dropping property  '+ elementName + '. Are you sure?',

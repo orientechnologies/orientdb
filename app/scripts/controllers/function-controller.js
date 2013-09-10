@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$dialog', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $dialog, $modal, $q, $route) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi,  $modal, $q, $route) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -170,7 +170,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         var recordID = $scope.functionToExecute['@rid'];
         var clazz = $scope.functionToExecute['@class'];
 
-        Utilities.confirm($scope, $dialog, {
+        Utilities.confirm($scope, $modal, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.functionToExecute['name'] + '. Are you sure?',
             success: function () {

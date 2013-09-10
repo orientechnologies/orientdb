@@ -244,7 +244,9 @@ Widget.directive('jsontext', function () {
         require: 'ngModel',
         link: function (scope, element, attr, ngModel) {
             function into(input) {
-                return JSON.parse(input);
+                if(input) return JSON.parse(input);
+
+                return input;
             }
 
             function out(data) {
