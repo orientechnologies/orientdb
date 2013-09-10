@@ -262,11 +262,14 @@ module.exports = function (grunt) {
           cwd: '<%= yeoman.app %>',
           dest: '<%= yeoman.dist %>',
           src: [
-            '*.{ico,txt}',
+            '*.{ico,txt,html}',
             '.htaccess',
             'components/**/*',
             'images/{,*/}*.{gif,webp}',
-            'styles/fonts/*'
+            'styles/**/*',
+            'images/**/*',
+            'views/**/*',
+            'scripts/**/*'
           ]
         }]
       }
@@ -300,17 +303,17 @@ module.exports = function (grunt) {
     'test',
     'coffee',
     'compass:dist',
-    'useminPrepare',
-    'imagemin',
-    'cssmin',
-    'htmlmin',
-    'concat',
+    //'useminPrepare',
+    //'imagemin',
+    //'cssmin',
+    //'htmlmin',
+    //'concat',
     'copy',
     'cdnify',
     //'ngmin',
     //'uglify',
-    'rev',
-    'usemin'
+    //'rev',
+    //'usemin'
   ]);
 
   grunt.registerTask('default', ['build']);
