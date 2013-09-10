@@ -45,7 +45,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
 	
 	$scope.delete = function(){
 		var recordID = $scope.doc['@rid']
-		Utilities.confirm($scope,$modal,{
+		Utilities.confirm($scope,$modal,$q,{
 			title : 'Warning!',
 			body : 'You are removing Vertex '+ recordID + '. Are you sure?',
 			success : function() {
@@ -85,7 +85,7 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
     }
 	$scope.deleteLink = function(group,edge) {
 		
-		Utilities.confirm($scope,$modal,{
+		Utilities.confirm($scope,$modal,$q,{
 			title : 'Warning!',
 			body : 'You are removing edge '+ edge + '. Are you sure?',
 			success : function() {

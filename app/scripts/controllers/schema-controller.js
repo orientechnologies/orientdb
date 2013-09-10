@@ -17,7 +17,7 @@ schemaModule.controller("SchemaController",['$scope','$routeParams','$location',
 
 	$scope.dropClass = function(nameClass){
 		
-		Utilities.confirm($scope,$modal,{
+		Utilities.confirm($scope,$modal,$q,{
 
 			title : 'Warning!',
 			body : 'You are dropping class '+ nameClass + '. Are you sure?',
@@ -185,7 +185,7 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 		
 
 
-		Utilities.confirm($scope,$modal,{
+		Utilities.confirm($scope,$modal,$q,{
 
 			title : 'Warning!',
 			body : 'You are dropping index '+ nameIndex + '. Are you sure?',
@@ -206,8 +206,8 @@ schemaModule.controller("ClassEditController",['$scope','$routeParams','$locatio
 	}
 
 	$scope.dropProperty = function(result,elementName){
-		// console.log(result);
-		Utilities.confirm($scope,$modal,{
+		console.log(result);
+		Utilities.confirm($scope,$modal,$q,{
 
 			title : 'Warning!',
 			body : 'You are dropping property  '+ elementName + '. Are you sure?',
