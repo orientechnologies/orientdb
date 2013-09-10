@@ -26,7 +26,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         header: ["@rid", "@version", "@class"],
 
-        exclude: ["@type", "@fieldTypes","$then","$resolved"],
+        exclude: ["@type", "@fieldTypes", "$then", "$resolved"],
 
         listTypes: ['BINARY', 'BYTE', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'],
 
@@ -448,7 +448,7 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
         }).error(function (data) {
                 Notification.push({content: data});
                 if (error) error(data);
-        });
+            });
     }
     resource.getAll = function (database, clazz, callback) {
         var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
@@ -532,8 +532,13 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
     resource.executeFunction = function (params, callback, error) {
         var startTime = new Date().getTime();
         var verbose = params.verbose != undefined ? params.verbose : true;
-        console.log(params.functionName);
-        var text = API + 'function/' + params.database + "/" + params.functionName + '/' + params.parameters;
+        console.log(params.functionName)
+        if (params.parameters == '') {
+            var text = API + 'function/' + params.database + "/" + params.functionName ;
+        }
+        else {
+            var text = API + 'function/' + params.database + "/" + params.functionName + '/' + params.parameters;
+        }
 
 
         $http.post(text).success(function (data) {
@@ -541,7 +546,7 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
             var records = data.result ? data.result.length : "";
             if (verbose) {
                 var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
-                Notification.push({content: noti});
+//                Notification.push({content: noti});
             }
             callback(data);
         }).error(function (data) {

@@ -2,9 +2,25 @@
     <div class="row-fluid">
 
         <div class="span12">
-            <h2>Functions:</h2>
+            <div class="">
+                <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i
+                        class="icon-plus"></i> New</a>
+                <a href="javascript:void(0)" class="btn" ng-click="deleteFunction()"> <i class="icon-trash"></i>
+                    Delete</a>
+                <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i>
+                    Clear</a>
+                <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i
+                        class="icon-white icon-ok"></i>
+                    Save</a>
+            </div>
+
+
+        </div>
+        <div class="span12">
+
             <div class="row-fluid">
                 <div class="span2">
+                    <br>
                     <ul class="nav nav-list well functions_list">
                         <li class="nav-header">
                             Functions:
@@ -17,7 +33,16 @@
                         </li>
                     </ul>
                 </div>
-                <div class="span6">
+                <div class="span10">
+                    <form>
+                        <legend></legend>
+                        Name: <input type="text" ng-model="functionToExecute['name']">
+                        Language:
+                        <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
+                                ng-change="modificataLang(selectedLanguage)">
+                        </select>
+                        Idempotent: <input type="checkbox" ng-model="functionToExecute['idempotent']">
+                    </form>
                     <b>
                         Parameters:
 
@@ -64,31 +89,7 @@
                     </div>
                     </p>
                 </div>
-                <div class="span4">
-                    <div class="btn-group">
-                        <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i
-                                class="icon-plus"></i> New</a>
-                        <a href="javascript:void(0)" class="btn" ng-click="deleteFunction()"> <i class="icon-trash"></i>
-                            Delete</a>
-                        <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i>
-                            Clear</a>
-                        <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i
-                                class="icon-white icon-ok"></i>
-                            Save</a>
-                    </div>
-                    <form>
-                        <fieldset>
-                            <legend>{{functionToExecute['name']}}</legend>
-                            <label>Name</label><input type="text" ng-model="functionToExecute['name']">
-                            <label>Language:</label>
-                            <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
-                                    ng-change="modificataLang(selectedLanguage)">
-                            </select>
-                            <label>Idempotent</label><input type="checkbox" ng-model="functionToExecute['idempotent']">
-                        </fieldset>
-                    </form>
 
-                </div>
             </div>
             <div class="row-fluid">
                 <div class="span12">

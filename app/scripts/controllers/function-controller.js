@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$dialog', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $dialog, $modal, $q) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$dialog', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $dialog, $modal, $q, $route) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -18,13 +18,12 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.isNewFunction = false;
 
-
     var sqlText = 'select * from oFunction';
 
 
     $scope.getListFunction = function () {
         $scope.functions = new Array;
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
             if (data.result) {
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
@@ -67,33 +66,32 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             $scope.functionToExecute['parameters'] = new Array;
         }
         $scope.functionToExecute['parameters'].push('');
+        console.log($scope.functionToExecute['parameters'])
     }
-    $scope.executeFunction = function () {
+    $scope.
+        executeFunction = function () {
 
 
         if ($scope.functionToExecute != undefined) {
-//            console.log($scope.parametersToExecute);
             var functionNamee = $scope.nameFunction;
             var buildedParams = '';
             for (i in $scope.parametersToExecute) {
-                if (i == $scope.parametersToExecute.length - 1)
-                    buildedParams = buildedParams.concat($scope.parametersToExecute[i])
-                else
-                    buildedParams = buildedParams.concat($scope.parametersToExecute[i] + '/');
+                buildedParams = buildedParams.concat($scope.parametersToExecute[i] + '/');
             }
             console.log(buildedParams);
-//
-//
-// console.log($scope.parametersToExecute);
 
             FunctionApi.executeFunction({database: $routeParams.database, functionName: $scope.nameFunction, parameters: buildedParams, limit: $scope.limit}, function (data) {
                 if (data.result) {
-//                    console.log(data.result);
                     $scope.resultExecute = JSON.stringify(data.result);
                 }
             });
         }
     }
+    $scope.refreshPage = function () {
+
+        $route.reload();
+    }
+
     $scope.calculateNumParameters = function () {
         if ($scope.functionToExecute != undefined) {
             console.log($scope.functionToExecute['parameters']);
@@ -115,12 +113,20 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.selectedLanguage = selectedFunction['language'];
         $scope.functionToExecute = selectedFunction;
         $scope.inParams = $scope.functionToExecute['parameters'];
+//        console.log($scope.inParams);
         $scope.parametersToExecute = new Array;
 
+
         $scope.$watch('inParams.length', function (data) {
-            $scope.parametersToExecute = new Array(data);
+            console.log(data);
+            if (data) {
+                $scope.parametersToExecute = new Array(data);
+            }
+            else {
+
+                $scope.parametersToExecute = null;
+            }
         });
-        console.log(selectedFunction['idempotent']);
 
 
         $scope.isNewFunction = false;
@@ -135,7 +141,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
         var newDoc = DocumentApi.createNewDoc('ofunction');
         $scope.showInConsole(newDoc);
-        console.log(newDoc);
+//        console.log(newDoc);
         $scope.isNewFunction = true;
 
     }
@@ -144,16 +150,19 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
         if ($scope.isNewFunction == true) {
             DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
+                    $scope.getListFunction();
+                    $scope.refreshPage();
 
                 }
             );
         }
         else {
             DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
-
+                $scope.getListFunction();
+                $scope.refreshPage();
             });
         }
-        $scope.getListFunction();
+
     }
 
     $scope.deleteFunction = function () {
