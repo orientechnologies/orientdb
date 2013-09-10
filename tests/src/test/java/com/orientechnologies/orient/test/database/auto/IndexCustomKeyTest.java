@@ -18,11 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -39,7 +35,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 @Test(groups = { "index" })
 public class IndexCustomKeyTest {
   private ODatabaseDocumentTx database;
-  private OIndex<?>           index;
 
   public static class ComparableBinary implements Comparable<ComparableBinary>, OSerializableStream {
     private byte[] value;
@@ -158,12 +153,8 @@ public class IndexCustomKeyTest {
     if (index == null) {
       OBinarySerializerFactory.INSTANCE.registerSerializer(new OHash256Serializer(), null);
 
-      index = database.getMetadata().getIndexManager()
+      database.getMetadata().getIndexManager()
           .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null);
-      this.index = index;
-    } else {
-      index = database.getMetadata().getIndexManager().getIndex("custom-hash");
-      this.index = index;
     }
   }
 
@@ -205,6 +196,8 @@ public class IndexCustomKeyTest {
     ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 3 });
     ODocument doc1 = new ODocument().field("k", "key3");
+
+    final OIndex index = getIndex();
     index.put(key3, doc1);
 
     ComparableBinary key4 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,

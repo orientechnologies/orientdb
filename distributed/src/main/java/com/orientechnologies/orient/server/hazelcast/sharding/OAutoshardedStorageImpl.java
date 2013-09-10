@@ -224,7 +224,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.getLevel2Cache();
   }
 
-  public void commit(final OTransaction iTx) {
+  public void commit(final OTransaction iTx, Runnable callback) {
     throw new ODistributedException("Transactions are not supported in distributed environment");
   }
 
@@ -385,7 +385,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     return wrapped.getStatus();
   }
 
-	@Override
+  @Override
   public boolean isHashClustersAreUsed() {
     return wrapped.isHashClustersAreUsed();
   }

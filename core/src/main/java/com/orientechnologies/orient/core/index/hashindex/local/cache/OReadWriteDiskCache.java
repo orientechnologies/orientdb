@@ -1,10 +1,7 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -20,23 +17,25 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 7/24/13
  */
 public class OReadWriteDiskCache implements ODiskCache {
-  public static final int            MIN_CACHE_SIZE = 256;
+  public static final int                             MIN_CACHE_SIZE = 256;
 
-  private int                        maxSize;
-  private int                        K_IN;
-  private int                        K_OUT;
-  private LRUList                    am;
-  private LRUList                    a1out;
-  private LRUList                    a1in;
+  private int                                         maxSize;
+  private int                                         K_IN;
+  private int                                         K_OUT;
+  private LRUList                                     am;
+  private LRUList                                     a1out;
+  private LRUList                                     a1in;
 
-  private final OWOWCache            writeCache;
+  private final OWOWCache                             writeCache;
 
   /**
    * Contains all pages in cache for given file.
    */
-  private final Map<Long, Set<Long>> filePages;
+  private final Map<Long, Set<Long>>                  filePages;
 
-  private final Object               syncObject;
+  private final Object                                syncObject;
+
+  private final NavigableMap<PinnedPage, OCacheEntry> pinnedPages    = new TreeMap<PinnedPage, OCacheEntry>();
 
   public OReadWriteDiskCache(long readCacheMaxMemory, long writeCacheMaxMemory, int pageSize, long writeGroupTTL,
       int pageFlushInterval, OStorageLocalAbstract storageLocal, OWriteAheadLog writeAheadLog, boolean syncOnPageFlush,
@@ -83,43 +82,68 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public void markDirty(long fileId, long pageIndex) {
+  public void openFile(long fileId) throws IOException {
     synchronized (syncObject) {
-      OReadCacheEntry cacheEntry = a1in.get(fileId, pageIndex);
-
-      if (cacheEntry != null) {
-        cacheEntry.isDirty = true;
-        return;
-      }
-
-      cacheEntry = am.get(fileId, pageIndex);
-      if (cacheEntry != null) {
-        cacheEntry.isDirty = true;
-      } else
-        throw new IllegalStateException("Requested page number " + pageIndex + " is not in cache");
+      writeCache.openFile(fileId);
+      filePages.put(fileId, new HashSet<Long>());
     }
   }
 
   @Override
-  public OCachePointer load(long fileId, long pageIndex) throws IOException {
+  public boolean exists(String fileName) {
     synchronized (syncObject) {
-      final OReadCacheEntry cacheEntry = updateCache(fileId, pageIndex);
+      return writeCache.exists(fileName);
+    }
+  }
+
+  @Override
+  public void pinPage(OCacheEntry cacheEntry) throws IOException {
+    synchronized (syncObject) {
+      remove(cacheEntry.fileId, cacheEntry.pageIndex);
+      pinnedPages.put(new PinnedPage(cacheEntry.fileId, cacheEntry.pageIndex), cacheEntry);
+    }
+  }
+
+  @Override
+  public void loadPinnedPage(OCacheEntry cacheEntry) throws IOException {
+    synchronized (syncObject) {
       cacheEntry.usagesCount++;
-      return cacheEntry.dataPointer;
     }
   }
 
   @Override
-  public void release(long fileId, long pageIndex) {
+  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
     synchronized (syncObject) {
-      OReadCacheEntry cacheEntry = get(fileId, pageIndex, false);
+      OCacheEntry cacheEntry = null;
+      if (checkPinnedPages)
+        cacheEntry = pinnedPages.get(new PinnedPage(fileId, pageIndex));
+
+      if (cacheEntry == null)
+        cacheEntry = updateCache(fileId, pageIndex);
+
+      cacheEntry.usagesCount++;
+      return cacheEntry;
+    }
+  }
+
+  @Override
+  public OCacheEntry allocateNewPage(long fileId) throws IOException {
+    synchronized (syncObject) {
+      final long filledUpTo = getFilledUpTo(fileId);
+      return load(fileId, filledUpTo, false);
+    }
+  }
+
+  @Override
+  public void release(OCacheEntry cacheEntry) {
+    synchronized (syncObject) {
       if (cacheEntry != null)
         cacheEntry.usagesCount--;
       else
         throw new IllegalStateException("record should be released is already free!");
 
       if (cacheEntry.usagesCount == 0 && cacheEntry.isDirty) {
-        writeCache.store(fileId, pageIndex, cacheEntry.dataPointer);
+        writeCache.store(cacheEntry.fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
         cacheEntry.isDirty = false;
       }
     }
@@ -152,14 +176,20 @@ public class OReadWriteDiskCache implements ODiskCache {
       final Set<Long> pageIndexes = filePages.get(fileId);
 
       for (Long pageIndex : pageIndexes) {
-        OReadCacheEntry cacheEntry = get(fileId, pageIndex, true);
+        OCacheEntry cacheEntry = get(fileId, pageIndex, true);
+        if (cacheEntry == null)
+          cacheEntry = pinnedPages.get(new PinnedPage(fileId, pageIndex));
+
         if (cacheEntry != null) {
           if (cacheEntry.dataPointer != null) {
-            if (cacheEntry.usagesCount == 0)
+            if (cacheEntry.usagesCount == 0) {
               cacheEntry = remove(fileId, pageIndex);
-            else
+
+              if (cacheEntry == null)
+                cacheEntry = pinnedPages.remove(new PinnedPage(fileId, pageIndex));
+            } else
               throw new OStorageException("Page with index " + pageIndex + " for file with id " + fileId
-                  + "can not be freed because it is used.");
+                  + " can not be freed because it is used.");
 
             cacheEntry.dataPointer.decrementReferrer();
             cacheEntry.dataPointer = null;
@@ -191,10 +221,16 @@ public class OReadWriteDiskCache implements ODiskCache {
 
       final Set<Long> pageEntries = filePages.get(fileId);
       for (Long pageIndex : pageEntries) {
-        OReadCacheEntry cacheEntry = get(fileId, pageIndex, true);
+        OCacheEntry cacheEntry = get(fileId, pageIndex, true);
+        if (cacheEntry == null)
+          cacheEntry = pinnedPages.get(new PinnedPage(fileId, pageIndex));
+
         if (cacheEntry != null) {
           if (cacheEntry.usagesCount == 0) {
             cacheEntry = remove(fileId, pageIndex);
+            if (cacheEntry == null)
+              cacheEntry = pinnedPages.remove(new PinnedPage(fileId, pageIndex));
+
             if (cacheEntry.dataPointer != null) {
               cacheEntry.dataPointer.decrementReferrer();
               cacheEntry.dataPointer = null;
@@ -228,30 +264,52 @@ public class OReadWriteDiskCache implements ODiskCache {
     synchronized (syncObject) {
       writeCache.flush();
 
-      for (OReadCacheEntry cacheEntry : am)
-        if (cacheEntry.usagesCount == 0) {
-          cacheEntry.dataPointer.decrementReferrer();
-          cacheEntry.dataPointer = null;
-        }
-
-        else
-          throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
-              + " is used and can not be removed");
-
-      for (OReadCacheEntry cacheEntry : a1in)
-        if (cacheEntry.usagesCount == 0) {
-          cacheEntry.dataPointer.decrementReferrer();
-          cacheEntry.dataPointer = null;
-        }
-
-        else
-          throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
-              + " is used and can not be removed");
-
-      a1out.clear();
-      am.clear();
-      a1in.clear();
+      clearCacheContent();
     }
+  }
+
+  private void clearCacheContent() {
+    for (OCacheEntry cacheEntry : am)
+      if (cacheEntry.usagesCount == 0) {
+        cacheEntry.dataPointer.decrementReferrer();
+        cacheEntry.dataPointer = null;
+      }
+
+      else
+        throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
+            + " is used and can not be removed");
+
+    for (OCacheEntry cacheEntry : a1in)
+      if (cacheEntry.usagesCount == 0) {
+        cacheEntry.dataPointer.decrementReferrer();
+        cacheEntry.dataPointer = null;
+      }
+
+      else
+        throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
+            + " is used and can not be removed");
+
+    a1out.clear();
+    am.clear();
+    a1in.clear();
+
+    for (Set<Long> pages : filePages.values())
+      pages.clear();
+
+    clearPinnedPages();
+  }
+
+  private void clearPinnedPages() {
+    for (OCacheEntry pinnedEntry : pinnedPages.values()) {
+      if (pinnedEntry.usagesCount == 0) {
+        pinnedEntry.dataPointer.decrementReferrer();
+        pinnedEntry.dataPointer = null;
+      } else
+        throw new OStorageException("Page with index " + pinnedEntry.pageIndex + " for file with id " + pinnedEntry.fileId
+            + "can not be freed because it is used.");
+    }
+
+    pinnedPages.clear();
   }
 
   @Override
@@ -283,8 +341,8 @@ public class OReadWriteDiskCache implements ODiskCache {
     }
   }
 
-  private OReadCacheEntry updateCache(long fileId, long pageIndex) throws IOException {
-    OReadCacheEntry cacheEntry = am.get(fileId, pageIndex);
+  private OCacheEntry updateCache(long fileId, long pageIndex) throws IOException {
+    OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null) {
       am.putToMRU(cacheEntry);
@@ -315,17 +373,23 @@ public class OReadWriteDiskCache implements ODiskCache {
 
     OCachePointer dataPointer = writeCache.load(fileId, pageIndex);
 
-    cacheEntry = new OReadCacheEntry(fileId, pageIndex, dataPointer, false);
+    cacheEntry = new OCacheEntry(fileId, pageIndex, dataPointer, false);
     a1in.putToMRU(cacheEntry);
 
-    filePages.get(fileId).add(pageIndex);
+    Set<Long> pages = filePages.get(fileId);
+    if (pages == null) {
+      pages = new HashSet<Long>();
+      filePages.put(fileId, pages);
+    }
+
+    pages.add(pageIndex);
     return cacheEntry;
   }
 
   private void removeColdestPageIfNeeded() throws IOException {
     if (am.size() + a1in.size() >= maxSize) {
       if (a1in.size() > K_IN) {
-        OReadCacheEntry removedFromAInEntry = a1in.removeLRU();
+        OCacheEntry removedFromAInEntry = a1in.removeLRU();
 
         if (removedFromAInEntry == null) {
           increaseCacheSize();
@@ -340,7 +404,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         }
 
         if (a1out.size() > K_OUT) {
-          OReadCacheEntry removedEntry = a1out.removeLRU();
+          OCacheEntry removedEntry = a1out.removeLRU();
           assert removedEntry.dataPointer == null;
           assert !removedEntry.isDirty;
 
@@ -348,7 +412,7 @@ public class OReadWriteDiskCache implements ODiskCache {
           pageEntries.remove(removedEntry.pageIndex);
         }
       } else {
-        OReadCacheEntry removedEntry = am.removeLRU();
+        OCacheEntry removedEntry = am.removeLRU();
 
         if (removedEntry == null) {
           increaseCacheSize();
@@ -400,12 +464,21 @@ public class OReadWriteDiskCache implements ODiskCache {
     }
   }
 
+  @Override
+  public void delete() throws IOException {
+    synchronized (syncObject) {
+      writeCache.delete();
+
+      clearCacheContent();
+    }
+  }
+
   int getMaxSize() {
     return maxSize;
   }
 
-  private OReadCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
-    OReadCacheEntry cacheEntry = am.get(fileId, pageIndex);
+  private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
+    OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null)
       return cacheEntry;
@@ -420,8 +493,8 @@ public class OReadWriteDiskCache implements ODiskCache {
     return cacheEntry;
   }
 
-  private OReadCacheEntry remove(long fileId, long pageIndex) {
-    OReadCacheEntry cacheEntry = am.remove(fileId, pageIndex);
+  private OCacheEntry remove(long fileId, long pageIndex) {
+    OCacheEntry cacheEntry = am.remove(fileId, pageIndex);
     if (cacheEntry != null) {
       if (cacheEntry.usagesCount > 1)
         throw new IllegalStateException("Record cannot be removed because it is used!");
@@ -444,6 +517,60 @@ public class OReadWriteDiskCache implements ODiskCache {
       return Integer.MAX_VALUE;
     } else {
       return (int) tmpMaxSize;
+    }
+  }
+
+  private class PinnedPage implements Comparable<PinnedPage> {
+    private final long fileId;
+    private final long pageIndex;
+
+    private PinnedPage(long fileId, long pageIndex) {
+      this.fileId = fileId;
+      this.pageIndex = pageIndex;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      PinnedPage that = (PinnedPage) o;
+
+      if (fileId != that.fileId)
+        return false;
+      if (pageIndex != that.pageIndex)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "PinnedPage{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + '}';
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int) (fileId ^ (fileId >>> 32));
+      result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
+      return result;
+    }
+
+    @Override
+    public int compareTo(PinnedPage other) {
+      if (fileId > other.fileId)
+        return 1;
+      if (fileId < other.fileId)
+        return -1;
+
+      if (pageIndex > other.pageIndex)
+        return 1;
+      if (pageIndex < other.pageIndex)
+        return -1;
+
+      return 0;
     }
   }
 }

@@ -145,7 +145,7 @@
         </exec>
 
         <echo>WAITING FOR SERVER STARTUP...</echo>
-        <sleep seconds="5"/>
+        <sleep seconds="10"/>
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">

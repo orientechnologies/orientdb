@@ -9,6 +9,12 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.zip.CRC32;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -21,12 +27,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -80,10 +80,14 @@ public class WOWCacheTest {
       writeAheadLog = null;
     }
 
-    File file = new File(storageLocal.getConfiguration().getDirectory() + File.separator + fileName);
-    if (file.exists()) {
-      boolean delete = file.delete();
-      Assert.assertTrue(delete);
+    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + fileName);
+    if (testFile.exists()) {
+      Assert.assertTrue(testFile.delete());
+    }
+
+    File nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
+    if (nameIdMapFile.exists()) {
+      Assert.assertTrue(nameIdMapFile.delete());
     }
   }
 

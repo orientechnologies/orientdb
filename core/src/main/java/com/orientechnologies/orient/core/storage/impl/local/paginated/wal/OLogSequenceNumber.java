@@ -5,15 +5,15 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @since 29.04.13
  */
 public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
-  private final int  segment;
+  private final long segment;
   private final long position;
 
-  public OLogSequenceNumber(int segment, long position) {
+  public OLogSequenceNumber(long segment, long position) {
     this.segment = segment;
     this.position = position;
   }
 
-  public int getSegment() {
+  public long getSegment() {
     return segment;
   }
 
@@ -40,7 +40,7 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public int hashCode() {
-    int result = segment;
+    int result = (int) (segment ^ (segment >>> 32));
     result = 31 * result + (int) (position ^ (position >>> 32));
     return result;
   }

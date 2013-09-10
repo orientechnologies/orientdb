@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
@@ -48,8 +47,8 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
     content[offset] = 1;
     offset++;
 
-    OIntegerSerializer.INSTANCE.serializeNative(previousCheckpoint.getSegment(), content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    OLongSerializer.INSTANCE.serializeNative(previousCheckpoint.getSegment(), content, offset);
+    offset += OLongSerializer.LONG_SIZE;
 
     OLongSerializer.INSTANCE.serializeNative(previousCheckpoint.getPosition(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
@@ -66,8 +65,8 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
 
     offset++;
 
-    int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
 
     long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
@@ -82,7 +81,7 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
     if (previousCheckpoint == null)
       return 1;
 
-    return OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE + 1;
+    return 2 * OLongSerializer.LONG_SIZE + 1;
   }
 
   @Override

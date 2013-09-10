@@ -101,7 +101,7 @@ public interface OStorage extends OSharedContainer {
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  public void commit(OTransaction iTx);
+  public void commit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   public void rollback(OTransaction iTx);
@@ -255,7 +255,7 @@ public interface OStorage extends OSharedContainer {
    */
   public STATUS getStatus();
 
-	/**
+  /**
    * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
    */
   public boolean isHashClustersAreUsed();

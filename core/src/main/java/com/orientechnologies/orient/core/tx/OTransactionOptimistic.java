@@ -16,11 +16,7 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,6 +27,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -66,7 +64,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (database.getStorage() instanceof OStorageProxy)
-      database.getStorage().commit(this);
+      database.getStorage().commit(this, null);
     else {
       final List<String> involvedIndexes = getInvolvedIndexes();
 
@@ -124,13 +122,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 index.acquireExclusiveLock();
             }
 
-            database.getStorage().callInLock(new Callable<Void>() {
-
-              public Void call() throws Exception {
-
-                database.getStorage().commit(OTransactionOptimistic.this);
-
-                // COMMIT INDEX CHANGES
+            final Runnable callback = new Runnable() {
+              @Override
+              public void run() {
                 final ODocument indexEntries = getIndexChanges();
                 if (indexEntries != null) {
                   for (Entry<String, Object> indexEntry : indexEntries) {
@@ -138,11 +132,23 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                     index.commit((ODocument) indexEntry.getValue());
                   }
                 }
-                return null;
               }
+            };
 
-            }, true);
+            final String storageType = database.getStorage().getType();
 
+            if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME))
+              database.getStorage().commit(OTransactionOptimistic.this, callback);
+            else {
+              database.getStorage().callInLock(new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  database.getStorage().commit(OTransactionOptimistic.this, null);
+                  callback.run();
+                  return null;
+                }
+              }, true);
+            }
             // OK
             break;
 

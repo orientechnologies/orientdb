@@ -39,8 +39,8 @@ public class ODirtyPagesRecord implements OWALRecord {
       OStringSerializer.INSTANCE.serializeNative(dirtyPage.getFileName(), content, offset);
       offset += OStringSerializer.INSTANCE.getObjectSize(dirtyPage.getFileName());
 
-      OIntegerSerializer.INSTANCE.serializeNative(dirtyPage.getLsn().getSegment(), content, offset);
-      offset += OIntegerSerializer.INT_SIZE;
+      OLongSerializer.INSTANCE.serializeNative(dirtyPage.getLsn().getSegment(), content, offset);
+      offset += OLongSerializer.LONG_SIZE;
 
       OLongSerializer.INSTANCE.serializeNative(dirtyPage.getLsn().getPosition(), content, offset);
       offset += OLongSerializer.LONG_SIZE;
@@ -63,8 +63,8 @@ public class ODirtyPagesRecord implements OWALRecord {
       String fileName = OStringSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
 
-      int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-      offset += OIntegerSerializer.INT_SIZE;
+      long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OLongSerializer.LONG_SIZE;
 
       long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OLongSerializer.LONG_SIZE;
@@ -80,7 +80,7 @@ public class ODirtyPagesRecord implements OWALRecord {
     int size = OIntegerSerializer.INT_SIZE;
 
     for (ODirtyPage dirtyPage : dirtyPages) {
-      size += 2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+      size += 3 * OLongSerializer.LONG_SIZE;
       size += OStringSerializer.INSTANCE.getObjectSize(dirtyPage.getFileName());
     }
 

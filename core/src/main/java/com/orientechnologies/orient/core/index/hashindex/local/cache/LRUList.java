@@ -25,7 +25,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @author Andrey Lomakin
  * @since 25.02.13
  */
-class LRUList implements Iterable<OReadCacheEntry> {
+class LRUList implements Iterable<OCacheEntry> {
   private static final int SEED = 362498820;
 
   private LRUEntry         head;
@@ -41,7 +41,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
     nextThreshold = (int) (entries.length * 0.75);
   }
 
-  public OReadCacheEntry get(long fileId, long pageIndex) {
+  public OCacheEntry get(long fileId, long pageIndex) {
     long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
@@ -57,7 +57,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
     return lruEntry.cacheEntry;
   }
 
-  public OReadCacheEntry remove(long fileId, long pageIndex) {
+  public OCacheEntry remove(long fileId, long pageIndex) {
     long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
@@ -106,7 +106,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
       tail = lruEntry.before;
   }
 
-  public void putToMRU(OReadCacheEntry cacheEntry) {
+  public void putToMRU(OCacheEntry cacheEntry) {
     final long fileId = cacheEntry.fileId;
     final long pageIndex = cacheEntry.pageIndex;
 
@@ -220,7 +220,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
     return size;
   }
 
-  public OReadCacheEntry removeLRU() {
+  public OCacheEntry removeLRU() {
     LRUEntry entryToRemove = head;
     while (entryToRemove != null && (entryToRemove.cacheEntry.dataPointer != null && entryToRemove.cacheEntry.usagesCount != 0)) {
       entryToRemove = entryToRemove.after;
@@ -232,12 +232,12 @@ class LRUList implements Iterable<OReadCacheEntry> {
     }
   }
 
-  public OReadCacheEntry getLRU() {
+  public OCacheEntry getLRU() {
     return head.cacheEntry;
   }
 
   @Override
-  public Iterator<OReadCacheEntry> iterator() {
+  public Iterator<OCacheEntry> iterator() {
     return new MRUEntryIterator();
   }
 
@@ -253,7 +253,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
     return OMurmurHash3.murmurHash3_x64_64(result, SEED);
   }
 
-  private final class MRUEntryIterator implements Iterator<OReadCacheEntry> {
+  private final class MRUEntryIterator implements Iterator<OCacheEntry> {
     private LRUEntry current = tail;
 
     @Override
@@ -262,7 +262,7 @@ class LRUList implements Iterable<OReadCacheEntry> {
     }
 
     @Override
-    public OReadCacheEntry next() {
+    public OCacheEntry next() {
       if (!hasNext())
         throw new NoSuchElementException();
 
