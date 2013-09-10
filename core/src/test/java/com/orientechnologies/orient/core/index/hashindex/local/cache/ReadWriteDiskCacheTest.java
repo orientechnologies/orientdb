@@ -733,7 +733,7 @@ public class ReadWriteDiskCacheTest {
     brokenByte[0] = 13;
 
     updateFilePage(2, systemOffset + 2, brokenByte);
-    updateFilePage(4, systemOffset + 3, brokenByte);
+    updateFilePage(4, systemOffset + 4, brokenByte);
 
     OPageDataVerificationError[] pageErrors = buffer.checkStoredPages(null);
     Assert.assertEquals(2, pageErrors.length);
@@ -868,7 +868,7 @@ public class ReadWriteDiskCacheTest {
     fileClassic.open();
 
     fileClassic.write(pageIndex * (8 + systemOffset) + offset, value, value.length, 0);
-
+    fileClassic.synch();
     fileClassic.close();
   }
 
