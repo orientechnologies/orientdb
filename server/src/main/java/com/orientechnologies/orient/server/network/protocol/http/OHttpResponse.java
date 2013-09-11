@@ -221,6 +221,8 @@ public class OHttpResponse {
 
     if (iFormat == null)
       iFormat = JSON_FORMAT;
+    else
+      iFormat = JSON_FORMAT + "," + iFormat;
 
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, iFormat);
