@@ -308,7 +308,7 @@ button.exportButton {
     /*float: left;*/
 }
 
-ul.horizontallist , ol.horizontallist {
+ul.horizontallist, ol.horizontallist {
     margin: 0px !important;
     padding: 0px;
 }
@@ -321,6 +321,7 @@ ul.horizontallist , ol.horizontallist {
     max-height: 400px;
     overflow-y: scroll;
 }
+
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #262626;
     border-bottom: 5px solid #FF6600;
@@ -329,15 +330,81 @@ ul.horizontallist , ol.horizontallist {
 }
 
 .panelAlerts {
-   min-height: 58px;
+    min-height: 58px;
 }
-
 
 .queryHelp {
     list-style: none;
     margin: 0;
 }
+
 .viewJson .CodeMirror {
     height: 300px;
     margin-bottom: 20px;
 }
+
+.label-data {
+    background-color: #F38630;
+    color: #555555;
+    text-align: center;
+
+}
+
+.label-data span {
+    margin-top: 5px;
+    display: block;
+}
+
+.label-free  span {
+    margin-top: 5px;
+    display: block;
+}
+
+.label-free {
+    background-color: #E0E4CC;
+    color: #555555;
+    text-align: center;
+
+}
+
+.table th {
+    background: none repeat scroll 0 0 #DDDDDD;
+    border-color: #C4C4C4;
+    padding-bottom: 2px;
+    padding-top: 2px;
+    position: relative;
+}
+
+.popoverForm {
+    margin: 0;
+}
+
+.CodeMirror-hints {
+    z-index: 1200;
+}
+
+/*.btn {
+    background-color: #E5E5E5;
+    background-image: none;
+    border: 0 none;
+    border-radius: 0 0 0 0 !important;
+    box-shadow: none !important;
+    color: #333333;
+    cursor: pointer;
+    filter: none;
+    outline: medium none;
+    padding: 7px 14px;
+    text-shadow: none;
+}
+
+.btn:hover {
+    background: #d8d8d8;
+} */
+
+/*.well {
+    background: none repeat scroll 0 0 #F5F5F5;
+    border: 0 none;
+    box-shadow: none !important;
+    padding: 20px;
+    text-shadow: none !important;
+} */

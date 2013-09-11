@@ -1,8 +1,10 @@
-<form name="popoverForm">
-  <select ng-model="popover.name" ng-options="i for i in labels">
-  </select>
-  <div class="form-actions">
-    <button type="button" class="btn" ng-click="hide()">Close</button>
-    <button class="btn btn-primary" ng-click="popover.saved=true;hide();addEdgeLabel()">Save changes</button>
-  </div>
+<form name="popoverForm" class="popoverForm">
+    <select ng-model="popover.name" ng-options="i for i in labels">
+    </select>
+
+    <div class="btn-group">
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button class="btn btn-primary" ng-click="popover.saved=true;hide();addEdgeLabel()">Save changes</button>
+    </div>
+
 </form>
