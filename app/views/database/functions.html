@@ -20,13 +20,12 @@
 
             <div class="row-fluid">
                 <div class="span2">
-                    <br>
                     <ul class="nav nav-list well functions_list">
                         <li class="nav-header">
                             Functions:
                         </li>
-                        <li>
-                            <a ng-repeat="func in functions | orderBy: 'name'" ng-click="showInConsole(func)"
+                        <li ng-repeat="func in functions | orderBy: 'name'" ng-class="{active : functionToExecute == func}">
+                            <a href="javascript:void(0)" ng-click="showInConsole(func)"
                                value="{{func['name']}}">
                                 {{func['name']}}
                             </a>
@@ -35,7 +34,6 @@
                 </div>
                 <div class="span10">
                     <form>
-                        <legend></legend>
                         Name: <input type="text" ng-model="functionToExecute['name']">
                         Language:
                         <select ng-options="lang for lang in languages" ng-model="selectedLanguage"

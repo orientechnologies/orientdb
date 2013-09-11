@@ -318,7 +318,8 @@ ul.horizontallist, ol.horizontallist {
 }
 
 .functions_list {
-    max-height: 400px;
+    min-height: 400px;
+    max-height: 800px;
     overflow-y: scroll;
 }
 
@@ -345,6 +346,7 @@ ul.horizontallist, ol.horizontallist {
 
 
 .console_class_functions {
+    margin-top: 20px;
     margin-left: 0px !important;
 }
 
