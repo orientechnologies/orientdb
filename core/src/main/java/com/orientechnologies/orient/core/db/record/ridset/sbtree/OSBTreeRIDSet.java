@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -76,12 +77,28 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
 
   @Override
   public Object[] toArray() {
-    return new Object[0]; // To change body of implemented methods use File | Settings | File Templates.
+    // TODO replace with more efficient implementation
+
+    final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
+
+    for (OIdentifiable identifiable : this) {
+      list.add(identifiable);
+    }
+
+    return list.toArray();
   }
 
   @Override
   public <T> T[] toArray(T[] a) {
-    return null; // To change body of implemented methods use File | Settings | File Templates.
+    // TODO replace with more efficient implementation.
+
+    final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
+
+    for (OIdentifiable identifiable : this) {
+      list.add(identifiable);
+    }
+
+    return list.toArray(a);
   }
 
   @Override
