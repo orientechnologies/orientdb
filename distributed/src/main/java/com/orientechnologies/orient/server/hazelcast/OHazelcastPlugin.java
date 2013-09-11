@@ -800,7 +800,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public String getNodeId(final Member iMember) {
-    return iMember.getInetSocketAddress().toString().substring(1);
+    final Object ipAddress = iMember.getInetSocketAddress();
+    if (ipAddress != null)
+      // USE THE IP-ADDRESS
+      return ipAddress.toString().substring(1);
+
+    // IP-ADDRESS NOT AVAILABLE, RETURN THE HAZELCAST'S UUID
+    return iMember.getUuid();
   }
 
   public Set<String> getRemoteNodeIds() {
