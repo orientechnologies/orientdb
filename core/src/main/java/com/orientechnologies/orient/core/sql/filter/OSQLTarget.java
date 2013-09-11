@@ -137,6 +137,19 @@ public class OSQLTarget extends OBaseParser {
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
           // REGISTER AS INDEX
           targetIndex = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.METADATA_PREFIX)) {
+          // METADATA
+          final String metadataTarget = subjectName.substring(OCommandExecutorSQLAbstract.METADATA_PREFIX.length());
+          targetRecords = new ArrayList<OIdentifiable>();
+
+          if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
+            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+                .getConfiguration().schemaRecordId));
+          } else if (metadataTarget.equals(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
+            ((ArrayList<OIdentifiable>) targetRecords).add(new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+                .getConfiguration().indexMgrRecordId));
+          } else
+            throw new OQueryParsingException("Metadata element not supported: " + metadataTarget);
 
         } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.DICTIONARY_PREFIX)) {
           // DICTIONARY
