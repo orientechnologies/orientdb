@@ -3,6 +3,19 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
+    $scope.editorOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        readOnly: false,
+        mode: 'javascript',
+        extraKeys: {
+            "Ctrl-Enter": function (instance) {
+                $scope.executeFunction();
+
+            }
+        }
+    };
+
     $scope.functions = new Array;
 
     $scope.consoleValue = '';                           //code of the function
@@ -28,8 +41,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
                 }
-                if ($scope.functions.length > 0)
-                    $scope.showInConsole($scope.functions[0]);
+                //if ($scope.functions.length > 0)
+                //    $scope.showInConsole($scope.functions[0]);
             }
         });
 
@@ -38,18 +51,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.functionToExecute['code'] = '';
     }
     $scope.getListFunction();
-    $scope.editorOptions = {
-        lineWrapping: true,
-        lineNumbers: true,
-        readOnly: false,
-        mode: 'text/x-sql',
-        extraKeys: {
-            "Ctrl-Enter": function (instance) {
-                $scope.executeFunction();
-
-            }
-        }
-    };
 
     $scope.removeParam = function (index) {
         console.log('aaa')

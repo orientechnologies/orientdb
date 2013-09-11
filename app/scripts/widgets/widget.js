@@ -124,22 +124,9 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         if (!property) {
 
             var fieldTypes = scope.doc['@fieldTypes'];
-            if (fieldTypes) {
-                var found = false;
-                fieldTypes.split(",").forEach(function (element, index, array) {
-                    element.split("=").forEach(function (elem, i, a) {
-                        if (i == 0 && elem == name) {
-                            found = true;
-                            type = Database.getMappingForKey(a[1]);
-                        }
-                    });
-                });
-                if (!found) {
-                    type = guessType(scope.doc[name])
-                }
-            } else {
+            var type = Database.findTypeFromFieldTipes(scope.doc,name);
+            if (!type)
                 type = guessType(scope.doc[name])
-            }
             property = new Object;
             property.name = name;
         } else {
@@ -244,7 +231,7 @@ Widget.directive('jsontext', function () {
         require: 'ngModel',
         link: function (scope, element, attr, ngModel) {
             function into(input) {
-                if(input) return JSON.parse(input);
+                if (input) return JSON.parse(input);
 
                 return input;
             }

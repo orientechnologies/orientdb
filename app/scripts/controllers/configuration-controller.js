@@ -17,9 +17,9 @@ configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$
 
     $scope.tabsI18n['uml'] = 'UML Class Diagram';
     $scope.tabsI18n['structure'] = 'Structure';
-    $scope.tabsI18n['allocation'] = 'Allocation';
+    $scope.tabsI18n['allocation'] = 'Defragmentation';
     $scope.tabsI18n['configuration'] = 'Configuration';
-    $scope.tabsI18n['import-export'] = 'Import & Export';
+    $scope.tabsI18n['import-export'] = 'Export';
 
 
     $scope.getTemplate = function (tab) {
