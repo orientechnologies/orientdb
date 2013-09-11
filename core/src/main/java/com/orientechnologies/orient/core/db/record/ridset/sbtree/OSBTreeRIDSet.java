@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 
 /**
- * Persistent Set<OIdentifiable> implementation that uses the MVRB-Tree to handle entries in persistent way.
+ * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
@@ -170,12 +170,5 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
       entryIterator.remove();
     }
   }
-
-  // public OSBTreeRIDSet(String fileId, long rootIndex) {
-  // this.fileId = fileId;
-  // this.rootIndex = rootIndex;
-  //
-  // tree = OSBTreeCollectionManager.INSTANCE.loadSBTree(fileId, rootIndex);
-  // }
 
 }

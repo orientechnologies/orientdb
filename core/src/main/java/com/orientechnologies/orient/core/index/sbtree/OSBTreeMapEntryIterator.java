@@ -30,6 +30,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private LinkedList<Map.Entry<K, V>> preFetchedValues;
   private final OSBTree<K, V>         sbTree;
   private K                           firstKey;
+  private Map.Entry<K, V>             currentEntry;
 
   public OSBTreeMapEntryIterator(OSBTree<K, V> sbTree) {
     this.sbTree = sbTree;
@@ -86,11 +87,14 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
     if (preFetchedValues.isEmpty())
       prefetchData(false);
 
+    currentEntry = entry;
+
     return entry;
   }
 
   @Override
   public void remove() {
-    throw new UnsupportedOperationException("remove");
+    sbTree.remove(currentEntry.getKey());
+    currentEntry = null;
   }
 }
