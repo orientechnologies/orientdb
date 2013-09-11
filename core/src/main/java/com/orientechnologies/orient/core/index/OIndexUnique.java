@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-  public OIndexUnique(String typeId, OIndexEngine<OIdentifiable> engine) {
-    super(typeId, engine);
+  public OIndexUnique(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine) {
+    super(typeId, algorithm, engine);
   }
 
   public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {

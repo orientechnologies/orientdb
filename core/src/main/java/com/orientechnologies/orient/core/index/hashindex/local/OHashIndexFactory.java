@@ -57,7 +57,7 @@ public class OHashIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm) throws OConfigurationException {
     OStorage storage = database.getStorage();
     OIndexEngine indexEngine;
 
@@ -72,13 +72,13 @@ public class OHashIndexFactory implements OIndexFactory {
       throw new OIndexException("Unsupported storage type : " + storageType);
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(indexType, indexEngine);
+      return new OIndexUnique(indexType, algorithm, indexEngine);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(indexType, indexEngine);
+      return new OIndexNotUnique(indexType, algorithm, indexEngine);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, indexEngine);
+      return new OIndexFullText(indexType, algorithm, indexEngine);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(indexType, indexEngine);
+      return new OIndexDictionary(indexType, algorithm, indexEngine);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
