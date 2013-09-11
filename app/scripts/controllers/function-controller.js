@@ -3,6 +3,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
+    $scope.listClasses =
     $scope.functions = new Array;
 
     $scope.consoleValue = '';                           //code of the function
@@ -17,6 +18,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.parametersToExecute1 = {0: '', 1: ''};
 
     $scope.isNewFunction = false;
+
+
 
     var sqlText = 'select * from oFunction';
 

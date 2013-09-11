@@ -53,7 +53,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
 
-                $scope.numberOfPage = new Array(Math.round(data.result.length / $scope.countPage));
+                $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
 
             }
             if ($scope.queries.indexOf($scope.queryText) == -1)
@@ -87,7 +87,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         if ($scope.resultTotal) {
             $scope.results = $scope.resultTotal.slice(0, $scope.countPage);
             $scope.currentPage = 1;
-            $scope.numberOfPage = new Array(Math.round($scope.resultTotal.length / $scope.countPage));
+            $scope.numberOfPage = new Array(Math.ceil($scope.resultTotal.length / $scope.countPage));
         }
     });
     $scope.openRecord = function (doc) {
