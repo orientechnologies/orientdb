@@ -18,7 +18,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.isNewFunction = false;
 
-    var sqlText = 'select * from oFunction';
+    var sqlText = 'select * from oFunction order by name';
 
 
     $scope.getListFunction = function () {
@@ -28,6 +28,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
                 }
+                if ($scope.functions.length > 0)
+                    $scope.showInConsole($scope.functions[0]);
             }
         });
 
@@ -113,7 +115,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.selectedLanguage = selectedFunction['language'];
         $scope.functionToExecute = selectedFunction;
         $scope.inParams = $scope.functionToExecute['parameters'];
-//        console.log($scope.inParams);
         $scope.parametersToExecute = new Array;
 
 
