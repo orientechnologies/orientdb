@@ -164,6 +164,16 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 });
             }
         }
+        else {
+            Utilities.confirm($scope, $modal, $q, {
+                title: 'Warning!',
+                body: 'Language can not be empty',
+                success: function () {
+
+                }
+
+            });
+        }
 
     }
 
@@ -172,7 +182,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         var recordID = $scope.functionToExecute['@rid'];
         var clazz = $scope.functionToExecute['@class'];
 
-        Utilities.confirm($scope, $modal,$q, {
+        Utilities.confirm($scope, $modal, $q, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.functionToExecute['name'] + '. Are you sure?',
             success: function () {
@@ -181,7 +191,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                     $scope.getListFunction();
                 });
             }
-//        $scope.getListFunction();
 
         });
 
