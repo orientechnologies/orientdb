@@ -177,42 +177,45 @@ configModule.controller("AllocationController", ['$scope', '$routeParams', '$loc
     $scope.data = [
         {
             value: 30,
-            color:"#F38630"
+            color: "#F38630"
         },
         {
-            value : 50,
-            color : "#E0E4CC"
+            value: 50,
+            color: "#E0E4CC"
         },
         {
-            value : 100,
-            color : "#69D2E7"
+            value: 100,
+            color: "#69D2E7"
         }
     ];
     $scope.db = $routeParams.database;
-    DatabaseApi.getAllocation($scope.db,function(datas){
+    DatabaseApi.getAllocation($scope.db, function (datas) {
 
         var size = datas.size;
+        $scope.dataSize = datas.dataSize;
+        $scope.dataSizePercent = datas.dataSizePercent;
+        $scope.holesSize = datas.holesSize;
+        $scope.holesSizePercent = datas.holesSizePercent;
         $scope.data.length = 0;
         var lastSize = 0;
-        datas['segments'].forEach(function(val,idx,arr){
+        datas['segments'].forEach(function (val, idx, arr) {
 
             lastSize += val.size;
 
         });
         var percSum = 0;
-        datas['segments'].forEach(function(val,idx,arr){
-            var color = val.type == 'd' ?  '#F38630' : '#E0E4CC';
+        datas['segments'].forEach(function (val, idx, arr) {
+            var color = val.type == 'd' ? '#F38630' : '#E0E4CC';
             var value = (val.size * 200) / lastSize;
             value = Math.round(value);
             value = value == 0 ? 1 : value;
             percSum += value;
-            $scope.data.push({ value : value , color : color});
+            $scope.data.push({ value: value, color: color});
 
         });
 
 
     });
-
 
 
 }]);
