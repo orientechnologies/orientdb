@@ -26,48 +26,48 @@ import com.orientechnologies.common.log.OLogManager;
 
 public class OrientJdbcDriver implements java.sql.Driver {
 
-	public static final int MAJOR_VERSION = 1;
-	public static final int MINOR_VERSION = 0;
+  public static final int MAJOR_VERSION = 1;
+  public static final int MINOR_VERSION = 6;
 
-	static {
-		try {
-			java.sql.DriverManager.registerDriver(new OrientJdbcDriver());
-		} catch (SQLException e) {
-			OLogManager.instance().error(null, "Error while registering the JDBC Driver");
-		}
-	}
+  static {
+    try {
+      java.sql.DriverManager.registerDriver(new OrientJdbcDriver());
+    } catch (SQLException e) {
+      OLogManager.instance().error(null, "Error while registering the JDBC Driver");
+    }
+  }
 
-	public boolean acceptsURL(String url) throws SQLException {
+  public boolean acceptsURL(String url) throws SQLException {
 
-		return url.startsWith("jdbc:orient:");
-	}
+    return url.startsWith("jdbc:orient:");
+  }
 
-	public Connection connect(String url, Properties info) throws SQLException {
-		return new OrientJdbcConnection(url, info);
-	}
+  public Connection connect(String url, Properties info) throws SQLException {
+    return new OrientJdbcConnection(url, info);
+  }
 
-	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
-		return new DriverPropertyInfo[] {};
-	}
+  public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+    return new DriverPropertyInfo[] {};
+  }
 
-	public boolean jdbcCompliant() {
-		return false;
-	}
+  public boolean jdbcCompliant() {
+    return false;
+  }
 
-	public int getMajorVersion() {
-		return MAJOR_VERSION;
-	}
+  public int getMajorVersion() {
+    return MAJOR_VERSION;
+  }
 
-	public int getMinorVersion() {
-		return MINOR_VERSION;
-	}
+  public int getMinorVersion() {
+    return MINOR_VERSION;
+  }
 
-	public static String getVersion() {
-		return "OrientDB 1.0 JDBC Driver";
-	}
+  public static String getVersion() {
+    return "OrientDB " + MAJOR_VERSION + "." + MINOR_VERSION + " JDBC Driver";
+  }
 
-	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-		return null;
-	}
+  public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+    return null;
+  }
 
 }

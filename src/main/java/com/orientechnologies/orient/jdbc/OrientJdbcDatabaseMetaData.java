@@ -183,7 +183,6 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public String getDriverName() throws SQLException {
-
     return "OrientDB JDBC Driver";
   }
 
