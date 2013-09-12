@@ -97,9 +97,10 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
         var matrix = new Array;
         for (z in DecToBin) {
-            console.log(DecToBin[z])
+
             matrix.push(DecToBin[z] == '1')
         }
+        console.log(DecToBin[z])
         return matrix;
 
 
