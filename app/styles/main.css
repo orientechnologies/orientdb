@@ -339,6 +339,19 @@ ul.horizontallist, ol.horizontallist {
     margin: 0;
 }
 
+.queryHelp {
+    background-color: #F5F5F5;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px 4px 4px 4px;
+    display: block;
+    font-size: 13px;
+    line-height: 20px;
+    margin: 0 0 10px;
+    padding: 9.5px;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+
 .viewJson .CodeMirror {
     height: 300px;
     margin-bottom: 20px;
