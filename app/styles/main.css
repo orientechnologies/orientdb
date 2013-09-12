@@ -357,7 +357,6 @@ ul.horizontallist, ol.horizontallist {
     margin-bottom: 20px;
 }
 
-
 .console_class_functions {
     margin-top: 20px;
     margin-left: 0px !important;
@@ -401,6 +400,10 @@ ul.horizontallist, ol.horizontallist {
 
 .CodeMirror-hints {
     z-index: 1200;
+}
+
+.pagination_select {
+    margin-top: 22px;
 }
 
 /*.btn {
