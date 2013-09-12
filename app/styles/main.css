@@ -321,8 +321,11 @@ ul.horizontallist, ol.horizontallist {
     min-height: 400px;
     max-height: 800px;
     overflow-y: scroll;
+    width: 90%;
 }
-
+       .input_functions{
+           width: 105%;
+       }
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #262626;
     border-bottom: 5px solid #FF6600;

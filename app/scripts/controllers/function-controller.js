@@ -161,7 +161,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
     $scope.saveFunction = function () {
 
-        if ($scope.functionToExecute['language'] != undefined) {
+        if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name']!= undefeined && $scope.functionToExecute['name']!= '') {
 
             if ($scope.isNewFunction == true) {
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
@@ -181,7 +181,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         else {
             Utilities.confirm($scope, $modal, $q, {
                 title: 'Warning!',
-                body: 'Language can not be empty',
+                body: 'Name and Language can not be empty',
                 success: function () {
 
                 }
