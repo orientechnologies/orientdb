@@ -1,42 +1,42 @@
-angular.module('header.controller',['database.services']).controller("HeaderController",['$scope','$routeParams','$http','$location','Database',function($scope,$routeParams,$http,$location,Database){
-	$scope.database = Database;
+angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$routeParams', '$http', '$location', 'Database', function ($scope, $routeParams, $http, $location, Database) {
+    $scope.database = Database;
     $scope.selectedMenu = null;
     $scope.menus = [];
-	$scope.$watch(Database.getName,function(data){
+    $scope.$watch(Database.getName, function (data) {
 
-        if(data!=null){
+        if (data != null) {
             $scope.setSelected();
             $scope.menus = [
-                { name : "browse", link : '#/database/'+ data +'/browse',icon : "icon-eye-open"},
-                { name : "schema", link : '#/database/'+ data +'/schema',icon: "icon-tasks"},
-                { name : "users" , link : '#/database/'+ data +'/users',icon : 'icon-user'},
-                { name: "functions", link: '#/database/' + data + '/functions', icon : 'icon-signal'},
-                { name: "settings", link: '#/database/' + data + '/settings',icon :'icon-wrench'}
+                { name: "browse", link: '#/database/' + data + '/browse', icon: "icon-eye-open"},
+                { name: "schema", link: '#/database/' + data + '/schema', icon: "icon-tasks"},
+                { name: "security", link: '#/database/' + data + '/users', icon: 'icon-user'},
+                { name: "functions", link: '#/database/' + data + '/functions', icon: 'icon-signal'},
+                { name: "settings", link: '#/database/' + data + '/settings', icon: 'icon-wrench'}
 
             ];
-		}
-	});
+        }
+    });
 
-    $scope.setSelected = function(){
+    $scope.setSelected = function () {
 
-        $scope.menus.forEach(function(element,index,array){
+        $scope.menus.forEach(function (element, index, array) {
             var find = $location.path().indexOf("/" + element.name);
-            if(find!=-1){
+            if (find != -1) {
                 $scope.selectedMenu = element;
             }
 
         });
     }
-    $scope.getClass = function(menu){
-          return menu == $scope.selectedMenu ? 'active' : '';
+    $scope.getClass = function (menu) {
+        return menu == $scope.selectedMenu ? 'active' : '';
     }
-    $scope.$on('$routeChangeSuccess', function(scope, next, current){
+    $scope.$on('$routeChangeSuccess', function (scope, next, current) {
         $scope.setSelected();
     });
-	$scope.logout = function(){
-		Database.disconnect(function(){
-			$scope.menus = [];
-			$location.path("/");	
-		});
-	}
+    $scope.logout = function () {
+        Database.disconnect(function () {
+            $scope.menus = [];
+            $location.path("/");
+        });
+    }
 }]);

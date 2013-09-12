@@ -1,0 +1,45 @@
+<div ng-controller="UsersController">
+    <div class="container-fluid" xmlns="http://www.w3.org/1999/html">
+        <div class="row-fluid">
+
+
+            <div class="span12 console_class_functions">
+
+                <div class="row-fluid">
+
+                    <table class="table table-striped table-bordered table-hover table-condensed pointer">
+
+                        <thead>
+                        <tr>
+
+                            <th>Name</th>
+
+                            <th>Role</th>
+
+
+                        </tr>
+
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="result in usersResult | orderBy:predicate:reverse">
+                            <td>{{result['name']}}</td>
+                            <td>
+                                <ul class="horizontallist">
+
+                                    <li ng-repeat="ee in result['roles']">
+
+                                        [{{ee['name']}}]
+                                    </li>
+                                </ul>
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

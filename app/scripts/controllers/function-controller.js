@@ -67,8 +67,20 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         if ($scope.functionToExecute['parameters'] == undefined) {
             $scope.functionToExecute['parameters'] = new Array;
         }
+
+        $scope.inParams = $scope.functionToExecute['parameters'];
+        $scope.$watch('inParams.length', function (data) {
+            console.log(data);
+            if (data) {
+                $scope.parametersToExecute = new Array(data);
+            }
+            else {
+
+                $scope.parametersToExecute = null;
+            }
+        });
+
         $scope.functionToExecute['parameters'].push('');
-        console.log($scope.functionToExecute['parameters'])
     }
     $scope.
         executeFunction = function () {

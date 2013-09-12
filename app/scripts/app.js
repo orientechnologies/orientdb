@@ -10,13 +10,15 @@ var deps = ['header.controller',
     'server.controller',
     'vertex.controller',
     'function.controller',
+    'users.controller',
     'notification.controller',
     'configuration.controller',
     '$strap.directives',
     'ui.codemirror',
     'LocalStorageModule',
     'filters',
-    'rendering', 'schema.controller'];
+    'rendering',
+    'schema.controller'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);
@@ -50,6 +52,16 @@ App.config(function ($routeProvider) {
         .when('/database/:database/functions', {
             templateUrl: 'views/database/functions.html',
             controller: 'FunctionController',
+            resolve: DatabaseResolve
+        })
+        .when('/database/:database/users', {
+            templateUrl: 'views/database/security.html',
+            controller: 'SecurityController',
+            resolve: DatabaseResolve
+        })
+        .when('/database/:database/security/:tab', {
+            templateUrl: 'views/database/security.html',
+            controller: 'SecurityController',
             resolve: DatabaseResolve
         })
         .when('/database/:database/browse/create/:clazz', {
