@@ -48,6 +48,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         CommandApi.queryText({database: $routeParams.database, language: $scope.language, text: $scope.queryText, limit: $scope.limit}, function (data) {
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
+                if ($scope.headers.length == 00) {
+                    $scope.alerts = new Array;
+                    $scope.alerts.push({content: "No records found."});
+                }
                 $scope.rawData = JSON.stringify(data);
                 $scope.resultTotal = data.result;
                 $scope.results = data.result.slice(0, $scope.countPage);
