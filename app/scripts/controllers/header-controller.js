@@ -11,7 +11,7 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
                 { name: "schema", link: '#/database/' + data + '/schema', icon: "icon-tasks"},
                 { name: "security", link: '#/database/' + data + '/users', icon: 'icon-user'},
                 { name: "functions", link: '#/database/' + data + '/functions', icon: 'icon-signal'},
-                { name: "settings", link: '#/database/' + data + '/settings', icon: 'icon-wrench'}
+                { name: "DB", link: '#/database/' + data + '/db', icon: 'icon-cloud'}
 
             ];
         }
@@ -20,7 +20,7 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
     $scope.setSelected = function () {
 
         $scope.menus.forEach(function (element, index, array) {
-            var find = $location.path().indexOf("/" + element.name);
+            var find = $location.path().indexOf("/" + element.name.toLowerCase());
             if (find != -1) {
                 $scope.selectedMenu = element;
             }
