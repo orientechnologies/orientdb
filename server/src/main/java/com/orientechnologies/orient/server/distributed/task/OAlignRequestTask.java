@@ -133,7 +133,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
     dManager.sendOperation2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager, databaseName,
-        EXECUTION_MODE.FIRE_AND_FORGET, totAligned));
+        EXECUTION_MODE.FIRE_AND_FORGET, totAligned), EXECUTION_MODE.FIRE_AND_FORGET);
 
     return totAligned;
   }
@@ -145,8 +145,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
         "flushing aligning %d operations db=%s...", tasks.getTasks(), databaseName);
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    @SuppressWarnings("unused")
-    final Object[] result = (Object[]) dManager.sendOperation2Node(getNodeSource(), tasks);
+    dManager.sendOperation2Node(getNodeSource(), tasks, EXECUTION_MODE.FIRE_AND_FORGET);
 
     final int aligned = tasks.getTasks();
 

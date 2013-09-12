@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+
 /**
  * Replication configuration with all the information to replicate the record.
  * 

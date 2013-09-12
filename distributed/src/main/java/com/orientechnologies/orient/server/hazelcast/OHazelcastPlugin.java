@@ -37,12 +37,12 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberLeftException;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
-import com.hazelcast.core.OperationTimeoutException;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -174,27 +174,45 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return runId;
   }
 
-  public Map<String, Object> propagate(final Set<String> iNodeIds, final OAbstractRemoteTask<? extends Object> iTask)
+  public Map<String, Object> propagate(final OAbstractRemoteTask<? extends Object> iTask, final OReplicationConfig iReplicationData)
       throws ODistributedException {
     final Map<String, Object> result = new HashMap<String, Object>();
 
-    ODistributedServerLog.debug(this, iTask.getNodeSource(), iNodeIds.toString(), DIRECTION.OUT, "propagate %s oper=%d.%d", iTask
-        .getName().toUpperCase(), iTask.getRunId(), iTask.getOperationSerial());
+    // SYNCHRONOUS
+    iTask.setMode(EXECUTION_MODE.SYNCHRONOUS);
+    propagateRemoteExecution(iTask, iReplicationData.synchReplicas, result);
 
-    for (String nodeId : iNodeIds) {
-      final Member m = remoteClusterNodes.get(nodeId);
-      if (m == null)
-        ODistributedServerLog.warn(this, getLocalNodeId(), nodeId, DIRECTION.OUT,
-            "cannot propagate operation on remote member because is disconnected");
-      else
-        result.put(nodeId, sendOperation2Node(nodeId, iTask));
-    }
+    // ASYNCHRONOUS
+    iTask.setMode(EXECUTION_MODE.ASYNCHRONOUS);
+    propagateRemoteExecution(iTask, iReplicationData.asynchReplicas, result);
 
     return result;
   }
 
+  private void propagateRemoteExecution(final OAbstractRemoteTask<? extends Object> iTask, final String[] iNodes,
+      final Map<String, Object> result) {
+
+    if (iNodes == null || iNodes.length == 0)
+      return;
+
+    final EXECUTION_MODE mode = iTask.getMode();
+
+    ODistributedServerLog.debug(this, iTask.getNodeSource(), iNodes.toString(), DIRECTION.OUT,
+        "propagate to %s nodes %s oper=%d.%d", mode, iTask.getName().toUpperCase(), iTask.getRunId(), iTask.getOperationSerial());
+
+    for (String nodeId : iNodes) {
+      final Member m = remoteClusterNodes.get(nodeId);
+      if (m == null)
+        ODistributedServerLog.warn(this, getLocalNodeId(), nodeId, DIRECTION.OUT,
+            "cannot propagate %s operation on remote member because is disconnected", mode);
+      else
+        result.put(nodeId, sendOperation2Node(nodeId, iTask, mode));
+    }
+  }
+
   @SuppressWarnings("unchecked")
-  public Object sendOperation2Node(final String iNodeId, final OAbstractRemoteTask<? extends Object> iTask) {
+  public Object sendOperation2Node(final String iNodeId, final OAbstractRemoteTask<? extends Object> iTask,
+      final EXECUTION_MODE iExecutionMode) {
     iTask.setNodeDestination(iNodeId);
     Member member = remoteClusterNodes.get(iNodeId);
     if (member == null) {
@@ -213,7 +231,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final Member clusterMember = member;
 
     ExecutionCallback<Object> callback = null;
-    if (iTask.getMode() == EXECUTION_MODE.ASYNCHRONOUS)
+    if (iExecutionMode == EXECUTION_MODE.ASYNCHRONOUS)
       callback = new ExecutionCallback<Object>() {
         @Override
         public void onResponse(Object result) {
@@ -229,7 +247,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
       try {
 
-        Object result = executeOperation((Callable<Object>) iTask, clusterMember, iTask.getMode(), callback);
+        Object result = executeOperation((Callable<Object>) iTask, clusterMember, iExecutionMode, callback);
 
         // OK
         return result;
@@ -283,12 +301,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public Object execute(final String iClusterName, final Object iKey, final OAbstractRemoteTask<? extends Object> iTask,
-      OReplicationConfig replicationData) throws ExecutionException {
+      OReplicationConfig iReplicationData) throws ExecutionException {
 
     String masterNodeId = null;
 
     try {
-      if (replicationData == null || !(iTask instanceof OAbstractReplicatedTask)) {
+      if (iReplicationData == null || !(iTask instanceof OAbstractReplicatedTask)) {
         // NO REPLICATION: LOCAL ONLY
         ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
         try {
@@ -305,20 +323,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         final String dbName = iTask.getDatabaseName();
 
-        if (replicationData != null) {
+        if (iReplicationData != null) {
           // SET THE DESTINATION NODE
-          iTask.setNodeDestination(replicationData.masterNode);
-          replicationData.masterNode = waitUntilMasterNodeIsOnline(iClusterName, iKey, dbName, replicationData.masterNode);
-          masterNodeId = replicationData.masterNode;
+          iTask.setNodeDestination(iReplicationData.masterNode);
+          iReplicationData.masterNode = waitUntilMasterNodeIsOnline(iClusterName, iKey, dbName, iReplicationData.masterNode);
+          masterNodeId = iReplicationData.masterNode;
         }
 
-        if (getLocalNodeId().equals(replicationData.masterNode))
+        if (getLocalNodeId().equals(iReplicationData.masterNode))
           // LOCAL + PROPAGATE
-          return executeLocallyAndPropagate((OAbstractReplicatedTask<? extends Object>) iTask);
+          return executeLocallyAndPropagate((OAbstractReplicatedTask<? extends Object>) iTask, iReplicationData);
         else
           // REMOTE + LOCAL
           return executeRemotelyAndApplyLocally(iClusterName, iKey, (OAbstractReplicatedTask<? extends Object>) iTask, dbName,
-              replicationData);
+              iReplicationData);
       }
     } catch (InterruptedException e) {
       Thread.interrupted();
@@ -361,96 +379,64 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return true;
   }
 
-  @SuppressWarnings("unchecked")
   protected Object executeRemotelyAndApplyLocally(final String iClusterName, final Object iKey,
       final OAbstractReplicatedTask<? extends Object> iTask, final String dbName, final OReplicationConfig iReplicationData)
       throws InterruptedException, Exception, ExecutionException {
 
     try {
-      // RETRY UNTIL SUCCEED
-      for (int retry = 0; retry < SEND_RETRY_MAX; ++retry) {
-        ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-            "routing %s against db=%s in %s mode...", iTask.getName().toUpperCase(), dbName, EXECUTION_MODE.SYNCHRONOUS);
+      ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+          "routing %s against db=%s in %s mode...", iTask.getName().toUpperCase(), dbName, EXECUTION_MODE.SYNCHRONOUS);
 
-        try {
-          // EXECUTES ON THE TARGET NODE
-          ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-              "remote execution %s db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
+      try {
+        // EXECUTES ON THE TARGET NODE
+        ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+            "remote execution %s db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
+            iTask.getRunId(), iTask.getOperationSerial());
+
+        // RESET THE SOURCE TO AVOID LOOPS
+        iTask.setNodeSource(getLocalNodeId());
+
+        final Map<String, Object> remoteResults = propagate(iTask, iReplicationData);
+
+        final Object localResult;
+        if (iTask instanceof OAbstractReplicatedTask<?>) {
+          // APPLY LOCALLY TOO
+          ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.IN,
+              "local exec: %s against db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
               iTask.getRunId(), iTask.getOperationSerial());
 
-          final Object remoteResult = executeOperation((Callable<Object>) iTask, iKey, EXECUTION_MODE.SYNCHRONOUS, null);
+          localResult = enqueueLocalExecution(iTask);
 
-          final Object localResult;
-          if (iTask instanceof OAbstractReplicatedTask<?>) {
-            // APPLY LOCALLY TOO
-            ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.IN,
-                "local exec: %s against db=%s mode=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getMode(),
-                iTask.getRunId(), iTask.getOperationSerial());
+          checkForConflicts(iTask, localResult, remoteResults);
 
-            localResult = enqueueLocalExecution(iTask);
+        } else
+          // GET THE FIRST REMOTE RESULT AS LOCAL
+          localResult = remoteResults.values().iterator().next();
 
-            // CHECK CONFLICT
-            if (remoteResult != null && localResult != null)
-              if (!remoteResult.equals(localResult)) {
-                ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.IN,
-                    "detected conflict on %s mode=%s db=%s oper=%d.%d: remote={%s} != local={%s}", iTask.getName().toUpperCase(),
-                    EXECUTION_MODE.SYNCHRONOUS, dbName, iTask.getRunId(), iTask.getOperationSerial(), remoteResult, localResult);
+        // OK
+        return localResult;
 
-                iTask.handleConflict(iTask.getNodeDestination(), localResult, remoteResult);
-              }
+      } catch (MemberLeftException e) {
+        // RETRY
+        ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+            "error on execution of operation %d.%d in %s mode, because node left. Re-route it in transparent way", e,
+            iTask.getRunId(), iTask.getOperationSerial(), EXECUTION_MODE.SYNCHRONOUS);
 
-          } else {
-            localResult = remoteResult;
-          }
+        return execute(iClusterName, iKey, iTask, iReplicationData);
 
-          // OK
-          return localResult;
-
-        } catch (MemberLeftException e) {
-          // RETRY
-          ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-              "error on execution of operation %d.%d in %s mode, because node left. Re-route it in transparent way", e,
-              iTask.getRunId(), iTask.getOperationSerial(), EXECUTION_MODE.SYNCHRONOUS);
-
-          return execute(iClusterName, iKey, iTask, iReplicationData);
-
-        } catch (ExecutionException e) {
-          if (e.getCause() instanceof OServerOfflineException) {
-            // RETRY
-            ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-                "remote node is not online, retrying %d...", retry + 1);
-            // WAIT A BIT
-            try {
-              Thread.sleep(200 + (retry * 50));
-            } catch (InterruptedException ex) {
-              Thread.interrupted();
-            }
-          } else {
-            ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-                "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
-                EXECUTION_MODE.SYNCHRONOUS);
-            throw e;
-          }
-        } catch (OperationTimeoutException e) {
-          ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-              "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
-              EXECUTION_MODE.SYNCHRONOUS);
-          throw e;
-        }
+      } catch (Exception e) {
+        ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
+            "error on execution of operation %d.%d in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
+            EXECUTION_MODE.SYNCHRONOUS);
+        throw e;
       }
     } finally {
       notifyQueueWaiters(iTask.getDatabaseName(), iTask.getRunId(), iTask.getOperationSerial(), false);
     }
-
-    ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeDestination(), DIRECTION.OUT,
-        "error on execution of operation %d.%d type=%s in %s mode", iTask.getRunId(), iTask.getOperationSerial(), iTask.getName(),
-        EXECUTION_MODE.SYNCHRONOUS);
-
-    // NEVER HAPPENS BECAUSE .error() THROWS AN EXCEPTION
-    throw new ODistributedException("Error on execution " + iTask.getName() + " in " + EXECUTION_MODE.SYNCHRONOUS + " mode");
   }
 
-  private Object executeLocallyAndPropagate(final OAbstractReplicatedTask<? extends Object> iTask) throws Exception {
+  private Object executeLocallyAndPropagate(final OAbstractReplicatedTask<? extends Object> iTask,
+      final OReplicationConfig iReplicationData) throws Exception {
     OAbstractReplicatedTask<? extends Object> taskToPropagate = iTask;
     Object localResult = null;
     try {
@@ -464,28 +450,30 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     } finally {
 
-      final Set<String> targetNodes = getOnlineRemoteNodeIdsBut(taskToPropagate.getNodeSource(),
-          taskToPropagate.getNodeDestination());
-      if (!targetNodes.isEmpty()) {
-        // RESET THE SOURCE TO AVOID LOOPS
-        taskToPropagate.setNodeSource(getLocalNodeId());
+      // RESET THE SOURCE TO AVOID LOOPS
+      taskToPropagate.setNodeSource(getLocalNodeId());
 
-        final Map<String, Object> remoteResults = propagate(targetNodes, taskToPropagate);
+      final Map<String, Object> remoteResults = propagate(taskToPropagate, iReplicationData);
 
-        for (Entry<String, Object> entry : remoteResults.entrySet()) {
-          final String remoteNode = entry.getKey();
-          final Object remoteResult = entry.getValue();
-
-          if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
-              || (localResult != null && !localResult.equals(remoteResult))) {
-            // CONFLICT
-            taskToPropagate.handleConflict(remoteNode, localResult, remoteResult);
-          }
-        }
-      }
+      checkForConflicts(taskToPropagate, localResult, remoteResults);
     }
 
     return localResult;
+  }
+
+  private void checkForConflicts(OAbstractReplicatedTask<? extends Object> taskToPropagate, Object localResult,
+      final Map<String, Object> remoteResults) {
+    
+    for (Entry<String, Object> entry : remoteResults.entrySet()) {
+      final String remoteNode = entry.getKey();
+      final Object remoteResult = entry.getValue();
+
+      if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
+          || (localResult != null && !localResult.equals(remoteResult))) {
+        // CONFLICT
+        taskToPropagate.handleConflict(remoteNode, localResult, remoteResult);
+      }
+    }
   }
 
   public boolean isLocalNodeMaster(final Object iKey) {
@@ -693,6 +681,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
         final String databaseName = entry.getKey();
+
+        final OReplicationConfig replicationData = getReplicationData(databaseName, null, null, getLocalNodeId(), null);
+
         try {
           final long[] lastOperationId = entry.getValue().getLog()
               .getLastJournaledOperationId(ODatabaseJournal.OPERATION_STATUS.COMMITTED);
@@ -714,8 +705,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             }
           }
 
-          propagate(remoteClusterNodes.keySet(), new OAlignRequestTask(serverInstance, this, databaseName,
-              EXECUTION_MODE.ASYNCHRONOUS, lastOperationId[0], lastOperationId[1]));
+          propagate(new OAlignRequestTask(serverInstance, this, databaseName, EXECUTION_MODE.ASYNCHRONOUS, lastOperationId[0],
+              lastOperationId[1]), replicationData);
 
         } catch (IOException e) {
           ODistributedServerLog.warn(this, getLocalNodeId(), null, DIRECTION.OUT,
@@ -757,7 +748,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                   databaseName, lastOperationId[0], lastOperationId[1]);
 
               sendOperation2Node(node, new OAlignRequestTask(serverInstance, this, databaseName, EXECUTION_MODE.ASYNCHRONOUS,
-                  lastOperationId[0], lastOperationId[1]));
+                  lastOperationId[0], lastOperationId[1]), EXECUTION_MODE.ASYNCHRONOUS);
 
             } catch (IOException e) {
               ODistributedServerLog.warn(this, getLocalNodeId(), null, DIRECTION.OUT,
@@ -934,21 +925,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return confictResolverClass;
   }
 
-  protected Object executeOperation(final Callable<Object> task, final Object iKey, final EXECUTION_MODE iMode,
-      final ExecutionCallback<Object> callback) throws ExecutionException, InterruptedException {
-    Member member = hazelcastInstance.getPartitionService().getPartition(iKey).getOwner();
-    return executeOperation(task, member, iMode, callback);
-  }
-
   protected Object executeOperation(final Callable<Object> task, Member member, final EXECUTION_MODE iMode,
       final ExecutionCallback<Object> callback) throws ExecutionException, InterruptedException {
 
+    final IExecutorService exec = hazelcastInstance.getExecutorService(DISTRIBUTED_EXECUTOR_NAME);
+
     if (iMode == EXECUTION_MODE.ASYNCHRONOUS && callback != null) {
-      hazelcastInstance.getExecutorService(DISTRIBUTED_EXECUTOR_NAME).submitToMember(task, member, callback);
+      exec.submitToMember(task, member, callback);
       return null;
     }
 
-    Future<Object> future = hazelcastInstance.getExecutorService(DISTRIBUTED_EXECUTOR_NAME).submitToMember(task, member);
+    Future<Object> future = exec.submitToMember(task, member);
 
     if (iMode == EXECUTION_MODE.SYNCHRONOUS)
       return future.get();
