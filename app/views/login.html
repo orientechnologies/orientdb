@@ -19,13 +19,13 @@
             <small>access</small>
         </h2>
         <div class="well">
-            <form id="signin" class="form-horizontal">
+            <form id="signin" name="loginForm" class="form-horizontal" novalidate>
                 <fieldset>
                     <div class="control-group">
                         <label class="control-label">Database:</label>
 
                         <div class="controls">
-                            <select ng-model="database" ng-options="i for i in databases">
+                            <select ng-model="database" required ng-options="i for i in databases">
                             </select>
                             <button class="btn" ng-click="createNew()"> Create new database
                             </button>
@@ -35,24 +35,24 @@
                         <label class="control-label">User</label>
 
                         <div class="controls">
-                            <input id="user" type="text" ng-model="username" value=""/>
+                            <input id="user" type="text" ng-model="username" required value=""/>
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label">Password</label>
 
                         <div class="controls">
-                            <input id="password" type="password" ng-model="password" value=""/>
+                            <input id="password" type="password" ng-model="password" required value=""/>
                         </div>
                     </div>
-                    <div class="row-fluid">
-                        <div class="span12" align="center">
-                            <button ng-click="connect()" class="btn"
-                                    rel="tooltip" data-placement="right" data-original-title="Connect to the database">
-                                Connect
-                            </button>
-                        </div>
+                    <div class="form-actions">
+                        <button ng-click="connect()" ng-disabled="loginForm.$invalid" class="btn btn-primary"
+                                rel="tooltip" data-placement="right" data-original-title="Connect to the database">
+                            Connect
+                        </button>
+
                     </div>
+
                 </fieldset>
             </form>
         </div>

@@ -5,19 +5,19 @@
 <div class="modal-body edge">
 	
 
-	<form id="signin"  class="form-horizontal">
+	<form id="signin" name="newDB"  class="form-horizontal" novalidate="">
 		<fieldset>
 			<div class="control-group">
 				<label class="control-label">Name</label>
 				<div class="controls">
-					<input type="text" class="input-xlarge" ng-model="name" placeholder="Database name"/>
+					<input type="text" class="input-xlarge" required ng-model="name" placeholder="Database name"/>
 
 				</div>
 			</div>
 			<div class="control-group">
 				<label class="control-label">Type</label>
 				<div class="controls">
-					<select class='span2' ng-model="type" ng-options="c for c in types">
+					<select class='span2' ng-model="type" required ng-options="c for c in types">
 					</select>
 
 				</div>
@@ -25,7 +25,7 @@
 			<div class="control-group">
 				<label class="control-label">Storage Type</label>
 				<div class="controls">
-					<select class='span2' ng-model="stype" ng-options="c for c in stypes">
+					<select class='span2' ng-model="stype" required ng-options="c for c in stypes">
 					</select>
 
 				</div>
@@ -33,13 +33,13 @@
 			<div class="control-group">
 				<label class="control-label">User</label>
 				<div class="controls">
-					<input id="user" type="text" ng-model="username"   value="" />
+					<input id="user" type="text" required ng-model="username"   value="" />
 				</div>
 			</div>
 			<div class="control-group">
 				<label class="control-label">Password</label>
 				<div class="controls">
-					<input id="password" type="password" ng-model="password" value="" />
+					<input id="password" type="password" required ng-model="password" value="" />
 				</div>
 			</div>
 		</fieldset>
@@ -48,5 +48,5 @@
 </div>
 <div class="modal-footer">
 	<button type="button" class="btn" ng-click="hide()">Close</button>
-	<button class="btn btn-primary" ng-click="createNew()">Create database</button>
+	<button class="btn btn-primary" ng-disabled="newDB.$invalid" ng-click="createNew()">Create database</button>
 </div>

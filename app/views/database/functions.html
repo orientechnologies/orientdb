@@ -9,7 +9,7 @@
                     Delete</a>
                 <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i>
                     Clear</a>
-                <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveFunction()"> <i
+                <a href="javascript:void(0)" class="btn btn-primary" ng-disabled="functionForm.$invalid" ng-click="saveFunction()"> <i
                         class="icon-white icon-ok"></i>
                     Save</a>
             </div>
@@ -34,8 +34,8 @@
                     </ul>
                 </div>
                 <div class="span10">
-                    <form>
-                        Name: <input type="text" ng-model="functionToExecute['name']">
+                    <form name="functionForm">
+                        Name : <input type="text" required ng-model="functionToExecute['name']">
                         Language:
                         <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
                                 ng-change="modificataLang(selectedLanguage)">

@@ -6,17 +6,17 @@
 	<div class="modal-body edge">
 		<div class="row-fluid">
 			<div class="span12">
-				<form class="form-horizontal">
+				<form class="form-horizontal" name="indexForm" novalidate>
 					<div class="control-group">
 						<label class="control-label" for="inputName">Name *</label>
 						<div class="controls">
-							<input type="text" id="inputName" ng-model="nameIndexToShow" value="{{nameIndexToShow}}"/>
+							<input type="text" id="inputName" required ng-model="nameIndexToShow" value="{{nameIndexToShow}}"/>
 						</div>
 					</div>
 					<div class="control-group">
 						<label class="control-label" >Type * </label>
 						<div class="controls">
-							<select ng-model="newIndex['type']" ng-options="p.toString() for p in listTypeIndex">
+							<select ng-model="newIndex['type']" required ng-options="p.toString() for p in listTypeIndex">
 							</select>
 						</div>
 					</div>
@@ -38,9 +38,9 @@
 		</div>
 	</div>
 	<div class="modal-footer">
-		<button type="submit" class="btn btn-primary" ng-click="saveNewIndex()">Save</button>
 
-		<button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="indexForm.$invalid" ng-click="saveNewIndex()">Save</button>
 
 	</div>
 

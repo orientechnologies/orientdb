@@ -6,11 +6,11 @@
 	<div class="modal-body edge">
 		<div class="row-fluid">
 			<div class="span12">
-				<form class="form-horizontal">
+				<form class="form-horizontal"  name="classForm" novalidate>
 					<div class="control-group">
 						<label class="control-label" for="inputName">Name *</label>
 						<div class="controls">
-							<input type="text" id="inputName" ng-model="property['name']" />
+							<input type="text" id="inputName" required ng-model="property['name']" />
 						</div>
 					</div>
 					<div class="control-group">
@@ -44,9 +44,8 @@
 		</div>
 	</div>
 	<div class="modal-footer">
-		<button type="submit" class="btn btn-primary" ng-click="saveNewClass()">Save</button>
-
-		<button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="classForm.$invalid" ng-click="saveNewClass()">Save</button>
 
 	</div>
 </div>
