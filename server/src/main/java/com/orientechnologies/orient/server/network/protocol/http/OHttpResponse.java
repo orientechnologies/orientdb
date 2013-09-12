@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  * 
  */
 public class OHttpResponse {
-  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class";
+  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,fieldTypes";
   public static final char[] URL_SEPARATOR = { '/' };
 
   private final OutputStream out;
