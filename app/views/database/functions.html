@@ -9,22 +9,29 @@
                     Delete</a>
                 <a href="javascript:void(0)" class="btn" ng-click="clearConsole()"> <i class="icon-refresh"></i>
                     Clear</a>
-                <a href="javascript:void(0)" class="btn btn-primary" ng-disabled="functionForm.$invalid" ng-click="saveFunction()"> <i
-                        class="icon-white icon-ok"></i>
-                    Save</a>
+                <button type="submit" class="btn btn-primary" ng-disabled="propertyForm.$invalid"
+                        ng-click="saveFunction()">Save
+                </button>
+
+
+                <!--<a href="javascript:void(0)" class="btn btn-primary" ng-disabled="functionForm.$invalid" ng-click="saveFunction()"> <i-->
+                <!--class="icon-white icon-ok"></i>-->
+                <!--Save</a>-->
             </div>
 
 
         </div>
         <div class="span12 console_class_functions">
 
+
             <div class="row-fluid">
                 <div class="span2">
+                    <input class="input input_functions" placeholder="Search" ng-model="queryy">
                     <ul class="nav nav-list well functions_list">
                         <li class="nav-header">
                             Functions:
                         </li>
-                        <li ng-repeat="func in functions | orderBy: 'name'"
+                        <li ng-repeat="func in functions | orderBy: 'name' | filter:queryy |filter:queryy.code"
                             ng-class="{active : functionToExecute == func}">
                             <a href="javascript:void(0)" ng-click="showInConsole(func)"
                                value="{{func['name']}}">
