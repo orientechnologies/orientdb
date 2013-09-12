@@ -819,6 +819,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("stop")) {
       checkServerAccess("server.replication.stop");
 
+    } else if (operation.equals("config")) {
+      checkServerAccess("server.replication.config");
+
+      response = dManager.getDatabaseConfiguration((String) request.field("db"));
+
     } else if (operation.equals("align")) {
       checkServerAccess("server.replication.align");
 
@@ -866,7 +871,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       final OServerHandler plugin = server.getPlugin("cluster");
       if (plugin != null && plugin instanceof ODistributedServerManager)
         response = ((ODistributedServerManager) plugin).getClusterConfiguration();
-
     } else
       throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");
 

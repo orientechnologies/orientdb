@@ -127,7 +127,11 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
 
   @Override
   public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
-    return binarySerializer.getObjectSizeInDirectMemory(memory, pointer);
+    final byte serializerId = memory.getByte(pointer);
+    init(serializerId);
+    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
+        + binarySerializer.getObjectSizeInDirectMemory(memory, pointer + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
+
   }
 
   public boolean isFixedLength() {

@@ -17,15 +17,8 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -65,12 +58,14 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected static final String     CONFIG_MAP_RID   = "mapRid";
   protected static final String     CONFIG_CLUSTERS  = "clusters";
 
-  protected String                  name;
+  private String                    name;
   protected String                  type;
+  private String                    algorithm;
+
   protected final OIndexEngine<T>   indexEngine;
-  protected Set<String>             clustersToIndex  = new HashSet<String>();
-  protected OIndexDefinition        indexDefinition;
-  protected final String            databaseName;
+  private Set<String>               clustersToIndex  = new HashSet<String>();
+  private OIndexDefinition          indexDefinition;
+  private final String              databaseName;
 
   @ODocumentInstance
   protected ODocument               configuration;
@@ -79,7 +74,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   private Thread                    rebuildThread    = null;
 
-  public OIndexAbstract(final String type, final OIndexEngine<T> indexEngine) {
+  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     acquireExclusiveLock();
@@ -87,6 +82,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
       this.type = type;
       this.indexEngine = indexEngine;
+      this.algorithm = algorithm;
 
       indexEngine.init();
     } finally {
@@ -169,6 +165,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       name = indexMetadata.getName();
       indexDefinition = indexMetadata.getIndexDefinition();
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
+      algorithm = indexMetadata.getAlgorithm();
 
       final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
 
@@ -253,7 +250,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS));
 
-    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type);
+    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm);
   }
 
   public boolean contains(final Object key) {
@@ -627,6 +624,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   }
 
   @Override
+  public String getAlgorithm() {
+    return algorithm;
+  }
+
+  @Override
   public String toString() {
     return name;
   }
@@ -702,6 +704,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
         configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
         configuration.field(CONFIG_MAP_RID, indexEngine.getIdentity());
+        configuration.field(ALGORITHM, algorithm);
 
       } finally {
         configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -767,8 +770,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
                 remove(value);
               else if (value == null)
                 remove(key);
-              else
+              else {
                 remove(key, value);
+              }
+
             }
           }
         }

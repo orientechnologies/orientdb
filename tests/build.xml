@@ -10,7 +10,7 @@
     <taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar"/>
 
     <target name="test"
-            depends="test-memory, test-memory-lh, test-local, test-plocal, test-local-node-id, test-remote">
+            depends="test-memory, test-local, test-plocal, test-remote">
     </target>
 
     <target name="test-init">
@@ -51,20 +51,6 @@
         </testng>
     </target>
 
-    <target name="test-memory-lh" depends="test-init">
-        <echo>EXECUTING TESTS USING MEMORY DATABASE AND LINEAR HASHING CLUSTER: memory:demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg line="-ea -Dfile.cluster.useMemoryLHCluster=true -Dstorage.cluster.useNodeIdAsClusterPosition=true -Dstorage.useTombstones=true -Ddb.use.distributedVersion=true"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="memory-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
 
     <target name="test-local" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
@@ -92,22 +78,6 @@
             </classpath>
             <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
                         includes="paginated-local-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
-
-
-    <target name="test-local-node-id" depends="test-init" if="${fullTest}">
-        <echo>EXECUTING TESTS USING LOCAL DATABASE AND NODE ID CLUSTER: local:${orient.path}/databases/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Dstorage.cluster.useNodeIdAsClusterPosition=true"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="local-test-db-from-scratch.xml"/>
         </testng>
     </target>
 
@@ -145,7 +115,7 @@
         </exec>
 
         <echo>WAITING FOR SERVER STARTUP...</echo>
-        <sleep seconds="5"/>
+        <sleep seconds="10"/>
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">

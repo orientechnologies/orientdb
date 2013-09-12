@@ -133,6 +133,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLCommandsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLInsertTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectProjectionsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectGroupByTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest"/>

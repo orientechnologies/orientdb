@@ -60,9 +60,11 @@ public interface ODistributedServerManager {
   public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationConfig)
       throws ExecutionException;
 
-  public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask) throws ODistributedException;
+  public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask, EXECUTION_MODE iExecutionMode)
+      throws ODistributedException;
 
-  public Map<String, Object> propagate(Set<String> iNodeIds, OAbstractRemoteTask<?> iTask) throws ODistributedException;
+  public Map<String, Object> propagate(OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationData)
+      throws ODistributedException;
 
   public String getLocalNodeId();
 

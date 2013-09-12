@@ -18,13 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -42,12 +36,7 @@ import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
-import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -59,19 +48,15 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -86,13 +71,15 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private String                        storagePath;
   private final OStorageVariableParser  variableParser;
   private int                           defaultClusterId          = -1;
+
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", ".oet", OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION             };
+      ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
+      OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION };
+
   private long                          positionGenerator         = 1;
   private OModificationLock             modificationLock          = new OModificationLock();
   private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
-  private final ODiskCache              diskCache;
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
     super(iName, iFilePath, iMode);
@@ -225,6 +212,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
         }
       }
 
+      if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
+        writeAheadLog = new OWriteAheadLog(this);
+
       txManager.open();
 
     } catch (Exception e) {
@@ -298,8 +288,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null, OMetadataDefault.DATASEGMENT_INDEX_NAME,
-          true);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
+          OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
@@ -308,6 +298,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
       defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
 
       configuration.create();
+
+      writeAheadLog = new OWriteAheadLog(this);
 
       txManager.create();
     } catch (OStorageException e) {
@@ -373,6 +365,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
       if (diskCache != null)
         diskCache.close();
 
+      if (writeAheadLog != null) {
+        writeAheadLog.shrinkTill(writeAheadLog.end());
+        writeAheadLog.close();
+      }
+
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
     } catch (IOException e) {
@@ -415,6 +412,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
     lock.acquireExclusiveLock();
     try {
 
+      if (diskCache != null)
+        diskCache.delete();
+
       // RETRIES
       for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
         if (dbDir.exists() && dbDir.isDirectory()) {
@@ -456,6 +456,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
 
+    } catch (IOException ioe) {
+      throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ".", ioe);
     } finally {
       lock.releaseExclusiveLock();
 
@@ -1289,18 +1291,23 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return null;
   }
 
-  public void commit(final OTransaction iTx) {
+  public void commit(final OTransaction iTx, Runnable callback) {
     modificationLock.requestModificationLock();
     try {
       lock.acquireExclusiveLock();
       try {
         try {
+          startStorageTx(iTx);
           txManager.clearLogEntries(iTx);
           txManager.commitAllPendingRecords(iTx);
+
+          if (callback != null)
+            callback.run();
 
           if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
             synch();
 
+          endStorageTx();
         } catch (Exception e) {
           // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
           OLogManager.instance().debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
@@ -1313,6 +1320,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         } finally {
           try {
             txManager.clearLogEntries(iTx);
+            if (writeAheadLog != null)
+              writeAheadLog.shrinkTill(writeAheadLog.end());
           } catch (Exception e) {
             // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
             // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
@@ -1320,6 +1329,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           }
         }
       } finally {
+        transaction = null;
         lock.releaseExclusiveLock();
       }
     } finally {
@@ -1333,12 +1343,15 @@ public class OStorageLocal extends OStorageLocalAbstract {
       lock.acquireExclusiveLock();
       try {
         txManager.getTxSegment().rollback(iTx);
+        rollbackStorageTx();
+
         if (OGlobalConfiguration.TX_COMMIT_SYNCH.getValueAsBoolean())
           synch();
       } catch (IOException ioe) {
         OLogManager.instance().error(this,
             "Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
       } finally {
+        transaction = null;
         lock.releaseExclusiveLock();
       }
     } finally {

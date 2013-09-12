@@ -1,2 +1,2 @@
-com.orientechnologies.orient.core.index.OMVRBIndexFactory
+com.orientechnologies.orient.core.index.ODefaultIndexFactory
 com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory

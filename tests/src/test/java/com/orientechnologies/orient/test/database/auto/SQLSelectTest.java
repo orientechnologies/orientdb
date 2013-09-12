@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -142,8 +141,8 @@ public class SQLSelectTest {
 
   @Test
   public void querySchemaAndLike() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'Gi%'"))
-        .execute();
+    List<ODocument> result1 = database
+        .command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'Gi%'")).execute();
 
     for (int i = 0; i < result1.size(); ++i) {
       record = result1.get(i);
@@ -944,13 +943,16 @@ public class SQLSelectTest {
 
     int clusterId = database.getClusterIdByName("profile");
 
+    OClusterPosition[] range = database.getStorage().getClusterDataRange(clusterId);
+
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where @rid between #" + clusterId
-        + ":2 and #" + clusterId + ":30 LIMIT 3");
+        + ":" + range[0] + " and #" + clusterId + ":" + range[1] + " LIMIT 3");
+
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query);
 
-    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(clusterId, range[0]));
 
     int iterationCount = 0;
     while (!resultset.isEmpty()) {
@@ -967,7 +969,7 @@ public class SQLSelectTest {
       resultset = database.query(query);
     }
 
-    Assert.assertEquals(last, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(30)));
+    Assert.assertEquals(last, new ORecordId(clusterId, range[1]));
     Assert.assertTrue(iterationCount > 1);
   }
 

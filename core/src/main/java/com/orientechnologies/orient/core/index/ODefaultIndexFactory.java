@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 /**
@@ -35,7 +36,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  * <li>DICTIONARY</li>
  * </ul>
  */
-public class OMVRBIndexFactory implements OIndexFactory {
+public class ODefaultIndexFactory implements OIndexFactory {
+
+  public static final String       SBTREE_ALGORITHM   = "SBTREE";
+  public static final String       MVRBTREE_ALGORITHM = "MVRBTREE";
+
   private static final Set<String> TYPES;
   static {
     final Set<String> types = new HashSet<String>();
@@ -59,19 +64,41 @@ public class OMVRBIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String indexType) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm) throws OConfigurationException {
+    if (SBTREE_ALGORITHM.equals(algorithm))
+      return createSBTreeIndex(indexType);
 
+    if (MVRBTREE_ALGORITHM.equals(algorithm) || algorithm == null)
+      return createMRBTreeIndex(indexType);
+
+    throw new OConfigurationException("Unsupported type : " + indexType);
+  }
+
+  private OIndexInternal<?> createMRBTreeIndex(String indexType) {
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(indexType, new OMVRBTreeIndexEngine<OIdentifiable>());
+      return new OIndexUnique(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<OIdentifiable>());
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(indexType, new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
+      return new OIndexNotUnique(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(indexType, new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
+      return new OIndexFullText(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<Set<OIdentifiable>>());
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(indexType, new OMVRBTreeIndexEngine<OIdentifiable>());
+      return new OIndexDictionary(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<OIdentifiable>());
     }
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
+  private OIndexInternal<?> createSBTreeIndex(String indexType) {
+    if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
+      return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>());
+    } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
+      return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>());
+    } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
+      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>());
+    } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
+      return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>());
+    }
+
+    throw new OConfigurationException("Unsupported type : " + indexType);
+  }
 }

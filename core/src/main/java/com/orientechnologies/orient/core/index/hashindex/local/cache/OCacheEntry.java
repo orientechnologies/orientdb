@@ -4,21 +4,37 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-class OReadCacheEntry {
+public class OCacheEntry {
+  OCachePointer dataPointer;
+
   final long    fileId;
   final long    pageIndex;
 
-  OCachePointer dataPointer;
-
   boolean       isDirty;
-
   int           usagesCount;
 
-  public OReadCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
+  public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
+
     this.dataPointer = dataPointer;
     isDirty = dirty;
+  }
+
+  public void markDirty() {
+    this.isDirty = true;
+  }
+
+  public OCachePointer getCachePointer() {
+    return dataPointer;
+  }
+
+  public long getFileId() {
+    return fileId;
+  }
+
+  public long getPageIndex() {
+    return pageIndex;
   }
 
   @Override
@@ -28,7 +44,7 @@ class OReadCacheEntry {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OReadCacheEntry that = (OReadCacheEntry) o;
+    OCacheEntry that = (OCacheEntry) o;
 
     if (fileId != that.fileId)
       return false;

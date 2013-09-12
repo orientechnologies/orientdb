@@ -106,6 +106,8 @@ public class OServer {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
     System.setProperty("com.sun.management.jmxremote", "true");
 
+    Orient.instance().startup();
+
     if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !Orient.instance().getProfiler().isRecording())
       Orient.instance().getProfiler().startRecording();
 

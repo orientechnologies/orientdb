@@ -412,7 +412,20 @@ public class OServerAdmin {
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "status"),
         "Cluster status");
 
-    OLogManager.instance().debug(this, "Cluster status %s", response.toJSON());
+    OLogManager.instance().debug(this, "Cluster status %s", response.toJSON("prettyPrint"));
+    return response;
+  }
+
+  /**
+   * Gets the cluster status.
+   * 
+   * @return the JSON containing the current cluster structure
+   */
+  public ODocument replicationConfig(final String iDatabaseName) {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "config")
+        .field("db", iDatabaseName), "Cluster config");
+
+    OLogManager.instance().debug(this, "Distributed database configuration %s", response.toJSON("prettyPrint"));
     return response;
   }
 

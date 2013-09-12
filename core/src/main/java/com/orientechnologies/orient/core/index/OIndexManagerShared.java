@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -48,10 +50,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * 
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
-  private static final long serialVersionUID      = 1L;
+  private static final boolean useSBTree             = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
 
-  protected volatile Thread recreateIndexesThread = null;
-  private volatile boolean  rebuildCompleted      = false;
+  private static final long    serialVersionUID      = 1L;
+
+  protected volatile Thread    recreateIndexesThread = null;
+  private volatile boolean     rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
     super(iDatabase);
@@ -84,9 +88,17 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
+    String alghorithm;
+    ODatabase database = getDatabase();
+    OStorage storage = database.getStorage();
+    if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
+      alghorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+    else
+      alghorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
+
     acquireExclusiveLock();
     try {
-      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType);
+      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType, alghorithm);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
@@ -97,7 +109,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         iProgressListener = new OIndexRebuildOutputListener(index);
 
       Set<String> clustersToIndex = new HashSet<String>();
-      ODatabase database = getDatabase();
       if (clusterIdsToIndex != null) {
         for (int clusterId : clusterIdsToIndex) {
           final String clusterNameToIndex = database.getClusterNameById(clusterId);
@@ -186,7 +197,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+            index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
+                (String) d.field(OIndexInternal.ALGORITHM));
 
             OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
@@ -334,13 +346,15 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
             for (ODocument idx : idxs) {
               try {
                 String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
+                String alghorithm = idx.field(OIndexInternal.ALGORITHM);
+
                 if (indexType == null) {
                   OLogManager.instance().error(this, "Index type is null, will process other record.");
                   errors++;
                   continue;
                 }
 
-                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType);
+                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType, alghorithm);
                 OIndexInternal.IndexMetadata indexMetadata = index.loadMetadata(idx);
                 OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 

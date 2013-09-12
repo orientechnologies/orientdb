@@ -48,8 +48,8 @@ public class OIndexFullText extends OIndexMultiValues {
   private final String        ignoreChars            = DEF_IGNORE_CHARS;
   private final Set<String>   stopWords;
 
-  public OIndexFullText(String typeId, OIndexEngine<Set<OIdentifiable>> indexEngine) {
-    super(typeId, indexEngine);
+  public OIndexFullText(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine) {
+    super(typeId, algorithm, indexEngine);
     stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
   }
 

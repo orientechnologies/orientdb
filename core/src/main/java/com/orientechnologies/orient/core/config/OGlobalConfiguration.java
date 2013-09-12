@@ -75,7 +75,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 50 * 1024),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 64),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 150 * 1024),
 
@@ -209,6 +209,13 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
 
+  INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
+      "Indicates whether index implementation for plocal storage will be durable in non-Tx mode, false by default", Boolean.class,
+      false),
+
+  INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
+      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
+
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
@@ -244,6 +251,10 @@ public enum OGlobalConfiguration {
 
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
+
+  // SBTREE
+  SBTREE_MAX_ENTREE_SIZE("sbtree.maxEntree.size",
+      "Maximum size of key-value pair which can be put in SBTree in bytes (24576000 by default)", Integer.class, 24576000),
 
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
