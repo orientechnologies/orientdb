@@ -258,7 +258,7 @@ public class OMultiValue {
     if (iObject.getClass().isArray())
       return new OIterableObjectArray<Object>(iObject).iterator();
 
-    return null;
+    return new OIterableObject<Object>(iObject);
   }
 
   /**

@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.common.collection;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -34,7 +34,6 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   private Collection<Object> sources;
   private Iterator<?>        iteratorOfInternalCollections;
   private Iterator<T>        partialIterator;
-  private List<T>            temp     = null;
 
   private int                browsed  = 0;
   private int                limit    = -1;
@@ -102,11 +101,13 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
     browsed = 0;
   }
 
-  public void add(final Object iValue) {
-    if (iteratorOfInternalCollections != null)
-      throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
-
-    sources.add(iValue);
+  public OMultiCollectionIterator<T> add(final Object iValue) {
+    if (iValue != null) {
+      if (iteratorOfInternalCollections != null)
+        throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
+      sources.add(iValue);
+    }
+    return this;
   }
 
   public int size() {
@@ -120,6 +121,8 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
           size += ((Map<?, ?>) o).size();
         else if (o instanceof OSizeable)
           size += ((OSizeable) o).size();
+        else if (o.getClass().isArray())
+          size += Array.getLength(o);
         else if (o instanceof Iterator<?> && o instanceof OResettable) {
           while (((Iterator<?>) o).hasNext()) {
             size++;
@@ -164,14 +167,17 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
               partialIterator = ((Collection<T>) next).iterator();
               return true;
             }
+          } else if (next.getClass().isArray()) {
+            final int arraySize = Array.getLength(next);
+            if (arraySize > 0) {
+              if (arraySize == 1)
+                partialIterator = new OIterableObject<T>((T) Array.get(next, 0));
+              else
+                partialIterator = (Iterator<T>) OMultiValue.getMultiValueIterator(next);
+              return true;
+            }
           } else {
-            if (temp == null)
-              temp = new ArrayList<T>(1);
-            else
-              temp.clear();
-
-            temp.add((T) next);
-            partialIterator = temp.iterator();
+            partialIterator = new OIterableObject<T>((T) next);
             return true;
           }
         }
