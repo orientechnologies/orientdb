@@ -925,7 +925,10 @@ public class OSBTree<K, V> extends ODurableComponent {
         return new BucketSearchResult(keyIndex - indexToSplit - 1, resultPath);
 
       } else {
-        long treeSize = bucketToSplit.getTreeSize();
+        final long treeSize = bucketToSplit.getTreeSize();
+
+        final byte keySerializeId = bucketToSplit.getKeySerializerId();
+        final byte valueSerializerId = bucketToSplit.getValueSerializerId();
 
         final List<OSBTreeBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K, V>>(indexToSplit);
 
@@ -971,7 +974,10 @@ public class OSBTree<K, V> extends ODurableComponent {
 
         bucketToSplit = new OSBTreeBucket<K, V>(bucketPointer.getDataPointer(), false, keySerializer, valueSerializer,
             getTrackMode());
+
         bucketToSplit.setTreeSize(treeSize);
+        bucketToSplit.setKeySerializerId(keySerializeId);
+        bucketToSplit.setValueSerializerId(valueSerializerId);
 
         bucketToSplit.addEntry(0,
             new OSBTreeBucket.SBTreeEntry<K, V>(leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), separationKey,
