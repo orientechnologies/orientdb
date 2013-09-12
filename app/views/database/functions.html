@@ -24,7 +24,8 @@
                         <li class="nav-header">
                             Functions:
                         </li>
-                        <li ng-repeat="func in functions | orderBy: 'name'" ng-class="{active : functionToExecute == func}">
+                        <li ng-repeat="func in functions | orderBy: 'name'"
+                            ng-class="{active : functionToExecute == func}">
                             <a href="javascript:void(0)" ng-click="showInConsole(func)"
                                value="{{func['name']}}">
                                 {{func['name']}}
@@ -53,9 +54,12 @@
                     <ul class="horizontallist">
 
                         <li ng-repeat="param in functionToExecute.parameters  track by $index">
-                            <input type="text" ng-model="functionToExecute['parameters'][$index]">
-                            <a href="javascript:void(0)" class="btn  btn-small" ng-click="removeParam($index)"> <i
-                                    class=" icon-trash"></i> </a>
+                            <div class="input-append">
+                                <input type="text" ng-model="functionToExecute['parameters'][$index]">
+                                <a href="javascript:void(0)" class="btn" ng-click="removeParam($index)"> <i
+                                        class=" icon-trash"></i> </a>
+                            </div>
+
                         </li>
                     </ul>
                     </p>

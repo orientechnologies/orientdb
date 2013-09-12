@@ -30,7 +30,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         listTypes: ['BINARY', 'BYTE', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'],
 
-        mapping: { 'BINARY': 'b', 'BYTE': 'b', 'DATE': 'a', 'DATETIME': 't', 'FLOAT': 'f', 'DECIMAL': 'c', 'LONG': 'l', 'DOUBLE': 'd', 'SHORT': 's'},
+        mapping: { 'BINARY': 'b', 'BYTE': 'b', 'DATE': 'a', 'DATETIME': 't', 'FLOAT': 'f', 'DECIMAL': 'c', 'LONG': 'l', 'DOUBLE': 'd', 'SHORT': 's','LINKSET' : 'e'},
         getMetadata: function () {
             if (current.metadata == null) {
                 var tmp = localStorageService.get("CurrentDB");
@@ -331,17 +331,25 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             var self = this;
             var fields = this.listField(c);
             var all = Object.keys(doc).filter(function (element, index, array) {
+                var type = self.getFieldType(c, element);
                 if (isGraph) {
                     return (fixedHeader.indexOf(element) == -1 && (!element.startsWith("in_") && !element.startsWith("out_")) && !self.isLink(type));
                 } else {
-                    var type = self.getFieldType(c, element);
                     return (fixedHeader.indexOf(element) == -1 && !self.isLink(type));
                 }
             });
             var toAdd = new Array;
-            fields.forEach(function(elem,index,array){
-                if(all.indexOf(elem)==-1){
-                    toAdd.push(elem);
+            fields.forEach(function (elem, index, array) {
+                if (all.indexOf(elem) == -1) {
+                    var type = self.getFieldType(c, elem);
+                    var bool = true;
+                    if (isGraph) {
+                        bool = (fixedHeader.indexOf(elem) == -1 && (!element.startsWith("in_") && !elem.startsWith("out_")) && !self.isLink(type));
+                    } else {
+                        bool = (fixedHeader.indexOf(elem) == -1 && !self.isLink(type));
+                    }
+                    if (bool)
+                        toAdd.push(elem);
                 }
             })
             return all.concat(toAdd);
@@ -353,11 +361,29 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             });
             return all;
         },
-
+        findTypeFromFieldTipes : function (doc,name) {
+            var fieldTypes = doc['@fieldTypes'];
+            var type = undefined;
+            var self = this;
+            if (fieldTypes) {
+                console.log(fieldTypes);
+                fieldTypes.split(",").forEach(function (element, index, array) {
+                    element.split("=").forEach(function (elem, i, a) {
+                        if (i == 0 && elem == name) {
+                            type = self.getMappingForKey(a[1]);
+                        }
+                    });
+                });
+            }
+            return type;
+        },
         getLink: function (doc) {
             var self = this;
             var all = Object.keys(doc).filter(function (element, index, array) {
                 var type = self.getFieldType(doc['@class'], element);
+                if (!type) {
+                    type = self.findTypeFromFieldTipes(doc,element);
+                }
                 return self.isLink(type);
             });
             return all;
@@ -541,7 +567,7 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
         var verbose = params.verbose != undefined ? params.verbose : true;
         console.log(params.functionName)
         if (params.parameters == '') {
-            var text = API + 'function/' + params.database + "/" + params.functionName ;
+            var text = API + 'function/' + params.database + "/" + params.functionName;
         }
         else {
             var text = API + 'function/' + params.database + "/" + params.functionName + '/' + params.parameters;

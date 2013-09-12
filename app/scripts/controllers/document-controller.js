@@ -24,7 +24,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
     } else {
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
-        $scope.incomings = Database.getEdge($scope.doc, 'in');
+        //$scope.incomings = Database.getEdge($scope.doc, 'in');
         $scope.outgoings = Database.getEdge($scope.doc, 'out');
         $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
     }
@@ -141,7 +141,7 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
     $scope.limit = 20;
     $scope.queries = new Array;
     $scope.added = new Array;
-    $scope.queryText = "select * from " + $scope.type.linkedClass;
+    $scope.queryText = $scope.type ? "select * from " + $scope.type.linkedClass : "";
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -150,7 +150,7 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
         mode: 'text/x-sql',
         extraKeys: {
             "Ctrl-Enter": function (instance) {
-                $scope.$apply(function(){
+                $scope.$apply(function () {
                     $scope.query();
                 });
             }
@@ -184,8 +184,26 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
     }
 }]);
 
+DocController.controller("DocumentPopoverLinkController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 
-function BaseEditController($scope, $routeParams,$route, $location, $modal, $q, DocumentApi, Database, Notification, CommandApi) {
+
+    $scope.addLink = function () {
+        if ($scope['outgoings'].indexOf($scope.popover.name) == -1) {
+
+            $scope['outgoings'].push($scope.popover.name);
+            var types = $scope.doc['@fieldTypes']
+            if (types) {
+                types = types + ',' + $scope.popover.name + '=e'
+            } else {
+                types = $scope.popover.name + '=e';
+            }
+            $scope.doc['@fieldTypes'] = types;
+        }
+        delete $scope.popover.name;
+    }
+
+}]);
+function BaseEditController($scope, $routeParams, $route, $location, $modal, $q, DocumentApi, Database, Notification, CommandApi) {
     $scope.database = $routeParams.database;
     $scope.rid = $routeParams.rid;
     $scope.label = 'Document';
@@ -222,32 +240,33 @@ function BaseEditController($scope, $routeParams,$route, $location, $modal, $q, 
 
     $scope.getLabelFor = function (label) {
         var props = Database.listPropertyForClass($scope.doc['@class'], label);
-        return label + (props.linkedClass != undefined ? " (" + (props.linkedClass) + ")" : "" );
+        var propsLabel = props != null ? (props.linkedClass != undefined ? " (" + (props.linkedClass) + ")" : "" ) : "";
+        return label + propsLabel;
     }
     $scope.delete = function () {
 
         var recordID = $scope.doc['@rid'];
         var clazz = $scope.doc['@class'];
-        Utilities.confirm($scope, $modal,$q, {
+        Utilities.confirm($scope, $modal, $q, {
             title: 'Warning!',
             body: 'You are removing ' + $scope.label + ' ' + recordID + '. Are you sure?',
             success: function () {
                 var command = "DELETE Vertex " + recordID;
                 console.log($scope.database);
-                DocumentApi.deleteDocument($scope.database,recordID,function(data){
+                DocumentApi.deleteDocument($scope.database, recordID, function (data) {
                     var clazz = $scope.doc['@class'];
                     $location.path('/database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
                 });
                 /*CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
-                    var clazz = $scope.doc['@class'];
-                    $location.path('database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
-                });*/
+                 var clazz = $scope.doc['@class'];
+                 $location.path('database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
+                 });*/
             }
         });
     }
 
     $scope.deleteField = function (name) {
-        Utilities.confirm($scope, $modal,$q, {
+        Utilities.confirm($scope, $modal, $q, {
             title: 'Warning!',
             body: 'You are removing field ' + name + ' from ' + $scope.label + ' ' + $scope.doc['@rid'] + '. Are you sure?',
             success: function () {
