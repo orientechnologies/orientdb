@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.hazelcast;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -178,6 +179,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throws ODistributedException {
     final Map<String, Object> result = new HashMap<String, Object>();
 
+    iTask.setNodeSource(getLocalNodeId());
+
     // SYNCHRONOUS
     iTask.setMode(EXECUTION_MODE.SYNCHRONOUS);
     propagateRemoteExecution(iTask, iReplicationData.synchReplicas, result);
@@ -197,7 +200,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final EXECUTION_MODE mode = iTask.getMode();
 
-    ODistributedServerLog.debug(this, iTask.getNodeSource(), iNodes.toString(), DIRECTION.OUT,
+    ODistributedServerLog.debug(this, iTask.getNodeSource(), Arrays.toString(iNodes), DIRECTION.OUT,
         "propagate to %s nodes %s oper=%d.%d", mode, iTask.getName().toUpperCase(), iTask.getRunId(), iTask.getOperationSerial());
 
     for (String nodeId : iNodes) {
@@ -463,7 +466,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   private void checkForConflicts(OAbstractReplicatedTask<? extends Object> taskToPropagate, Object localResult,
       final Map<String, Object> remoteResults) {
-    
+
     for (Entry<String, Object> entry : remoteResults.entrySet()) {
       final String remoteNode = entry.getKey();
       final Object remoteResult = entry.getValue();
@@ -807,12 +810,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public Set<String> getOnlineRemoteNodeIdsBut(final String... iExcludeNodes) {
     final Set<String> otherNodes = remoteClusterNodes.keySet();
 
-    final Set<String> set = new HashSet<String>(otherNodes.size());
-    for (String item : remoteClusterNodes.keySet()) {
-      if (isOfflineNode(item))
-        // SKIP IT BECAUSE IS NOT ONLINE YET
-        // TODO: SPEED UP THIS CHECKING THE NODE IN ALIGNMENT STATES?
-        continue;
+    final Set<String> set = new HashSet<String>(otherNodes.size()+1);
+    for (String item : otherNodes) {
+//      if (isOfflineNode(item))
+//        // SKIP IT BECAUSE IS NOT ONLINE YET
+//        // TODO: SPEED UP THIS CHECKING THE NODE IN ALIGNMENT STATES?
+//        continue;
 
       boolean include = true;
       for (String excludeNode : iExcludeNodes)
