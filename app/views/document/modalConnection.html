@@ -43,6 +43,6 @@
 	</div>
 	<div class="modal-footer">
 		<button type="button" class="btn" ng-click="hide()">Close</button>
-		<button class="btn btn-primary" ng-click="modal.saved=true;hide();createLink()">Add link</button>
+		<button class="btn btn-primary" ng-disabled="added.length==0" ng-click="modal.saved=true;hide();createLink()">Add link</button>
 	</div>
 </div>

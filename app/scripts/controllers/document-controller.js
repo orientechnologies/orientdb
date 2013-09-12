@@ -153,7 +153,8 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
                 $scope.$apply(function () {
                     $scope.query();
                 });
-            }
+            },
+            "Ctrl-Space": "autocomplete"
         }
     };
     $scope.query = function () {

@@ -41,8 +41,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
                 }
-                //if ($scope.functions.length > 0)
-                //    $scope.showInConsole($scope.functions[0]);
+                if ($scope.functions.length > 0)
+                    $scope.showInConsole($scope.functions[0]);
             }
         });
 
