@@ -565,7 +565,7 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
     resource.executeFunction = function (params, callback, error) {
         var startTime = new Date().getTime();
         var verbose = params.verbose != undefined ? params.verbose : true;
-        console.log(params.functionName)
+//        console.log(params.functionName)
         if (params.parameters == '') {
             var text = API + 'function/' + params.database + "/" + params.functionName;
         }

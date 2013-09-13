@@ -27,7 +27,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.resultExecute = undefined;
 
     $scope.parametersToExecute = new Array;
-    $scope.parametersToExecute1 = {0: '', 1: ''};
 
     $scope.isNewFunction = false;
 
@@ -41,8 +40,10 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
                 }
+
                 if ($scope.functions.length > 0)
                     $scope.showInConsole($scope.functions[0]);
+
             }
         });
 
@@ -53,7 +54,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.getListFunction();
 
     $scope.removeParam = function (index) {
-        console.log('aaa')
         if ($scope.functionToExecute != undefined) {
             var numPar = parseInt($scope.functionToExecute['parameters']);
 
@@ -93,7 +93,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             for (i in $scope.parametersToExecute) {
                 buildedParams = buildedParams.concat($scope.parametersToExecute[i] + '/');
             }
-            console.log(buildedParams);
 
             FunctionApi.executeFunction({database: $routeParams.database, functionName: $scope.nameFunction, parameters: buildedParams, limit: $scope.limit}, function (data) {
                 if (data.result) {
@@ -109,7 +108,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.calculateNumParameters = function () {
         if ($scope.functionToExecute != undefined) {
-            console.log($scope.functionToExecute['parameters']);
             var numPar = parseInt($scope.functionToExecute['parameters']);
             var i = 0;
             var result = new Array;
@@ -132,7 +130,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
 
         $scope.$watch('inParams.length', function (data) {
-            console.log(data);
             if (data) {
                 $scope.parametersToExecute = new Array(data);
             }
@@ -147,11 +144,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
 
     $scope.modificataLang = function (lang) {
-        console.log(lang);
         $scope.functionToExecute['language'] = lang;
     }
     $scope.createNewFunction = function () {
-
 
         var newDoc = DocumentApi.createNewDoc('ofunction');
         $scope.showInConsole(newDoc);
@@ -165,7 +160,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             if ($scope.isNewFunction == true) {
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
-                        $scope.refreshPage();
+
 
                     }
                 );
@@ -173,7 +168,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             else {
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                     $scope.getListFunction();
-                    $scope.refreshPage();
                 });
             }
         }
