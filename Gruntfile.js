@@ -5,10 +5,7 @@ var red,reset;
 red   = '\u001b[31m';
 reset = '\u001b[0m';
 
-if(!process.env['ORIENTDB_HOME']){
-    console.log(red + 'No ORIENTDB_HOME found.' + reset) ;
-    process.exit(1);
-}
+
 var mountFolder = function (connect, dir) {
   return connect.static(require('path').resolve(dir));
 };
@@ -306,6 +303,7 @@ module.exports = function (grunt) {
     ]);
 
     grunt.registerTask('build', [
+        'studiodist',
         'clean:dist',
         // 'jshint',
         // 'test',
@@ -325,4 +323,10 @@ module.exports = function (grunt) {
     ]);
 
     grunt.registerTask('default', ['build']);
+    grunt.registerTask('studiodist', [],function(){
+        if(!process.env['ORIENTDB_HOME']){
+            console.log(red + 'No ORIENTDB_HOME found.' + reset) ;
+            process.exit(1);
+        }
+    });
 };
