@@ -11,13 +11,14 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         formScope.deleteField = scope.deleteField;
         formScope.options = new Array;
         formScope.types = Database.getSupportedTypes();
+        formScope.fieldTypes = new Array;
         formScope.editorOptions = {
             lineWrapping: true,
             lineNumbers: true,
             readOnly: false,
             mode: 'application/json',
             onChange: function (_editor) {
-                console.log(_editor);
+
             }
         };
         formScope.onLoadEditor = function (_editor) {
@@ -102,7 +103,13 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             reader.readAsDataURL(files[0]);
         }
         scope.$watch("headers",function(data){
+
+            data.forEach(function(elem,idx,array){
+                formScope.fieldTypes[elem] = formScope.getTemplate(elem);
+            }) ;
+            console.log(formScope.fieldTypes);
             formScope.headers = data;
+
         });
         var el = angular.element($compile(response.data)(formScope));
         element.empty();

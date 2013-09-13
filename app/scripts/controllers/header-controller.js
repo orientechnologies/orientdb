@@ -11,7 +11,7 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
                 { name: "schema", link: '#/database/' + data + '/schema', icon: "icon-tasks"},
                 { name: "security", link: '#/database/' + data + '/users', icon: 'icon-user'},
                 { name: "functions", link: '#/database/' + data + '/functions', icon: 'icon-signal'},
-                { name: "DB", link: '#/database/' + data + '/db', icon: 'icon-cloud'}
+                { name: "DB", link: '#/database/' + data + '/db', icon: 'icon-book'}
 
             ];
         }

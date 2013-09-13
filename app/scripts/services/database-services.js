@@ -1,7 +1,7 @@
 var database = angular.module('database.services', ['ngResource']);
 
-//var API = '/api/';
-var API = '/';
+var API = '/api/';
+//var API = '/';
 var DatabaseResolve = {
     current: function (Database, $q, $route, $location, Spinner) {
         var deferred = $q.defer();
@@ -366,7 +366,6 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             var type = undefined;
             var self = this;
             if (fieldTypes) {
-                console.log(fieldTypes);
                 fieldTypes.split(",").forEach(function (element, index, array) {
                     element.split("=").forEach(function (elem, i, a) {
                         if (i == 0 && elem == name) {
