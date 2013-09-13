@@ -8,7 +8,6 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         var formScope = scope.$new(true);
         formScope.doc = scope.doc;
         formScope.database = scope.database;
-        formScope.headers = scope.headers;
         formScope.deleteField = scope.deleteField;
         formScope.options = new Array;
         formScope.types = Database.getSupportedTypes();
@@ -102,6 +101,9 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             }
             reader.readAsDataURL(files[0]);
         }
+        scope.$watch("headers",function(data){
+            formScope.headers = data;
+        });
         var el = angular.element($compile(response.data)(formScope));
         element.empty();
         element.append(el);

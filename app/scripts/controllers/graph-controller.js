@@ -212,6 +212,7 @@ GrapgController.controller("VertexModalBrowseController",['$scope','$routeParams
 	$scope.createEdges = function(){
 
 		var command;
+        console.log($scope.label);
 		if($scope.label.contains('in_')){
 			command = "CREATE EDGE " + $scope.label.replace("in_","") + " FROM [" + $scope.added + "]" + " TO " + $scope.originRid;	
 		}else {
