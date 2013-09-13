@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -48,8 +49,8 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
   }
 
   public OAlignRequestTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final long iLastRunId, final long iLastOperationId) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode);
+      final long iLastRunId, final long iLastOperationId) {
+    super(iServer, iDistributedSrvMgr, iDbName);
     lastRunId = iLastRunId;
     lastOperationId = iLastOperationId;
   }
@@ -107,7 +108,6 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
 
           operation.setNodeSource(localNode);
           operation.setDatabaseName(databaseName);
-          operation.setMode(EXECUTION_MODE.SYNCHRONOUS);
 
           tasks.addTask(operation);
           positions.add(pos);
@@ -132,8 +132,8 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
       totAligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    dManager.sendOperation2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager, databaseName,
-        EXECUTION_MODE.FIRE_AND_FORGET, totAligned), EXECUTION_MODE.FIRE_AND_FORGET);
+    dManager.sendTask2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager, databaseName, totAligned),
+        EXECUTION_MODE.ASYNCHRONOUS, new HashMap<String, Object>());
 
     return totAligned;
   }
@@ -145,7 +145,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
         "flushing aligning %d operations db=%s...", tasks.getTasks(), databaseName);
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    dManager.sendOperation2Node(getNodeSource(), tasks, EXECUTION_MODE.FIRE_AND_FORGET);
+    dManager.sendTask2Node(getNodeSource(), tasks, EXECUTION_MODE.SYNCHRONOUS, new HashMap<String, Object>());
 
     final int aligned = tasks.getTasks();
 

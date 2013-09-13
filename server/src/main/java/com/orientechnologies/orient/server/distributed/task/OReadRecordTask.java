@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
  * Execute a read of a record from a distributed node.
@@ -41,9 +40,9 @@ public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
   public OReadRecordTask() {
   }
 
-  public OReadRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final ORecordId iRid) {
-    super(iServer, iDistributedSrvMgr, iDbName, EXECUTION_MODE.SYNCHRONOUS);
+  public OReadRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
+      final ORecordId iRid) {
+    super(iServer, iDistributedSrvMgr, iDbName);
     rid = iRid;
   }
 

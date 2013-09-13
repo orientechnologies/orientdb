@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,7 +36,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 public interface ODistributedServerManager {
 
   public enum EXECUTION_MODE {
-    SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
+    SYNCHRONOUS, ASYNCHRONOUS
   }
 
   public boolean isEnabled();
@@ -60,10 +61,7 @@ public interface ODistributedServerManager {
   public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationConfig)
       throws ExecutionException;
 
-  public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask, EXECUTION_MODE iExecutionMode)
-      throws ODistributedException;
-
-  public Map<String, Object> propagate(OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationData)
+  public Map<String, Object> replicate(OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationData)
       throws ODistributedException;
 
   public String getLocalNodeId();
@@ -118,4 +116,7 @@ public interface ODistributedServerManager {
   public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
 
   public void notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
+
+  public Future<Object> sendTask2Node(String iNodeId, OAbstractRemoteTask<? extends Object> iTask, EXECUTION_MODE iMode,
+      Map<String, Object> iResults);
 }

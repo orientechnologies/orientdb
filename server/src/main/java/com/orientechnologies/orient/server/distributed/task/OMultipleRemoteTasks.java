@@ -42,7 +42,7 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
   public OMultipleRemoteTasks(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
       final EXECUTION_MODE iMode) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode);
+    super(iServer, iDistributedSrvMgr, iDbName);
   }
 
   @Override

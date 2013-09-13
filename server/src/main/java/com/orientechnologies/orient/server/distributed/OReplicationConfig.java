@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-
 /**
  * Replication configuration with all the information to replicate the record.
  * 
@@ -26,4 +25,5 @@ public class OReplicationConfig {
   public String   masterNode;
   public String[] synchReplicas;
   public String[] asynchReplicas;
+  public int      minSuccessfulOperations = 0;
 }

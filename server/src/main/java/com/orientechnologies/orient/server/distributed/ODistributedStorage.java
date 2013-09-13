@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
@@ -69,9 +68,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   protected final OStorageSynchronizer      dbSynchronizer;
 
   protected boolean                         eventuallyConsistent = true;
-  protected EXECUTION_MODE                  createRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
-  protected EXECUTION_MODE                  updateRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
-  protected EXECUTION_MODE                  deleteRecordMode     = EXECUTION_MODE.SYNCHRONOUS;
 
   public ODistributedStorage(final OServer iServer, final OStorageSynchronizer dbSynchronizer, final OStorageEmbedded wrapped) {
     this.serverInstance = iServer;
@@ -113,11 +109,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
     try {
       // EXECUTE IT LOCALLY
-      return dManager.execute(
-          null,
-          null,
-          new OSQLCommandTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), createRecordMode, iCommand
-              .getText()), replicationData);
+      return dManager.execute(null, null,
+          new OSQLCommandTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), iCommand.getText()),
+          replicationData);
 
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route COMMAND operation to the distributed node", e);
@@ -146,8 +140,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
       else
         result = dManager.execute(clusterName, iRecordId,
-            new OCreateRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), createRecordMode,
-                iRecordId, iContent, iRecordVersion, iRecordType), replicationData);
+            new OCreateRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), iRecordId, iContent,
+                iRecordVersion, iRecordType), replicationData);
 
       iRecordId.clusterPosition = ((OPhysicalPosition) result).clusterPosition;
 
@@ -203,8 +197,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
       else
         result = dManager.execute(clusterName, iRecordId,
-            new OUpdateRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), updateRecordMode,
-                iRecordId, iContent, iVersion, iRecordType), replicationData);
+            new OUpdateRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), iRecordId, iContent,
+                iVersion, iRecordType), replicationData);
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route UPDATE_RECORD operation against %s to the distributed node", e, iRecordId);
     }
@@ -231,7 +225,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
       else
         result = dManager.execute(clusterName, iRecordId,
-            new ODeleteRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), updateRecordMode,
+            new ODeleteRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
                 iRecordId, iVersion), replicationData);
     } catch (ExecutionException e) {
       handleDistributedException("Cannot route DELETE_RECORD operation against %s to the distributed node", e, iRecordId);

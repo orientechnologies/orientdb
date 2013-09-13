@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
  * Distributed create record task used for synchronization.
@@ -35,8 +34,8 @@ public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicat
   }
 
   public OAbstractRecordReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode);
+      final String iDbName, final ORecordId iRid, final ORecordVersion iVersion) {
+    super(iServer, iDistributedSrvMgr, iDbName);
     this.rid = iRid;
     this.version = iVersion;
   }
@@ -49,6 +48,15 @@ public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicat
     super(iRunId, iOperationId);
     this.rid = iRid;
     this.version = iVersion;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
+    super.copy(iCopy);
+    ((OAbstractRecordReplicatedTask<T>) iCopy).rid = rid;
+    ((OAbstractRecordReplicatedTask<T>) iCopy).version = version;
+    return iCopy;
   }
 
   @Override

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -44,13 +43,20 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   }
 
   public OSQLCommandTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
-      final EXECUTION_MODE iMode, final String iCommand) {
-    super(iServer, iDistributedSrvMgr, databaseName, iMode);
+      final String iCommand) {
+    super(iServer, iDistributedSrvMgr, databaseName);
     text = iCommand;
   }
 
   public OSQLCommandTask(final long iRunId, final long iOperationId, final String iCommand) {
     text = iCommand;
+  }
+
+  @Override
+  public OSQLCommandTask copy() {
+    final OSQLCommandTask copy = (OSQLCommandTask) super.copy(new OSQLCommandTask());
+    copy.text = text;
+    return copy;
   }
 
   /**
@@ -73,17 +79,17 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
 
     final ODatabaseDocumentTx db = openDatabase();
     try {
-      Object result = openDatabase().command(new OCommandSQL(text)).execute();
-
-      if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-        return result;
-
-      // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
-      return null;
+      return openDatabase().command(new OCommandSQL(text)).execute();
 
     } finally {
       closeDatabase(db);
     }
+  }
+
+  public OSQLCommandTask copy(final OSQLCommandTask iCopy) {
+    super.copy(iCopy);
+    iCopy.text = text;
+    return iCopy;
   }
 
   @Override

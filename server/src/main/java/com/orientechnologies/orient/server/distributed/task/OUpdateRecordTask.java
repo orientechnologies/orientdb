@@ -29,7 +29,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -49,8 +48,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
   }
 
   public OUpdateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
+      final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+    super(iServer, iDistributedSrvMgr, iDbName, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
@@ -60,6 +59,14 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
     super(iRunId, iOperationId, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
+  }
+
+  @Override
+  public OUpdateRecordTask copy() {
+    final OUpdateRecordTask copy = (OUpdateRecordTask) super.copy(new OUpdateRecordTask());
+    copy.content = content;
+    copy.recordType = recordType;
+    return copy;
   }
 
   @Override

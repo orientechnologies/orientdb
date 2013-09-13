@@ -23,7 +23,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
@@ -57,19 +56,21 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   }
 
   public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String databaseName, final EXECUTION_MODE iMode) {
-    this(iServer, iDistributedSrvMgr, databaseName, iMode, iDistributedSrvMgr.incrementDistributedSerial(databaseName));
+      final String databaseName) {
+    this(iServer, iDistributedSrvMgr, databaseName, iDistributedSrvMgr.incrementDistributedSerial(databaseName));
   }
 
   public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String databaseName, final EXECUTION_MODE iMode, final long iOperationSerial) {
-    super(iServer, iDistributedSrvMgr, databaseName, iMode);
+      final String databaseName, final long iOperationSerial) {
+    super(iServer, iDistributedSrvMgr, databaseName);
     // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED
     this.operationSerial = iOperationSerial;
 
     ODistributedServerLog.debug(this, getNodeSource(), nodeDestination, DIRECTION.OUT,
         "creating operation id %d.%d for db=%s class=%s", runId, operationSerial, databaseName, getClass().getSimpleName());
   }
+
+  public abstract OAbstractReplicatedTask<T> copy();
 
   public abstract OPERATION_TYPES getOperationType();
 
@@ -81,13 +82,7 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   @SuppressWarnings("unchecked")
   public T call() throws Exception {
     // EXECUTE IT LOCALLY
-    final Object localResult = getDistributedServerManager().enqueueLocalExecution(this);
-
-    if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-      return (T) localResult;
-
-    // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
-    return null;
+    return (T) getDistributedServerManager().enqueueLocalExecution(this);
   }
 
   /**
@@ -102,6 +97,14 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   public void handleConflict(final String iRemoteNode, Object localResult, Object remoteResult) {
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
+    super.copy(iCopy);
+    ((OAbstractReplicatedTask<T>) iCopy).align = align;
+    return iCopy;
+  }
+
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(getNodeSource());
@@ -109,7 +112,6 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     out.writeUTF(databaseName);
     out.writeLong(runId);
     out.writeLong(operationSerial);
-    out.writeByte(mode.ordinal());
     out.writeBoolean(align);
   }
 
@@ -121,7 +123,6 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     databaseName = in.readUTF();
     runId = in.readLong();
     operationSerial = in.readLong();
-    mode = EXECUTION_MODE.values()[in.readByte()];
     align = in.readBoolean();
   }
 

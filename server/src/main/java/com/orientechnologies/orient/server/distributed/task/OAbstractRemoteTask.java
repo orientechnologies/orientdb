@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 
 /**
@@ -46,7 +45,6 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
   protected long              runId;
   protected long              operationSerial;
 
-  protected EXECUTION_MODE    mode;
   protected boolean           inheritedDatabase;
   protected transient OServer serverInstance;
 
@@ -67,13 +65,11 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     this.operationSerial = iOperationId;
   }
 
-  public OAbstractRemoteTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
-      final EXECUTION_MODE iMode) {
+  public OAbstractRemoteTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName) {
     this.serverInstance = iServer;
 
     this.setNodeSource(iDistributedSrvMgr.getLocalNodeId());
     this.databaseName = databaseName;
-    this.mode = iMode;
 
     this.runId = iDistributedSrvMgr.getRunId();
     this.operationSerial = -1;
@@ -110,7 +106,6 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     out.writeUTF(databaseName);
     out.writeLong(runId);
     out.writeLong(operationSerial);
-    out.writeByte(mode.ordinal());
   }
 
   @Override
@@ -121,7 +116,6 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     databaseName = in.readUTF();
     runId = in.readLong();
     operationSerial = in.readLong();
-    mode = EXECUTION_MODE.values()[in.readByte()];
   }
 
   public String getNodeSource() {
@@ -146,14 +140,6 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
 
   public long getRunId() {
     return runId;
-  }
-
-  public EXECUTION_MODE getMode() {
-    return mode;
-  }
-
-  public void setMode(final EXECUTION_MODE iMode) {
-    mode = iMode;
   }
 
   public void setNodeSource(final String nodeSource) {
@@ -205,5 +191,16 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
 
   public ODistributedServerManager getDistributedServerManager() {
     return serverInstance.getDistributedManager();
+  }
+
+  public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
+    iCopy.nodeSource = nodeSource;
+    iCopy.nodeDestination = nodeDestination;
+    iCopy.databaseName = databaseName;
+    iCopy.runId = runId;
+    iCopy.operationSerial = operationSerial;
+    iCopy.inheritedDatabase = inheritedDatabase;
+    iCopy.serverInstance = serverInstance;
+    return iCopy;
   }
 }
