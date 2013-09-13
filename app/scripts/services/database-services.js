@@ -1,7 +1,6 @@
 var database = angular.module('database.services', ['ngResource']);
 
-//var API = '/api/';
-var API = '/';
+
 var DatabaseResolve = {
     current: function (Database, $q, $route, $location, Spinner) {
         var deferred = $q.defer();

@@ -2,6 +2,7 @@
 var lrSnippet = require('grunt-contrib-livereload/lib/utils').livereloadSnippet;
 var proxySnippet = require('grunt-connect-proxy/lib/utils').proxyRequest;
 var red,reset;
+var fs = require('fs');
 red   = '\u001b[31m';
 reset = '\u001b[0m';
 
@@ -14,10 +15,12 @@ module.exports = function (grunt) {
   // load all grunt tasks
   require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
+  var dist =  process.env['ORIENTDB_HOME'];
+  dist = ((dist.lastIndexOf('/') +1 == dist.length) ? dist  : dist + "/");
   // configurable paths
   var yeomanConfig = {
     app: 'app',
-    dist: process.env['ORIENTDB_HOME'] + '/www/studio'
+    dist: dist  + 'www/studio'
   };
 
   try {
