@@ -452,23 +452,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   private void checkForConflicts(final OAbstractReplicatedTask<? extends Object> taskToPropagate, final Object localResult,
       final Map<String, Object> remoteResults, final int minSuccessfulOperations) {
 
+    int successfulReplicatedNodes = 0;
+
     for (Entry<String, Object> entry : remoteResults.entrySet()) {
       final String remoteNode = entry.getKey();
       final Object remoteResult = entry.getValue();
 
-      if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
-          || (localResult != null && !localResult.equals(remoteResult))) {
-        // CONFLICT
-        taskToPropagate.handleConflict(remoteNode, localResult, remoteResult);
-      }
-    }
-
-    // CHECK FOR THE MINIMUM RESULT
-    int successfulReplicatedNodes = 0;
-    // COUNT REMOTE RESULTS
-    for (Entry<String, Object> entry : remoteResults.entrySet()) {
-      if (!(entry.getValue() instanceof Exception))
+      if (!(remoteResult instanceof Exception)) {
         successfulReplicatedNodes++;
+
+        if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
+            || (localResult != null && !localResult.equals(remoteResult))) {
+          // CONFLICT
+          taskToPropagate.handleConflict(remoteNode, localResult, remoteResult);
+        }
+      }
     }
 
     if (successfulReplicatedNodes < minSuccessfulOperations)
