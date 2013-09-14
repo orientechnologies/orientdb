@@ -31,7 +31,12 @@ public class ONoOperationTask extends OAbstractReplicatedTask<Boolean> {
 
   public ONoOperationTask(final OAbstractReplicatedTask<?> iTaskToClone) {
     super(iTaskToClone.getServerInstance(), iTaskToClone.getDistributedServerManager(), iTaskToClone.getDatabaseName(),
-        iTaskToClone.getMode(), iTaskToClone.getOperationSerial());
+        iTaskToClone.getOperationSerial());
+  }
+
+  @Override
+  public ONoOperationTask copy() {
+    return (ONoOperationTask) super.copy(new ONoOperationTask());
   }
 
   @Override

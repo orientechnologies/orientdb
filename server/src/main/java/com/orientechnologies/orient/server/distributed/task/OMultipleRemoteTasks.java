@@ -42,30 +42,31 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
   public OMultipleRemoteTasks(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
       final EXECUTION_MODE iMode) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode);
+    super(iServer, iDistributedSrvMgr, iDbName);
   }
 
   @Override
   public Object[] call() throws Exception {
-    ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
+    final Object[] result;
 
-    final Object[] result = new Object[tasks.size()];
+    final ODistributedServerManager dServer = getDistributedServerManager();
 
     int executedTasks = 0;
     try {
+      result = new Object[tasks.size()];
+
+      ODistributedServerLog.warn(this, dServer.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
 
       for (; executedTasks < tasks.size(); ++executedTasks) {
         final OAbstractRemoteTask<?> task = tasks.get(executedTasks);
 
-        getDistributedServerManager().notifyQueueWaiters(task.getDatabaseName(), task.getRunId(), task.getOperationSerial() - 1,
-            true);
-
+        // if (dServer.alignOperation(task))
         result[executedTasks] = task.call();
       }
     } finally {
 
-      ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+      ODistributedServerLog.warn(this, dServer.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
           "****** END EXECUTING ALIGNMENT BLOCK db=%s tasks=%d/%d ******", databaseName, executedTasks, tasks.size());
     }
 
@@ -127,4 +128,10 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
   public OAbstractReplicatedTask<?> getTask(final int i) {
     return tasks.get(i);
   }
+
+  @Override
+  public long getTimeout() {
+    return DEFAULT_TIMEOUT + (DEFAULT_TIMEOUT / 100 * tasks.size());
+  }
+
 }

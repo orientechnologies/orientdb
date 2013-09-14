@@ -104,7 +104,7 @@ public class ODatabaseJournal {
   private OStorage                  storage;
   private OFile                     file;
   private boolean                   synchEnabled          = false;
-  private final long[]              lastExecuted          = new long[] { -1, -1 };
+  private final long[]              lastExecuted          = new long[] { -1, -1, -1 };
 
   public ODatabaseJournal(final OServer iServer, final ODistributedServerManager iCluster, final OStorage iStorage,
       final String iStartingDirectory) throws IOException {
@@ -127,6 +127,7 @@ public class ODatabaseJournal {
     final long[] lastOp = getLastJournaledOperationId(null);
     lastExecuted[0] = lastOp[0];
     lastExecuted[1] = lastOp[1];
+    lastExecuted[2] = -1;
 
     ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
         "Loaded journal for database '%s', last operation=%d.%d", iStorage.getName(), lastExecuted[0], lastExecuted[1]);
@@ -255,7 +256,7 @@ public class ODatabaseJournal {
   public long[] getLastExecutedOperationId() {
     lock.lock();
     try {
-      return new long[] { lastExecuted[0], lastExecuted[1] };
+      return new long[] { lastExecuted[0], lastExecuted[1], lastExecuted[2] };
     } finally {
       lock.unlock();
     }
@@ -664,23 +665,34 @@ public class ODatabaseJournal {
    * @param iRunId
    * @param iOperationSerial
    * @param iForce
+   * @return The delta of changes skipped
    */
-  public void updateLastOperation(final long iRunId, final long iOperationSerial, final boolean iForce) {
+  public boolean updateLastOperation(final long iRunId, final long iOperationSerial, final boolean iForce) {
     lock.lock();
     try {
-      if (!iForce && lastExecuted[0] == iRunId && lastExecuted[1] >= iOperationSerial) {
+      final boolean updated;
+
+      final boolean alreadyExecuted = lastExecuted[0] == iRunId && lastExecuted[1] >= iOperationSerial;
+
+      if (alreadyExecuted && !iForce) {
         // ALREADY UPDATED
         ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
             "skipped updating journal last task db='%s' op=%d.%d found=%d.%d", storage.getName(), iRunId, iOperationSerial,
             lastExecuted[0], lastExecuted[1]);
-        return;
+        updated = false;
+      } else {
+        // UPDATE IT
+        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+            "updating journal last task db='%s' op=%d.%d found=%d.%d force=%s", storage.getName(), iRunId, iOperationSerial,
+            lastExecuted[0], lastExecuted[1], iForce);
+
+        lastExecuted[0] = iRunId;
+        lastExecuted[1] = iOperationSerial;
+        lastExecuted[2] = System.currentTimeMillis();
+        updated = true;
       }
 
-      ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
-          "updating journal last task db='%s' op=%d.%d", storage.getName(), iRunId, iOperationSerial);
-
-      lastExecuted[0] = iRunId;
-      lastExecuted[1] = iOperationSerial;
+      return updated;
 
     } finally {
       lock.unlock();

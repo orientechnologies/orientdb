@@ -439,7 +439,11 @@ public enum OGlobalConfiguration {
       Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE);
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
+
+  // DISTRIBUTED
+  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
+      "Maximum timeout in milliseconds to wait in distributed queue before to check for new messages", Integer.class, 30000);
 
   private final String                 key;
   private final Object                 defValue;

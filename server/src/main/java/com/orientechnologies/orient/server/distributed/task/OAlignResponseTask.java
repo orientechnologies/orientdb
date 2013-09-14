@@ -23,7 +23,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
  * Distributed align response task to communicate the result of alignment.
@@ -40,8 +39,8 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
   }
 
   public OAlignResponseTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final int iAligned) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode);
+      final int iAligned) {
+    super(iServer, iDistributedSrvMgr, iDbName);
     aligned = iAligned;
   }
 
@@ -61,7 +60,7 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
       ODistributedServerLog.info(this, dManager.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
           "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
 
-      dManager.endAlignment(getNodeSource(), databaseName);
+      dManager.endAlignment(getNodeSource(), databaseName, aligned);
     }
     return null;
   }

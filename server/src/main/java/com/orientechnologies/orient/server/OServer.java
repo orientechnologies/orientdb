@@ -624,13 +624,14 @@ public class OServer {
       OServerHandler handler;
       for (OServerHandlerConfiguration h : configuration.handlers) {
         handler = (OServerHandler) Class.forName(h.clazz).newInstance();
+
+        if (handler instanceof ODistributedServerManager)
+          distributedManager = (ODistributedServerManager) handler;
+
         plugins.put(handler.getName(), handler);
 
         handler.config(this, h.parameters);
         handler.startup();
-
-        if (handler instanceof ODistributedServerManager)
-          distributedManager = (ODistributedServerManager) handler;
       }
     }
   }

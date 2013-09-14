@@ -31,7 +31,7 @@
     <artifactId>orientdb</artifactId>
     <packaging>pom</packaging>
 
-    <name>OrientDB Distribution</name>
+    <name>OrientDB Default Distribution</name>
 
     <properties>
         <VERSION>${project.version}</VERSION>
