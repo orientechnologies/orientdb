@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.server.OServer;
@@ -42,6 +44,8 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * 
  */
 public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
+  private static final int   MAX_TIMEOUT      = 60000;
+
   private static final long  serialVersionUID = 1L;
 
   protected long             lastRunId;
@@ -138,9 +142,17 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
     final Future<Object> future = dManager.sendTask2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager,
         databaseName, totAligned), EXECUTION_MODE.ASYNCHRONOUS, new HashMap<String, Object>());
 
-    if (future != null)
+    if (future != null) {
       // WAIT FOR THE TASK IS COMPLETED
-      future.get();
+      try {
+        future.get(getTimeout(), TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        // TIMEOUT
+        ODistributedServerLog.error(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
+            "timeout on alignment request db=%s...", databaseName);
+        future.cancel(true);
+      }
+    }
 
     return totAligned;
   }
@@ -155,8 +167,16 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
     final Future<Object> future = dManager.sendTask2Node(getNodeSource(), tasks, EXECUTION_MODE.SYNCHRONOUS,
         new HashMap<String, Object>());
 
-    if (future != null)
-      future.get();
+    if (future != null) {
+      try {
+        future.get(getTimeout(), TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        // TIMEOUT
+        ODistributedServerLog.error(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
+            "timeout on flushing alignment operations db=%s...", databaseName);
+        future.cancel(true);
+      }
+    }
 
     final int aligned = tasks.getTasks();
 
@@ -205,5 +225,10 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
   @Override
   public String getPayload() {
     return lastRunId + "." + lastOperationId;
+  }
+
+  @Override
+  public long getTimeout() {
+    return MAX_TIMEOUT;
   }
 }

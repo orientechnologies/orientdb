@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -82,7 +83,18 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   @SuppressWarnings("unchecked")
   public T call() throws Exception {
     // EXECUTE IT LOCALLY
-    return (T) getDistributedServerManager().enqueueLocalExecution(this);
+    final ORef<Long> journalOffset = new ORef<Long>();
+
+    final T result;
+    try {
+      result = (T) getDistributedServerManager().enqueueLocalExecution(this, journalOffset);
+      getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, true);
+      return result;
+
+    } catch (Exception e) {
+      getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, false);
+      throw e;
+    }
   }
 
   /**

@@ -128,4 +128,10 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
   public OAbstractReplicatedTask<?> getTask(final int i) {
     return tasks.get(i);
   }
+
+  @Override
+  public long getTimeout() {
+    return DEFAULT_TIMEOUT + (DEFAULT_TIMEOUT / 100 * tasks.size());
+  }
+
 }

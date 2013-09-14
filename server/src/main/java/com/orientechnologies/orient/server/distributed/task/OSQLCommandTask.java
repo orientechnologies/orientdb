@@ -37,6 +37,8 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
 public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   private static final long serialVersionUID = 1L;
 
+  private static final long CMD_TIMEOUT      = 60000;
+
   protected String          text;
 
   public OSQLCommandTask() {
@@ -122,5 +124,10 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   @Override
   public String getPayload() {
     return text;
+  }
+
+  @Override
+  public long getTimeout() {
+    return CMD_TIMEOUT;
   }
 }

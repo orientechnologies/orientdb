@@ -30,6 +30,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.FileSystemXmlConfig;
@@ -45,6 +47,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -75,22 +78,22 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
-  protected static final String        SYNCH_EXECUTOR_NAME  = "OHazelcastPlugin::SynchExecutor";
-  protected static final String        ASYNCH_EXECUTOR_NAME = "OHazelcastPlugin::AsynchExecutor";
+  protected static final String        SYNCH_EXECUTOR_NAME     = "OHazelcastPlugin::SynchExecutor";
+  protected static final String        ASYNCH_EXECUTOR_NAME    = "OHazelcastPlugin::AsynchExecutor";
+  protected static final long          RESET_OPERATION_TIMEOUT = 8000;
 
   protected int                        nodeNumber;
   protected String                     localNodeId;
-  protected String                     configFile           = "hazelcast.xml";
-  protected Map<String, Member>        remoteClusterNodes   = new ConcurrentHashMap<String, Member>();
-  private long                         executionTimeout     = 5000;
-  private final long                   REALIGN_DELAY_TIME   = 500;
+  protected String                     configFile              = "hazelcast.xml";
+  protected Map<String, Member>        remoteClusterNodes      = new ConcurrentHashMap<String, Member>();
+  protected final long                 REALIGN_DELAY_TIME      = 1000;
   protected long                       timeOffset;
-  protected long                       runId                = -1;
-  protected volatile String            status               = "starting";
-  protected Map<String, Boolean>       pendingAlignments    = new HashMap<String, Boolean>();
+  protected long                       runId                   = -1;
+  protected volatile String            status                  = "starting";
+  protected Map<String, Boolean>       pendingAlignments       = new HashMap<String, Boolean>();
   protected TimerTask                  alignmentTask;
   protected String                     membershipListenerRegistration;
-  protected Object                     lockQueue            = new Object();
+  protected Object                     lockQueue               = new Object();
 
   protected volatile HazelcastInstance hazelcastInstance;
 
@@ -235,9 +238,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final OAbstractRemoteTask<? extends Object> task = f.getKey();
 
         try {
-          results.put(task.getNodeDestination(), f.getValue().get());
+          results.put(task.getNodeDestination(), f.getValue().get(task.getTimeout(), TimeUnit.MILLISECONDS));
 
+        } catch (TimeoutException e) {
+          // TIMEOUT
+          ODistributedServerLog.error(this, getLocalNodeId(), task.getNodeDestination(), DIRECTION.OUT,
+              "timeout on replication of operation %d.%d task=%s, db=%s...", task, task.getRunId(), task.getOperationSerial(),
+              task.getDatabaseName());
+
+          f.getValue().cancel(true);
+
+          ODistributedExecutionCallback.handleTaskException(this, task, EXECUTION_MODE.SYNCHRONOUS, task.getNodeDestination(),
+              results, e);
         } catch (Throwable e) {
+          // ERROR
           ODistributedExecutionCallback.handleTaskException(this, task, EXECUTION_MODE.SYNCHRONOUS, task.getNodeDestination(),
               results, e);
         }
@@ -397,7 +411,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             "apply changes locally about %s against db=%s oper=%d.%d...", iTask.getName().toUpperCase(), dbName, iTask.getRunId(),
             iTask.getOperationSerial());
 
-        localResult = enqueueLocalExecution(iTask);
+        final ORef<Long> journalOffset = new ORef<Long>();
+
+        localResult = enqueueLocalExecution(iTask, journalOffset);
+
+        // OK, SET AS "COMMITTED" IN JOURNAL AFTER THE REMOTE OPERATION ARE COMPLETED
+        updateJournal(iTask, iTask.getDatabaseSynchronizer(), journalOffset.value, true);
 
         checkForConflicts(iTask, localResult, remoteResults, iReplicationData.minSuccessfulOperations);
 
@@ -430,18 +449,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final OReplicationConfig iReplicationData) throws Exception {
     OAbstractReplicatedTask<? extends Object> taskToPropagate = iTask;
     Object localResult = null;
+    final ORef<Long> journalOffset = new ORef<Long>();
     try {
       // LOCAL EXECUTION AVOID TO USE EXECUTORS
-      localResult = enqueueLocalExecution(iTask);
+      localResult = enqueueLocalExecution(iTask, journalOffset);
 
     } catch (Exception e) {
-      // ERROR: PROPAGATE A NO-OP TASK TO MAINTAIN THE TASK SEQUENCE
+      // ERROR: PROPAGATE A NO-OP TASK TO MAINTAIN THE TASK SEQUENCE AND SET AS "CANCELED" IN JOURNAL
+      updateJournal(iTask, iTask.getDatabaseSynchronizer(), journalOffset.value, false);
       taskToPropagate = new ONoOperationTask(iTask);
       throw e;
 
     } finally {
 
       final Map<String, Object> remoteResults = replicate(taskToPropagate, iReplicationData);
+
+      // OK, SET AS "COMMITTED" IN JOURNAL AFTER THE REMOTE OPERATION ARE COMPLETED
+      updateJournal(iTask, iTask.getDatabaseSynchronizer(), journalOffset.value, true);
 
       checkForConflicts(taskToPropagate, localResult, remoteResults, iReplicationData.minSuccessfulOperations);
     }
@@ -988,7 +1012,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public Object enqueueLocalExecution(final OAbstractReplicatedTask<? extends Object> iTask) throws Exception {
+  public Object enqueueLocalExecution(final OAbstractReplicatedTask<? extends Object> iTask, final ORef<Long> iOperationOffset)
+      throws Exception {
 
     final long opSerial = iTask.getOperationSerial();
     if (opSerial == -1)
@@ -1006,24 +1031,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       ODistributedServerLog.debug(this, iTask.getNodeSource(), iTask.getNodeDestination(), DIRECTION.IN,
           "local exec: pop operation=%d.%d, thread=%s", iTask.getRunId(), opSerial, Thread.currentThread().getName());
 
-      final OStorageSynchronizer dbSynchronizer = iTask.getDatabaseSynchronizer();
-
-      final long operationLogOffset = logOperation2Journal(dbSynchronizer, iTask);
+      iOperationOffset.value = logOperation2Journal(iTask.getDatabaseSynchronizer(), iTask);
 
       // EXECUTE IT LOCALLY
-      try {
-        final Object result = iTask.executeOnLocalNode();
+      return iTask.executeOnLocalNode();
 
-        // OK, SET AS COMMITTED
-        updateJournal(iTask, dbSynchronizer, operationLogOffset, true);
-
-        return result;
-
-      } catch (Exception e) {
-        // ERROR: SET AS CANCELED
-        updateJournal(iTask, dbSynchronizer, operationLogOffset, false);
-        throw e;
-      }
     } finally {
       notifyQueueWaiters(iTask.getDatabaseName(), iTask.getRunId(), opSerial, false);
     }
@@ -1034,7 +1046,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getLocalNodeAlias();
   }
 
-  private void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
+  public void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
       final long operationLogOffset, final boolean iSuccess) {
     try {
       if (iSuccess)
@@ -1062,39 +1074,57 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   private boolean waitForMyTurnInQueue(final OAbstractReplicatedTask<? extends Object> iTask) {
-    // MANAGE ORDER
-    final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iTask.getDatabaseName());
+    try {
+      // MANAGE ORDER
+      final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iTask.getDatabaseName());
 
-    while (true) {
-      if (!checkOperationSequence(iTask))
-        break;
+      while (true) {
+        if (!checkOperationSequence(iTask))
+          break;
 
-      final long opSerial = iTask.getOperationSerial();
+        final long opSerial = iTask.getOperationSerial();
 
-      synchronized (lockQueue) {
+        synchronized (lockQueue) {
 
-        final long[] lastExecutedOperation = dbSynchronizer.getLog().getLastExecutedOperationId();
+          final long[] lastExecutedOperation = dbSynchronizer.getLog().getLastExecutedOperationId();
 
-        if ((lastExecutedOperation[0] != iTask.getRunId() && opSerial > 1) // FIRST OF THE NEW RUN?
-            || (lastExecutedOperation[0] == iTask.getRunId() && lastExecutedOperation[1] != opSerial - 1)) {
-          // SLEEP UNTIL NEXT OPERATION
-          try {
-            final String tasksToWait = lastExecutedOperation[0] != iTask.getRunId() ? ">=1 (prev run)" : ""
-                + (opSerial - lastExecutedOperation[1] - 1);
+          if ((lastExecutedOperation[0] != iTask.getRunId() && opSerial > 1) // FIRST OF THE NEW RUN?
+              || (lastExecutedOperation[0] == iTask.getRunId() && lastExecutedOperation[1] != opSerial - 1)) {
 
-            ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.NONE,
-                "waiting for %s task(s) in queue %s, current=%d my=%d thread=%s", tasksToWait, iTask.getRunId(),
-                lastExecutedOperation[1], opSerial, Thread.currentThread().getName());
+            final long timeSinceLastJournalUpdate = System.currentTimeMillis() - lastExecutedOperation[2];
 
-            lockQueue.wait(OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong());
-          } catch (InterruptedException e) {
+            if (timeSinceLastJournalUpdate > RESET_OPERATION_TIMEOUT) {
+              lastExecutedOperation[1]++;
+
+              ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.NONE,
+                  "timeout expired waiting for operation, skip task %d.%d thread=%s", lastExecutedOperation[0],
+                  lastExecutedOperation[1], Thread.currentThread().getName());
+
+              dbSynchronizer.getLog().updateLastOperation(lastExecutedOperation[0], lastExecutedOperation[1], false);
+
+            } else
+              // SLEEP UNTIL NEXT OPERATION
+              try {
+                final String tasksToWait = lastExecutedOperation[0] != iTask.getRunId() ? ">=1 (prev run)" : ""
+                    + (opSerial - lastExecutedOperation[1] - 1);
+
+                ODistributedServerLog.debug(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.NONE,
+                    "waiting for %s task(s) queue=%s current=%d my=%d thread=%s", tasksToWait, iTask.getRunId(),
+                    lastExecutedOperation[1], opSerial, Thread.currentThread().getName());
+
+                lockQueue.wait(OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong());
+              } catch (InterruptedException e) {
+              }
+          } else {
+            // OK!
+            ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
+            return true;
           }
-        } else {
-          // OK!
-          ODistributedThreadLocal.INSTANCE.set(iTask.getNodeSource());
-          return true;
         }
       }
+    } catch (Throwable r) {
+      ODistributedServerLog.error(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.NONE,
+          "error while checking for queue sequence, queue=%s, thread=%s", iTask.getRunId(), Thread.currentThread().getName());
     }
 
     return false;

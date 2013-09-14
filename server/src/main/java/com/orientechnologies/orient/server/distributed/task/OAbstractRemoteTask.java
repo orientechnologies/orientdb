@@ -39,6 +39,8 @@ import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externalizable {
   private static final long   serialVersionUID = 1L;
 
+  protected static final long DEFAULT_TIMEOUT  = 10000;
+
   private String              nodeSource;
   protected String            nodeDestination;
   protected String            databaseName;
@@ -203,4 +205,9 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     iCopy.serverInstance = serverInstance;
     return iCopy;
   }
+
+  public long getTimeout() {
+    return DEFAULT_TIMEOUT;
+  }
+
 }

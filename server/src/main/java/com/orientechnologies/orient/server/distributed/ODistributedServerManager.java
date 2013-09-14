@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
+import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -115,10 +116,13 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
+  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask, final ORef<Long> iOperationOffset) throws Exception;
 
   public boolean notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
 
   public Future<Object> sendTask2Node(String iNodeId, OAbstractRemoteTask<? extends Object> iTask, EXECUTION_MODE iMode,
       Map<String, Object> iResults);
+
+  public void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
+      final long operationLogOffset, final boolean iSuccess);
 }

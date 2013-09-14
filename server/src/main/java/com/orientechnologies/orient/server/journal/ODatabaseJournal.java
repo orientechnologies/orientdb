@@ -104,7 +104,7 @@ public class ODatabaseJournal {
   private OStorage                  storage;
   private OFile                     file;
   private boolean                   synchEnabled          = false;
-  private final long[]              lastExecuted          = new long[] { -1, -1 };
+  private final long[]              lastExecuted          = new long[] { -1, -1, -1 };
 
   public ODatabaseJournal(final OServer iServer, final ODistributedServerManager iCluster, final OStorage iStorage,
       final String iStartingDirectory) throws IOException {
@@ -127,6 +127,7 @@ public class ODatabaseJournal {
     final long[] lastOp = getLastJournaledOperationId(null);
     lastExecuted[0] = lastOp[0];
     lastExecuted[1] = lastOp[1];
+    lastExecuted[2] = -1;
 
     ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
         "Loaded journal for database '%s', last operation=%d.%d", iStorage.getName(), lastExecuted[0], lastExecuted[1]);
@@ -255,7 +256,7 @@ public class ODatabaseJournal {
   public long[] getLastExecutedOperationId() {
     lock.lock();
     try {
-      return new long[] { lastExecuted[0], lastExecuted[1] };
+      return new long[] { lastExecuted[0], lastExecuted[1], lastExecuted[2] };
     } finally {
       lock.unlock();
     }
@@ -687,6 +688,7 @@ public class ODatabaseJournal {
 
         lastExecuted[0] = iRunId;
         lastExecuted[1] = iOperationSerial;
+        lastExecuted[2] = System.currentTimeMillis();
         updated = true;
       }
 
