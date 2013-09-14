@@ -94,13 +94,15 @@ public interface ODistributedServerManager {
 
   public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
 
+  void broadcastAlignmentRequest();
+
   /**
    * Communicates the alignment has been postponed. Current server will send an updated request of alignment against the postponed
    * node.
    */
   public void postponeAlignment(String iNode, String iDatabaseName);
 
-  public void endAlignment(String nodeSource, String databaseName);
+  public void endAlignment(String nodeSource, String databaseName, int alignedOperations);
 
   /**
    * Gets a distributed lock
@@ -115,7 +117,7 @@ public interface ODistributedServerManager {
 
   public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
 
-  public void notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
+  public boolean notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
 
   public Future<Object> sendTask2Node(String iNodeId, OAbstractRemoteTask<? extends Object> iTask, EXECUTION_MODE iMode,
       Map<String, Object> iResults);

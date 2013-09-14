@@ -139,4 +139,13 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
   public OPERATION_TYPES getOperationType() {
     return OPERATION_TYPES.RECORD_UPDATE;
   }
+
+  @Override
+  public String toString() {
+    if (version.isTemporary())
+      return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
+    else
+      return super.toString();
+  }
+
 }

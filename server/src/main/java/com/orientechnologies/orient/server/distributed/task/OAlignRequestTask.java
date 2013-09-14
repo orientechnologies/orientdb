@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.server.OServer;
@@ -31,6 +33,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
+import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed align request task used for synchronization.
@@ -38,7 +41,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
+public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
   private static final long  serialVersionUID = 1L;
 
   protected long             lastRunId;
@@ -50,7 +53,7 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
 
   public OAlignRequestTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
       final long iLastRunId, final long iLastOperationId) {
-    super(iServer, iDistributedSrvMgr, iDbName);
+    super(iServer, iDistributedSrvMgr, iDbName, -1);
     lastRunId = iLastRunId;
     lastOperationId = iLastOperationId;
   }
@@ -132,20 +135,28 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
       totAligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    dManager.sendTask2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager, databaseName, totAligned),
-        EXECUTION_MODE.ASYNCHRONOUS, new HashMap<String, Object>());
+    final Future<Object> future = dManager.sendTask2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager,
+        databaseName, totAligned), EXECUTION_MODE.ASYNCHRONOUS, new HashMap<String, Object>());
+
+    if (future != null)
+      // WAIT FOR THE TASK IS COMPLETED
+      future.get();
 
     return totAligned;
   }
 
   protected int flushBufferedTasks(final ODistributedServerManager dManager, final OStorageSynchronizer synchronizer,
-      final OMultipleRemoteTasks tasks, final List<Long> positions) throws IOException {
+      final OMultipleRemoteTasks tasks, final List<Long> positions) throws IOException, InterruptedException, ExecutionException {
 
     ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.OUT,
         "flushing aligning %d operations db=%s...", tasks.getTasks(), databaseName);
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    dManager.sendTask2Node(getNodeSource(), tasks, EXECUTION_MODE.SYNCHRONOUS, new HashMap<String, Object>());
+    final Future<Object> future = dManager.sendTask2Node(getNodeSource(), tasks, EXECUTION_MODE.SYNCHRONOUS,
+        new HashMap<String, Object>());
+
+    if (future != null)
+      future.get();
 
     final int aligned = tasks.getTasks();
 
@@ -176,5 +187,23 @@ public class OAlignRequestTask extends OAbstractRemoteTask<Integer> {
   @Override
   public String getName() {
     return "align_request";
+  }
+
+  @Override
+  public OAlignRequestTask copy() {
+    final OAlignRequestTask copy = (OAlignRequestTask) super.copy(new OAlignRequestTask());
+    copy.lastRunId = lastRunId;
+    copy.lastOperationId = lastOperationId;
+    return copy;
+  }
+
+  @Override
+  public OPERATION_TYPES getOperationType() {
+    return OPERATION_TYPES.NOOP;
+  }
+
+  @Override
+  public String getPayload() {
+    return lastRunId + "." + lastOperationId;
   }
 }

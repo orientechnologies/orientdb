@@ -54,8 +54,8 @@ public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicat
   @Override
   public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
     super.copy(iCopy);
-    ((OAbstractRecordReplicatedTask<T>) iCopy).rid = rid;
-    ((OAbstractRecordReplicatedTask<T>) iCopy).version = version;
+    ((OAbstractRecordReplicatedTask<T>) iCopy).rid = rid.copy();
+    ((OAbstractRecordReplicatedTask<T>) iCopy).version = version.copy();
     return iCopy;
   }
 

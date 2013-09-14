@@ -47,25 +47,26 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
   @Override
   public Object[] call() throws Exception {
-    ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
+    final Object[] result;
 
-    final Object[] result = new Object[tasks.size()];
+    final ODistributedServerManager dServer = getDistributedServerManager();
 
     int executedTasks = 0;
     try {
+      result = new Object[tasks.size()];
+
+      ODistributedServerLog.warn(this, dServer.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+          "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
 
       for (; executedTasks < tasks.size(); ++executedTasks) {
         final OAbstractRemoteTask<?> task = tasks.get(executedTasks);
 
-        getDistributedServerManager().notifyQueueWaiters(task.getDatabaseName(), task.getRunId(), task.getOperationSerial() - 1,
-            true);
-
+        // if (dServer.alignOperation(task))
         result[executedTasks] = task.call();
       }
     } finally {
 
-      ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+      ODistributedServerLog.warn(this, dServer.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
           "****** END EXECUTING ALIGNMENT BLOCK db=%s tasks=%d/%d ******", databaseName, executedTasks, tasks.size());
     }
 

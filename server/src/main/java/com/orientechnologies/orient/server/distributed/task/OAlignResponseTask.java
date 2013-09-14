@@ -60,7 +60,7 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
       ODistributedServerLog.info(this, dManager.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
           "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
 
-      dManager.endAlignment(getNodeSource(), databaseName);
+      dManager.endAlignment(getNodeSource(), databaseName, aligned);
     }
     return null;
   }
