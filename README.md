@@ -12,7 +12,7 @@ Look also at [Presentations](https://github.com/orientechnologies/orientdb/wiki/
 
 No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
 
-# Scalability: the database is the bottleneck of most of applications
+## Scalability: the database is the bottleneck of most of applications
 
 The most common reason applications scale out badly is, very often, the database. The database is the bottleneck of most applications. OrientDB scales out very well on a single machine. A single server does the work of about 125 servers running [MySQL](http://en.wikipedia.org/wiki/Mysql). The transactional engine can run in distributed systems supporting up to 302,231,454,903,657 billion (2^78) records for the maximum capacity of 19,807,040,628,566,084 Terabytes of data distributed on multiple disks in multiple nodes. Today only OrientDB Key/Value Server can run in a cluster with thousands of instances using a Distributed Hash Table algorithm. We're developing the distributed version of OrientDB as well.
 
