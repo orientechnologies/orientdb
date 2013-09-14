@@ -101,16 +101,15 @@
         <module>commons</module>
         <module>nativeos</module>
         <module>core</module>
-        <module>distribution</module>
         <module>enterprise</module>
         <module>object</module>
         <module>server</module>
         <module>tools</module>
         <module>tests</module>
         <module>distributed</module>
-        <!--<module>clustered-client</module> -->
-        <!--<module>blueprints</module> -->
         <module>graphdb</module>
+        <module>distribution/default</module>
+        <module>distribution/graphed</module>
     </modules>
 
     <scm>
