@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -45,12 +44,18 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
   }
 
   public ODeleteRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
+      final ORecordId iRid, final ORecordVersion iVersion) {
+    super(iServer, iDistributedSrvMgr, iDbName, iRid, iVersion);
   }
 
   public ODeleteRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final ORecordVersion iVersion) {
     super(iRunId, iOperationId, iRid, iVersion);
+  }
+
+  @Override
+  public ODeleteRecordTask copy() {
+    final ODeleteRecordTask copy = (ODeleteRecordTask) super.copy(new ODeleteRecordTask());
+    return copy;
   }
 
   @Override

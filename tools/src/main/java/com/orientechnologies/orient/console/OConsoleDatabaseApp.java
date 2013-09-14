@@ -1458,6 +1458,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Returns the configuration of a distributed database")
+  public void replicationConfig(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName)
+      throws IOException {
+
+    try {
+      if (serverAdmin == null)
+        throw new IllegalStateException("You must be connected to a remote server to align database");
+
+      final ODocument response = serverAdmin.replicationConfig(iDatabaseName);
+
+      message("\nDistributed configuration for database '%s':\n%s", iDatabaseName, response.toJSON("prettyPrint"));
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Check database integrity")
   public void checkDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
       throws IOException {

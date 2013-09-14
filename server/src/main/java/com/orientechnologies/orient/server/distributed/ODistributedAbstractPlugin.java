@@ -260,6 +260,7 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     return getReplicaNodes("asynch-replicas", iDatabaseName, iClusterName, iKey);
   }
 
+  // TODO rewrite this to support dynamic node listing
   @SuppressWarnings("unchecked")
   protected Collection<String> getReplicaNodes(final String iMode, final String iDatabaseName, final String iClusterName,
       final Object iKey) {

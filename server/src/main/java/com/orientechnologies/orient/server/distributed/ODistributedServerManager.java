@@ -19,8 +19,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
+import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -35,7 +37,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 public interface ODistributedServerManager {
 
   public enum EXECUTION_MODE {
-    SYNCHRONOUS, ASYNCHRONOUS, FIRE_AND_FORGET
+    SYNCHRONOUS, ASYNCHRONOUS
   }
 
   public boolean isEnabled();
@@ -60,9 +62,8 @@ public interface ODistributedServerManager {
   public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationConfig)
       throws ExecutionException;
 
-  public Object sendOperation2Node(String iNodeId, OAbstractRemoteTask<?> iTask) throws ODistributedException;
-
-  public Map<String, Object> propagate(Set<String> iNodeIds, OAbstractRemoteTask<?> iTask) throws ODistributedException;
+  public Map<String, Object> replicate(OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationData)
+      throws ODistributedException;
 
   public String getLocalNodeId();
 
@@ -94,13 +95,15 @@ public interface ODistributedServerManager {
 
   public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
 
+  void broadcastAlignmentRequest();
+
   /**
    * Communicates the alignment has been postponed. Current server will send an updated request of alignment against the postponed
    * node.
    */
   public void postponeAlignment(String iNode, String iDatabaseName);
 
-  public void endAlignment(String nodeSource, String databaseName);
+  public void endAlignment(String nodeSource, String databaseName, int alignedOperations);
 
   /**
    * Gets a distributed lock
@@ -113,7 +116,13 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
+  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask, final ORef<Long> iOperationOffset) throws Exception;
 
-  public void notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
+  public boolean notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
+
+  public Future<Object> sendTask2Node(String iNodeId, OAbstractRemoteTask<? extends Object> iTask, EXECUTION_MODE iMode,
+      Map<String, Object> iResults);
+
+  public void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
+      final long operationLogOffset, final boolean iSuccess);
 }

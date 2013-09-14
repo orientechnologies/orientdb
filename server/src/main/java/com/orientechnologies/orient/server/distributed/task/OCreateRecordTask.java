@@ -30,7 +30,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
@@ -59,10 +58,18 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
   }
 
   public OCreateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
+      final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+    super(iServer, iDistributedSrvMgr, iDbName, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
+  }
+
+  @Override
+  public OCreateRecordTask copy() {
+    final OCreateRecordTask copy = (OCreateRecordTask) super.copy(new OCreateRecordTask());
+    copy.content = content;
+    copy.recordType = recordType;
+    return copy;
   }
 
   public Object getDistributedKey() {

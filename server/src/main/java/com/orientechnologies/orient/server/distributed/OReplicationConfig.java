@@ -25,4 +25,5 @@ public class OReplicationConfig {
   public String   masterNode;
   public String[] synchReplicas;
   public String[] asynchReplicas;
+  public int      minSuccessfulOperations = 0;
 }
