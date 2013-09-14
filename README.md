@@ -32,6 +32,7 @@ Orient ODBMS was the very first version of the Orient engine developed in C++ in
 ## How does it compare with other products?
 
 Take a look at [GraphDB comparison](https://github.com/orientechnologies/orientdb/wiki/GraphDB-Comparison) and [DocumentDB comparison](https://github.com/orientechnologies/orientdb/wiki/DocumentDB-Comparison).
+Download the Benchmark PDF <a href="https://docs.google.com/viewer?a=v&pid=sites&srcid=ZGVmYXVsdGRvbWFpbnx0b2t5b3RlY2hzdXp1bXVyYWxhYmVuZ3xneDoyMGRiOGFlM2Y2OGY5Mzhj">XGDBench: A Benchmarking Platform for Graph Stores in Exascale Clouds</a> by <a href="http://www.cs.titech.ac.jp/cs-home-e.html">Tokyo Institute of Technology</a> and <a href="http://www.research.ibm.com/labs/tokyo/">IBM Research</a>.
 
 ## Easy to install and use
 
