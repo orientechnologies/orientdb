@@ -16,7 +16,8 @@ module.exports = function (grunt) {
   require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
   var dist =  process.env['ORIENTDB_HOME'];
-  dist = ((dist.lastIndexOf('/') +1 == dist.length) ? dist  : dist + "/");
+  if(dist)
+    dist = ((dist.lastIndexOf('/') +1 == dist.length) ? dist  : dist + "/");
   // configurable paths
   var yeomanConfig = {
     app: 'app',
@@ -276,7 +277,7 @@ module.exports = function (grunt) {
                       '*.{ico,txt}',
                       '.htaccess',
                       // 'components/**/*',
-                      'images/{,*/}*.{gif,webp,png,jpg}',
+                      'img/{,*/}*.{gif,webp,png,jpg}',
                       'font/*',
                       'data/**/*'
                   ]
