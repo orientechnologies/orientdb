@@ -380,7 +380,7 @@ public class OWriteAheadLog {
       ListIterator<LogSegment> iterator = logSegments.listIterator(logSegments.size());
       while (iterator.hasPrevious()) {
         final LogSegment logSegment = iterator.previous();
-        if (logSegment.end().compareTo(lsn) >= 0)
+        if (logSegment.end() == null || logSegment.end().compareTo(lsn) >= 0)
           continue;
 
         logSegment.delete(false);

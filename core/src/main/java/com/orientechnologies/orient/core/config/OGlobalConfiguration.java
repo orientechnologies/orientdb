@@ -128,9 +128,9 @@ public enum OGlobalConfiguration {
 
   CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
 
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
+  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, false),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 10000),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 0),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -212,6 +212,10 @@ public enum OGlobalConfiguration {
   INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode, false by default", Boolean.class,
       false),
+
+  INDEX_TX_MODE("index.txMode",
+      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
+      "ROLLBACK_ONLY"),
 
   INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
       "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
