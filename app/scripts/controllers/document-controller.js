@@ -148,6 +148,7 @@ DocController.controller("DocumentModalBrowseController", ['$scope', '$routePara
         readOnly: false,
         theme: 'ambiance',
         mode: 'text/x-sql',
+        metadata: Database,
         extraKeys: {
             "Ctrl-Enter": function (instance) {
                 $scope.$apply(function () {
@@ -258,10 +259,6 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
                     var clazz = $scope.doc['@class'];
                     $location.path('/database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
                 });
-                /*CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
-                 var clazz = $scope.doc['@class'];
-                 $location.path('database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
-                 });*/
             }
         });
     }

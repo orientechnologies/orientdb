@@ -29,7 +29,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         listTypes: ['BINARY', 'BYTE', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'],
 
-        mapping: { 'BINARY': 'b', 'BYTE': 'b', 'DATE': 'a', 'DATETIME': 't', 'FLOAT': 'f', 'DECIMAL': 'c', 'LONG': 'l', 'DOUBLE': 'd', 'SHORT': 's','LINKSET' : 'e'},
+        mapping: { 'BINARY': 'b', 'BYTE': 'b', 'DATE': 'a', 'DATETIME': 't', 'FLOAT': 'f', 'DECIMAL': 'c', 'LONG': 'l', 'DOUBLE': 'd', 'SHORT': 's', 'LINKSET': 'e'},
         getMetadata: function () {
             if (current.metadata == null) {
                 var tmp = localStorageService.get("CurrentDB");
@@ -360,7 +360,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             });
             return all;
         },
-        findTypeFromFieldTipes : function (doc,name) {
+        findTypeFromFieldTipes: function (doc, name) {
             var fieldTypes = doc['@fieldTypes'];
             var type = undefined;
             var self = this;
@@ -380,7 +380,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             var all = Object.keys(doc).filter(function (element, index, array) {
                 var type = self.getFieldType(doc['@class'], element);
                 if (!type) {
-                    type = self.findTypeFromFieldTipes(doc,element);
+                    type = self.findTypeFromFieldTipes(doc, element);
                 }
                 return self.isLink(type);
             });
@@ -466,20 +466,22 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
         var shallow = params.shallow != undefined ? '' : ',shallow';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
-        var query = params.text;
-        $http.post(text, query).success(function (data) {
-            var time = ((new Date().getTime() - startTime) / 1000);
-            var records = data.result ? data.result.length : "";
+        if (params.text) {
+            var query = params.text.trim();
+            $http.post(text, query).success(function (data) {
+                var time = ((new Date().getTime() - startTime) / 1000);
+                var records = data.result ? data.result.length : "";
 
-            if (verbose) {
-                var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
-                Notification.push({content: noti});
-            }
-            callback(data);
-        }).error(function (data) {
-                Notification.push({content: data});
-                if (error) error(data);
-            });
+                if (verbose) {
+                    var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
+                    Notification.push({content: noti});
+                }
+                callback(data);
+            }).error(function (data) {
+                    Notification.push({content: data});
+                    if (error) error(data);
+                });
+        }
     }
     resource.getAll = function (database, clazz, callback) {
         var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
