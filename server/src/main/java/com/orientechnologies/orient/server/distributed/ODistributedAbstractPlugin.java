@@ -248,7 +248,6 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       }
 
       return sync;
-      // return sync.isConfigured() ? sync : null;
     }
   }
 

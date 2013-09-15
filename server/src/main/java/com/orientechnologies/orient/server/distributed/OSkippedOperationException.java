@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.common.types;
+package com.orientechnologies.orient.server.distributed;
+
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
- * Modifiable value. Point to the real value. Useful to pass in method as parameter, letting the method to change. A sort of void*
- * of C language.
+ * Exception thrown when the operation has already been executed.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORef<T> {
-  public T value;
+public class OSkippedOperationException extends OException {
+  private static final long            serialVersionUID = 1L;
+  private final OAbstractRemoteTask<?> task;
 
-  public ORef() {
+  public OSkippedOperationException(OAbstractRemoteTask<? extends Object> iTask) {
+    task = iTask;
   }
 
-  public ORef(final T object) {
-    this.value = object;
-  }
-
-  public ORef<T> clear() {
-    value = null;
-    return this;
+  public OAbstractRemoteTask<?> getTask() {
+    return task;
   }
 
   @Override
   public String toString() {
-    return value != null ? value.toString() : "ORef<null>";
+    return "OSkippedOperationException task=" + task;
   }
 }

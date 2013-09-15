@@ -88,11 +88,13 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
     final T result;
     try {
       result = (T) getDistributedServerManager().enqueueLocalExecution(this, journalOffset);
-      getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, true);
+      if (journalOffset.value != null)
+        getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, true);
       return result;
 
     } catch (Exception e) {
-      getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, false);
+      if (journalOffset.value != null)
+        getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, false);
       throw e;
     }
   }

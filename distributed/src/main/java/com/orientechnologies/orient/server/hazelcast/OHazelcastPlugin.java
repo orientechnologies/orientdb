@@ -62,13 +62,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.OReplicationConfig;
+import com.orientechnologies.orient.server.distributed.OSkippedOperationException;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.OAlignRequestTask;
 import com.orientechnologies.orient.server.distributed.task.ONoOperationTask;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
@@ -80,7 +80,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
   protected static final String        SYNCH_EXECUTOR_NAME     = "OHazelcastPlugin::SynchExecutor";
   protected static final String        ASYNCH_EXECUTOR_NAME    = "OHazelcastPlugin::AsynchExecutor";
-  protected static final long          RESET_OPERATION_TIMEOUT = 8000;
+  protected static final long          RESET_OPERATION_TIMEOUT = 20000;
 
   protected int                        nodeNumber;
   protected String                     localNodeId;
@@ -243,7 +243,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         } catch (TimeoutException e) {
           // TIMEOUT
           ODistributedServerLog.error(this, getLocalNodeId(), task.getNodeDestination(), DIRECTION.OUT,
-              "timeout on replication of operation %d.%d task=%s, db=%s...", task, task.getRunId(), task.getOperationSerial(),
+              "timeout on replication of operation %d.%d task=%s, db=%s...", task.getRunId(), task.getOperationSerial(), task,
               task.getDatabaseName());
 
           f.getValue().cancel(true);
@@ -349,23 +349,25 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     } catch (InterruptedException e) {
       Thread.interrupted();
 
+      // PROPAGATE IT
+      ODistributedServerLog.debug(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
+          "caught interruption during execution %d.%d of operation", iTask.getRunId(), iTask.getOperationSerial());
+      throw new ExecutionException("Caught interruption during execution of operation " + iTask.getRunId() + "."
+          + iTask.getOperationSerial() + " in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node " + masterNodeId, e);
+
     } catch (ONeedRetryException e) {
       // PROPAGATE IT
       ODistributedServerLog.debug(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
-          "error on execution %d.%d of operation in %s mode raising a ONeedRetryException", iTask.getRunId(),
-          iTask.getOperationSerial(), EXECUTION_MODE.SYNCHRONOUS);
+          "error on execution %d.%d of operation raising a ONeedRetryException", iTask.getRunId(), iTask.getOperationSerial());
       throw e;
 
     } catch (Exception e) {
       // ALL OTHER EXCEPTION: WRAP ON EXECUTION EXCEPTION
-      ODistributedServerLog.error(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT,
-          "error on execution %d.%d of operation in %s mode", e, iTask.getRunId(), iTask.getOperationSerial(),
-          EXECUTION_MODE.SYNCHRONOUS);
+      ODistributedServerLog.error(this, getLocalNodeId(), masterNodeId, DIRECTION.OUT, "error on execution %d.%d of operation", e,
+          iTask.getRunId(), iTask.getOperationSerial());
       throw new ExecutionException("error on execution of operation " + iTask.getRunId() + "." + iTask.getOperationSerial()
-          + " in " + EXECUTION_MODE.SYNCHRONOUS + " mode against node " + masterNodeId, e);
+          + " against node " + masterNodeId, e);
     }
-
-    return null;
   }
 
   protected boolean checkOperationSequence(final OAbstractRemoteTask<? extends Object> iTask) {
@@ -415,8 +417,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         localResult = enqueueLocalExecution(iTask, journalOffset);
 
-        // OK, SET AS "COMMITTED" IN JOURNAL AFTER THE REMOTE OPERATION ARE COMPLETED
-        updateJournal(iTask, iTask.getDatabaseSynchronizer(), journalOffset.value, true);
+        if (journalOffset.value != null)
+          // OK, SET AS "COMMITTED" IN JOURNAL AFTER THE REMOTE OPERATION ARE COMPLETED
+          updateJournal(iTask, iTask.getDatabaseSynchronizer(), journalOffset.value, true);
 
         checkForConflicts(iTask, localResult, remoteResults, iReplicationData.minSuccessfulOperations);
 
@@ -788,7 +791,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             long[] lastOperationId;
 
             try {
-              lastOperationId = synch.getLog().getLastJournaledOperationId(ODatabaseJournal.OPERATION_STATUS.COMMITTED);
+              lastOperationId = synch.getLog().getLastJournaledOperationId(null);
 
               ODistributedServerLog.info(this, getLocalNodeId(), node, DIRECTION.OUT, "resend alignment request db=%s from %d:%d",
                   databaseName, lastOperationId[0], lastOperationId[1]);
@@ -1025,7 +1028,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
     if (!waitForMyTurnInQueue(iTask))
-      return null;
+      throw new OSkippedOperationException(iTask);
 
     try {
       ODistributedServerLog.debug(this, iTask.getNodeSource(), iTask.getNodeDestination(), DIRECTION.IN,
@@ -1097,8 +1100,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               lastExecutedOperation[1]++;
 
               ODistributedServerLog.warn(this, getLocalNodeId(), iTask.getNodeSource(), DIRECTION.NONE,
-                  "timeout expired waiting for operation, skip task %d.%d thread=%s", lastExecutedOperation[0],
-                  lastExecutedOperation[1], Thread.currentThread().getName());
+                  "timeout expired waiting for operation, skip op=%d.%d task=%s thread=%s", lastExecutedOperation[0],
+                  lastExecutedOperation[1], iTask, Thread.currentThread().getName());
 
               dbSynchronizer.getLog().updateLastOperation(lastExecutedOperation[0], lastExecutedOperation[1], false);
 

@@ -110,10 +110,7 @@ public class ODistributedServerLog {
       message.append(']');
     }
 
-    if (iRequester instanceof OAbstractRemoteTask<?>)
-      message.append(" - ");
-    else
-      message.append(' ');
+    message.append(' ');
     message.append(iMessage);
 
     return message.toString();

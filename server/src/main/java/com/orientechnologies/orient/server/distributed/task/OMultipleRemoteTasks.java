@@ -26,6 +26,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.OSkippedOperationException;
 
 /**
  * Groups multiples tasks to being replicated in one single call.
@@ -61,8 +62,11 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
       for (; executedTasks < tasks.size(); ++executedTasks) {
         final OAbstractRemoteTask<?> task = tasks.get(executedTasks);
 
-        // if (dServer.alignOperation(task))
-        result[executedTasks] = task.call();
+        try {
+          result[executedTasks] = task.call();
+        } catch (OSkippedOperationException e) {
+          // SKIP IT AND CONTINUE
+        }
       }
     } finally {
 
