@@ -5,7 +5,7 @@
  * Time: 17.30
  * To change this template use File | Settings | File Templates.
  */
- /*
+
 (function () {
     CodeMirror.commands.autocomplete = function (cm) {
         CodeMirror.showHint(cm, CodeMirror.hint.sql);
@@ -102,5 +102,5 @@
         etl.appendChild(document.createTextNode(cur.text));
         etl.appendChild(createLabel("  (F)"));
     }
-})(); */
+})();
 
