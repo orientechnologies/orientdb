@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
-public class OAutomaticBackup extends OServerHandlerAbstract {
+public class OAutomaticBackup extends OServerPluginAbstract {
   public enum VARIABLES {
     DBNAME, DATE
   }

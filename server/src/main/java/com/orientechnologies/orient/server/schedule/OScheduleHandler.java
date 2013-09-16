@@ -33,13 +33,13 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
 
 /**
  * Author : henryzhao81@gmail.com Mar 28, 2013
  */
 
-public class OScheduleHandler extends OServerHandlerAbstract {
+public class OScheduleHandler extends OServerPluginAbstract {
   private static int          MAX_POOL_SIZE = 21;                                         // 1 for TimerThread
   private ExecutorService     executor      = Executors.newFixedThreadPool(MAX_POOL_SIZE);
   protected String            databaseName  = "";

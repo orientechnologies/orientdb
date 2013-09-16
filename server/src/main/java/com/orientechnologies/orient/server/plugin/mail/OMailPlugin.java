@@ -35,9 +35,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
 
-public class OMailPlugin extends OServerHandlerAbstract implements OScriptInjection {
+public class OMailPlugin extends OServerPluginAbstract implements OScriptInjection {
   private static final String       CONFIG_PROFILE_PREFIX = "profile.";
   private static final String       CONFIG_MAIL_PREFIX    = "mail.";
 

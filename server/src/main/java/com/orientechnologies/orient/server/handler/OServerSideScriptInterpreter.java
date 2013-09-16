@@ -29,7 +29,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * @author Luca
  * 
  */
-public class OServerSideScriptInterpreter extends OServerHandlerAbstract {
+public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   private boolean enabled = false;
 
   @Override

@@ -13,7 +13,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.managed.OrientServer;
 
-public class OJMXPlugin extends OServerHandlerAbstract {
+public class OJMXPlugin extends OServerPluginAbstract {
   private OrientServer managedServer;
   private ObjectName   onProfiler;
   private ObjectName   onServer;

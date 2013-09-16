@@ -5,9 +5,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
 
-public class OGraphServerHandler extends OServerHandlerAbstract {
+public class OGraphServerHandler extends OServerPluginAbstract {
   private boolean enabled      = true;
   private int     graphPoolMax = OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger();
 
