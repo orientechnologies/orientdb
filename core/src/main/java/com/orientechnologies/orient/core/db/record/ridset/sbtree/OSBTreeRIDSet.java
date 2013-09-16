@@ -43,6 +43,13 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
     rootIndex = tree.getRootIndex();
   }
 
+  public OSBTreeRIDSet(String fileName, long rootIndex) {
+    tree = OSBTreeCollectionManager.INSTANCE.loadSBTree(fileName, rootIndex);
+
+    this.fileName = tree.getName();
+    this.rootIndex = tree.getRootIndex();
+  }
+
   protected String getFileName() {
     return fileName;
   }
