@@ -40,7 +40,7 @@ public class ODurablePage {
   }
 
   public static enum TrackMode {
-    NONE, FULL
+    NONE, FULL, ROLLBACK_ONLY
   }
 
   public int getIntValue(int pageOffset) {
@@ -64,7 +64,13 @@ public class ODurablePage {
       byte[] oldValues = directMemory.get(pagePointer + pageOffset, OIntegerSerializer.INT_SIZE);
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
       byte[] newValues = directMemory.get(pagePointer + pageOffset, OIntegerSerializer.INT_SIZE);
+
       pageChanges.addChanges(pageOffset, newValues, oldValues);
+    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
+      byte[] oldValues = directMemory.get(pagePointer + pageOffset, OIntegerSerializer.INT_SIZE);
+      OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
+
+      pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
   }
@@ -76,6 +82,11 @@ public class ODurablePage {
       byte[] newValues = new byte[] { directMemory.getByte(pagePointer + pageOffset) };
 
       pageChanges.addChanges(pageOffset, newValues, oldValues);
+    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
+      byte[] oldValues = new byte[] { directMemory.getByte(pagePointer + pageOffset) };
+      directMemory.setByte(pagePointer + pageOffset, value);
+
+      pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       directMemory.setByte(pagePointer + pageOffset, value);
   }
@@ -87,6 +98,11 @@ public class ODurablePage {
       byte[] newValues = directMemory.get(pagePointer + pageOffset, OLongSerializer.LONG_SIZE);
 
       pageChanges.addChanges(pageOffset, newValues, oldValues);
+    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
+      byte[] oldValues = directMemory.get(pagePointer + pageOffset, OLongSerializer.LONG_SIZE);
+      OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
+
+      pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, directMemory, pagePointer + pageOffset);
   }
@@ -100,6 +116,11 @@ public class ODurablePage {
       directMemory.set(pagePointer + pageOffset, value, 0, value.length);
 
       pageChanges.addChanges(pageOffset, value, oldValues);
+    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
+      byte[] oldValues = directMemory.get(pagePointer + pageOffset, value.length);
+      directMemory.set(pagePointer + pageOffset, value, 0, value.length);
+
+      pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       directMemory.set(pagePointer + pageOffset, value, 0, value.length);
   }
@@ -115,6 +136,13 @@ public class ODurablePage {
       directMemory.copyData(pagePointer + from, pagePointer + to, len);
 
       pageChanges.addChanges(to, content, oldContent);
+    } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
+      byte[] oldContent = directMemory.get(pagePointer + to, len);
+
+      directMemory.copyData(pagePointer + from, pagePointer + to, len);
+
+      pageChanges.addChanges(to, null, oldContent);
+
     } else
       directMemory.copyData(pagePointer + from, pagePointer + to, len);
   }
