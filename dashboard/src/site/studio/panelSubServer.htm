@@ -1,0 +1,32 @@
+<div class="row-fluid" id="sub-db">
+	<div class="span12" id="header">
+		<div class="row-fluid" style="padding-bottom: 9px; border-bottom: 1px solid #ddd;">
+			<div class="span2">
+				<a href="."><img border="0" src="images/orient_db.png" /></a>
+			</div>
+			<div class="span3 form-inline">
+				<label>Server:</label> <input id="server" value="" readonly />
+				<h3>Server management</h3>
+			</div>
+			<div class="offset4 span3">
+				<div id="navigation-bar" class="btn-group" align="right">
+					<button class="btn" onclick="javascript:controller.loadFragment('panelServer.htm')">
+						<img src='images/menu-server.png' /><br>Server
+					</button>
+					<a class="btn" href="http://code.google.com/p/orient/wiki/OrientDB_Studio" target="help"><img src='images/help.png' /><br>Help</a>
+					<button class="btn" onclick="javascript:disconnect()">
+						<img src='images/disconnect.png' /><br>Disconnect
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="span12" id="panel"></div>
+</div>
+
+<script>
+	controller.loadFragment('panelServer.htm');
+	$('#server').change(formatServerURL);
+	$('#server').val(document.location.href);
+	formatServerURL();
+</script>

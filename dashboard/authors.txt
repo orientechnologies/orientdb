@@ -1,0 +1,3 @@
+ffortino = Fabrizio Fortino <fabrizio.fortino@gmail.com>
+lgarulli = Luca Garulli <l.garulli@gmail.com>
+afocareta = Alfonso Focareta <alfonso.focareta@gmail.com>

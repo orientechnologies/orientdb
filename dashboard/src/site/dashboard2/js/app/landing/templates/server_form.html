@@ -1,0 +1,70 @@
+<% var view = "settings.server" + (data.id ? "" : ".new"); %>
+    
+<h2 data-i18n="<%=view%>.title"></h2>
+	
+<div class="row-fluid">
+
+    <ul class="nav nav-tabs" id="serverTab">
+		<li class="active"><a href="#general" data-toggle="tab" data-i18n="<%=view%>.general"></a></li>
+		<% if (data.id) { %><li><a href="#config" data-toggle="tab" data-i18n="<%=view%>.configuration"></a></li><% }%>
+	</ul>
+
+    <div id="serverTabContent" class="tab-content">
+        <div class="tab-pane active" id="general">
+            <p class="lead" data-i18n="<%=view%>.heading1"></p>
+			<form class="form-horizontal">
+				<fieldset>
+				    <div class="control-group">
+						<label class="control-label" for="enabled" data-i18n="<%=view%>.enabled"></label>
+						<div class="controls">
+							<input type="checkbox" class="span5" id="enabled" <% if (data.enabled) { %>checked<% }%> >
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="name" data-i18n="<%=view%>.name"></label>
+						<div class="controls">
+							<input type="text" class="span5" id="name" value="<%=data.name%>">
+							<p class="help-block" data-i18n="<%=view%>.namehint"></p>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="url" data-i18n="<%=view%>.url"></label>
+						<div class="controls">
+							<input type="text" class="span5" id="url" value="<%=data.url%>">
+							<p class="help-block" data-i18n="<%=view%>.urlhint"></p>
+						</div>
+					</div>
+	
+					<div class="control-group">
+						<label class="control-label" for="username" data-i18n="<%=view%>.user"></label>
+						<div class="controls">
+							<input type="text" class="span5" id="username" value="<%=data.user%>">
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="password" data-i18n="<%=view%>.pwd"></label>
+						<div class="controls">
+							<input type="password" class="span5" id="password" value="<%=data.password%>">
+						</div>
+					</div>
+				</fieldset>
+				<div class="form-actions">
+				  <div class="pull-right">
+				    <button type="reset" class="btn btn-large"><strong data-i18n="cancel"></strong></button>
+					<button type="submit" class="btn btn-large btn-primary"><strong data-i18n="save"></strong></button>
+				  </div>
+				</div>
+			</form>
+		</div>
+		<% if (data.id && data.configuration) { %>
+		<div class="tab-pane" id="config">
+		    <p class="lead" data-i18n="<%=view%>.heading2"></p>
+		    <table class="table table-condensed table-striped">
+		    <% _.each(data.configuration, function(value, key) { %>
+		        <tr><td><%=key%></td><td><%=value%></td></tr>
+		    <% }); %>
+		    </table>
+		</div>
+		<% }%>
+	</div>
+</div>

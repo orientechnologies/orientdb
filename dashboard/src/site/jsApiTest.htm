@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>OrientDB Javascript API Test Suite</title>
+<meta name="title" content="OrientDB Javascript API Test Suite" />
+<meta name="description" content="OrientDB" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<script src="www/js/jquery-1.7.1.min.js" type="text/javascript">
+</script>
+<script src="www/js/jquery.tools.min.js" type="text/javascript">
+</script>
+
+<script src="www/js/orientdb-api.js" type="text/javascript">
+	
+</script>
+<script src="www/js/jquery.json-2.2.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+	var orientServer;
+
+	
+	function testCode() {
+		database = new ODatabase('http://localhost:2480/demo');
+		databaseInfo = database.open('admin', 'admin');
+		queryResult = database.createClass('TestClass');
+		queryResult = database.createProperty('TestClass','testField');
+		queryResult = database.createProperty('TestClass','testField2','BOOLEAN');
+		queryResult = database.createProperty('TestClass','testField3','LINK','Person');
+		queryResult = database.createProperty('TestClass','testField4','LINKMAP','Person');
+		queryResult = database.createProperties('TestClass','{"testBooleanField" : {"propertyType" : "BOOLEAN"}, "testDateField" : {"propertyType" : "DATE"}, "testStringField" : {"propertyType" : "STRING"}, "testLinkField" :  {"propertyType" : "LINK","linkedClass" : "Person"}, "testLinkMapField" :  {"propertyType" : "LINKMAP","linkedClass" : "Person"}, "testLinkTypeMapField" :  {"propertyType" : "LINKMAP","linkedType" : "DATE"}}');
+		classInfo('TestClass');
+	}
+
+	function connect() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		databaseInfo = orientServer.open();
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#connectionStatus").text('Connected');
+			jQuery("#output").text('Connect OK.');
+		}
+	}
+
+	function connectLogged() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		databaseInfo = orientServer.open('admin', 'admin');
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#connectionStatus").text('Connected');
+			jQuery("#output").text('Connect OK.');
+		}
+	}
+
+	function connectProxiedAdmin() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		databaseInfo = orientServer.open(null, null, 'admin');
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#connectionStatus").text('Connected');
+			jQuery("#output").text('Connect OK.');
+		}
+	}
+
+	function connectProxiedWriter() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		databaseInfo = orientServer.open(null, null, 'admin');
+		if (databaseInfo == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#connectionStatus").text('Connected');
+			jQuery("#output").text('Connect OK.');
+		}
+	}
+
+	function query() {
+		connectLogged();
+		queryResult = orientServer
+				.query('select from Address where city.country.name = \'Italy\'');
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned ' + queryResult["result"].length
+							+ ' items');
+		}
+	}
+
+	function queryFetched() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'',
+				null, '*:-1');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned '
+							+ eval('(' + queryResult + ')')["result"].length
+							+ ' items' + '\n' + queryResult);
+		}
+	}
+
+	function queryLimited() {
+		connectLogged();
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'', '5');
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned ' + queryResult["result"].length
+							+ ' items');
+		}
+	}
+
+	function queryFetchedAndLimited() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'', '7',
+				'*:-1 city:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned '
+							+ eval('(' + queryResult + ')')["result"].length
+							+ ' items' + '\n' + queryResult);
+		}
+	}
+
+	function queryFetchedAndLimited2() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.query(
+				'select from Address where city.country.name = \'Italy\'', '7',
+				'*:-1 City.country:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Query executed: returned '
+							+ eval('(' + queryResult + ')')["result"].length
+							+ ' items' + '\n' + queryResult);
+		}
+	}
+
+	function queryFetchedAndLimited2Callback() {
+		connectLogged();
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = 'http://localhost:2480/query/demo/sql/select from Address where city.country.name = \'Italy\'/?campo1=0&callback=jsonpTest&campo2=1';
+		$("#jsonPTestDiv").append(script);
+	}
+
+	function load() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.load('12:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Load executed:' + '\n' + queryResult);
+		}
+	}
+
+	function loadFetched() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.load('12:0', '*:-1 type:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Load executed:' + '\n' + queryResult);
+		}
+	}
+
+	function loadFetched2() {
+		connectLogged();
+		orientServer.setEvalResponse(false);
+		queryResult = orientServer.load('12:0', '*:-1 type:0 City.country:0');
+		orientServer.setEvalResponse(true);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Load executed:' + '\n' + queryResult);
+		}
+	}
+
+	function classInfo() {
+		connectLogged();
+		queryResult = orientServer.classInfo('Address');
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Class: ' + queryResult.name);
+		}
+	}
+	
+	function classInfo(className) {
+		connectLogged();
+		queryResult = orientServer.classInfo(className);
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Class: ' + queryResult.name);
+		}
+	}
+
+	function browseCluster() {
+		connectLogged();
+		queryResult = orientServer.browseCluster('Address');
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text('Cluster: ' + queryResult);
+		}
+	}
+
+	function serverInfo() {
+		connectLogged();
+		queryResult = orientServer.serverInfo();
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(queryResult);
+		}
+	}
+
+	function schema() {
+		connectLogged();
+		queryResult = orientServer.schema();
+		if (queryResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(queryResult.length + ' classes.');
+		}
+	}
+
+	function security() {
+		connect();
+		queryResultRoles = orientServer.securityRoles();
+		queryResultUsers = orientServer.securityUsers();
+		if (queryResultUsers == null && queryResultRoles == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					'Roles: ' + queryResultRoles + '\nUsers: '
+							+ queryResultUsers);
+		}
+	}
+
+	function insert() {
+		connectLogged();
+		commandResult = orientServer
+				.save(jQuery
+						.parseJSON('{"@rid":"-1:-1","@class":"FlexForm","@version":0,"surface":"federicasd","stem":"federic","morphFeats":["INDIC"],"lemma":"#5:27406","suffix":"asd"}'));
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text(
+					"Insert succesful: created record " + commandResult);
+		}
+	}
+
+	function remove() {
+		connectLogged();
+		commandResult = orientServer
+				.executeCommand('delete from Address where street = \'Via test 1\' and type = \'Tipo test\'');
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output")
+					.text(
+							"Remove succesful: removed " + commandResult
+									+ " record(s)");
+		}
+	}
+
+	function databaseInfo() {
+		orientServer = new ODatabase('http://localhost:2480/inesistente');
+		databaseInfo = orientServer.open('admin', 'admin');
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output")
+					.text(
+							"Remove succesful: removed " + commandResult
+									+ " record(s)");
+		}
+	}
+
+	function indexPut() {
+		connectLogged();
+		commandResult = orientServer.indexPut("dictionary", "config", {
+			name : 'Luke'
+		});
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text("Index put ok: " + commandResult);
+		}
+	}
+	function indexGet() {
+		connectLogged();
+		commandResult = orientServer.indexGet("dictionary", "config");
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text("Index get ok: " + commandResult);
+		}
+	}
+	function indexRemove() {
+		connectLogged();
+		commandResult = orientServer.indexRemove("dictionary", "config");
+		if (commandResult == null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+		} else {
+			jQuery("#output").text("Index remove ok: " + commandResult);
+		}
+	}
+	function disconnect() {
+		if (orientServer == null) {
+			orientServer = new ODatabase('http://localhost:2480/demo');
+		}
+		orientServer.close();
+		if (orientServer.getErrorMessage() != null) {
+			jQuery("#output").text(orientServer.getErrorMessage());
+			jQuery("#connectionStatus").text('Disconnected');
+		} else {
+			jQuery("#connectionStatus").text('Disconnected');
+			jQuery("#output").text('Disconnect OK.');
+		}
+	}
+	function jsonpTest(data) {
+		alert('PRova' + data);
+	}
+</script>
+</head>
+<body>
+	<span id="connectionStatusLabel">Status: </span>
+	<span id="connectionStatus">Disconnected</span>
+	<br />
+	<span id="outputLabel">Output: </span>
+	<textarea id="output" rows="5" cols="40"></textarea>
+	<br />
+	<button type="button" onclick="javascript:connect();">Test Connect</button>
+	<button type="button" onclick="javascript:connectProxiedAdmin();">Test Connect Proxied Admin</button>
+	<button type="button" onclick="javascript:connectProxiedWriter();">Test Connect Proxied Writer</button>
+	<button type="button" onclick="javascript:connectLogged();">Test Connect Logged</button>
+	<button type="button" onclick="javascript:disconnect();">Test Disconnect</button>
+	<br />
+	<button type="button" onclick="javascript:schema();">Test Schema</button>
+	<button type="button" onclick="javascript:security();">Test Security</button>
+	<button type="button" onclick="javascript:classInfo();">Test Class Info</button>
+	<button type="button" onclick="javascript:browseCluster();">Test Browse Cluster</button>
+	<button type="button" onclick="javascript:serverInfo();">Test Server Info</button>
+	<button type="button" onclick="javascript:databaseInfo();">Test Database Info</button>
+	<br />
+	<button type="button" onclick="javascript:query();">Test Query</button>
+	<button type="button" onclick="javascript:queryFetched();">Test Query Fetched</button>
+	<button type="button" onclick="javascript:queryLimited();">Test Query Limited</button>
+	<button type="button" onclick="javascript:queryFetchedAndLimited();">Test Query Fetched and Limited</button>
+	<button type="button" onclick="javascript:queryFetchedAndLimited2();">Test Query Fetched and Limited 2</button>
+	<button type="button" onclick="javascript:queryFetchedAndLimited2Callback();">Test Query Fetched and Limited with Callback</button>
+	<div id="jsonPTestDiv"></div>
+	<br />
+	<button type="button" onclick="javascript:insert();">Test Insert</button>
+	<button type="button" onclick="javascript:remove();">Test Delete</button>
+	<button type="button" onclick="javascript:load();">Test Load</button>
+	<button type="button" onclick="javascript:loadFetched();">Test LoadFetched</button>
+	<button type="button" onclick="javascript:loadFetched2();">Test LoadFetched 2</button>
+	<br />
+	<button type="button" onclick="javascript:indexPut();">Test Index Put</button>
+	<button type="button" onclick="javascript:indexGet();">Test Index Get</button>
+	<button type="button" onclick="javascript:indexRemove();">Test Index Remove</button>
+	<br />
+	<button type="button" onclick="javascript:testCode();">Test Code</button>
+</body>
+</html>

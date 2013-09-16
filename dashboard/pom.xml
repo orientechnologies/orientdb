@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.5.0</version>
+        <relativePath>../</relativePath>
+    </parent>
+
+    <artifactId>orientdb-dashboard</artifactId>
+
+    <name>OrientDB Dashboard</name>
+
+    <properties>
+        <javac.src.version>1.6</javac.src.version>
+        <javac.target.version>1.6</javac.target.version>
+        <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
+        <osgi.import>*</osgi.import>
+        <osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
+        <blueprints.version>2.4.0-SNAPSHOT</blueprints.version>
+    </properties>
+    <scm>
+        <url>https://github.com/nuvolabase/orientdb</url>
+        <connection>scm:git:git://github.com/nuvolabase/orientdb.git</connection>
+        <developerConnection>scm:git:git://github.com/nuvolabase/orientdb.git</developerConnection>
+    </scm>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>1.6.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${jar.manifest.mainclass}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>downloads-maven-plugin</artifactId>
+                <version>0.5</version>
+                <configuration>
+
+                    <description>${project.version} release of ${project.name}</description>
+                    <override>true</override>
+                    <includeAttached>true</includeAttached>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-scm-plugin</artifactId>
+                <version>1.8</version>
+                <configuration>
+                    <checkoutDirectory>${project.basedir}/srcOrient</checkoutDirectory>
+                    <workingDirectory>${project.basedir}/srcOrient</workingDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <id>1</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>ant</executable>
+                            <workingDirectory>${project.basedir}/srcOrient</workingDirectory>
+                            <arguments>
+                                <argument>clean</argument>
+                                <argument>installg</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+
+                    <execution>
+                        <id>2</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>cp</executable>
+                            <workingDirectory>${project.basedir}/releases/orientdb-${project.version}
+                            </workingDirectory>
+                            <arguments>
+                                <argument>${project.build.directory}/orientdb-monitor-${project.version}.jar</argument>
+                                <argument>lib</argument>
+                            </arguments>
+                        </configuration>
+
+                    </execution>
+
+
+                    <execution>
+                        <id>3</id>
+
+                        <phase>install</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>cp</executable>
+                            <workingDirectory>${project.basedir}/releases/orientdb-${project.version}
+                            </workingDirectory>
+                            <arguments>
+                                <argument>${project.basedir}/config/orientdb-server-config.xml</argument>
+                                <argument>config</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Xss2048k</argLine> &lt;!&ndash;IBM JDK StackOverflowException fix&ndash;&gt;
+                    <systemPropertyVariables>
+                        <ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME>
+                    </systemPropertyVariables>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>
+                            ${project.basedir}/src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml
+                        </suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>-->
+        </plugins>
+    </build>
+
+</project>

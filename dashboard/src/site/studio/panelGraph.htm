@@ -1,0 +1,190 @@
+<!--[if IE]><script src="js/jit/excanvas.js"></script><![endif]-->
+
+<script src="js/sigma.js"></script>
+<style>
+.sigma-expand {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+}
+</style>
+<table style="width: 100%;" cellpadding="0" cellspacing="2">
+	<tr>
+		<td valign="top">
+			<table style="width: 100%;" cellpadding="2" cellspacing="0">
+				<tr>
+					<td valign="top">
+						<div id="center-container">
+							<div id="graphPanel" class="sigma-expand"></div>
+						</div>
+					</td>
+					<td valign="top">
+						<table style="width: 100%;">
+							<tr>
+								<td>@rid</td>
+								<td><input id="root-rid" type="text" class="input-mini" /></td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button id="editGraph" class="btn" style="width: 140px; text-align: center">
+										Edit <img border="0" alt="Edit record" src="images/set.png" align="top" />
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td>Depth</td>
+								<td><input id="graph-load-depth" type="text" value="2" class="input-mini" style="width: 30px;" /></td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button id="editReload" class="btn" style="width: 140px; text-align: center">
+										Reload <img border="0" alt="Reload record" src="images/refresh.png" align="top" />
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div id="graph-inner-details">
+										<hr>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2"><label class="checkbox"> <input id="bpGraphModel" type="checkbox"> Blueprints Graph model
+								</label></td>
+							</tr>
+							<tr>
+								<td>Edge type</td>
+								<td><select id="edgeType" class="input-small">
+										<option value="curve">curve</option>
+										<option value="line">line</option>
+								</select></td>
+							</tr>
+							<tr>
+								<td colspan="2"><label class="checkbox"> <input id="activateFishEye" type="checkbox" checked="checked"> <i
+										class="icon-eye-open"></i> Auto Zoom
+								</label></td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button id="circularLayout" class="btn" style="width: 140px; text-align: center">
+										Circular layout <i class="icon-share"></i>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<button id="randomLayout" class="btn" style="width: 140px; text-align: center">
+										Random layout <i class="icon-align-center"></i>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div>
+										<b>Fields</b>
+									</div>
+									<table id="fields" style="width: 100%;"></table>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<div>
+										<b>Legend</b>
+									</div>
+									<table id="legend" style="width: 100%;"></table>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+			</table>
+		</td>
+	</tr>
+</table>
+
+<script>
+	var fieldsChecked = {
+		"__rid" : true
+	};
+	function reload() {
+		g.reset();
+
+		var rid = $("#root-rid").val();
+		if (rid && rid.length > 0)
+			selectedObject = rid;
+		else
+			$("#root-rid").val(selectedObject);
+
+		g.drawGraph(selectedObject, {
+			"depth" : $('#graph-load-depth').val(),
+			"bluePrintsGraphModel" : $('#bpGraphModel').attr('checked'),
+			"edgeType" : $('#edgeType').val(),
+			"selectedFields" : fieldsChecked
+		});
+	}
+
+	function enableField(field) {
+		if ($('#field' + field).attr('checked') == 'checked')
+			fieldsChecked[field] = true;
+		else
+			delete fieldsChecked[field];
+		reload();
+	}
+
+	$("#editGraph").click(function() {
+		if (selectedObject != null)
+			displayDocument(selectedObject, orientServer);
+	});
+
+	$("#editReload").click(function() {
+		reload();
+	});
+
+	$("#circularLayout").click(function() {
+		g.circularLayout();
+	});
+	$("#randomLayout").click(function() {
+		g.randomLayout();
+	});
+	$("#activateFishEye").click(function() {
+		if ($("#activateFishEye").attr('checked') == 'checked')
+			g.activateFishEye();
+		else
+			g.deactivateFishEye();
+	});
+
+	$("#edgeType").change(function() {
+		reload();
+	});
+
+	$("#bpGraphModel").click(function() {
+		reload();
+	});
+
+	if (selectedObject) {
+		$("#root-rid").val(getRID(selectedObject));
+
+		var g = new OGraph('graphPanel', {
+			"legendTagId" : "legend",
+			"fieldsTagId" : "fields",
+			"fieldsColumns" : 2
+		});
+
+		g.drawGraph(selectedObject, {
+			"depth" : $('#graph-load-depth').val(),
+			"bluePrintsGraphModel" : $('#bpGraphModel').attr('checked'),
+			"edgeType" : $('#edgeType').val(),
+			"selectedFields" : fieldsChecked
+		});
+
+		g.activateFishEye();
+	}
+	
+	$(function() {
+		initTooltips();
+	});
+</script>

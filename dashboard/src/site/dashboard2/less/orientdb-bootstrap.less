@@ -1,0 +1,509 @@
+@orientdb-blue: #0d96e5;
+@orientdb-purple: #c60d4c;
+@orientdb-orange: #FF6600;
+@orientdb-yellow: #e7a200;
+@orientdb-red: #e11311;
+@orientdb-green: #46ca26;
+@orientdb-white: #fff;
+@orientdb-dark-white: #f7f7f7;
+@orientdb-grey: #ddd;
+@orientdb-dark-grey: #ccc;
+@orientdb-light-black: #262626;
+@orientdb-black: #000;
+
+// Font Awesome
+.font-awesome {
+    font-family: FontAwesome;
+    font-weight: normal;
+    font-style: normal;
+    text-decoration: inherit;
+    -webkit-font-smoothing: antialiased;
+}
+
+.font-awesome-before {
+    text-decoration: inherit;
+    display: inline-block;
+    speak: none;
+}
+
+// Utils
+.no-box-shadow {
+    box-shadow: none !important;
+    -moz-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+.border-radius {
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+}
+
+.no-border-radius {
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+}
+
+.no-border-top-side {
+    border-top-left-radius: 0;
+    -webkit-border-top-left-radius: 0;
+    -moz-border-radius-topleft: 0;
+    border-top-right-radius: 0;
+    -webkit-border-top-right-radius: 0;
+    -moz-border-radius-topright: 0;
+}
+
+.box-shadow-inset {
+    -webkit-box-shadow: inset 0 2px 4px rgba(0, 0, 0, .15) !important;
+    -moz-box-shadow: inset 0 2px 4px rgba(0, 0, 0, .15) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .15) !important;
+}
+
+// General
+html {
+}
+
+body {
+
+    color: @orientdb-light-black;
+
+    & > .container-fluid,
+    & > .container {
+
+        & > #content {
+            padding-top: 60px;
+        }
+    }
+}
+
+// Hr
+hr {
+    border: 0;
+    height: 2px;
+    background: darken(@orientdb-dark-white, 5%);
+}
+
+// Buttons
+a {
+    color: @orientdb-blue;
+
+    &:hover {
+        color: darken(@orientdb-blue, 5%);
+    }
+}
+
+button, .btn {
+    border: 0;
+    .no-box-shadow;
+    padding: 6px 14px;
+    background: @orientdb-grey;
+    color: @orientdb-light-black;
+
+    &:hover {
+        background: darken(@orientdb-grey, 5%);
+        color: @orientdb-black;
+    }
+
+    &.btn-large {
+        padding: 11px 20px;
+    }
+
+    &:active,
+    &.active {
+        .box-shadow-inset;
+    }
+
+    &.btn-primary {
+        background: @orientdb-orange;
+        color: @orientdb-white;
+
+        &:hover {
+            background: darken(@orientdb-orange, 5%);
+        }
+    }
+
+    &.btn-danger {
+        background: @orientdb-red;
+        color: @orientdb-white;
+
+        &:hover {
+            background: darken(@orientdb-red, 5%);
+        }
+    }
+
+    &.btn-success {
+        background: @orientdb-green;
+        color: @orientdb-white;
+
+        &:hover {
+            background: darken(@orientdb-green, 5%);
+        }
+    }
+
+    &.btn-inverse {
+        background: @orientdb-purple;
+        color: @orientdb-white;
+
+        &:hover {
+            background: darken(@orientdb-purple, 5%);
+        }
+    }
+
+    &.btn-navigation {
+        background: @orientdb-light-black;
+        color: @orientdb-dark-white;
+
+        &.active {
+            background: @orientdb-blue;
+        }
+    }
+}
+
+.icon-btn {
+    font-size: 18px;
+    padding: 2px 3px 0 3px;
+    width: 16px;
+    height: 12px;
+    .border-radius;
+    color: @orientdb-purple;
+    display: inline-block;
+
+    &:hover {
+        color: darken(@orientdb-purple, 15%);
+        text-decoration: none;
+    }
+}
+
+.icon-info-sign {
+    font-size: 18px;
+}
+
+// Tables
+table {
+    .border-radius;
+    //border-width: 0 !important;
+
+    & td,
+    & th {
+        text-align: center !important;
+        //border-width: 0 !important;
+    }
+
+    & th {
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        border-color: #c4c4c4 !important;
+        background: #dddddd;
+        position: relative;
+    }
+}
+
+// Add On
+.input-append .add-on, .input-prepend .add-on {
+    padding: 7px 8px;
+    background: @orientdb-dark-grey;
+    margin-right: 0;
+    border: 0;
+    .no-box-shadow;
+}
+
+// Inputs
+select, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
+    height: 20px !important;
+    min-height: 34px !important;
+    .no-box-shadow;
+    border-width: 2px !important;
+    padding: 5px 10px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+
+    &.input-block-level {
+    }
+
+}
+
+textarea {
+    border-width: 2px !important;
+    .no-box-shadow;
+}
+
+@media (min-width: 1200px) {
+    input.span4, textarea.span4, .uneditable-input.span4, select.span4 {
+        width: 356px;
+    }
+}
+
+form, .form {
+    margin: 0;
+
+    &.form-horizontal {
+        & .control-label {
+            padding-top: 6px;
+        }
+
+        & .well {
+            padding-bottom: 1px;
+
+            &.form-actions {
+                padding-right: 0;
+                padding-left: 200px;
+                background: @orientdb-dark-white;
+                padding-bottom: 20px;
+            }
+        }
+
+    }
+
+    & .form-actions {
+        margin-bottom: 0;
+        background: transparent;
+        border-color: darken(@orientdb-dark-white, 5%);
+        border-width: 2px;
+        padding-bottom: 0;
+        padding-left: 0;
+    }
+
+    & fieldset {
+        & legend {
+            border-width: 2px;
+            font-size: 15px;
+            font-weight: bold;
+            margin: -10px 0 0;
+            line-height: 0;
+            padding-top: 10px;
+            padding-bottom: 20px;
+            border-color: darken(@orientdb-dark-white, 5%);
+
+            & .btn {
+                margin: 0 0 0 10px;
+                padding: 3px 10px;
+                font-size: 12px;
+            }
+        }
+
+        & .dataTables_wrapper {
+            padding: 0;
+            border: 0;
+        }
+    }
+
+
+}
+
+label, .badge {
+    text-shadow: none;
+    .border-radius;
+}
+
+.badge {
+    padding: 3px 10px;
+    font-size: 11px;
+}
+
+.help-inline {
+    padding-left: 0;
+    display: block !important;
+    padding-top: 5px;
+}
+
+.help-block {
+    margin-top: 10px;
+}
+
+// Dropdown
+.dropdown-menu {
+    border: 0 !important;
+
+    & li {
+
+        & a {
+
+            &:hover {
+                background: @orientdb-blue;
+            }
+        }
+
+        &.active {
+            & a {
+                background: @orientdb-blue !important;
+            }
+        }
+    }
+}
+
+// Large Dialog
+.modal.large {
+    width: 900px;
+    margin-left: -450px;
+}
+
+// Modal
+.modal {
+
+    & .modal-body {
+        max-height: 600px;
+    }
+
+    & .modal-footer {
+       border: 0;
+       .no-box-shadow;
+        background: @orientdb-dark-white;
+    }
+
+    & .modal-header {
+        border-width: 2px;
+        border-color: @orientdb-dark-white;
+    }
+}
+
+// Well
+.well {
+    padding: 20px;
+    .no-box-shadow;
+    border: 0;
+    background: @orientdb-dark-white;
+}
+
+// Lead
+.lead {
+    margin-bottom: 10px;
+    font-size: 15px;
+    line-height: 21px;
+}
+
+// Hero Unit
+.hero-unit-login {
+    background: transparent url(../img/orientdb-hero.png) no-repeat 0 2px;
+    height: 272px;
+    padding: 60px;
+    margin-bottom: 30px;
+
+    & h1 {
+        color: @orientdb-blue;
+    }
+
+    & p {
+        font-size: 20px;
+        line-height: 27px;
+    }
+}
+
+// Page Header
+.page-header {
+    margin-top: 0;
+    border: 0;
+    padding: 0;
+    margin-bottom: 20px;
+
+    & h1,
+    & h2,
+    & h3,
+    & h4,
+    & h5 {
+        margin-top: 0;
+        color: @orientdb-black;
+    }
+
+}
+
+// Pagination
+.pagination {
+    & a {
+        padding: 6px 14px !important;
+    }
+}
+
+// Nav Pills
+ul.nav-pills li.dropdown:hover ul.dropdown-menu {
+    display: block;
+    margin-top: -1px;
+}
+
+// Badge
+.badge {
+    display: inline !important;
+}
+
+// Alerts
+.alert {
+    background: @orientdb-yellow;
+    color: #fff;
+    .no-box-shadow;
+    border: 0;
+
+    &.alert-error {
+        background: @orientdb-red;
+    }
+
+    &.alert-info {
+        background: @orientdb-blue;
+    }
+
+    &.alert-success {
+        background: @orientdb-green;
+    }
+
+    .alert-heading {
+        color: @orientdb-white;
+    }
+}
+
+// Tabs
+.tabbable {
+
+    & .nav-tabs {
+        border-bottom-width: 6px;
+        border-color: @orientdb-dark-white;
+        margin: 0 0 10px 0;
+
+        & li {
+            margin: 0 2px -6px 0;
+
+            & a {
+                border-color: @orientdb-dark-white;
+                border-width: 2px;
+                border-bottom-width: 0;
+                padding: 8px 12px 14px 12px;
+
+                &:hover {
+                    background: @orientdb-dark-white
+                }
+            }
+
+            &.active {
+                & a {
+                    border-width: 0;
+                    padding: 10px 14px;
+                    background: @orientdb-dark-white;
+                    color: @orientdb-light-black;
+
+                    &:hover {
+                        background: @orientdb-dark-white;
+                    }
+                }
+            }
+        }
+    }
+
+    & .tab-pane {
+        width: 100%;
+
+        & .well { //.no-border-top-side;
+            padding-top: 30px;
+        }
+    }
+
+    & .dataTables_wrapper {
+        border: 0;
+        padding-top: 0;
+    }
+}
+
+.tooltip {
+    &.in {
+        opacity: 1;
+    }
+}

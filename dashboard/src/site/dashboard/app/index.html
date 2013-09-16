@@ -1,0 +1,117 @@
+<!doctype html>
+<!--[if lt IE 7]>
+<html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>
+<html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>
+<html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css styles/main.css -->
+    <link rel="stylesheet" href="styles/bootstrap.css">
+    <link rel="stylesheet" href="components/bootstrap/docs/assets/css/docs.css">
+    <link rel="stylesheet" href="components/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" href="components/nvd3/src/nv.d3.css">
+    <link rel="stylesheet" href="components/select2/select2.css">
+    <link rel="stylesheet" href="components/bootstrap-daterangepicker/daterangepicker-bs2.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+</head>
+<body ng-app="MonitorApp">
+<!--[if lt IE 7]>
+<p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser
+    today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better
+    experience this site.</p>
+<![endif]-->
+
+<!--[if lt IE 9]>
+<script src="components/es5-shim/es5-shim.js"></script>
+<script src="components/json3/lib/json3.min.js"></script>
+<![endif]-->
+
+<!-- Add your site or application content here -->
+<div ng-controller="HeaderController">
+    <div ng-include src="'views/header.html'"></div>
+</div>
+<div class="monitor-app row-fluid" >
+    <div class="span2" >
+        <div class="row-fluid" ng-include src="'views/sidenav.html'"></div>
+    </div>
+    <div class="span10 mainSection" >
+        <div class="row-fluid" ng-view>
+
+        </div>
+        <div class="container-fluid">
+            <footer id="footer">
+                <div>
+                    <a class="brand" href="http://www.orientechnologies.com/enterprise.htm" target="_blank"></a>
+                    <p class="pull-right"><a target='_blank' href='http://www.orientechnologies.com/enterprise.htm'>&copy;
+                        Orient Technologies</a> - <a target='_blank' href='http://www.nuvolabase.com/site/terms.html'>Terms of
+                        Service</a> - <a target='_blank' href='http://www.nuvolabase.com/site/contacts.html'>Contacts</a></p>
+                </div>
+            </footer>
+        </div>
+    </div>
+</div>
+
+
+<script src="components/jquery/jquery.js"></script>
+<script src="components/angular/angular.js"></script>
+<script src="components/angular-resource/angular-resource.js"></script>
+<script src="components/angular-cookies/angular-cookies.js"></script>
+<script src="components/angular-sanitize/angular-sanitize.js"></script>
+<script src="components/angular-ngi18n/dist/angular-ngi18n.js"></script>
+<script src="components/js-base64/base64.js"></script>
+<script src="components/bootstrap/docs/assets/js/bootstrap.js"></script>
+<script src="components/angular-strap/dist/angular-strap.js"></script>
+<script src="components/d3/d3.js"></script>
+<script src="components/nvd3/nv.d3.js"></script>
+<script src="components/moment/moment.js"></script>
+<script src="components/angular-ui-select2/src/select2.js"></script>
+<script src="components/select2/select2.js"></script>
+<script src="components/jqvmap/jqvmap/jquery.vmap.js"></script>
+<script src="components/jqvmap/jqvmap/maps/jquery.vmap.world.js"></script>
+<script src="components/jqvmap/jqvmap/data/jquery.vmap.sampledata.js"></script>
+<script src="components/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="components/stringjs/lib/string.js"></script>
+
+<!-- build:js scripts/scripts.js -->
+<script src="scripts/app.js"></script>
+<script src="scripts/service/odirective.js"></script>
+<script src="scripts/filters/moment-filters.js"></script>
+<script src="scripts/filters/filter.js"></script>
+<script src="scripts/controllers/nav.js"></script>
+<script src="scripts/controllers/login.js"></script>
+<script src="scripts/controllers/monitor.js"></script>
+<script src="scripts/controllers/server.js"></script>
+<script src="scripts/controllers/settings.js"></script>
+<script src="scripts/controllers/header.js"></script>
+<script src="scripts/service/monitor-service.js"></script>
+<script src="scripts/directive/angularjs.nvd3.js"></script>
+<script src="scripts/directive/custom.js"></script>
+
+
+
+<!-- endbuild -->
+
+<!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
+<script>
+    var _gaq = [
+        ['_setAccount', 'UA-XXXXX-X'],
+        ['_trackPageview']
+    ];
+    (function (d, t) {
+        var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+        g.src = ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js';
+        s.parentNode.insertBefore(g, s)
+    }(document, 'script'));
+</script>
+</body>
+</html>

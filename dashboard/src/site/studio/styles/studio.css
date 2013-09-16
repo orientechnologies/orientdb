@@ -1,0 +1,145 @@
+.cell_readonly {
+	color: white;
+	background-color: #6D7B8D;
+}
+
+#graph-inner-details {
+	font-size: 13pt;
+}
+
+#center-container {
+	background-color: #1a1a1a;
+	vertical-align: top;
+}
+
+.help {
+	font-size: 12pt;
+}
+
+table.ograph_detail {
+	background-color: #87B6D9;
+}
+
+input.odocumentview_version_value {
+	width: 60px;
+}
+
+input.odocumentview_rid_value {
+	width: 90px;
+}
+
+select.odocumentview_type_value {
+	width: 100px;
+	color: grey;
+}
+
+input.odocumentview_field_label {
+	font-size: 13pt;
+	vertical-align: top;
+	text-align: right;
+	border-color: #F8F8F8;
+}
+
+td.odocumentview_field_label {
+	font-size: 13pt;
+	vertical-align: top;
+	text-align: left;
+}
+
+td.odocumentview_field_value {
+	font-size: 13pt;
+}
+
+textarea.odocumentview_field_value {
+	font-size: 13pt;
+	vertical-align: top;
+	width: 80%;
+}
+
+.tooltip {
+	background-color: #5C9CCC;
+	border: 1px solid #fff;
+	padding: 10px 15px;
+	width: 200px;
+	display: none;
+	color: #fff;
+	text-align: left;
+	font-size: 12px;
+	z-index: 950;
+	/* outline radius for mozilla/firefox only */
+	-moz-box-shadow: 0 0 10px #000;
+	-webkit-box-shadow: 0 0 10px #000;
+}
+
+button.exportButton {
+	position: relative;
+	overflow: hidden;
+	direction: ltr;
+	cursor: pointer;
+	text-align: center;
+	color: #333;
+	font-weight: bold;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	width: 15em;
+	height: 2.5em;
+	line-height: 2.5em;
+	background: #3399FF;
+	border: 1px solid #2e6e9e;
+	text-align: center !important;
+}
+
+button.exportButton:hover {
+	background: #33CCFF;
+}
+
+.noborder {
+	margin-left: 0px;
+}
+
+button.uniform-large {
+	width: 130px;
+}
+
+.link {
+	padding: 2px 4px 3px;
+	font-size: 11.049999999999999px;
+	font-weight: bold;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	color: #fff !important;
+	background-color: #3a87ad;
+	cursor: pointer;
+}
+
+.link:hover {
+	background-color: #2d6987;
+	text-decoration: none;
+}
+
+.className {
+	padding: 2px 4px 3px;
+	font-size: 11.049999999999999px;
+	font-weight: bold;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	color: #fff !important;
+	background-color: #3a87ad;
+	cursor: pointer;
+}
+
+.className:hover {
+	background-color: #2d6987;
+	text-decoration: none;
+}
+
+#graphPanel {
+	position: relative;
+	width: 900px;
+	height: 650px;
+	margin: auto;
+	overflow: hidden;
+}

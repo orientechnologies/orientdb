@@ -1,0 +1,418 @@
+/* Will be compiled down to a single stylesheet with your sass files */
+html {
+    height: 100%;
+
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: #35353a;
+}
+
+#full-screen-background-image {
+    z-index: -999;
+    min-height: 100%;
+    min-width: 1024px;
+    width: 100%;
+    height: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.account-container {
+    display: block;
+    margin: 90px auto 0 auto;
+}
+
+/** Text Under Box**/
+.login-extra {
+    display: block;
+    width: 300px;
+    margin: 1.5em auto;
+    text-align: center;
+    line-height: 19px;
+    text-shadow: 1px 1px 0px #fff;
+}
+
+@media ( max-width : 480px) {
+    .account-container {
+        width: 280px;
+        margin-top: 35px;
+    }
+
+    .login-fields input {
+        width: 160px;
+    }
+}
+
+.navbar .container-fluid .brand {
+    background: url("../img/orientdb-logo-full.png") no-repeat scroll 0 9px transparent;
+    width: 233px;
+}
+
+.navbar .container-fluid .brand2 {
+    background: url("../img/orientdb-logo.png") no-repeat scroll 0 9px transparent;
+    display: inline-block;
+    height: 29px;
+    margin: 0;
+    padding: 9px 15px 10px 0;
+    width: 29px;
+}
+
+.navbar.navbar-inverse .navbar-inner {
+    background: none repeat scroll 0 0 #262626;
+    border-bottom: 5px solid #FF6600;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+button.btn-primary, .btn.btn-primary {
+    background: none repeat scroll 0 0 #FF6600;
+    color: #FFFFFF;
+}
+
+.btn-block {
+    -moz-box-sizing: border-box;
+    display: block;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+}
+
+.monitor-app {
+    margin: 53px auto 0;
+    min-height: 100%;
+}
+
+.loginForm input {
+    margin-bottom: 10px;
+}
+
+#footer {
+    background: none repeat scroll 0 0 #F4F4F4;
+    border-radius: 4px 4px 4px 4px;
+    height: 19px;
+    margin: 30px 0;
+    padding: 10px 20px;
+}
+
+#footer .brand {
+    background: url("../img/orientdb-logo-nano.png") no-repeat scroll left top transparent;
+    display: inline-block;
+    height: 19px;
+    width: 148px;
+}
+
+.table th {
+    background: none repeat scroll 0 0 #DDDDDD;
+    border-color: #C4C4C4;
+    padding-bottom: 6px;
+    padding-top: 6px;
+    position: relative;
+    font-size: 13px;
+}
+
+.table-nocolor th {
+    background: none;
+    border-color: #C4C4C4;
+}
+
+.well {
+    background: none repeat scroll 0 0 #F7F7F7;
+    border: 0 none;
+    box-shadow: none !important;
+    padding: 20px;
+    text-shadow: none !important;
+}
+
+.btn {
+    background-color: #E5E5E5;
+    background-image: none;
+    border: 0 none;
+    border-radius: 0 0 0 0 !important;
+    box-shadow: none !important;
+    color: #333333;
+    cursor: pointer;
+    filter: none;
+    outline: medium none;
+    padding: 7px 14px;
+    text-shadow: none;
+}
+
+.nav-pills > li > a {
+    border-radius: 0 0 0 0 !important;
+}
+
+button.btn-inverse, .btn.btn-inverse {
+    background: none repeat scroll 0 0 #FF6600;
+    color: #FFFFFF;
+}
+
+button.btn-inverse:hover, .btn.btn-inverse:hover {
+    background: none repeat scroll 0 0 #E65C00;
+}
+
+.serverNav {
+    color: #ffffff;
+}
+
+.icon-brand {
+    background: url("../img/orientdb-logo.png") no-repeat;
+    height: 29px;
+    width: 29px;
+    display: inline-block;
+}
+
+.mainSection {
+    background: #ffffff;
+    box-shadow: -10px 0px 10px 1px #262626;
+    padding-left: 10px;
+    margin-left: 0px !important;
+    width: 85.1064% !important;
+
+}
+
+.navSection {
+    padding-top: 20px;
+
+}
+
+.navMenu {
+    margin-top: 40px;
+}
+
+.navMenu ul.nav-list > li > a {
+    color: #ffffff !important;
+    text-shadow: none;
+    padding: 10px 15px;
+    border-top: 1px solid #5C5C5C !important;
+}
+
+.navMenu ul.nav-list > li > a:hover {
+    background-color: #0088CC;
+}
+
+.navMenu ul.nav-list > li.active > a .selected {
+    /* background-image: url("../img/sidebar-menu-arrow.png");
+     display: block;
+     float: right;
+     height: 25px;
+     position: absolute;
+     right: 0;
+     top: 8px;
+     width: 8px;*/
+}
+
+.navMenu ul.nav-list > li {
+    line-height: 20px;
+}
+
+.menuTitle {
+    padding-left: 5px;
+}
+
+.serverBox {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.widget {
+    clear: both;
+    margin-bottom: 25px;
+    margin-top: 0;
+    padding: 0;
+}
+
+.widget > .widget-title:after, .widget > .widget-title:before {
+    content: "";
+    display: table;
+    line-height: 0;
+}
+
+.widget > .widget-title:after {
+    clear: both;
+}
+
+.widget > .widget-title:after, .widget > .widget-title:before {
+    content: "";
+    display: table;
+    line-height: 0;
+}
+
+.widget > .widget-title {
+    border-bottom: 1px solid #EEEEEE;
+    margin-bottom: 15px;
+}
+
+.widget.boxed > .widget-body {
+    background-color: #FFFFFF;
+    padding: 10px;
+}
+
+.widget > .widget-body {
+    clear: both;
+    padding: 0;
+}
+
+.widget > .widget-title > .widget-caption {
+    display: inline-block;
+    float: left;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0 0 7px;
+    padding: 0;
+}
+
+.widget > .widget-title >  .actions {
+    display: inline-block;
+    float: right;
+    margin: 6px 0 0;
+    padding: 0;
+}
+
+.widget > .widget-title > .actions > .btn {
+    margin-top: -10px;
+    padding: 4px 10px;
+}
+
+.widget.boxed > .widget-title {
+    margin-bottom: 0;
+}
+
+.widget.boxed > .widget-title {
+    border-bottom: 1px solid #EEEEEE;
+    color: #FFFFFF !important;
+    padding: 8px 10px 2px;
+}
+
+.widget.boxed > .widget-title {
+    color: #FFFFFF !important;
+}
+
+/* BLUE*/
+.widget.boxed.blue {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: -moz-use-text-color #B4CEF8 #B4CEF8;
+    border-image: none;
+    border-right: 1px solid #B4CEF8;
+    border-style: none solid solid;
+    border-width: 0 1px 1px;
+}
+
+.widget.boxed.blue > .widget-title {
+    background-color: #0088CC;
+}
+
+.logDate {
+    color: #C1CBD0;
+    font-style: italic;
+}
+
+.log-list li > div {
+    margin-bottom: 5px;
+}
+
+.select2-container .select2-choice {
+    -moz-user-select: none;
+    background: none repeat scroll 0 0 #FFFFFF;
+    border: 2px solid #CCCCCC;
+    border-radius: 4px 4px 4px 4px;
+    color: #444444;
+    display: block;
+    height: 30px;
+    line-height: 30px;
+    overflow: hidden;
+    position: relative;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.select2-container .select2-choice .select2-arrow  b:before {
+    content: "\f0dc";
+    display: inline-block;
+    font-size: 14px;
+    position: relative;
+    text-decoration: inherit;
+    top: 1px;
+}
+
+.select2-container .select2-choice .select2-arrow  b {
+    background: none;
+}
+
+.select2-container .select2-choice  b {
+    display: block;
+    font-family: FontAwesome;
+    font-style: normal;
+    font-weight: normal;
+    height: 100%;
+    text-decoration: inherit;
+    width: 100%;
+}
+
+.select2-container .select2-choice .select2-arrow {
+    background: none;
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    display: inline-block;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 18px;
+}
+
+.select2-container-active .select2-choice, .select2-container-active .select2-choices {
+    border: 2px solid #0D96E5;
+    box-shadow: none;
+    outline: medium none;
+}
+
+.select2-drop {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background: none repeat scroll 0 0 #FFFFFF;
+    border-color: -moz-use-text-color #0D96E5 #0D96E5;
+    border-image: none;
+    border-radius: 0 0 4px 4px;
+    border-right: 2px solid #0D96E5;
+    border-style: none solid solid;
+    border-width: 0 2px 2px;
+    box-shadow: 0 4px 5px rgba(0, 0, 0, 0.05);
+    color: #000000;
+    margin-top: -2px;
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    z-index: 9999;
+}
+
+.select2-search input:focus {
+    box-shadow: none;
+}
+
+.querySearch {
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+.metric-range {
+    background-color: #E02222;
+    color: #ffffff;
+    cursor: pointer;
+    margin-right: 0;
+    margin-top: -8px;
+    padding: 8px 8px 7px;
+}
+.metric-range span {
+}
+
+

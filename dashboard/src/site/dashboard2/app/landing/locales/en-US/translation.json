@@ -1,0 +1,79 @@
+{
+    "title" : "OrientDB Enterprise Dashboard",
+    "welcome" : {
+      "title" : "Welcome to OrientDB Enterprise Dashboard",
+      "message" : "Collect internal metrics and statistics of your OrientDB Servers and Clusters, find out the most costly SQL commands, handle the server configuration in a central cockpit, get hints to improve performances.",
+      "button" : "Add a new server"
+    },
+    "payoff" : "Enterprise Dashboard",
+    "settings" : {
+      "label" : "Settings",
+      "servers" : {
+        "label" : "<i class='icon-sitemap'></i> Servers",
+        "new" : "<i class='icon-plus-sign'></i> New Server"
+      },
+      "server" : {
+        "title" : "<i class='icon-edit'></i> Edit Server",
+        "general" : "General",
+        "heading1" : "In this tab you can view and modify the OrientDB Server connection properties",
+        "enabled" : "Enabled",
+        "name" : "Name",
+        "namehint" : "Something descriptive to help you identify this server",
+        "url" : "URL",
+        "urlhint" : "The OrientDB Server URL to monitor",
+        "user" : "Server User",
+        "userhint" : "A username specified in orientdb-server-config.xml or orientdb-dserver-config.xml",
+        "pwd" : "Password",
+        "configuration" : "Configuration",
+        "heading2" : "Here you can see the system configuration for this OrientDB Server",
+        "new" : {
+          "title" : "<i class='icon-edit'></i> New Server"
+        }
+      },
+      "help" : {
+        "label" : "<i class='icon-book'></i> Help"
+      }
+    },
+    "profiler" : {
+      "title" : "<i class=' icon-eye-open'></i> Server Profiler",
+      "queries" : {
+        "title" : "<i class=' icon-tasks'></i> Queries"
+      },
+      "metrics" : {
+        "title" : "<i class='icon-align-left'/> Metrics"
+      }
+    },
+    "queryprofiler" : {
+      "label" : "<i class='icon-tasks'/> Query Profiler",
+      "server" : "Server",
+      "database" : "Database",
+      "entries" : "executions (count)",
+      "refresh" : "<i class='icon-refresh'></i> Refresh",
+      "clean" : "<i class='icon-eraser'></i> Clear"
+    },
+    "metrics" : {
+      "label" : "<i class='icon-align-left'/> Metrics",
+      "server" : "Server",
+      "metric" : "Metric",
+      "range" : "Time Window"
+    },
+    "logs" : {
+      "title" : "<i class='icon-envelope'></i> Latest Notifications",
+      "date" : "Date",
+      "server" : "Server",
+      "description" : "Description"
+    },
+    "servers" : {
+      "health" : {
+        "title" : "<i class=' icon-stethoscope'></i> Servers Health",
+        "status" : "Status",
+        "name" : "Server",
+        "lastcheck" : "Last Heartbeat"
+      }
+    },
+    "signout" : "Sign Out",
+    "systemerror" : "Oops... the system was unable to perform your operation",
+    "footer" : "<a target='_blank' href='http://www.orientechnologies.com/enterprise.htm'>&copy; Orient Technologies</a> - <a target='_blank' href='http://www.nuvolabase.com/site/terms.html'>Terms of Service</a> - <a target='_blank' href='http://www.nuvolabase.com/site/contacts.html'>Contacts</a>",
+    "cancel" : "Cancel",
+    "save" : "Save"
+}

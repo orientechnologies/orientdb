@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+<!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title data-i18n="title"></title>
+<meta name="description" content="">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<link rel="stylesheet" href="../../css/style.css">
+<style>
+html,body {
+	height: 100%;
+	width: 100%;
+	padding: 0;
+	margin: 0;
+}
+
+#full-screen-background-image {
+	z-index: -999;
+	min-height: 100%;
+	min-width: 1024px;
+	width: 100%;
+	height: auto;
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+
+.account-container {
+	display: block;
+	margin: 90px auto 0 auto;
+}
+
+/** Text Under Box**/
+.login-extra {
+	display: block;
+	width: 300px;
+	margin: 1.5em auto;
+	text-align: center;
+	line-height: 19px;
+	text-shadow: 1px 1px 0px #fff;
+}
+
+@media ( max-width : 480px) {
+	.account-container {
+		width: 280px;
+		margin-top: 35px;
+	}
+	.login-fields input {
+		width: 160px;
+	}
+}
+</style>
+
+<script src="../../js/vendor/modernizr-2.6.1-respond-1.1.0.min.js"></script>
+</head>
+<body>
+	<!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+	
+	<div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a href="#" class="brand">&nbsp;</a>
+            </div>
+        </div>
+    </div>
+
+	<img alt="full screen background image"
+		src="../../img/orient_home_bg.jpg" id="full-screen-background-image" />
+		
+	<div class="container account-container">
+		<div class="row">
+			<div class="span4 offset4 well">
+				<legend data-i18n="mainmessage"></legend>
+	          	<p style="text-align: justify;" data-i18n="maindescription"></p>
+				<form id="loginform">
+					<input type="text" id="username" class="span4" name="username" data-i18n="username" data-i18n-attr="placeholder">
+					<input type="password" id="password" class="span4" name="password" data-i18n="password" data-i18n-attr="placeholder">
+		            <label class="checkbox">
+		            	<input id="Field" name="Field" type="checkbox" class="field login-checkbox" value="First Choice" tabindex="4"> <label class="choice" data-i18n="keepmein" for="Field"></label>
+		            </label>
+					<button type="submit" name="submit" class="btn-primary btn-block" data-i18n="signin"></button>
+				</form>    
+			</div>
+		</div>
+	</div>	
+
+	<div class="login-extra">
+		<p style="text-align: center">
+			<small data-i18n="footer"></small>
+		</p>
+	</div>
+
+	<script data-main="../../js/app/home"
+		src="../../js/vendor/require.js"></script>
+</body>
+</html>

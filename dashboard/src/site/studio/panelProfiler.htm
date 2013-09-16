@@ -1,0 +1,53 @@
+<div id="panel-profiler">
+	<button onclick="javascript:reloadProfiler()" class="btn">
+		Refresh <img border="0" alt="Refresh" src="images/execute.png" align="top" />
+	</button>
+	<table style="width: 100%;">
+		<tr>
+			<td valign="top"><b>Hook Values</b>
+				<table id="serverProfilerHooks" class="table table-striped table-bordered table-condensed">
+				</table></td>
+		</tr>
+		<tr>
+			<td valign="top"><b>Counters</b>
+				<table id="serverProfilerCounters" class="table table-striped table-bordered table-condensed">
+				</table></td>
+		</tr>
+		<tr>
+			<td valign="top"><b>Statistics</b>
+				<table id="serverProfilerStats" class="table table-striped table-bordered table-condensed">
+				</table></td>
+		</tr>
+		<tr>
+			<td valign="top"><b>Chronos</b>
+				<table id="serverProfilerChronos" class="table table-striped table-bordered table-condensed">
+				</table></td>
+		</tr>
+	</table>
+</div>
+
+<script>
+	function reloadProfiler() {
+		var profiler = orientServer.profiler();
+		if (profiler == null) {
+			jQuery("#output").val(orientServer.getErrorMessage());
+		} else {
+			fillStaticTable($('#serverProfilerHooks'), [ 'Name', 'Value' ],
+					server['profiler']['hookValues']);
+			fillStaticTable($('#serverProfilerCounters'), [ 'Name', 'Value' ],
+					server['profiler']['counters']);
+			fillStaticTable($('#serverProfilerStats'), [ 'Name', 'Total',
+					'Average Elapsed (ms)', 'Min Elapsed (ms)',
+					'Max Elapsed (ms)', 'Last Elapsed (ms)',
+					'Total Elapsed (ms)' ], server['profiler']['stats']);
+			fillStaticTable($('#serverProfilerChronos'), [ 'Name', 'Total',
+					'Average Elapsed (ms)', 'Min Elapsed (ms)',
+					'Max Elapsed (ms)', 'Last Elapsed (ms)',
+					'Total Elapsed (ms)' ], server['profiler']['chronos']);
+		}
+	}
+	
+	$(function() {
+		initTooltips();
+	});
+</script>

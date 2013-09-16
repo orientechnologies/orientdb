@@ -1,0 +1,21 @@
+<td>
+    <% if (data.enabled) { %>
+        <i class="icon-ok"></i>
+    <% } %>
+</td>
+<td><% if (data.status === 'ONLINE') { %>
+	<span class="label label-success">Online</span>
+	<% } else if (data.status === 'OFFLINE') { %>
+	<span class="label label-important">Offline</span>
+	<% } else if (data.status) { %>
+	<span class="label label-important"><%= data.status %></span>
+	<% } else  { %>
+	<span class="label label-inverse">No data</span>
+	<% } %>
+</td>
+<td><a href="#settings/servers/<%= data['@rid']%>"><%= data.name %></a></td>
+<td><%= data.url %></td>
+<td style="text-align: center">
+	<a href="#settings/servers/<%= data['@rid']%>"><i class="icon-edit"></i></a> 
+	<a class="deleteitem" href="#"><i class="icon-trash"></i></a>
+</td>

@@ -1,0 +1,30 @@
+<div class="container-fluid">
+    <h3>
+        <i class="icon-bar-chart"></i>
+        {{ 'dashboard.metrics' | i18n }}
+    </h3>
+
+    <div ng-controller="MetricsMonitorController">
+        <div class="row-fluid">
+            <div class="well">
+                <label for="metricOnline" class="span2">{{ 'dashboard.metrics' | i18n }}</label>
+                <select id="metricOnline" ui-select2 ng-model="metric" class="span4" data-placeholder="Pick a Metric">
+                    <option ng-repeat="met in metrics" value="{{ metric }}">{{ met.name }}</option>
+                </select>
+
+                <div class="span2"></div>
+                <div class="span4 metric-range" ng-model="range" rangepicker="range">
+                    <i class="icon-calendar"></i>
+                    <span></span>
+                    <i class="icon-angle-down"></i>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid">
+
+        </div>
+        <div class="row-fluid">
+
+        </div>
+    </div>
+</div>
