@@ -78,14 +78,24 @@ public class OServerNetworkListener extends Thread {
       for (int i = 0; i < iCommands.length; ++i) {
         if (iCommands[i].stateful)
           // SAVE STATEFUL COMMAND CFG
-          statefulCommands.add(iCommands[i]);
+          registerStatefulCommand(iCommands[i]);
         else
           // EARLY CREATE STATELESS COMMAND
-          statelessCommands.add(OServerNetworkListener.createCommand(server, iCommands[i]));
+          registerStatelessCommand(OServerNetworkListener.createCommand(server, iCommands[i]));
       }
     }
 
     start();
+  }
+
+  public OServerNetworkListener registerStatelessCommand(final OServerCommand iCommand) {
+    statelessCommands.add(iCommand);
+    return this;
+  }
+
+  public OServerNetworkListener registerStatefulCommand(final OServerCommandConfiguration iCommand) {
+    statefulCommands.add(iCommand);
+    return this;
   }
 
   public void shutdown() {
