@@ -117,12 +117,17 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     // CREATE EDGES
     final List<Object> edges = new ArrayList<Object>();
     for (ORecordId from : fromIds) {
-      final OrientVertex fromVertex = (OrientVertex) graph.getVertex(from);
+      final OrientVertex fromVertex = graph.getVertex(from);
       if (fromVertex == null)
         throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
 
       for (ORecordId to : toIds) {
-        final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
+        final OrientVertex toVertex;
+        if (from.equals(to)) {
+          toVertex = fromVertex;
+        } else {
+          toVertex = graph.getVertex(to);
+        }
 
         final String clsName = clazz.getName();
 
