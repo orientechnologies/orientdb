@@ -259,22 +259,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         }
       }
 
-      if (path.endsWith(".htm") || path.endsWith(".html"))
-        staticContent.type = "text/html";
-      else if (path.endsWith(".png"))
-        staticContent.type = "image/png";
-      else if (path.endsWith(".jpeg"))
-        staticContent.type = "image/jpeg";
-      else if (path.endsWith(".js"))
-        staticContent.type = "application/x-javascript";
-      else if (path.endsWith(".css"))
-        staticContent.type = "text/css";
-      else if (path.endsWith(".ico"))
-        staticContent.type = "image/x-icon";
-      else if (path.endsWith(".otf"))
-        staticContent.type = "font/opentype";
-      else
-        staticContent.type = "text/plain";
+      staticContent.type = getContentType(path);
 
       staticContent.is = new BufferedInputStream(new FileInputStream(inputFile));
       staticContent.contentSize = inputFile.length();
@@ -295,5 +280,24 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         staticContent.is = new ByteArrayInputStream(cachedEntry.content);
       }
     }
+  }
+
+  public static String getContentType(final String path) {
+    if (path.endsWith(".htm") || path.endsWith(".html"))
+      return "text/html";
+    else if (path.endsWith(".png"))
+      return "image/png";
+    else if (path.endsWith(".jpeg"))
+      return "image/jpeg";
+    else if (path.endsWith(".js"))
+      return "application/x-javascript";
+    else if (path.endsWith(".css"))
+      return "text/css";
+    else if (path.endsWith(".ico"))
+      return "image/x-icon";
+    else if (path.endsWith(".otf"))
+      return "font/opentype";
+
+    return "text/plain";
   }
 }
