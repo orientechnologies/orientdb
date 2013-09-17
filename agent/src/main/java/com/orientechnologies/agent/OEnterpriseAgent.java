@@ -20,9 +20,9 @@ package com.orientechnologies.agent;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
   private OServer server;

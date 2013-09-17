@@ -6,5 +6,7 @@
 	},
 	"version" : "1.0",
 	"description" : "This is the Agent part of the commercial OrientDB Enterprise suite",
-	"web" : "http://www.orientechnologies.com/enterprise.htm"
+	"web" : "http://www.orientechnologies.com/enterprise.htm",
+	"copyrights" : "Orient Technologies LTD",
+	"license" : "Commercial"
 }
