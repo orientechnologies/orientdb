@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler;
+package com.orientechnologies.orient.server.plugin;
 
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -61,4 +61,6 @@ public interface OServerPlugin extends OService {
   public void config(OServer oServer, OServerParameterConfiguration[] iParams);
 
   public void sendShutdown();
+
+  public Object getContent(final String iURL);
 }

@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler;
+package com.orientechnologies.orient.server.plugin;
 
 import java.util.Collection;
 
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 public class OServerPluginHelper {
 

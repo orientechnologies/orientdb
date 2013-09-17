@@ -18,10 +18,10 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
 import com.orientechnologies.orient.server.hazelcast.sharding.OAutoshardedStorageImpl;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
 import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Distributed plugin implementation that supports autosharding

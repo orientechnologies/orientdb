@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Allow the execution of server-side scripting. This could be a security hole in your configuration if users have access to the

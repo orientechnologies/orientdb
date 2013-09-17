@@ -303,4 +303,20 @@ public class OServerNetworkListener extends Thread {
           + iCommand + ")", e);
     }
   }
+
+  public Object getCommand(final Class<?> iCommandClass) {
+    // SEARCH IN STATELESS COMMANDS
+    for (OServerCommand cmd : statelessCommands) {
+      if (cmd.getClass().equals(iCommandClass))
+        return cmd;
+    }
+
+    // SEARCH IN STATEFUL COMMANDS
+    for (OServerCommandConfiguration cmd : statefulCommands) {
+      if (cmd.implementation.equals(iCommandClass.getName()))
+        return cmd;
+    }
+
+    return null;
+  }
 }
