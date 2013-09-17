@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Allow the execution of server-side scripting. This could be a security hole in your configuration if users have access to the
@@ -29,7 +30,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * @author Luca
  * 
  */
-public class OServerSideScriptInterpreter extends OServerHandlerAbstract {
+public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   private boolean enabled = false;
 
   @Override

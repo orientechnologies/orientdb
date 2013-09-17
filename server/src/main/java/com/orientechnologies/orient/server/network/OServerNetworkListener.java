@@ -78,14 +78,39 @@ public class OServerNetworkListener extends Thread {
       for (int i = 0; i < iCommands.length; ++i) {
         if (iCommands[i].stateful)
           // SAVE STATEFUL COMMAND CFG
-          statefulCommands.add(iCommands[i]);
+          registerStatefulCommand(iCommands[i]);
         else
           // EARLY CREATE STATELESS COMMAND
-          statelessCommands.add(OServerNetworkListener.createCommand(server, iCommands[i]));
+          registerStatelessCommand(OServerNetworkListener.createCommand(server, iCommands[i]));
       }
     }
 
     start();
+  }
+
+  public OServerNetworkListener registerStatelessCommand(final OServerCommand iCommand) {
+    statelessCommands.add(iCommand);
+    return this;
+  }
+
+  public OServerNetworkListener unregisterStatelessCommand(final Class<? extends OServerCommand> iCommandClass) {
+    for (OServerCommand c : statelessCommands) {
+      if (c.getClass().equals(iCommandClass)) {
+        statelessCommands.remove(c);
+        break;
+      }
+    }
+    return this;
+  }
+
+  public OServerNetworkListener registerStatefulCommand(final OServerCommandConfiguration iCommand) {
+    statefulCommands.add(iCommand);
+    return this;
+  }
+
+  public OServerNetworkListener unregisterStatefulCommand(final OServerCommandConfiguration iCommand) {
+    statefulCommands.remove(iCommand);
+    return this;
   }
 
   public void shutdown() {
@@ -277,5 +302,21 @@ public class OServerNetworkListener extends Thread {
       throw new IllegalArgumentException("Cannot create custom command invoking the constructor: " + iCommand.implementation + "("
           + iCommand + ")", e);
     }
+  }
+
+  public Object getCommand(final Class<?> iCommandClass) {
+    // SEARCH IN STATELESS COMMANDS
+    for (OServerCommand cmd : statelessCommands) {
+      if (cmd.getClass().equals(iCommandClass))
+        return cmd;
+    }
+
+    // SEARCH IN STATEFUL COMMANDS
+    for (OServerCommandConfiguration cmd : statefulCommands) {
+      if (cmd.implementation.equals(iCommandClass.getName()))
+        return cmd;
+    }
+
+    return null;
   }
 }

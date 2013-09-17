@@ -15,50 +15,14 @@
  */
 package com.orientechnologies.orient.server.handler;
 
-import com.orientechnologies.common.util.OService;
-import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 
 /**
- * Server handler interface. Used when configured in the server configuration.
+ * Deprecated, use OServerPlugin instead.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OServerHandler extends OService {
-  /**
-   * Callback invoked when a client connection begins.
-   */
-  public void onClientConnection(OClientConnection iConnection);
-
-  /**
-   * Callback invoked when a client connection ends.
-   */
-  public void onClientDisconnection(OClientConnection iConnection);
-
-  /**
-   * Callback invoked before a client request is processed.
-   */
-  public void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
-
-  /**
-   * Callback invoked after a client request is processed.
-   */
-  public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
-
-  /**
-   * Callback invoked when a client connection has errors.
-   * 
-   * @param iThrowable
-   *          Throwable instance received
-   */
-  public void onClientError(OClientConnection iConnection, Throwable iThrowable);
-
-  /**
-   * Configures the handler. Called at startup.
-   */
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams);
-
-  public void sendShutdown();
+@Deprecated
+public interface OServerHandler extends OServerPlugin {
 }

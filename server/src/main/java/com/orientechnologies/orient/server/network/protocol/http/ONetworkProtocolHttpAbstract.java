@@ -522,10 +522,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         Orient
             .instance()
             .getProfiler()
-            .stopChrono("server.http." + listeningAddress + ".requests", "Execution of HTTP request",
-                connection.data.lastCommandReceived);
-      Orient.instance().getProfiler()
-          .stopChrono("server.network.requests", "Total received requests", connection.data.lastCommandReceived);
+            .stopChrono("server.network.requests", "Total received requests", connection.data.lastCommandReceived,
+                "server.network.requests");
     }
   }
 
