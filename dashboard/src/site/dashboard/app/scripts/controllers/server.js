@@ -76,7 +76,33 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         $scope.server = data;
         Server.findDatabases(data.name, function (data) {
             $scope.databases = data;
+            var db = $scope.databases[0];
+            $scope.dbselected = db;
+            var create = 'db.' + db + '.createRecord';
+            var update = 'db.' + db + '.updateRecord';
+            var del = 'db.' + db + '.deleteRecord';
+            var read = 'db.' + db + '.readRecord';
+            Metric.getOperationMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
+                $scope.operationData = new Array;
+                var tmpArr = new Array;
+                data.result.forEach(function (elem, idx, array) {
+                    if (!tmpArr[elem.name]) {
+                        tmpArr[elem.name] = new Array;
+                    }
+                    tmpArr[elem.name].push([elem.dateTo, elem.entries]);
+                });
+
+                data.result.forEach(function (elem, idx, array) {
+                    if (!tmpArr[elem.name]) {
+                        tmpArr[elem.name] = new Array;
+                    }
+                    tmpArr[elem.name].push([elem.dateTo, elem.entries]);
+                });
+                $scope.operationData = tmpArr;
+            });
+
         });
+
     });
 
 });
@@ -87,14 +113,14 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
             var name = $scope.metrics[0].name;
-            Metric.getMetrics({ name : name , server : $scope.rid},function(data){
-                 console.log(data);
+            Metric.getMetrics({ name: name, server: $scope.rid}, function (data) {
+                console.log(data);
 
             })
         }
     });
-    $scope.$watch("range",function(data){
-          console.log(data);
+    $scope.$watch("range", function (data) {
+        console.log(data);
     });
 
 });
