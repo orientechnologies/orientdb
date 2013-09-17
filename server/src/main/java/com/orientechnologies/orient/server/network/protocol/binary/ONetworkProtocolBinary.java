@@ -75,8 +75,8 @@ import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
-import com.orientechnologies.orient.server.handler.OServerHandler;
 import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
@@ -718,7 +718,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         sendDatabaseInformation();
 
-        final OServerHandler plugin = server.getPlugin("cluster");
+        final OServerPlugin plugin = server.getPlugin("cluster");
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
@@ -868,7 +868,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IllegalArgumentException("Cluster operation is null");
 
     if (operation.equals("status")) {
-      final OServerHandler plugin = server.getPlugin("cluster");
+      final OServerPlugin plugin = server.getPlugin("cluster");
       if (plugin != null && plugin instanceof ODistributedServerManager)
         response = ((ODistributedServerManager) plugin).getClusterConfiguration();
     } else

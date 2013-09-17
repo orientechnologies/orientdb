@@ -71,7 +71,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
   public void serializeNative(String object, byte[] stream, int startPosition) {
     int length = object.length();
-    CONVERTER.putInt(stream, startPosition, length, ByteOrder.nativeOrder());
+    OIntegerSerializer.INSTANCE.serializeNative(length, stream, startPosition);
 
     int pos = startPosition + OIntegerSerializer.INT_SIZE;
     for (int i = 0; i < length; i++) {
@@ -82,7 +82,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   public String deserializeNative(byte[] stream, int startPosition) {
-    int len = CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
+    int len = OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
     char[] buffer = new char[len];
 
     int pos = startPosition + OIntegerSerializer.INT_SIZE;
@@ -108,7 +108,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
   @Override
   public String deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    int len = memory.getInt(pointer);
+    int len = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(memory, pointer);
     char[] buffer = new char[len];
 
     pointer += OIntegerSerializer.INT_SIZE;

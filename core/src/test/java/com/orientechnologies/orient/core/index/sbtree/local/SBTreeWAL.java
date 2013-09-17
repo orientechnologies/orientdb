@@ -36,6 +36,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  */
 @Test
 public class SBTreeWAL extends SBTreeTest {
+  static {
+    OGlobalConfiguration.INDEX_TX_MODE.setValue("FULL");
+  }
+
   private String                          buildDirectory;
 
   private String                          actualStorageDir;
@@ -120,7 +124,7 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
@@ -156,7 +160,7 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
   }
 

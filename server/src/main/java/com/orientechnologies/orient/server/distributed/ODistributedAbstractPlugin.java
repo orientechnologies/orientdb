@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -43,7 +43,7 @@ import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract implements ODistributedServerManager,
+public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
   public static final String                              REPLICATOR_USER            = "replicator";
   protected static final String                           MASTER_AUTO                = "$auto";

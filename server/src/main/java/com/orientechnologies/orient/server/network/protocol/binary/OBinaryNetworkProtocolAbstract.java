@@ -141,7 +141,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } catch (Throwable t) {
       sendError(clientTxId, t);
     } finally {
-      Orient.instance().getProfiler().stopChrono("server.network.requests", "Total received requests", timer);
+      Orient.instance().getProfiler()
+          .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
 
       OSerializationThreadLocal.INSTANCE.get().clear();
     }

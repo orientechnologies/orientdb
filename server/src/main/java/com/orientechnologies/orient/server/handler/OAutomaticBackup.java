@@ -19,8 +19,9 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OAutomaticBackup extends OServerHandlerAbstract {
+public class OAutomaticBackup extends OServerPluginAbstract {
   public enum VARIABLES {
     DBNAME, DATE
   }

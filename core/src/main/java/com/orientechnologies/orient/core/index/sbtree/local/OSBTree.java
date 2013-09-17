@@ -25,28 +25,31 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 8/7/13
  */
 public class OSBTree<K, V> extends ODurableComponent {
-  private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
-  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
+  private static final OAlwaysLessKey         ALWAYS_LESS_KEY    = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey      ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private final static long              ROOT_INDEX         = 0;
+  private final static long                   ROOT_INDEX         = 0;
 
-  private final Comparator<? super K>    comparator         = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K>         comparator         = ODefaultComparator.INSTANCE;
 
-  private OStorageLocalAbstract          storage;
-  private String                         name;
+  private OStorageLocalAbstract               storage;
+  private String                              name;
 
-  private final String                   dataFileExtension;
+  private final String                        dataFileExtension;
 
-  private ODiskCache                     diskCache;
+  private ODiskCache                          diskCache;
 
-  private long                           fileId;
+  private long                                fileId;
 
-  private int                            keySize;
+  private int                                 keySize;
 
-  private OBinarySerializer<K>           keySerializer;
-  private OBinarySerializer<V>           valueSerializer;
+  private OBinarySerializer<K>                keySerializer;
+  private OBinarySerializer<V>                valueSerializer;
 
-  private final boolean                  durableInNonTxMode;
+  private final boolean                       durableInNonTxMode;
+  private static final ODurablePage.TrackMode txTrackMode        = ODurablePage.TrackMode
+                                                                     .valueOf(OGlobalConfiguration.INDEX_TX_MODE.getValueAsString()
+                                                                         .toUpperCase());
 
   public OSBTree(String dataFileExtension, int keySize, boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -420,7 +423,11 @@ public class OSBTree<K, V> extends ODurableComponent {
     if (transaction == null && !durableInNonTxMode)
       return ODurablePage.TrackMode.NONE;
 
-    return super.getTrackMode();
+    final ODurablePage.TrackMode trackMode = super.getTrackMode();
+    if (!trackMode.equals(ODurablePage.TrackMode.NONE))
+      return txTrackMode;
+
+    return trackMode;
   }
 
   public Collection<V> getValuesMinor(K key, boolean inclusive, final int maxValuesToFetch) {

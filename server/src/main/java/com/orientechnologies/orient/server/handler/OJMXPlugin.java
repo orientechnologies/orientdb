@@ -12,8 +12,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.managed.OrientServer;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OJMXPlugin extends OServerHandlerAbstract {
+public class OJMXPlugin extends OServerPluginAbstract {
   private OrientServer managedServer;
   private ObjectName   onProfiler;
   private ObjectName   onServer;
@@ -63,10 +64,13 @@ public class OJMXPlugin extends OServerHandlerAbstract {
   public void shutdown() {
     try {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-      if (mBeanServer.isRegistered(onProfiler))
-        mBeanServer.unregisterMBean(onProfiler);
-      if (mBeanServer.isRegistered(onServer))
-        mBeanServer.unregisterMBean(onServer);
+      if (onProfiler != null)
+        if (mBeanServer.isRegistered(onProfiler))
+          mBeanServer.unregisterMBean(onProfiler);
+      
+      if (onServer != null)
+        if (mBeanServer.isRegistered(onServer))
+          mBeanServer.unregisterMBean(onServer);
     } catch (Exception e) {
       OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
     }

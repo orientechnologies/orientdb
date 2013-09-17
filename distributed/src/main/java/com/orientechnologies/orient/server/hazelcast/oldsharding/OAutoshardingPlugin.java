@@ -18,9 +18,9 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTConfiguration;
 import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Distributed plugin implementation that supports autosharding
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.Serve
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  * @since 8/27/12
  */
-public class OAutoshardingPlugin extends OServerHandlerAbstract implements ODatabaseLifecycleListener {
+public class OAutoshardingPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
 
   private boolean          enabled = true;
   private ServerInstance   serverInstance;

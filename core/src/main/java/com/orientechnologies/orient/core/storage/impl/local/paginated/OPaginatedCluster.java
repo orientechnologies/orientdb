@@ -1601,7 +1601,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               recordPosition++;
             }
           }
-        }
+        } else
+          recordPosition = 0;
 
       } finally {
         diskCache.release(cacheEntry);
@@ -1657,7 +1658,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               recordPosition--;
             }
           }
-        }
+        } else
+					recordPosition = Integer.MAX_VALUE;
 
       } finally {
         diskCache.release(cacheEntry);
