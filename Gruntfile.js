@@ -21,7 +21,7 @@ module.exports = function (grunt) {
   // configurable paths
   var yeomanConfig = {
     app: 'app',
-    dist: dist  + 'www/studio'
+    dist: dist  + 'www/studio/www'
   };
 
   try {
@@ -276,6 +276,7 @@ module.exports = function (grunt) {
                   src: [
                       '*.{ico,txt}',
                       '.htaccess',
+                      '../plugin.json',
                       // 'components/**/*',
                       'img/{,*/}*.{gif,webp,png,jpg}',
                       'font/*',
