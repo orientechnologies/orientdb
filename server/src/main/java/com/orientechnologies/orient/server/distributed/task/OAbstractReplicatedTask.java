@@ -57,11 +57,6 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
   }
 
   public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String databaseName) {
-    this(iServer, iDistributedSrvMgr, databaseName, iDistributedSrvMgr.incrementDistributedSerial(databaseName));
-  }
-
-  public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
       final String databaseName, final long iOperationSerial) {
     super(iServer, iDistributedSrvMgr, databaseName);
     // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED

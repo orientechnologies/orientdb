@@ -50,14 +50,14 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
 
     if (aligned == -1) {
       // ALIGNMENT POSTPONED
-      ODistributedServerLog.info(this, dManager.getLocalNodeId(), getNodeSource(), DIRECTION.IN, "alignment postponed for db '%s'",
+      ODistributedServerLog.info(this, dManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "alignment postponed for db '%s'",
           databaseName);
 
       dManager.postponeAlignment(getNodeSource(), databaseName);
 
     } else {
       // ALIGNMENT DONE
-      ODistributedServerLog.info(this, dManager.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+      ODistributedServerLog.info(this, dManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
 
       dManager.endAlignment(getNodeSource(), databaseName, aligned);

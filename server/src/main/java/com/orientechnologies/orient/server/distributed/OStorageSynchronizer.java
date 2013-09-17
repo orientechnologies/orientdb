@@ -58,7 +58,7 @@ public class OStorageSynchronizer {
       resolver = cluster.getConfictResolverClass().newInstance();
       resolver.startup(server, cluster, dbName);
     } catch (Exception e) {
-      ODistributedServerLog.error(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.error(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
           "cannot create the conflict resolver instance of class '%s'", cluster.getConfictResolverClass(), e);
     }
 
@@ -74,7 +74,7 @@ public class OStorageSynchronizer {
   public int recoverUncommited(final ODistributedServerManager iCluster, final String storageName) throws IOException {
     final OStorage storage = openStorage(storageName);
 
-    ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "*", DIRECTION.OUT, "recovering uncommitted operations...");
+    ODistributedServerLog.info(this, iCluster.getLocalNodeName(), "*", DIRECTION.OUT, "recovering uncommitted operations...");
 
     int updated = 0;
     int deleted = 0;
@@ -92,26 +92,23 @@ public class OStorageSynchronizer {
 
           final OCluster recordCluster = storage.getClusterById(rid.getClusterId());
           if (recordCluster == null) {
-            ODistributedServerLog.warn(this, iCluster.getLocalNodeId(), null, DIRECTION.NONE,
+            ODistributedServerLog.warn(this, iCluster.getLocalNodeName(), null, DIRECTION.NONE,
                 "Cannot find cluster for RID %s, skip it", rid);
             continue;
           }
 
-          final OReplicationConfig replicationData = iCluster.getReplicationData(storageName, recordCluster.getName(), rid,
-              cluster.getLocalNodeId(), null);
-
           final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid, new OReadRecordTask(
-              server, cluster, storageName, rid), replicationData);
+              server, cluster, storageName, rid));
 
           if (record == null) {
             // DELETE IT
             storage.deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
-            ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "?", DIRECTION.IN, "restored record %s (delete)", rid);
+            ODistributedServerLog.info(this, iCluster.getLocalNodeName(), "?", DIRECTION.IN, "restored record %s (delete)", rid);
             deleted++;
           } else {
             // UPDATE IT
             storage.updateRecord(rid, record.buffer, record.version, record.recordType, 0, null);
-            ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "?", DIRECTION.IN, "restored record %s (update)", rid);
+            ODistributedServerLog.info(this, iCluster.getLocalNodeName(), "?", DIRECTION.IN, "restored record %s (update)", rid);
             updated++;
           }
 
@@ -122,7 +119,7 @@ public class OStorageSynchronizer {
           ODistributedServerLog
               .error(
                   this,
-                  iCluster.getLocalNodeId(),
+                  iCluster.getLocalNodeName(),
                   null,
                   DIRECTION.NONE,
                   "error on acquiring uncommitted record %s from other servers. The database could not be unaligned with others nodes!",
@@ -131,7 +128,7 @@ public class OStorageSynchronizer {
       }
 
     } finally {
-      ODistributedServerLog.info(this, iCluster.getLocalNodeId(), "*", DIRECTION.OUT,
+      ODistributedServerLog.info(this, iCluster.getLocalNodeName(), "*", DIRECTION.OUT,
           "recovered %d operations: updated=%d deleted=%d", (updated + deleted), updated, deleted);
     }
 
@@ -165,7 +162,7 @@ public class OStorageSynchronizer {
     OStorage stg = Orient.instance().getStorage(iName);
     if (stg == null) {
       // NOT YET OPEN: OPEN IT NOW
-      ODistributedServerLog.warn(this, cluster.getLocalNodeId(), null, DIRECTION.NONE, "Initializing storage '%s'...", iName);
+      ODistributedServerLog.warn(this, cluster.getLocalNodeName(), null, DIRECTION.NONE, "Initializing storage '%s'...", iName);
 
       final String url = server.getStorageURL(iName);
       if (url == null)

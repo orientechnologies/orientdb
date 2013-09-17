@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast.sharding.distributed;
+package com.orientechnologies.orient.server.hazelcast.oldsharding.distributed;
 
 import java.util.Set;
 

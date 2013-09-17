@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.server.hazelcast;
+
+import java.util.List;
+
+import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 
 /**
- * Replication configuration with all the information to replicate the record.
+ * Hazelcast implementation for distributed partition.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OReplicationConfig {
-  public String   masterNode;
-  public String[] synchReplicas;
-  public String[] asynchReplicas;
-  public int      minSuccessfulOperations = 0;
+public class OHazelcastDistributionPartition implements ODistributedPartition {
+  private final List<String> nodes;
+
+  public OHazelcastDistributionPartition(final List<String> nodes) {
+    this.nodes = nodes;
+  }
+
+  public List<String> getNodes() {
+    return nodes;
+  }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.hazelcast.sharding;
+package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.sql.*;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
 
 /**
  * Factory that determines and returns valid OQueryExecutor class instance based on query

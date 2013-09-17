@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.server.hazelcast.sharding;
+package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,9 +38,9 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTConfiguration;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTNode;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
 
 /**
  * Implementation of the Autosharded storage. This storage is build on Distributed Hash Table principle. Each storage is responsible

@@ -129,7 +129,7 @@ public class ODatabaseJournal {
     lastExecuted[1] = lastOp[1];
     lastExecuted[2] = -1;
 
-    ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+    ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
         "Loaded journal for database '%s', last operation=%d.%d", iStorage.getName(), lastExecuted[0], lastExecuted[1]);
   }
 
@@ -372,7 +372,7 @@ public class ODatabaseJournal {
       if (status != OPERATION_STATUS.CANCELED) {
         final OAbstractRemoteTask<?> op = getOperation(fileOffset);
 
-        ODistributedServerLog.info(this, cluster.getLocalNodeId(), null, DIRECTION.NONE, "db '%s' found uncommitted operation %s",
+        ODistributedServerLog.info(this, cluster.getLocalNodeName(), null, DIRECTION.NONE, "db '%s' found uncommitted operation %s",
             storage.getName(), op);
 
         if (op instanceof OAbstractRecordReplicatedTask<?>)
@@ -395,7 +395,7 @@ public class ODatabaseJournal {
       final int varSize = file.readInt(iOffsetEndOperation - OFFSET_BACK_SIZE);
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
-      ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
           "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
           file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
@@ -446,7 +446,7 @@ public class ODatabaseJournal {
         varSize = ORecordId.PERSISTENT_SIZE;
         final ORecordId rid = ((OAbstractRecordReplicatedTask<?>) task).getRid();
 
-        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
             "- journaled operation=%d.%d type=%s db=%s rid=%s", iRunId, iOperationId, iOperationType.toString(), storage.getName(),
             rid);
 
@@ -466,7 +466,7 @@ public class ODatabaseJournal {
         final byte[] cmdBinary = cmdText.getBytes();
         varSize = cmdBinary.length;
 
-        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
             "- journaled operation=%d.%d type=%s db=%s cmd=%s", iRunId, iOperationId, iOperationType.toString(), storage.getName(),
             cmdText);
 
@@ -676,13 +676,13 @@ public class ODatabaseJournal {
 
       if (alreadyExecuted && !iForce) {
         // ALREADY UPDATED
-        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
             "skipped updating journal last task db='%s' op=%d.%d found=%d.%d", storage.getName(), iRunId, iOperationSerial,
             lastExecuted[0], lastExecuted[1]);
         updated = false;
       } else {
         // UPDATE IT
-        ODistributedServerLog.debug(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
             "updating journal last task db='%s' op=%d.%d found=%d.%d force=%s", storage.getName(), iRunId, iOperationSerial,
             lastExecuted[0], lastExecuted[1], iForce);
 

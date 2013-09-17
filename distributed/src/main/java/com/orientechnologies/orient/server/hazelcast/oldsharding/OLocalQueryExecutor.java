@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast.sharding;
+package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast;
+package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,9 +19,8 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
-import com.orientechnologies.orient.server.hazelcast.sharding.OAutoshardedStorageImpl;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTConfiguration;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
 
 /**
  * Distributed plugin implementation that supports autosharding

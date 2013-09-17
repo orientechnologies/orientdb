@@ -15,12 +15,19 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.Serializable;
+
 /**
- * Interface that represents the replication strategy.
  * 
- * @author luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OReplicationStrategy {
-  String getNode(final ODistributedServerManager iManager, final String iClusterName, final Object iKey);
+public interface ODistributedResponse {
+
+  String getSenderNodeName();
+
+  long getSenderThreadId();
+
+  Serializable getPayload();
+
 }

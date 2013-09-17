@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.hazelcast.sharding;
+package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,8 +44,8 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.OHazelcastResultListener;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.OHazelcastResultListener;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
 
 /**
  * Executor for distributed select command and its result merge

@@ -45,8 +45,8 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   }
 
   public OSQLCommandTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
-      final String iCommand) {
-    super(iServer, iDistributedSrvMgr, databaseName);
+      final String iCommand, final long iMessageId) {
+    super(iServer, iDistributedSrvMgr, databaseName, iMessageId);
     text = iCommand;
   }
 
@@ -76,7 +76,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   }
 
   public Object executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "execute command=%s db=%s", text.toString(), databaseName);
 
     final ODatabaseDocumentTx db = openDatabase();

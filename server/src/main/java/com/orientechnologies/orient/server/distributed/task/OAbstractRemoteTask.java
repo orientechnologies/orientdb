@@ -70,7 +70,7 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
   public OAbstractRemoteTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName) {
     this.serverInstance = iServer;
 
-    this.setNodeSource(iDistributedSrvMgr.getLocalNodeId());
+    this.setNodeSource(iDistributedSrvMgr.getLocalNodeName());
     this.databaseName = databaseName;
 
     this.runId = iDistributedSrvMgr.getRunId();
@@ -210,4 +210,7 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     return DEFAULT_TIMEOUT;
   }
 
+  public String getClusterName() {
+    return null;
+  }
 }

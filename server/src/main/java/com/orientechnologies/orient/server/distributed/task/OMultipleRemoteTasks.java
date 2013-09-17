@@ -56,7 +56,7 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
     try {
       result = new Object[tasks.size()];
 
-      ODistributedServerLog.warn(this, dServer.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+      ODistributedServerLog.warn(this, dServer.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
 
       for (; executedTasks < tasks.size(); ++executedTasks) {
@@ -70,7 +70,7 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
       }
     } finally {
 
-      ODistributedServerLog.warn(this, dServer.getLocalNodeId(), getNodeSource(), DIRECTION.IN,
+      ODistributedServerLog.warn(this, dServer.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "****** END EXECUTING ALIGNMENT BLOCK db=%s tasks=%d/%d ******", databaseName, executedTasks, tasks.size());
     }
 

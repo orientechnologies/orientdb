@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast.sharding.hazelcast;
+package com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast;
 
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -9,10 +9,10 @@ import com.hazelcast.core.*;
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNodeLookup;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.OLocalDHTNode;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTConfiguration;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTNode;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTNodeLookup;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.OLocalDHTNode;
 
 /**
  * @author Andrey Lomakin

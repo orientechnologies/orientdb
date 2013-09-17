@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.hazelcast.sharding;
+package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,8 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.ServerInstance;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTNode;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
 
 /**
  * Abstract distributed executor. Contains methods to distribute command across all nodes

@@ -19,14 +19,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -61,11 +56,11 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   protected Map<String, ODocument>                        databaseConfiguration      = new HashMap<String, ODocument>();
 
   protected boolean                                       enabled                    = true;
-  protected String                                        alias                      = null;
+  protected String                                        nodeName                   = null;
   protected Class<? extends OReplicationConflictResolver> confictResolverClass;
   protected boolean                                       alignmentStartup;
   protected int                                           alignmentTimer;
-  protected Map<String, OReplicationStrategy>             strategies                 = new HashMap<String, OReplicationStrategy>();
+  protected Map<String, ODistributedPartitioningStrategy> strategies                 = new HashMap<String, ODistributedPartitioningStrategy>();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -80,8 +75,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
           enabled = false;
           return;
         }
-      } else if (param.name.equalsIgnoreCase("alias"))
-        alias = param.value;
+      } else if (param.name.equalsIgnoreCase("nodeName"))
+        nodeName = param.value;
       else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         final String path = OSystemVariableResolver.resolveSystemVariables(param.value);
         if (loadDatabaseConfiguration("*", path) == null)
@@ -98,8 +93,8 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
         alignmentTimer = Integer.parseInt(param.value);
       else if (param.name.startsWith("replication.strategy.")) {
         try {
-          strategies.put(param.name.substring("replication.strategy.".length()), (OReplicationStrategy) Class.forName(param.value)
-              .newInstance());
+          strategies.put(param.name.substring("replication.strategy.".length()),
+              (ODistributedPartitioningStrategy) Class.forName(param.value).newInstance());
         } catch (Exception e) {
           OLogManager.instance().error(this, "Cannot create replication strategy instance '%s'", e, param.value);
 
@@ -192,14 +187,14 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
   }
 
   public String getLocalNodeId() {
-    return alias;
+    return nodeName;
   }
 
-  public OReplicationStrategy getReplicationStrategy(String iStrategy) {
+  public ODistributedPartitioningStrategy getReplicationStrategy(String iStrategy) {
     if (iStrategy.startsWith("$"))
       iStrategy = iStrategy.substring(1);
 
-    final OReplicationStrategy strategy = strategies.get(iStrategy);
+    final ODistributedPartitioningStrategy strategy = strategies.get(iStrategy);
     if (strategy == null)
       throw new ODistributedException("Configured strategy '" + iStrategy + "' is not configured");
 
@@ -232,6 +227,10 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
     }
   }
 
+  public ODistributedPartitioningStrategy getStrategy(final String iStrategyName) {
+    return strategies.get(iStrategyName);
+  }
+
   public OStorageSynchronizer getDatabaseSynchronizer(final String iDatabaseName) {
     synchronized (synchronizers) {
       OStorageSynchronizer sync = synchronizers.get(iDatabaseName);
@@ -248,79 +247,6 @@ public abstract class ODistributedAbstractPlugin extends OServerHandlerAbstract 
       }
 
       return sync;
-    }
-  }
-
-  public Collection<String> getSynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey) {
-    return getReplicaNodes("synch-replicas", iDatabaseName, iClusterName, iKey);
-  }
-
-  public Collection<String> getAsynchronousReplicaNodes(final String iDatabaseName, final String iClusterName, final Object iKey) {
-    return getReplicaNodes("asynch-replicas", iDatabaseName, iClusterName, iKey);
-  }
-
-  // TODO rewrite this to support dynamic node listing
-  @SuppressWarnings("unchecked")
-  protected Collection<String> getReplicaNodes(final String iMode, final String iDatabaseName, final String iClusterName,
-      final Object iKey) {
-    Object replicas = getDatabaseClusterConfiguration(iDatabaseName, iClusterName).field(iMode);
-    if (replicas == null)
-      // GET THE DEFAULT ONE
-      replicas = getDatabaseClusterConfiguration(iDatabaseName, "*").field(iMode);
-
-    if (replicas == null)
-      // NO REPLICAS CONFIGURED
-      return Collections.emptyList();
-
-    final Set<String> remoteNodes = getRemoteNodeIds();
-
-    final List<String> result = new ArrayList<String>();
-
-    if (replicas instanceof String || replicas instanceof Integer) {
-      // DYNAMIC NODES
-      int tot = 0;
-
-      if (replicas instanceof String) {
-        final String replicasAsText = (String) replicas;
-        if (replicasAsText.charAt(replicasAsText.length() - 1) == '%') {
-          // PERCENTAGE
-          final int perc = Integer.parseInt(replicasAsText.substring(0, replicasAsText.length() - 1));
-          tot = Math.round(perc * remoteNodes.size() / 100);
-        } else
-          // PUNCTUAL
-          tot = Integer.parseInt(replicasAsText);
-      } else
-        tot = (Integer) replicas;
-
-      for (String nodeId : remoteNodes) {
-        if (result.size() > tot)
-          break;
-        result.add(nodeId);
-      }
-    } else if (replicas instanceof Collection) {
-      // STATIC NODE LIST
-      final Collection<String> nodeCollection = (Collection<String>) replicas;
-      for (String nodeId : nodeCollection) {
-        if (remoteNodes.contains(nodeId))
-          result.add(nodeId);
-      }
-    }
-
-    return result;
-  }
-
-  protected ODocument getDatabaseClusterConfiguration(final String iDbName, final String iClusterName) {
-    synchronized (databaseConfiguration) {
-      final ODocument clusters = getDatabaseConfiguration(iDbName).field("clusters");
-
-      if (clusters == null)
-        throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
-
-      ODocument cfg = clusters.field(iClusterName);
-      if (cfg == null)
-        cfg = clusters.field("*");
-
-      return cfg;
     }
   }
 
