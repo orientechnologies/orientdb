@@ -12,7 +12,10 @@
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- */package com.orientechnologies.agent;
+ * 
+ * For more information: http://www.orientechnologies.com
+ */
+package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
 import com.orientechnologies.orient.server.OServer;
@@ -42,8 +45,18 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     installCommands();
   }
 
+  @Override
+  public void shutdown() {
+    uninstallCommands();
+  }
+
   private void installCommands() {
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     listener.registerStatelessCommand(new OServerCommandGetProfiler());
+  }
+
+  private void uninstallCommands() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
   }
 }

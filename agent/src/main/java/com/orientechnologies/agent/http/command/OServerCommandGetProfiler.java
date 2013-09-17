@@ -12,6 +12,8 @@
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
+ * 
+ * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.agent.http.command;
 
