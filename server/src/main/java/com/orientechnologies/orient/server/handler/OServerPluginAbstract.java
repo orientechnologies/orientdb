@@ -33,6 +33,7 @@ public abstract class OServerPluginAbstract implements OServerPlugin {
   }
 
   public void sendShutdown() {
+    shutdown();
   }
 
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {

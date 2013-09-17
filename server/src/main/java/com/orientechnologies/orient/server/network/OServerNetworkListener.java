@@ -93,8 +93,23 @@ public class OServerNetworkListener extends Thread {
     return this;
   }
 
+  public OServerNetworkListener unregisterStatelessCommand(final Class<? extends OServerCommand> iCommandClass) {
+    for (OServerCommand c : statelessCommands) {
+      if (c.getClass().equals(iCommandClass)) {
+        statelessCommands.remove(c);
+        break;
+      }
+    }
+    return this;
+  }
+
   public OServerNetworkListener registerStatefulCommand(final OServerCommandConfiguration iCommand) {
     statefulCommands.add(iCommand);
+    return this;
+  }
+
+  public OServerNetworkListener unregisterStatefulCommand(final OServerCommandConfiguration iCommand) {
+    statefulCommands.remove(iCommand);
     return this;
   }
 

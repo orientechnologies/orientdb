@@ -71,6 +71,8 @@ import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.handler.OServerPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 
 public class OServer {
   protected ReentrantLock                                  lock               = new ReentrantLock();
@@ -80,10 +82,10 @@ public class OServer {
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
-  protected Map<String, OServerPlugin>                    plugins            = new HashMap<String, OServerPlugin>();
   protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols   = new HashMap<String, Class<? extends ONetworkProtocol>>();
   protected List<OServerNetworkListener>                   networkListeners   = new ArrayList<OServerNetworkListener>();
   protected List<OServerLifecycleListener>                 lifecycleListeners = new ArrayList<OServerLifecycleListener>();
+  protected OServerPluginManager                           pluginManager;
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private ODatabaseDocumentPool                            dbPool;
@@ -249,15 +251,18 @@ public class OServer {
     try {
       lock.lock();
 
-      if (plugins.size() > 0) {
+      final String[] plugins = pluginManager.getPluginNames();
+      if (plugins.length > 0) {
         // SHUTDOWN HANDLERS
         OLogManager.instance().info(this, "Shutting down plugins:");
-        for (OServerPlugin h : plugins.values()) {
-          OLogManager.instance().info(this, "- %s", h.getName());
+        for (String pluginName : plugins) {
+
+          OLogManager.instance().info(this, "- %s", pluginName);
+          final OServerPluginInfo plugin = pluginManager.getPlugin(pluginName);
           try {
-            h.sendShutdown();
+            plugin.getInstance().sendShutdown();
           } catch (Throwable t) {
-            OLogManager.instance().error(this, "Error during server handler %s shutdown.", t, h);
+            OLogManager.instance().error(this, "Error during server plugin %s shutdown.", t, plugin);
           }
         }
       }
@@ -438,8 +443,8 @@ public class OServer {
     return null;
   }
 
-  public Collection<OServerPlugin> getPlugins() {
-    return plugins.values();
+  public Collection<OServerPluginInfo> getPlugins() {
+    return pluginManager.getPlugins();
   }
 
   public OContextConfiguration getContextConfiguration() {
@@ -447,15 +452,15 @@ public class OServer {
   }
 
   @SuppressWarnings("unchecked")
-  public <RET extends OServerPlugin> RET getPluginByClass(final Class<RET> iHandlerClass) {
+  public <RET extends OServerPlugin> RET getPluginByClass(final Class<RET> iPluginClass) {
     try {
       startupLatch.await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
 
-    for (OServerPlugin h : plugins.values())
-      if (h.getClass().equals(iHandlerClass))
+    for (OServerPluginInfo h : getPlugins())
+      if (h.getInstance().getClass().equals(iPluginClass))
         return (RET) h;
 
     return null;
@@ -468,7 +473,11 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    return (RET) plugins.get(iName);
+
+    final OServerPluginInfo p = pluginManager.getPlugin(iName);
+    if (p != null)
+      return (RET) p.getInstance();
+    return null;
   }
 
   public Object getVariable(final String iName) {
@@ -619,6 +628,11 @@ public class OServer {
   }
 
   protected void registerPlugins() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    pluginManager = new OServerPluginManager();
+    pluginManager.config(this);
+    pluginManager.startup();
+
+    // PLUGINS CONFIGURED IN XML
     if (configuration.handlers != null) {
       // ACTIVATE PLUGINS
       OServerPlugin handler;
@@ -628,7 +642,7 @@ public class OServer {
         if (handler instanceof ODistributedServerManager)
           distributedManager = (ODistributedServerManager) handler;
 
-        plugins.put(handler.getName(), handler);
+        pluginManager.registerPlugin(new OServerPluginInfo(handler.getName(), handler));
 
         handler.config(this, h.parameters);
         handler.startup();
