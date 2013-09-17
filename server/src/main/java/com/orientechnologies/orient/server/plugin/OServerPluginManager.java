@@ -266,7 +266,7 @@ public class OServerPluginManager implements OService {
             OLogManager.instance().warn(this, "Cannot load static file under path: %s", e, f);
           }
           content.contentSize = f.length();
-          content.type = "text/html";
+          content.type = OServerCommandGetStaticContent.getContentType(f.getName());
           return content;
         }
         return null;
