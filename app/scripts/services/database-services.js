@@ -509,6 +509,7 @@ database.factory('DocumentApi', function ($http, $resource, Database) {
         //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
     }
     resource.createDocument = function (database, rid, doc, callback) {
+        console.log(doc);
         $http.post(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
     }
     resource.deleteDocument = function (database, rid, callback) {

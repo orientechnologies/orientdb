@@ -7,6 +7,7 @@
  */
 
 (function () {
+    "use strict";
     CodeMirror.commands.autocomplete = function (cm) {
         CodeMirror.showHint(cm, CodeMirror.hint.sql);
     }
