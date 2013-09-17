@@ -1,1 +1,5 @@
 target/
+
+agent/.project
+agent/.classpath
+*.prefs
