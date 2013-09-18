@@ -53,7 +53,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
@@ -81,7 +81,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-  private OMetadata                                   metadata;
+  private OMetadataDefault                                   metadata;
   private OUser                                       user;
   private static final String                         DEF_RECORD_FORMAT   = "csv";
   private byte                                        recordType;
@@ -119,7 +119,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       super.open(iUserName, iUserPassword);
       level1Cache.startup();
 
-      metadata = new OMetadata();
+      metadata = new OMetadataDefault();
       metadata.load();
 
       recordFormat = DEF_RECORD_FORMAT;
@@ -191,7 +191,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-      metadata = new OMetadata();
+      metadata = new OMetadataDefault();
       metadata.create();
 
       user = getMetadata().getSecurity().getUser(OUser.ADMIN);
@@ -528,7 +528,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return super.countClusterElements(iClusterName);
   }
 
-  public OMetadata getMetadata() {
+  public OMetadataDefault getMetadata() {
     checkOpeness();
     return metadata;
   }
@@ -731,6 +731,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
+    iRecord.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
       final boolean wasNew = iForceCreate || rid.isNew();
       if (wasNew && rid.clusterId == -1 && iClusterName != null)
@@ -759,15 +760,21 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (wasNew) {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED)
+            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED) {
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              iRecord.unsetDirty();
+              iRecord.setDirty();
               stream = iRecord.toStream();
+            }
           } else {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED)
+            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED) {
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              iRecord.unsetDirty();
+              iRecord.setDirty();
               stream = iRecord.toStream();
+            }
           }
       }
 
@@ -823,6 +830,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } catch (Throwable t) {
       // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on saving record in cluster #" + iRecord.getIdentity().getClusterId(), t);
+    } finally {
+      iRecord.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
     }
     return (RET) iRecord;
   }

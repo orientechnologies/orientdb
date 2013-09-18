@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -413,8 +413,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
     for (Field field : iPojo.getClass().getDeclaredFields()) {
       final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
-      if (value instanceof OLazyObjectMultivalueElement)
-        ((OLazyObjectMultivalueElement<?>) value).detach(false);
+      if (value instanceof OObjectLazyMultivalueElement)
+        ((OObjectLazyMultivalueElement<?>) value).detach(false);
     }
 
     return (RET) iPojo;

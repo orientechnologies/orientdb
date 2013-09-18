@@ -68,7 +68,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   public OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String indexType) throws OConfigurationException {
     OStorage storage = iDatabase.getStorage();
-    if (storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME))
+    if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
       return createSBTreeIndex(indexType);
 
     return createMRBTreeIndex(indexType);

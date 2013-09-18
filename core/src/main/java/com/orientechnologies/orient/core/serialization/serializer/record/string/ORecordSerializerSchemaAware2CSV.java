@@ -212,13 +212,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   else {
                     linkedType = OType.getTypeByClass(firstValue.getClass());
 
-                    if (linkedType != OType.LINK) {
-                      // EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
-                      if (linkedType == null) {
-                        linkedType = OType.EMBEDDED;
-                        // linkedClass = new OClass(firstValue.getClass());
-                      }
-                    }
+                    if (linkedType != OType.LINK)
+                      // EMBEDDED FOR SURE DON'T USE THE LINKED TYPE
+                      linkedType = null;
                   }
 
                   if (type == null)

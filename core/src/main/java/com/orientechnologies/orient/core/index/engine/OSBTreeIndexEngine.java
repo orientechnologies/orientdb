@@ -364,7 +364,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
             Collection<OIdentifiable> identifiables = transformer.transformFromValue(entry.value);
             for (OIdentifiable identifiable : identifiables) {
               if (identifiable.equals(value))
-                keySetToRemove.add(value);
+                keySetToRemove.add(entry.key);
             }
           }
           return true;

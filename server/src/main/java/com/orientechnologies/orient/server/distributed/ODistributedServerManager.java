@@ -115,5 +115,5 @@ public interface ODistributedServerManager {
 
   public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask) throws Exception;
 
-  public void resetOperationQueue(long iCurrentRunId, long iOperationSerial);
+  public void notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
 }

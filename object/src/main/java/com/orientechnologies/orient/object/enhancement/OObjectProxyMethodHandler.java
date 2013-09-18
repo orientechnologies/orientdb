@@ -36,7 +36,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -59,11 +59,11 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectLazySet;
-import com.orientechnologies.orient.object.enumerations.OLazyObjectEnumSerializer;
+import com.orientechnologies.orient.object.enumerations.OObjectLazyEnumSerializer;
 import com.orientechnologies.orient.object.enumerations.OObjectEnumLazyList;
 import com.orientechnologies.orient.object.enumerations.OObjectEnumLazyMap;
 import com.orientechnologies.orient.object.enumerations.OObjectEnumLazySet;
-import com.orientechnologies.orient.object.serialization.OLazyObjectCustomSerializer;
+import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerializer;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
@@ -133,10 +133,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
     for (String fieldName : doc.fieldNames()) {
       Object value = getValue(self, fieldName, false, null);
-      if (value instanceof OLazyObjectMultivalueElement) {
-        ((OLazyObjectMultivalueElement<?>) value).detach(nonProxiedInstance);
+      if (value instanceof OObjectLazyMultivalueElement) {
+        ((OObjectLazyMultivalueElement<?>) value).detach(nonProxiedInstance);
         if (nonProxiedInstance)
-          value = ((OLazyObjectMultivalueElement<?>) value).getNonOrientInstance();
+          value = ((OObjectLazyMultivalueElement<?>) value).getNonOrientInstance();
       }
       OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getField(fieldName, selfClass), self, value);
     }
@@ -161,10 +161,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       final Field field = OObjectEntitySerializer.getField(fieldName, selfClass);
       if (field != null) {
         Object value = getValue(self, fieldName, false, null);
-        if (value instanceof OLazyObjectMultivalueElement) {
-          ((OLazyObjectMultivalueElement<?>) value).detachAll(nonProxiedInstance);
+        if (value instanceof OObjectLazyMultivalueElement) {
+          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance);
           if (nonProxiedInstance)
-            value = ((OLazyObjectMultivalueElement<?>) value).getNonOrientInstance();
+            value = ((OObjectLazyMultivalueElement<?>) value).getNonOrientInstance();
         } else if (value instanceof Proxy) {
           OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) value).getHandler();
           if (nonProxiedInstance) {
@@ -230,8 +230,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     for (String key : fields) {
       try {
         Object value = getValue(proxiedObject, key, false, null);
-        if (value instanceof OLazyObjectMultivalueElement) {
-          if (((OLazyObjectMultivalueElement<?>) value).getUnderlying() != doc.field(key))
+        if (value instanceof OObjectLazyMultivalueElement) {
+          if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(key))
             loadedFields.remove(key);
         } else {
           loadedFields.put(key, doc.getRecordVersion().copy());
@@ -287,16 +287,16 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           value = lazyLoadField(self, fieldName, docValue, value);
         }
       } else {
-        if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OLazyObjectMultivalueElement))
+        if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OObjectLazyMultivalueElement))
             || value.getClass().isArray()) {
           final Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(OObjectEntitySerializer.getField(
               fieldName, self.getClass()));
           if (genericMultiValueType == null || !OReflectionHelper.isJavaType(genericMultiValueType)) {
             final Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());
-            if (OObjectEntitySerializer.isSerializedType(f) && !(value instanceof OLazyObjectCustomSerializer)) {
+            if (OObjectEntitySerializer.isSerializedType(f) && !(value instanceof OObjectLazyCustomSerializer)) {
               value = manageSerializedCollections(self, fieldName, value);
             } else if (genericMultiValueType != null && genericMultiValueType.isEnum()
-                && !(value instanceof OLazyObjectEnumSerializer)) {
+                && !(value instanceof OObjectLazyEnumSerializer)) {
               value = manageEnumCollections(self, f.getName(), genericMultiValueType, value);
             } else {
               value = manageObjectCollections(self, fieldName, value);
@@ -478,7 +478,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       Map<Object, Object> map = new HashMap<Object, Object>();
       setDocFieldValue(f.getName(), map, OType.EMBEDDEDMAP);
       value = new OObjectEnumLazyMap(genericType, doc, map, (Map<Object, Object>) value);
-    } else if (!(value instanceof OLazyObjectMultivalueElement)) {
+    } else if (!(value instanceof OObjectLazyMultivalueElement)) {
       OType type = OObjectEntitySerializer.isEmbeddedField(self.getClass(), f.getName()) ? OType.EMBEDDEDMAP : OType.LINKMAP;
       Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
@@ -515,7 +515,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         setDocFieldValue(f.getName(), set, OType.EMBEDDEDSET);
         value = new OObjectEnumLazySet(genericType, doc, set, (Set<Object>) value);
       }
-    } else if (!(value instanceof OLazyObjectMultivalueElement)) {
+    } else if (!(value instanceof OObjectLazyMultivalueElement)) {
       boolean embedded = OObjectEntitySerializer.isEmbeddedField(self.getClass(), f.getName());
       if (value instanceof List) {
         OType type = embedded ? OType.EMBEDDEDLIST : OType.LINKLIST;
@@ -542,7 +542,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       }
     }
     if (!((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner()).isLazyLoading())
-      ((OLazyObjectMultivalueElement) value).detach(false);
+      ((OObjectLazyMultivalueElement) value).detach(false);
     return value;
   }
 
@@ -626,7 +626,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     if (value instanceof ORecordLazyMap
         || (value instanceof OTrackedMap<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
             .isEnum())) {
-      value = new OObjectLazyMap(self, (ORecordLazyMap) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
+      value = new OObjectLazyMap(self, (OTrackedMap<?>) value, OObjectEntitySerializer.isCascadeDeleteField(self.getClass(),
           f.getName()));
     } else if (customSerialization) {
       value = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), doc, (Map<Object, Object>) value);
@@ -721,7 +721,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(OObjectEntitySerializer.getField(fieldName,
             self.getClass()));
         if (genericMultiValueType != null && !OReflectionHelper.isJavaType(genericMultiValueType)) {
-          if (!(valueToSet instanceof OLazyObjectMultivalueElement)) {
+          if (!(valueToSet instanceof OObjectLazyMultivalueElement)) {
             if (valueToSet instanceof Collection<?>) {
               boolean customSerialization = false;
               final Field f = OObjectEntitySerializer.getField(fieldName, self.getClass());

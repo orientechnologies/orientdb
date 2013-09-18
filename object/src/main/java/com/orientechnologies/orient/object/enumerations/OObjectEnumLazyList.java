@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings({ "unchecked" })
-public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OLazyObjectEnumSerializer<List<TYPE>>, Serializable {
+public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {
   private static final long     serialVersionUID = -8541477416577361792L;
 
   private ORecord<?>            sourceRecord;

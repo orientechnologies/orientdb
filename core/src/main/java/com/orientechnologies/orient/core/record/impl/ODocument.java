@@ -130,24 +130,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Deprecated: use {@link #ODocument()} instead. ODocument instances always refer to the thread-local database and not anymore to
-   * the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase) {
-    this();
-  }
-
-  /**
-   * Deprecated: use {@link #ODocument(ORID)} instead. ODocument instances always refer to the thread-local database and not anymore
-   * to the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase, final ORID iRID) {
-    this(iRID);
-  }
-
-  /**
    * Creates a new instance in memory linked by the Record Id to the persistent one. New instances are not persistent until
    * {@link #save()} is called.
    * 
@@ -159,15 +141,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _recordId = (ORecordId) iRID;
     _status = STATUS.NOT_LOADED;
     _dirty = false;
-  }
-
-  /**
-   * Deprecated: use {@link #ODocument(String, ORID)} instead. ODocument instances always refer to the thread-local database and not
-   * anymore to the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase, final String iClassName, final ORID iRID) {
-    this(iClassName, iRID);
   }
 
   /**
@@ -184,15 +157,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _recordId = (ORecordId) iRID;
     _dirty = false;
     _status = STATUS.NOT_LOADED;
-  }
-
-  /**
-   * Deprecated: use {@link #ODocument(String)} instead. ODocument instances always refer to the thread-local database and not
-   * anymore to the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase, final String iClassName) {
-    this(iClassName);
   }
 
   /**

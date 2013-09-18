@@ -48,7 +48,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.*;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
@@ -532,15 +532,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       status = STATUS.OPEN;
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      doAddCluster(OMetadata.CLUSTER_INTERNAL_NAME, null, false, null);
+      doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null, false, null);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      doAddCluster(OMetadata.CLUSTER_INDEX_NAME, null, false, null);
+      doAddCluster(OMetadataDefault.CLUSTER_INDEX_NAME, null, false, null);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
-      doAddCluster(OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, false, null);
+      doAddCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, null);
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null, false, null);
@@ -570,7 +570,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private boolean exists(String path) {
-    return new File(path + "/" + OMetadata.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
+    return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
   @Override
@@ -616,10 +616,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       super.close(force);
 
-      if (writeAheadLog != null)
-        writeAheadLog.close();
-
       diskCache.close();
+
+      if (writeAheadLog != null) {
+        writeAheadLog.shrinkTill(writeAheadLog.end());
+        writeAheadLog.close();
+      }
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
@@ -1435,7 +1437,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     final OPaginatedCluster cluster = getClusterById(rid.clusterId);
 
-    if (cluster.getName().equals(OMetadata.CLUSTER_INDEX_NAME) || cluster.getName().equals(OMetadata.CLUSTER_MANUAL_INDEX_NAME))
+    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
+        || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
       // AVOID TO COMMIT INDEX STUFF
       return;
 
@@ -1518,11 +1521,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
+        if (transaction == null)
+          return;
+
         if (writeAheadLog == null)
           throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
-        if (transaction == null)
-          throw new OStorageException("There is no active transaction, rollback can not be performed.");
 
         if (transaction.getClientTx().getId() != clientTx.getId())
           throw new OStorageException(
@@ -1897,15 +1900,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private void addDefaultClusters() throws IOException {
     final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
-        OMetadata.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
+        OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
     configuration.load();
 
-    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length, OMetadata.CLUSTER_INDEX_NAME,
-        null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+        OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
         OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
-        OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression));
+        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression));
 
     defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
         CLUSTER_DEFAULT_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
@@ -1920,7 +1923,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     final OPaginatedCluster cluster = getClusterById(clusterId);
 
     final String name = cluster.getName();
-    if (OMetadata.CLUSTER_INDEX_NAME.equals(name) || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
+    if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
       throw new IllegalArgumentException("It is impossible to freeze and release index or manual index cluster!");
     }
 
@@ -1938,7 +1941,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     final OPaginatedCluster cluster = getClusterById(clusterId);
 
     final String name = cluster.getName();
-    if (OMetadata.CLUSTER_INDEX_NAME.equals(name) || OMetadata.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
+    if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
       throw new IllegalArgumentException("It is impossible to freeze and release index or manualindex cluster!");
     }
 

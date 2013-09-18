@@ -23,7 +23,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -48,6 +48,7 @@ public abstract class ODatabaseImpExpAbstract {
   protected boolean                includeIndexDefinitions   = true;
   protected boolean                includeManualIndexes      = true;
   protected boolean                useLineFeedForRecords     = false;
+  protected boolean                preserveRids              = false;
 
   protected OCommandOutputListener listener;
 
@@ -62,8 +63,8 @@ public abstract class ODatabaseImpExpAbstract {
 
     listener = iListener;
     excludeClusters = new LinkedHashSet<String>();
-    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
-    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+    excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public ODatabaseImpExpAbstract setOptions(final String iOptions) {
@@ -227,5 +228,13 @@ public abstract class ODatabaseImpExpAbstract {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
 
     }
+  }
+
+  public boolean isPreserveRids() {
+    return preserveRids;
+  }
+
+  public void setPreserveRids(boolean preserveRids) {
+    this.preserveRids = preserveRids;
   }
 }

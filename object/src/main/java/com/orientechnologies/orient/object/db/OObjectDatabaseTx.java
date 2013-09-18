@@ -60,10 +60,11 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
-import com.orientechnologies.orient.object.enhancement.OObjectSchemaGenerator;
 import com.orientechnologies.orient.object.entity.OObjectEntityClassHandler;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
+import com.orientechnologies.orient.object.metadata.OMetadataObject;
+import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
@@ -82,6 +83,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   protected boolean             saveOnlyDirty;
   protected boolean             lazyLoading;
   protected boolean             automaticSchemaGeneration;
+  protected OMetadataObject     metadata;
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
@@ -106,7 +108,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     super.open(iUserName, iUserPassword);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
+    metadata = new OMetadataObject(underlying.getMetadata());
     return (THISDB) this;
+  }
+
+  @Override
+  public OMetadataObject getMetadata() {
+    checkOpeness();
+    return metadata;
   }
 
   /**
@@ -489,43 +498,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public ODatabaseComplex<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
     deleteRecord(iRID, iVersion, true);
-    return this;
-  }
-
-  public synchronized ODatabaseComplex<Object> generateSchema(Class<?> iClass) {
-    OObjectSchemaGenerator.generateSchema(iClass, underlying);
-    return this;
-  }
-
-  /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
-   */
-  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName) {
-    return generateSchema(iPackageName, Thread.currentThread().getContextClassLoader());
-  }
-
-  /**
-   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-   * 
-   * @param iPackageName
-   *          The base package
-   */
-  public synchronized ODatabaseComplex<Object> generateSchema(final String iPackageName, final ClassLoader iClassLoader) {
-    OLogManager.instance().debug(this, "Generating schema inside package: %s", iPackageName);
-
-    List<Class<?>> classes = null;
-    try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
-    } catch (ClassNotFoundException e) {
-      throw new OException(e);
-    }
-    for (Class<?> c : classes) {
-      generateSchema(c);
-    }
-
     return this;
   }
 

@@ -28,7 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
@@ -47,10 +47,6 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.TRUE),
 
   // MEMORY
-  @Deprecated
-  MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
-      Float.class, 0.70),
-
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
@@ -79,7 +75,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 50 * 1024),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 64),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 150 * 1024),
 
@@ -177,7 +173,7 @@ public enum OGlobalConfiguration {
 
   NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
       "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
-      OMetadata.CLUSTER_MANUAL_INDEX_NAME),
+      OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
@@ -195,11 +191,6 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.FALSE),
 
   TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
-
-  // GRAPH
-  @Deprecated
-  BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
-      "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
 
   // INDEX
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
@@ -223,7 +214,7 @@ public enum OGlobalConfiguration {
       false),
 
   INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
-      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, false),
+      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -260,6 +251,10 @@ public enum OGlobalConfiguration {
 
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
+
+  // SBTREE
+  SBTREE_MAX_ENTREE_SIZE("sbtree.maxEntree.size",
+      "Maximum size of key-value pair which can be put in SBTree in bytes (24576000 by default)", Integer.class, 24576000),
 
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
@@ -399,9 +394,6 @@ public enum OGlobalConfiguration {
           Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
         }
       }),
-
-  @Deprecated
-  PROFILER_AUTODUMP_RESET("profiler.autoDump.reset", "Resets the profiler at every auto dump", Boolean.class, true),
 
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {

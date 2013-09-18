@@ -376,7 +376,7 @@ public abstract class OBaseParser {
           if (nextChar == 'u') {
             parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
           } else {
-            parserLastWord.append(c);
+            // parserLastWord.append(c);
             parserLastWord.append(nextChar);
             parserCurrentPos++;
           }
@@ -420,6 +420,16 @@ public abstract class OBaseParser {
         if (escape)
           escape = false;
       }
+
+      // CHECK MISSING CHARACTER
+      if (stringBeginChar != ' ')
+        throw new IllegalStateException("Missing closed string character: '" + stringBeginChar + "', position: " + parserCurrentPos);
+      if (openBraket > 0)
+        throw new IllegalStateException("Missing closed braket character: ']', position: " + parserCurrentPos);
+      if (openGraph > 0)
+        throw new IllegalStateException("Missing closed graph character: '}', position: " + parserCurrentPos);
+      if (openParenthesis > 0)
+        throw new IllegalStateException("Missing closed parenthesis character: ')', position: " + parserCurrentPos);
 
     } finally {
       if (parserCurrentPos >= text2Use.length()) {

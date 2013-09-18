@@ -58,15 +58,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (THISDB) super.create();
   }
 
-  /**
-   * Uses drop() instead.
-   */
-  @Deprecated
-  @Override
-  public void delete() {
-    drop();
-  }
-
   @Override
   public void drop() {
     checkOpeness();
@@ -154,7 +145,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public void setUser(OUser user) {
     underlying.setUser(user);
   }
-  
+
   public OMetadata getMetadata() {
     return underlying.getMetadata();
   }
@@ -273,12 +264,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (RET) underlying.save(iRecord, iClusterName);
   }
 
-	@Override
-	public boolean updatedReplica(ORecordInternal<?> iObject) {
-		return underlying.updatedReplica(iObject);
-	}
+  @Override
+  public boolean updatedReplica(ORecordInternal<?> iObject) {
+    return underlying.updatedReplica(iObject);
+  }
 
-	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
+  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) underlying.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);

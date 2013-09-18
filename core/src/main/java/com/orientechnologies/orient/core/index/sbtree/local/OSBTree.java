@@ -188,7 +188,19 @@ public class OSBTree<K, V> extends ODurableComponent {
           getTrackMode());
 
       if (bucketSearchResult.itemIndex >= 0) {
-        keyBucket.updateValue(bucketSearchResult.itemIndex, value);
+        while (!keyBucket.updateValue(bucketSearchResult.itemIndex, value)) {
+          keyBucketPointer.releaseExclusiveLock();
+          diskCache.release(keyBucketCacheEntry);
+
+          bucketSearchResult = splitBucket(bucketSearchResult.path, bucketSearchResult.itemIndex, key);
+
+          keyBucketCacheEntry = diskCache.load(fileId, bucketSearchResult.getLastPathItem(), false);
+          keyBucketPointer = keyBucketCacheEntry.getCachePointer();
+          keyBucketPointer.acquireExclusiveLock();
+
+          keyBucket = new OSBTreeBucket<K, V>(keyBucketPointer.getDataPointer(), keySerializer, valueSerializer, getTrackMode());
+        }
+
         logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem(), false);
       } else {
         int insertionIndex = -bucketSearchResult.itemIndex - 1;

@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -91,8 +91,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     // exclude automatically generated clusters
     excludeClusters.add("orids");
-    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
-    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+    excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -378,7 +378,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
             if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
               OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
-              assert identifiable != null;
 
               if (identifiable != null)
                 indexOneValue = identifiable.getIdentity();

@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
@@ -233,14 +233,14 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   private void addDefaultClusters() throws IOException {
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadata.CLUSTER_INTERNAL_NAME));
+        OMetadataDefault.CLUSTER_INTERNAL_NAME));
     configuration.load();
 
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadata.CLUSTER_INDEX_NAME));
+        OMetadataDefault.CLUSTER_INDEX_NAME));
 
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadata.CLUSTER_MANUAL_INDEX_NAME));
+        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME));
 
     defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         CLUSTER_DEFAULT_NAME));
@@ -248,14 +248,14 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   private void addEHDefaultClusters() throws IOException {
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadata.CLUSTER_INTERNAL_NAME));
+        OMetadataDefault.CLUSTER_INTERNAL_NAME));
     configuration.load();
 
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadata.CLUSTER_INDEX_NAME));
+        OMetadataDefault.CLUSTER_INDEX_NAME));
 
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadata.CLUSTER_MANUAL_INDEX_NAME));
+        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME));
 
     defaultClusterId = createClusterFromConfig(new OStorageEHClusterConfiguration(configuration, clusters.length,
         CLUSTER_DEFAULT_NAME, null, 0));
@@ -282,17 +282,17 @@ public class OStorageLocal extends OStorageLocalAbstract {
       status = STATUS.OPEN;
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
-      addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
+      addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME,
-          true);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
+          OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
+      addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
@@ -364,6 +364,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       if (diskCache != null)
         diskCache.close();
+
+      if (writeAheadLog != null) {
+        writeAheadLog.shrinkTill(writeAheadLog.end());
+        writeAheadLog.close();
+      }
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
@@ -1315,6 +1320,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         } finally {
           try {
             txManager.clearLogEntries(iTx);
+            if (writeAheadLog != null)
+              writeAheadLog.shrinkTill(writeAheadLog.end());
           } catch (Exception e) {
             // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
             // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL

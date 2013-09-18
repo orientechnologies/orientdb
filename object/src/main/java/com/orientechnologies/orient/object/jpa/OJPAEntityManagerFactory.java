@@ -16,9 +16,10 @@
 package com.orientechnologies.orient.object.jpa;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
@@ -28,62 +29,82 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.metamodel.Metamodel;
 
 /**
- * JPA EntityManagerFactory implementation that uses OrientDB EntityManager instances. Can works also as singleton by using
- * OEntityManagerFactory.getInstance().
+ * JPA EntityManagerFactory implementation that uses OrientDB EntityManager instances.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public class OJPAEntityManagerFactory implements EntityManagerFactory {
-	private boolean																opened		= true;
-	private List<OJPAEntityManager>								instances	= new ArrayList<OJPAEntityManager>();
-	private static final OJPAEntityManagerFactory	INSTANCE	= new OJPAEntityManagerFactory();
+	/** the log used by this class. */
+	private static Logger									logger		= Logger.getLogger(OJPAPersistenceProvider.class.getName());
 
-	public EntityManager createEntityManager() {
-		return createEntityManager(new HashMap<Object, Object>());
+	private boolean												opened		= true;
+	private final List<OJPAEntityManager>	instances	= new ArrayList<OJPAEntityManager>();
+	private final OJPAProperties					properties;
+
+	public OJPAEntityManagerFactory(final OJPAProperties properties) {
+		this.properties = properties;
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("EntityManagerFactory created. " + toString());
+		}
 	}
 
-	@SuppressWarnings("rawtypes")
+	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public EntityManager createEntityManager(final Map map) {
-		final OJPAEntityManager newInstance = new OJPAEntityManager(map);
+		return createEntityManager(new OJPAProperties(map));
+	}
+
+	@Override
+	public EntityManager createEntityManager() {
+		return createEntityManager(properties);
+	}
+
+	private EntityManager createEntityManager(final OJPAProperties properties) {
+		final OJPAEntityManager newInstance = new OJPAEntityManager(this, properties);
 		instances.add(newInstance);
 		return newInstance;
 	}
 
+	@Override
 	public void close() {
 		for (OJPAEntityManager instance : instances) {
 			instance.close();
 		}
 		instances.clear();
 		opened = false;
+		if (logger.isLoggable(Level.INFO)) {
+			logger.info("EntityManagerFactory closed. " + toString());
+		}
 	}
 
+	@Override
 	public boolean isOpen() {
 		return opened;
 	}
 
-	public static OJPAEntityManagerFactory getInstance() {
-		return INSTANCE;
-	}
-
+	@Override
 	public CriteriaBuilder getCriteriaBuilder() {
 		throw new UnsupportedOperationException("getCriteriaBuilder");
 	}
 
+	@Override
 	public Metamodel getMetamodel() {
 		throw new UnsupportedOperationException("getMetamodel");
 	}
 
+	@Override
 	public Map<String, Object> getProperties() {
-		throw new UnsupportedOperationException("getProperties");
+		return properties.getUnmodifiableProperties();
 	}
 
+	@Override
 	public Cache getCache() {
 		throw new UnsupportedOperationException("getCache");
 	}
 
+	@Override
 	public PersistenceUnitUtil getPersistenceUnitUtil() {
 		throw new UnsupportedOperationException("getPersistenceUnitUtil");
 	}
-
 }

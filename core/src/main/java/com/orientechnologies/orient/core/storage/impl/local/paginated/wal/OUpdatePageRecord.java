@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
@@ -51,7 +50,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public int serializedSize() {
     int serializedSize = super.serializedSize();
 
-    serializedSize += OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+    serializedSize += 2 * OLongSerializer.LONG_SIZE;
     serializedSize += pageChanges.serializedSize();
 
     return serializedSize;
@@ -64,8 +63,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     OLongSerializer.INSTANCE.serializeNative(prevLsn.getPosition(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OIntegerSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    OLongSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
+    offset += OLongSerializer.LONG_SIZE;
 
     offset = pageChanges.toStream(content, offset);
 
@@ -79,8 +78,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    int segment = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
 
     prevLsn = new OLogSequenceNumber(segment, position);
 

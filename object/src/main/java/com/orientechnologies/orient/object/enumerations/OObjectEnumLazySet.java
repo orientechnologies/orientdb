@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> implements OLazyObjectEnumSerializer<Set<TYPE>>,
+public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> implements OObjectLazyEnumSerializer<Set<TYPE>>,
     Serializable {
   private static final long serialVersionUID = -7698875159671927472L;
 

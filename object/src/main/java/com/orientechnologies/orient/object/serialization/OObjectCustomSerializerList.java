@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 @SuppressWarnings({ "unchecked" })
-public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OLazyObjectCustomSerializer<List<TYPE>>, Serializable {
+public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLazyCustomSerializer<List<TYPE>>, Serializable {
   private static final long       serialVersionUID = -8541477416577361792L;
 
   private ORecord<?>              sourceRecord;

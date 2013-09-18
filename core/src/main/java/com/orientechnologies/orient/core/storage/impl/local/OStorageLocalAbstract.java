@@ -96,7 +96,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   }
 
   protected void rollbackStorageTx() throws IOException {
-    if (writeAheadLog == null)
+    if (writeAheadLog == null || transaction == null)
       return;
 
     writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), true));

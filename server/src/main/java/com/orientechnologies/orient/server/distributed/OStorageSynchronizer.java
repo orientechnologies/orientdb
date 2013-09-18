@@ -41,26 +41,34 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 public class OStorageSynchronizer {
   private OServer                      server;
   private ODistributedServerManager    cluster;
+  private String                       dbName;
   private ODatabaseJournal             log;
   private OReplicationConflictResolver resolver;
 
-  public OStorageSynchronizer(final OServer iServer, final ODistributedServerManager iCluster, final String iStorageName)
-      throws IOException {
+  public OStorageSynchronizer(final OServer iServer, final ODistributedServerManager iCluster, final String iStorageName) {
     server = iServer;
     cluster = iCluster;
-    final OStorage storage = openStorage(iStorageName);
+    dbName = iStorageName;
+  }
+
+  public void config() throws IOException {
+    final OStorage storage = openStorage(dbName);
 
     try {
       resolver = cluster.getConfictResolverClass().newInstance();
-      resolver.startup(server, iCluster, iStorageName);
+      resolver.startup(server, cluster, dbName);
     } catch (Exception e) {
       ODistributedServerLog.error(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
           "cannot create the conflict resolver instance of class '%s'", cluster.getConfictResolverClass(), e);
     }
 
-    final String logDirectory = OSystemVariableResolver.resolveSystemVariables(server.getDatabaseDirectory() + "/" + iStorageName);
+    final String logDirectory = OSystemVariableResolver.resolveSystemVariables(server.getDatabaseDirectory() + "/" + dbName);
 
-    log = new ODatabaseJournal(iServer, cluster, storage, logDirectory);
+    log = new ODatabaseJournal(server, cluster, storage, logDirectory);
+  }
+
+  public boolean isConfigured() {
+    return log != null;
   }
 
   public int recoverUncommited(final ODistributedServerManager iCluster, final String storageName) throws IOException {

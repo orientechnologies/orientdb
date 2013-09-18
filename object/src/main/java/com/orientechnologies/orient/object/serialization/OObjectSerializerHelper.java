@@ -73,8 +73,8 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.object.db.ODatabasePojoAbstract;
-import com.orientechnologies.orient.object.db.OLazyObjectList;
-import com.orientechnologies.orient.object.db.OLazyObjectMap;
+import com.orientechnologies.orient.object.db.OObjectLazyList;
+import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectNotDetachedException;
 import com.orientechnologies.orient.object.fetch.OObjectFetchContext;
 import com.orientechnologies.orient.object.fetch.OObjectFetchListener;
@@ -818,8 +818,8 @@ public class OObjectSerializerHelper {
             null, iSaveOnlyDirty));
       }
     } else {
-      if (iMultiValue instanceof OLazyObjectMap<?>) {
-        result = ((OLazyObjectMap<?>) iMultiValue).getUnderlying();
+      if (iMultiValue instanceof OObjectLazyMap<?>) {
+        result = ((OObjectLazyMap<?>) iMultiValue).getUnderlying();
       } else {
         if (iRecord != null && iType.equals(OType.EMBEDDEDMAP))
           result = new OTrackedMap<Object>(iRecord);
@@ -1098,7 +1098,7 @@ public class OObjectSerializerHelper {
 
   public static Object convertInObject(final Object iPojo, final String iField, final Object iValue, final Class<?> parameterType) {
     // New conversion method working with OLazyObjectList
-    if (!(iValue instanceof OLazyObjectList<?>))
+    if (!(iValue instanceof OObjectLazyList<?>))
       return OType.convert(iValue, parameterType);
 
     List<Object> aSubList = null;
@@ -1107,7 +1107,7 @@ public class OObjectSerializerHelper {
       final Class<?> listClass = aField.getType();
       final ParameterizedType aType = (ParameterizedType) aField.getGenericType();
       final Class<?> objectClass = (Class<?>) aType.getActualTypeArguments()[0];
-      final OLazyObjectList<?> aList = (OLazyObjectList<?>) iValue;
+      final OObjectLazyList<?> aList = (OObjectLazyList<?>) iValue;
       // Instantiation of the list
       if (listClass.isInterface()) {
         aSubList = new ArrayList<Object>();

@@ -24,7 +24,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.record.ORecord;
 
 public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Object> implements Serializable,
-    OLazyObjectEnumSerializer<Map<Object, Object>> {
+    OObjectLazyEnumSerializer<Map<Object, Object>> {
   private static final long         serialVersionUID = -8606432090996808181L;
 
   private final ORecord<?>          sourceRecord;

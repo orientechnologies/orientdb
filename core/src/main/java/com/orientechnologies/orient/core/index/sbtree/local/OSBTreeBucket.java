@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePa
  * @since 8/7/13
  */
 public class OSBTreeBucket<K, V> extends ODurablePage {
+  private static final int            MAX_ENTREE_SIZE         = OGlobalConfiguration.SBTREE_MAX_ENTREE_SIZE.getValueAsInteger();
+
   private static final int            FREE_POINTER_OFFSET     = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            SIZE_OFFSET             = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            IS_LEAF_OFFSET          = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -245,6 +247,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
         valueSize = valueSerializer.getObjectSize(treeEntry.value);
 
       entrySize += valueSize;
+
+      checkEntreeSize(entrySize);
     } else
       entrySize += 2 * OLongSerializer.LONG_SIZE;
 
@@ -304,7 +308,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     return true;
   }
 
-  public void updateValue(int index, V value) throws IOException {
+  public boolean updateValue(int index, V value) throws IOException {
     if (valueSerializer.isFixedLength()) {
       int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
@@ -314,11 +318,25 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       valueSerializer.serializeNative(value, serializedValue, 0);
 
       setBinaryValue(entryPosition, serializedValue);
-    } else {
-      K key = getKey(index);
-      remove(index);
-      addEntry(index, new SBTreeEntry<K, V>(-1, -1, key, value), false);
+      return true;
     }
+
+    final int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    int entreeSize = keySerializer.getObjectSizeInDirectMemory(directMemory, pagePointer + entryPosition);
+    entreeSize += valueSerializer.getObjectSize(value);
+
+    checkEntreeSize(entreeSize);
+
+    final K key = getKey(index);
+    remove(index);
+    return addEntry(index, new SBTreeEntry<K, V>(-1, -1, key, value), false);
+  }
+
+  private void checkEntreeSize(int entreeSize) {
+    if (entreeSize > MAX_ENTREE_SIZE)
+      throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
+          + ".");
   }
 
   public void setLeftSibling(long pageIndex) throws IOException {
