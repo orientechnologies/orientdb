@@ -21,7 +21,8 @@ module.exports = function (grunt) {
   // configurable paths
   var yeomanConfig = {
     app: 'app',
-    dist: dist  + 'www/studio/www'
+    dist: 'dist/studio/www'
+    //dist: dist  + 'www/studio/www'
   };
 
   try {
@@ -308,7 +309,7 @@ module.exports = function (grunt) {
     ]);
 
     grunt.registerTask('build', [
-        'studiodist',
+        //'studiodist',
         'clean:dist',
         // 'jshint',
         // 'test',
