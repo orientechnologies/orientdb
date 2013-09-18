@@ -30,4 +30,5 @@ public interface ODistributedResponse {
 
   Serializable getPayload();
 
+  long getRequestId();
 }

@@ -44,6 +44,8 @@ public interface ODistributedServerManager {
 
   public void setStatus(STATUS iStatus);
 
+  public boolean isNodeAvailable(final String iNodeName);
+
   public boolean isOfflineNodeById(String iNodeName);
 
   public boolean isLocalNodeMaster(Object iKey);

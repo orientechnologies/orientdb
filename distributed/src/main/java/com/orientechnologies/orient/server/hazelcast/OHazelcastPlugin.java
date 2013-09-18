@@ -35,7 +35,6 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import com.hazelcast.core.IQueue;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
@@ -74,19 +73,23 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * 
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
-  protected String                              nodeId;
-  protected String                              hazelcastConfigFile = "hazelcast.xml";
-  protected Map<String, Member>                 remoteClusterNodes  = new ConcurrentHashMap<String, Member>();
-  protected long                                runId               = -1;
-  protected OHazelcastDistributedMessageService messageService;
-  protected long                                timeOffset          = 0;
 
-  protected volatile STATUS                     status              = STATUS.STARTING;
+  protected static final String                 CONFIG_NODE_PREFIX     = "node.";
+  protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
+
+  protected String                              nodeId;
+  protected String                              hazelcastConfigFile    = "hazelcast.xml";
+  protected Map<String, Member>                 cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
+  protected long                                runId                  = -1;
+  protected OHazelcastDistributedMessageService messageService;
+  protected long                                timeOffset             = 0;
+
+  protected volatile STATUS                     status                 = STATUS.STARTING;
 
   protected String                              membershipListenerRegistration;
 
   // ALIGNMENT
-  protected Map<String, Boolean>                pendingAlignments   = new HashMap<String, Boolean>();
+  protected Map<String, Boolean>                pendingAlignments      = new HashMap<String, Boolean>();
   protected TimerTask                           alignmentTask;
 
   protected volatile HazelcastInstance          hazelcastInstance;
@@ -132,7 +135,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
 
-    remoteClusterNodes.clear();
+    cachedClusterNodes.clear();
     synchronizers.clear();
 
     try {
@@ -140,21 +143,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       nodeId = hazelcastInstance.getCluster().getLocalMember().getUuid();
       timeOffset = System.currentTimeMillis() - hazelcastInstance.getCluster().getClusterTime();
+      cachedClusterNodes.put(getLocalNodeName(), hazelcastInstance.getCluster().getLocalMember());
 
       OServer.registerServerInstance(getLocalNodeName(), serverInstance);
 
       messageService = new OHazelcastDistributedMessageService(this);
 
-      initDistributedDatabases();
     } catch (FileNotFoundException e) {
       throw new OConfigurationException("Error on creating Hazelcast instance", e);
     }
 
-    final IMap<String, Object> configurationMap = getConfigurationMap();
+    initDistributedDatabases();
 
+    final IMap<String, Object> configurationMap = getConfigurationMap();
     configurationMap.addEntryListener(this, true);
 
-    setStatus(STATUS.ALIGNING);
+    setStatus(STATUS.ONLINE);
 
     // GET AND REGISTER THE CLUSTER RUN ID IF NOT PRESENT
     configurationMap.putIfAbsent("runId", hazelcastInstance.getCluster().getClusterTime());
@@ -190,7 +194,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     super.shutdown();
 
-    remoteClusterNodes.clear();
+    cachedClusterNodes.clear();
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
@@ -260,7 +264,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
     members.add(getLocalNodeConfiguration());
-    for (Member member : remoteClusterNodes.values()) {
+    for (Member member : cachedClusterNodes.values()) {
       members.add(getNodeConfigurationById(member.getUuid()));
     }
 
@@ -268,7 +272,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public ODocument getNodeConfigurationById(final String iNodeId) {
-    return (ODocument) getConfigurationMap().get("node." + iNodeId);
+    return (ODocument) getConfigurationMap().get(CONFIG_NODE_PREFIX + iNodeId);
   }
 
   @Override
@@ -313,7 +317,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     status = iStatus;
 
-    getConfigurationMap().put("node." + getLocalNodeId(), getLocalNodeConfiguration());
+    getConfigurationMap().put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
 
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node status to '%s'", status);
   }
@@ -325,19 +329,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (Member clusterMember : hazelcastInstance.getCluster().getMembers()) {
       final String nodeId = getNodeName(clusterMember);
       if (!getLocalNodeName().equals(nodeId))
-        remoteClusterNodes.put(nodeId, clusterMember);
+        cachedClusterNodes.put(nodeId, clusterMember);
     }
 
-    if (remoteClusterNodes.isEmpty())
+    if (cachedClusterNodes.isEmpty())
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "no node running has been detected");
     else
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "detected %d running nodes %s",
-          remoteClusterNodes.size(), remoteClusterNodes.keySet());
+          cachedClusterNodes.size(), cachedClusterNodes.keySet());
 
     if (!alignmentStartup)
       // NO ALIGNMENT: THE NODE IS ONLINE
       setStatus(STATUS.ONLINE);
-    else if (remoteClusterNodes.isEmpty())
+    else if (cachedClusterNodes.isEmpty())
       // NO NODES; AVOID ALIGNMENT
       setStatus(STATUS.ONLINE);
     else
@@ -358,50 +362,50 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void broadcastAlignmentRequest() {
-    if (remoteClusterNodes.isEmpty())
+    if (cachedClusterNodes.isEmpty())
       // NO NODES; AVOID ALIGNMENT
       return;
-
-    setStatus(STATUS.ALIGNING);
-
-    // EXECUTE THE ALIGNMENT: THE STATUS ONLINE WILL BE SET ASYNCHRONOUSLY ONCE FINISHED
-    synchronized (synchronizers) {
-
-      for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
-        final String databaseName = entry.getKey();
-
-        try {
-          // GET LAST OPERATION, DOESN'T MATTER THE STATUS
-          final long[] lastOperationId = entry.getValue().getLog().getLastJournaledOperationId(null);
-
-          if (lastOperationId[0] == -1 && lastOperationId[1] == -1)
-            // AVOID TO SEND THE REQUEST IF THE LOG IS EMPTY
-            continue;
-
-          ODistributedServerLog.warn(this, getLocalNodeName(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
-              "sending align request in broadcast for database '%s' from operation %d:%d", databaseName, lastOperationId[0],
-              lastOperationId[1]);
-
-          synchronized (pendingAlignments) {
-            for (String node : remoteClusterNodes.keySet()) {
-              pendingAlignments.put(node + "/" + databaseName, Boolean.FALSE);
-
-              ODistributedServerLog.info(this, getLocalNodeName(), node, DIRECTION.NONE,
-                  "setting node in alignment state for db=%s", databaseName);
-            }
-          }
-
-          sendRequest(databaseName, new OAlignRequestTask(lastOperationId[0], lastOperationId[1]));
-
-        } catch (IOException e) {
-          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.OUT,
-              "error on retrieve last operation id from the log for db=%s", databaseName);
-        }
-      }
-
-      if (pendingAlignments.isEmpty())
-        setStatus(STATUS.ONLINE);
-    }
+    //
+    // setStatus(STATUS.ALIGNING);
+    //
+    // // EXECUTE THE ALIGNMENT: THE STATUS ONLINE WILL BE SET ASYNCHRONOUSLY ONCE FINISHED
+    // synchronized (synchronizers) {
+    //
+    // for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
+    // final String databaseName = entry.getKey();
+    //
+    // try {
+    // // GET LAST OPERATION, DOESN'T MATTER THE STATUS
+    // final long[] lastOperationId = entry.getValue().getLog().getLastJournaledOperationId(null);
+    //
+    // if (lastOperationId[0] == -1 && lastOperationId[1] == -1)
+    // // AVOID TO SEND THE REQUEST IF THE LOG IS EMPTY
+    // continue;
+    //
+    // ODistributedServerLog.warn(this, getLocalNodeName(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
+    // "sending align request in broadcast for database '%s' from operation %d:%d", databaseName, lastOperationId[0],
+    // lastOperationId[1]);
+    //
+    // synchronized (pendingAlignments) {
+    // for (String node : remoteClusterNodes.keySet()) {
+    // pendingAlignments.put(node + "/" + databaseName, Boolean.FALSE);
+    //
+    // ODistributedServerLog.info(this, getLocalNodeName(), node, DIRECTION.NONE,
+    // "setting node in alignment state for db=%s", databaseName);
+    // }
+    // }
+    //
+    // sendRequest(databaseName, new OAlignRequestTask(lastOperationId[0], lastOperationId[1]));
+    //
+    // } catch (IOException e) {
+    // ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.OUT,
+    // "error on retrieve last operation id from the log for db=%s", databaseName);
+    // }
+    // }
+    //
+    // if (pendingAlignments.isEmpty())
+    // setStatus(STATUS.ONLINE);
+    // }
   }
 
   @Override
@@ -497,13 +501,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public Set<String> getRemoteNodeIds() {
-    return remoteClusterNodes.keySet();
+    return cachedClusterNodes.keySet();
   }
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    // final String nodeId = getStorageId(iEvent.getMember());
-    // remoteClusterNodes.put(nodeId, iEvent.getMember());
   }
 
   /**
@@ -511,51 +513,57 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
-    final String nodeId = getNodeName(iEvent.getMember());
-    getConfigurationMap().remove("node." + nodeId);
-
-    remoteClusterNodes.remove(nodeId);
-
-    // DESTROY THE NODE QUEUE
-    IQueue<ODistributedResponse> queue = messageService.getNodeQueue(nodeId);
-    queue.destroy();
+    final Member member = iEvent.getMember();
+    cachedClusterNodes.remove(getNodeName(member));
+    OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
   }
 
   @Override
   public void entryAdded(EntryEvent<String, Object> iEvent) {
-    if (iEvent.getKey().startsWith("node.")) {
-      final String nodeId = ((ODocument) iEvent.getValue()).field("name");
-      if (!getLocalNodeName().equals(nodeId))
-        remoteClusterNodes.put(nodeId, iEvent.getMember());
+    final String key = iEvent.getKey();
+    if (key.startsWith(CONFIG_NODE_PREFIX)) {
+      cachedClusterNodes.put(getNodeName(iEvent.getMember()), iEvent.getMember());
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
+      synchronized (cachedDatabaseConfiguration) {
+        cachedDatabaseConfiguration.put(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
+      }
     }
   }
 
   @Override
   public void entryRemoved(EntryEvent<String, Object> iEvent) {
-    if (iEvent.getKey().startsWith("node.")) {
-      final String nodeId = ((ODocument) iEvent.getValue()).field("name");
-      ODistributedServerLog.warn(this, getLocalNodeName(), nodeId, DIRECTION.NONE,
-          "tracked remote node has been disconnected from the cluster");
-      remoteClusterNodes.remove(nodeId);
-
-      OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    final String key = iEvent.getKey();
+    if (key.startsWith(CONFIG_NODE_PREFIX)) {
+    } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
+      synchronized (cachedDatabaseConfiguration) {
+        cachedDatabaseConfiguration.remove(key.substring(CONFIG_DATABASE_PREFIX.length()));
+      }
     }
   }
 
   @Override
   public void entryUpdated(EntryEvent<String, Object> iEvent) {
-    if (iEvent.getKey().startsWith("node.")) {
-      final String nodeId = ((ODocument) iEvent.getValue()).field("name");
-      ODistributedServerLog.debug(this, getLocalNodeName(), nodeId, DIRECTION.NONE,
-          "received notification about update in the cluster: %s", iEvent);
-
-      OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    final String key = iEvent.getKey();
+    if (key.startsWith(CONFIG_NODE_PREFIX)) {
+    } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
+      synchronized (cachedDatabaseConfiguration) {
+        cachedDatabaseConfiguration.put(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
+      }
     }
   }
 
   @Override
-  public void entryEvicted(EntryEvent<String, Object> event) {
+  public void entryEvicted(EntryEvent<String, Object> iEvent) {
+    final String key = iEvent.getKey();
+    if (key.startsWith(CONFIG_NODE_PREFIX)) {
+    } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
+    }
+  }
+
+  @Override
+  public boolean isNodeAvailable(final String iNodeName) {
+    return cachedClusterNodes.containsKey(iNodeName);
   }
 
   public boolean isOfflineNodeById(final String iNodeId) {
@@ -734,10 +742,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
     // FIRST LOOK IN THE CLUSTER
     if (hazelcastInstance != null) {
-      final ODocument cfg = (ODocument) getConfigurationMap().get("database." + iDatabaseName);
+      final ODocument cfg = (ODocument) getConfigurationMap().get(CONFIG_DATABASE_PREFIX + iDatabaseName);
       if (cfg != null) {
-        synchronized (databaseJsonConfiguration) {
-          databaseJsonConfiguration.put(iDatabaseName, cfg);
+        synchronized (cachedDatabaseConfiguration) {
+          cachedDatabaseConfiguration.put(iDatabaseName, cfg);
         }
         return cfg;
       }
@@ -751,6 +759,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     super.saveDatabaseConfiguration(iDatabaseName, cfg);
 
     // SAVE IN THE CLUSTER TOO
-    getConfigurationMap().put("database." + iDatabaseName, cfg);
+    getConfigurationMap().put(CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
   }
 }

@@ -40,12 +40,14 @@ public class ODistributedConfiguration {
    * @param iClusterName
    */
   public boolean isReplicationActive(final String iClusterName) {
-    if (iClusterName != null) {
-      ODocument cluster = getClusterConfiguration(iClusterName);
-      if (cluster.containsField("replication"))
-        return cluster.field("replication");
+    synchronized (configuration) {
+      if (iClusterName != null) {
+        ODocument cluster = getClusterConfiguration(iClusterName);
+        if (cluster.containsField("replication"))
+          return cluster.field("replication");
+      }
+      return configuration.field("replication");
     }
-    return configuration.field("replication");
   }
 
   /**
@@ -54,70 +56,92 @@ public class ODistributedConfiguration {
    * @param iClusterName
    */
   public int getWriteQuorum(final String iClusterName) {
-    return (Integer) getClusterConfiguration(iClusterName).field("writeQuorum");
+    synchronized (configuration) {
+      return (Integer) getClusterConfiguration(iClusterName).field("writeQuorum");
+    }
   }
 
   public String getDefaultPartition(final String iClusterName) {
-    return (String) getPartitioningConfiguration(iClusterName).field("default");
+    synchronized (configuration) {
+      return (String) getPartitioningConfiguration(iClusterName).field("default");
+    }
   }
 
   public String getPartitionStrategy(final String iClusterName) {
-    return (String) getPartitioningConfiguration(iClusterName).field("strategy");
+    synchronized (configuration) {
+      return (String) getPartitioningConfiguration(iClusterName).field("strategy");
+    }
   }
 
   public ODistributedConfiguration addNodeInPartition(final String iClusterName, final int iPartition, final String iNode) {
-    List<String> partition = getPartition(iClusterName, iPartition);
-    partition.add(iNode);
+    synchronized (configuration) {
+      getPartition(iClusterName, iPartition).add(iNode);
+    }
     return this;
   }
 
   public List<String> getPartition(final String iClusterName, final int iPartition) {
-    final List<List<String>> partitions = getPartitions(iClusterName);
-    return partitions.get(iPartition);
+    synchronized (configuration) {
+      final List<List<String>> partitions = getPartitions(iClusterName);
+      return partitions.get(iPartition);
+    }
   }
 
   public List<List<String>> getPartitions(final String iClusterName) {
-    final ODocument partition = getPartitioningConfiguration(iClusterName);
-    if (partition == null)
-      return null;
+    synchronized (configuration) {
+      final ODocument partition = getPartitioningConfiguration(iClusterName);
+      if (partition == null)
+        return null;
 
-    return partition.field("partitions");
+      return partition.field("partitions");
+    }
   }
 
   public ODocument getPartitioningConfiguration(final String iClusterName) {
-    final ODocument cluster = getClusterConfiguration(iClusterName);
-    return (ODocument) cluster.field("partitioning");
+    synchronized (configuration) {
+      final ODocument cluster = getClusterConfiguration(iClusterName);
+      return (ODocument) cluster.field("partitioning");
+    }
   }
 
   public String getClusterConfigurationName(final String iClusterName) {
-    final ODocument clusters = configuration.field("clusters");
+    synchronized (configuration) {
+      final ODocument clusters = configuration.field("clusters");
 
-    if (clusters == null)
-      throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
+      if (clusters == null)
+        throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
 
-    return clusters.containsField(iClusterName) ? iClusterName : "*";
+      return clusters.containsField(iClusterName) ? iClusterName : "*";
+    }
   }
 
   public String[] getClusterNames() {
-    final ODocument clusters = configuration.field("clusters");
-    return clusters.fieldNames();
+    synchronized (configuration) {
+      final ODocument clusters = configuration.field("clusters");
+      return clusters.fieldNames();
+    }
   }
 
-  public ODocument getClusterConfiguration(final String iClusterName) {
-    final ODocument clusters = configuration.field("clusters");
+  public ODocument getClusterConfiguration(String iClusterName) {
+    synchronized (configuration) {
+      final ODocument clusters = configuration.field("clusters");
 
-    if (clusters == null)
-      throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
+      if (clusters == null)
+        throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
 
-    ODocument cfg = clusters.field(iClusterName);
-    if (cfg == null)
-      // GET DEFAULT CLUSTER
-      cfg = clusters.field("*");
+      if (iClusterName == null)
+        iClusterName = "*";
 
-    return cfg;
+      ODocument cfg = clusters.field(iClusterName);
+      if (cfg == null && !iClusterName.equals("*"))
+        // GET DEFAULT CLUSTER
+        cfg = clusters.field("*");
+
+      return cfg;
+    }
   }
 
   public ODocument serialize() {
-    return configuration;
+    return configuration.copy();
   }
 }

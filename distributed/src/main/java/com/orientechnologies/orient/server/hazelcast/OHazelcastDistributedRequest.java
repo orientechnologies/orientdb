@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -30,6 +31,9 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * 
  */
 public class OHazelcastDistributedRequest implements ODistributedRequest, Externalizable {
+  private static AtomicLong   serialId = new AtomicLong();
+
+  private long                id;
   private EXECUTION_MODE      executionMode;
   private String              senderNodeName;
   private String              databaseName;
@@ -51,17 +55,22 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     this.senderThreadId = Thread.currentThread().getId();
     this.payload = payload;
     this.executionMode = iExecutionMode;
+    this.id = serialId.incrementAndGet();
   }
 
   @Override
-  public ODistributedRequest assignUniqueId( final long iRunId, final long iOperationSerial) {
-    payload.setId( iRunId, iOperationSerial );
+  public ODistributedRequest assignUniqueId(final long iRunId, final long iOperationSerial) {
+    payload.setId(iRunId, iOperationSerial);
     return this;
   }
 
   @Override
   public void undo() {
     payload.undo();
+  }
+
+  public long getId() {
+    return id;
   }
 
   @Override
@@ -119,6 +128,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeLong(id);
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
@@ -128,6 +138,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    id = in.readLong();
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     databaseName = in.readUTF();

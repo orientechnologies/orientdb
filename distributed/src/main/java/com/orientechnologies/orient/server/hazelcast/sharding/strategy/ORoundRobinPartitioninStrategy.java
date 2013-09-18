@@ -36,18 +36,25 @@ public class ORoundRobinPartitioninStrategy implements ODistributedPartitioningS
   @Override
   public ODistributedPartition getPartition(final ODistributedServerManager iManager, final String iDatabaseName,
       final String iClusterName) {
+
     final ODistributedConfiguration cfg = iManager.getDatabaseConfiguration(iDatabaseName);
     final List<List<String>> partitions = cfg.getPartitions(iClusterName);
 
-    AtomicLong lastPos = lastPartition.get(iDatabaseName);
-    if (lastPos == null) {
-      lastPos = new AtomicLong(-1l);
-      lastPartition.putIfAbsent(iDatabaseName, lastPos);
-    }
+    final List<String> partition;
+    if (partitions.size() > 1) {
+      // APPLY ROUND ROBIN
+      AtomicLong lastPos = lastPartition.get(iDatabaseName);
+      if (lastPos == null) {
+        lastPos = new AtomicLong(-1l);
+        lastPartition.putIfAbsent(iDatabaseName, lastPos);
+      }
 
-    final long newPos = lastPos.incrementAndGet();
+      final long newPos = lastPos.incrementAndGet();
 
-    final List<String> partition = partitions.get((int) (newPos % partitions.size()));
+      partition = partitions.get((int) (newPos % partitions.size()));
+    } else
+      // ONLY ONE PARTITION: JUST USE IT
+      partition = partitions.get(0);
 
     return iManager.newPartition(partition);
   }

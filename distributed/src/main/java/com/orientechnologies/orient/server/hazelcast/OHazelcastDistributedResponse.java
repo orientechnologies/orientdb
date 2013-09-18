@@ -30,6 +30,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
  * 
  */
 public class OHazelcastDistributedResponse implements ODistributedResponse, Externalizable {
+  private long         requestId;
   private String       senderNodeName;
   private long         senderThreadId;
   private Serializable payload;
@@ -40,10 +41,17 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   public OHazelcastDistributedResponse() {
   }
 
-  public OHazelcastDistributedResponse(final String senderNodeName, final long senderThreadId, final Serializable payload) {
+  public OHazelcastDistributedResponse(final long iRequestId, final String senderNodeName, final long senderThreadId,
+      final Serializable payload) {
+    this.requestId = iRequestId;
     this.senderNodeName = senderNodeName;
     this.senderThreadId = senderThreadId;
     this.payload = payload;
+  }
+
+  @Override
+  public long getRequestId() {
+    return requestId;
   }
 
   @Override
@@ -74,6 +82,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeLong(requestId);
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeObject(payload);
@@ -81,6 +90,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    requestId = in.readLong();
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     payload = (Serializable) in.readObject();

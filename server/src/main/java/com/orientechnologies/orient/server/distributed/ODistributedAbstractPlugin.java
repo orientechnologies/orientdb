@@ -45,22 +45,22 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  public static final String                              REPLICATOR_USER            = "replicator";
-  protected static final String                           MASTER_AUTO                = "$auto";
+  public static final String                              REPLICATOR_USER             = "replicator";
+  protected static final String                           MASTER_AUTO                 = "$auto";
 
-  protected static final String                           PAR_DEF_DISTRIB_DB_CONFIG  = "configuration.db.default";
-  protected static final String                           FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
+  protected static final String                           PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
+  protected static final String                           FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                       serverInstance;
-  protected Map<String, OStorageSynchronizer>             synchronizers              = new HashMap<String, OStorageSynchronizer>();
-  protected Map<String, ODocument>                        databaseJsonConfiguration  = new HashMap<String, ODocument>();
+  protected Map<String, OStorageSynchronizer>             synchronizers               = new HashMap<String, OStorageSynchronizer>();
+  protected Map<String, ODocument>                        cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
-  protected boolean                                       enabled                    = true;
-  protected String                                        nodeName                   = null;
+  protected boolean                                       enabled                     = true;
+  protected String                                        nodeName                    = null;
   protected Class<? extends OReplicationConflictResolver> confictResolverClass;
   protected boolean                                       alignmentStartup;
   protected int                                           alignmentTimer;
-  protected Map<String, ODistributedPartitioningStrategy> strategies                 = new HashMap<String, ODistributedPartitioningStrategy>();
+  protected Map<String, ODistributedPartitioningStrategy> strategies                  = new HashMap<String, ODistributedPartitioningStrategy>();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -104,8 +104,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     }
 
     // CHECK DEFAULT DISTIRBUTED CONFIGURATION
-    synchronized (databaseJsonConfiguration) {
-      if (!databaseJsonConfiguration.containsKey("*"))
+    synchronized (cachedDatabaseConfiguration) {
+      if (!cachedDatabaseConfiguration.containsKey("*"))
         throw new OConfigurationException("Invalid cluster configuration: cannot find settings '" + PAR_DEF_DISTRIB_DB_CONFIG
             + "' for the default database");
     }
@@ -152,7 +152,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       // NOT OWN DB, SKIPT IT
       return;
 
-    synchronized (databaseJsonConfiguration) {
+    synchronized (cachedDatabaseConfiguration) {
       final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
       if (cfg == null)
         return;
@@ -201,12 +201,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   }
 
-  public void setDefaultDatabaseConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
-    synchronized (databaseJsonConfiguration) {
-      databaseJsonConfiguration.put(iDatabaseName, iConfiguration);
-    }
-  }
-
   public ODistributedPartitioningStrategy getStrategy(final String iStrategyName) {
     return strategies.get(iStrategyName);
   }
@@ -242,9 +236,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       final byte[] buffer = new byte[(int) file.length()];
       f.read(buffer);
 
-      synchronized (databaseJsonConfiguration) {
+      synchronized (cachedDatabaseConfiguration) {
         final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
-        databaseJsonConfiguration.put(iDatabaseName, doc);
+        cachedDatabaseConfiguration.put(iDatabaseName, doc);
         return doc;
       }
 
@@ -260,10 +254,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
-    synchronized (databaseJsonConfiguration) {
-      ODocument cfg = databaseJsonConfiguration.get(iDatabaseName);
+    synchronized (cachedDatabaseConfiguration) {
+      ODocument cfg = cachedDatabaseConfiguration.get(iDatabaseName);
       if (cfg == null)
-        cfg = databaseJsonConfiguration.get("*");
+        cfg = cachedDatabaseConfiguration.get("*");
       return new ODistributedConfiguration(cfg);
     }
   }
@@ -272,13 +266,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     OLogManager.instance().config(this, "New distributed configuration for database: %s:\n%s", iDatabaseName,
         cfg.toJSON("prettyPrint"));
 
-    synchronized (databaseJsonConfiguration) {
-      final ODocument oldCfg = databaseJsonConfiguration.get(iDatabaseName);
+    synchronized (cachedDatabaseConfiguration) {
+      final ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
       if (oldCfg != null && Arrays.equals(oldCfg.toStream(), cfg.toStream()))
         // NO CHANGE, SKIP IT
         return;
 
-      databaseJsonConfiguration.put(iDatabaseName, cfg);
+      cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       FileOutputStream f = null;
       try {
