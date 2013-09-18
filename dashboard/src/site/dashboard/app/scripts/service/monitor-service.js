@@ -84,12 +84,44 @@ monitor.factory('Metric', function ($http, $resource) {
     resource.getMetrics = function (params, callback) {
         var url = API + 'command/monitor/sql/-/-1';
         var query = "select snapshot.dateTo as dateTo, name, entries, last, min, max, average, total from Metric where  name = '{{name}}' and  snapshot.server = '{{server}}'";
-        if(params.dateFrom){
-           query += "and snapshot.dateFrom >= {{dateFrom}} ";
+        if (params.dateFrom) {
+            query += "and snapshot.dateFrom >= {{dateFrom}} ";
         }
-        if(params.dateTo){
+        if (params.dateTo) {
             query += "and snapshot.dateTo <= {{dateTo}} ";
         }
+        if (params.name && params.server) {
+            query = S(query).template(params).s;
+            $http.post(url, query).success(function (data) {
+                callback(data);
+            });
+        } else {
+            throw 'name and server params required';
+        }
+    }
+    resource.getOperationMetrics = function (params, callback) {
+        var url = API + 'command/monitor/sql/-/-1';
+        if (params.names) {
+            params.name = "";
+            params.names.forEach(function (elem, idx, array) {
+                params.name += "'" + elem + "',";
+            });
+            var index = params.name.lastIndexOf(",");
+            params.name = params.name.substring(0,index);
+        } else {
+
+        }
+        var query = "select snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average, total from Metric where  name in [{{name}}] ";
+        if (params.dateFrom) {
+            query += "and snapshot.dateFrom >= {{dateFrom}} ";
+        }
+        if (params.server) {
+            query += "and snapshot.server = '{{server}}'";
+        }
+        if (params.dateTo) {
+            query += "and snapshot.dateTo <= {{dateTo}} ";
+        }
+        query += " order by name desc , dateTo desc";
         if (params.name && params.server) {
             query = S(query).template(params).s;
             $http.post(url, query).success(function (data) {
