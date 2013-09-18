@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.handler;
 
+import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
+
 
 /**
  * Deprecated, use OServerPluginHelper instead.

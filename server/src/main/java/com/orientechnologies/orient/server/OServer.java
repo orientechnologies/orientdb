@@ -68,9 +68,9 @@ import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
-import com.orientechnologies.orient.server.handler.OServerPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 
@@ -258,9 +258,9 @@ public class OServer {
         for (String pluginName : plugins) {
 
           OLogManager.instance().info(this, "- %s", pluginName);
-          final OServerPluginInfo plugin = pluginManager.getPlugin(pluginName);
+          final OServerPluginInfo plugin = pluginManager.getPluginByName(pluginName);
           try {
-            plugin.getInstance().sendShutdown();
+            plugin.shutdown();
           } catch (Throwable t) {
             OLogManager.instance().error(this, "Error during server plugin %s shutdown.", t, plugin);
           }
@@ -461,7 +461,7 @@ public class OServer {
 
     for (OServerPluginInfo h : getPlugins())
       if (h.getInstance().getClass().equals(iPluginClass))
-        return (RET) h;
+        return (RET) h.getInstance();
 
     return null;
   }
@@ -474,7 +474,7 @@ public class OServer {
       Thread.currentThread().interrupt();
     }
 
-    final OServerPluginInfo p = pluginManager.getPlugin(iName);
+    final OServerPluginInfo p = pluginManager.getPluginByName(iName);
     if (p != null)
       return (RET) p.getInstance();
     return null;
@@ -642,7 +642,7 @@ public class OServer {
         if (handler instanceof ODistributedServerManager)
           distributedManager = (ODistributedServerManager) handler;
 
-        pluginManager.registerPlugin(new OServerPluginInfo(handler.getName(), handler));
+        pluginManager.registerPlugin(new OServerPluginInfo(handler.getName(), null, null, null, handler, null, 0, null));
 
         handler.config(this, h.parameters);
         handler.startup();

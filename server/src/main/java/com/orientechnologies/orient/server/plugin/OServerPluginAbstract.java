@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.handler;
+package com.orientechnologies.orient.server.plugin;
 
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
@@ -26,31 +26,45 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
  * 
  */
 public abstract class OServerPluginAbstract implements OServerPlugin {
+  @Override
   public void startup() {
   }
 
+  @Override
   public void shutdown() {
   }
 
+  @Override
   public void sendShutdown() {
     shutdown();
   }
 
+  @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
   }
 
+  @Override
   public void onClientConnection(final OClientConnection iConnection) {
   }
 
+  @Override
   public void onClientDisconnection(final OClientConnection iConnection) {
   }
 
+  @Override
   public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
   }
 
+  @Override
   public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
   }
 
+  @Override
   public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
+  }
+
+  @Override
+  public Object getContent(String iURL) {
+    return null;
   }
 }

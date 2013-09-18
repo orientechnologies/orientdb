@@ -16,26 +16,33 @@
 package com.orientechnologies.orient.server.plugin;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerPlugin;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent.OStaticContent;
 
 /**
  * Manages Server Extensions
@@ -47,6 +54,7 @@ public class OServerPluginManager implements OService {
   private static final int                             CHECK_DELAY   = 5000;
   private OServer                                      server;
   private ConcurrentHashMap<String, OServerPluginInfo> activePlugins = new ConcurrentHashMap<String, OServerPluginInfo>();
+  private ConcurrentHashMap<String, String>            loadedPlugins = new ConcurrentHashMap<String, String>();
 
   public void config(OServer iServer) {
     server = iServer;
@@ -64,8 +72,18 @@ public class OServerPluginManager implements OService {
     }, CHECK_DELAY, CHECK_DELAY);
   }
 
-  public OServerPluginInfo getPlugin(final String iName) {
+  public OServerPluginInfo getPluginByName(final String iName) {
+    if (iName == null)
+      return null;
     return activePlugins.get(iName);
+  }
+
+  public String getPluginNameByFile(final String iFileName) {
+    return loadedPlugins.get(iFileName);
+  }
+
+  public OServerPluginInfo getPluginByFile(final String iFileName) {
+    return getPluginByName(getPluginNameByFile(iFileName));
   }
 
   public String[] getPluginNames() {
@@ -91,104 +109,173 @@ public class OServerPluginManager implements OService {
 
     final File[] plugins = pluginsDirectory.listFiles();
 
-    final Map<String, OServerPluginInfo> currentDynamicPlugins = new HashMap<String, OServerPluginInfo>();
-    for (Entry<String, OServerPluginInfo> entry : activePlugins.entrySet()) {
-      if (entry.getValue().isDynamic())
-        currentDynamicPlugins.put(entry.getKey(), entry.getValue());
+    final Set<String> currentDynamicPlugins = new HashSet<String>();
+    for (Entry<String, String> entry : loadedPlugins.entrySet()) {
+      currentDynamicPlugins.add(entry.getKey());
     }
 
-    for (File extension : plugins) {
-      final String pluginName = updatePlugin(extension);
+    for (File plugin : plugins) {
+      final String pluginName = updatePlugin(plugin);
       if (pluginName != null)
         currentDynamicPlugins.remove(pluginName);
     }
 
     // REMOVE MISSING PLUGIN
-    for (Entry<String, OServerPluginInfo> entry : currentDynamicPlugins.entrySet())
-      uninstallPlugin(entry.getKey());
+    for (String pluginName : currentDynamicPlugins)
+      uninstallPluginByFile(pluginName);
   }
 
-  public void uninstallPlugin(final String iName) {
-    OLogManager.instance().info(this, "Uninstalling dynamic plugin '%s'...", iName);
+  public void uninstallPluginByFile(final String iFileName) {
+    final String pluginName = loadedPlugins.remove(iFileName);
+    if (pluginName != null) {
+      OLogManager.instance().info(this, "Uninstalling dynamic plugin '%s'...", iFileName);
 
-    final OServerPluginInfo removePlugin = activePlugins.remove(iName);
-    if (removePlugin != null)
-      removePlugin.getInstance().shutdown();
+      final OServerPluginInfo removePlugin = activePlugins.remove(pluginName);
+      if (removePlugin != null)
+        removePlugin.shutdown();
+    }
   }
 
   protected String updatePlugin(final File pluginFile) {
-    final String pluginName = pluginFile.getName();
+    final String pluginFileName = pluginFile.getName();
 
-    if (!pluginFile.isDirectory() && !pluginName.endsWith(".jar"))
+    if (!pluginFile.isDirectory() && !pluginFileName.endsWith(".jar"))
       // SKIP IT
       return null;
 
-    OServerPluginInfo currentPluginData = activePlugins.get(pluginName);
+    OServerPluginInfo currentPluginData = getPluginByFile(pluginFileName);
 
     final long fileLastModified = pluginFile.lastModified();
     if (currentPluginData != null) {
       if (fileLastModified <= currentPluginData.getLoadedOn())
         // ALREADY LOADED, SKIPT IT
-        return pluginName;
+        return pluginFileName;
 
       // SHUTDOWN PREVIOUS INSTANCE
       try {
-        currentPluginData.getInstance().sendShutdown();
+        currentPluginData.shutdown();
       } catch (Exception e) {
         // IGNORE EXCEPTIONS
-        OLogManager.instance().debug(this, "Error on shutdowning plugin '%s'...", e, pluginName);
+        OLogManager.instance().debug(this, "Error on shutdowning plugin '%s'...", e, pluginFileName);
       }
     }
 
     installDynamicPlugin(pluginFile);
 
-    return pluginName;
+    return pluginFileName;
   }
 
   private void installDynamicPlugin(final File pluginFile) {
-    final String pluginName = pluginFile.getName();
+    String pluginName = pluginFile.getName();
 
-    OServerPluginInfo currentPluginData;
+    final OServerPluginInfo currentPluginData;
     OLogManager.instance().info(this, "Installing dynamic plugin '%s'...", pluginName);
 
     try {
       final URLClassLoader pluginClassLoader = new URLClassLoader(new URL[] { pluginFile.toURI().toURL() }, this.getClass()
           .getClassLoader());
 
-      // LOAD PLUGIN.PROPERTIES FILE
-      final InputStream pluginPropertiesFile = pluginClassLoader.getResourceAsStream("plugin.properties");
-      if (pluginPropertiesFile == null || pluginPropertiesFile.available() == 0)
-        OLogManager.instance().error(this, "Error on loading plugin.properties for dynamic plugin '%s'",
-            IllegalArgumentException.class, pluginName);
+      // LOAD PLUGIN.JSON FILE
+      final InputStream pluginConfigFile = pluginClassLoader.getResourceAsStream("plugin.json");
 
-      final Properties properties = new Properties();
-      properties.load(pluginPropertiesFile);
-
-      final String pluginClass = properties.getProperty("class");
-
-      List<OServerParameterConfiguration> params = new ArrayList<OServerParameterConfiguration>();
-
-      for (Object prop : properties.keySet()) {
-        final String propName = prop.toString();
-        if (propName.startsWith("param."))
-          params.add(new OServerParameterConfiguration(propName.substring("param.".length()), properties.getProperty(propName)));
+      if (pluginConfigFile == null || pluginConfigFile.available() == 0) {
+        pluginClassLoader.close();
+        OLogManager.instance().error(this, "Error on loading plugin.json for dynamic plugin '%s'", pluginName);
+        throw new IllegalArgumentException(String.format("Error on loading plugin.json for dynamic plugin '%s'", pluginName));
       }
 
-      final OServerParameterConfiguration[] pluginParams = params.toArray(new OServerParameterConfiguration[params.size()]);
+      final ODocument properties = new ODocument().fromJSON(pluginConfigFile);
+
+      if (properties.containsField("name"))
+        // OVERWRITE PLUGIN NAME
+        pluginName = properties.field("name");
+
+      final String pluginClass = properties.field("javaClass");
+
+      final OServerPlugin pluginInstance;
+      final Map<String, Object> parameters;
+
+      if (pluginClass != null) {
+        // CREATE PARAMETERS
+        parameters = properties.field("parameters");
+        final List<OServerParameterConfiguration> params = new ArrayList<OServerParameterConfiguration>();
+        for (String paramName : parameters.keySet()) {
+          params.add(new OServerParameterConfiguration(paramName, (String) parameters.get(paramName)));
+        }
+        final OServerParameterConfiguration[] pluginParams = params.toArray(new OServerParameterConfiguration[params.size()]);
+
+        pluginInstance = startPluginClass(pluginClassLoader, pluginClass, pluginParams);
+      } else {
+        pluginInstance = null;
+        parameters = null;
+      }
 
       // REGISTER THE PLUGIN
-      currentPluginData = new OServerPluginInfo(pluginName, startPluginClass(pluginClassLoader, pluginClass, pluginParams),
-          pluginFile.lastModified());
+      currentPluginData = new OServerPluginInfo(pluginName, (String) properties.field("version"),
+          (String) properties.field("description"), (String) properties.field("web"), pluginInstance, parameters,
+          pluginFile.lastModified(), pluginClassLoader);
 
       registerPlugin(currentPluginData);
+      loadedPlugins.put(pluginFile.getName(), pluginName);
+
+      registerStaticDirectory(currentPluginData);
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on installing dynamic plugin '%s'", e, pluginName);
     }
   }
 
+  protected void registerStaticDirectory(final OServerPluginInfo currentPluginData) {
+    Object pluginWWW = currentPluginData.getParameter("www");
+    if (pluginWWW == null)
+      pluginWWW = currentPluginData.getName();
+
+    final OServerNetworkListener httpListener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    final OServerCommandGetStaticContent command = (OServerCommandGetStaticContent) httpListener
+        .getCommand(OServerCommandGetStaticContent.class);
+
+    if (command != null) {
+      final URL wwwURL = currentPluginData.getClassLoader().findResource("www/");
+
+      final OCallable<Object, String> callback;
+      if (wwwURL != null && currentPluginData.getInstance() == null)
+        callback = createStaticLinkCallback(wwwURL);
+      else
+        // LET TO THE COMMAND TO CONTROL TH
+        callback = new OCallable<Object, String>() {
+          @Override
+          public Object call(final String iArgument) {
+            return currentPluginData.getInstance().getContent(iArgument);
+          }
+        };
+
+      command.registerVirtualFolder(pluginWWW.toString(), callback);
+    }
+  }
+
+  protected OCallable<Object, String> createStaticLinkCallback(final URL wwwURL) {
+    return new OCallable<Object, String>() {
+      @Override
+      public Object call(final String iArgument) {
+        File f = new File(wwwURL.getFile() + iArgument);
+        if (f.exists() && f.isFile()) {
+          final OServerCommandGetStaticContent.OStaticContent content = new OStaticContent();
+          try {
+            content.is = new FileInputStream(f);
+          } catch (FileNotFoundException e) {
+            OLogManager.instance().warn(this, "Cannot load static file under path: %s", e, f);
+          }
+          content.contentSize = f.length();
+          content.type = OServerCommandGetStaticContent.getContentType(f.getName());
+          return content;
+        }
+        return null;
+      }
+    };
+  }
+
   @SuppressWarnings("unchecked")
-  private OServerPlugin startPluginClass(final URLClassLoader pluginClassLoader, final String iClassName,
+  protected OServerPlugin startPluginClass(final URLClassLoader pluginClassLoader, final String iClassName,
       final OServerParameterConfiguration[] params) throws Exception {
 
     final Class<? extends OServerPlugin> classToLoad = (Class<? extends OServerPlugin>) Class.forName(iClassName, true,

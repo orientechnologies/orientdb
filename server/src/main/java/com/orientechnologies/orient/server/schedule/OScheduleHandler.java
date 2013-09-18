@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Author : henryzhao81@gmail.com Mar 28, 2013

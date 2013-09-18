@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.handler.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Abstract plugin to manage the distributed environment.

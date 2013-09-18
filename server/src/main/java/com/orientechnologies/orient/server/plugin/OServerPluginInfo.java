@@ -15,7 +15,12 @@
  */
 package com.orientechnologies.orient.server.plugin;
 
-import com.orientechnologies.orient.server.handler.OServerPlugin;
+import java.io.IOException;
+import java.net.URLClassLoader;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.orientechnologies.common.log.OLogManager;
 
 /**
  * Server plugin information
@@ -24,20 +29,38 @@ import com.orientechnologies.orient.server.handler.OServerPlugin;
  * 
  */
 public class OServerPluginInfo {
-  private final String        name;
-  private final OServerPlugin instance;
-  private final long          loadedOn;
+  private final String              name;
+  private final String              version;
+  private final String              description;
+  private final String              web;
+  private final OServerPlugin       instance;
+  private final Map<String, Object> parameters;
+  private final long                loadedOn;
+  private final URLClassLoader      pluginClassLoader;
 
-  public OServerPluginInfo(final String name, final OServerPlugin instance, final long loadedOn) {
+  public OServerPluginInfo(final String name, final String version, final String description, final String web,
+      final OServerPlugin instance, final Map<String, Object> parameters, final long loadedOn,
+      final URLClassLoader pluginClassLoader) {
     this.name = name;
-    this.loadedOn = loadedOn;
+    this.version = version;
+    this.description = description;
+    this.web = web;
     this.instance = instance;
+    this.parameters = parameters != null ? parameters : new HashMap<String, Object>();
+    this.loadedOn = loadedOn;
+    this.pluginClassLoader = pluginClassLoader;
   }
 
-  public OServerPluginInfo(final String name, final OServerPlugin instance) {
-    this.name = name;
-    this.instance = instance;
-    this.loadedOn = 0;
+  public void shutdown() {
+    if (instance != null)
+      instance.sendShutdown();
+
+    if (pluginClassLoader != null)
+      try {
+        pluginClassLoader.close();
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error during shutdown of plugin '%s'", e, name);
+      }
   }
 
   public boolean isDynamic() {
@@ -54,5 +77,25 @@ public class OServerPluginInfo {
 
   public long getLoadedOn() {
     return loadedOn;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public String getWeb() {
+    return web;
+  }
+
+  public Object getParameter(final String iName) {
+    return parameters.get(iName);
+  }
+
+  public URLClassLoader getClassLoader() {
+    return pluginClassLoader;
   }
 }
