@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeRIDSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -54,6 +55,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -344,19 +346,19 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case LINKSET: {
-      final OMVRBTreeRIDSet coll;
+      final OStringBuilderSerializable coll;
 
-      if (!(iValue instanceof OMVRBTreeRIDSet)) {
+      if (!(iValue instanceof OMVRBTreeRIDSet || iValue instanceof OSBTreeRIDSet)) {
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
         coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
-        ((Collection<? extends OIdentifiable>) iValue).clear();
 
         iRecord.field(iName, coll);
       } else
         // LAZY SET
-        coll = (OMVRBTreeRIDSet) iValue;
+        coll = (OStringBuilderSerializable) iValue;
 
-      linkSetToStream(iOutput, iRecord, coll);
+      coll.toStream(iOutput);
+
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkSet2string"), "Serialize linkset to string",
           timer);
       break;
@@ -444,11 +446,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     default:
       fieldTypeToString(iOutput, iType, iValue);
     }
-  }
-
-  public static StringBuilder linkSetToStream(final StringBuilder iOutput, final ODocument iRecord, final OMVRBTreeRIDSet iSet) {
-    iSet.toStream(iOutput);
-    return iOutput;
   }
 
   public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,

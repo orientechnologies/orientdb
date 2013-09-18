@@ -22,15 +22,18 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OSBTreeRIDSet implements Set<OIdentifiable> {
+// TODO implement ORecordLazyMultiValue
+public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable {
   private final String                    fileName;
   private final long                      rootIndex;
 
@@ -170,6 +173,16 @@ public class OSBTreeRIDSet implements Set<OIdentifiable> {
   @Override
   public void clear() {
     tree.clear();
+  }
+
+  @Override
+  public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException {
+    throw new UnsupportedOperationException("unimplemented yet");
+  }
+
+  @Override
+  public OStringBuilderSerializable fromStream(StringBuilder iInput) throws OSerializationException {
+    throw new UnsupportedOperationException("unimplemented yet");
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {

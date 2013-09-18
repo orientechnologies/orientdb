@@ -11,7 +11,9 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Test that {@link OSBTreeRIDSet} is saved into the database correctly.
@@ -24,7 +26,7 @@ public class OSBTreeRIDSetPersistencyTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRIDSetTest");
+    db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRIDSetPersistencyTest");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -52,13 +54,16 @@ public class OSBTreeRIDSetPersistencyTest {
     final OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
     ridSet.addAll(expected);
 
-    final String fileName = ridSet.getFileName();
-    final long rootIndex = ridSet.getRootIndex();
+    final ODocument doc = new ODocument();
+    doc.field("ridset", ridSet);
+    doc.save();
+    final ORID id = doc.getIdentity();
 
     db.close();
     db.open("admin", "admin");
 
-    final OSBTreeRIDSet loaded = new OSBTreeRIDSet(fileName, rootIndex);
+    final OSBTreeRIDSet loaded = ((ODocument) db.load(id)).field("ridset");
+
     Assert.assertEquals(loaded.size(), expected.size());
     Assert.assertTrue(loaded.containsAll(expected));
   }
