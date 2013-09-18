@@ -80,7 +80,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
-    final ODistributedConfiguration dConfig = dManager.getConfiguration(getName());
+    final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
     if (!dConfig.isReplicationActive(null))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
@@ -105,14 +105,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       return wrapped.executeCommand(iCommand, executor);
 
     try {
-      dManager.sendRequest();
-      
-      final ODistributedRequest request = dManager.getMessageService().createRequest();
-      request.setPayload(new OSQLCommandTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), iCommand
-          .getText()));
-
       // REPLICATE IT
-      final Object result = dManager.getMessageService().send(request).getPayload();
+      final Object result = dManager.sendRequest(getName(), new OSQLCommandTask(iCommand.getText()));
+
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed COMMAND", (Throwable) result);
 
@@ -138,17 +133,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ASSIGN DESTINATION NODE
       final String clusterName = getClusterNameFromRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getConfiguration(getName());
+      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
-      final ODistributedRequest request = dManager.getMessageService().createRequest();
-      request.setPayload(new OCreateRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
-          iRecordId, iContent, iRecordVersion, iRecordType));
-
       // REPLICATE IT
-      result = dManager.getMessageService().send(request).getPayload();
+      result = dManager.sendRequest(getName(), new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType));
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) result);
@@ -174,16 +165,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
     try {
       final String clusterName = getClusterNameFromRID(iRecordId);
-      final ODistributedConfiguration dConfig = dManager.getConfiguration(getName());
+      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
-      final ODistributedRequest request = dManager.getMessageService().createRequest();
-      request.setPayload(new OReadRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(), iRecordId));
-
       // REPLICATE IT
-      final Object result = dManager.getMessageService().send(request).getPayload();
+      final Object result = dManager.sendRequest(getName(), new OReadRecordTask(iRecordId));
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed READ_RECORD", (Throwable) result);
@@ -206,17 +194,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameFromRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getConfiguration(getName());
+      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
-      final ODistributedRequest request = dManager.getMessageService().createRequest();
-      request.setPayload(new OUpdateRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
-          iRecordId, iContent, iVersion, iRecordType));
-
       // REPLICATE IT
-      final Object result = dManager.getMessageService().send(request).getPayload();
+      final Object result = dManager.sendRequest(getName(), new OUpdateRecordTask(iRecordId, iContent, iVersion, iRecordType));
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed UPDATE_RECORD", (Throwable) result);
@@ -240,17 +224,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameFromRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getConfiguration(getName());
+      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
-      final ODistributedRequest request = dManager.getMessageService().createRequest();
-      request.setPayload(new ODeleteRecordTask(serverInstance, serverInstance.getDistributedManager(), wrapped.getName(),
-          iRecordId, iVersion));
-
       // REPLICATE IT
-      final Object result = dManager.getMessageService().send(request).getPayload();
+      final Object result = dManager.sendRequest(getName(), new ODeleteRecordTask(iRecordId, iVersion));
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed UPDATE_RECORD", (Throwable) result);

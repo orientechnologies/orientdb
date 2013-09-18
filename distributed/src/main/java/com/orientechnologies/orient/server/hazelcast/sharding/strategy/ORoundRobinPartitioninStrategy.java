@@ -31,16 +31,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public class ORoundRobinPartitioninStrategy implements ODistributedPartitioningStrategy {
-  protected final ODistributedServerManager       manager;
   protected ConcurrentHashMap<String, AtomicLong> lastPartition = new ConcurrentHashMap<String, AtomicLong>();
 
-  public ORoundRobinPartitioninStrategy(final ODistributedServerManager manager) {
-    this.manager = manager;
-  }
-
   @Override
-  public ODistributedPartition getPartition(final String iDatabaseName, final String iClusterName) {
-    final ODistributedConfiguration cfg = manager.getConfiguration(iDatabaseName);
+  public ODistributedPartition getPartition(final ODistributedServerManager iManager, final String iDatabaseName,
+      final String iClusterName) {
+    final ODistributedConfiguration cfg = iManager.getDatabaseConfiguration(iDatabaseName);
     final List<List<String>> partitions = cfg.getPartitions(iClusterName);
 
     AtomicLong lastPos = lastPartition.get(iDatabaseName);
@@ -53,6 +49,6 @@ public class ORoundRobinPartitioninStrategy implements ODistributedPartitioningS
 
     final List<String> partition = partitions.get((int) (newPos % partitions.size()));
 
-    return manager.newPartition(partition);
+    return iManager.newPartition(partition);
   }
 }

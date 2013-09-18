@@ -19,9 +19,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -30,12 +30,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
  * 
  */
 public class OHazelcastDistributedRequest implements ODistributedRequest, Externalizable {
-  private String       senderNodeName;
-  private final long[] id = new long[2];
-  private String       databaseName;
-  private String       clusterName;
-  private long         threadId;
-  private Serializable payload;
+  private EXECUTION_MODE      executionMode;
+  private String              senderNodeName;
+  private String              databaseName;
+  private String              clusterName;
+  private long                senderThreadId;
+  private OAbstractRemoteTask payload;
 
   /**
    * Constructor used by serializer.
@@ -43,27 +43,25 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   public OHazelcastDistributedRequest() {
   }
 
-  public OHazelcastDistributedRequest(final String senderNodeName, final long iRunId, final long iOperationId,
-      final String databaseName, final String clusterName, final Serializable payload) {
+  public OHazelcastDistributedRequest(final String senderNodeName, final String databaseName, final String clusterName,
+      final OAbstractRemoteTask payload, EXECUTION_MODE iExecutionMode) {
     this.senderNodeName = senderNodeName;
-    this.id[0] = iRunId;
-    this.id[1] = iOperationId;
     this.databaseName = databaseName;
     this.clusterName = clusterName;
-    this.threadId = Thread.currentThread().getId();
+    this.senderThreadId = Thread.currentThread().getId();
     this.payload = payload;
+    this.executionMode = iExecutionMode;
   }
 
   @Override
-  public Object getId() {
-    return id;
-  }
-
-  @Override
-  public OHazelcastDistributedRequest setId(final Object id) {
-    this.id[0] = ((long[]) id)[0];
-    this.id[1] = ((long[]) id)[1];
+  public ODistributedRequest assignUniqueId( final long iRunId, final long iOperationSerial) {
+    payload.setId( iRunId, iOperationSerial );
     return this;
+  }
+
+  @Override
+  public void undo() {
+    payload.undo();
   }
 
   @Override
@@ -78,11 +76,11 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
 
   @Override
   public long getSenderThreadId() {
-    return threadId;
+    return senderThreadId;
   }
 
   @Override
-  public Serializable getPayload() {
+  public OAbstractRemoteTask getPayload() {
     return payload;
   }
 
@@ -100,12 +98,12 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
 
   @Override
   public OHazelcastDistributedRequest setSenderThreadId(long threadId) {
-    this.threadId = threadId;
+    this.senderThreadId = threadId;
     return this;
   }
 
   @Override
-  public OHazelcastDistributedRequest setPayload(Serializable payload) {
+  public OHazelcastDistributedRequest setPayload(OAbstractRemoteTask payload) {
     this.payload = payload;
     return this;
   }
@@ -121,26 +119,36 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeLong(id[0]);
-    out.writeLong(id[1]);
+    out.writeUTF(senderNodeName);
+    out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
-    out.writeUTF(clusterName);
-    out.writeLong(threadId);
+    out.writeUTF(clusterName != null ? clusterName : "");
     out.writeObject(payload);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    id[0] = in.readLong();
-    id[1] = in.readLong();
+    senderNodeName = in.readUTF();
+    senderThreadId = in.readLong();
     databaseName = in.readUTF();
     clusterName = in.readUTF();
-    threadId = in.readLong();
-    payload = (Serializable) in.readObject();
+    if (clusterName.length() == 0)
+      clusterName = null;
+    payload = (OAbstractRemoteTask) in.readObject();
   }
 
   @Override
   public String toString() {
     return payload != null ? payload.toString() : null;
+  }
+
+  @Override
+  public EXECUTION_MODE getExecutionMode() {
+    return executionMode;
+  }
+
+  public OHazelcastDistributedRequest setExecutionMode(final EXECUTION_MODE executionMode) {
+    this.executionMode = executionMode;
+    return this;
   }
 }

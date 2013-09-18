@@ -19,12 +19,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.types.ORef;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
@@ -34,7 +30,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> {
+public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
   protected boolean         align            = false;
@@ -52,47 +48,15 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
    * @param iOperationId
    */
   public OAbstractReplicatedTask(final long iRunId, final long iOperationId) {
-    super(iRunId, iOperationId);
-    this.align = true;
+    this.runId = iRunId;
+    this.operationSerial = iOperationId;
   }
 
-  public OAbstractReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String databaseName, final long iOperationSerial) {
-    super(iServer, iDistributedSrvMgr, databaseName);
-    // ASSIGN A UNIQUE OPERATION ID TO BE LOGGED
-    this.operationSerial = iOperationSerial;
-
-    ODistributedServerLog.debug(this, getNodeSource(), nodeDestination, DIRECTION.OUT,
-        "creating operation id %d.%d for db=%s class=%s", runId, operationSerial, databaseName, getClass().getSimpleName());
-  }
-
-  public abstract OAbstractReplicatedTask<T> copy();
+  public abstract OAbstractReplicatedTask copy();
 
   public abstract OPERATION_TYPES getOperationType();
 
   public abstract String getPayload();
-
-  /**
-   * Remote node execution
-   */
-  @SuppressWarnings("unchecked")
-  public T call() throws Exception {
-    // EXECUTE IT LOCALLY
-    final ORef<Long> journalOffset = new ORef<Long>();
-
-    final T result;
-    try {
-      result = (T) getDistributedServerManager().enqueueLocalExecution(this, journalOffset);
-      if (journalOffset.value != null)
-        getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, true);
-      return result;
-
-    } catch (Exception e) {
-      if (journalOffset.value != null)
-        getDistributedServerManager().updateJournal(this, getDatabaseSynchronizer(), journalOffset.value, false);
-      throw e;
-    }
-  }
 
   /**
    * Handles conflict between local and remote execution results.
@@ -103,22 +67,21 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
    *          the result on remote node
    * @param remoteResult2
    */
-  public void handleConflict(final String iRemoteNode, Object localResult, Object remoteResult) {
+  public void handleConflict(String iDatabaseName, final String iRemoteNode, Object localResult, Object remoteResult,
+      OReplicationConflictResolver iConfictStrategy) {
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
+  public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
     super.copy(iCopy);
-    ((OAbstractReplicatedTask<T>) iCopy).align = align;
+    ((OAbstractReplicatedTask) iCopy).runId = runId;
+    ((OAbstractReplicatedTask) iCopy).operationSerial = operationSerial;
+    ((OAbstractReplicatedTask) iCopy).align = align;
     return iCopy;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(getNodeSource());
-    out.writeUTF(nodeDestination);
-    out.writeUTF(databaseName);
     out.writeLong(runId);
     out.writeLong(operationSerial);
     out.writeBoolean(align);
@@ -126,13 +89,17 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    setNodeSource(in.readUTF());
-    nodeDestination = in.readUTF();
-    serverInstance = OServer.getInstance(nodeDestination);
-    databaseName = in.readUTF();
     runId = in.readLong();
     operationSerial = in.readLong();
     align = in.readBoolean();
+  }
+
+  public long getOperationSerial() {
+    return operationSerial;
+  }
+
+  public long getRunId() {
+    return runId;
   }
 
   public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
@@ -141,6 +108,19 @@ public abstract class OAbstractReplicatedTask<T> extends OAbstractRemoteTask<T> 
 
   public void setAsCanceled(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
     dbSynchronizer.getLog().setOperationStatus(operationLogOffset, null, ODatabaseJournal.OPERATION_STATUS.CANCELED);
+  }
+
+  public boolean isAlign() {
+    return align;
+  }
+
+  public void setAlign(boolean align) {
+    this.align = align;
+  }
+
+  @Override
+  public String toString() {
+    return "{" + runId + "." + operationSerial + "} " + super.toString();
   }
 
 }

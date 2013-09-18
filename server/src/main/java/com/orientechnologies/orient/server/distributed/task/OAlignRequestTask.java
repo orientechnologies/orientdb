@@ -19,20 +19,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
@@ -43,7 +38,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
+public class OAlignRequestTask extends OAbstractReplicatedTask {
   private static final int   MAX_TIMEOUT      = 60000;
 
   private static final long  serialVersionUID = 1L;
@@ -55,46 +50,41 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
   public OAlignRequestTask() {
   }
 
-  public OAlignRequestTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final long iLastRunId, final long iLastOperationId) {
-    super(iServer, iDistributedSrvMgr, iDbName, -1);
+  public OAlignRequestTask(final long iLastRunId, final long iLastOperationId) {
     lastRunId = iLastRunId;
     lastOperationId = iLastOperationId;
   }
 
   @Override
-  public Integer call() throws Exception {
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
     if (lastRunId == -1 && lastOperationId == -1)
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "db=%s align request starting from the beginning (no log found)", databaseName);
+      ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.IN,
+          "db=%s align request starting from the beginning (no log found)", iDatabaseName);
     else
-      ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "db=%s align request starting from operation %d.%d", databaseName, lastRunId, lastOperationId);
+      ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.IN,
+          "db=%s align request starting from operation %d.%d", iDatabaseName, lastRunId, lastOperationId);
 
     int totAligned;
 
-    final ODistributedServerManager dManager = getDistributedServerManager();
+    final ODistributedServerManager dManager = iManager;
 
-    final String localNode = dManager.getLocalNodeName();
-
-    final OStorageSynchronizer synchronizer = getDatabaseSynchronizer();
+    final OStorageSynchronizer synchronizer = iManager.getDatabaseSynchronizer(iDatabaseName);
     if (synchronizer == null)
       return 0;
 
     final ODatabaseJournal log = synchronizer.getLog();
 
     // GET THE DISTRIBUTED LOCK TO ALIGN THE DATABASE
-    final Lock alignmentLock = dManager.getLock("align." + databaseName);
+    final Lock alignmentLock = dManager.getLock("align." + iDatabaseName);
     if (alignmentLock.tryLock())
       try {
         totAligned = 0;
         int aligned = 0;
 
-        ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "****** BEGIN PREPARING ALIGNMENT BLOCK db=%s ******", databaseName);
+        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), null, DIRECTION.OUT,
+            "****** BEGIN PREPARING ALIGNMENT BLOCK db=%s ******", iDatabaseName);
 
-        final OMultipleRemoteTasks tasks = new OMultipleRemoteTasks(serverInstance, dManager, databaseName,
-            EXECUTION_MODE.SYNCHRONOUS);
+        final OMultipleRemoteTasks tasks = new OMultipleRemoteTasks();
         final List<Long> positions = new ArrayList<Long>();
 
         final Iterator<Long> it = log.browseLastOperations(new long[] { lastRunId, lastOperationId },
@@ -102,19 +92,16 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
         while (it.hasNext()) {
           final long pos = it.next();
 
-          final OAbstractReplicatedTask<?> operation = log.getOperation(pos);
+          final OAbstractReplicatedTask operation = log.getOperation(pos);
           if (operation == null) {
-            ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "#%d db=%s skipped operation", aligned, databaseName);
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.OUT, "#%d db=%s skipped operation",
+                aligned, iDatabaseName);
             continue;
           }
 
-          ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "#%d aligning operation=%d.%d db=%s %s", aligned, operation.getRunId(), operation.getOperationSerial(), databaseName,
-              operation);
-
-          operation.setNodeSource(localNode);
-          operation.setDatabaseName(databaseName);
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.OUT,
+              "#%d aligning operation=%d.%d db=%s %s", aligned, operation.getRunId(), operation.getOperationSerial(),
+              iDatabaseName, operation);
 
           tasks.addTask(operation);
           positions.add(pos);
@@ -122,14 +109,14 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
           aligned++;
 
           if (tasks.getTasks() >= OP_BUFFER)
-            totAligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
+            totAligned += flushBufferedTasks(dManager, iDatabaseName, tasks, positions);
         }
 
         if (tasks.getTasks() > 0)
-          totAligned += flushBufferedTasks(dManager, synchronizer, tasks, positions);
+          totAligned += flushBufferedTasks(dManager, iDatabaseName, tasks, positions);
 
-        ODistributedServerLog.warn(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "****** END PREPARING ALIGNMENT BLOCK db=%s total=%d ******", databaseName, totAligned);
+        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), null, DIRECTION.OUT,
+            "****** END PREPARING ALIGNMENT BLOCK db=%s total=%d ******", iDatabaseName, totAligned);
 
       } finally {
         alignmentLock.unlock();
@@ -139,49 +126,24 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
       totAligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    final Future<Object> future = dManager.sendTask2Node(getNodeSource(), new OAlignResponseTask(serverInstance, dManager,
-        databaseName, totAligned), EXECUTION_MODE.ASYNCHRONOUS, new HashMap<String, Object>());
-
-    if (future != null) {
-      // WAIT FOR THE TASK IS COMPLETED
-      try {
-        future.get(getTimeout(), TimeUnit.MILLISECONDS);
-      } catch (TimeoutException e) {
-        // TIMEOUT
-        ODistributedServerLog.error(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "timeout on alignment request db=%s...", databaseName);
-        future.cancel(true);
-      }
-    }
+    dManager.sendRequest(iDatabaseName, new OAlignResponseTask(totAligned));
 
     return totAligned;
   }
 
-  protected int flushBufferedTasks(final ODistributedServerManager dManager, final OStorageSynchronizer synchronizer,
+  protected int flushBufferedTasks(final ODistributedServerManager iManager, final String iDatabaseName,
       final OMultipleRemoteTasks tasks, final List<Long> positions) throws IOException, InterruptedException, ExecutionException {
 
-    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "flushing aligning %d operations db=%s...", tasks.getTasks(), databaseName);
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.OUT, "flushing aligning %d operations db=%s...",
+        tasks.getTasks(), iDatabaseName);
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    final Future<Object> future = dManager.sendTask2Node(getNodeSource(), tasks, EXECUTION_MODE.SYNCHRONOUS,
-        new HashMap<String, Object>());
-
-    if (future != null) {
-      try {
-        future.get(getTimeout(), TimeUnit.MILLISECONDS);
-      } catch (TimeoutException e) {
-        // TIMEOUT
-        ODistributedServerLog.error(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "timeout on flushing alignment operations db=%s...", databaseName);
-        future.cancel(true);
-      }
-    }
+    iManager.sendRequest(iDatabaseName, tasks);
 
     final int aligned = tasks.getTasks();
 
-    ODistributedServerLog.info(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        " flushed aligning %d operations db=%s...", aligned, databaseName);
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.OUT, " flushed aligning %d operations db=%s...",
+        aligned, iDatabaseName);
 
     // REUSE THE MULTIPLE TASK
     tasks.clearTasks();
@@ -230,5 +192,10 @@ public class OAlignRequestTask extends OAbstractReplicatedTask<Integer> {
   @Override
   public long getTimeout() {
     return MAX_TIMEOUT;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + " > " + "{" + lastRunId + "." + lastOperationId + "} ";
   }
 }

@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -97,8 +96,7 @@ public class OStorageSynchronizer {
             continue;
           }
 
-          final ORawBuffer record = (ORawBuffer) iCluster.execute(getClusterNameByRID(storage, rid), rid, new OReadRecordTask(
-              server, cluster, storageName, rid));
+          final ORawBuffer record = (ORawBuffer) iCluster.sendRequest(storageName, new OReadRecordTask(rid));
 
           if (record == null) {
             // DELETE IT
@@ -115,7 +113,7 @@ public class OStorageSynchronizer {
           // SET AS CANCELED
           log.setOperationStatus(offset, null, ODatabaseJournal.OPERATION_STATUS.CANCELED);
 
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
           ODistributedServerLog
               .error(
                   this,
@@ -162,8 +160,6 @@ public class OStorageSynchronizer {
     OStorage stg = Orient.instance().getStorage(iName);
     if (stg == null) {
       // NOT YET OPEN: OPEN IT NOW
-      ODistributedServerLog.warn(this, cluster.getLocalNodeName(), null, DIRECTION.NONE, "Initializing storage '%s'...", iName);
-
       final String url = server.getStorageURL(iName);
       if (url == null)
         throw new IllegalArgumentException("Database '" + iName + "' is not configured on local server");

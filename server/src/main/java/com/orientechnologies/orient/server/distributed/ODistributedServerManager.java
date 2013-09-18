@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
@@ -30,10 +31,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
  * 
  */
 public interface ODistributedServerManager {
-
-  public enum EXECUTION_MODE {
-    SYNCHRONOUS, ASYNCHRONOUS
-  }
 
   public enum STATUS {
     STARTING, ONLINE, ALIGNING, SHUTDOWNING, OFFLINE
@@ -45,35 +42,29 @@ public interface ODistributedServerManager {
 
   public boolean checkStatus(STATUS string);
 
-  public void setStatus(String iStatus);
+  public void setStatus(STATUS iStatus);
 
-  public boolean isOfflineNode(String iNodeId);
+  public boolean isOfflineNodeById(String iNodeName);
 
   public boolean isLocalNodeMaster(Object iKey);
 
-  public Collection<String> getSynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
-
-  public Collection<String> getAsynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
+  public String getLocalNodeId();
 
   public String getLocalNodeName();
 
-  public ODocument getDatabaseStatus(String iDatabaseName);
-
-  public ODocument getDatabaseConfiguration(String iDatabaseName);
-
   public ODocument getClusterConfiguration();
 
-  public ODocument getNodeConfiguration(String iNode);
+  public ODocument getNodeConfigurationById(String iNode);
 
   public ODocument getLocalNodeConfiguration();
 
   /**
-   * Returns the offset in milliseconds as difference between the current date time and the central cluster time. This allows to
-   * have a quite precise idea about information on date times, such as logs to determine the youngest in case of conflict.
+   * Returns a time taking care about the offset with the cluster time. This allows to have a quite precise idea about information
+   * on date times, such as logs to determine the youngest in case of conflict.
    * 
    * @return
    */
-  public long getTimeOffset();
+  public long getDistributedTime(long iTme);
 
   public long getRunId();
 
@@ -102,14 +93,16 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
-      final long operationLogOffset, final boolean iSuccess);
+  public void updateJournal(String iDatabaseName, OAbstractReplicatedTask iTask, OStorageSynchronizer dbSynchronizer,
+      long operationLogOffset, boolean iSuccess);
 
-  ODistributedConfiguration getConfiguration(String iDatabaseName);
+  public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  public ODistributedPartition newPartition(final List<String> partition);
+  public ODistributedPartition newPartition(List<String> partition);
 
   public ODistributedMessageService getMessageService();
 
-  public void sendRequest();
+  public Object sendRequest(String iDatabaseName, OAbstractRemoteTask iTask);
+
+  public Object sendRequest(String iDatabaseName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 }

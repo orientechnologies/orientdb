@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.OSkippedOperationException;
 
 /**
@@ -34,44 +33,37 @@ import com.orientechnologies.orient.server.distributed.OSkippedOperationExceptio
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
-  private static final long                serialVersionUID = 1L;
-  private List<OAbstractReplicatedTask<?>> tasks            = new ArrayList<OAbstractReplicatedTask<?>>();
+public class OMultipleRemoteTasks extends OAbstractRemoteTask {
+  private static final long             serialVersionUID = 1L;
+  private List<OAbstractReplicatedTask> tasks            = new ArrayList<OAbstractReplicatedTask>();
 
   public OMultipleRemoteTasks() {
   }
 
-  public OMultipleRemoteTasks(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode) {
-    super(iServer, iDistributedSrvMgr, iDbName);
-  }
-
   @Override
-  public Object[] call() throws Exception {
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
     final Object[] result;
-
-    final ODistributedServerManager dServer = getDistributedServerManager();
 
     int executedTasks = 0;
     try {
       result = new Object[tasks.size()];
 
-      ODistributedServerLog.warn(this, dServer.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", databaseName, tasks.size());
+      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), null, DIRECTION.IN,
+          "****** BEGIN EXECUTING ALIGNMENT BLOCK db=%s tasks=%d ******", iDatabaseName, tasks.size());
 
       for (; executedTasks < tasks.size(); ++executedTasks) {
-        final OAbstractRemoteTask<?> task = tasks.get(executedTasks);
+        final OAbstractRemoteTask task = tasks.get(executedTasks);
 
         try {
-          result[executedTasks] = task.call();
+          result[executedTasks] = task.execute(iServer, iManager, iDatabaseName);
         } catch (OSkippedOperationException e) {
           // SKIP IT AND CONTINUE
         }
       }
     } finally {
 
-      ODistributedServerLog.warn(this, dServer.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "****** END EXECUTING ALIGNMENT BLOCK db=%s tasks=%d/%d ******", databaseName, executedTasks, tasks.size());
+      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), null, DIRECTION.IN,
+          "****** END EXECUTING ALIGNMENT BLOCK db=%s tasks=%d/%d ******", iDatabaseName, executedTasks, tasks.size());
     }
 
     return result;
@@ -79,7 +71,6 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeInt(tasks.size());
     for (int i = 0; i < tasks.size(); ++i) {
       out.writeObject(tasks.get(i));
@@ -88,10 +79,9 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     final int taskSize = in.readInt();
     for (int i = 0; i < taskSize; ++i)
-      tasks.add((OAbstractReplicatedTask<?>) in.readObject());
+      tasks.add((OAbstractReplicatedTask) in.readObject());
   }
 
   @Override
@@ -99,29 +89,11 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
     return "multiple_requests";
   }
 
-  @Override
-  public void setNodeDestination(final String masterNodeId) {
-    super.setNodeDestination(masterNodeId);
-    if (tasks != null)
-      for (OAbstractReplicatedTask<?> t : tasks) {
-        t.setNodeDestination(masterNodeId);
-      }
-  }
-
-  @Override
-  public void setNodeSource(final String nodeSource) {
-    super.setNodeSource(nodeSource);
-    if (tasks != null)
-      for (OAbstractReplicatedTask<?> t : tasks) {
-        t.setNodeSource(nodeSource);
-      }
-  }
-
   public int getTasks() {
     return tasks.size();
   }
 
-  public void addTask(final OAbstractReplicatedTask<?> operation) {
+  public void addTask(final OAbstractReplicatedTask operation) {
     tasks.add(operation);
   }
 
@@ -129,7 +101,7 @@ public class OMultipleRemoteTasks extends OAbstractRemoteTask<Object[]> {
     tasks.clear();
   }
 
-  public OAbstractReplicatedTask<?> getTask(final int i) {
+  public OAbstractReplicatedTask getTask(final int i) {
     return tasks.get(i);
   }
 

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.hazelcast;
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -32,9 +31,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedMessageServic
 import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 import com.orientechnologies.orient.server.distributed.ODistributedPartitioningStrategy;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -48,8 +49,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected final ConcurrentHashMap<Long, ArrayBlockingQueue<ODistributedResponse>> threadQueues;
   protected final IQueue<ODistributedResponse>                                      responseQueue;
 
-  protected static final long                                                       MAX_PUSH_TIMEOUT = 1000;
-  protected static final long                                                       MAX_PULL_TIMEOUT = 10000;
+  protected static final long                                                       MAX_PUSH_TIMEOUT = 3000;
+  protected static final long                                                       MAX_PULL_TIMEOUT = 5000;
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -60,18 +61,18 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     responseQueue.clear();
 
     // DISPATCH THE RESPONSE TO THE RIGHT THREAD QUEUE
-    new Runnable() {
+    new Thread(new Runnable() {
       @Override
       public void run() {
-        while (Thread.interrupted())
+        while (!Thread.interrupted())
           try {
             notifyResponse(responseQueue.take());
-          } catch (Exception e) {
-            ODistributedServerLog
-                .error(this, manager.getLocalNodeId(), null, DIRECTION.IN, "error on reading distributed response");
+          } catch (Throwable e) {
+            ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.IN,
+                "error on reading distributed response");
           }
       }
-    }.run();
+    }).start();
   }
 
   @Override
@@ -88,15 +89,16 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     final Thread currentThread = Thread.currentThread();
 
-    final ODistributedConfiguration cfg = manager.getConfiguration(databaseName);
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     final ODistributedPartitioningStrategy strategy = manager.getStrategy(cfg.getPartitionStrategy(clusterName));
-    final ODistributedPartition partition = strategy.getPartition(databaseName, clusterName);
+    final ODistributedPartition partition = strategy.getPartition(manager, databaseName, clusterName);
     final List<String> nodes = partition.getNodes();
 
     final int writeQuorum = cfg.getWriteQuorum(clusterName);
     final int queueSize = nodes.size();
 
+    iRequest.setSenderNodeName(manager.getLocalNodeName());
     iRequest.setSenderThreadId(currentThread.getId());
 
     // REGISTER THE THREAD'S RESPONSE QUEUE
@@ -105,20 +107,36 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     try {
       final ODistributedResponse[] responses = new ODistributedResponse[queueSize];
 
-      // BROADCAST THE REQUEST
-      topic.publish(iRequest);
+      // ASSURE THE ID IS ALWAYS SEQUENTIAL
+      synchronized (topic) {
+        iRequest.assignUniqueId(manager.getRunId(), manager.incrementDistributedSerial(databaseName));
+        // BROADCAST THE REQUEST
+        topic.publish(iRequest);
+      }
+
+      if (iRequest.getExecutionMode() == EXECUTION_MODE.NO_RESPONSE)
+        return null;
 
       // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (WRITE QUORUM)
       int receivedResponses = 0;
       ODistributedResponse firstResponse = null;
       final long beginTime = System.currentTimeMillis();
-      for (int i = 0; i < writeQuorum; ++i) {
-        responses[i] = responseQueue.poll(MAX_PULL_TIMEOUT - (System.currentTimeMillis() - beginTime), TimeUnit.MILLISECONDS);
+      final int expectedSynchronousResponses = Math.min(queueSize, writeQuorum);
+
+      for (int i = 0; i < expectedSynchronousResponses; ++i) {
+        final long elapsed = System.currentTimeMillis() - beginTime;
+
+        responses[i] = responseQueue.poll(MAX_PULL_TIMEOUT - elapsed, TimeUnit.MILLISECONDS);
         if (responses[i] != null) {
+          ODistributedServerLog.debug(this, manager.getLocalNodeName() + ":" + currentThread.getId(), null, DIRECTION.IN,
+              "received response: %s", responses[i]);
+
           if (firstResponse == null)
             firstResponse = responses[i];
           receivedResponses++;
-        }
+        } else
+          ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.IN,
+              "- timeout (%dms) on response for request: %s", elapsed, iRequest);
       }
 
       if (queueSize > writeQuorum) {
@@ -132,8 +150,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       }
 
       if (receivedResponses < writeQuorum) {
-        // ROLLBACK MESSAGES
-        // TODO: ROLLBACK
+        // UNDO REQUEST
+        // TODO: UNDO
+        iRequest.undo();
       }
 
       return firstResponse;
@@ -148,6 +167,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   }
 
+  /**
+   * Execute the remote call on the local node and send back the result
+   */
   @Override
   public void onMessage(final Message<ODistributedRequest> message) {
     final ODistributedRequest req = message.getMessageObject();
@@ -155,53 +177,69 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     // GET THE SENDER'S RESPONSE QUEUE
     final IQueue<ODistributedResponse> queue = getNodeQueue(req.getSenderNodeName());
 
-    final Object requestPayload = req.getPayload();
-
-    final Serializable responsePayload;
-    if (requestPayload instanceof Callable<?>)
-      try {
-        responsePayload = (Serializable) ((Callable<?>) requestPayload).call();
-      } catch (Exception e1) {
-        throw new ODistributedException("Error on executing payload " + requestPayload + " in request: " + req.getSenderNodeName()
-            + ":" + req.getSenderThreadId(), e1);
-      }
-    else
-      throw new ODistributedException("Invalid payload in request " + req);
-
-    final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(req.getSenderNodeName(),
-        req.getSenderThreadId(), responsePayload);
-
+    ODistributedThreadLocal.INSTANCE.set("local");
     try {
-      queue.offer(response, MAX_PUSH_TIMEOUT, TimeUnit.MILLISECONDS);
-      throw new ODistributedException("Timeout on dispatching response to the thread queue " + req.getSenderNodeName() + ":"
-          + req.getSenderThreadId());
-    } catch (Exception e) {
-      throw new ODistributedException("Cannot dispatch response to the thread queue " + req.getSenderNodeName() + ":"
-          + req.getSenderThreadId(), e);
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName() + ":" + req.getSenderThreadId(),
+          DIRECTION.IN, "request %s", req.getPayload());
+
+      // EXECUTE IT LOCALLY
+      final Serializable responsePayload = manager.executeOnLocalNode(req);
+
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName() + ":" + req.getSenderThreadId(),
+          DIRECTION.OUT, "response to request %s: %s", req.getPayload(), responsePayload);
+
+      final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(req.getSenderNodeName(),
+          req.getSenderThreadId(), responsePayload);
+
+      try {
+        if (!queue.offer(response, MAX_PUSH_TIMEOUT, TimeUnit.MILLISECONDS))
+          throw new ODistributedException("Timeout on dispatching response to the thread queue " + req.getSenderNodeName() + ":"
+              + req.getSenderThreadId());
+      } catch (Exception e) {
+        throw new ODistributedException("Cannot dispatch response to the thread queue " + req.getSenderNodeName() + ":"
+            + req.getSenderThreadId(), e);
+      }
+
+    } finally {
+      ODistributedThreadLocal.INSTANCE.set(null);
     }
   }
 
   public void notifyResponse(final ODistributedResponse response) {
     final long threadId = response.getSenderThreadId();
+
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.IN, "- forward response -> thread %d", threadId);
+
     final ArrayBlockingQueue<ODistributedResponse> responseQueue = threadQueues.get(threadId);
 
-    if (responseQueue == null)
-      throw new ODistributedException("Cannot dispatch response to the thread " + threadId + " because the queue was not found");
+    if (responseQueue == null) {
+      ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.IN,
+          "cannot dispatch response to the thread %d because the queue was not found (timeout?)", threadId);
+      return;
+    }
 
     try {
       if (!responseQueue.offer(response, MAX_PUSH_TIMEOUT, TimeUnit.MILLISECONDS))
-        throw new ODistributedException("Timeout on dispatching response to the thread " + threadId);
+        ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.IN,
+            "timeout on dispatching response to the internal thread queue %d", threadId);
     } catch (Exception e) {
-      throw new ODistributedException("Cannot dispatch response to the thread " + threadId, e);
+      ODistributedServerLog.error(this, manager.getLocalNodeName(), null, DIRECTION.IN,
+          "error on dispatching response to the internal thread queue %d", e, threadId);
     }
   }
 
   public void configureDatabase(final String databaseName) {
-    final ODistributedConfiguration cfg = manager.getConfiguration(databaseName);
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
+    // CREATE 1 TOPIC PER CONFIGURED CLUSTER
     for (String clusterName : cfg.getClusterNames()) {
       final ITopic<ODistributedRequest> topic = getRequestTopic(databaseName, clusterName);
       topic.addMessageListener(this);
     }
+
+    // CREATE 1 TOPIC PER DATABASE
+    final ITopic<ODistributedRequest> topic = getRequestTopic(databaseName, null);
+    topic.addMessageListener(this);
   }
 
   public ITopic<ODistributedRequest> getRequestTopic(final String iDatabaseName, final String iClusterName) {
@@ -210,7 +248,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       return manager.getHazelcastInstance().getTopic(iDatabaseName);
 
     // TOPIC = <DATABASE>.<CLUSTER>
-    final String cfgClusterName = manager.getConfiguration(iDatabaseName).getClusterConfigurationName(iClusterName);
+    final String cfgClusterName = manager.getDatabaseConfiguration(iDatabaseName).getClusterConfigurationName(iClusterName);
     final String topicName = iDatabaseName + "." + cfgClusterName;
     return manager.getHazelcastInstance().getTopic(topicName);
   }
@@ -218,5 +256,14 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public IQueue<ODistributedResponse> getNodeQueue(final String iNodeName) {
     final String queueName = "node." + iNodeName;
     return manager.getHazelcastInstance().getQueue(queueName);
+  }
+
+  public void shutdown() {
+    threadQueues.clear();
+
+    if (responseQueue != null) {
+      responseQueue.clear();
+      responseQueue.destroy();
+    }
   }
 }

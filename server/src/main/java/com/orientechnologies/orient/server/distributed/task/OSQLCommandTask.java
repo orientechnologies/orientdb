@@ -34,7 +34,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
+public class OSQLCommandTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   private static final long CMD_TIMEOUT      = 60000;
@@ -44,13 +44,12 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   public OSQLCommandTask() {
   }
 
-  public OSQLCommandTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
-      final String iCommand, final long iMessageId) {
-    super(iServer, iDistributedSrvMgr, databaseName, iMessageId);
+  public OSQLCommandTask(final String iCommand) {
     text = iCommand;
   }
 
   public OSQLCommandTask(final long iRunId, final long iOperationId, final String iCommand) {
+    super(iRunId, iOperationId);
     text = iCommand;
   }
 
@@ -70,18 +69,18 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
    *          the result on remote node
    */
   @Override
-  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
-    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleCommandConflict(iRemoteNodeId, text, localResult, remoteResult);
+  public void handleConflict(String iDatabaseName, final String iRemoteNodeId, final Object localResult, final Object remoteResult,
+      OReplicationConflictResolver iConfictStrategy) {
+    iConfictStrategy.handleCommandConflict(iRemoteNodeId, text, localResult, remoteResult);
   }
 
-  public Object executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "execute command=%s db=%s", text.toString(), databaseName);
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "- execute command=%s db=%s",
+        text.toString(), iDatabaseName);
 
-    final ODatabaseDocumentTx db = openDatabase();
+    final ODatabaseDocumentTx db = openDatabase(iServer, iDatabaseName);
     try {
-      return openDatabase().command(new OCommandSQL(text)).execute();
+      return db.command(new OCommandSQL(text)).execute();
 
     } finally {
       closeDatabase(db);
@@ -113,7 +112,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
 
   @Override
   public String toString() {
-    return getName() + "(" + text + ")";
+    return super.toString() + "(" + text + ")";
   }
 
   @Override

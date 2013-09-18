@@ -16,10 +16,6 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,7 +24,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
 /**
  * Base class for Tasks to be executed remotely.
@@ -36,19 +32,16 @@ import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externalizable {
+public abstract class OAbstractRemoteTask implements Externalizable {
   private static final long   serialVersionUID = 1L;
 
   protected static final long DEFAULT_TIMEOUT  = 10000;
 
-  private String              nodeSource;
-  protected String            nodeDestination;
-  protected String            databaseName;
   protected long              runId;
   protected long              operationSerial;
 
-  protected boolean           inheritedDatabase;
-  protected transient OServer serverInstance;
+  protected transient boolean inheritedDatabase;
+  protected transient String  nodeSource;
 
   /**
    * Constructor used from unmarshalling.
@@ -56,100 +49,26 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
   public OAbstractRemoteTask() {
   }
 
-  /**
-   * Constructor used on creation from log.
-   * 
-   * @param iRunId
-   * @param iOperationId
-   */
-  public OAbstractRemoteTask(final long iRunId, final long iOperationId) {
-    this.runId = iRunId;
-    this.operationSerial = iOperationId;
-  }
-
-  public OAbstractRemoteTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName) {
-    this.serverInstance = iServer;
-
-    this.setNodeSource(iDistributedSrvMgr.getLocalNodeName());
-    this.databaseName = databaseName;
-
-    this.runId = iDistributedSrvMgr.getRunId();
-    this.operationSerial = -1;
-  }
-
   public abstract String getName();
 
-  /**
-   * Local node execution
-   * 
-   * @throws Exception
-   * 
-   */
-  public Object executeOnLocalNode() throws Exception {
-    return call();
-  }
+  public abstract Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName)
+      throws Exception;
 
   /**
    * Handles conflict between local and remote execution results.
    * 
+   * @param iDatabaseName
+   *          TODO
    * @param localResult
    *          The result on local node
    * @param remoteResult
    *          the result on remote node
+   * @param iConfictStrategy
+   *          TODO
    * @param remoteResult2
    */
-  public void handleConflict(final String iRemoteNode, Object localResult, Object remoteResult) {
-  }
-
-  @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(getNodeSource());
-    out.writeUTF(nodeDestination);
-    out.writeUTF(databaseName);
-    out.writeLong(runId);
-    out.writeLong(operationSerial);
-  }
-
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    setNodeSource(in.readUTF());
-    nodeDestination = in.readUTF();
-    serverInstance = OServer.getInstance(nodeDestination);
-    databaseName = in.readUTF();
-    runId = in.readLong();
-    operationSerial = in.readLong();
-  }
-
-  public String getNodeSource() {
-    return nodeSource;
-  }
-
-  public String getNodeDestination() {
-    return nodeDestination;
-  }
-
-  public void setNodeDestination(final String masterNodeId) {
-    nodeDestination = masterNodeId;
-  }
-
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  public long getOperationSerial() {
-    return operationSerial;
-  }
-
-  public long getRunId() {
-    return runId;
-  }
-
-  public void setNodeSource(final String nodeSource) {
-    this.nodeSource = nodeSource;
-  }
-
-  public void setDatabaseName(String databaseName) {
-    this.databaseName = databaseName;
+  public void handleConflict(String iDatabaseName, final String iRemoteNode, Object localResult, Object remoteResult,
+      OReplicationConflictResolver iConfictStrategy) {
   }
 
   @Override
@@ -157,7 +76,7 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
     return getName();
   }
 
-  protected ODatabaseDocumentTx openDatabase() {
+  protected ODatabaseDocumentTx openDatabase(final OServer serverInstance, final String databaseName) {
     inheritedDatabase = true;
 
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -179,30 +98,8 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
       iDatabase.close();
   }
 
-  public OServer getServerInstance() {
-    return serverInstance;
-  }
-
-  public void setServerInstance(final OServer serverInstance) {
-    this.serverInstance = serverInstance;
-  }
-
-  public OStorageSynchronizer getDatabaseSynchronizer() {
-    return getDistributedServerManager().getDatabaseSynchronizer(databaseName);
-  }
-
-  public ODistributedServerManager getDistributedServerManager() {
-    return serverInstance.getDistributedManager();
-  }
-
-  public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
-    iCopy.nodeSource = nodeSource;
-    iCopy.nodeDestination = nodeDestination;
-    iCopy.databaseName = databaseName;
-    iCopy.runId = runId;
-    iCopy.operationSerial = operationSerial;
+  public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
     iCopy.inheritedDatabase = inheritedDatabase;
-    iCopy.serverInstance = serverInstance;
     return iCopy;
   }
 
@@ -212,5 +109,21 @@ public abstract class OAbstractRemoteTask<T> implements Callable<T>, Externaliza
 
   public String getClusterName() {
     return null;
+  }
+
+  public String getNodeSource() {
+    return nodeSource;
+  }
+
+  public void setNodeSource(String nodeSource) {
+    this.nodeSource = nodeSource;
+  }
+
+  public void undo() {
+  }
+
+  public void setId(final long iRunId, final long iOperationSerial) {
+    this.runId = iRunId;
+    this.operationSerial = iOperationSerial;
   }
 }

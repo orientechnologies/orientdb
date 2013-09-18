@@ -822,7 +822,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("config")) {
       checkServerAccess("server.replication.config");
 
-      response = dManager.getDatabaseConfiguration((String) request.field("db"));
+      response = new ODocument().fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).serialize()
+          .toJSON("prettyPrint"));
 
     } else if (operation.equals("align")) {
       checkServerAccess("server.replication.align");

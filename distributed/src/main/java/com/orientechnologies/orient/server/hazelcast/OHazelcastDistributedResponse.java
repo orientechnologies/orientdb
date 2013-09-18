@@ -60,15 +60,15 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     return payload;
   }
 
-  public void setSenderNodeName(String senderNodeName) {
+  public void setSenderNodeName(final String senderNodeName) {
     this.senderNodeName = senderNodeName;
   }
 
-  public void setSenderThreadId(long senderThreadId) {
+  public void setSenderThreadId(final long senderThreadId) {
     this.senderThreadId = senderThreadId;
   }
 
-  public void setPayload(Serializable payload) {
+  public void setPayload(final Serializable payload) {
     this.payload = payload;
   }
 

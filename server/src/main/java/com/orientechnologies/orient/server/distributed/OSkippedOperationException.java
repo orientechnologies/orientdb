@@ -25,14 +25,14 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * 
  */
 public class OSkippedOperationException extends OException {
-  private static final long            serialVersionUID = 1L;
-  private final OAbstractRemoteTask<?> task;
+  private static final long         serialVersionUID = 1L;
+  private final OAbstractRemoteTask task;
 
-  public OSkippedOperationException(OAbstractRemoteTask<? extends Object> iTask) {
+  public OSkippedOperationException(OAbstractRemoteTask iTask) {
     task = iTask;
   }
 
-  public OAbstractRemoteTask<?> getTask() {
+  public OAbstractRemoteTask getTask() {
     return task;
   }
 

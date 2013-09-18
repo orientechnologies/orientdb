@@ -27,14 +27,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ODistributedConfiguration {
-  private ODocument configuration;
+  public static final String NEW_NODE_TAG = "<NEW_NODE>";
+  private ODocument          configuration;
 
-  public ODistributedConfiguration(final String iConfiguration) {
-    try {
-      configuration.fromString(iConfiguration);
-    } catch (Exception e) {
-      throw new ODistributedException("Invalid configuration: " + iConfiguration);
-    }
+  public ODistributedConfiguration(final ODocument iConfiguration) {
+    configuration = iConfiguration;
   }
 
   /**
@@ -79,9 +76,12 @@ public class ODistributedConfiguration {
     return partitions.get(iPartition);
   }
 
-  @SuppressWarnings("unchecked")
   public List<List<String>> getPartitions(final String iClusterName) {
-    return (List<List<String>>) getPartitioningConfiguration(iClusterName).field("partitions");
+    final ODocument partition = getPartitioningConfiguration(iClusterName);
+    if (partition == null)
+      return null;
+
+    return partition.field("partitions");
   }
 
   public ODocument getPartitioningConfiguration(final String iClusterName) {
@@ -117,7 +117,7 @@ public class ODistributedConfiguration {
     return cfg;
   }
 
-  public String serialize() {
-    return configuration.toString();
+  public ODocument serialize() {
+    return configuration;
   }
 }

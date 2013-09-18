@@ -22,5 +22,5 @@ package com.orientechnologies.orient.server.distributed;
  * 
  */
 public interface ODistributedPartitioningStrategy {
-  ODistributedPartition getPartition(final String iDatabaseName, final String iClusterName);
+  ODistributedPartition getPartition(final ODistributedServerManager iManager, final String iDatabaseName, final String iClusterName);
 }

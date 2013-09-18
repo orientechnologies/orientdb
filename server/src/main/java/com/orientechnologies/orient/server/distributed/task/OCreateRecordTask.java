@@ -41,7 +41,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPosition> {
+public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   protected byte[]          content;
@@ -50,16 +50,15 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
   public OCreateRecordTask() {
   }
 
-  public OCreateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType) {
-    super(iRunId, iOperationId, iRid, iVersion);
+  public OCreateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+    super(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
 
-  public OCreateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(iServer, iDistributedSrvMgr, iDbName, iRid, iVersion);
+  public OCreateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType) {
+    super(iRunId, iOperationId, iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
@@ -77,13 +76,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
   }
 
   @Override
-  public OPhysicalPosition executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "creating record %s/%s v.%s oper=%d.%d...", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "- creating record %s/%s v.%s oper=%d.%d...", iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
 
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
-    final ODatabaseDocumentTx database = openDatabase();
+    final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
     try {
       record.fill(rid, version, content, true);
       if (rid.getClusterId() != -1)
@@ -93,8 +92,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
 
       rid = (ORecordId) record.getIdentity();
 
-      ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "assigned new rid %s/%s v.%d oper=%d.%d", databaseName, rid.toString(), record.getVersion(), runId, operationSerial);
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "  - assigned new rid %s/%s v.%d oper=%d.%d", iDatabaseName, rid.toString(), record.getVersion(), runId, operationSerial);
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {
@@ -111,13 +110,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
    *          the result on remote node
    */
   @Override
-  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
-    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-
+  public void handleConflict(String iDatabaseName, final String iRemoteNodeId, final Object localResult, final Object remoteResult,
+      OReplicationConflictResolver iConfictStrategy) {
     final OPhysicalPosition remote = (OPhysicalPosition) remoteResult;
 
-    resolver.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(), remote == null ? null
-        : remote.clusterPosition), remote == null ? null : remote.recordVersion.getCounter());
+    iConfictStrategy.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(),
+        remote == null ? null : remote.clusterPosition), remote == null ? null : remote.recordVersion.getCounter());
   }
 
   @Override

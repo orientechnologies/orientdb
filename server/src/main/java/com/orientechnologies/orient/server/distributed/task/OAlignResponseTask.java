@@ -30,7 +30,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
+public class OAlignResponseTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
   protected int             aligned;
@@ -38,42 +38,36 @@ public class OAlignResponseTask extends OAbstractRemoteTask<Integer> {
   public OAlignResponseTask() {
   }
 
-  public OAlignResponseTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final int iAligned) {
-    super(iServer, iDistributedSrvMgr, iDbName);
+  public OAlignResponseTask(final int iAligned) {
     aligned = iAligned;
   }
 
   @Override
-  public Integer call() throws Exception {
-    final ODistributedServerManager dManager = getDistributedServerManager();
-
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
     if (aligned == -1) {
       // ALIGNMENT POSTPONED
-      ODistributedServerLog.info(this, dManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "alignment postponed for db '%s'",
-          databaseName);
+      ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "alignment postponed for db '%s'",
+          iDatabaseName);
 
-      dManager.postponeAlignment(getNodeSource(), databaseName);
+      iManager.postponeAlignment(iManager.getLocalNodeName(), iDatabaseName);
 
     } else {
       // ALIGNMENT DONE
-      ODistributedServerLog.info(this, dManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "alignment ended against db '%s': %d operation(s)", databaseName, aligned);
+      ODistributedServerLog.info(this, iManager.getLocalNodeName(), null, DIRECTION.IN,
+          "alignment ended against db '%s': %d operation(s)", iDatabaseName, aligned);
 
-      dManager.endAlignment(getNodeSource(), databaseName, aligned);
+      iManager.endAlignment(iManager.getLocalNodeName(), iDatabaseName, aligned);
     }
     return null;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeInt(aligned);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     aligned = in.readInt();
   }
 

@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.Serializable;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
  * 
@@ -23,9 +23,11 @@ import java.io.Serializable;
  * 
  */
 public interface ODistributedRequest {
-  Object getId();
+  enum EXECUTION_MODE {
+    RESPONSE, NO_RESPONSE
+  };
 
-  ODistributedRequest setId(final Object id);
+  EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();
 
@@ -37,11 +39,17 @@ public interface ODistributedRequest {
 
   String getSenderNodeName();
 
+  ODistributedRequest setSenderNodeName(String localNodeName);
+
   long getSenderThreadId();
 
   ODistributedRequest setSenderThreadId(final long threadId);
 
-  Serializable getPayload();
+  OAbstractRemoteTask getPayload();
 
-  ODistributedRequest setPayload(final Serializable payload);
+  ODistributedRequest setPayload(final OAbstractRemoteTask payload);
+
+  void undo();
+
+  ODistributedRequest assignUniqueId(long iRunId, long iOperationSerial);
 }

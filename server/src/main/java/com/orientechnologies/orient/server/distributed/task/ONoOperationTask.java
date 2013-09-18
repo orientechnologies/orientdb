@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
@@ -23,15 +25,14 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ONoOperationTask extends OAbstractReplicatedTask<Boolean> {
+public class ONoOperationTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   public ONoOperationTask() {
   }
 
-  public ONoOperationTask(final OAbstractReplicatedTask<?> iTaskToClone) {
-    super(iTaskToClone.getServerInstance(), iTaskToClone.getDistributedServerManager(), iTaskToClone.getDatabaseName(),
-        iTaskToClone.getOperationSerial());
+  public ONoOperationTask(final OAbstractReplicatedTask iTaskToClone) {
+    super(iTaskToClone.getRunId(), iTaskToClone.getOperationSerial());
   }
 
   @Override
@@ -40,7 +41,7 @@ public class ONoOperationTask extends OAbstractReplicatedTask<Boolean> {
   }
 
   @Override
-  public Object executeOnLocalNode() throws Exception {
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
     return null;
   }
 

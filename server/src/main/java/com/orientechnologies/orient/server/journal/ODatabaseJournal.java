@@ -146,8 +146,8 @@ public class ODatabaseJournal {
     return storage;
   }
 
-  public OAbstractReplicatedTask<?> getOperation(final long iOffsetEndOperation) throws IOException {
-    OAbstractReplicatedTask<?> task = null;
+  public OAbstractReplicatedTask getOperation(final long iOffsetEndOperation) throws IOException {
+    OAbstractReplicatedTask task = null;
 
     lock.lock();
     try {
@@ -168,9 +168,11 @@ public class ODatabaseJournal {
           // GET LAST RID
           rid.clusterPosition = storage.getClusterDataRange(rid.clusterId)[1];
 
-        final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
-        if (record != null)
-          task = new OCreateRecordTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
+        if (rid.clusterPosition.isPersistent()) {
+          final ORawBuffer record = storage.readRecord(rid, null, false, null, false).getResult();
+          if (record != null)
+            task = new OCreateRecordTask(runId, operationId, rid, record.buffer, record.version, record.recordType);
+        }
         break;
       }
 
@@ -208,7 +210,7 @@ public class ODatabaseJournal {
       }
 
       if (task != null)
-        task.setServerInstance(server);
+        task.setAlign(true);
 
     } finally {
       lock.unlock();
@@ -370,14 +372,14 @@ public class ODatabaseJournal {
         break;
 
       if (status != OPERATION_STATUS.CANCELED) {
-        final OAbstractRemoteTask<?> op = getOperation(fileOffset);
+        final OAbstractRemoteTask op = getOperation(fileOffset);
 
-        ODistributedServerLog.info(this, cluster.getLocalNodeName(), null, DIRECTION.NONE, "db '%s' found uncommitted operation %s",
-            storage.getName(), op);
+        ODistributedServerLog.info(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
+            "db '%s' found uncommitted operation %s", storage.getName(), op);
 
-        if (op instanceof OAbstractRecordReplicatedTask<?>)
+        if (op instanceof OAbstractRecordReplicatedTask)
           // COLLECT THE RECORD TO BE RETRIEVED FROM OTHER SERVERS
-          uncommittedRecords.put(((OAbstractRecordReplicatedTask<?>) op).getRid(), fileOffset);
+          uncommittedRecords.put(((OAbstractRecordReplicatedTask) op).getRid(), fileOffset);
       }
 
       fileOffset = getPreviousOperation(fileOffset);
@@ -396,7 +398,7 @@ public class ODatabaseJournal {
       final long offset = iOffsetEndOperation - OFFSET_BACK_SIZE - varSize - OFFSET_VARDATA;
 
       ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
-          "update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
+          "- update journal db '%s' on operation #%d.%d rid %s", storage.getName(),
           file.readLong(iOffsetEndOperation - OFFSET_BACK_RUNID), file.readLong(iOffsetEndOperation - OFFSET_BACK_OPERATID), iRid);
 
       file.write(offset + OFFSET_STATUS, new byte[] { (byte) iStatus.ordinal() });
@@ -427,7 +429,7 @@ public class ODatabaseJournal {
    * 
    * @return The end of the record stored for this operation.
    */
-  public long append(final OAbstractReplicatedTask<?> task) throws IOException {
+  public long append(final OAbstractReplicatedTask task) throws IOException {
 
     final OPERATION_TYPES iOperationType = task.getOperationType();
     final long iRunId = task.getRunId();
@@ -444,7 +446,7 @@ public class ODatabaseJournal {
       case RECORD_UPDATE:
       case RECORD_DELETE: {
         varSize = ORecordId.PERSISTENT_SIZE;
-        final ORecordId rid = ((OAbstractRecordReplicatedTask<?>) task).getRid();
+        final ORecordId rid = ((OAbstractRecordReplicatedTask) task).getRid();
 
         ODistributedServerLog.debug(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
             "- journaled operation=%d.%d type=%s db=%s rid=%s", iRunId, iOperationId, iOperationType.toString(), storage.getName(),

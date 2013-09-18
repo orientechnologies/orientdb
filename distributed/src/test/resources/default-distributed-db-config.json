@@ -17,7 +17,7 @@
                 "strategy": "round-robin",
                 "default": 0,
                 "partitions": [
-                    []
+                    [ "<NEW_NODE>" ]
                 ]
             }
         }

@@ -37,15 +37,14 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
+public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   public ODeleteRecordTask() {
   }
 
-  public ODeleteRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iServer, iDistributedSrvMgr, iDbName, iRid, iVersion);
+  public ODeleteRecordTask(final ORecordId iRid, final ORecordVersion iVersion) {
+    super(iRid, iVersion);
   }
 
   public ODeleteRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final ORecordVersion iVersion) {
@@ -59,11 +58,11 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
   }
 
   @Override
-  public Boolean executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "delete record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "- delete record %s/%s v.%s oper=%d.%d",
+        iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
 
-    final ODatabaseDocumentTx database = openDatabase();
+    final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
     try {
       final ORecordInternal<?> record = database.load(rid);
       if (record != null) {
@@ -93,9 +92,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask<Boolean> {
    *          the result on remote node
    */
   @Override
-  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
-    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleDeleteConflict(iRemoteNodeId, rid);
+  public void handleConflict(String iDatabaseName, final String iRemoteNodeId, final Object localResult, final Object remoteResult,
+      OReplicationConflictResolver iConfictStrategy) {
+    iConfictStrategy.handleDeleteConflict(iRemoteNodeId, rid);
   }
 
   @Override
