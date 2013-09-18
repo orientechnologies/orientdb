@@ -55,12 +55,12 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     this.senderThreadId = Thread.currentThread().getId();
     this.payload = payload;
     this.executionMode = iExecutionMode;
-    this.id = serialId.incrementAndGet();
   }
 
   @Override
   public ODistributedRequest assignUniqueId(final long iRunId, final long iOperationSerial) {
     payload.setId(iRunId, iOperationSerial);
+    id = serialId.incrementAndGet();
     return this;
   }
 

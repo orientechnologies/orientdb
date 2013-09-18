@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
@@ -96,7 +97,8 @@ public class OStorageSynchronizer {
             continue;
           }
 
-          final ORawBuffer record = (ORawBuffer) iCluster.sendRequest(storageName, new OReadRecordTask(rid));
+          final ORawBuffer record = (ORawBuffer) iCluster.sendRequest(storageName, new OReadRecordTask(rid),
+              EXECUTION_MODE.RESPONSE);
 
           if (record == null) {
             // DELETE IT

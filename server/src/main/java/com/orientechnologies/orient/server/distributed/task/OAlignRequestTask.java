@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -126,7 +127,7 @@ public class OAlignRequestTask extends OAbstractReplicatedTask {
       totAligned = -1;
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    dManager.sendRequest(iDatabaseName, new OAlignResponseTask(totAligned));
+    dManager.sendRequest(iDatabaseName, new OAlignResponseTask(totAligned), EXECUTION_MODE.RESPONSE);
 
     return totAligned;
   }
@@ -138,7 +139,7 @@ public class OAlignRequestTask extends OAbstractReplicatedTask {
         tasks.getTasks(), iDatabaseName);
 
     // SEND TO THE REQUESTER NODE THE TASK TO EXECUTE
-    iManager.sendRequest(iDatabaseName, tasks);
+    iManager.sendRequest(iDatabaseName, tasks, EXECUTION_MODE.RESPONSE);
 
     final int aligned = tasks.getTasks();
 

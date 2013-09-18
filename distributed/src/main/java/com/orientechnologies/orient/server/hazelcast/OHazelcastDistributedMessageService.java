@@ -46,16 +46,18 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   protected final OHazelcastPlugin                                                  manager;
 
-  protected final Lock                                                              requestLock                 = new ReentrantLock();
+  protected final Lock                                                              requestLock                  = new ReentrantLock();
 
   protected final IQueue<ODistributedResponse>                                      nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ArrayBlockingQueue<ODistributedResponse>> internalThreadQueues;
 
-  protected static final long                                                       MAX_PUSH_TIMEOUT            = 3000;
-  protected static final long                                                       MAX_PULL_TIMEOUT            = 5000;
-  private static final Object                                                       NODE_QUEUE_PREFIX           = "orientdb.node.";
-  private static final String                                                       NODE_QUEUE_REQUEST_POSTFIX  = "request";
-  private static final String                                                       NODE_QUEUE_RESPONSE_POSTFIX = "response";
+  protected static final long                                                       MSG_SEND_REQUEST_TIMEOUT     = 3000;
+  protected static final long                                                       MSG_SEND_RESPONSE_TIMEOUT    = 3000;
+  protected static final long                                                       MSG_RECEIVE_RESPONSE_TIMEOUT = 5000;
+  protected static final long                                                       MSG_FORWARD_TIMEOUT          = 1000;
+  private static final Object                                                       NODE_QUEUE_PREFIX            = "orientdb.node.";
+  private static final String                                                       NODE_QUEUE_REQUEST_POSTFIX   = "request";
+  private static final String                                                       NODE_QUEUE_RESPONSE_POSTFIX  = "response";
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -84,7 +86,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
-                "error on reading distributed response");
+                "error on reading distributed response", e);
           }
         }
       }
@@ -113,13 +115,14 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     final int writeQuorum = cfg.getWriteQuorum(clusterName);
     final int queueSize = nodes.size();
+    final long threadId = currentThread.getId();
 
     iRequest.setSenderNodeName(manager.getLocalNodeName());
-    iRequest.setSenderThreadId(currentThread.getId());
+    iRequest.setSenderThreadId(threadId);
 
     // REGISTER THE THREAD'S RESPONSE QUEUE
-    final ArrayBlockingQueue<ODistributedResponse> responseQueue = new ArrayBlockingQueue<ODistributedResponse>(queueSize, true);
-    internalThreadQueues.put(currentThread.getId(), responseQueue);
+    final ArrayBlockingQueue<ODistributedResponse> responseQueue = new ArrayBlockingQueue<ODistributedResponse>(queueSize + 2, true);
+    internalThreadQueues.put(threadId, responseQueue);
 
     try {
       requestLock.lock();
@@ -133,7 +136,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
         for (IQueue<ODistributedRequest> queue : reqQueues) {
-          queue.offer(iRequest, MAX_PUSH_TIMEOUT, TimeUnit.MILLISECONDS);
+          queue.offer(iRequest, MSG_SEND_REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
         }
 
       } finally {
@@ -144,12 +147,12 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
       return firstResponse;
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw new ODistributedException("Error on sending distributed request against " + databaseName
           + (clusterName != null ? ":" + clusterName : ""), e);
     } finally {
       // UNREGISTER THE THREAD'S RESPONSE QUEUE
-      internalThreadQueues.remove(currentThread.getId());
+      internalThreadQueues.remove(threadId);
     }
 
   }
@@ -170,6 +173,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     for (String node : iNodes) {
       if (manager.isNodeAvailable(node))
         availableNodes++;
+      else
+        ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), node, DIRECTION.OUT,
+            "skip listening of response because node '%s' is not online", node);
     }
 
     final int expectedSynchronousResponses = Math.min(availableNodes, Math.min(queueSize, writeQuorum));
@@ -178,11 +184,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     for (int i = 0; i < expectedSynchronousResponses; ++i) {
       final long elapsed = System.currentTimeMillis() - beginTime;
 
-      responses[i] = responseQueue.poll(MAX_PULL_TIMEOUT - elapsed, TimeUnit.MILLISECONDS);
+      responses[i] = responseQueue.poll(MSG_RECEIVE_RESPONSE_TIMEOUT - elapsed, TimeUnit.MILLISECONDS);
       if (responses[i] != null) {
         if (responses[i].getRequestId() != iRequest.getId()) {
           ODistributedServerLog.error(this, getLocalNodeNameAndThread(), responses[i].getSenderNodeName(), DIRECTION.OUT,
-              "ignore message from another request (%d)", responses[i].getRequestId());
+              "ignore message %d from another request (%d)", responses[i].getRequestId(), responses[i].getSenderThreadId());
           // IGNORE
           --i;
           continue;
@@ -241,7 +247,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
           } catch (Throwable e) {
             ODistributedServerLog.error(this, getLocalNodeNameAndThread(), senderNode, DIRECTION.IN,
-                "error on reading distributed request");
+                "error on reading distributed request", e);
           }
         }
       }
@@ -278,7 +284,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
         // GET THE SENDER'S RESPONSE QUEUE
         final IQueue<ODistributedResponse> queue = getNodeQueue(getResponseQueueName(iRequest.getSenderNodeName()));
 
-        if (!queue.offer(response, MAX_PUSH_TIMEOUT, TimeUnit.MILLISECONDS))
+        if (!queue.offer(response, MSG_SEND_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS))
           throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName()
               + ":" + iRequest.getSenderThreadId());
 
@@ -304,12 +310,13 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     if (responseQueue == null) {
       ODistributedServerLog.error(this, manager.getLocalNodeName(), targetLocalNodeThread, DIRECTION.OUT,
-          "cannot dispatch response to the internal thread because the queue was not found (timeout?)");
+          "cannot dispatch response to the internal thread because the thread queue was not found (timeout?): %s", threadId,
+          response.getPayload());
       return;
     }
 
     try {
-      if (!responseQueue.offer(response, MAX_PUSH_TIMEOUT, TimeUnit.MILLISECONDS))
+      if (!responseQueue.offer(response, MSG_FORWARD_TIMEOUT, TimeUnit.MILLISECONDS))
         ODistributedServerLog.error(this, manager.getLocalNodeName(), targetLocalNodeThread, DIRECTION.OUT,
             "timeout on dispatching response to the internal thread queue");
     } catch (Exception e) {

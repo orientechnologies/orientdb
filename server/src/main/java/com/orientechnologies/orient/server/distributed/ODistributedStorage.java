@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
@@ -106,7 +107,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
     try {
       // REPLICATE IT
-      final Object result = dManager.sendRequest(getName(), new OSQLCommandTask(iCommand.getText()));
+      final Object result = dManager.sendRequest(getName(), new OSQLCommandTask(iCommand.getText()), EXECUTION_MODE.RESPONSE);
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed COMMAND", (Throwable) result);
@@ -139,7 +140,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
       // REPLICATE IT
-      result = dManager.sendRequest(getName(), new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType));
+      result = dManager.sendRequest(getName(), new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType),
+          EXECUTION_MODE.RESPONSE);
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) result);
@@ -171,7 +173,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
       // REPLICATE IT
-      final Object result = dManager.sendRequest(getName(), new OReadRecordTask(iRecordId));
+      final Object result = dManager.sendRequest(getName(), new OReadRecordTask(iRecordId), EXECUTION_MODE.RESPONSE);
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed READ_RECORD", (Throwable) result);
@@ -200,7 +202,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
       // REPLICATE IT
-      final Object result = dManager.sendRequest(getName(), new OUpdateRecordTask(iRecordId, iContent, iVersion, iRecordType));
+      final Object result = dManager.sendRequest(getName(), new OUpdateRecordTask(iRecordId, iContent, iVersion, iRecordType),
+          EXECUTION_MODE.RESPONSE);
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed UPDATE_RECORD", (Throwable) result);
@@ -230,7 +233,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
       // REPLICATE IT
-      final Object result = dManager.sendRequest(getName(), new ODeleteRecordTask(iRecordId, iVersion));
+      final Object result = dManager.sendRequest(getName(), new ODeleteRecordTask(iRecordId, iVersion), EXECUTION_MODE.RESPONSE);
 
       if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed UPDATE_RECORD", (Throwable) result);

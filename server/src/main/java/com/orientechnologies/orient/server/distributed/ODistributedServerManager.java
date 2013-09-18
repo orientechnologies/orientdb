@@ -33,7 +33,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 public interface ODistributedServerManager {
 
   public enum STATUS {
-    STARTING, ONLINE, ALIGNING, SHUTDOWNING, OFFLINE
+    OFFLINE, ONLINE, ALIGNING, SHUTDOWNING
   };
 
   public boolean isEnabled();
@@ -101,10 +101,6 @@ public interface ODistributedServerManager {
   public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
   public ODistributedPartition newPartition(List<String> partition);
-
-  public ODistributedMessageService getMessageService();
-
-  public Object sendRequest(String iDatabaseName, OAbstractRemoteTask iTask);
 
   public Object sendRequest(String iDatabaseName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 }
