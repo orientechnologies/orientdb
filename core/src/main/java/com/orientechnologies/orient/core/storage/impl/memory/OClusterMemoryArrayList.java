@@ -69,9 +69,14 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
+      if (entries.isEmpty())
+        return OClusterPositionFactory.INSTANCE.valueOf(-1);
 
-      return OClusterPositionFactory.INSTANCE.valueOf(entries.size() == 0 ? -1 : 0);
+      int index = 0;
+      while (index < entries.size() && entries.get(index) == null)
+        index++;
 
+      return OClusterPositionFactory.INSTANCE.valueOf(index);
     } finally {
       releaseSharedLock();
     }
@@ -81,7 +86,11 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
-      return OClusterPositionFactory.INSTANCE.valueOf(entries.size() - 1);
+      int index = entries.size() - 1;
+      while (index >= 0 && entries.get(index) == null)
+        index--;
+
+      return OClusterPositionFactory.INSTANCE.valueOf(index);
     } finally {
       releaseSharedLock();
     }
