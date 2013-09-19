@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
  */
 public class OHazelcastDistributedResponse implements ODistributedResponse, Externalizable {
   private long         requestId;
+  private String       executorNodeName;
   private String       senderNodeName;
   private long         senderThreadId;
   private Serializable payload;
@@ -41,9 +42,10 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   public OHazelcastDistributedResponse() {
   }
 
-  public OHazelcastDistributedResponse(final long iRequestId, final String senderNodeName, final long senderThreadId,
-      final Serializable payload) {
+  public OHazelcastDistributedResponse(final long iRequestId, final String executorNodeName, final String senderNodeName,
+      final long senderThreadId, final Serializable payload) {
     this.requestId = iRequestId;
+    this.executorNodeName = executorNodeName;
     this.senderNodeName = senderNodeName;
     this.senderThreadId = senderThreadId;
     this.payload = payload;
@@ -52,6 +54,11 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   @Override
   public long getRequestId() {
     return requestId;
+  }
+
+  @Override
+  public String getExecutorNodeName() {
+    return executorNodeName;
   }
 
   @Override
@@ -83,6 +90,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(requestId);
+    out.writeUTF(executorNodeName);
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeObject(payload);
@@ -91,6 +99,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     requestId = in.readLong();
+    executorNodeName = in.readUTF();
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     payload = (Serializable) in.readObject();

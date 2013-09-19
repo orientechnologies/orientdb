@@ -24,6 +24,8 @@ import java.io.Serializable;
  */
 public interface ODistributedResponse {
 
+  String getExecutorNodeName();
+
   String getSenderNodeName();
 
   long getSenderThreadId();
