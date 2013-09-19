@@ -1,8 +1,13 @@
 # [OrientDB Studio](https://github.com/orientechnologies/orientdb-studio)
 
-Studio Web tool
+## Users
+#### OrientDB v1.6 or major
 
+Copy the **studio.jar** file inside the directory "plugins" in OrientDB Server.
 
+#### OrientDB v1.4 - v1.5
+
+Unpack the **studio.jar** file inside the directory "www/studio" in OrientDB Server. If you want also to keep the previous version of studio, rename the existent "www/studio" directory in some other like "www/studioprev".
 
 ## Developers
 

@@ -25,7 +25,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.functionToExecute = undefined;
 
     $scope.resultExecute = undefined;
-
+    $scope.limit = -1;
     $scope.parametersToExecute = new Array;
 
     $scope.isNewFunction = false;
@@ -71,7 +71,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
         $scope.inParams = $scope.functionToExecute['parameters'];
         $scope.$watch('inParams.length', function (data) {
-            console.log(data);
             if (data) {
                 $scope.parametersToExecute = new Array(data);
             }
@@ -154,7 +153,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     }
     $scope.saveFunction = function () {
-
+        console.log($scope.functionToExecute)
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name']!= undefined && $scope.functionToExecute['name']!= '') {
 
             if ($scope.isNewFunction == true) {
