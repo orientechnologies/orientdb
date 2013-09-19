@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -373,17 +374,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true);
 
-    String field;
     String fieldName = null;
     String fieldValue;
-    OType type = null;
+    OType type;
     OClass linkedClass;
     OType linkedType;
     OProperty prop;
+    final List<String> fieldList = (iFields != null && iFields.length > 0) ? Arrays.asList(iFields) : null;
 
     // UNMARSHALL ALL THE FIELDS
-    for (int i = 0; i < fields.size(); ++i) {
-      field = fields.get(i).trim();
+    for (String field : fields) {
+      field = field.trim();
       boolean uncertainType = false;
 
       try {
@@ -396,19 +397,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             // ALREADY UNMARSHALLED: DON'T OVERWRITE IT
             continue;
 
-          if (iFields != null && iFields.length > 0) {
-            // CHECK IF THE FIELS IS REQUESTED TO BEING UNMARSHALLED
-            boolean found = false;
-            for (String f : iFields)
-              if (f.equals(fieldName)) {
-                found = true;
-                break;
-              }
-
-            if (!found)
-              // SKIP IT
-              continue;
-          }
+          // CHECK IF THE FIELS IS REQUESTED TO BEING UNMARSHALLED
+          if (fieldList != null && !fieldList.contains(fieldName))
+            continue;
 
           // GET THE FIELD VALUE
           fieldValue = field.length() > pos + 1 ? field.substring(pos + 1) : null;
