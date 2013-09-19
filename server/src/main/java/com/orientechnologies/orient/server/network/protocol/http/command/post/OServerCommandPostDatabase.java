@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -91,7 +92,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
   protected String getStoragePath(final String databaseName, final String storageMode) {
     final String path;
-    if (storageMode.equals(OEngineLocal.NAME)) {
+    if (storageMode.equals(OEngineLocal.NAME) || storageMode.equals(OEngineLocalPaginated.NAME)) {
       path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
     } else if (storageMode.equals(OEngineMemory.NAME)) {
       path = storageMode + ":" + databaseName;
