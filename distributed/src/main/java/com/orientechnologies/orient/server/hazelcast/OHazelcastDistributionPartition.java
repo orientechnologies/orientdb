@@ -28,7 +28,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedPartition;
  * 
  */
 public class OHazelcastDistributionPartition implements ODistributedPartition {
-  private final List<String> nodes = new ArrayList<>(5);
+  private final List<String> nodes = new ArrayList<String>(5);
 
   public OHazelcastDistributionPartition(final List<String> nodes) {
     for (String n : nodes)
