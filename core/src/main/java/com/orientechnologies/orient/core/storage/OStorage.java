@@ -268,4 +268,6 @@ public interface OStorage extends OSharedContainer {
   public String getType();
 
   public void checkForClusterPermissions(final String iClusterName);
+
+  public OStorage getUnderlying();
 }
