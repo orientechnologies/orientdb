@@ -24,6 +24,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.hazelcast.core.IQueue;
+import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
@@ -34,7 +35,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -67,6 +67,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     final String queueName = getResponseQueueName(manager.getLocalNodeName());
     nodeResponseQueue = getNodeQueue(queueName);
 
+    ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
+        "listening for incoming responses on queue: %s", queueName);
+
     checkForPendingMessages(nodeResponseQueue, queueName);
 
     // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.response, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING THE
@@ -76,8 +79,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       public void run() {
         while (!Thread.interrupted()) {
           String senderNode = null;
+          ODistributedResponse message = null;
           try {
-            final ODistributedResponse message = nodeResponseQueue.take();
+            message = nodeResponseQueue.take();
 
             if (message != null) {
               senderNode = message.getSenderNodeName();
@@ -86,7 +90,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
-                "error on reading distributed response", e);
+                "error on reading distributed response", e, message != null ? message.getPayload() : "-");
           }
         }
       }
@@ -228,6 +232,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     final String queueName = getRequestQueueName(manager.getLocalNodeName(), iDatabaseName);
     final IQueue<ODistributedRequest> requestQueue = getNodeQueue(queueName);
 
+    ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
+        "listening for incoming requests on queue: %s", queueName);
+
     checkForPendingMessages(requestQueue, queueName);
 
     // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.<db>.request, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING
@@ -237,8 +244,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       public void run() {
         while (!Thread.interrupted()) {
           String senderNode = null;
+          ODistributedRequest message = null;
           try {
-            final ODistributedRequest message = requestQueue.take();
+            message = requestQueue.take();
 
             if (message != null) {
               senderNode = message.getSenderNodeName();
@@ -247,7 +255,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
           } catch (Throwable e) {
             ODistributedServerLog.error(this, getLocalNodeNameAndThread(), senderNode, DIRECTION.IN,
-                "error on reading distributed request", e);
+                "error on reading distributed request: %s", e, message != null ? message.getPayload() : "-");
           }
         }
       }
