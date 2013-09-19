@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
+import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -1010,6 +1011,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public ORecordHook.RESULT callbackHooks(final TYPE iType, final OIdentifiable id) {
     if (id == null || !OHookThreadLocal.INSTANCE.push(id))
+      return RESULT.RECORD_NOT_CHANGED;
+
+    if (ODistributedThreadLocal.INSTANCE.get() != null)
+      // DON'T RUN HOOKS IN DISTRIBUTED MODE
       return RESULT.RECORD_NOT_CHANGED;
 
     try {

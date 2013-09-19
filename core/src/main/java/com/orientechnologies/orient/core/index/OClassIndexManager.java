@@ -33,7 +33,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
@@ -60,9 +59,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(ODocument iDocument) {
-    if (ODistributedThreadLocal.INSTANCE.get() == null)
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-      checkIndexesAndAquireLock(iDocument, BEFORE_CREATE);
+    checkIndexesAndAquireLock(iDocument, BEFORE_CREATE);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -74,9 +71,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public void onRecordAfterCreate(ODocument iDocument) {
-    if (ODistributedThreadLocal.INSTANCE.get() == null)
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-      addIndexesEntriesAndReleaseLock(iDocument);
+    addIndexesEntriesAndReleaseLock(iDocument);
   }
 
   @Override
@@ -125,9 +120,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeUpdate(ODocument iDocument) {
-    if (ODistributedThreadLocal.INSTANCE.get() == null)
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-      checkIndexesAndAquireLock(iDocument, BEFORE_UPDATE);
+    checkIndexesAndAquireLock(iDocument, BEFORE_UPDATE);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -139,9 +132,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public void onRecordAfterUpdate(ODocument iDocument) {
-    if (ODistributedThreadLocal.INSTANCE.get() == null)
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-      updateIndexEntries(iDocument);
+    updateIndexEntries(iDocument);
   }
 
   @Override
@@ -196,23 +187,19 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    if (ODistributedThreadLocal.INSTANCE.get() == null) {
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-
-      final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
-      if (iDocument.fields() == 0) {
-        // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
-        iDocument.reload();
-        if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
-          if (OFastConcurrentModificationException.enabled())
-            throw OFastConcurrentModificationException.instance();
-          else
-            throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
-                ORecordOperation.DELETED);
-      }
-      acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
+    final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
+    if (iDocument.fields() == 0) {
+      // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
+      iDocument.reload();
+      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
+        if (OFastConcurrentModificationException.enabled())
+          throw OFastConcurrentModificationException.instance();
+        else
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
+              ORecordOperation.DELETED);
     }
 
+    acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -225,9 +212,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public void onRecordAfterDelete(final ODocument iDocument) {
-    if (ODistributedThreadLocal.INSTANCE.get() == null)
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-      deleteIndexEntries(iDocument);
+    deleteIndexEntries(iDocument);
   }
 
   @Override
