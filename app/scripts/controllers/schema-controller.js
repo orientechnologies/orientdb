@@ -43,7 +43,6 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
                     console.log(elem);
                     $scope.listClasses.splice(elem, 1)
                     $scope.listClasses.splice();
-                    ;
                 });
 
             }
