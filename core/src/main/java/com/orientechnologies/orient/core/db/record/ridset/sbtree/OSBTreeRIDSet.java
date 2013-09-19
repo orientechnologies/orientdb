@@ -21,10 +21,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.profiler.OJVMProfiler;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 
 /**
@@ -39,6 +43,8 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   private OSBTree<OIdentifiable, Boolean> tree;
 
+  protected static final OJVMProfiler     PROFILER = Orient.instance().getProfiler();
+
   public OSBTreeRIDSet() {
     tree = OSBTreeCollectionManager.INSTANCE.createSBTree();
 
@@ -46,7 +52,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     rootIndex = tree.getRootIndex();
   }
 
-  public OSBTreeRIDSet(String fileName, long rootIndex) {
+  protected OSBTreeRIDSet(String fileName, long rootIndex) {
     tree = OSBTreeCollectionManager.INSTANCE.loadSBTree(fileName, rootIndex);
 
     this.fileName = tree.getName();
@@ -177,12 +183,37 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public OStringBuilderSerializable toStream(StringBuilder iOutput) throws OSerializationException {
-    throw new UnsupportedOperationException("unimplemented yet");
+    final long timer = PROFILER.startChrono();
+
+    try {
+      iOutput.append(OStringSerializerHelper.LINKSET_PREFIX);
+
+      final ODocument document = new ODocument();
+      document.field("root", getRootIndex());
+      document.field("file", getFileName());
+      iOutput.append(new String(document.toStream()));
+
+      iOutput.append(OStringSerializerHelper.SET_END);
+    } finally {
+      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.toStream"), "Serialize a MVRBTreeRID", timer);
+    }
+    return this;
   }
 
   @Override
   public OStringBuilderSerializable fromStream(StringBuilder iInput) throws OSerializationException {
     throw new UnsupportedOperationException("unimplemented yet");
+  }
+
+  public static OSBTreeRIDSet fromStream(String stream) {
+    stream = stream.substring(OStringSerializerHelper.LINKSET_PREFIX.length(), stream.length() - 1);
+
+    final ODocument doc = new ODocument();
+    doc.fromString(stream);
+    final long rootIndex = doc.field("root");
+    final String fileName = doc.field("file");
+
+    return new OSBTreeRIDSet(fileName, rootIndex);
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {

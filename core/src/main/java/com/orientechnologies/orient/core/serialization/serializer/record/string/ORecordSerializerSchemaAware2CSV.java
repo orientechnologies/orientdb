@@ -426,6 +426,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             if (fieldValue != null && type == null) {
               if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
                 type = OType.STRING;
+              } else if (fieldValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX)) {
+                type = OType.LINKSET;
               } else if (fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
                   && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.LIST_END
                   || fieldValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
@@ -437,6 +439,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
                 if (!value.isEmpty()) {
                   if (value.charAt(0) == OStringSerializerHelper.LINK) {
+                    // TODO replace with regex
                     // ASSURE ALL THE ITEMS ARE RID
                     final List<String> items = OStringSerializerHelper.smartSplit(value, ',');
                     boolean allLinks = true;
@@ -449,15 +452,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                     if (allLinks) {
                       type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
                       linkedType = OType.LINK;
-
-                      // GET THE CLASS NAME IF ANY
-                      // TODO: CAN WE REMOVE THIS?
-                      int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-                      if (classSeparatorPos > -1) {
-                        String className = value.substring(1, classSeparatorPos);
-                        if (className != null)
-                          linkedClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(className);
-                      }
                     }
                   } else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
                     linkedType = OType.EMBEDDED;

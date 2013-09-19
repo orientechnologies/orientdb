@@ -42,30 +42,29 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 public abstract class OStringSerializerHelper {
-  public static final char                RECORD_SEPARATOR        = ',';
+  public static final char   RECORD_SEPARATOR        = ',';
 
-  public static final String              CLASS_SEPARATOR         = "@";
-  public static final char                LINK                    = ORID.PREFIX;
-  public static final char                EMBEDDED_BEGIN          = '(';
-  public static final char                EMBEDDED_END            = ')';
-  public static final char                LIST_BEGIN              = '[';
-  public static final char                LIST_END                = ']';
-  public static final char                SET_BEGIN               = '<';
-  public static final char                SET_END                 = '>';
-  public static final char                MAP_BEGIN               = '{';
-  public static final char                MAP_END                 = '}';
-  public static final char                BINARY_BEGINEND         = '_';
-  public static final char                CUSTOM_TYPE             = '^';
-  public static final char                ENTRY_SEPARATOR         = ':';
-  public static final char                PARAMETER_NAMED         = ':';
-  public static final char                PARAMETER_POSITIONAL    = '?';
-  public static final char[]              PARAMETER_SEPARATOR     = new char[] { ',' };
-  public static final char[]              PARAMETER_EXT_SEPARATOR = new char[] { ' ', '.' };
-  public static final char[]              DEFAULT_IGNORE_CHARS    = new char[] { '\n', '\r', ' ' };
-  public static final char[]              DEFAULT_FIELD_SEPARATOR = new char[] { ',', ' ' };
-  public static final char                COLLECTION_SEPARATOR    = ',';
-  public static final List<String>        EMPTY_LIST              = Collections.unmodifiableList(new ArrayList<String>());
-  public static final Map<String, String> EMPTY_MAP               = Collections.unmodifiableMap(new HashMap<String, String>());
+  public static final String CLASS_SEPARATOR         = "@";
+  public static final char   LINK                    = ORID.PREFIX;
+  public static final char   EMBEDDED_BEGIN          = '(';
+  public static final char   EMBEDDED_END            = ')';
+  public static final char   LIST_BEGIN              = '[';
+  public static final char   LIST_END                = ']';
+  public static final char   SET_BEGIN               = '<';
+  public static final char   SET_END                 = '>';
+  public static final char   MAP_BEGIN               = '{';
+  public static final char   MAP_END                 = '}';
+  public static final char   BINARY_BEGINEND         = '_';
+  public static final char   CUSTOM_TYPE             = '^';
+  public static final char   ENTRY_SEPARATOR         = ':';
+  public static final char   PARAMETER_NAMED         = ':';
+  public static final char   PARAMETER_POSITIONAL    = '?';
+  public static final char[] PARAMETER_SEPARATOR     = new char[] { ',' };
+  public static final char[] PARAMETER_EXT_SEPARATOR = new char[] { ' ', '.' };
+  public static final char[] DEFAULT_IGNORE_CHARS    = new char[] { '\n', '\r', ' ' };
+  public static final char[] DEFAULT_FIELD_SEPARATOR = new char[] { ',', ' ' };
+  public static final char   COLLECTION_SEPARATOR    = ',';
+  public static final String LINKSET_PREFIX          = "" + SET_BEGIN + LINK + CLASS_SEPARATOR;
 
   public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
     if (iValue == null)
@@ -566,15 +565,15 @@ public abstract class OStringSerializerHelper {
   public static Map<String, String> getMap(final String iText) {
     int openPos = iText.indexOf(MAP_BEGIN);
     if (openPos == -1)
-      return EMPTY_MAP;
+      return Collections.emptyMap();
 
     int closePos = iText.indexOf(MAP_END, openPos + 1);
     if (closePos == -1)
-      return EMPTY_MAP;
+      return Collections.emptyMap();
 
     final List<String> entries = smartSplit(iText.substring(openPos + 1, closePos), COLLECTION_SEPARATOR);
     if (entries.size() == 0)
-      return EMPTY_MAP;
+      return Collections.emptyMap();
 
     Map<String, String> map = new HashMap<String, String>();
 

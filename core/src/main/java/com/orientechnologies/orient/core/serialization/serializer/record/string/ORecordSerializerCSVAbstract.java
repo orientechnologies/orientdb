@@ -76,8 +76,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case EMBEDDEDSET:
       return embeddedCollectionFromStream((ODocument) iSourceRecord, iType, iLinkedClass, iLinkedType, iValue);
 
-    case LINKLIST:
-    case LINKSET: {
+    case LINKSET:
+      if (iValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX))
+        return OSBTreeRIDSet.fromStream(iValue);
+    case LINKLIST: {
       if (iValue.length() == 0)
         return null;
 
