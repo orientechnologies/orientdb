@@ -44,8 +44,8 @@ public class OIndexUnique extends OIndexOneValue {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
           if (!value.equals(iSingleValue))
             throw new ORecordDuplicatedException(String.format(
-                "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
-                OIndexException.class, iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
+                "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
           else
             return this;
         }

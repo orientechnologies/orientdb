@@ -1,6 +1,13 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -46,8 +53,8 @@ public class SBTreeTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx
+        .getStorage().getUnderlying());
   }
 
   @AfterMethod

@@ -15,18 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 
-import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -36,74 +31,45 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
  */
 public interface ODistributedServerManager {
 
-  public enum EXECUTION_MODE {
-    SYNCHRONOUS, ASYNCHRONOUS
-  }
+  public enum STATUS {
+    OFFLINE, ONLINE, ALIGNING, SHUTDOWNING
+  };
 
   public boolean isEnabled();
 
-  public String getStatus();
+  public STATUS getStatus();
 
-  public boolean checkStatus(String string);
+  public boolean checkStatus(STATUS string);
 
-  public void setStatus(String iStatus);
+  public void setStatus(STATUS iStatus);
 
-  public boolean isOfflineNode(String iNodeId);
+  public boolean isNodeAvailable(final String iNodeName);
+
+  public boolean isOfflineNodeById(String iNodeName);
 
   public boolean isLocalNodeMaster(Object iKey);
 
-  public OReplicationConfig getReplicationData(String iDatabaseName, String iClusterName, Object iKey, String iSourceNodeId,
-      String iDestinationNodeId);
-
-  public Collection<String> getSynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
-
-  public Collection<String> getAsynchronousReplicaNodes(String iDatabaseName, String iClusterName, Object iKey);
-
-  public Object execute(String iClusterName, Object iKey, OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationConfig)
-      throws ExecutionException;
-
-  public Map<String, Object> replicate(OAbstractRemoteTask<?> iTask, OReplicationConfig iReplicationData)
-      throws ODistributedException;
-
   public String getLocalNodeId();
 
-  public Set<String> getRemoteNodeIds();
-
-  public Set<String> getOnlineRemoteNodeIdsBut(String... iNodeId);
-
-  public ODocument getDatabaseStatus(String iDatabaseName);
-
-  public ODocument getDatabaseConfiguration(String iDatabaseName);
+  public String getLocalNodeName();
 
   public ODocument getClusterConfiguration();
 
-  public ODocument getNodeConfiguration(String iNode);
+  public ODocument getNodeConfigurationById(String iNode);
 
   public ODocument getLocalNodeConfiguration();
 
   /**
-   * Returns the offset in milliseconds as difference between the current date time and the central cluster time. This allows to
-   * have a quite precise idea about information on date times, such as logs to determine the youngest in case of conflict.
+   * Returns a time taking care about the offset with the cluster time. This allows to have a quite precise idea about information
+   * on date times, such as logs to determine the youngest in case of conflict.
    * 
    * @return
    */
-  public long getTimeOffset();
+  public long getDistributedTime(long iTme);
 
   public long getRunId();
 
   public long incrementDistributedSerial(String iDatabaseName);
-
-  public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
-
-  void broadcastAlignmentRequest();
-
-  /**
-   * Communicates the alignment has been postponed. Current server will send an updated request of alignment against the postponed
-   * node.
-   */
-  public void postponeAlignment(String iNode, String iDatabaseName);
-
-  public void endAlignment(String nodeSource, String databaseName, int alignedOperations);
 
   /**
    * Gets a distributed lock
@@ -116,13 +82,9 @@ public interface ODistributedServerManager {
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
-  public Object enqueueLocalExecution(OAbstractReplicatedTask<?> iTask, final ORef<Long> iOperationOffset) throws Exception;
+  public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  public boolean notifyQueueWaiters(String iDatabaseName, long iRunId, long iOperationSerial, boolean iForce);
+  public ODistributedPartition newPartition(List<String> partition);
 
-  public Future<Object> sendTask2Node(String iNodeId, OAbstractRemoteTask<? extends Object> iTask, EXECUTION_MODE iMode,
-      Map<String, Object> iResults);
-
-  public void updateJournal(final OAbstractReplicatedTask<? extends Object> iTask, final OStorageSynchronizer dbSynchronizer,
-      final long operationLogOffset, final boolean iSuccess);
+  public Object sendRequest(String iDatabaseName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 }

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast.sharding.distributed;
+package com.orientechnologies.orient.server.hazelcast.oldsharding.distributed;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -38,9 +39,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
-import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
-import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.OHazelcastResultListener;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.OCommandResultSerializationHelper;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.OHazelcastResultListener;
 
 /**
  * @author Andrey Lomakin

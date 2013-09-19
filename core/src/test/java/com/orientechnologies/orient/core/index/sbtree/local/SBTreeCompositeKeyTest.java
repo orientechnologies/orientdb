@@ -44,7 +44,7 @@ public class SBTreeCompositeKeyTest {
 
     localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", 2, false);
     localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+        (OStorageLocalAbstract) databaseDocumentTx.getStorage().getUnderlying());
   }
 
   @BeforeMethod

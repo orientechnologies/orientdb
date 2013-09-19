@@ -32,7 +32,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
+public class OReadRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
   protected ORecordId       rid;
@@ -40,15 +40,13 @@ public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
   public OReadRecordTask() {
   }
 
-  public OReadRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final ORecordId iRid) {
-    super(iServer, iDistributedSrvMgr, iDbName);
+  public OReadRecordTask(final ORecordId iRid) {
     rid = iRid;
   }
 
   @Override
-  public ORawBuffer call() throws Exception {
-    final ODatabaseDocumentTx database = openDatabase();
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
+    final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
     try {
       final ORecordInternal<?> record = database.load(rid);
       if (record == null)
@@ -63,13 +61,11 @@ public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(rid.toString());
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     rid = new ORecordId(in.readUTF());
   }
 

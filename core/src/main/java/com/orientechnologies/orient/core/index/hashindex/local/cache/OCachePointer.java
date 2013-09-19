@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -32,7 +30,6 @@ public class OCachePointer extends OSharedResourceAdaptive {
   private final ODirectMemory         directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final AtomicInteger         referrersCount = new AtomicInteger();
-  private final Lock                  writeLock      = new ReentrantLock();
 
   private final AtomicInteger         usagesCounter  = new AtomicInteger();
 

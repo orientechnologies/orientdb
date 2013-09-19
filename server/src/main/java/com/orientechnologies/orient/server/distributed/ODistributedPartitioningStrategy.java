@@ -16,11 +16,11 @@
 package com.orientechnologies.orient.server.distributed;
 
 /**
- * Interface that represents the replication strategy.
+ * Interface that represents the sharding strategy.
  * 
- * @author luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OReplicationStrategy {
-  String getNode(final ODistributedServerManager iManager, final String iClusterName, final Object iKey);
+public interface ODistributedPartitioningStrategy {
+  ODistributedPartition getPartition(final ODistributedServerManager iManager, final String iDatabaseName, final String iClusterName);
 }

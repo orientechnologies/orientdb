@@ -122,7 +122,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
         ODistributedServerLog
             .debug(
                 this,
-                cluster.getLocalNodeId(),
+                cluster.getLocalNodeName(),
                 iRemoteNode,
                 DIRECTION.IN,
                 "Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
@@ -141,7 +141,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
       }
     }
 
-    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Conflict on CREATE record %s/%s v.%d (other RID=%s v.%d)...", database.getName(), iCurrentRID, iCurrentVersion, iOtherRID,
         iOtherVersion);
 
@@ -162,7 +162,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
       final ORecordVersion iOtherVersion) {
     final int otherVersionNumber = iOtherVersion == null ? -1 : iOtherVersion.getCounter();
 
-    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Conflict on UDPATE record %s/%s (current=v%d, other=v%d)...", database.getName(), iCurrentRID,
         iCurrentVersion.getCounter(), otherVersionNumber);
 
@@ -181,7 +181,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public void handleDeleteConflict(final String iRemoteNode, final ORecordId iCurrentRID) {
-    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Conflict on DELETE record %s/%s (cannot be deleted on other node)", database.getName(), iCurrentRID);
 
     if (!existConflictsForRecord(iCurrentRID)) {
@@ -197,7 +197,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public void handleCommandConflict(final String iRemoteNode, final Object iCommand, Object iLocalResult, Object iRemoteResult) {
-    ODistributedServerLog.warn(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.warn(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Conflict on COMMAND execution on db '%s', cmd='%s' result local=%s, remote=%s", database.getName(), iCommand,
         iLocalResult, iRemoteResult);
   }
@@ -241,7 +241,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   public boolean existConflictsForRecord(final ORecordId iRID) {
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
     if (index == null) {
-      ODistributedServerLog.warn(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.warn(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
           "Index against %s is not available right now, searches will be slower", DISTRIBUTED_CONFLICT_CLASS);
 
       final List<?> result = database.query(new OSQLSynchQuery<Object>("select from " + DISTRIBUTED_CONFLICT_CLASS + " where "
@@ -250,7 +250,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
     }
 
     if (index.contains(iRID)) {
-      ODistributedServerLog.info(this, cluster.getLocalNodeId(), null, DIRECTION.NONE,
+      ODistributedServerLog.info(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
           "Conflict already present for record %s, skip it", iRID);
       return true;
     }
@@ -269,7 +269,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   protected void errorOnWriteConflict(final String iRemoteNode, final ODocument doc) {
-    ODistributedServerLog.error(this, cluster.getLocalNodeId(), iRemoteNode, DIRECTION.IN,
+    ODistributedServerLog.error(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Error on saving CONFLICT for record %s/%s...", database.getName(), doc);
   }
 

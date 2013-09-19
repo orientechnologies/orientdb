@@ -66,6 +66,10 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
   }
 
+  public OStorage getUnderlying() {
+    return this;
+  }
+
   public OStorageConfiguration getConfiguration() {
     return configuration;
   }

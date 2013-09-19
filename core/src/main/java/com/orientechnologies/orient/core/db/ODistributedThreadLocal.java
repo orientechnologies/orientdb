@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.core.db;
 
 /**
  * Thread local to know when the request comes from distributed requester avoiding loops.
  * 
- * @author Luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 public class ODistributedThreadLocal extends ThreadLocal<String> {

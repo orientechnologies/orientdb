@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.server.hazelcast.sharding.hazelcast;
+package com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast;
 
 import java.io.IOException;
 
@@ -21,8 +21,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ITopic;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
-import com.orientechnologies.orient.server.hazelcast.sharding.ODistributedSelectQueryExecutor;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.OCommandResultSerializationHelper;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.ODistributedSelectQueryExecutor;
 
 /**
  * This class provides functionality to async aggregation of result sets from different nodes to one that initiated query

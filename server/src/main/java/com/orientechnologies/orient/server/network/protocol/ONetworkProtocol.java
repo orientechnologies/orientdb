@@ -58,9 +58,9 @@ public abstract class ONetworkProtocol extends OSoftThread {
   public void waitNodeIsOnline() throws OTimeoutException {
     // WAIT THE NODE IS ONLINE AGAIN
     final ODistributedServerManager mgr = server.getDistributedManager();
-    if (mgr != null && mgr.isEnabled() && mgr.isOfflineNode(mgr.getLocalNodeId())) {
+    if (mgr != null && mgr.isEnabled() && mgr.isOfflineNodeById(mgr.getLocalNodeId())) {
       for (int retry = 0; retry < MAX_RETRIES; ++retry) {
-        if (mgr != null && mgr.isOfflineNode(mgr.getLocalNodeId())) {
+        if (mgr != null && mgr.isOfflineNodeById(mgr.getLocalNodeId())) {
           // NODE NOT ONLINE YET, REFUSE THE CONNECTION
           OLogManager.instance().info(this, "Node is not online yet (status=%s), blocking the command until it's online %d/%d",
               mgr.getStatus(), retry + 1, MAX_RETRIES);

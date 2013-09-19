@@ -4,7 +4,7 @@
 		<handler
 			class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
 			<parameters>
-				<parameter value="europe0" name="alias" />
+				<parameter value="europe0" name="nodeName" />
 				<parameter value="true" name="enabled" />
 				<parameter value="src/test/resources/hazelcast-0.xml"
 					name="configuration.hazelcast" />
@@ -15,8 +15,8 @@
 				<parameter name="configuration.db.default"
 					value="src/test/resources/default-distributed-db-config.json" />
 
-				<parameter name="replication.strategy.auto"
-					value="com.orientechnologies.orient.server.hazelcast.strategy.OAutoReplicationStrategy" />
+				<parameter name="sharding.strategy.round-robin"
+					value="com.orientechnologies.orient.server.hazelcast.sharding.strategy" />
 			</parameters>
 		</handler>
 		<handler

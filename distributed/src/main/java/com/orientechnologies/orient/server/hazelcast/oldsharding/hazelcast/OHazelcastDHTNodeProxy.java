@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast.sharding.hazelcast;
+package com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
+import com.orientechnologies.orient.server.hazelcast.oldsharding.distributed.ODHTNode;
 
 /**
  * @author Andrey Lomakin

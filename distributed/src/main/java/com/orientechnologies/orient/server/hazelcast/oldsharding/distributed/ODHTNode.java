@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.hazelcast.sharding.distributed;
+package com.orientechnologies.orient.server.hazelcast.oldsharding.distributed;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.id.ORID;

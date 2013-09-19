@@ -17,8 +17,6 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Distributed create record task used for synchronization.
@@ -26,16 +24,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicatedTask<T> {
+public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
   protected ORecordId      rid;
   protected ORecordVersion version;
 
   public OAbstractRecordReplicatedTask() {
   }
 
-  public OAbstractRecordReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iServer, iDistributedSrvMgr, iDbName);
+  public OAbstractRecordReplicatedTask(final ORecordId iRid, final ORecordVersion iVersion) {
     this.rid = iRid;
     this.version = iVersion;
   }
@@ -50,18 +46,17 @@ public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicat
     this.version = iVersion;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public OAbstractRemoteTask<? extends Object> copy(final OAbstractRemoteTask<? extends Object> iCopy) {
+  public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
     super.copy(iCopy);
-    ((OAbstractRecordReplicatedTask<T>) iCopy).rid = rid.copy();
-    ((OAbstractRecordReplicatedTask<T>) iCopy).version = version.copy();
+    ((OAbstractRecordReplicatedTask) iCopy).rid = rid.copy();
+    ((OAbstractRecordReplicatedTask) iCopy).version = version.copy();
     return iCopy;
   }
 
   @Override
   public String toString() {
-    return getName() + "(" + rid + " v." + version + ")";
+    return super.toString() + "(" + rid + " v." + version + ")";
   }
 
   public ORecordId getRid() {
