@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed task used for synchronization. It doesn't execute any operation, but it assures the other nodes update the task id.
@@ -48,11 +47,6 @@ public class ONoOperationTask extends OAbstractReplicatedTask {
   @Override
   public String getName() {
     return "noop";
-  }
-
-  @Override
-  public OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.NOOP;
   }
 
   @Override

@@ -66,15 +66,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   protected final OServer                   serverInstance;
   protected final ODistributedServerManager dManager;
   protected final OStorageEmbedded          wrapped;
-  protected final OStorageSynchronizer      dbSynchronizer;
 
   protected boolean                         eventuallyConsistent = true;
 
-  public ODistributedStorage(final OServer iServer, final OStorageSynchronizer dbSynchronizer, final OStorageEmbedded wrapped) {
+  public ODistributedStorage(final OServer iServer, final OStorageEmbedded wrapped) {
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.wrapped = wrapped;
-    this.dbSynchronizer = dbSynchronizer;
   }
 
   public Object command(final OCommandRequestText iCommand) {
@@ -133,7 +131,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
     try {
       // ASSIGN DESTINATION NODE
-      final String clusterName = getClusterNameFromRID(iRecordId);
+      final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
@@ -167,7 +165,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
     try {
-      final String clusterName = getClusterNameFromRID(iRecordId);
+      final String clusterName = getClusterNameByRID(iRecordId);
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
         // DON'T REPLICATE
@@ -195,7 +193,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
     try {
-      final String clusterName = getClusterNameFromRID(iRecordId);
+      final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
@@ -219,6 +217,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     }
   }
 
+  public String getClusterNameByRID(final ORecordId iRid) {
+    final OCluster cluster = getClusterById(iRid.clusterId);
+    return cluster != null ? cluster.getName() : "*";
+  }
+
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final ORecordVersion iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     if (ODistributedThreadLocal.INSTANCE.get() != null)
@@ -226,7 +229,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
     try {
-      final String clusterName = getClusterNameFromRID(iRecordId);
+      final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dConfig.isReplicationActive(clusterName))
@@ -509,13 +512,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     return wrapped.getLock();
   }
 
+  public OStorage getUnderlying() {
+    return wrapped;
+  }
+
   @Override
   public String getType() {
     return "distributed";
-  }
-
-  protected String getClusterNameFromRID(final ORecordId iRecordId) {
-    return OStorageSynchronizer.getClusterNameByRID(wrapped, iRecordId);
   }
 
   protected void handleDistributedException(final String iMessage, Exception e, Object... iParams) {

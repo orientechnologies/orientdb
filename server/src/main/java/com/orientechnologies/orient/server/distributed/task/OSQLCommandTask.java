@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed task used for synchronization.
@@ -113,11 +112,6 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   @Override
   public String toString() {
     return super.toString() + "(" + text + ")";
-  }
-
-  @Override
-  public OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.SQL_COMMAND;
   }
 
   @Override

@@ -21,7 +21,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -53,7 +55,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected static final String                           FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                       serverInstance;
-  protected Map<String, OStorageSynchronizer>             synchronizers               = new HashMap<String, OStorageSynchronizer>();
+  protected Set<String>                                   managedDatabases            = new HashSet<String>();
   protected Map<String, ODocument>                        cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
   protected boolean                                       enabled                     = true;
@@ -151,11 +153,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         return;
 
       if (cfg.isReplicationActive(null)) {
-        final OStorageSynchronizer dbSynchronizer = getDatabaseSynchronizer(iDatabase.getName());
-
-        if (dbSynchronizer != null && iDatabase instanceof ODatabaseComplex<?>
-            && !(iDatabase.getStorage() instanceof ODistributedStorage))
-          ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance, dbSynchronizer,
+        if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage))
+          ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance,
               (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
       }
     }
@@ -196,25 +195,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   public ODistributedPartitioningStrategy getStrategy(final String iStrategyName) {
     return strategies.get(iStrategyName);
-  }
-
-  public OStorageSynchronizer getDatabaseSynchronizer(final String iDatabaseName) {
-    synchronized (synchronizers) {
-      OStorageSynchronizer sync = synchronizers.get(iDatabaseName);
-      if (sync == null) {
-        try {
-          sync = new OStorageSynchronizer(serverInstance, this, iDatabaseName);
-          synchronizers.put(iDatabaseName, sync);
-          sync.config();
-          sync.recoverUncommited(this, iDatabaseName);
-        } catch (Exception e) {
-          synchronizers.remove(iDatabaseName);
-          throw new ODistributedException("Cannot get the storage synchronizer for database " + iDatabaseName, e);
-        }
-      }
-
-      return sync;
-    }
   }
 
   protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {

@@ -19,10 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Base class for Replicated tasks.
@@ -53,8 +50,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   }
 
   public abstract OAbstractReplicatedTask copy();
-
-  public abstract OPERATION_TYPES getOperationType();
 
   public abstract String getPayload();
 
@@ -100,14 +95,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
 
   public long getRunId() {
     return runId;
-  }
-
-  public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, null, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
-  }
-
-  public void setAsCanceled(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, null, ODatabaseJournal.OPERATION_STATUS.CANCELED);
   }
 
   public boolean isAlign() {

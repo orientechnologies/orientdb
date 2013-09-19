@@ -30,10 +30,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed create record task used for synchronization.
@@ -154,18 +151,5 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public String getName() {
     return "record_create";
-  }
-
-  /**
-   * Write the status with the new RID too.
-   */
-  @Override
-  public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, rid, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
-  }
-
-  @Override
-  public OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.RECORD_CREATE;
   }
 }

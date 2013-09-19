@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -72,18 +71,6 @@ public interface ODistributedServerManager {
 
   public long incrementDistributedSerial(String iDatabaseName);
 
-  public OStorageSynchronizer getDatabaseSynchronizer(String iDatabaseName);
-
-  void broadcastAlignmentRequest();
-
-  /**
-   * Communicates the alignment has been postponed. Current server will send an updated request of alignment against the postponed
-   * node.
-   */
-  public void postponeAlignment(String iNode, String iDatabaseName);
-
-  public void endAlignment(String nodeSource, String databaseName, int alignedOperations);
-
   /**
    * Gets a distributed lock
    * 
@@ -94,9 +81,6 @@ public interface ODistributedServerManager {
   public Lock getLock(String iLockName);
 
   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
-
-  public void updateJournal(String iDatabaseName, OAbstractReplicatedTask iTask, OStorageSynchronizer dbSynchronizer,
-      long operationLogOffset, boolean iSuccess);
 
   public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 
@@ -41,7 +40,6 @@ import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,11 +57,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAlignRequestTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
@@ -87,10 +83,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected volatile STATUS                     status                 = STATUS.OFFLINE;
 
   protected String                              membershipListenerRegistration;
-
-  // ALIGNMENT
-  protected Map<String, Boolean>                pendingAlignments      = new HashMap<String, Boolean>();
-  protected TimerTask                           alignmentTask;
 
   protected volatile HazelcastInstance          hazelcastInstance;
 
@@ -136,7 +128,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
 
     cachedClusterNodes.clear();
-    synchronizers.clear();
+    managedDatabases.clear();
 
     try {
       hazelcastInstance = Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
@@ -166,7 +158,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       runId = (Long) getConfigurationMap().get("runId");
 
       // REGISTER CURRENT MEMBERS
-      // registerAndAlignNodes();
       setStatus(STATUS.ONLINE);
 
       super.startup();
@@ -192,9 +183,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return;
 
     setStatus(STATUS.OFFLINE);
-
-    if (alignmentTask != null)
-      alignmentTask.cancel();
 
     messageService.shutdown();
 
@@ -285,6 +273,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public ODocument getLocalNodeConfiguration() {
     final ODocument nodeCfg = new ODocument();
 
+    nodeCfg.field("id", getLocalNodeId());
     nodeCfg.field("name", getLocalNodeName());
     nodeCfg.field("status", getStatus());
 
@@ -328,92 +317,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node status to '%s'", status);
   }
 
-  private void registerAndAlignNodes() {
-    membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
-
-    // COLLECTS THE MEMBER LIST
-    for (Member clusterMember : hazelcastInstance.getCluster().getMembers()) {
-      final String nodeId = getNodeName(clusterMember);
-      if (!getLocalNodeName().equals(nodeId))
-        cachedClusterNodes.put(nodeId, clusterMember);
-    }
-
-    if (cachedClusterNodes.isEmpty())
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "no node running has been detected");
-    else
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "detected %d running nodes %s",
-          cachedClusterNodes.size(), cachedClusterNodes.keySet());
-
-    if (!alignmentStartup)
-      // NO ALIGNMENT: THE NODE IS ONLINE
-      setStatus(STATUS.ONLINE);
-    else if (cachedClusterNodes.isEmpty())
-      // NO NODES; AVOID ALIGNMENT
-      setStatus(STATUS.ONLINE);
-    else
-      broadcastAlignmentRequest();
-
-    if (alignmentTimer > 0) {
-      // SCHEDULE THE AUTO ALIGNMENT
-      alignmentTask = new TimerTask() {
-        @Override
-        public void run() {
-          broadcastAlignmentRequest();
-        }
-      };
-
-      Orient.instance().getTimer().schedule(alignmentTask, alignmentTimer, alignmentTimer);
-    }
-  }
-
-  @Override
-  public void broadcastAlignmentRequest() {
-    if (cachedClusterNodes.isEmpty())
-      // NO NODES; AVOID ALIGNMENT
-      return;
-    //
-    // setStatus(STATUS.ALIGNING);
-    //
-    // // EXECUTE THE ALIGNMENT: THE STATUS ONLINE WILL BE SET ASYNCHRONOUSLY ONCE FINISHED
-    // synchronized (synchronizers) {
-    //
-    // for (Entry<String, OStorageSynchronizer> entry : synchronizers.entrySet()) {
-    // final String databaseName = entry.getKey();
-    //
-    // try {
-    // // GET LAST OPERATION, DOESN'T MATTER THE STATUS
-    // final long[] lastOperationId = entry.getValue().getLog().getLastJournaledOperationId(null);
-    //
-    // if (lastOperationId[0] == -1 && lastOperationId[1] == -1)
-    // // AVOID TO SEND THE REQUEST IF THE LOG IS EMPTY
-    // continue;
-    //
-    // ODistributedServerLog.warn(this, getLocalNodeName(), remoteClusterNodes.keySet().toString(), DIRECTION.OUT,
-    // "sending align request in broadcast for database '%s' from operation %d:%d", databaseName, lastOperationId[0],
-    // lastOperationId[1]);
-    //
-    // synchronized (pendingAlignments) {
-    // for (String node : remoteClusterNodes.keySet()) {
-    // pendingAlignments.put(node + "/" + databaseName, Boolean.FALSE);
-    //
-    // ODistributedServerLog.info(this, getLocalNodeName(), node, DIRECTION.NONE,
-    // "setting node in alignment state for db=%s", databaseName);
-    // }
-    // }
-    //
-    // sendRequest(databaseName, new OAlignRequestTask(lastOperationId[0], lastOperationId[1]));
-    //
-    // } catch (IOException e) {
-    // ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.OUT,
-    // "error on retrieve last operation id from the log for db=%s", databaseName);
-    // }
-    // }
-    //
-    // if (pendingAlignments.isEmpty())
-    // setStatus(STATUS.ONLINE);
-    // }
-  }
-
   @Override
   public Object sendRequest(final String iDatabaseName, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName,
@@ -427,63 +330,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public String[] getManagedDatabases() {
-    synchronized (synchronizers) {
-      return synchronizers.keySet().toArray(new String[synchronizers.size()]);
-    }
-  }
-
-  @Override
-  public void endAlignment(final String iNode, final String iDatabaseName, final int alignedOperations) {
-    synchronized (pendingAlignments) {
-      if (pendingAlignments.remove(iNode + "/" + iDatabaseName) == null) {
-        ODistributedServerLog.error(this, getLocalNodeName(), iNode, DIRECTION.OUT,
-            "received response for an alignment against an unknown node %s database %s", iDatabaseName);
-      }
-
-      if (pendingAlignments.isEmpty()) {
-        setStatus(STATUS.ONLINE);
-      } else {
-        // WAKE UP ALL THE POSTPONED ALIGNMENTS
-        for (Entry<String, Boolean> entry : pendingAlignments.entrySet()) {
-          final String[] parts = entry.getKey().split("/");
-          final String node = parts[0];
-          final String databaseName = parts[1];
-
-          if (entry.getValue()) {
-            final OStorageSynchronizer synch = synchronizers.get(databaseName);
-
-            long[] lastOperationId;
-
-            try {
-              lastOperationId = synch.getLog().getLastJournaledOperationId(null);
-
-              ODistributedServerLog.info(this, getLocalNodeName(), node, DIRECTION.OUT,
-                  "resend alignment request db=%s from %d:%d", databaseName, lastOperationId[0], lastOperationId[1]);
-
-              sendRequest(databaseName, new OAlignRequestTask(lastOperationId[0], lastOperationId[1]), EXECUTION_MODE.RESPONSE);
-
-            } catch (IOException e) {
-              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.OUT,
-                  "error on retrieve last operation id from the log for db=%s", databaseName);
-            }
-          } else
-            ODistributedServerLog.info(this, getLocalNodeName(), node, DIRECTION.NONE,
-                "db=%s is in alignment status yet, the node is not online yet", databaseName);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void postponeAlignment(final String iNode, final String iDatabaseName) {
-    synchronized (pendingAlignments) {
-      final String key = iNode + "/" + iDatabaseName;
-      if (!pendingAlignments.containsKey(key)) {
-        ODistributedServerLog.error(this, getLocalNodeName(), iNode, DIRECTION.IN,
-            "received response to postpone an alignment against an unknown node", iDatabaseName);
-      }
-
-      pendingAlignments.put(key, Boolean.TRUE);
+    synchronized (managedDatabases) {
+      return managedDatabases.toArray(new String[managedDatabases.size()]);
     }
   }
 
@@ -530,6 +378,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "added node configuration id=%s name=%s",
           iEvent.getMember(), getNodeName(iEvent.getMember()));
+
+      final ODocument cfg = (ODocument) iEvent.getValue();
+      cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       saveDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
@@ -542,6 +394,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node configuration id=%s name=%s",
           iEvent.getMember(), getNodeName(iEvent.getMember()));
+
+      final ODocument cfg = (ODocument) iEvent.getValue();
+      cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       saveDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
@@ -554,6 +410,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "removed node configuration id=%s name=%s",
           iEvent.getMember(), getNodeName(iEvent.getMember()));
+
+      cachedClusterNodes.remove(getNodeName(iEvent.getMember()));
+
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       synchronized (cachedDatabaseConfiguration) {
         cachedDatabaseConfiguration.remove(key.substring(CONFIG_DATABASE_PREFIX.length()));
@@ -601,21 +460,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getLocalNodeName();
   }
 
-  public void updateJournal(final String iDatabaseName, final OAbstractReplicatedTask iTask,
-      final OStorageSynchronizer dbSynchronizer, final long operationLogOffset, final boolean iSuccess) {
-    try {
-      if (iSuccess)
-        iTask.setAsCommitted(dbSynchronizer, operationLogOffset);
-      else
-        iTask.setAsCanceled(dbSynchronizer, operationLogOffset);
-    } catch (IOException e) {
-      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.IN, "error on changing the log status for %s db=%s %s",
-          e, getName(), iDatabaseName, iTask.getPayload());
-      throw new ODistributedException("Error on changing the log status", e);
-
-    }
-  }
-
   public Serializable executeOnLocalNode(final ODistributedRequest req) {
     final Object requestPayload = req.getPayload();
 
@@ -645,29 +489,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected Serializable executeRollbackableTask(final String databaseName, final OAbstractReplicatedTask task) {
-    final OStorageSynchronizer dbSynch = getDatabaseSynchronizer(databaseName);
-
-    long operationLogOffset = -1;
-
     try {
-      // LOG THE OPERATION
-      // operationLogOffset = dbSynch.getLog().append(task);
-
       final Serializable response = (Serializable) task.execute(serverInstance, this, databaseName);
-
-      // OK
-      // if (operationLogOffset > -1)
-      // // MARK THE OPERATION AS COMMITTED
-      // updateJournal(databaseName, task, dbSynch, operationLogOffset, true);
 
       return response;
 
     } catch (Exception e1) {
-      // EXCEPTION
-      // if (operationLogOffset > -1)
-      // // MARK THE OPERATION AS CANCELED
-      // updateJournal(databaseName, task, dbSynch, operationLogOffset, false);
-
       if (e1 instanceof ONeedRetryException)
         throw (ONeedRetryException) e1;
 
@@ -690,11 +517,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       messageService.configureDatabase(databaseName);
 
-      getDatabaseSynchronizer(databaseName);
-
       checkLocalNodeInConfiguration(databaseName);
     }
-
   }
 
   protected void checkLocalNodeInConfiguration(final String iDatabaseName) {

@@ -74,9 +74,8 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
-import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
+import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
@@ -155,12 +154,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     }
 
-    OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
+    OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
   }
 
   @Override
   protected void onAfterRequest() throws IOException {
-    OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
+    OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
@@ -825,34 +824,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       response = new ODocument().fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).serialize()
           .toJSON("prettyPrint"));
 
-    } else if (operation.equals("align")) {
-      checkServerAccess("server.replication.align");
-
-    } else if (operation.equals("getJournal")) {
-      checkServerAccess("server.replication.getJournal");
-
-      final Integer limit = request.field("limit");
-
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-
-      final Iterable<ODocument> result = dbSynch.getLog().query(null, limit != null ? limit : -1);
-      response = new ODocument().field("result", result, OType.EMBEDDEDLIST);
-
-    } else if (operation.equals("resetJournal")) {
-      checkServerAccess("server.replication.resetJournal");
-
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-      dbSynch.getLog().reset();
-
-    } else if (operation.equals("getAllConflicts")) {
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-      response = dbSynch.getConflictResolver().getAllConflicts();
-
-    } else if (operation.equals("resetConflicts")) {
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-      response = dbSynch.getConflictResolver().reset();
-
     }
+
     sendResponse(response);
 
   }
@@ -1477,7 +1450,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   public void startup() {
     super.startup();
-    OServerHandlerHelper.invokeHandlerCallbackOnClientConnection(server, connection);
+    OServerPluginHelper.invokeHandlerCallbackOnClientConnection(server, connection);
   }
 
   @Override
@@ -1488,7 +1461,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection == null)
       return;
 
-    OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
+    OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
 
     OClientConnectionManager.instance().disconnect(connection);
   }
@@ -1522,7 +1495,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   protected void handleConnectionError(final OChannelBinaryServer iChannel, final Throwable e) {
     super.handleConnectionError(channel, e);
-    OServerHandlerHelper.invokeHandlerCallbackOnClientError(server, connection, e);
+    OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
   }
 
   public String getType() {
