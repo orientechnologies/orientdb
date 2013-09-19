@@ -33,15 +33,17 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         Utilities.confirm($scope, $modal, $q, {
 
             title: 'Warning!',
-            body: 'You are dropping class ' + nameClass + '. Are you sure?',
+            body: 'You are dropping class ' + nameClass['name'] + '. Are you sure?',
             success: function () {
-                var sql = 'DROP CLASS ' + nameClass;
+                var sql = 'DROP CLASS ' + nameClass['name'];
 
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
 
-                    var elem = $scope.listClasses.indexOf($scope.listClasses[nameClass])
+                    var elem = $scope.listClasses.indexOf(nameClass);
+                    console.log(elem);
                     $scope.listClasses.splice(elem, 1)
-                    $scope.listClasses.splice()
+                    $scope.listClasses.splice();
+                    ;
                 });
 
             }
