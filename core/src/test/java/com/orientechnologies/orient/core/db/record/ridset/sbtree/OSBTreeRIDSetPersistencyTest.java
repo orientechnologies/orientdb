@@ -8,13 +8,13 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Test that {@link OSBTreeRIDSet} is saved into the database correctly.
@@ -27,7 +27,7 @@ public class OSBTreeRIDSetPersistencyTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    // OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(Boolean.FALSE);
+    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(Boolean.FALSE);
 
     db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRIDSetPersistencyTest");
     if (db.exists()) {
@@ -60,24 +60,17 @@ public class OSBTreeRIDSetPersistencyTest {
     expected.add(new ORecordId("#77:21"));
     expected.add(new ORecordId("#77:22"));
 
-    final OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
+    final ODocument doc = new ODocument();
+
+    final OSBTreeRIDSet ridSet = new OSBTreeRIDSet(doc);
     ridSet.addAll(expected);
 
-    final OMVRBTreeRIDSet omvrbTreeRIDSet = new OMVRBTreeRIDSet();
-    omvrbTreeRIDSet.addAll(expected);
-
-    final ODocument doc = new ODocument();
     doc.field("ridset", ridSet);
-    doc.field("rbtreeset", omvrbTreeRIDSet);
     doc.save();
     final ORID id = doc.getIdentity();
 
     db.close();
     db.open("admin", "admin");
-
-    final OMVRBTreeRIDSet rb = ((ODocument) db.load(id)).field("rbtreeset");
-    Assert.assertEquals(rb.size(), expected.size());
-    Assert.assertTrue(rb.containsAll(expected));
 
     final OSBTreeRIDSet loaded = ((ODocument) db.load(id)).field("ridset");
 

@@ -78,7 +78,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     case LINKSET:
       if (iValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX))
-        return OSBTreeRIDSet.fromStream(iValue);
+        return OSBTreeRIDSet.fromStream(iValue, iSourceRecord);
     case LINKLIST: {
       if (iValue.length() == 0)
         return null;

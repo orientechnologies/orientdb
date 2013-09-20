@@ -32,11 +32,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  */
 public class OSBTreeCollectionManager {
 
-  public static final OSBTreeCollectionManager         INSTANCE   = new OSBTreeCollectionManager();
+  private final Map<String, OSBTree<OIdentifiable, Boolean>> treeCache  = new HashMap<String, OSBTree<OIdentifiable, Boolean>>();
 
-  private Map<String, OSBTree<OIdentifiable, Boolean>> treeCache  = new HashMap<String, OSBTree<OIdentifiable, Boolean>>();
-
-  private AtomicLong                                   nextFileId = new AtomicLong();
+  private AtomicLong                                         nextFileId = new AtomicLong();
 
   public OSBTree<OIdentifiable, Boolean> createSBTree() {
     OSBTree<OIdentifiable, Boolean> tree = new OSBTree<OIdentifiable, Boolean>(".sbt", 1, true);
@@ -56,9 +54,16 @@ public class OSBTreeCollectionManager {
       return tree;
 
     tree = new OSBTree<OIdentifiable, Boolean>(".sbt", 1, true);
-    tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
-        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
+    tree.load(fileName, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
 
     return tree;
+  }
+
+  public void startup() {
+
+  }
+
+  public void shutdown() {
+    treeCache.clear();
   }
 }

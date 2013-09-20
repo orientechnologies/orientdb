@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -81,7 +82,8 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-  private OMetadataDefault                                   metadata;
+  private final OSBTreeCollectionManager              sbTreeCollectionManager;
+  private OMetadataDefault                            metadata;
   private OUser                                       user;
   private static final String                         DEF_RECORD_FORMAT   = "csv";
   private byte                                        recordType;
@@ -105,6 +107,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     databaseOwner = this;
 
     recordType = iRecordType;
+    sbTreeCollectionManager = new OSBTreeCollectionManager();
     level1Cache = new OLevel1RecordCache(new OCacheLevelOneLocatorImpl());
 
     mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
@@ -117,6 +120,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.open(iUserName, iUserPassword);
+      sbTreeCollectionManager.startup();
       level1Cache.startup();
 
       metadata = new OMetadataDefault();
@@ -177,6 +181,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
       super.create();
 
+      sbTreeCollectionManager.startup();
       level1Cache.startup();
 
       getStorage().getConfiguration().update();
@@ -247,6 +252,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     user = null;
     level1Cache.shutdown();
+    sbTreeCollectionManager.shutdown();
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
@@ -272,7 +278,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false);
+    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
@@ -991,6 +997,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  public OSBTreeCollectionManager getSbTreeCollectionManager() {
+    return sbTreeCollectionManager;
+  }
+
   @Override
   public OLevel1RecordCache getLevel1Cache() {
     return level1Cache;
@@ -1004,6 +1014,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Callback the registeted hooks if any.
    * 
    * @param iType
+   *          Hook type. Define when hook is called.
    * @param id
    *          Record received in the callback
    * @return True if the input record is changed, otherwise false
