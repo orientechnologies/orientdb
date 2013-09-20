@@ -1147,12 +1147,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           for (int i = 0; i < createdRecords; i++) {
             currentRid = network.readRID();
             createdRid = network.readRID();
-            for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
-              if (txEntry.getRecord().getIdentity().equals(currentRid)) {
-                txEntry.getRecord().setIdentity(createdRid);
-                break;
-              }
-            }
+			iTx.updateIdentityAfterCommit(currentRid, createdRid);
           }
           final int updatedRecords = network.readInt();
           ORecordId rid;
@@ -1161,10 +1156,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             // SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
             for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
-              if (txEntry.getRecord().getIdentity().equals(rid)) {
-                txEntry.getRecord().getRecordVersion().copyFrom(network.readVersion());
-                break;
-              }
+			  ORecordOperation rop = iTx.getRecordEntry(rid);
+			  if (rop != null) {
+			    rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
+				break;
+			  }
             }
           }
 
