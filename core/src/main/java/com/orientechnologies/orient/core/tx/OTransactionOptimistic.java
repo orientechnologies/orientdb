@@ -127,13 +127,21 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
               }
             }
 
+            final Map<String, OIndex> indexes = new HashMap<String, OIndex>();
+            if (involvedIndexes != null) {
+              for (String indexName : involvedIndexes) {
+                final OIndex<?> index = database.getMetadata().getIndexManager().getIndexInternal(indexName);
+                indexes.put(indexName, index);
+              }
+            }
+
             final Runnable callback = new Runnable() {
               @Override
               public void run() {
                 final ODocument indexEntries = getIndexChanges();
                 if (indexEntries != null) {
                   for (Entry<String, Object> indexEntry : indexEntries) {
-                    final OIndex<?> index = database.getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
+                    final OIndex<?> index = indexes.get(indexEntry.getKey());
                     index.commit((ODocument) indexEntry.getValue());
                   }
                 }
