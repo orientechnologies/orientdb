@@ -31,12 +31,19 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         return menu == $scope.selectedMenu ? 'active' : '';
     }
     $scope.$on('$routeChangeSuccess', function (scope, next, current) {
+        //$scope.refreshMetadata();
         $scope.setSelected();
     });
+    $scope.refreshMetadata = function(){
+        Database.refreshMetadata($routeParams.database, function () {
+
+        });
+    };
     $scope.logout = function () {
         Database.disconnect(function () {
             $scope.menus = [];
             $location.path("/");
         });
     }
+
 }]);

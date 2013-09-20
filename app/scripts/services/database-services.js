@@ -4,14 +4,18 @@ var database = angular.module('database.services', ['ngResource']);
 var DatabaseResolve = {
     current: function (Database, $q, $route, $location, Spinner) {
         var deferred = $q.defer();
-        Database.refreshMetadata($route.current.params.database, function () {
+        if (!Database.getMetadata()) {
+            Database.refreshMetadata($route.current.params.database, function () {
+                deferred.resolve();
+            });
+        } else {
             deferred.resolve();
-        })
+        }
         return deferred.promise;
     },
     delay: function ($q, $timeout) {
         var delay = $q.defer();
-        $timeout(delay.resolve, 1000);
+        $timeout(delay.resolve, 0);
         return delay.promise;
     }
 }
@@ -31,10 +35,10 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         mapping: { 'BINARY': 'b', 'BYTE': 'b', 'DATE': 'a', 'DATETIME': 't', 'FLOAT': 'f', 'DECIMAL': 'c', 'LONG': 'l', 'DOUBLE': 'd', 'SHORT': 's', 'LINKSET': 'e'},
         getMetadata: function () {
-            if (current.metadata == null) {
+            /*if (current.metadata == null) {
                 var tmp = localStorageService.get("CurrentDB");
                 if (tmp != null) current = tmp;
-            }
+            } */
             return current.metadata;
         },
         setMetadata: function (metadata) {
@@ -98,7 +102,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                 localStorageService.clearAll();
                 localStorageService.cookie.clearAll();
                 document.cookie = "";
-                console.log(document.cookie);
+
                 callback();
             });
 
@@ -283,9 +287,13 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
         },
         isGraph: function (clazz) {
             var sup = clazz;
+
             var iterator = clazz;
             while ((iterator = this.getSuperClazz(iterator)) != "") {
                 sup = iterator;
+                if(sup == 'V' || sup == 'E'){
+                    return true;
+                }
             }
             return sup == 'V' || sup == 'E';
         },
@@ -343,7 +351,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                     var type = self.getFieldType(c, elem);
                     var bool = true;
                     if (isGraph) {
-                        bool = (fixedHeader.indexOf(elem) == -1 && (!element.startsWith("in_") && !elem.startsWith("out_")) && !self.isLink(type));
+                        bool = (fixedHeader.indexOf(elem) == -1 && (!elem.startsWith("in_") && !elem.startsWith("out_")) && !self.isLink(type));
                     } else {
                         bool = (fixedHeader.indexOf(elem) == -1 && !self.isLink(type));
                     }
@@ -509,7 +517,6 @@ database.factory('DocumentApi', function ($http, $resource, Database) {
         //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
     }
     resource.createDocument = function (database, rid, doc, callback) {
-        console.log(doc);
         $http.post(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
     }
     resource.deleteDocument = function (database, rid, callback) {
@@ -562,7 +569,6 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
 //    var resource = $resource(API + 'command/:database');
 
     var resource = $resource('function/:database');
-    console.log(resource);
     resource.executeFunction = function (params, callback, error) {
         var startTime = new Date().getTime();
         var verbose = params.verbose != undefined ? params.verbose : true;

@@ -1,9 +1,13 @@
 var dbModule = angular.module('database.controller', ['database.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, Spinner) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner','localStorageService', function ($scope, $routeParams, $location, Database, CommandApi, Spinner,localStorageService) {
 
     $scope.database = Database;
     $scope.limit = 20;
-    $scope.queries = new Array;
+
+    if(localStorageService.get("Queries")==null){
+        localStorageService.add("Queries", new Array);
+    }
+    $scope.queries = localStorageService.get("Queries");
     $scope.language = 'sql';
     $scope.countPage = 10;
     $scope.countPageOptions = [10, 20, 50, 100];
@@ -58,14 +62,20 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.currentPage = 1;
 
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
-
+                if ($scope.queries.indexOf($scope.queryText) == -1) {
+                    $scope.queries.push($scope.queryText);
+                    localStorageService.add("Queries",  $scope.queries);
+                }
             }
-            if ($scope.queries.indexOf($scope.queryText) == -1)
-                $scope.queries.push($scope.queryText);
+
             Spinner.loading = false;
         }, function (data) {
             Spinner.loading = false;
         });
+    }
+    $scope.clear = function(){
+        $scope.queries = new Array;
+        localStorageService.add("Queries",  $scope.queries);
     }
     $scope.switchPage = function (index) {
         if (index != $scope.currentPage) {
