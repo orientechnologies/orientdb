@@ -107,7 +107,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
-      sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer, storageLocalAbstract);
+      sbTree.create(indexName, 0, keySerializer, (OBinarySerializer<V>) valueSerializer, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
     }
@@ -132,7 +132,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage();
 
-      sbTree.load(indexName, storageLocalAbstract);
+      sbTree.load(indexName, 0, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
     }

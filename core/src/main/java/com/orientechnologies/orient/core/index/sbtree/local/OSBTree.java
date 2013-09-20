@@ -48,7 +48,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private final static long              ROOT_INDEX         = 0;
+  private long                           rootIndex          = 0;
 
   private final Comparator<? super K>    comparator         = ODefaultComparator.INSTANCE;
 
@@ -75,7 +75,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
   }
 
-  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+  public void create(String name, long rootIndex, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
       OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
@@ -91,7 +91,14 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       initDurableComponent(storageLocal);
 
-      OCacheEntry rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
+      OCacheEntry rootCacheEntry;
+      if (rootIndex < 0)
+        rootCacheEntry = diskCache.allocateNewPage(fileId);
+      else
+        rootCacheEntry = diskCache.load(fileId, rootIndex, false);
+
+      this.rootIndex = rootCacheEntry.getPageIndex();
+
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
 
       rootPointer.acquireExclusiveLock();
@@ -104,7 +111,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         rootBucket.setValueSerializerId(valueSerializer.getId());
         rootBucket.setTreeSize(0);
 
-        super.logPageChanges(rootBucket, fileId, ROOT_INDEX, true);
+        super.logPageChanges(rootBucket, fileId, this.rootIndex, true);
         rootCacheEntry.markDirty();
       } finally {
         rootPointer.releaseExclusiveLock();
@@ -141,7 +148,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   public long getRootIndex() {
     acquireSharedLock();
     try {
-      return ROOT_INDEX;
+      return rootIndex;
     } finally {
       releaseSharedLock();
     }
@@ -269,7 +276,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       diskCache.truncateFile(fileId);
 
-      OCacheEntry cacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
+      OCacheEntry cacheEntry = diskCache.load(fileId, rootIndex, false);
       OCachePointer rootPointer = cacheEntry.getCachePointer();
       rootPointer.acquireExclusiveLock();
       try {
@@ -280,7 +287,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         rootBucket.setValueSerializerId(valueSerializer.getId());
         rootBucket.setTreeSize(0);
 
-        logPageChanges(rootBucket, fileId, ROOT_INDEX, true);
+        logPageChanges(rootBucket, fileId, rootIndex, true);
         cacheEntry.markDirty();
       } finally {
         rootPointer.releaseExclusiveLock();
@@ -308,10 +315,11 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void load(String name, OStorageLocalAbstract storageLocal) {
+  public void load(String name, long rootIndex, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
+      this.rootIndex = rootIndex;
 
       diskCache = storage.getDiskCache();
 
@@ -319,7 +327,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       fileId = diskCache.openFile(name + dataFileExtension);
 
-      OCacheEntry rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
+      OCacheEntry rootCacheEntry = diskCache.load(fileId, this.rootIndex, false);
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
       try {
         OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootPointer.getDataPointer(), keySerializer, valueSerializer,
@@ -339,7 +347,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private void setSize(long size) throws IOException {
-    OCacheEntry rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
+    OCacheEntry rootCacheEntry = diskCache.load(fileId, rootIndex, false);
 
     OCachePointer rootPointer = rootCacheEntry.getCachePointer();
     rootPointer.acquireExclusiveLock();
@@ -348,7 +356,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           getTrackMode());
       rootBucket.setTreeSize(size);
 
-      logPageChanges(rootBucket, fileId, ROOT_INDEX, false);
+      logPageChanges(rootBucket, fileId, rootIndex, false);
       rootCacheEntry.markDirty();
     } finally {
       rootPointer.releaseExclusiveLock();
@@ -359,7 +367,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   public long size() {
     acquireSharedLock();
     try {
-      OCacheEntry rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
+      OCacheEntry rootCacheEntry = diskCache.load(fileId, rootIndex, false);
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
 
       try {
@@ -611,7 +619,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       LinkedList<PagePathItemUnit> path = new LinkedList<PagePathItemUnit>();
 
-      long bucketIndex = ROOT_INDEX;
+      long bucketIndex = rootIndex;
 
       OCacheEntry cacheEntry = diskCache.load(fileId, bucketIndex, false);
       OCachePointer cachePointer = cacheEntry.getCachePointer();
@@ -674,7 +682,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       LinkedList<PagePathItemUnit> path = new LinkedList<PagePathItemUnit>();
 
-      long bucketIndex = ROOT_INDEX;
+      long bucketIndex = rootIndex;
 
       OCacheEntry cacheEntry = diskCache.load(fileId, bucketIndex, false);
       OCachePointer cachePointer = cacheEntry.getCachePointer();
@@ -850,7 +858,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       for (int i = startRightIndex; i < bucketSize; i++)
         rightEntries.add(bucketToSplit.getEntry(i));
 
-      if (pageIndex != ROOT_INDEX) {
+      if (pageIndex != rootIndex) {
         OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
         OCachePointer rightBucketPointer = rightBucketEntry.getCachePointer();
 
@@ -1030,7 +1038,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult findBucket(K key, PartialSearchMode partialSearchMode) throws IOException {
-    long pageIndex = ROOT_INDEX;
+    long pageIndex = rootIndex;
     final ArrayList<Long> path = new ArrayList<Long>();
 
     if (!(keySize == 1 || ((OCompositeKey) key).getKeys().size() == keySize || partialSearchMode.equals(PartialSearchMode.NONE))) {
