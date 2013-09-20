@@ -64,6 +64,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     collectionManager = owner.getDatabase().getSbTreeCollectionManager();
   }
 
+  public OSBTreeRIDSet(ODocument owner, Collection<OIdentifiable> iValue) {
+    this(owner);
+    addAll(iValue);
+  }
+
   private OSBTree<OIdentifiable, Boolean> getTree() {
     return collectionManager.loadSBTree(fileName, rootIndex);
   }

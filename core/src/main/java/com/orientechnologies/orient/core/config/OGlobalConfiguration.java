@@ -259,6 +259,8 @@ public enum OGlobalConfiguration {
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
+  PREFER_SBTREE_SET("collections.preferSBTreeSet", "", Boolean.class, true),
+
   // FILE
   FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
 

@@ -28,6 +28,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -57,11 +58,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
   public static final char FIELD_VALUE_SEPARATOR = ':';
+  private final boolean    preferSBTreeRIDSet    = OGlobalConfiguration.PREFER_SBTREE_SET.getValueAsBoolean();
 
   protected abstract ORecordSchemaAware<?> newObject(final String iClassName);
 
@@ -352,7 +355,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
       if (!(iValue instanceof OMVRBTreeRIDSet || iValue instanceof OSBTreeRIDSet)) {
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
-        coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
+        if (preferSBTreeRIDSet && iRecord.getDatabase().getStorage() instanceof OLocalPaginatedStorage)
+          coll = new OSBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
+        else
+          coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 
         iRecord.field(iName, coll);
       } else
