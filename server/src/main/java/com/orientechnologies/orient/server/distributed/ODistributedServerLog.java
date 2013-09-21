@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import java.util.logging.Level;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
  * Distributed logger.
@@ -29,6 +28,10 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public class ODistributedServerLog {
   public enum DIRECTION {
     NONE, IN, OUT, BOTH
+  }
+
+  public static boolean isDebugEnabled() {
+    return OLogManager.instance().isDebugEnabled();
   }
 
   public static void debug(final Object iRequester, final String iLocalNode, final String iRemoteNode, final DIRECTION iDirection,
