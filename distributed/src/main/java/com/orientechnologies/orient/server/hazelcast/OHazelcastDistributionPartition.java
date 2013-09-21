@@ -29,7 +29,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedPartition;
  * 
  */
 public class OHazelcastDistributionPartition implements ODistributedPartition {
-  private final Set<String> nodes = new HashSet<>(5);
+  private final Set<String> nodes = new HashSet<String>(5);
 
   public OHazelcastDistributionPartition(final List<String> nodes) {
     for (String n : nodes)
