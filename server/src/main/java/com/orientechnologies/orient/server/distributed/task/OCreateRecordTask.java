@@ -53,13 +53,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     recordType = iRecordType;
   }
 
-  public OCreateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType) {
-    super(iRunId, iOperationId, iRid, iVersion);
-    content = iContent;
-    recordType = iRecordType;
-  }
-
   @Override
   public OCreateRecordTask copy() {
     final OCreateRecordTask copy = (OCreateRecordTask) super.copy(new OCreateRecordTask());
@@ -74,8 +67,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "creating record %s/%s v.%s oper=%d.%d...", iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%s...",
+        iDatabaseName, rid.toString(), version.toString());
 
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
@@ -90,7 +83,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       rid = (ORecordId) record.getIdentity();
 
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> assigned new rid %s/%s v.%d oper=%d.%d", iDatabaseName, rid.toString(), record.getVersion(), runId, operationSerial);
+          "+-> assigned new rid %s/%s v.%d", iDatabaseName, rid.toString(), record.getVersion());
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {
@@ -117,7 +110,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(rid.toString());
     if (content == null)
       out.writeInt(0);
@@ -133,7 +125,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     rid = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     if (contentSize == 0)

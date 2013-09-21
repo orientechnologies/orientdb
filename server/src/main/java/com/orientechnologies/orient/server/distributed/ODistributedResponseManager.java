@@ -33,7 +33,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
  * 
  */
 public class ODistributedResponseManager {
-  private final long                              messageId;
+  private long                                    messageId;
   private final long                              sentOn;
   private final ConcurrentHashMap<String, Object> responses         = new ConcurrentHashMap<String, Object>();
   private int                                     receivedResponses = 0;
@@ -41,8 +41,8 @@ public class ODistributedResponseManager {
 
   private static final String                     NO_RESPONSE       = "waiting-for-response";
 
-  public ODistributedResponseManager(final long messageId, final Set<String> expectedResponses, final long iTotalTimeout) {
-    this.messageId = messageId;
+  public ODistributedResponseManager(final long iMessageId, final Set<String> expectedResponses, final long iTotalTimeout) {
+    this.messageId = iMessageId;
     this.sentOn = System.currentTimeMillis();
     this.totalTimeout = iTotalTimeout;
 
@@ -150,5 +150,9 @@ public class ODistributedResponseManager {
     merged.setPayload(mergedPayload);
 
     return merged;
+  }
+
+  public void setMessageId(long messageId) {
+    this.messageId = messageId;
   }
 }

@@ -93,13 +93,11 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(text);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     text = in.readUTF();
   }
 

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
 /**
@@ -30,21 +26,7 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  /**
-   * Constructor used from unmarshalling.
-   */
   public OAbstractReplicatedTask() {
-  }
-
-  /**
-   * Constructor used on creation from log.
-   * 
-   * @param iRunId
-   * @param iOperationId
-   */
-  public OAbstractReplicatedTask(final long iRunId, final long iOperationId) {
-    this.runId = iRunId;
-    this.operationSerial = iOperationId;
   }
 
   public abstract OAbstractReplicatedTask copy();
@@ -67,34 +49,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   @Override
   public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
     super.copy(iCopy);
-    ((OAbstractReplicatedTask) iCopy).runId = runId;
-    ((OAbstractReplicatedTask) iCopy).operationSerial = operationSerial;
     return iCopy;
   }
-
-  @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeLong(runId);
-    out.writeLong(operationSerial);
-  }
-
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    runId = in.readLong();
-    operationSerial = in.readLong();
-  }
-
-  public long getOperationSerial() {
-    return operationSerial;
-  }
-
-  public long getRunId() {
-    return runId;
-  }
-
-  @Override
-  public String toString() {
-    return "{" + runId + "." + operationSerial + "} " + super.toString();
-  }
-
 }

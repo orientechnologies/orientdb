@@ -40,9 +40,6 @@ public abstract class OAbstractRemoteTask implements Externalizable {
     FIRST_RESPONSE, MERGE
   }
 
-  protected long              runId;
-  protected long              operationSerial;
-
   protected transient boolean inheritedDatabase;
   protected transient String  nodeSource;
 
@@ -123,6 +120,7 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   }
 
   public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
+    iCopy.nodeSource = nodeSource;
     iCopy.inheritedDatabase = inheritedDatabase;
     return iCopy;
   }
@@ -136,10 +134,5 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   }
 
   public void undo() {
-  }
-
-  public void setId(final long iRunId, final long iOperationSerial) {
-    this.runId = iRunId;
-    this.operationSerial = iOperationSerial;
   }
 }

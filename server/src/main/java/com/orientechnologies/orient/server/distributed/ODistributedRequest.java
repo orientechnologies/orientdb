@@ -52,6 +52,4 @@ public interface ODistributedRequest {
   ODistributedRequest setPayload(final OAbstractRemoteTask payload);
 
   void undo();
-
-  ODistributedRequest assignUniqueId(long iRunId, long iOperationSerial);
 }

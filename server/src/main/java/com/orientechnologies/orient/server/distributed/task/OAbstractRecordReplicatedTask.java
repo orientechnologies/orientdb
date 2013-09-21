@@ -36,16 +36,6 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     this.version = iVersion;
   }
 
-  /**
-   * Constructor called on aligning
-   */
-  public OAbstractRecordReplicatedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
-      final ORecordVersion iVersion) {
-    super(iRunId, iOperationId);
-    this.rid = iRid;
-    this.version = iVersion;
-  }
-
   @Override
   public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
     super.copy(iCopy);

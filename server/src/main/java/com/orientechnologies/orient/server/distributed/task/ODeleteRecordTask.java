@@ -46,10 +46,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     super(iRid, iVersion);
   }
 
-  public ODeleteRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iRunId, iOperationId, iRid, iVersion);
-  }
-
   @Override
   public ODeleteRecordTask copy() {
     final ODeleteRecordTask copy = (ODeleteRecordTask) super.copy(new ODeleteRecordTask());
@@ -58,8 +54,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s oper=%d.%d",
-        iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s", iDatabaseName,
+        rid.toString(), version.toString());
 
     final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
     try {
@@ -98,7 +94,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(rid.toString());
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
@@ -107,7 +102,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     rid = new ORecordId(in.readUTF());
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
