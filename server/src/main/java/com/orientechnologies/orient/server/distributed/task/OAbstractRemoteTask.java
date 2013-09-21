@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.Externalizable;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -33,9 +34,11 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
  * 
  */
 public abstract class OAbstractRemoteTask implements Externalizable {
-  private static final long   serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  protected static final long DEFAULT_TIMEOUT  = 10000;
+  public enum RESULT_STRATEGY {
+    FIRST_RESPONSE, MERGE
+  }
 
   protected long              runId;
   protected long              operationSerial;
@@ -53,6 +56,26 @@ public abstract class OAbstractRemoteTask implements Externalizable {
 
   public abstract Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName)
       throws Exception;
+
+  public long getTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_TIMEOUT.getValueAsLong();
+  }
+
+  public long getSynchronousTimeout(final int iSynchNodes) {
+    return getTimeout() * iSynchNodes;
+  }
+
+  public long getTotalTimeout(final int iTotalNodes) {
+    return getTimeout() * iTotalNodes;
+  }
+
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.FIRST_RESPONSE;
+  }
+
+  public boolean isWriteOperation() {
+    return true;
+  }
 
   /**
    * Handles conflict between local and remote execution results.
@@ -76,6 +99,7 @@ public abstract class OAbstractRemoteTask implements Externalizable {
     return getName();
   }
 
+  // TODO: USE THE POOL!
   protected ODatabaseDocumentTx openDatabase(final OServer serverInstance, final String databaseName) {
     inheritedDatabase = true;
 
@@ -101,14 +125,6 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
     iCopy.inheritedDatabase = inheritedDatabase;
     return iCopy;
-  }
-
-  public long getTimeout() {
-    return DEFAULT_TIMEOUT;
-  }
-
-  public String getClusterName() {
-    return null;
   }
 
   public String getNodeSource() {

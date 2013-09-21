@@ -54,6 +54,15 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
   }
 
+  /**
+   * The command is replicated
+   * 
+   * @return
+   */
+  public boolean isReplicated() {
+    return true;
+  }
+
   public boolean isIdempotent() {
     return false;
   }

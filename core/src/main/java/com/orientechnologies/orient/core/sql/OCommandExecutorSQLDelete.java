@@ -21,7 +21,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -46,8 +46,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements
-    OCommandDistributedConditionalReplicateRequest, OCommandResultListener {
+public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
   public static final String   NAME            = "DELETE FROM";
   public static final String   KEYWORD_DELETE  = "DELETE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";

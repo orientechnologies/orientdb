@@ -47,8 +47,6 @@ public interface ODistributedServerManager {
 
   public boolean isOfflineNodeById(String iNodeName);
 
-  public boolean isLocalNodeMaster(Object iKey);
-
   public String getLocalNodeId();
 
   public String getLocalNodeName();
@@ -86,5 +84,7 @@ public interface ODistributedServerManager {
 
   public ODistributedPartition newPartition(List<String> partition);
 
-  public Object sendRequest(String iDatabaseName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
+  public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
+
+  public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
 }

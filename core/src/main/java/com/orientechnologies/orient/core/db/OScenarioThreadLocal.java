@@ -15,22 +15,35 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+
 /**
  * Thread local to know when the request comes from distributed requester avoiding loops.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODistributedThreadLocal extends ThreadLocal<String> {
-  public static ODistributedThreadLocal INSTANCE = new ODistributedThreadLocal();
+public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
+  public static OScenarioThreadLocal INSTANCE = new OScenarioThreadLocal();
+
+  public enum RUN_MODE {
+    DEFAULT, RUNNING_DISTRIBUTED
+  }
+
+  public OScenarioThreadLocal() {
+    set(RUN_MODE.DEFAULT);
+  }
 
   @Override
-  public void set(final String value) {
+  public void set(final RUN_MODE value) {
     super.set(value);
   }
 
   @Override
-  public String get() {
-    return super.get();
+  public RUN_MODE get() {
+    RUN_MODE result = super.get();
+    if (result == null)
+      result = RUN_MODE.DEFAULT;
+    return result;
   }
 }

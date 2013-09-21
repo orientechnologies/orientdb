@@ -217,4 +217,9 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
       }
     }
   }
+
+  @Override
+  public boolean isDistributed() {
+    return false;
+  }
 }

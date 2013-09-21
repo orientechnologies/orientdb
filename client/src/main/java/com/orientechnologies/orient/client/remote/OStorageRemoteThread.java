@@ -78,6 +78,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
+  @Override
+  public boolean isDistributed() {
+    return delegate.isDistributed();
+  }
+
   public void create(final Map<String, Object> iOptions) {
     pushSession();
     try {

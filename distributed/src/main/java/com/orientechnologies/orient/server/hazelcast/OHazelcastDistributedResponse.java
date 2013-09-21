@@ -52,6 +52,11 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   }
 
   @Override
+  public boolean isExecutedOnLocalNode() {
+    return getExecutorNodeName().equals(getSenderNodeName());
+  }
+
+  @Override
   public long getRequestId() {
     return requestId;
   }
@@ -83,8 +88,14 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     this.senderThreadId = senderThreadId;
   }
 
-  public void setPayload(final Serializable payload) {
+  public ODistributedResponse setPayload(final Serializable payload) {
     this.payload = payload;
+    return this;
+  }
+
+  public ODistributedResponse setExecutorNodeName(final String executorNodeName) {
+    this.executorNodeName = executorNodeName;
+    return this;
   }
 
   @Override
@@ -109,4 +120,5 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   public String toString() {
     return payload != null ? payload.toString() : null;
   }
+
 }

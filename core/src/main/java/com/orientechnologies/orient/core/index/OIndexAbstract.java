@@ -17,8 +17,15 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -118,7 +125,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * @param rebuild
    * @param progressListener
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   public OIndexInternal<?> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
       final OStreamSerializer valueSerializer) {
@@ -592,7 +598,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<Entry<Object, T>> inverseIterator() {
     checkForRebuild();
 

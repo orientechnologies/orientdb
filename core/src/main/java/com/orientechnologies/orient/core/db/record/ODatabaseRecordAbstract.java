@@ -38,7 +38,8 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
-import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.DISTRIBUTED_EXECUTION_MODE;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -1013,17 +1015,27 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     if (id == null || !OHookThreadLocal.INSTANCE.push(id))
       return RESULT.RECORD_NOT_CHANGED;
 
-    if (ODistributedThreadLocal.INSTANCE.get() != null)
-      // DON'T RUN HOOKS IN DISTRIBUTED MODE
-      return RESULT.RECORD_NOT_CHANGED;
-
     try {
       final ORecord<?> rec = id.getRecord();
       if (rec == null)
         return RESULT.RECORD_NOT_CHANGED;
 
+      RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+
       boolean recordChanged = false;
       for (ORecordHook hook : hooks.keySet()) {
+        // CHECK IF EXECUTE THE TRIGGER BASED ON STORAGE TYPE: DISTRIBUTED OR NOT
+        switch (runMode) {
+        case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
+          if (getStorage().isDistributed() && hook.getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
+            // SKIP
+            continue;
+          break; // TARGET NODE
+        case RUNNING_DISTRIBUTED:
+          if (hook.getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE)
+            continue;
+        }
+
         final RESULT res = hook.onTrigger(iType, rec);
 
         if (res == RESULT.RECORD_CHANGED)

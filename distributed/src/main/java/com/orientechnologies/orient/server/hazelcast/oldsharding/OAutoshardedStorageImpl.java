@@ -29,7 +29,8 @@ import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
@@ -79,6 +80,11 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     for (String clusterName : dhtConfiguration.getUndistributableClusters()) {
       undistributedClusters.add(wrapped.getClusterIdByName(clusterName));
     }
+  }
+
+  @Override
+  public boolean isDistributed() {
+    return true;
   }
 
   @Override
@@ -158,7 +164,7 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   @Override
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback) {
-    if (ODistributedThreadLocal.INSTANCE.get() != null || undistributedClusters.contains(iRecordId.getClusterId())) {
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT || undistributedClusters.contains(iRecordId.getClusterId())) {
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
 

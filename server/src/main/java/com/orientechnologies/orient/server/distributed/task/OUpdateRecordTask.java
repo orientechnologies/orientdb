@@ -70,7 +70,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "- updating record %s/%s v.%s oper=%d.%d", iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
+        "updating record %s/%s v.%s oper=%d.%d", iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
     final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
@@ -79,7 +79,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       record.save();
 
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "updated record %s/%s v.%s oper=%d.%d", iDatabaseName, rid.toString(), record.getRecordVersion().toString(), runId,
+          "+-> updated record %s/%s v.%s oper=%d.%d", iDatabaseName, rid.toString(), record.getRecordVersion().toString(), runId,
           operationSerial);
 
       return record.getRecordVersion();

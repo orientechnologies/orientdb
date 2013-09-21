@@ -15,8 +15,9 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedPartition;
@@ -28,7 +29,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedPartition;
  * 
  */
 public class OHazelcastDistributionPartition implements ODistributedPartition {
-  private final List<String> nodes = new ArrayList<String>(5);
+  private final Set<String> nodes = new HashSet<>(5);
 
   public OHazelcastDistributionPartition(final List<String> nodes) {
     for (String n : nodes)
@@ -36,7 +37,7 @@ public class OHazelcastDistributionPartition implements ODistributedPartition {
         this.nodes.add(n);
   }
 
-  public List<String> getNodes() {
+  public Set<String> getNodes() {
     return nodes;
   }
 }
