@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
@@ -37,15 +38,15 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-// TODO implement ORecordLazyMultiValue
-public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable {
+public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, ORecordLazyMultiValue {
   private final String                   fileName;
   private final long                     rootIndex;
   private final ORecordInternal<?>       owner;
+  private boolean                        autoConvertToRecord = true;
 
   private final OSBTreeCollectionManager collectionManager;
 
-  protected static final OJVMProfiler    PROFILER = Orient.instance().getProfiler();
+  protected static final OJVMProfiler    PROFILER            = Orient.instance().getProfiler();
 
   public OSBTreeRIDSet(ORecordInternal<?> owner) {
     this.owner = owner;
@@ -102,7 +103,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return new TreeKeyIterator(getTree());
+    return new TreeKeyIterator(getTree(), autoConvertToRecord);
   }
 
   @Override
@@ -112,6 +113,9 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
 
     for (OIdentifiable identifiable : this) {
+      if (autoConvertToRecord)
+        identifiable = identifiable.getRecord();
+
       list.add(identifiable);
     }
 
@@ -125,6 +129,9 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
 
     for (OIdentifiable identifiable : this) {
+      if (autoConvertToRecord)
+        identifiable = identifiable.getRecord();
+
       list.add(identifiable);
     }
 
@@ -236,11 +243,43 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     return new OSBTreeRIDSet(owner, fileName, rootIndex);
   }
 
+  @Override
+  public Iterator<OIdentifiable> rawIterator() {
+    return new TreeKeyIterator(getTree(), false);
+  }
+
+  @Override
+  public void convertLinks2Records() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean convertRecords2Links() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isAutoConvertToRecord() {
+    return autoConvertToRecord;
+  }
+
+  @Override
+  public void setAutoConvertToRecord(boolean convertToRecord) {
+    autoConvertToRecord = convertToRecord;
+  }
+
+  @Override
+  public boolean detach() {
+    throw new UnsupportedOperationException();
+  }
+
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
+    private final boolean                                   autoConvertToRecord;
     private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
-    public TreeKeyIterator(OSBTree<OIdentifiable, Boolean> tree) {
+    public TreeKeyIterator(OSBTree<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
       entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(tree);
+      this.autoConvertToRecord = autoConvertToRecord;
     }
 
     @Override
@@ -250,7 +289,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
     @Override
     public OIdentifiable next() {
-      return entryIterator.next().getKey();
+      final OIdentifiable identifiable = entryIterator.next().getKey();
+      if (autoConvertToRecord)
+        return identifiable.getRecord();
+      else
+        return identifiable;
     }
 
     @Override

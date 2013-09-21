@@ -77,4 +77,5 @@ public class OSBTreeRIDSetPersistencyTest {
     Assert.assertEquals(loaded.size(), expected.size());
     Assert.assertTrue(loaded.containsAll(expected));
   }
+
 }

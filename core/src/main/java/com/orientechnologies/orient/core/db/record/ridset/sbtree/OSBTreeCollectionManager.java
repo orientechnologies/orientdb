@@ -31,9 +31,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  */
 public class OSBTreeCollectionManager {
 
-  private final Map<String, OSBTree<OIdentifiable, Boolean>> treeCache = new HashMap<String, OSBTree<OIdentifiable, Boolean>>();
+  private final Map<Long, OSBTree<OIdentifiable, Boolean>> treeCache = new HashMap<Long, OSBTree<OIdentifiable, Boolean>>();
 
-  public static final String                                 FILE_ID   = "ridset";
+  public static final String                               FILE_ID   = "ridset";
 
   public OSBTree<OIdentifiable, Boolean> createSBTree() {
     OSBTree<OIdentifiable, Boolean> tree = new OSBTree<OIdentifiable, Boolean>(".sbt", 1, true);
@@ -41,18 +41,20 @@ public class OSBTreeCollectionManager {
     tree.create(FILE_ID, -1, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
 
-    treeCache.put(FILE_ID, tree);
+    treeCache.put(tree.getRootIndex(), tree);
 
     return tree;
   }
 
   public OSBTree<OIdentifiable, Boolean> loadSBTree(String fileName, long rootIndex) {
-    OSBTree<OIdentifiable, Boolean> tree = treeCache.get(fileName);
+    OSBTree<OIdentifiable, Boolean> tree = treeCache.get(rootIndex);
     if (tree != null)
       return tree;
 
     tree = new OSBTree<OIdentifiable, Boolean>(".sbt", 1, true);
     tree.load(fileName, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
+
+    treeCache.put(tree.getRootIndex(), tree);
 
     return tree;
   }
