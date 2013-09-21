@@ -53,29 +53,25 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s", iDatabaseName,
-        rid.toString(), version.toString());
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s",
+        database.getName(), rid.toString(), version.toString());
 
-    final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
-    try {
-      final ORecordInternal<?> record = database.load(rid);
-      if (record != null) {
-        record.getRecordVersion().copyFrom(version);
+    final ORecordInternal<?> record = database.load(rid);
+    if (record != null) {
+      record.getRecordVersion().copyFrom(version);
 
-        if (!version.isUntracked()) {
-          // UPDATE THE RECORD TO FORCE THE SETTING OF VERSION
-          record.getRecordVersion().setRollbackMode();
-          record.setDirty();
-          record.save();
-        }
-        record.delete();
-        return Boolean.TRUE;
+      if (!version.isUntracked()) {
+        // UPDATE THE RECORD TO FORCE THE SETTING OF VERSION
+        record.getRecordVersion().setRollbackMode();
+        record.setDirty();
+        record.save();
       }
-      return Boolean.FALSE;
-    } finally {
-      closeDatabase(database);
+      record.delete();
+      return Boolean.TRUE;
     }
+    return Boolean.FALSE;
   }
 
   /**

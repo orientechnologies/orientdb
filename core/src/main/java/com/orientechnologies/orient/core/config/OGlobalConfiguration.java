@@ -447,7 +447,7 @@ public enum OGlobalConfiguration {
 
   // DISTRIBUTED
   DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
-      1000),
+      10000),
 
   DISTRIBUTED_CRUD_TASK_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout in milliseconds to wait for CRUD remote tasks",
       Integer.class, 3000),

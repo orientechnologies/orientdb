@@ -283,4 +283,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected File getDistributedConfigFile(final String iDatabaseName) {
     return new File(serverInstance.getDatabaseDirectory() + iDatabaseName + "/" + FILE_DISTRIBUTED_DB_CONFIG);
   }
+
+  public OServer getServerInstance() {
+    return serverInstance;
+  }
 }

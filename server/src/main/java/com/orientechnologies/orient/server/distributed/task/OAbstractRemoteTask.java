@@ -18,12 +18,8 @@ package com.orientechnologies.orient.server.distributed.task;
 import java.io.Externalizable;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
@@ -51,7 +47,7 @@ public abstract class OAbstractRemoteTask implements Externalizable {
 
   public abstract String getName();
 
-  public abstract Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName)
+  public abstract Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception;
 
   public long getTimeout() {
@@ -94,29 +90,6 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   @Override
   public String toString() {
     return getName();
-  }
-
-  // TODO: USE THE POOL!
-  protected ODatabaseDocumentTx openDatabase(final OServer serverInstance, final String databaseName) {
-    inheritedDatabase = true;
-
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && db.getName().equals(databaseName) && !db.isClosed()) {
-      if (db instanceof ODatabaseDocumentTx)
-        return (ODatabaseDocumentTx) db;
-      else if (db.getDatabaseOwner() instanceof ODatabaseDocumentTx)
-        return (ODatabaseDocumentTx) db.getDatabaseOwner();
-    }
-
-    inheritedDatabase = false;
-    final OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-    return (ODatabaseDocumentTx) serverInstance
-        .openDatabase("document", databaseName, replicatorUser.name, replicatorUser.password);
-  }
-
-  protected void closeDatabase(final ODatabaseDocumentTx iDatabase) {
-    if (!inheritedDatabase)
-      iDatabase.close();
   }
 
   public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {

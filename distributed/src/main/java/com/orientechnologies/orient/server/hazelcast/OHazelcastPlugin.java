@@ -39,6 +39,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -68,21 +69,21 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
 
-  protected static final String                 CONFIG_NODE_PREFIX     = "node.";
-  protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
+  protected static final String                              CONFIG_NODE_PREFIX     = "node.";
+  protected static final String                              CONFIG_DATABASE_PREFIX = "database.";
 
-  protected String                              nodeId;
-  protected String                              hazelcastConfigFile    = "hazelcast.xml";
-  protected Map<String, Member>                 cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
-  protected long                                runId                  = -1;
-  protected OHazelcastDistributedMessageService messageService;
-  protected long                                timeOffset             = 0;
+  protected String                                           nodeId;
+  protected String                                           hazelcastConfigFile    = "hazelcast.xml";
+  protected Map<String, Member>                              cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
+  protected long                                             runId                  = -1;
+  protected Map<String, OHazelcastDistributedMessageService> messageServices        = new ConcurrentHashMap<String, OHazelcastDistributedMessageService>();
+  protected long                                             timeOffset             = 0;
 
-  protected volatile STATUS                     status                 = STATUS.OFFLINE;
+  protected volatile STATUS                                  status                 = STATUS.OFFLINE;
 
-  protected String                              membershipListenerRegistration;
+  protected String                                           membershipListenerRegistration;
 
-  protected volatile HazelcastInstance          hazelcastInstance;
+  protected volatile HazelcastInstance                       hazelcastInstance;
 
   public OHazelcastPlugin() {
   }
@@ -140,8 +141,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final IMap<String, Object> configurationMap = getConfigurationMap();
       configurationMap.addEntryListener(this, true);
 
-      messageService = new OHazelcastDistributedMessageService(this);
-
       // REGISTER CURRENT NODES
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
         final String memberName = getNodeName(m);
@@ -182,7 +181,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     setStatus(STATUS.OFFLINE);
 
-    messageService.shutdown();
+    for (OHazelcastDistributedMessageService messageService : messageServices.values())
+      messageService.shutdown();
 
     super.shutdown();
 
@@ -309,6 +309,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final EXECUTION_MODE iExecutionMode) {
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iClusterName,
         iTask, iExecutionMode);
+
+    final OHazelcastDistributedMessageService messageService = messageServices.get(iDatabaseName);
 
     final ODistributedResponse response = messageService.send(req);
     if (response != null)
@@ -451,12 +453,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   /**
    * Executes the request on local node. In case of error returns the Exception itself
+   * @param database 
    */
-  public Serializable executeOnLocalNode(final ODistributedRequest req) {
+  public Serializable executeOnLocalNode(final ODistributedRequest req, ODatabaseDocumentTx database) {
     final OAbstractRemoteTask task = req.getPayload();
 
     try {
-      return (Serializable) task.execute(serverInstance, this, req.getDatabaseName());
+      return (Serializable) task.execute(serverInstance, this, database);
     } catch (Throwable e) {
       return e;
     }
@@ -480,7 +483,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
 
-      messageService.configureDatabase(databaseName);
+      final OHazelcastDistributedMessageService messageService = new OHazelcastDistributedMessageService(this, databaseName);
+      messageServices.put(databaseName, messageService);
 
       managedDatabases.put(databaseName, databaseName);
 

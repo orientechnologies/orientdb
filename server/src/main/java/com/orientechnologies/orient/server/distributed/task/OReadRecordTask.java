@@ -45,18 +45,13 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
-    try {
-      final ORecordInternal<?> record = database.load(rid);
-      if (record == null)
-        return null;
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    final ORecordInternal<?> record = database.load(rid);
+    if (record == null)
+      return null;
 
-      return new ORawBuffer(record);
-
-    } finally {
-      closeDatabase(database);
-    }
+    return new ORawBuffer(record);
   }
 
   @Override

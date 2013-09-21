@@ -67,17 +67,12 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
     iConfictStrategy.handleCommandConflict(iRemoteNodeId, text, localResult, remoteResult);
   }
 
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
-        text.toString(), iDatabaseName);
+        text.toString(), database.getName());
 
-    final ODatabaseDocumentTx db = openDatabase(iServer, iDatabaseName);
-    try {
-      return db.command(new OCommandSQL(text)).execute();
-
-    } finally {
-      closeDatabase(db);
-    }
+    return database.command(new OCommandSQL(text)).execute();
   }
 
   @Override

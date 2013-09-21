@@ -66,29 +66,25 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%s...",
-        iDatabaseName, rid.toString(), version.toString());
+        database.getName(), rid.toString(), version.toString());
 
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
-    final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
-    try {
-      record.fill(rid, version, content, true);
-      if (rid.getClusterId() != -1)
-        record.save(database.getClusterNameById(rid.getClusterId()), true);
-      else
-        record.save();
+    record.fill(rid, version, content, true);
+    if (rid.getClusterId() != -1)
+      record.save(database.getClusterNameById(rid.getClusterId()), true);
+    else
+      record.save();
 
-      rid = (ORecordId) record.getIdentity();
+    rid = (ORecordId) record.getIdentity();
 
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> assigned new rid %s/%s v.%d", iDatabaseName, rid.toString(), record.getVersion());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
 
-      return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
-    } finally {
-      closeDatabase(database);
-    }
+    return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
   }
 
   /**

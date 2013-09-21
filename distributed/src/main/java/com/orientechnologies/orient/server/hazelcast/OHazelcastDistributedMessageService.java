@@ -32,8 +32,12 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
@@ -56,14 +60,15 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   protected final OHazelcastPlugin                                                  manager;
 
-  protected final Map<String, IQueue<?>>                                            queues                      = new HashMap<String, IQueue<?>>();
-  protected final Map<String, Lock>                                                 requestDatabaseLock         = new HashMap<String, Lock>(
-                                                                                                                    5);
+  protected final String                                                            databaseName;
+  protected final static Map<String, IQueue<?>>                                     queues                      = new HashMap<String, IQueue<?>>();
+  protected final Lock                                                              requestLock;
 
   protected final IQueue<ODistributedResponse>                                      nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ArrayBlockingQueue<ODistributedResponse>> internalThreadQueues;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager>              responsesByRequestIds;
   protected final TimerTask                                                         asynchMessageManager;
+  protected ODatabaseDocumentTx                                                     database;
 
   private static final String                                                       NODE_QUEUE_PREFIX           = "orientdb.node.";
   private static final String                                                       NODE_QUEUE_REQUEST_POSTFIX  = ".request";
@@ -72,8 +77,12 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   private static final String                                                       NODE_LOCK_PREFIX            = "orientdb.reqlock.";
 
-  public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
+  public OHazelcastDistributedMessageService(final OHazelcastPlugin manager, final String iDatabaseName) {
     this.manager = manager;
+    this.databaseName = iDatabaseName;
+
+    this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
+
     this.internalThreadQueues = new ConcurrentHashMap<Long, ArrayBlockingQueue<ODistributedResponse>>();
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
 
@@ -127,6 +136,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
         }
       }
     }).start();
+
+    configureDatabase(databaseName);
   }
 
   @Override
@@ -167,7 +178,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
-    final Lock requestLock = getLock(databaseName);
     try {
       requestLock.lock();
       try {
@@ -287,6 +297,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   public void configureDatabase(final String iDatabaseName) {
+    // TODO: USE THE POOL!
+    final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+    database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+        replicatorUser.password);
+
     // CREATE A QUEUE PER DATABASE
     final String queueName = getRequestQueueName(manager.getLocalNodeName(), iDatabaseName);
     final IQueue<ODistributedRequest> requestQueue = getQueue(queueName);
@@ -349,7 +364,13 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
             iRequest.getSenderNodeName() + ":" + iRequest.getSenderThreadId(), DIRECTION.IN, "request %s", iRequest.getPayload());
 
       // EXECUTE IT LOCALLY
-      final Serializable responsePayload = manager.executeOnLocalNode(iRequest);
+      final Serializable responsePayload;
+      try {
+        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        responsePayload = manager.executeOnLocalNode(iRequest, database);
+      } finally {
+        database.getLevel1Cache().clear();
+      }
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, manager.getLocalNodeName(),
@@ -423,6 +444,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   public void shutdown() {
+    try {
+      database.close();
+    } catch (Exception e) {
+    }
+
     internalThreadQueues.clear();
 
     asynchMessageManager.cancel();
@@ -559,20 +585,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   /**
-   * Return the request lock per database. If not exists create and register it.
-   */
-  protected Lock getLock(final String iDatabase) {
-    synchronized (requestDatabaseLock) {
-      Lock lock = requestDatabaseLock.get(iDatabase);
-      if (lock == null) {
-        lock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabase);
-        requestDatabaseLock.put(iDatabase, lock);
-      }
-      return lock;
-    }
-  }
-
-  /**
    * Return the queue. If not exists create and register it.
    */
   @SuppressWarnings("unchecked")
@@ -586,6 +598,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
       return manager.getHazelcastInstance().getQueue(iQueueName);
     }
+  }
+
+  public ODatabaseDocumentTx getDatabase() {
+    return database;
   }
 
 }
