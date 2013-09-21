@@ -75,7 +75,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "- creating record %s/%s v.%s oper=%d.%d...", iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
+        "creating record %s/%s v.%s oper=%d.%d...", iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
 
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
@@ -90,7 +90,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       rid = (ORecordId) record.getIdentity();
 
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "  - assigned new rid %s/%s v.%d oper=%d.%d", iDatabaseName, rid.toString(), record.getVersion(), runId, operationSerial);
+          "+-> assigned new rid %s/%s v.%d oper=%d.%d", iDatabaseName, rid.toString(), record.getVersion(), runId, operationSerial);
 
       return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
     } finally {

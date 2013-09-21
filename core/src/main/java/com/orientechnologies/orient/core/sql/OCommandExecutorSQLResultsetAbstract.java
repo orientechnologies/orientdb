@@ -113,6 +113,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   @Override
+  public boolean isReplicated() {
+    return true;
+  }
+
+  @Override
   public boolean isIdempotent() {
     return true;
   }

@@ -22,7 +22,8 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODistributedThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -189,7 +190,7 @@ public class OLocalDHTNode implements ODHTNode {
 
   private OPhysicalPosition executeCreateRecord(final String storageName, final ORecordId iRecordId, final byte[] iContent,
       final ORecordVersion iRecordVersion, final byte iRecordType) {
-    ODistributedThreadLocal.INSTANCE.set("");
+    OScenarioThreadLocal.INSTANCE.set(RUN_MODE.RUNNING_DISTRIBUTED);
     try {
       final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
 
@@ -207,7 +208,7 @@ public class OLocalDHTNode implements ODHTNode {
         closeDatabase(database);
       }
     } finally {
-      ODistributedThreadLocal.INSTANCE.set(null);
+      OScenarioThreadLocal.INSTANCE.set(RUN_MODE.DEFAULT);
     }
   }
 
@@ -654,11 +655,11 @@ public class OLocalDHTNode implements ODHTNode {
                 node.createRecord(storageName, (ORecordId) rec.getIdentity(), rec.toStream(), rec.getRecordVersion(),
                     rec.getRecordType());
 
-                ODistributedThreadLocal.INSTANCE.set("");
+                OScenarioThreadLocal.INSTANCE.set(RUN_MODE.RUNNING_DISTRIBUTED);
                 try {
                   rec.delete();
                 } finally {
-                  ODistributedThreadLocal.INSTANCE.set(null);
+                  OScenarioThreadLocal.INSTANCE.set(RUN_MODE.DEFAULT);
                 }
               }
             } finally {

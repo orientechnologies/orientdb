@@ -37,7 +37,6 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -50,7 +49,6 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -231,17 +229,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       ;
   }
 
-  public boolean isLocalNodeMaster(final Object iKey) {
-    final Member partitionOwner = hazelcastInstance.getPartitionService().getPartition(iKey).getOwner();
-    final boolean local = partitionOwner.equals(hazelcastInstance.getCluster().getLocalMember());
-
-    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-        "network partition: check for local master: key '%s' is assigned to %s (local=%s)", iKey, getNodeName(partitionOwner),
-        local);
-
-    return local;
-  }
-
   @Override
   public ODocument getClusterConfiguration() {
     if (!enabled)
@@ -318,9 +305,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public Object sendRequest(final String iDatabaseName, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
-    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName,
-        iTask.getClusterName(), iTask, iExecutionMode);
+  public Object sendRequest(final String iDatabaseName, final String iClusterName, final OAbstractRemoteTask iTask,
+      final EXECUTION_MODE iExecutionMode) {
+    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iClusterName,
+        iTask, iExecutionMode);
 
     final ODistributedResponse response = messageService.send(req);
     if (response != null)
@@ -331,7 +319,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public String[] getManagedDatabases() {
     synchronized (managedDatabases) {
-      return managedDatabases.toArray(new String[managedDatabases.size()]);
+      return managedDatabases.keySet().toArray(new String[managedDatabases.size()]);
     }
   }
 
@@ -376,11 +364,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void entryAdded(EntryEvent<String, Object> iEvent) {
     final String key = iEvent.getKey();
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "added node configuration id=%s name=%s",
-          iEvent.getMember(), getNodeName(iEvent.getMember()));
-
       final ODocument cfg = (ODocument) iEvent.getValue();
       cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
+          getNodeName(iEvent.getMember()), cachedClusterNodes.size());
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       saveDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
@@ -460,46 +449,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getLocalNodeName();
   }
 
+  /**
+   * Executes the request on local node. In case of error returns the Exception itself
+   */
   public Serializable executeOnLocalNode(final ODistributedRequest req) {
-    final Object requestPayload = req.getPayload();
+    final OAbstractRemoteTask task = req.getPayload();
 
-    if (requestPayload instanceof OAbstractReplicatedTask) {
-      // ROLLBACKABLE TASK
-      return executeRollbackableTask(req.getDatabaseName(), (OAbstractReplicatedTask) requestPayload);
-    } else if (requestPayload instanceof OAbstractRemoteTask) {
-      // REMOTE TASK
-      return executeTask(req.getDatabaseName(), (OAbstractRemoteTask) requestPayload);
+    try {
+      return (Serializable) task.execute(serverInstance, this, req.getDatabaseName());
+    } catch (Throwable e) {
+      return e;
     }
-
-    throw new ODistributedException("Invalid payload in request " + req);
   }
 
   @Override
   public ODistributedPartition newPartition(final List<String> partition) {
     return new OHazelcastDistributionPartition(partition);
-  }
-
-  protected Serializable executeTask(final String databaseName, final OAbstractRemoteTask task) {
-    try {
-      return (Serializable) task.execute(serverInstance, this, databaseName);
-    } catch (Exception e1) {
-      // EXCEPTION
-      throw new ODistributedException("Error on executing task: " + task, e1);
-    }
-  }
-
-  protected Serializable executeRollbackableTask(final String databaseName, final OAbstractReplicatedTask task) {
-    try {
-      final Serializable response = (Serializable) task.execute(serverInstance, this, databaseName);
-
-      return response;
-
-    } catch (Exception e1) {
-      if (e1 instanceof ONeedRetryException)
-        throw (ONeedRetryException) e1;
-
-      throw new ODistributedException("Error on executing task: " + task, e1);
-    }
   }
 
   protected IMap<String, Object> getConfigurationMap() {
@@ -516,6 +481,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
 
       messageService.configureDatabase(databaseName);
+
+      managedDatabases.put(databaseName, databaseName);
 
       checkLocalNodeInConfiguration(databaseName);
     }

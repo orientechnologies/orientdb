@@ -30,8 +30,6 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  protected boolean         align            = false;
-
   /**
    * Constructor used from unmarshalling.
    */
@@ -71,7 +69,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
     super.copy(iCopy);
     ((OAbstractReplicatedTask) iCopy).runId = runId;
     ((OAbstractReplicatedTask) iCopy).operationSerial = operationSerial;
-    ((OAbstractReplicatedTask) iCopy).align = align;
     return iCopy;
   }
 
@@ -79,14 +76,12 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(runId);
     out.writeLong(operationSerial);
-    out.writeBoolean(align);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     runId = in.readLong();
     operationSerial = in.readLong();
-    align = in.readBoolean();
   }
 
   public long getOperationSerial() {
@@ -95,14 +90,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
 
   public long getRunId() {
     return runId;
-  }
-
-  public boolean isAlign() {
-    return align;
-  }
-
-  public void setAlign(boolean align) {
-    this.align = align;
   }
 
   @Override

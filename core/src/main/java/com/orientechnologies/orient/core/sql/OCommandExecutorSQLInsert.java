@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -40,8 +40,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
-public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware implements
-    OCommandDistributedConditionalReplicateRequest {
+public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
   public static final String        KEYWORD_INSERT = "INSERT";
   private static final String       KEYWORD_VALUES = "VALUES";
   private String                    className      = null;
@@ -54,8 +53,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     className = null;
     newRecords = null;

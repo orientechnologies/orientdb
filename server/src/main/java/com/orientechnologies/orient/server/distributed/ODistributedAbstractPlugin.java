@@ -21,9 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -55,15 +54,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected static final String                           FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                       serverInstance;
-  protected Set<String>                                   managedDatabases            = new HashSet<String>();
+  protected Map<String, String>                           managedDatabases            = new ConcurrentHashMap<String, String>();
+  protected Map<String, ODocument>                        loadedDatabaseConfiguration = new ConcurrentHashMap<String, ODocument>();
   protected Map<String, ODocument>                        cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
   protected boolean                                       enabled                     = true;
   protected String                                        nodeName                    = null;
   protected Class<? extends OReplicationConflictResolver> confictResolverClass;
   protected File                                          defaultDatabaseConfigFile;
-  protected boolean                                       alignmentStartup;
-  protected int                                           alignmentTimer;
   protected Map<String, ODistributedPartitioningStrategy> strategies                  = new HashMap<String, ODistributedPartitioningStrategy>();
 
   @SuppressWarnings("unchecked")
@@ -91,10 +89,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         } catch (ClassNotFoundException e) {
           OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", e, param.value);
         }
-      else if (param.name.equalsIgnoreCase("alignment.startup"))
-        alignmentStartup = Boolean.parseBoolean(param.value);
-      else if (param.name.equalsIgnoreCase("alignment.timer"))
-        alignmentTimer = Integer.parseInt(param.value);
       else if (param.name.startsWith("sharding.strategy.")) {
         try {
           strategies.put(param.name.substring("sharding.strategy.".length()),
@@ -193,7 +187,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   }
 
-  public ODistributedPartitioningStrategy getStrategy(final String iStrategyName) {
+  public ODistributedPartitioningStrategy getPartitioningStrategy(final String iStrategyName) {
     return strategies.get(iStrategyName);
   }
 
@@ -210,6 +204,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       f.read(buffer);
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      loadedDatabaseConfiguration.put(iDatabaseName, doc);
       updateDatabaseConfiguration(iDatabaseName, doc);
       return doc;
 
@@ -250,13 +245,20 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   protected void saveDatabaseConfiguration(final String iDatabaseName, final ODocument cfg) {
     synchronized (cachedDatabaseConfiguration) {
-      final ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
+      final ODocument oldCfg = loadedDatabaseConfiguration.get(iDatabaseName);
       if (oldCfg != null && Arrays.equals(oldCfg.toStream(), cfg.toStream()))
         // NO CHANGE, SKIP IT
         return;
     }
 
+    // INCREMENT VERSION
+    Integer oldVersion = cfg.field("version");
+    if (oldVersion == null)
+      oldVersion = 0;
+    cfg.field("version", oldVersion.intValue() + 1);
+
     updateDatabaseConfiguration(iDatabaseName, cfg);
+    loadedDatabaseConfiguration.put(iDatabaseName, cfg);
 
     FileOutputStream f = null;
     try {

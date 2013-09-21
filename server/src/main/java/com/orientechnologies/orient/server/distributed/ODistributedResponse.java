@@ -33,4 +33,10 @@ public interface ODistributedResponse {
   Serializable getPayload();
 
   long getRequestId();
+
+  ODistributedResponse setExecutorNodeName(String iExecutor);
+
+  ODistributedResponse setPayload(Serializable iPayload);
+
+  boolean isExecutedOnLocalNode();
 }

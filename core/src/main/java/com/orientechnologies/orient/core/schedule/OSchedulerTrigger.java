@@ -28,68 +28,74 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_S
  */
 
 public class OSchedulerTrigger extends ODocumentHookAbstract {
-	public OSchedulerTrigger() {
-		setIncludeClasses(OScheduler.CLASSNAME);
-	}
+  public OSchedulerTrigger() {
+    setIncludeClasses(OScheduler.CLASSNAME);
+  }
 
-	@Override
-	public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-        String name = iDocument.field(OScheduler.PROP_NAME);
-        OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(name);
-        if(scheduler != null) {
-        	throw new OException("Duplicate Scheduler");
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
+
+  @Override
+  public RESULT onRecordBeforeCreate(final ODocument iDocument) {
+    String name = iDocument.field(OScheduler.PROP_NAME);
+    OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(name);
+    if (scheduler != null) {
+      throw new OException("Duplicate Scheduler");
+    }
+    boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument.field(OScheduler.PROP_STARTED));
+    if (start)
+      iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
+    else
+      iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+    iDocument.field(OScheduler.PROP_STARTED, start);
+    return RESULT.RECORD_CHANGED;
+  }
+
+  @Override
+  public void onRecordAfterCreate(final ODocument iDocument) {
+    OScheduler scheduler = new OScheduler(iDocument);
+    ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);
+  }
+
+  @Override
+  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
+    try {
+      boolean isStart = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument
+          .field(OScheduler.PROP_STARTED));
+      String schedulerName = iDocument.field(OScheduler.PROP_NAME);
+      OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener()
+          .getScheduler(schedulerName);
+      if (isStart) {
+        if (scheduler == null) {
+          scheduler = new OScheduler(iDocument);
+          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);
         }
-		boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean)iDocument.field(OScheduler.PROP_STARTED));
-		if(start)
-			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
-		else
-			iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
-		iDocument.field(OScheduler.PROP_STARTED, start);
-		return RESULT.RECORD_CHANGED;
-	}
-	
-	@Override
-	public void onRecordAfterCreate(final ODocument iDocument) {
-		OScheduler scheduler = new OScheduler(iDocument);
-		ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);
-	}
-	
-	@Override
-	public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-		try {
-			boolean isStart = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean)iDocument.field(OScheduler.PROP_STARTED));
-			String schedulerName = iDocument.field(OScheduler.PROP_NAME);
-			OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(schedulerName);
-			if(isStart) {
-				if(scheduler == null) {
-					scheduler = new OScheduler(iDocument);
-					ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);				
-				}
-				String currentStatus = iDocument.field(OScheduler.PROP_STATUS);
-				if(currentStatus.equals(SCHEDULER_STATUS.STOPPED.name())) {
-					iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
-				}
-			} else {
-				if(scheduler != null) {
-					iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
-				}
-			}	
-			scheduler.resetDocument(iDocument);
-		} catch(Exception ex) {
-			OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
-			return RESULT.RECORD_NOT_CHANGED;
-		}
-		return RESULT.RECORD_CHANGED;
-	}
-	
-	@Override
-	public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-		String schedulerName = iDocument.field(OScheduler.PROP_NAME);
-		OScheduler scheduler = null;
-		scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(schedulerName);
-		if(scheduler != null) {
-			ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().removeScheduler(scheduler);
-		}
-		return RESULT.RECORD_CHANGED;
-	}
+        String currentStatus = iDocument.field(OScheduler.PROP_STATUS);
+        if (currentStatus.equals(SCHEDULER_STATUS.STOPPED.name())) {
+          iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
+        }
+      } else {
+        if (scheduler != null) {
+          iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+        }
+      }
+      scheduler.resetDocument(iDocument);
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
+      return RESULT.RECORD_NOT_CHANGED;
+    }
+    return RESULT.RECORD_CHANGED;
+  }
+
+  @Override
+  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
+    String schedulerName = iDocument.field(OScheduler.PROP_NAME);
+    OScheduler scheduler = null;
+    scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(schedulerName);
+    if (scheduler != null) {
+      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().removeScheduler(scheduler);
+    }
+    return RESULT.RECORD_CHANGED;
+  }
 }

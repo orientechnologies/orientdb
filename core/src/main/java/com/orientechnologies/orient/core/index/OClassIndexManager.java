@@ -54,7 +54,10 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
   public OClassIndexManager() {
-    // rebuild indexes if index cluster wasn't closed properly
+  }
+
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }
 
   @Override

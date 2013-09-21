@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook.DISTRIBUTED_EXECUTION_MODE;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -40,7 +41,9 @@ public class HookTest extends ORecordHookAbstract {
   public HookTest(String iURL) {
     database = new OObjectDatabaseTx(iURL);
   }
-
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
   @Test
   public void testRegisterHook() throws IOException {
     database.open("admin", "admin");

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
@@ -36,19 +37,12 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 public class OSQLCommandTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
-  private static final long CMD_TIMEOUT      = 60000;
-
   protected String          text;
 
   public OSQLCommandTask() {
   }
 
   public OSQLCommandTask(final String iCommand) {
-    text = iCommand;
-  }
-
-  public OSQLCommandTask(final long iRunId, final long iOperationId, final String iCommand) {
-    super(iRunId, iOperationId);
     text = iCommand;
   }
 
@@ -74,7 +68,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   }
 
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "- execute command=%s db=%s",
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
         text.toString(), iDatabaseName);
 
     final ODatabaseDocumentTx db = openDatabase(iServer, iDatabaseName);
@@ -84,6 +78,11 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
     } finally {
       closeDatabase(db);
     }
+  }
+
+  @Override
+  public long getTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_TIMEOUT.getValueAsLong();
   }
 
   public OSQLCommandTask copy(final OSQLCommandTask iCopy) {
@@ -117,10 +116,5 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   @Override
   public String getPayload() {
     return text;
-  }
-
-  @Override
-  public long getTimeout() {
-    return CMD_TIMEOUT;
   }
 }

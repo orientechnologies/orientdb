@@ -58,7 +58,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "- delete record %s/%s v.%s oper=%d.%d",
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s oper=%d.%d",
         iDatabaseName, rid.toString(), version.toString(), runId, operationSerial);
 
     final ODatabaseDocumentTx database = openDatabase(iServer, iDatabaseName);
@@ -67,7 +67,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       if (record != null) {
         record.getRecordVersion().copyFrom(version);
 
-        if (align && !version.isUntracked()) {
+        if (!version.isUntracked()) {
           // UPDATE THE RECORD TO FORCE THE SETTING OF VERSION
           record.getRecordVersion().setRollbackMode();
           record.setDirty();

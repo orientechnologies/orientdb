@@ -15,42 +15,44 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 /**
- * Distributed task used for synchronization. It doesn't execute any operation, but it assures the other nodes update the task id.
+ * Distributed map and reduce task that collect and merge the result.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ONoOperationTask extends OAbstractReplicatedTask {
+public class OMapReduceCommandTask extends OSQLCommandTask {
   private static final long serialVersionUID = 1L;
 
-  public ONoOperationTask() {
+  public OMapReduceCommandTask() {
   }
 
-  public ONoOperationTask(final OAbstractReplicatedTask iTaskToClone) {
-    super(iTaskToClone.getRunId(), iTaskToClone.getOperationSerial());
-  }
-
-  @Override
-  public ONoOperationTask copy() {
-    return (ONoOperationTask) super.copy(new ONoOperationTask());
+  public OMapReduceCommandTask(final String iCommand) {
+    super(iCommand);
   }
 
   @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final String iDatabaseName) throws Exception {
-    return null;
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.MERGE;
+  }
+
+  public boolean isWriteOperation() {
+    return false;
+  }
+
+  @Override
+  public OMapReduceCommandTask copy() {
+    final OMapReduceCommandTask copy = (OMapReduceCommandTask) super.copy(new OMapReduceCommandTask());
+    return copy;
+  }
+
+  public OMapReduceCommandTask copy(final OMapReduceCommandTask iCopy) {
+    super.copy(iCopy);
+    return iCopy;
   }
 
   @Override
   public String getName() {
-    return "noop";
-  }
-
-  @Override
-  public String getPayload() {
-    return "noop=" + runId + "." + operationSerial;
+    return "map_reduce_command";
   }
 }
