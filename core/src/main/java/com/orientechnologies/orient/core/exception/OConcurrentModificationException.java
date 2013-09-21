@@ -66,7 +66,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
     // EXTRACT MY VERSION
     beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
     endPos = message.indexOf(')', beginPos);
-    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
+    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), recordVersion);
   }
 
   public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
