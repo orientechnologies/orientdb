@@ -15,12 +15,15 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,17 +32,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.FileSystemXmlConfig;
+import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.IQueue;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,6 +65,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 /**
@@ -75,9 +82,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected String                                           nodeId;
   protected String                                           hazelcastConfigFile    = "hazelcast.xml";
   protected Map<String, Member>                              cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
-  protected long                                             runId                  = -1;
   protected Map<String, OHazelcastDistributedMessageService> messageServices        = new ConcurrentHashMap<String, OHazelcastDistributedMessageService>();
   protected long                                             timeOffset             = 0;
+  protected Date                                             startedOn              = new Date();
 
   protected volatile STATUS                                  status                 = STATUS.OFFLINE;
 
@@ -150,10 +157,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       initDistributedDatabases();
 
-      // GET AND REGISTER THE CLUSTER RUN ID IF NOT PRESENT
-      configurationMap.putIfAbsent("runId", hazelcastInstance.getCluster().getClusterTime());
-      runId = (Long) getConfigurationMap().get("runId");
-
       // REGISTER CURRENT MEMBERS
       setStatus(STATUS.ONLINE);
 
@@ -190,16 +193,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
-  }
-
-  @Override
-  public long incrementDistributedSerial(final String iDatabaseName) {
-    return hazelcastInstance.getAtomicLong("db." + iDatabaseName).incrementAndGet();
-  }
-
-  @Override
-  public long getRunId() {
-    return runId;
   }
 
   private void checkForConflicts(final String iDatabaseName, final OAbstractReplicatedTask taskToPropagate,
@@ -244,7 +237,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // INSERT MEMBERS
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
-    members.add(getLocalNodeConfiguration());
+    // members.add(getLocalNodeConfiguration());
     for (Member member : cachedClusterNodes.values()) {
       members.add(getNodeConfigurationById(member.getUuid()));
     }
@@ -263,6 +256,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     nodeCfg.field("id", getLocalNodeId());
     nodeCfg.field("name", getLocalNodeName());
     nodeCfg.field("status", getStatus());
+    nodeCfg.field("startedOn", startedOn);
 
     List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
     nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
@@ -332,6 +326,40 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public String getLocalNodeId() {
     return nodeId;
+  }
+
+  public ODocument getStats() {
+    final ODocument doc = new ODocument();
+
+    final Map<String, HashMap<String, Object>> nodes = new HashMap<String, HashMap<String, Object>>();
+    doc.field("nodes", nodes);
+
+    for (Entry<String, QueueConfig> entry : hazelcastInstance.getConfig().getQueueConfigs().entrySet()) {
+      final String queueName = entry.getKey();
+
+      if (!queueName.startsWith(OHazelcastDistributedMessageService.NODE_QUEUE_PREFIX))
+        continue;
+
+      final IQueue<Object> queue = hazelcastInstance.getQueue(queueName);
+
+      final String[] names = queueName.split("\\.");
+
+      HashMap<String, Object> node = nodes.get(names[2]);
+      if (node == null) {
+        node = new HashMap<String, Object>();
+        nodes.put(names[2], node);
+      }
+
+      if (names[3].equals("response")) {
+        node.put("responses", queue.size());
+      } else {
+        final String dbName = names[3];
+
+        node.put(dbName + ".requests", queue.size());
+      }
+    }
+
+    return doc;
   }
 
   public String getNodeName(final Member iMember) {
@@ -453,7 +481,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   /**
    * Executes the request on local node. In case of error returns the Exception itself
-   * @param database 
+   * 
+   * @param database
    */
   public Serializable executeOnLocalNode(final ODistributedRequest req, ODatabaseDocumentTx database) {
     final OAbstractRemoteTask task = req.getPayload();
@@ -478,17 +507,44 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    * Initializes distributed databases.
    */
   protected void initDistributedDatabases() {
+    final Set<String> configuredDatabases = new HashSet<String>();
     for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
       final String databaseName = storageEntry.getKey();
 
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
 
-      final OHazelcastDistributedMessageService messageService = new OHazelcastDistributedMessageService(this, databaseName);
-      messageServices.put(databaseName, messageService);
+      messageServices.put(databaseName, new OHazelcastDistributedMessageService(this, databaseName));
 
       managedDatabases.put(databaseName, databaseName);
 
       checkLocalNodeInConfiguration(databaseName);
+
+      configuredDatabases.add(databaseName);
+    }
+
+    installNewDatabases(configuredDatabases);
+  }
+
+  protected void installNewDatabases(final Set<String> configuredDatabases) {
+    for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
+      if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
+        final String dbName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
+
+        if (!configuredDatabases.contains(dbName)) {
+          final ODocument config = (ODocument) entry.getValue();
+          final Boolean autoDeploy = config.field("autoDeploy");
+          if (autoDeploy != null && autoDeploy) {
+            ByteArrayInputStream is = new ByteArrayInputStream((byte[]) sendRequest(dbName, null, new ODeployDatabaseTask(),
+                EXECUTION_MODE.RESPONSE));
+
+            final ODatabaseDocumentTx db = new ODatabaseDocumentTx("databases/" + dbName).create();
+            try {
+              new ODatabaseImport(db, is, null);
+            } catch (IOException e) {
+            }
+          }
+        }
+      }
     }
   }
 

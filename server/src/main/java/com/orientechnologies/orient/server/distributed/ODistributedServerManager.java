@@ -65,10 +65,6 @@ public interface ODistributedServerManager {
    */
   public long getDistributedTime(long iTme);
 
-  public long getRunId();
-
-  public long incrementDistributedSerial(String iDatabaseName);
-
   /**
    * Gets a distributed lock
    * 
@@ -87,4 +83,6 @@ public interface ODistributedServerManager {
   public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
+
+  public ODocument getStats();
 }
