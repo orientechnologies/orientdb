@@ -31,254 +31,249 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandGetLog extends
-		OServerCommandAuthenticatedServerAbstract {
+public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstract {
 
-	private static final String[] NAMES = { "GET|log/*" };
+  private static final String[] NAMES         = { "GET|log/*" };
 
-	private static final String TAIL = "tail";
+  private static final String   TAIL          = "tail";
 
-	private static final String FILE = "file";
+  private static final String   FILE          = "file";
 
-	private static final String SEARCH = "search";
+  private static final String   SEARCH        = "search";
 
-	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+  SimpleDateFormat              dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
-	public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
-		super(iConfiguration.pattern);
-	}
+  public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
+    super(iConfiguration.pattern);
+  }
 
-	public OServerCommandGetLog() {
-		super("server.log");
-	}
+  public OServerCommandGetLog() {
+    super("server.log");
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse)
-			throws Exception {
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-		final String[] urlParts = checkSyntax(iRequest.url, 3,
-				"Syntax error: log/<type>/<value>");
+    final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: log/<type>/<value>");
 
-		String type = urlParts[1];
+    String type = urlParts[1];
 
-		String value = urlParts[2];
+    String value = urlParts[2];
 
-		String orientdb_home = System.getenv("ORIENTDB_HOME");
+    String orientdb_home = System.getenv("ORIENTDB_HOME");
 
-		String logsDirectory = orientdb_home.concat("/log");
+    String logsDirectory = orientdb_home.concat("/log");
 
-		File directory = new File(logsDirectory);
-		// Reading directory contents
+    File directory = new File(logsDirectory);
+    // Reading directory contents
 
-		FilenameFilter filter = new FilenameFilter() {
-			public boolean accept(File directory, String fileName) {
-				return !fileName.endsWith(".lck");
-			}
-		};
+    FilenameFilter filter = new FilenameFilter() {
+      public boolean accept(File directory, String fileName) {
+        return !fileName.endsWith(".lck");
+      }
+    };
 
-		File[] files = directory.listFiles(filter);
-		Arrays.sort(files);
-		// List<String> lines = new ArrayList<String>();
+    File[] files = directory.listFiles(filter);
+    Arrays.sort(files);
+    // List<String> lines = new ArrayList<String>();
 
-		List<ODocument> subdocuments = new ArrayList<ODocument>();
-		final ODocument result = new ODocument();
+    List<ODocument> subdocuments = new ArrayList<ODocument>();
+    final ODocument result = new ODocument();
 
-		String line = "";
-		String dayToDoc = "";
-		String hour = "";
-		String typeToDoc = "";
-		String info = "";
+    String line = "";
+    String dayToDoc = "";
+    String hour = "";
+    String typeToDoc = "";
+    String info = "";
 
-		ODocument doc = new ODocument();
+    ODocument doc = new ODocument();
 
-		if (TAIL.equals(type)) {
-			Integer valueInt = new Integer(value);
-			File f = files[0];
-			BufferedReader br = new BufferedReader(new FileReader(f));
-			valueInt = new Integer(value);
-			for (int i = 0; i < valueInt && line != null; i++) {
-				line = br.readLine();
-				if (line != null) {
-					String[] split = line.split(" ");
-					if (split != null) {
-						Date day = null;
+    if (TAIL.equals(type)) {
+      Integer valueInt = new Integer(value);
+      File f = files[0];
+      BufferedReader br = new BufferedReader(new FileReader(f));
+      valueInt = new Integer(value);
+      for (int i = 0; i < valueInt && line != null; i++) {
+        line = br.readLine();
+        if (line != null) {
+          String[] split = line.split(" ");
+          if (split != null) {
+            Date day = null;
 
-						try {
+            try {
 
-							day = dateFormatter.parse(split[0]);
-							// sono riuscito a creare una data allora e' una
-							// nuova riga
-							// salvo il documento della riga precedente se
-							// presente
-							if (doc.field("day") != null) {
-								doc.field("info", info);
-								subdocuments.add(doc);
-								doc = new ODocument();
-							}
+              day = dateFormatter.parse(split[0]);
+              // sono riuscito a creare una data allora e' una
+              // nuova riga
+              // salvo il documento della riga precedente se
+              // presente
+              if (doc.field("day") != null) {
+                doc.field("info", info);
+                subdocuments.add(doc);
+                doc = new ODocument();
+              }
 
-							// creo un nuovo documento
-							dayToDoc = split[0];
-							hour = split[1];
-							typeToDoc = split[2];
+              // creo un nuovo documento
+              dayToDoc = split[0];
+              hour = split[1];
+              typeToDoc = split[2];
 
-							if (doc.field("day") == null) {
-								doc = new ODocument();
-								addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-							}
-							line = line.replace(split[0], "");
-							line = line.replace(split[1], "");
-							line = line.replace(split[2], "");
-							info = line;
+              if (doc.field("day") == null) {
+                doc = new ODocument();
+                addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+              }
+              line = line.replace(split[0], "");
+              line = line.replace(split[1], "");
+              line = line.replace(split[2], "");
+              info = line;
 
-						} catch (Exception e) {
-							// e' uno stack trace
-							info = info.concat(line);
-						}
-					}
-				} else {
-					if (doc.field("day") != null) {
-						addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-						doc.field("info", info);
-						subdocuments.add(doc);
-					}
-				}
-			}
-			br.close();
-		} else if (FILE.equals(type)) {
-			Integer valueInt = new Integer(value);
-			File f = files[new Integer(valueInt)];
-			BufferedReader br = new BufferedReader(new FileReader(f));
-			while (line != null) {
-				line = br.readLine();
-				if (line != null) {
-					String[] split = line.split(" ");
-					if (split != null) {
-						Date day = null;
+            } catch (Exception e) {
+              // e' uno stack trace
+              info = info.concat(line);
+            }
+          }
+        } else {
+          if (doc.field("day") != null) {
+            addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+            doc.field("info", info);
+            subdocuments.add(doc);
+          }
+        }
+      }
+      br.close();
+    } else if (FILE.equals(type)) {
+      Integer valueInt = new Integer(value);
+      File f = files[new Integer(valueInt)];
+      BufferedReader br = new BufferedReader(new FileReader(f));
+      while (line != null) {
+        line = br.readLine();
+        if (line != null) {
+          String[] split = line.split(" ");
+          if (split != null) {
+            Date day = null;
 
-						try {
+            try {
 
-							day = dateFormatter.parse(split[0]);
-							// sono riuscito a creare una data allora e' una
-							// nuova riga
-							// salvo il documento della riga precedente se
-							// presente
-							if (doc.field("day") != null) {
-								doc.field("info", info);
-								subdocuments.add(doc);
-								doc = new ODocument();
-							}
+              day = dateFormatter.parse(split[0]);
+              // sono riuscito a creare una data allora e' una
+              // nuova riga
+              // salvo il documento della riga precedente se
+              // presente
+              if (doc.field("day") != null) {
+                doc.field("info", info);
+                subdocuments.add(doc);
+                doc = new ODocument();
+              }
 
-							// creo un nuovo documento
-							dayToDoc = split[0];
-							hour = split[1];
-							typeToDoc = split[2];
+              // creo un nuovo documento
+              dayToDoc = split[0];
+              hour = split[1];
+              typeToDoc = split[2];
 
-							if (doc.field("day") == null) {
-								doc = new ODocument();
-								addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-							}
-							line = line.replace(split[0], "");
-							line = line.replace(split[1], "");
-							line = line.replace(split[2], "");
-							info = line;
+              if (doc.field("day") == null) {
+                doc = new ODocument();
+                addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+              }
+              line = line.replace(split[0], "");
+              line = line.replace(split[1], "");
+              line = line.replace(split[2], "");
+              info = line;
 
-						} catch (Exception e) {
-							// e' uno stack trace
-							info = info.concat(line);
-						}
-					}
+            } catch (Exception e) {
+              // e' uno stack trace
+              info = info.concat(line);
+            }
+          }
 
-				} else {
-					if (doc.field("day") != null) {
-						addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-						doc.field("info", info);
-						subdocuments.add(doc);
-					}
-				}
+        } else {
+          if (doc.field("day") != null) {
+            addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+            doc.field("info", info);
+            subdocuments.add(doc);
+          }
+        }
 
-			}
-			br.close();
-		} else if (SEARCH.equals(type)) {
-			// ricerca intelligente
+      }
+      br.close();
+    } else if (SEARCH.equals(type)) {
+      // ricerca intelligente
 
-			for (int i = 0 ; i<files.length-1 ; i++) {
-				line="";
-				BufferedReader br = new BufferedReader(new FileReader(files[i]));
-				while (line != null) {
-					line = br.readLine();
-					if (line != null) {
-						String[] split = line.split(" ");
-						if (split != null) {
-							Date day = null;
+      for (int i = 0; i < files.length - 1; i++) {
+        line = "";
+        BufferedReader br = new BufferedReader(new FileReader(files[i]));
+        while (line != null) {
+          line = br.readLine();
+          if (line != null) {
+            String[] split = line.split(" ");
+            if (split != null) {
+              Date day = null;
 
-							try {
+              try {
 
-								day = dateFormatter.parse(split[0]);
-								// sono riuscito a creare una data allora e' una
-								// nuova riga
-								// salvo il documento della riga precedente se
-								// presente
-								if (doc.field("day") != null) {
-									doc.field("info", info);
-									if(info.contains(value)){
-										subdocuments.add(doc);
-									}
-									doc = new ODocument();
-								}
+                day = dateFormatter.parse(split[0]);
+                // sono riuscito a creare una data allora e' una
+                // nuova riga
+                // salvo il documento della riga precedente se
+                // presente
+                if (doc.field("day") != null) {
+                  doc.field("info", info);
+                  if (info.contains(value)) {
+                    subdocuments.add(doc);
+                  }
+                  doc = new ODocument();
+                }
 
-								// creo un nuovo documento
-								dayToDoc = split[0];
-								hour = split[1];
-								typeToDoc = split[2];
+                // creo un nuovo documento
+                dayToDoc = split[0];
+                hour = split[1];
+                typeToDoc = split[2];
 
-								if (doc.field("day") == null) {
-									doc = new ODocument();
-									addFieldToDoc(dayToDoc, hour, typeToDoc,
-											doc);
-								}
-								line = line.replace(split[0], "");
-								line = line.replace(split[1], "");
-								line = line.replace(split[2], "");
-								info = line;
+                if (doc.field("day") == null) {
+                  doc = new ODocument();
+                  addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+                }
+                line = line.replace(split[0], "");
+                line = line.replace(split[1], "");
+                line = line.replace(split[2], "");
+                info = line;
 
-							} catch (Exception e) {
-								// e' uno stack trace
-								info = info.concat(line);
-							}
-						}
+              } catch (Exception e) {
+                // e' uno stack trace
+                info = info.concat(line);
+              }
+            }
 
-					} else {
-						if (doc.field("day") != null) {
-							addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-							doc.field("info", info);
-							if(info.contains(value)){
-								subdocuments.add(doc);
-							}
-						}
-					}
-				}
+          } else {
+            if (doc.field("day") != null) {
+              addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+              doc.field("info", info);
+              if (info.contains(value)) {
+                subdocuments.add(doc);
+              }
+            }
+          }
+        }
 
-			}
+      }
 
-		}
+    }
 
-		iRequest.data.commandInfo = "Load log";
+    iRequest.data.commandInfo = "Load log";
 
-		result.field("logs", subdocuments);
-		iResponse.writeRecord(result, null, "");
+    result.field("logs", subdocuments);
+    iResponse.writeRecord(result, null, "");
 
-		return false;
-	}
+    return false;
+  }
 
-	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc,
-			ODocument doc) {
-		doc.field("day", dayToDoc);
-		doc.field("hour", hour);
-		doc.field("type", typeToDoc);
-	}
+  private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc, ODocument doc) {
+    doc.field("day", dayToDoc);
+    doc.field("hour", hour);
+    doc.field("type", typeToDoc);
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

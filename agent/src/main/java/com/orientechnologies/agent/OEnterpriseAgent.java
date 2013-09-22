@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent;
 
+import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
 import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
 import com.orientechnologies.orient.server.OServer;
@@ -26,43 +27,43 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
-	private OServer server;
+  private OServer server;
 
-	public OEnterpriseAgent() {
-	}
+  public OEnterpriseAgent() {
+  }
 
-	@Override
-	public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-		server = oServer;
-	}
+  @Override
+  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    server = oServer;
+  }
 
-	@Override
-	public String getName() {
-		return "enterprise-agent";
-	}
+  @Override
+  public String getName() {
+    return "enterprise-agent";
+  }
 
-	@Override
-	public void startup() {
-		installCommands();
-	}
+  @Override
+  public void startup() {
+    installCommands();
+  }
 
-	@Override
-	public void shutdown() {
-		uninstallCommands();
-	}
+  @Override
+  public void shutdown() {
+    uninstallCommands();
+  }
 
-	private void installCommands() {
-		final OServerNetworkListener listener = server
-				.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-		listener.registerStatelessCommand(new OServerCommandGetProfiler());
-		listener.registerStatelessCommand(new OServerCommandGetLog());
+  private void installCommands() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    listener.registerStatelessCommand(new OServerCommandGetProfiler());
+    listener.registerStatelessCommand(new OServerCommandGetDistributed());
+    listener.registerStatelessCommand(new OServerCommandGetLog());
 
-	}
+  }
 
-	private void uninstallCommands() {
-		final OServerNetworkListener listener = server
-				.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-		listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
-		listener.unregisterStatelessCommand(OServerCommandGetLog.class);
-	}
+  private void uninstallCommands() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
+    listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
+    listener.unregisterStatelessCommand(OServerCommandGetLog.class);
+  }
 }
