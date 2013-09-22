@@ -1922,7 +1922,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         parseServerURLs();
 
         for (ODocument m : members)
-          if (m != null && !serverURLs.contains((String) m.field("id"))) {
+          if (m != null && !serverURLs.contains((String) m.field("name"))) {
             for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
               if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
                 String url = (String) listener.get("listen");

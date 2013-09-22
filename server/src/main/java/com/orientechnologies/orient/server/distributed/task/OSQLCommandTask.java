@@ -77,7 +77,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
 
   @Override
   public long getTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   public OSQLCommandTask copy(final OSQLCommandTask iCopy) {

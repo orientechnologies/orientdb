@@ -51,7 +51,7 @@ public abstract class OAbstractRemoteTask implements Externalizable {
       throws Exception;
 
   public long getTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   public long getSynchronousTimeout(final int iSynchNodes) {

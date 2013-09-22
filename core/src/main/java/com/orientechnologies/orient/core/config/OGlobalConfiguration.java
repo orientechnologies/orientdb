@@ -449,23 +449,20 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
       10000),
 
-  DISTRIBUTED_CRUD_TASK_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout in milliseconds to wait for CRUD remote tasks",
-      Integer.class, 3000),
+  DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
-  DISTRIBUTED_COMMAND_TASK_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000),
+  DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
 
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
-      Integer.class, 3000),
-
-  DISTRIBUTED_SYNCH_RESPONSES_TIMEOUT("distributed.synchResponsesTimeout",
-      "Maximum timeout in milliseconds to collect all the synchronous responses from replication", Integer.class, 5000),
+      Integer.class, 5000l),
 
   DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000),
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000);
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l);
 
   private final String                 key;
   private final Object                 defValue;

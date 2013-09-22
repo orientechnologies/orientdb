@@ -36,14 +36,22 @@ public class ODistributedResponseManager {
   private long                                    messageId;
   private final long                              sentOn;
   private final ConcurrentHashMap<String, Object> responses         = new ConcurrentHashMap<String, Object>();
+  private final int                               expectedSynchronousResponses;
   private int                                     receivedResponses = 0;
-  private long                                    totalTimeout;
+  private int                                     quorum;
+  private boolean                                 executeOnLocalNode;
+  private final long                              totalTimeout;
+  private boolean                                 receivedCurrentNode;
 
   private static final String                     NO_RESPONSE       = "waiting-for-response";
 
-  public ODistributedResponseManager(final long iMessageId, final Set<String> expectedResponses, final long iTotalTimeout) {
+  public ODistributedResponseManager(final long iMessageId, final Set<String> expectedResponses,
+      final int iExpectedSynchronousResponses, final int iQuorum, final boolean iExecuteOnLocalNode, final long iTotalTimeout) {
     this.messageId = iMessageId;
     this.sentOn = System.currentTimeMillis();
+    this.expectedSynchronousResponses = iExpectedSynchronousResponses;
+    this.quorum = iQuorum;
+    this.executeOnLocalNode = iExecuteOnLocalNode;
     this.totalTimeout = iTotalTimeout;
 
     for (String node : expectedResponses)
@@ -77,6 +85,9 @@ public class ODistributedResponseManager {
 
     responses.put(executorNode, response);
     receivedResponses++;
+
+    if (executeOnLocalNode && response.isExecutedOnLocalNode())
+      receivedCurrentNode = true;
 
     // TODO: CHECK FOR CONFLICTS
 
@@ -154,5 +165,25 @@ public class ODistributedResponseManager {
 
   public void setMessageId(long messageId) {
     this.messageId = messageId;
+  }
+
+  public int getExpectedSynchronousResponses() {
+    return expectedSynchronousResponses;
+  }
+
+  public int getQuorum() {
+    return quorum;
+  }
+
+  public boolean waitForSynchronousResponses() {
+    return (executeOnLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses;
+  }
+
+  public boolean isExecuteOnLocalNode() {
+    return executeOnLocalNode;
+  }
+
+  public boolean isReceivedCurrentNode() {
+    return receivedCurrentNode;
   }
 }
