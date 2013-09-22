@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -202,6 +204,16 @@ public class OStorageRemoteThread implements OStorageProxy {
     } finally {
       popSession();
     }
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("backup");
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("restore");
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,

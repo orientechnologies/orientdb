@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -577,6 +579,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   @Override
   public void release() {
     getFreezableStorage().release();
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    wrapped.backup(out, options);
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    wrapped.restore(in, options);
   }
 
   private OFreezableStorage getFreezableStorage() {

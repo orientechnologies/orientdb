@@ -35,13 +35,16 @@ public class OGZIPCompression implements OCompression {
   public static final OGZIPCompression INSTANCE = new OGZIPCompression();
 
   @Override
-  public byte[] compress(byte[] content) {
+  public byte[] compress(final byte[] content) {
     try {
-      OMemoryStream memoryOutputStream = new OMemoryStream();
-      GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream);
-      gzipOutputStream.write(content);
-      gzipOutputStream.finish();
-
+      final OMemoryStream memoryOutputStream = new OMemoryStream();
+      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream);
+      try {
+        gzipOutputStream.write(content);
+        gzipOutputStream.finish();
+      } finally {
+        gzipOutputStream.close();
+      }
       return memoryOutputStream.toByteArray();
     } catch (IOException ioe) {
       throw new IllegalStateException("Exception during data compression.", ioe);
@@ -51,31 +54,37 @@ public class OGZIPCompression implements OCompression {
   @Override
   public byte[] uncompress(byte[] content) {
     try {
-      OMemoryInputStream memoryInputStream = new OMemoryInputStream(content);
-      GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream);
+      final OMemoryInputStream memoryInputStream = new OMemoryInputStream(content);
+      final GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream);
 
-      byte[] buffer = new byte[1024];
-      byte[] result = new byte[1024];
+      try {
+        final byte[] buffer = new byte[1024];
+        byte[] result = new byte[1024];
 
-      int bytesRead;
+        int bytesRead;
 
-      int len = 0;
-      while ((bytesRead = gzipInputStream.read(buffer, 0, buffer.length)) > -1) {
-        if (len + bytesRead > result.length) {
-          int newSize = 2 * result.length;
-          if (newSize < len + bytesRead)
-            newSize = Integer.MAX_VALUE;
+        int len = 0;
+        while ((bytesRead = gzipInputStream.read(buffer, 0, buffer.length)) > -1) {
+          if (len + bytesRead > result.length) {
+            int newSize = 2 * result.length;
+            if (newSize < len + bytesRead)
+              newSize = Integer.MAX_VALUE;
 
-          byte[] oldResult = result;
-          result = new byte[newSize];
-          System.arraycopy(oldResult, 0, result, 0, oldResult.length);
+            final byte[] oldResult = result;
+            result = new byte[newSize];
+            System.arraycopy(oldResult, 0, result, 0, oldResult.length);
+          }
+
+          System.arraycopy(buffer, 0, result, len, bytesRead);
+          len += bytesRead;
         }
 
-        System.arraycopy(buffer, 0, result, len, bytesRead);
-        len += bytesRead;
+        return Arrays.copyOf(result, len);
+
+      } finally {
+        gzipInputStream.close();
       }
 
-      return Arrays.copyOf(result, len);
     } catch (IOException ioe) {
       throw new IllegalStateException("Exception during data uncompression.", ioe);
     }

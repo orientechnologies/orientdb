@@ -150,7 +150,7 @@ public class OIOUtils {
     if (iMax < 0)
       iMax = Integer.MAX_VALUE;
 
-    final byte[] buf = new byte[8193];
+    final byte[] buf = new byte[8192];
     int byteRead = 0;
     int byteTotal = 0;
     while ((byteRead = in.read(buf, 0, Math.min(buf.length, iMax - byteTotal))) > 0) {

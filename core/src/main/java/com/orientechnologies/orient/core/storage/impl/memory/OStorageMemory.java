@@ -16,7 +16,16 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
-import java.util.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -85,7 +94,8 @@ public class OStorageMemory extends OStorageEmbedded {
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null, OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
+          OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
@@ -167,6 +177,16 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public void delete() {
     close(true);
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("backup");
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("restore");
   }
 
   public void reload() {

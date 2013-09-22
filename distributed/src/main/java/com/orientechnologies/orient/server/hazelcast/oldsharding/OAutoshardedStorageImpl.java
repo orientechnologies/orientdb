@@ -17,6 +17,8 @@
 package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -159,6 +161,16 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     else
       return new OStorageOperationResult<ORecordVersion>(node.updateRecord(wrapped.getName(), iRecordId, iContent, iVersion,
           iRecordType), true);
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    wrapped.backup(out, options);
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    wrapped.restore(in, options);
   }
 
   @Override

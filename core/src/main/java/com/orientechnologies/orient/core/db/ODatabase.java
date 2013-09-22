@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+import com.orientechnologies.orient.core.util.OBackupable;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
@@ -44,7 +45,7 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
  * @author Luca Garulli
  * 
  */
-public interface ODatabase extends Closeable {
+public interface ODatabase extends OBackupable, Closeable {
   public static enum OPTIONS {
     SECURITY
   }

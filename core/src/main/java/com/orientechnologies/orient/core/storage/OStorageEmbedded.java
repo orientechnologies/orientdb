@@ -231,7 +231,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     return null;
   }
 
-	/**
+  /**
    * Checks if the storage is open. If it's closed an exception is raised.
    */
   protected void checkOpeness() {
