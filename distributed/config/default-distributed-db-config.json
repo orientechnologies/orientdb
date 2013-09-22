@@ -1,5 +1,6 @@
 {
     "replication": true,
+    "autoDeploy": true,
     "clusters": {
         "internal": {
             "replication": false
