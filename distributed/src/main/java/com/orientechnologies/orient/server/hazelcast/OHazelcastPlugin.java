@@ -45,10 +45,10 @@ import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -511,14 +511,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
       final String databaseName = storageEntry.getKey();
 
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
+      if (!messageServices.containsKey(databaseName)) {
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
 
-      messageServices.put(databaseName, new OHazelcastDistributedMessageService(this, databaseName));
+        final OHazelcastDistributedMessageService msgService = new OHazelcastDistributedMessageService(this, databaseName);
+        messageServices.put(databaseName, msgService);
+        msgService.configureDatabase(databaseName);
 
-      managedDatabases.put(databaseName, databaseName);
-
-      checkLocalNodeInConfiguration(databaseName);
-
+        managedDatabases.put(databaseName, databaseName);
+        checkLocalNodeInConfiguration(databaseName);
+      }
       configuredDatabases.add(databaseName);
     }
 
@@ -528,19 +530,36 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected void installNewDatabases(final Set<String> configuredDatabases) {
     for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
-        final String dbName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
+        final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
 
-        if (!configuredDatabases.contains(dbName)) {
+        if (!configuredDatabases.contains(databaseName)) {
           final ODocument config = (ODocument) entry.getValue();
           final Boolean autoDeploy = config.field("autoDeploy");
           if (autoDeploy != null && autoDeploy) {
-            ByteArrayInputStream is = new ByteArrayInputStream((byte[]) sendRequest(dbName, null, new ODeployDatabaseTask(),
-                EXECUTION_MODE.RESPONSE));
+            final OHazelcastDistributedMessageService msgService = new OHazelcastDistributedMessageService(this, databaseName);
+            messageServices.put(databaseName, msgService);
 
-            final ODatabaseDocumentTx db = new ODatabaseDocumentTx("databases/" + dbName).create();
+            final OBuffer result = (OBuffer) sendRequest(databaseName, null, new ODeployDatabaseTask(), EXECUTION_MODE.RESPONSE);
+
+            final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+
+            new File(dbPath).mkdirs();
+
+            final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+
+            final ByteArrayInputStream in = new ByteArrayInputStream(result.getBuffer());
             try {
-              new ODatabaseImport(db, is, null);
+              db.restore(in, null);
+              in.close();
+
+              msgService.configureDatabase(databaseName);
+              
+              managedDatabases.put(databaseName, databaseName);
+              checkLocalNodeInConfiguration(databaseName);
+
             } catch (IOException e) {
+              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
+                  "error on copying database '%s' on local server", e, databaseName);
             }
           }
         }

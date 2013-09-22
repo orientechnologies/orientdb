@@ -16,19 +16,14 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.locks.Lock;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -40,10 +35,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public class ODeployDatabaseTask extends OAbstractReplicatedTask {
-  private static final long   serialVersionUID = 1L;
-  private static final String BACKUP_DIRECTORY = "tempBackups";
+  private static final long  serialVersionUID = 1L;
+  // private static final String BACKUP_DIRECTORY = "tempBackups";
 
-  protected final static int  CHUNK_MAX_SIZE   = 1048576;      // 1MB
+  protected final static int CHUNK_MAX_SIZE   = 1048576; // 1MB
 
   public ODeployDatabaseTask() {
   }
@@ -64,51 +59,35 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
         ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "backuping database %s...",
             database.getName());
 
-        final File f = new File(BACKUP_DIRECTORY + "/" + database.getName());
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        database.backup(out, null);
 
-        try {
-          database.freeze();
-          try {
-            ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "exporting database %s to %s...", database.getName(), f);
+        return new OBuffer(out.toByteArray());
 
-            final ODatabaseExport export = new ODatabaseExport(database, f.getAbsolutePath(), null);
-            try {
-              export.exportDatabase();
-            } finally {
-              export.close();
-            }
-          } finally {
-            database.release();
-          }
-
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "exporting database %s to %s...", database.getName(), f);
-
-          final ByteArrayOutputStream out = new ByteArrayOutputStream(CHUNK_MAX_SIZE);
-          final FileInputStream in = new FileInputStream(f);
-          try {
-            final long fileSize = f.length();
-
-            ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "copying %s bytes to remote node...", OFileUtils.getSizeAsString(fileSize));
-
-            for (int byteCopied = 0; byteCopied < fileSize;) {
-              byteCopied += OIOUtils.copyStream(in, out, CHUNK_MAX_SIZE);
-
-              if ((Boolean) iManager.sendRequest(database.getName(), null, new OCopyDatabaseChunkTask(out.toByteArray()),
-                  EXECUTION_MODE.RESPONSE)) {
-                out.reset();
-              }
-            }
-
-            return "deployed";
-          } finally {
-            out.close();
-          }
-        } finally {
-          OFileUtils.deleteRecursively(new File("exportDatabase/"));
-        }
+        // final File f = new File(BACKUP_DIRECTORY + "/" + database.getName());
+        // database.backup(new FileOutputStream(f), null);
+        //
+        // final ByteArrayOutputStream out = new ByteArrayOutputStream(CHUNK_MAX_SIZE);
+        // final FileInputStream in = new FileInputStream(f);
+        // try {
+        // final long fileSize = f.length();
+        //
+        // ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+        // "copying %s to remote node...", OFileUtils.getSizeAsString(fileSize));
+        //
+        // for (int byteCopied = 0; byteCopied < fileSize;) {
+        // byteCopied += OIOUtils.copyStream(in, out, CHUNK_MAX_SIZE);
+        //
+        // if ((Boolean) iManager.sendRequest(database.getName(), null, new OCopyDatabaseChunkTask(out.toByteArray()),
+        // EXECUTION_MODE.RESPONSE)) {
+        // out.reset();
+        // }
+        // }
+        //
+        // return "deployed";
+        // } finally {
+        // OFileUtils.deleteRecursively(new File(BACKUP_DIRECTORY));
+        // }
 
       } finally {
         lock.unlock();
@@ -118,7 +97,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
           "skip deploying database because another node is doing it", database.getName());
 
-    return "skipped";
+    return new byte[0];
   }
 
   @Override

@@ -114,9 +114,15 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeUTF(databaseName);
+    out.write(chunkContent);
+    out.writeBoolean(lastChunk);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    databaseName = in.readUTF();
+    in.read(chunkContent);
+    lastChunk = in.readBoolean();
   }
 }

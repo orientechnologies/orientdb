@@ -137,8 +137,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
         }
       }
     }).start();
-
-    configureDatabase(databaseName);
   }
 
   @Override
