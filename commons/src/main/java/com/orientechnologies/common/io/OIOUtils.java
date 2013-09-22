@@ -149,8 +149,8 @@ public class OIOUtils {
   public static int copyStream(final InputStream in, final OutputStream out, int iMax) throws java.io.IOException {
     if (iMax < 0)
       iMax = Integer.MAX_VALUE;
-    
-    final byte[] buf = new byte[1024];
+
+    final byte[] buf = new byte[8193];
     int byteRead = 0;
     int byteTotal = 0;
     while ((byteRead = in.read(buf, 0, Math.min(buf.length, iMax - byteTotal))) > 0) {
