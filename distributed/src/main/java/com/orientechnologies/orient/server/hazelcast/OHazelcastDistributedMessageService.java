@@ -271,7 +271,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
 
     if (firstResponse == null)
-      throw new ODistributedException("No response from connected nodes");
+      throw new ODistributedException("No response received from any of nodes " + currentResponseMgr.getExpectedNodes()
+          + " for request " + iRequest);
 
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
