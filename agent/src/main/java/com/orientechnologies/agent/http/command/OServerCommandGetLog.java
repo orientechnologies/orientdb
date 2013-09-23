@@ -260,4 +260,5 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 	public String[] getNames() {
 		return NAMES;
 	}
+
 }
