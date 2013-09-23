@@ -100,7 +100,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   @Override
   public void restore(InputStream in, Map<String, Object> options) throws IOException {
     if (!isClosed())
-      throw new IllegalStateException("Cannot restore an open database");
+      close();
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath());
   }

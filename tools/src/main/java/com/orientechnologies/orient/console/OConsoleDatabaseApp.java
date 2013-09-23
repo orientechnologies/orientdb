@@ -18,6 +18,8 @@ package com.orientechnologies.orient.console;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -1538,12 +1540,57 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Backup a database", splitInWords = false)
+  public void backupDatabase(@ConsoleParameter(name = "options", description = "Backup options") final String iText)
+      throws IOException {
+    checkForDatabase();
+
+    out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
+    // final String options = fileName != null ? iText.substring(
+    // ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
+
+    final long startTime = System.currentTimeMillis();
+    try {
+      currentDatabase.backup(new FileOutputStream(fileName), null);
+
+      message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+
+    } catch (ODatabaseExportException e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Restore a database into the current one", splitInWords = false)
+  public void restoreDatabase(@ConsoleParameter(name = "options", description = "Restore options") final String text)
+      throws IOException {
+    checkForDatabase();
+
+    message("\nRestoring database %s...", text);
+
+    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    // final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() :
+    // text;
+
+    final long startTime = System.currentTimeMillis();
+    try {
+      currentDatabase.restore(new FileInputStream(fileName), null);
+
+      message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+
+    } catch (ODatabaseImportException e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Export a database", splitInWords = false)
   public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
       throws IOException {
     checkForDatabase();
 
-    out.println(new StringBuilder("Exporting current database to: ").append(iText).append("..."));
+    out.println(new StringBuilder("Exporting current database to: ").append(iText).append(" in GZipped JSON format ..."));
     final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
     final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
     final String options = fileName != null ? iText.substring(

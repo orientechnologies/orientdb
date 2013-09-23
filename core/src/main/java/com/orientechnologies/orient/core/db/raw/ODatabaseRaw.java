@@ -186,6 +186,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   public void restore(InputStream in, Map<String, Object> options) throws IOException {
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
+
     getStorage().restore(in, options);
   }
 
