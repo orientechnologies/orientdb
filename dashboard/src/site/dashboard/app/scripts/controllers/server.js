@@ -78,49 +78,115 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             $scope.databases = data;
             var db = $scope.databases[0];
             $scope.dbselected = db;
+        });
+
+    });
+    $scope.getServerMetrics = function () {
+
+        var names = new Array;
+        $scope.databases.forEach(function (db, idx, array) {
             var create = 'db.' + db + '.createRecord';
             var update = 'db.' + db + '.updateRecord';
             var del = 'db.' + db + '.deleteRecord';
             var read = 'db.' + db + '.readRecord';
-            Metric.getOperationMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
-                $scope.operationData = new Array;
-                var tmpArr = new Array;
-                data.result.forEach(function (elem, idx, array) {
-                    if (!tmpArr[elem.name]) {
-                        tmpArr[elem.name] = new Array;
-                    }
-                    tmpArr[elem.name].push([elem.dateTo, elem.entries]);
-                });
+            names.push(create);
+            names.push(update);
+            names.push(del);
+            names.push(read);
+        });
+        Metric.getOperationMetrics({names: names, server: $scope.rid }, function (data) {
+            $scope.serverLoad = new Array;
+            var tmpArr = new Array;
 
-                data.result.forEach(function (elem, idx, array) {
-                    if (!tmpArr[elem.name]) {
-                        tmpArr[elem.name] = new Array;
-                    }
-                    tmpArr[elem.name].push([elem.dateTo, elem.entries]);
-                });
-                $scope.operationData = tmpArr;
+            data.result.forEach(function (elem, idx, array) {
+                var last = elem.name.lastIndexOf(".");
+                var length = elem.name.length;
+                elem.name = elem.name.substring(last + 1, length);
+            });
+            data.result.forEach(function (elem, idx, array) {
+                if (!tmpArr[elem.name]) {
+                    tmpArr[elem.name] = new Array;
+                }
+                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
+            });
+            data.result.forEach(function (elem, idx, array) {
+                if (!tmpArr[elem.name]) {
+                    tmpArr[elem.name] = new Array;
+                }
+                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
+            });
+            $scope.serverLoad = tmpArr;
+        });
+    }
+    $scope.getDbMetrics = function (db) {
+        var DOT = '.';
+        var CREATE_LABEL = 'createRecord';
+        var UPDATE_LABEL = 'updateRecord';
+        var DELETE_LABEL = 'deleteRecord';
+        var READ_LABEL = 'readRecord';
+        var create = 'db.' + db + DOT + CREATE_LABEL;
+        var update = 'db.' + db + DOT + UPDATE_LABEL;
+        var del = 'db.' + db + DOT + DELETE_LABEL;
+        var read = 'db.' + db + DOT + READ_LABEL;
+        Metric.getOperationMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
+            $scope.operationData = new Array;
+            var tmpArr = new Array;
+
+            data.result.forEach(function (elem, idx, array) {
+                if (!tmpArr[elem.name]) {
+                    tmpArr[elem.name] = new Array;
+                }
+                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
+            });
+            data.result.forEach(function (elem, idx, array) {
+                if (!tmpArr[elem.name]) {
+                    tmpArr[elem.name] = new Array;
+                }
+                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
             });
 
+            $scope.operationData = tmpArr;
         });
+    }
+    $scope.selectDb = function (db) {
+        $scope.dbselected = db;
 
+    }
+    $scope.$watch('dbselected', function (data) {
+
+        if (data) {
+            $scope.getDbMetrics(data);
+        }
     });
+    $scope.$watch('databases', function (data) {
+        if (data)
+            $scope.getServerMetrics();
+    });
+
 
 });
 app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
 
     $scope.rid = $routeParams.server;
-    Metric.getMetricTypes('CHRONO', function (data) {
+    Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
-            var name = $scope.metrics[0].name;
-            Metric.getMetrics({ name: name, server: $scope.rid}, function (data) {
-                console.log(data);
+            $scope.metric = $scope.metrics[0].name;
 
-            })
         }
     });
     $scope.$watch("range", function (data) {
+
         console.log(data);
     });
 
+    $scope.$watch("metric", function (data) {
+
+        console.log(data);
+        if (data) {
+            Metric.getMetrics({ name: data, server: $scope.rid}, function (data) {
+                console.log(data);
+            })
+        }
+    });
 });

@@ -17,6 +17,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -24,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.monitor.hooks.OEventHook;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -41,15 +43,16 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
   public static final String                VERSION           = OConstants.ORIENT_VERSION;
   static final String                       SYSTEM_CONFIG     = "system.config";
 
-  static final String                       CLASS_SERVER      = "Server";
-  static final String                       CLASS_LOG         = "Log";
-  static final String                       CLASS_SNAPSHOT    = "Snapshot";
-  static final String                       CLASS_METRIC      = "Metric";
-  static final String                       CLASS_COUNTER     = "Counter";
-  static final String                       CLASS_CHRONO      = "Chrono";
-  static final String                       CLASS_STATISTIC   = "Statistic";
-  static final String                       CLASS_INFORMATION = "Information";
-  static final String                       CLASS_DICTIONARY  = "Dictionary";
+  public static final String                       CLASS_SERVER      = "Server";
+  public static final String                       CLASS_LOG         = "Log";
+  public static final String                       CLASS_EVENT         = "Event";
+  public static final String                       CLASS_SNAPSHOT    = "Snapshot";
+  public static final String                       CLASS_METRIC      = "Metric";
+  public static final String                       CLASS_COUNTER     = "Counter";
+  public static final String                       CLASS_CHRONO      = "Chrono";
+  public static final String                       CLASS_STATISTIC   = "Statistic";
+  public static final String                       CLASS_INFORMATION = "Information";
+  public static final String                       CLASS_DICTIONARY  = "Dictionary";
 
   private OServer                           serverInstance;
   private long                              updateTimer;
@@ -94,6 +97,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
     updateDictionary();
 
+    db.registerHook(new OEventHook());
     Orient.instance().getTimer().schedule(new OMonitorTask(this), updateTimer, updateTimer);
   }
 
@@ -197,6 +201,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
     final OClass information = schema.createClass(CLASS_INFORMATION).setSuperClass(metric);
     information.createProperty("value", OType.STRING);
+    
+    final OClass events = schema.createClass(CLASS_EVENT);
+    events.createProperty("name", OType.STRING);
+    events.createProperty("enabled", OType.BOOLEAN);
+    events.createProperty("clazz", OType.STRING);
+    events.createProperty("condition", OType.LINK,schema.getClass(OFunction.class));
+    events.createProperty("action", OType.LINK,schema.getClass(OFunction.class));
   }
 
   @Override

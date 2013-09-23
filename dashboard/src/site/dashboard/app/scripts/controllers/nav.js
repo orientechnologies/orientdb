@@ -16,7 +16,7 @@ angular.module('MonitorApp')
 
         Monitor.getServers(function (data) {
             $scope.servers = data.result;
-            $scope.rid = $routeParams.server || $scope.servers[0]['@rid'];
+            $scope.rid = $routeParams.server || ($scope.servers[0] ? $scope.servers[0]['@rid'] : "");
             $scope.rid = $scope.rid.replace("#", '');
 
         });

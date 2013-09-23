@@ -69,6 +69,7 @@ Widget.directive('stackedchart', function () {
             chart.yAxis
                 .tickFormat(d3.format(',.2f'));
 
+            $(element[0]).html("");
             d3.select(element[0])
                 .datum(data)
                 .transition().duration(1200)
@@ -88,7 +89,7 @@ Widget.directive('stackedchart', function () {
             scope.$watch(data, function (data) {
                 if (data) {
                     var formatted = new Array;
-                    var keys = new Array;
+                    /*var keys = new Array;
 
                     Object.keys(data).forEach(function (elem, idx, array) {
                         data[elem].forEach(function(el,i,a){
@@ -96,20 +97,19 @@ Widget.directive('stackedchart', function () {
                                 keys.push(el[0]);
                         });
                     });
-                    console.log(keys)
                     keys.sort(function(a,b){
                         var aDate =  moment(a,"YYYY-MM-DD HH:mm:ss").unix();
                         var bDate =  moment(b,"YYYY-MM-DD HH:mm:ss").unix();
                         return aDate - bDate;
                     });
-
+                    console.log(keys);
                     data['hidden'] = new Array;
                     keys.forEach(function(elem,idx,array){
                         data['hidden'].push([elem,0]);
                     });
 
                     var obj = { "key": 'hidden', "values": data['hidden'], "disabled" : true };
-                    formatted.push(obj);
+                    formatted.push(obj);*/
                     Object.keys(data).forEach(function (elem, idx, array) {
                         if (elem != "hidden") {
                             var obj = { "key": elem, "values": data[elem] };

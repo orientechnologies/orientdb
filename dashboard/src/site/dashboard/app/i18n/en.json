@@ -43,6 +43,12 @@
     "dashboard.metrics": "Metrics",
     "dashboard.query": "Query Profiler",
     "dashboard.alert": "Alert",
-    "general.title": "Server Management"
+    "general.title": "Server Management",
+    "general.databases": "Database Management",
+    "general.db": "Databases",
+    "general.serverUp": "Server up since",
+    "general.lastMsg": "Server last message",
+    "server.db.operations": "DB operations",
+    "server.operations": "Server operations"
 
 }

@@ -399,6 +399,9 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .select2-search input:focus {
     box-shadow: none;
 }
+.pointer {
+    cursor: pointer;
+}
 
 .querySearch {
     margin-top: 12px;

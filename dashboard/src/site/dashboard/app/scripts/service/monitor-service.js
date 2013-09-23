@@ -76,7 +76,11 @@ monitor.factory('Metric', function ($http, $resource) {
     }
     resource.getMetricTypes = function (type, callback) {
         var url = API + 'command/monitor/sql/-/-1';
-        var query = 'select * from Dictionary where type = "' + type + '" order by name';
+        if(type){
+            var query = 'select * from Dictionary where type = "' + type + '" order by name';
+        }   else {
+            var query = 'select * from Dictionary order by name';
+        }
         $http.post(url, query).success(function (data) {
             callback(data);
         })
