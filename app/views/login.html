@@ -27,8 +27,8 @@
                         <div class="controls">
                             <select ng-model="database" required ng-options="i for i in databases">
                             </select>
-                            <button class="btn" ng-click="createNew()"> Create new database
-                            </button>
+                            <a class="btn" ng-click="createNew()"> Create new database
+                            </a>
                         </div>
                     </div>
                     <div class="control-group">
@@ -46,7 +46,7 @@
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button ng-click="connect()" ng-disabled="loginForm.$invalid" class="btn btn-primary"
+                        <button ng-click="connect()" type="submit" ng-disabled="loginForm.$invalid" class="btn btn-primary"
                                 rel="tooltip" data-placement="right" data-original-title="Connect to the database">
                             Connect
                         </button>
