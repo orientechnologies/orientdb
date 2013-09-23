@@ -31,18 +31,17 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandGetLog extends
-		OServerCommandAuthenticatedServerAbstract {
+public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstract {
 
-	private static final String[] NAMES = { "GET|log/*" };
+	private static final String[]	NAMES					= { "GET|log/*" };
 
-	private static final String TAIL = "tail";
+	private static final String		TAIL					= "tail";
 
-	private static final String FILE = "file";
+	private static final String		FILE					= "file";
 
-	private static final String SEARCH = "search";
+	private static final String		SEARCH				= "search";
 
-	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+	SimpleDateFormat							dateFormatter	= new SimpleDateFormat("yyyy-MM-dd");
 
 	public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
 		super(iConfiguration.pattern);
@@ -53,11 +52,9 @@ public class OServerCommandGetLog extends
 	}
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse)
-			throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-		final String[] urlParts = checkSyntax(iRequest.url, 3,
-				"Syntax error: log/<type>/<value>");
+		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: log/<type>/<value>");
 
 		String type = urlParts[1];
 
@@ -106,17 +103,14 @@ public class OServerCommandGetLog extends
 						try {
 
 							day = dateFormatter.parse(split[0]);
-							// sono riuscito a creare una data allora e' una
-							// nuova riga
-							// salvo il documento della riga precedente se
-							// presente
+							// trying to create a Date
 							if (doc.field("day") != null) {
 								doc.field("info", info);
 								subdocuments.add(doc);
 								doc = new ODocument();
 							}
 
-							// creo un nuovo documento
+							// Created new Doc
 							dayToDoc = split[0];
 							hour = split[1];
 							typeToDoc = split[2];
@@ -131,7 +125,7 @@ public class OServerCommandGetLog extends
 							info = line;
 
 						} catch (Exception e) {
-							// e' uno stack trace
+							//stack trace
 							info = info.concat(line);
 						}
 					}
@@ -158,17 +152,12 @@ public class OServerCommandGetLog extends
 						try {
 
 							day = dateFormatter.parse(split[0]);
-							// sono riuscito a creare una data allora e' una
-							// nuova riga
-							// salvo il documento della riga precedente se
-							// presente
 							if (doc.field("day") != null) {
 								doc.field("info", info);
 								subdocuments.add(doc);
 								doc = new ODocument();
 							}
 
-							// creo un nuovo documento
 							dayToDoc = split[0];
 							hour = split[1];
 							typeToDoc = split[2];
@@ -183,7 +172,6 @@ public class OServerCommandGetLog extends
 							info = line;
 
 						} catch (Exception e) {
-							// e' uno stack trace
 							info = info.concat(line);
 						}
 					}
@@ -199,10 +187,9 @@ public class OServerCommandGetLog extends
 			}
 			br.close();
 		} else if (SEARCH.equals(type)) {
-			// ricerca intelligente
 
-			for (int i = 0 ; i<files.length-1 ; i++) {
-				line="";
+			for (int i = 0; i < files.length - 1; i++) {
+				line = "";
 				BufferedReader br = new BufferedReader(new FileReader(files[i]));
 				while (line != null) {
 					line = br.readLine();
@@ -214,27 +201,21 @@ public class OServerCommandGetLog extends
 							try {
 
 								day = dateFormatter.parse(split[0]);
-								// sono riuscito a creare una data allora e' una
-								// nuova riga
-								// salvo il documento della riga precedente se
-								// presente
 								if (doc.field("day") != null) {
 									doc.field("info", info);
-									if(info.contains(value)){
+									if (info.contains(value)) {
 										subdocuments.add(doc);
 									}
 									doc = new ODocument();
 								}
 
-								// creo un nuovo documento
 								dayToDoc = split[0];
 								hour = split[1];
 								typeToDoc = split[2];
 
 								if (doc.field("day") == null) {
 									doc = new ODocument();
-									addFieldToDoc(dayToDoc, hour, typeToDoc,
-											doc);
+									addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
 								}
 								line = line.replace(split[0], "");
 								line = line.replace(split[1], "");
@@ -242,7 +223,6 @@ public class OServerCommandGetLog extends
 								info = line;
 
 							} catch (Exception e) {
-								// e' uno stack trace
 								info = info.concat(line);
 							}
 						}
@@ -251,7 +231,7 @@ public class OServerCommandGetLog extends
 						if (doc.field("day") != null) {
 							addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
 							doc.field("info", info);
-							if(info.contains(value)){
+							if (info.contains(value)) {
 								subdocuments.add(doc);
 							}
 						}
@@ -270,8 +250,7 @@ public class OServerCommandGetLog extends
 		return false;
 	}
 
-	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc,
-			ODocument doc) {
+	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc, ODocument doc) {
 		doc.field("day", dayToDoc);
 		doc.field("hour", hour);
 		doc.field("type", typeToDoc);
