@@ -30,11 +30,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
  * 
  */
 public class OHazelcastDistributedResponse implements ODistributedResponse, Externalizable {
-  private long         requestId;
-  private String       executorNodeName;
-  private String       senderNodeName;
-  private long         senderThreadId;
-  private Serializable payload;
+  private long   requestId;
+  private String executorNodeName;
+  private String senderNodeName;
+  private long   senderThreadId;
+  private Object payload;
 
   /**
    * Constructor used by serializer.
@@ -76,7 +76,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     return senderThreadId;
   }
 
-  public Serializable getPayload() {
+  public Object getPayload() {
     return payload;
   }
 
@@ -88,7 +88,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     this.senderThreadId = senderThreadId;
   }
 
-  public ODistributedResponse setPayload(final Serializable payload) {
+  public ODistributedResponse setPayload(final Object payload) {
     this.payload = payload;
     return this;
   }

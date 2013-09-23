@@ -273,7 +273,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     if (firstResponse == null)
       throw new ODistributedException("No response from connected nodes");
 
-    return getResponse(iRequest, firstResponse, currentResponseMgr);
+    return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
 
   protected ArrayBlockingQueue<ODistributedResponse> getInternalThreadQueue(final long threadId) {
@@ -358,6 +358,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       final Serializable responsePayload;
       try {
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        iRequest.getPayload().setNodeSource(iRequest.getSenderNodeName());
         responsePayload = manager.executeOnLocalNode(iRequest, database);
       } finally {
         database.getLevel1Cache().clear();
@@ -542,20 +543,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     if (queueSize > 0)
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
           "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
-  }
-
-  protected ODistributedResponse getResponse(final ODistributedRequest iRequest, ODistributedResponse firstResponse,
-      final ODistributedResponseManager currentResponseMgr) {
-    switch (iRequest.getPayload().getResultStrategy()) {
-    case FIRST_RESPONSE:
-      return firstResponse;
-
-    case MERGE:
-      return currentResponseMgr.merge(new OHazelcastDistributedResponse(firstResponse.getRequestId(), null, firstResponse
-          .getSenderNodeName(), firstResponse.getSenderThreadId(), null));
-    }
-
-    return firstResponse;
   }
 
   /**

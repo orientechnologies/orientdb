@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.locks.Lock;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.server.OServer;
@@ -53,51 +54,73 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
 
-    final Lock lock = iManager.getLock(database.getName());
-    if (lock.tryLock()) {
-      try {
-        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "backuping database %s...",
-            database.getName());
+    if (!getNodeSource().equals(iManager.getLocalNodeName())) {
 
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        database.backup(out, null);
+      final String databaseName = database.getName();
 
-        return new OBuffer(out.toByteArray());
+      final Lock lock = iManager.getLock(databaseName);
+      if (lock.tryLock()) {
+        try {
+          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
+              databaseName);
 
-        // final File f = new File(BACKUP_DIRECTORY + "/" + database.getName());
-        // database.backup(new FileOutputStream(f), null);
-        //
-        // final ByteArrayOutputStream out = new ByteArrayOutputStream(CHUNK_MAX_SIZE);
-        // final FileInputStream in = new FileInputStream(f);
-        // try {
-        // final long fileSize = f.length();
-        //
-        // ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        // "copying %s to remote node...", OFileUtils.getSizeAsString(fileSize));
-        //
-        // for (int byteCopied = 0; byteCopied < fileSize;) {
-        // byteCopied += OIOUtils.copyStream(in, out, CHUNK_MAX_SIZE);
-        //
-        // if ((Boolean) iManager.sendRequest(database.getName(), null, new OCopyDatabaseChunkTask(out.toByteArray()),
-        // EXECUTION_MODE.RESPONSE)) {
-        // out.reset();
-        // }
-        // }
-        //
-        // return "deployed";
-        // } finally {
-        // OFileUtils.deleteRecursively(new File(BACKUP_DIRECTORY));
-        // }
+          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          database.backup(out, null);
 
-      } finally {
-        lock.unlock();
-      }
+          final byte[] buffer = out.toByteArray();
 
+          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "sending the compressed database %s over the network, total %s", databaseName,
+              OFileUtils.getSizeAsString(buffer.length));
+
+          return new OBuffer(buffer);
+
+          // final File f = new File(BACKUP_DIRECTORY + "/" + database.getName());
+          // database.backup(new FileOutputStream(f), null);
+          //
+          // final ByteArrayOutputStream out = new ByteArrayOutputStream(CHUNK_MAX_SIZE);
+          // final FileInputStream in = new FileInputStream(f);
+          // try {
+          // final long fileSize = f.length();
+          //
+          // ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+          // "copying %s to remote node...", OFileUtils.getSizeAsString(fileSize));
+          //
+          // for (int byteCopied = 0; byteCopied < fileSize;) {
+          // byteCopied += OIOUtils.copyStream(in, out, CHUNK_MAX_SIZE);
+          //
+          // if ((Boolean) iManager.sendRequest(database.getName(), null, new OCopyDatabaseChunkTask(out.toByteArray()),
+          // EXECUTION_MODE.RESPONSE)) {
+          // out.reset();
+          // }
+          // }
+          //
+          // return "deployed";
+          // } finally {
+          // OFileUtils.deleteRecursively(new File(BACKUP_DIRECTORY));
+          // }
+
+        } finally {
+          lock.unlock();
+        }
+
+      } else
+        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+            "skip deploying database %s because another node is doing it", databaseName);
     } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "skip deploying database because another node is doing it", database.getName());
+      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+          "skip deploying database from the same node");
 
-    return new byte[0];
+    return new OBuffer(new byte[0]);
+  }
+
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.UNION;
+  }
+
+  @Override
+  public long getTimeout() {
+    return 60000;
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.RESULT_STRATEGY;
 
 /**
  * Asynchronous response manager
@@ -35,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 public class ODistributedResponseManager {
   private long                                    messageId;
   private final long                              sentOn;
+  private ODistributedResponse                    firstResponse;
   private final ConcurrentHashMap<String, Object> responses         = new ConcurrentHashMap<String, Object>();
   private final int                               expectedSynchronousResponses;
   private int                                     receivedResponses = 0;
@@ -83,6 +86,8 @@ public class ODistributedResponseManager {
         .stopChrono("distributed.replication." + executorNode + ".responseTime", "Response time from replication messages", sentOn,
             "distributed.replication.*.responseTime");
 
+    if (firstResponse == null)
+      firstResponse = response;
     responses.put(executorNode, response);
     receivedResponses++;
 
@@ -185,5 +190,27 @@ public class ODistributedResponseManager {
 
   public boolean isReceivedCurrentNode() {
     return receivedCurrentNode;
+  }
+
+  public ODistributedResponse getResponse(final RESULT_STRATEGY resultStrategy) {
+    switch (resultStrategy) {
+    case FIRST_RESPONSE:
+      return firstResponse;
+
+    case MERGE:
+      // return merge( m new OHazelcastDistributedResponse(firstResponse.getRequestId(), null, firstResponse.getSenderNodeName(),
+      // firstResponse.getSenderThreadId(), null));
+      return firstResponse;
+
+    case UNION:
+      final Map<String, Object> payloads = new HashMap<String, Object>();
+      for (Map.Entry<String, Object> entry : responses.entrySet())
+        if (entry.getValue() != NO_RESPONSE)
+          payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
+      firstResponse.setPayload(payloads);
+      return firstResponse;
+    }
+
+    return firstResponse;
   }
 }

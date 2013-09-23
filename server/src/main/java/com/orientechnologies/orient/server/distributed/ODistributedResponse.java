@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.Serializable;
-
 /**
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -30,13 +28,13 @@ public interface ODistributedResponse {
 
   long getSenderThreadId();
 
-  Serializable getPayload();
+  Object getPayload();
 
   long getRequestId();
 
   ODistributedResponse setExecutorNodeName(String iExecutor);
 
-  ODistributedResponse setPayload(Serializable iPayload);
+  ODistributedResponse setPayload(Object iPayload);
 
   boolean isExecutedOnLocalNode();
 }

@@ -23,7 +23,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,6 +55,7 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -401,6 +401,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
           getNodeName(iEvent.getMember()), cachedClusterNodes.size());
 
+      installNewDatabases();
+
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       saveDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
@@ -507,12 +509,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    * Initializes distributed databases.
    */
   protected void initDistributedDatabases() {
-    final Set<String> configuredDatabases = new HashSet<String>();
     for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
       final String databaseName = storageEntry.getKey();
 
       if (!messageServices.containsKey(databaseName)) {
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
+
+        if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
+          // PUBLISH CFG FIRST TIME
+          final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
+        }
 
         final OHazelcastDistributedMessageService msgService = new OHazelcastDistributedMessageService(this, databaseName);
         messageServices.put(databaseName, msgService);
@@ -521,13 +528,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         managedDatabases.put(databaseName, databaseName);
         checkLocalNodeInConfiguration(databaseName);
       }
-      configuredDatabases.add(databaseName);
     }
 
-    installNewDatabases(configuredDatabases);
+    installNewDatabases();
   }
 
-  protected void installNewDatabases(final Set<String> configuredDatabases) {
+  @SuppressWarnings("unchecked")
+  protected void installNewDatabases() {
+    final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
+
     for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
@@ -539,12 +548,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             final OHazelcastDistributedMessageService msgService = new OHazelcastDistributedMessageService(this, databaseName);
             messageServices.put(databaseName, msgService);
 
-            final OBuffer result = (OBuffer) sendRequest(databaseName, null, new ODeployDatabaseTask(), EXECUTION_MODE.RESPONSE);
+            final Map<String, OBuffer> results = (Map<String, OBuffer>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
+                EXECUTION_MODE.RESPONSE);
 
             final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
-            new File(dbPath).mkdirs();
+            // EXTRACT THE REAL RESULT
+            OBuffer result = null;
+            for (Entry<String, OBuffer> r : results.entrySet())
+              if (r.getValue().getBuffer() != null && r.getValue().getBuffer().length > 0) {
+                result = r.getValue();
 
+                ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "installing database %s in %s...",
+                    databaseName, dbPath);
+
+                break;
+              }
+
+            if (result == null)
+              throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
+
+            new File(dbPath).mkdirs();
             final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
 
             final ByteArrayInputStream in = new ByteArrayInputStream(result.getBuffer());
@@ -553,7 +577,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               in.close();
 
               msgService.configureDatabase(databaseName);
-              
+
               managedDatabases.put(databaseName, databaseName);
               checkLocalNodeInConfiguration(databaseName);
 
