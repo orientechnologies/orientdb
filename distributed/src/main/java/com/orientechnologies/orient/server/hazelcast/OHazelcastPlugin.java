@@ -43,6 +43,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -575,6 +576,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             try {
               db.restore(in, null);
               in.close();
+
+              db.close();
+              Orient.instance().unregisterStorageByName(db.getName());
 
               msgService.configureDatabase(databaseName);
 
