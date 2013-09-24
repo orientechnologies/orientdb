@@ -79,6 +79,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private boolean                    preserveClusterIDs     = false;
 
+  private Set<String>                indexesToRebuild       = new HashSet<String>();
+
   public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(database, iFileName, iListener);
@@ -138,6 +140,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.setStatus(STATUS.IMPORTING);
 
+      for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
+        indexesToRebuild.add(index.getName().toLowerCase());
+      }
+
       String tag;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
         tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
@@ -155,6 +161,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         else if (tag.equals("manualIndexes"))
           importManualIndexes();
       }
+
+      listener.onMessage("\nRebuild of stale indexes...");
+      for (String indexName : indexesToRebuild) {
+        listener.onMessage("\nStart rebuild index " + indexName);
+        database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+        listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
+      }
+      listener.onMessage("\nStale indexes were rebuilt...");
 
       database.getStorage().synch();
       database.setStatus(STATUS.OPEN);
@@ -854,6 +868,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Index '" + indexName + "'...");
       // drop automatically created indexes
       indexManager.dropIndex(indexName);
+      indexesToRebuild.remove(indexName.toLowerCase());
 
       int[] clusterIdsToIndex = new int[clustersToIndex.size()];
 
