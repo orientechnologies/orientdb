@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -486,28 +486,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
     else {
       if (fieldValue != null && fieldValue.getClass().isArray()) {
-        // SEQUENTIAL SCAN
-        final int arraySize = Array.getLength(fieldValue);
-        for (Entry<Object, ORuntimeResult> entry : groupedResult.entrySet()) {
-          final Object k = entry.getKey();
-
-          boolean same = false;
-
-          if (k != null && k.getClass().isArray() && Array.getLength(k) == arraySize) {
-            same = true;
-            for (int i = 0; i < arraySize; ++i) {
-              final Object o1 = Array.get(k, i);
-              final Object o2 = Array.get(fieldValue, i);
-
-              if (o1 == null && o2 != null || o1 != null && o2 == null || o1 != null && !o1.equals(o2)) {
-                same = false;
+        // LOOK IT BY HASH (FASTER THAN COMPARE EACH SINGLE VALUE)
+        final Object[] array = (Object[]) fieldValue;
+        group = groupedResult.get(OArrays.hash(array));
+        if (group != null) {
+          final Object[] v = (Object[]) group.getFieldValue();
+          if (v.length == array.length) {
+            for (int i = 0; i < array.length; ++i) {
+              if (!array[i].equals(v[i])) {
+                // SAME HAS BUT NOT REALLY EQUALS!
+                group = null;
                 break;
               }
             }
           }
-
-          if (same)
-            group = entry.getValue();
         }
       } else
         // LOKUP FOR THE FIELD
@@ -515,8 +507,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     if (group == null) {
-      group = new ORuntimeResult(createProjectionFromDefinition(), resultCount, context);
-      groupedResult.put(fieldValue, group);
+      group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
+      if (fieldValue != null && fieldValue.getClass().isArray())
+        groupedResult.put(OArrays.hash((Object[]) fieldValue), group);
+      else
+        groupedResult.put(fieldValue, group);
     }
     return group;
   }
