@@ -44,14 +44,14 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 
 public class OSQLEngine {
 
-  private static Set<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
-  private static Set<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
-  private static Set<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
-  private static OQueryOperator[]                SORTED_OPERATORS   = null;
+  private static List<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
+  private static List<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
+  private static List<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
+  private static OQueryOperator[]                 SORTED_OPERATORS   = null;
 
-  protected static final OSQLEngine              INSTANCE           = new OSQLEngine();
+  protected static final OSQLEngine               INSTANCE           = new OSQLEngine();
 
-  private static ClassLoader                     orientClassLoader  = OSQLEngine.class.getClassLoader();
+  private static ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
 
   protected OSQLEngine() {
   }
@@ -166,11 +166,11 @@ public class OSQLEngine {
 
       final Iterator<OSQLFunctionFactory> ite = lookupProviderWithOrientClassLoader(OSQLFunctionFactory.class, orientClassLoader);
 
-      final Set<OSQLFunctionFactory> factories = new HashSet<OSQLFunctionFactory>();
+      final List<OSQLFunctionFactory> factories = new ArrayList<OSQLFunctionFactory>();
       while (ite.hasNext()) {
         factories.add(ite.next());
       }
-      FUNCTION_FACTORIES = Collections.unmodifiableSet(factories);
+      FUNCTION_FACTORIES = Collections.unmodifiableList(factories);
     }
     return FUNCTION_FACTORIES.iterator();
   }
@@ -184,11 +184,11 @@ public class OSQLEngine {
       final Iterator<OQueryOperatorFactory> ite = lookupProviderWithOrientClassLoader(OQueryOperatorFactory.class,
           orientClassLoader);
 
-      final Set<OQueryOperatorFactory> factories = new HashSet<OQueryOperatorFactory>();
+      final List<OQueryOperatorFactory> factories = new ArrayList<OQueryOperatorFactory>();
       while (ite.hasNext()) {
         factories.add(ite.next());
       }
-      OPERATOR_FACTORIES = Collections.unmodifiableSet(factories);
+      OPERATOR_FACTORIES = Collections.unmodifiableList(factories);
     }
     return OPERATOR_FACTORIES.iterator();
   }
@@ -201,7 +201,7 @@ public class OSQLEngine {
 
       final Iterator<OCommandExecutorSQLFactory> ite = lookupProviderWithOrientClassLoader(OCommandExecutorSQLFactory.class,
           orientClassLoader);
-      final Set<OCommandExecutorSQLFactory> factories = new HashSet<OCommandExecutorSQLFactory>();
+      final List<OCommandExecutorSQLFactory> factories = new ArrayList<OCommandExecutorSQLFactory>();
       while (ite.hasNext()) {
         try {
           factories.add(ite.next());
@@ -210,7 +210,7 @@ public class OSQLEngine {
         }
       }
 
-      EXECUTOR_FACTORIES = Collections.unmodifiableSet(factories);
+      EXECUTOR_FACTORIES = Collections.unmodifiableList(factories);
 
     }
     return EXECUTOR_FACTORIES.iterator();
