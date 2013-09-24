@@ -46,7 +46,7 @@ public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
 		final Object result = super.execute(iArgs);
 		final ODocument report = new ODocument(delegate.getContext().getVariables());
 
-		report.field("elapsed", (System.nanoTime() - startTime) / 1000000000f);
+		report.field("elapsed", (System.nanoTime() - startTime) / 1000000f);
 
 		if (result instanceof Collection<?>) {
 			report.field("resultType", "collection");
