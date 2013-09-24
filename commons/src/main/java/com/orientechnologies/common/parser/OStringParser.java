@@ -52,23 +52,27 @@ public class OStringParser {
     for (int i = 0; i < iText.length(); ++i) {
       c = iText.charAt(i);
 
-      if (openBraket == 0 && openGraph == 0 && !escape && c == '\\' && ((i + 1) < iText.length())) {
+      if (!escape && c == '\\' && ((i + 1) < iText.length())) {
         // ESCAPE CHARS
         final char nextChar = iText.charAt(i + 1);
 
         if (nextChar == 'u') {
           i = readUnicode(iText, i + 2, buffer);
         } else if (nextChar == 'n') {
-          buffer.append("\n");
+          buffer.append(stringBeginChar == ' ' ? "\n" : "\\\n");
           i++;
         } else if (nextChar == 'r') {
-          buffer.append("\r");
+          buffer.append(stringBeginChar == ' ' ? "\r" : "\\\r");
           i++;
         } else if (nextChar == 't') {
-          buffer.append("\t");
+          buffer.append(stringBeginChar == ' ' ? "\t" : "\\\t");
           i++;
         } else if (nextChar == 'f') {
-          buffer.append("\f");
+          buffer.append(stringBeginChar == ' ' ? "\f" : "\\\f");
+          i++;
+        } else if (stringBeginChar != ' ' && nextChar == '\'' || nextChar == '"') {
+          buffer.append('\\');
+          buffer.append(nextChar);
           i++;
         } else
           escape = true;
@@ -100,7 +104,7 @@ public class OStringParser {
           openBraket++;
         else if (c == ']')
           openBraket--;
-        if (c == '{')
+        else if (c == '{')
           openGraph++;
         else if (c == '}')
           openGraph--;
@@ -112,6 +116,7 @@ public class OStringParser {
               if (buffer.length() > 0) {
                 // SEPARATOR (OUTSIDE A STRING): PUSH
                 fields.add(buffer.toString());
+                System.out.println("\n(" + i + ")->" + buffer);
                 buffer.setLength(0);
               }
               break;
@@ -144,9 +149,11 @@ public class OStringParser {
         escape = false;
     }
 
-    if (buffer.length() > 0)
+    if (buffer.length() > 0) {
       // ADD THE LAST WORD IF ANY
       fields.add(buffer.toString());
+      System.out.println("\n(-FINE)->" + buffer);
+    }
 
     String[] result = new String[fields.size()];
     fields.toArray(result);
