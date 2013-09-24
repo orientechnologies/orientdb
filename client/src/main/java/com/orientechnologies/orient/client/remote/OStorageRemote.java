@@ -1724,6 +1724,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected void checkConnection() {
+      /*
     lock.acquireSharedLock();
 
     try {
@@ -1736,6 +1737,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       lock.releaseSharedLock();
     }
+      */
   }
 
   /**
