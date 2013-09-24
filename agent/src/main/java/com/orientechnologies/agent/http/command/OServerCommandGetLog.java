@@ -73,7 +73,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 			}
 		};
 
-		File[] files = directory.listFiles(filter);
+		File[] files = directory.listFiles(filter);    
 		Arrays.sort(files);
 		// List<String> lines = new ArrayList<String>();
 
