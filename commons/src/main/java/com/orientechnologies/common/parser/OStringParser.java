@@ -116,7 +116,6 @@ public class OStringParser {
               if (buffer.length() > 0) {
                 // SEPARATOR (OUTSIDE A STRING): PUSH
                 fields.add(buffer.toString());
-                System.out.println("\n(" + i + ")->" + buffer);
                 buffer.setLength(0);
               }
               break;
@@ -152,7 +151,6 @@ public class OStringParser {
     if (buffer.length() > 0) {
       // ADD THE LAST WORD IF ANY
       fields.add(buffer.toString());
-      System.out.println("\n(-FINE)->" + buffer);
     }
 
     String[] result = new String[fields.size()];
