@@ -577,6 +577,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String type = channel.readString();
     final String name = channel.readString();
+    int clusterId = -1;
 
     final String location;
     if (connection.data.protocolVersion >= 10 || type.equalsIgnoreCase("PHYSICAL"))
@@ -592,9 +593,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       dataSegmentName = null;
     }
 
+    if (connection.data.protocolVersion >= 18)
+      clusterId = channel.readInt();
+
     Object[] params = null;
 
-    final int num = connection.database.addCluster(type, name, location, dataSegmentName, params);
+    final int num;
+
+    if (clusterId < 0)
+      num = connection.database.addCluster(type, name, location, dataSegmentName, params);
+    else
+      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName, params);
 
     beginResponse();
     try {

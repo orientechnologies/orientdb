@@ -67,24 +67,27 @@ public class DbImportExportTest implements OCommandOutputListener {
       importDir.mkdir();
 
     ODatabaseDocumentTx database;
-    if (url.startsWith("plocal:"))
+    if (url.startsWith("plocal:") || url.startsWith("remote:"))
       database = new ODatabaseDocumentTx("plocal:" + testPath + "/" + NEW_DB_URL);
     else
       database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
 
     database.create();
 
-    ODatabaseImport impor = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 
     // UNREGISTER ALL THE HOOKS
     for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
       database.unregisterHook(hook);
     }
 
-    impor.setPreserveRids(true);
-    impor.setDeleteRIDMapping(false);
-    impor.importDatabase();
-    impor.close();
+    if (url.startsWith("plocal:") || url.startsWith("remote:"))
+      dbImport.setPreserveClusterIDs(true);
+
+    dbImport.setPreserveRids(true);
+    dbImport.setDeleteRIDMapping(false);
+    dbImport.importDatabase();
+    dbImport.close();
 
     database.close();
   }
