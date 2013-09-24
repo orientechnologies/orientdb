@@ -171,7 +171,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
-            $scope.metric = $scope.metrics[0].name;
+            $scope.metric = $scope.metrics[0].name  ;
 
         }
     });
@@ -182,10 +182,21 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 
     $scope.$watch("metric", function (data) {
 
-        console.log(data);
         if (data) {
             Metric.getMetrics({ name: data, server: $scope.rid}, function (data) {
-                console.log(data);
+                $scope.metricsData = new Array;
+                var tmpArr = new Array;
+
+                data.result.forEach(function (elem, idx, array) {
+                    if (!tmpArr[elem.name]) {
+                        tmpArr[elem.name] = new Array;
+                    }
+                    var el = undefined;
+                    el = elem.value || elem.entries;
+                    tmpArr[elem.name].push([elem.dateTo, el]);
+                });
+
+                $scope.metricsData = tmpArr;
             })
         }
     });

@@ -26,12 +26,12 @@ public class OEventHook extends ORecordHookAbstract {
 		
 		for (ODocument oDocument : triggers) {
 			
-			ODocument condition = oDocument.field("condition");
-			if(condition!=null){
-				OFunction docFunction = new OFunction(condition);
-				Object ret =  docFunction.execute(doc);
-				System.out.println(ret);
-			}
+//			ODocument condition = oDocument.field("condition");
+//			if(condition!=null){
+//				OFunction docFunction = new OFunction(condition);
+//				Object ret =  docFunction.execute(doc);
+//				System.out.println(ret);
+//			}
 		}
 		
 	}
