@@ -272,7 +272,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     if (firstResponse == null)
       throw new ODistributedException("No response received from any of nodes " + currentResponseMgr.getExpectedNodes()
-          + " for request " + iRequest);
+          + " for request " + iRequest + " after the timeout " + synchTimeout);
 
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
@@ -497,6 +497,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected void purgePendingMessages() {
     final long now = System.currentTimeMillis();
 
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
+
     for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext();) {
       final Entry<Long, ODistributedResponseManager> item = it.next();
 
@@ -504,13 +506,13 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
       final long timeElapsed = now - resp.getSentOn();
 
-      if (timeElapsed > OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong()) {
+      if (timeElapsed > timeout) {
         // EXPIRED, FREE IT!
         final List<String> missingNodes = resp.getMissingNodes();
         if (missingNodes.size() > 0) {
           ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.IN,
               "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
-              resp.getMessageId(), missingNodes, timeElapsed, resp.getTotalTimeout());
+              resp.getMessageId(), missingNodes, timeElapsed, timeout);
         }
 
         Orient.instance().getProfiler()
