@@ -37,15 +37,18 @@ public class OGZIPCompression implements OCompression {
   @Override
   public byte[] compress(final byte[] content) {
     try {
+      final byte[] result;
       final OMemoryStream memoryOutputStream = new OMemoryStream();
       final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream);
       try {
         gzipOutputStream.write(content);
         gzipOutputStream.finish();
+        result = memoryOutputStream.toByteArray();
       } finally {
         gzipOutputStream.close();
       }
-      return memoryOutputStream.toByteArray();
+
+      return result;
     } catch (IOException ioe) {
       throw new IllegalStateException("Exception during data compression.", ioe);
     }
