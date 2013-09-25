@@ -594,7 +594,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     if (connection.data.protocolVersion >= 18)
-      clusterId = channel.readInt();
+      clusterId = channel.readShort();
 
     Object[] params = null;
 

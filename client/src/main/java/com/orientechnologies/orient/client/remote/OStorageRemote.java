@@ -1221,7 +1221,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
             network.writeInt(-1);
 
           if (network.getSrvProtocolVersion() >= 18)
-            network.writeInt(iRequestedId);
+            network.writeShort((short) iRequestedId);
         } finally {
           endRequest(network);
         }
