@@ -597,7 +597,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               db.close();
               Orient.instance().unregisterStorageByName(db.getName());
 
-              distribDatabase.configureDatabase(db);
+              distribDatabase.configureDatabase(null);
 
             } catch (IOException e) {
               ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
