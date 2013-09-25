@@ -43,6 +43,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -105,20 +106,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (nodeName == null) {
       // GENERATE NODE NAME
       nodeName = "node" + System.currentTimeMillis();
+
+      // SALVE THE NODE NAME IN CONFIGURATION
+      boolean found = false;
       final OServerConfiguration cfg = iServer.getConfiguration();
       for (OServerHandlerConfiguration h : cfg.handlers) {
         if (h.clazz.equals(getClass().getName())) {
           for (OServerParameterConfiguration p : h.parameters) {
             if (p.name.equals("nodeName")) {
+              found = true;
               p.value = nodeName;
-              try {
-                iServer.saveConfiguration();
-              } catch (IOException e) {
-                throw new OConfigurationException("Cannot save server configuration", e);
-              }
               break;
             }
           }
+
+          if (!found) {
+            h.parameters = OArrays.copyOf(h.parameters, h.parameters.length + 1);
+            h.parameters[h.parameters.length - 1] = new OServerParameterConfiguration("nodeName", nodeName);
+          }
+
+          try {
+            iServer.saveConfiguration();
+          } catch (IOException e) {
+            throw new OConfigurationException("Cannot save server configuration", e);
+          }
+          break;
         }
       }
     }
