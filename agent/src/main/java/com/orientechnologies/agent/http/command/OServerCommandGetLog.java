@@ -40,6 +40,10 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 	private static final String		FILE					= "file";
 
 	private static final String		SEARCH				= "search";
+	
+	private static final String		ALLFILES				= "files";
+	
+	
 
 	SimpleDateFormat							dateFormatter	= new SimpleDateFormat("yyyy-MM-dd");
 
@@ -54,13 +58,20 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 	@Override
 	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-		final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: log/<type>/<value>");
+		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: log/<type>?<value>");
 
-		String type = urlParts[1];
+		String type = urlParts[1]; // the type of the log tail search or file
 
-		String value = urlParts[2];
+		// String value = urlParts[2];
+		String value = iRequest.getParameter("searchvalue");
+
+		String size = iRequest.getParameter("size");
+
+		String logType = iRequest.getParameter("logtype");
 
 		String orientdb_home = System.getenv("ORIENTDB_HOME");
+
+		orientdb_home = "/home/marco/Documenti/Lavoro/orientbi";
 
 		String logsDirectory = orientdb_home.concat("/log");
 
@@ -73,9 +84,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 			}
 		};
 
-		File[] files = directory.listFiles(filter);    
+		File[] files = directory.listFiles(filter);
 		Arrays.sort(files);
-		// List<String> lines = new ArrayList<String>();
 
 		List<ODocument> subdocuments = new ArrayList<ODocument>();
 		final ODocument result = new ODocument();
@@ -89,10 +99,15 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		ODocument doc = new ODocument();
 
 		if (TAIL.equals(type)) {
-			Integer valueInt = new Integer(value);
+
+			// if tail it must be a size
+			if (size == null) {
+				return false;
+			}
+			Integer valueInt = new Integer(size);
 			File f = files[0];
 			BufferedReader br = new BufferedReader(new FileReader(f));
-			valueInt = new Integer(value);
+			valueInt = new Integer(size);
 			for (int i = 0; i < valueInt && line != null; i++) {
 				line = br.readLine();
 				if (line != null) {
@@ -106,7 +121,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 							// trying to create a Date
 							if (doc.field("day") != null) {
 								doc.field("info", info);
-								subdocuments.add(doc);
+								doc.field("file", f.getName());
+								checkInsertForTail(value, logType, subdocuments, typeToDoc, info, doc);
 								doc = new ODocument();
 							}
 
@@ -125,7 +141,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 							info = line;
 
 						} catch (Exception e) {
-							//stack trace
+							// stack trace
 							info = info.concat(line);
 						}
 					}
@@ -133,7 +149,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 					if (doc.field("day") != null) {
 						addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
 						doc.field("info", info);
-						subdocuments.add(doc);
+						doc.field("file", f.getName());
+						checkInsertForTail(value, logType, subdocuments, typeToDoc, info, doc);
 					}
 				}
 			}
@@ -155,6 +172,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 							if (doc.field("day") != null) {
 								doc.field("info", info);
 								subdocuments.add(doc);
+								doc.field("file", f.getName());
 								doc = new ODocument();
 							}
 
@@ -180,6 +198,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 					if (doc.field("day") != null) {
 						addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
 						doc.field("info", info);
+						doc.field("file", f.getName());
 						subdocuments.add(doc);
 					}
 				}
@@ -204,6 +223,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 								if (doc.field("day") != null) {
 									doc.field("info", info);
 									if (info.contains(value)) {
+										doc.field("file", files[i].getName());
 										subdocuments.add(doc);
 									}
 									doc = new ODocument();
@@ -232,6 +252,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 							addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
 							doc.field("info", info);
 							if (info.contains(value)) {
+								doc.field("file", files[i].getName());
 								subdocuments.add(doc);
 							}
 						}
@@ -240,6 +261,19 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 
 			}
 
+		}else if (ALLFILES.equals(type)) {
+			for (int i = 0; i < files.length - 1; i++) {
+				doc = new ODocument();
+				files[i].getName();
+				doc.field("name", files[i].getName());
+				subdocuments.add(doc);
+				
+			}
+			
+			result.field("files", subdocuments);
+			iResponse.writeRecord(result, null, "");
+
+			return false;
 		}
 
 		iRequest.data.commandInfo = "Load log";
@@ -248,6 +282,24 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		iResponse.writeRecord(result, null, "");
 
 		return false;
+	}
+
+	private void checkInsertForTail(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info, ODocument doc) {
+		if (value == null && logType == null) {
+			subdocuments.add(doc);
+			return;
+		} else if (value != null && logType != null) {
+			if (info.toLowerCase().contains(value.toLowerCase()) && typeToDoc.equalsIgnoreCase(logType)) {
+				subdocuments.add(doc);
+				return;
+			}
+		} else if (logType != null && typeToDoc.equalsIgnoreCase(logType)) {
+			subdocuments.add(doc);
+			return;
+		} else if (value != null && info.toLowerCase().contains(value.toLowerCase())) {
+			subdocuments.add(doc);
+			return;
+		}
 	}
 
 	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc, ODocument doc) {
