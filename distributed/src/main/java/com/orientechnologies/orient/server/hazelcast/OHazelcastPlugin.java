@@ -45,6 +45,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -334,7 +335,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void onCreate(final ODatabase iDatabase) {
     final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-    distribDatabase.configureDatabase();
+    distribDatabase.configureDatabase((ODatabaseDocumentTx) ((ODatabaseComplex<?>) iDatabase).getDatabaseOwner());
     // distribDatabase.
     onOpen(iDatabase);
   }
@@ -532,7 +533,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
         }
 
-        messageService.registerDatabase(databaseName).configureDatabase();
+        messageService.registerDatabase(databaseName).configureDatabase(null);
       }
     }
 
@@ -584,7 +585,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               db.close();
               Orient.instance().unregisterStorageByName(db.getName());
 
-              distribDatabase.configureDatabase();
+              distribDatabase.configureDatabase(db);
 
             } catch (IOException e) {
               ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,

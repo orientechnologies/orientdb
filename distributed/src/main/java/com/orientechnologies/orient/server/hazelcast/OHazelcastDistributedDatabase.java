@@ -214,11 +214,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
 
-  public void configureDatabase() {
+  public void configureDatabase(final ODatabaseDocumentTx iDatabase) {
     // TODO: USE THE POOL!
-    final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-    database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-        replicatorUser.password);
+    if (iDatabase == null) {
+      // OPEN IT
+      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+          ODistributedAbstractPlugin.REPLICATOR_USER);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+          replicatorUser.password);
+    } else
+      database = iDatabase;
 
     // CREATE A QUEUE PER DATABASE
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
@@ -268,7 +273,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         }
       }
     }).start();
-    
+
     checkLocalNodeInConfiguration();
   }
 
