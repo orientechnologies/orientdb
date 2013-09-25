@@ -42,19 +42,19 @@ public class ODistributedResponseManager {
   private final int                               expectedSynchronousResponses;
   private int                                     receivedResponses = 0;
   private int                                     quorum;
-  private boolean                                 executeOnLocalNode;
+  private boolean                                 waitForLocalNode;
   private final long                              totalTimeout;
   private boolean                                 receivedCurrentNode;
 
   private static final String                     NO_RESPONSE       = "waiting-for-response";
 
   public ODistributedResponseManager(final long iMessageId, final Set<String> expectedResponses,
-      final int iExpectedSynchronousResponses, final int iQuorum, final boolean iExecuteOnLocalNode, final long iTotalTimeout) {
+      final int iExpectedSynchronousResponses, final int iQuorum, final boolean iWaitForLocalNode, final long iTotalTimeout) {
     this.messageId = iMessageId;
     this.sentOn = System.currentTimeMillis();
     this.expectedSynchronousResponses = iExpectedSynchronousResponses;
     this.quorum = iQuorum;
-    this.executeOnLocalNode = iExecuteOnLocalNode;
+    this.waitForLocalNode = iWaitForLocalNode;
     this.totalTimeout = iTotalTimeout;
 
     for (String node : expectedResponses)
@@ -91,7 +91,7 @@ public class ODistributedResponseManager {
     responses.put(executorNode, response);
     receivedResponses++;
 
-    if (executeOnLocalNode && response.isExecutedOnLocalNode())
+    if (waitForLocalNode && response.isExecutedOnLocalNode())
       receivedCurrentNode = true;
 
     // TODO: CHECK FOR CONFLICTS
@@ -181,11 +181,11 @@ public class ODistributedResponseManager {
   }
 
   public boolean waitForSynchronousResponses() {
-    return (executeOnLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses;
+    return (waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses;
   }
 
-  public boolean isExecuteOnLocalNode() {
-    return executeOnLocalNode;
+  public boolean isWaitForLocalNode() {
+    return waitForLocalNode;
   }
 
   public boolean isReceivedCurrentNode() {

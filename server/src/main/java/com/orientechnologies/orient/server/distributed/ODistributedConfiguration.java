@@ -52,12 +52,19 @@ public class ODistributedConfiguration {
 
   /**
    * Returns the write quorum.
-   * 
-   * @param iClusterName
    */
   public int getWriteQuorum(final String iClusterName) {
     synchronized (configuration) {
       return (Integer) getClusterConfiguration(iClusterName).field("writeQuorum");
+    }
+  }
+
+  /**
+   * Reads your writes.
+   */
+  public Boolean isReadYourWrites(final String iClusterName) {
+    synchronized (configuration) {
+      return (Boolean) getClusterConfiguration(iClusterName).field("readYourWrites");
     }
   }
 
