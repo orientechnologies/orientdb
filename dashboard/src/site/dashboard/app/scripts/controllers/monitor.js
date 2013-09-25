@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q,$odialog, Monitor, Server, Notification) {
+    .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification) {
 
 
         (function poll() {
@@ -56,7 +56,7 @@ angular.module('MonitorApp')
 
             $odialog.confirm({
                 title: 'Warning!',
-                body: 'You are removing Server ' + server.name  + '. Are you sure?',
+                body: 'You are removing Server ' + server.name + '. Are you sure?',
                 success: function () {
                     Server.delete(server['@rid'], function (data) {
                         $scope.refresh();
