@@ -837,7 +837,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         throw new OConfigurationException("Cluster id must be positive!");
       }
       if (requestedId < clusters.length && clusters[requestedId] != null) {
-        throw new OConfigurationException("Requested cluster ID is occupied!");
+        throw new OConfigurationException("Requested cluster ID [" + requestedId + "] is occupied by cluster with name ["
+            + clusters[requestedId].getName() + "]");
       }
 
       return addClusterInternal(clusterName, requestedId, location, true, parameters);

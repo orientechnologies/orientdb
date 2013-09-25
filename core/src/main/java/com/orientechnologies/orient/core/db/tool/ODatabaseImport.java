@@ -62,20 +62,24 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  public static final String           EXPORT_IMPORT_MAP_NAME = "___exportImportRIDMap";
+  public static final String         EXPORT_IMPORT_MAP_NAME = "___exportImportRIDMap";
 
-  protected Map<OPropertyImpl, String> linkedClasses          = new HashMap<OPropertyImpl, String>();
-  protected Map<OClass, String>        superClasses           = new HashMap<OClass, String>();
-  protected OJSONReader                jsonReader;
-  protected ORecordInternal<?>         record;
-  protected boolean                    schemaImported         = false;
-  protected int                        exporterVersion        = -1;
-  protected ORID                       schemaRecordId;
-  protected ORID                       indexMgrRecordId;
+  private Map<OPropertyImpl, String> linkedClasses          = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, String>        superClasses           = new HashMap<OClass, String>();
+  private OJSONReader                jsonReader;
+  private ORecordInternal<?>         record;
+  private boolean                    schemaImported         = false;
+  private int                        exporterVersion        = -1;
+  private ORID                       schemaRecordId;
+  private ORID                       indexMgrRecordId;
 
-  protected boolean                    deleteRIDMapping       = true;
+  private boolean                    deleteRIDMapping       = true;
 
-  private OIndex<OIdentifiable>        exportImportHashTable;
+  private OIndex<OIdentifiable>      exportImportHashTable;
+
+  private boolean                    preserveClusterIDs     = false;
+
+  private Set<String>                indexesToRebuild       = new HashSet<String>();
 
   public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -115,6 +119,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   protected void parseSetting(final String option, final List<String> items) {
     if (option.equalsIgnoreCase("-deleteRIDMapping"))
       deleteRIDMapping = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-preserveClusterIDs"))
+      preserveClusterIDs = Boolean.parseBoolean(items.get(0));
     else
       super.parseSetting(option, items);
   }
@@ -134,6 +140,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.setStatus(STATUS.IMPORTING);
 
+      for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
+        indexesToRebuild.add(index.getName().toLowerCase());
+      }
+
       String tag;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
         tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
@@ -151,6 +161,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         else if (tag.equals("manualIndexes"))
           importManualIndexes();
       }
+
+      listener.onMessage("\nRebuild of stale indexes...");
+      for (String indexName : indexesToRebuild) {
+        listener.onMessage("\nStart rebuild index " + indexName);
+        database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+        listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
+      }
+      listener.onMessage("\nStale indexes were rebuilt...");
 
       database.getStorage().synch();
       database.setStatus(STATUS.OPEN);
@@ -550,20 +568,31 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       int clusterId = name != null ? database.getClusterIdByName(name) : -1;
       if (clusterId == -1) {
         // CREATE IT
-        clusterId = database.addCluster(type, name, null, null);
+        if (!preserveClusterIDs)
+          clusterId = database.addCluster(type, name, null, null);
+        else {
+          clusterId = database.addCluster(type, name, id, null, null);
+          assert clusterId == id;
+        }
+
       }
 
       if (clusterId != id) {
-        if (database.countClusterElements(clusterId - 1) == 0) {
-          listener.onMessage("Found previous version: migrating old clusters...");
-          database.dropCluster(name, true);
-          database.addCluster(type, "temp_" + clusterId, null, null);
-          clusterId = database.addCluster(type, name, null, null);
-        } else
-          throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
-              + " different from the original: " + id + ". To continue the import drop the cluster '"
-              + database.getClusterNameById(clusterId - 1) + "' that has " + database.countClusterElements(clusterId - 1)
-              + " records");
+        if (!preserveClusterIDs) {
+          if (database.countClusterElements(clusterId - 1) == 0) {
+            listener.onMessage("Found previous version: migrating old clusters...");
+            database.dropCluster(name, true);
+            database.addCluster(type, "temp_" + clusterId, null, null);
+            clusterId = database.addCluster(type, name, null, null);
+          } else
+            throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
+                + " different from the original: " + id + ". To continue the import drop the cluster '"
+                + database.getClusterNameById(clusterId - 1) + "' that has " + database.countClusterElements(clusterId - 1)
+                + " records");
+        } else {
+          database.dropCluster(clusterId, false);
+          database.addCluster(type, name, id, null, null);
+        }
       }
 
       if (name != null
@@ -839,6 +868,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       listener.onMessage("\n- Index '" + indexName + "'...");
       // drop automatically created indexes
       indexManager.dropIndex(indexName);
+      indexesToRebuild.remove(indexName.toLowerCase());
 
       int[] clusterIdsToIndex = new int[clustersToIndex.size()];
 
@@ -976,6 +1006,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   public void setDeleteRIDMapping(boolean deleteRIDMapping) {
     this.deleteRIDMapping = deleteRIDMapping;
+  }
+
+  public void setPreserveClusterIDs(boolean preserveClusterIDs) {
+    this.preserveClusterIDs = preserveClusterIDs;
   }
 
   private static class RewritersFactory {
