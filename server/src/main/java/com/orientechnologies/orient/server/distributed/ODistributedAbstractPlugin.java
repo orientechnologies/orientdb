@@ -127,10 +127,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     Orient.instance().removeDbLifecycleListener(this);
   }
 
-  @Override
-  public void onCreate(final ODatabase iDatabase) {
-  }
-
   /**
    * Auto register myself as hook.
    */
@@ -280,7 +276,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     }
   }
 
-  protected File getDistributedConfigFile(final String iDatabaseName) {
+  public File getDistributedConfigFile(final String iDatabaseName) {
     return new File(serverInstance.getDatabaseDirectory() + iDatabaseName + "/" + FILE_DISTRIBUTED_DB_CONFIG);
   }
 

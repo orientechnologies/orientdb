@@ -15,17 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-
 /**
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface ODistributedMessageService {
-  public ODistributedRequest createRequest();
-
-  public ODistributedDatabase registerDatabase(String iDatabaseName);
-
-  public ODistributedDatabase getDatabase(String iDatabaseName);
+public interface ODistributedDatabase {
+  public ODistributedResponse send(ODistributedRequest iRequest) throws InterruptedException;
 
 }

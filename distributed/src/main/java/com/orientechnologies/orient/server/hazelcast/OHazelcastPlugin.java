@@ -44,6 +44,7 @@ import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -77,21 +78,21 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
 
-  protected static final String                              CONFIG_NODE_PREFIX     = "node.";
-  protected static final String                              CONFIG_DATABASE_PREFIX = "database.";
+  protected static final String                 CONFIG_NODE_PREFIX     = "node.";
+  protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
 
-  protected String                                           nodeId;
-  protected String                                           hazelcastConfigFile    = "hazelcast.xml";
-  protected Map<String, Member>                              cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
-  protected Map<String, OHazelcastDistributedMessageService> messageServices        = new ConcurrentHashMap<String, OHazelcastDistributedMessageService>();
-  protected long                                             timeOffset             = 0;
-  protected Date                                             startedOn              = new Date();
+  protected String                              nodeId;
+  protected String                              hazelcastConfigFile    = "hazelcast.xml";
+  protected Map<String, Member>                 cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
+  protected OHazelcastDistributedMessageService messageService;
+  protected long                                timeOffset             = 0;
+  protected Date                                startedOn              = new Date();
 
-  protected volatile STATUS                                  status                 = STATUS.OFFLINE;
+  protected volatile STATUS                     status                 = STATUS.OFFLINE;
 
-  protected String                                           membershipListenerRegistration;
+  protected String                              membershipListenerRegistration;
 
-  protected volatile HazelcastInstance                       hazelcastInstance;
+  protected volatile HazelcastInstance          hazelcastInstance;
 
   public OHazelcastPlugin() {
   }
@@ -156,7 +157,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           cachedClusterNodes.put(memberName, m);
       }
 
-      initDistributedDatabases();
+      messageService = new OHazelcastDistributedMessageService(this);
+
+      loadDistributedDatabases();
 
       // REGISTER CURRENT MEMBERS
       setStatus(STATUS.ONLINE);
@@ -185,8 +188,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     setStatus(STATUS.OFFLINE);
 
-    for (OHazelcastDistributedMessageService messageService : messageServices.values())
-      messageService.shutdown();
+    messageService.shutdown();
 
     super.shutdown();
 
@@ -305,9 +307,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iClusterName,
         iTask, iExecutionMode);
 
-    final OHazelcastDistributedMessageService messageService = messageServices.get(iDatabaseName);
+    final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 
-    final ODistributedResponse response = messageService.send(req);
+    final ODistributedResponse response = db.send(req);
     if (response != null)
       return response.getPayload();
 
@@ -327,6 +329,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public String getLocalNodeId() {
     return nodeId;
+  }
+
+  @Override
+  public void onCreate(final ODatabase iDatabase) {
+    final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
+    distribDatabase.configureDatabase();
+    // distribDatabase.
+    onOpen(iDatabase);
   }
 
   public ODocument getStats() {
@@ -509,11 +519,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   /**
    * Initializes distributed databases.
    */
-  protected void initDistributedDatabases() {
+  protected void loadDistributedDatabases() {
     for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
       final String databaseName = storageEntry.getKey();
 
-      if (!messageServices.containsKey(databaseName)) {
+      if (messageService.getDatabase(databaseName) == null) {
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
 
         if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
@@ -522,12 +532,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
         }
 
-        final OHazelcastDistributedMessageService msgService = new OHazelcastDistributedMessageService(this, databaseName);
-        messageServices.put(databaseName, msgService);
-        msgService.configureDatabase(databaseName);
-
-        managedDatabases.put(databaseName, databaseName);
-        checkLocalNodeInConfiguration(databaseName);
+        messageService.registerDatabase(databaseName).configureDatabase();
       }
     }
 
@@ -546,8 +551,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           final ODocument config = (ODocument) entry.getValue();
           final Boolean autoDeploy = config.field("autoDeploy");
           if (autoDeploy != null && autoDeploy) {
-            final OHazelcastDistributedMessageService msgService = new OHazelcastDistributedMessageService(this, databaseName);
-            messageServices.put(databaseName, msgService);
+            final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(databaseName);
 
             final Map<String, OBuffer> results = (Map<String, OBuffer>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
                 EXECUTION_MODE.RESPONSE);
@@ -580,10 +584,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               db.close();
               Orient.instance().unregisterStorageByName(db.getName());
 
-              msgService.configureDatabase(databaseName);
-
-              managedDatabases.put(databaseName, databaseName);
-              checkLocalNodeInConfiguration(databaseName);
+              distribDatabase.configureDatabase();
 
             } catch (IOException e) {
               ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
@@ -592,49 +593,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
         }
       }
-    }
-  }
-
-  protected void checkLocalNodeInConfiguration(final String iDatabaseName) {
-    final String localNode = getLocalNodeName();
-
-    // LOAD DATABASE FILE IF ANY
-    loadDatabaseConfiguration(iDatabaseName, getDistributedConfigFile(iDatabaseName));
-
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabaseName);
-    for (String clusterName : cfg.getClusterNames()) {
-      final List<List<String>> partitions = cfg.getPartitions(clusterName);
-      if (partitions != null)
-        for (List<String> partition : partitions) {
-          for (String node : partition)
-            if (node.equals(localNode))
-              // FOUND: DO NOTHING
-              return;
-        }
-    }
-
-    // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
-    boolean dirty = false;
-    for (String clusterName : cfg.getClusterNames()) {
-      final List<List<String>> partitions = cfg.getPartitions(clusterName);
-      if (partitions != null)
-        for (int p = 0; p < partitions.size(); ++p) {
-          List<String> partition = partitions.get(p);
-          for (String node : partition)
-            if (node.equalsIgnoreCase(ODistributedConfiguration.NEW_NODE_TAG)) {
-              ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: %s.%s.%d",
-                  localNode, iDatabaseName, clusterName, p);
-              partition.add(localNode);
-              dirty = true;
-              break;
-            }
-        }
-    }
-
-    if (dirty) {
-      final ODocument doc = cfg.serialize();
-      getConfigurationMap().put(CONFIG_DATABASE_PREFIX + iDatabaseName, doc);
-      updateDatabaseConfiguration(iDatabaseName, doc);
     }
   }
 
