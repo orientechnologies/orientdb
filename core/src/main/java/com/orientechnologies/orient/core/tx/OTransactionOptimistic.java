@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -142,7 +143,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 if (indexEntries != null) {
                   for (Entry<String, Object> indexEntry : indexEntries) {
                     final OIndex<?> index = indexes.get(indexEntry.getKey().toLowerCase());
-                    index.commit((ODocument) indexEntry.getValue());
+
+                    if (index == null) {
+                      OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
+                      throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
+                    } else
+                      index.commit((ODocument) indexEntry.getValue());
                   }
                 }
               }
