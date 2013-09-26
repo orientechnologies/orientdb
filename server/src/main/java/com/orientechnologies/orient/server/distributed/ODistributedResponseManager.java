@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
@@ -35,26 +39,31 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.
  * 
  */
 public class ODistributedResponseManager {
-  private long                                    messageId;
+  private final ODistributedRequest               request;
   private final long                              sentOn;
   private ODistributedResponse                    firstResponse;
-  private final ConcurrentHashMap<String, Object> responses         = new ConcurrentHashMap<String, Object>();
+  private final ConcurrentHashMap<String, Object> responses                   = new ConcurrentHashMap<String, Object>();
   private final int                               expectedSynchronousResponses;
-  private int                                     receivedResponses = 0;
+  private int                                     receivedResponses           = 0;
   private int                                     quorum;
   private boolean                                 waitForLocalNode;
+  private final long                              synchTimeout;
   private final long                              totalTimeout;
   private boolean                                 receivedCurrentNode;
+  private final Lock                              lock                        = new ReentrantLock();
+  private final Condition                         synchronousResponsesArrived = lock.newCondition();
 
-  private static final String                     NO_RESPONSE       = "waiting-for-response";
+  private static final String                     NO_RESPONSE                 = "waiting-for-response";
 
-  public ODistributedResponseManager(final long iMessageId, final Set<String> expectedResponses,
-      final int iExpectedSynchronousResponses, final int iQuorum, final boolean iWaitForLocalNode, final long iTotalTimeout) {
-    this.messageId = iMessageId;
+  public ODistributedResponseManager(final ODistributedRequest iRequest, final Set<String> expectedResponses,
+      final int iExpectedSynchronousResponses, final int iQuorum, final boolean iWaitForLocalNode, final long iSynchTimeout,
+      final long iTotalTimeout) {
+    this.request = iRequest;
     this.sentOn = System.currentTimeMillis();
     this.expectedSynchronousResponses = iExpectedSynchronousResponses;
     this.quorum = iQuorum;
     this.waitForLocalNode = iWaitForLocalNode;
+    this.synchTimeout = iSynchTimeout;
     this.totalTimeout = iTotalTimeout;
 
     for (String node : expectedResponses)
@@ -66,7 +75,7 @@ public class ODistributedResponseManager {
 
     if (!responses.containsKey(executorNode)) {
       ODistributedServerLog.warn(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
-          "received response for message %d from unexpected node. Expected are: %s", messageId, getExpectedNodes());
+          "received response for message %d from unexpected node. Expected are: %s", request.getId(), getExpectedNodes());
 
       Orient.instance().getProfiler()
           .updateCounter("distributed.replication.unexpectedNodeResponse", "Number of responses from unexpected nodes", +1);
@@ -96,11 +105,22 @@ public class ODistributedResponseManager {
 
     // TODO: CHECK FOR CONFLICTS
 
-    return getExpectedResponses() == receivedResponses;
+    final boolean completed = getExpectedResponses() == receivedResponses;
+    if (completed) {
+      // NOTIFY WAITER THE RESPONSE IS COMPLETE NOW
+      lock.lock();
+      try {
+        synchronousResponsesArrived.signalAll();
+      } finally {
+        lock.unlock();
+      }
+    }
+
+    return completed;
   }
 
   public long getMessageId() {
-    return messageId;
+    return request.getId();
   }
 
   public long getSentOn() {
@@ -168,10 +188,6 @@ public class ODistributedResponseManager {
     return merged;
   }
 
-  public void setMessageId(long messageId) {
-    this.messageId = messageId;
-  }
-
   public int getExpectedSynchronousResponses() {
     return expectedSynchronousResponses;
   }
@@ -180,8 +196,28 @@ public class ODistributedResponseManager {
     return quorum;
   }
 
-  public boolean waitForSynchronousResponses() {
-    return (waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses;
+  public boolean waitForSynchronousResponses() throws InterruptedException {
+    final long beginTime = System.currentTimeMillis();
+
+    lock.lock();
+    try {
+
+      if ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) {
+        // WAIT FOR THE RESPONSES
+        if (!synchronousResponsesArrived.await(synchTimeout, TimeUnit.MILLISECONDS))
+          return false;
+      }
+
+      return true;
+    } finally {
+      lock.unlock();
+
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono("distributed.replication.synchResponses",
+              "Time to collect all the synchronous responses from distributed nodes", beginTime);
+    }
   }
 
   public boolean isWaitForLocalNode() {
@@ -193,6 +229,9 @@ public class ODistributedResponseManager {
   }
 
   public ODistributedResponse getResponse(final RESULT_STRATEGY resultStrategy) {
+    if (firstResponse == null)
+      throw new ODistributedException("No response received from any of nodes " + getExpectedNodes() + " for request " + request);
+
     switch (resultStrategy) {
     case FIRST_RESPONSE:
       return firstResponse;

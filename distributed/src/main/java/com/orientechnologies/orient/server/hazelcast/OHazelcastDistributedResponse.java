@@ -71,11 +71,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     return senderNodeName;
   }
 
-  @Override
-  public long getSenderThreadId() {
-    return senderThreadId;
-  }
-
   public Object getPayload() {
     return payload;
   }

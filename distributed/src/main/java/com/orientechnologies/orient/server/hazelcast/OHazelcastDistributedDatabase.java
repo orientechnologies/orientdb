@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -117,8 +116,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
 
     // CREATE THE RESPONSE MANAGER
-    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(iRequest.getId(), nodes,
-        expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getPayload().getTotalTimeout(queueSize));
+    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(iRequest, nodes,
+        expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getPayload().getSynchronousTimeout(
+            expectedSynchronousResponses), iRequest.getPayload().getTotalTimeout(queueSize));
 
     msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
@@ -160,56 +160,23 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final long beginTime = System.currentTimeMillis();
 
-    int expectedSynchronousResponses = currentResponseMgr.getExpectedSynchronousResponses();
-    final long synchTimeout = iRequest.getPayload().getSynchronousTimeout(expectedSynchronousResponses);
-
-    final ArrayBlockingQueue<ODistributedResponse> responseQueue = msgService.getInternalThreadQueue(iRequest.getSenderThreadId());
-
     // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (WRITE QUORUM)
-    ODistributedResponse firstResponse = null;
-
-    while (currentResponseMgr.waitForSynchronousResponses()) {
-      long elapsed = System.currentTimeMillis() - beginTime;
-
-      final ODistributedResponse currentResponse = responseQueue.poll(synchTimeout - elapsed, TimeUnit.MILLISECONDS);
-
-      if (currentResponse != null) {
-        // RESPONSE RECEIVED
-        if (currentResponse.getRequestId() != iRequest.getId()) {
-          // IT REFERS TO ANOTHER REQUEST, DISCARD IT
-          continue;
-        }
-
-        // PROCESS IT AS SYNCHRONOUS
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), currentResponse.getSenderNodeName(), DIRECTION.IN,
-              "received response: %s", currentResponse);
-
-        if (firstResponse == null)
-          firstResponse = currentResponse;
-
-      } else {
-        elapsed = System.currentTimeMillis() - beginTime;
-        ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), null, DIRECTION.IN,
-            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s", elapsed,
-            currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
-        break;
-      }
+    if (!currentResponseMgr.waitForSynchronousResponses()) {
+      ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), null, DIRECTION.IN,
+          "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s",
+          System.currentTimeMillis() - beginTime, currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(),
+          iRequest);
     }
 
     if (currentResponseMgr.isWaitForLocalNode() && !currentResponseMgr.isReceivedCurrentNode())
       ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), manager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about message %d", iRequest.getId());
+          "no response received from local node about request %s", iRequest);
 
     if (currentResponseMgr.getReceivedResponses() < currentResponseMgr.getQuorum()) {
       // UNDO REQUEST
       // TODO: UNDO
       iRequest.undo();
     }
-
-    if (firstResponse == null)
-      throw new ODistributedException("No response received from any of nodes " + currentResponseMgr.getExpectedNodes()
-          + " for request " + iRequest);
 
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }

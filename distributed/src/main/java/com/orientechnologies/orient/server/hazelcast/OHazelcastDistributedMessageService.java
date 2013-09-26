@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
@@ -44,27 +42,25 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
  */
 public class OHazelcastDistributedMessageService implements ODistributedMessageService {
 
-  protected final OHazelcastPlugin                                                  manager;
+  protected final OHazelcastPlugin                                     manager;
 
-  protected Map<String, OHazelcastDistributedDatabase>                              databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
+  protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
 
-  protected final static Map<String, IQueue<?>>                                     queues                      = new HashMap<String, IQueue<?>>();
+  protected final static Map<String, IQueue<?>>                        queues                      = new HashMap<String, IQueue<?>>();
 
-  protected final IQueue<ODistributedResponse>                                      nodeResponseQueue;
-  protected final ConcurrentHashMap<Long, ArrayBlockingQueue<ODistributedResponse>> internalThreadQueues;
-  protected final ConcurrentHashMap<Long, ODistributedResponseManager>              responsesByRequestIds;
-  protected final TimerTask                                                         asynchMessageManager;
+  protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
+  protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
+  protected final TimerTask                                            asynchMessageManager;
 
-  public static final String                                                        NODE_QUEUE_PREFIX           = "orientdb.node.";
-  public static final String                                                        NODE_QUEUE_REQUEST_POSTFIX  = ".request";
-  public static final String                                                        NODE_QUEUE_RESPONSE_POSTFIX = ".response";
-  public static final String                                                        NODE_QUEUE_UNDO_POSTFIX     = ".undo";
+  public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
+  public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
+  public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
+  public static final String                                           NODE_QUEUE_UNDO_POSTFIX     = ".undo";
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
 
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
-    this.internalThreadQueues = new ConcurrentHashMap<Long, ArrayBlockingQueue<ODistributedResponse>>();
 
     // CREAT THE QUEUE
     final String queueName = getResponseQueueName(manager.getLocalNodeName());
@@ -122,56 +118,38 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     return new OHazelcastDistributedRequest();
   }
 
-  protected ArrayBlockingQueue<ODistributedResponse> getInternalThreadQueue(final long threadId) {
-    ArrayBlockingQueue<ODistributedResponse> responseQueue = internalThreadQueues.get(threadId);
-    if (responseQueue == null) {
-      // REGISTER THE INTERNAL THREAD'S RESPONSE QUEUE
-      responseQueue = new ArrayBlockingQueue<ODistributedResponse>(
-          OGlobalConfiguration.DISTRIBUTED_THREAD_QUEUE_SIZE.getValueAsInteger(), true);
-      internalThreadQueues.put(threadId, responseQueue);
-    }
-    return responseQueue;
-  }
-
   protected void dispatchResponseToThread(final ODistributedResponse response) {
-    Orient.instance().getProfiler()
-        .updateCounter("distributed.replication.msgReceived", "Number of replication messages received in current node", +1);
+    try {
+      final long reqId = response.getRequestId();
 
-    final long threadId = response.getSenderThreadId();
-
-    final String targetLocalNodeThread = manager.getLocalNodeName() + ":" + threadId;
-
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), targetLocalNodeThread, DIRECTION.OUT,
-          "- forward response to the internal thread");
-
-    final ArrayBlockingQueue<ODistributedResponse> responseQueue = internalThreadQueues.get(threadId);
-
-    if (responseQueue == null) {
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), targetLocalNodeThread, DIRECTION.OUT,
-            "cannot dispatch response to the internal thread because the thread queue %d was not found: %s", threadId,
-            response.getPayload());
-      return;
-    }
-
-    if (processAsynchResponse(response))
-      // DISPATCH THE RESPONSE TO THE INTERNAL THREAD TO BE WORKED SYNCHRONOUSLY
-      try {
-        if (!responseQueue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), targetLocalNodeThread, DIRECTION.OUT,
-              "timeout on dispatching response of message %d to the internal thread queue", response.getRequestId());
-      } catch (Exception e) {
-        ODistributedServerLog.error(this, manager.getLocalNodeName(), targetLocalNodeThread, DIRECTION.OUT,
-            "error on dispatching response to the internal thread queue", e);
+      // GET ASYNCHRONOUS MSG MANAGER IF ANY
+      final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(reqId);
+      if (asynchMgr == null) {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
+              "received response for message %d after the timeout (%dms)", reqId,
+              OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       }
+
+      if (asynchMgr.addResponse(response))
+        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER
+        responsesByRequestIds.remove(reqId);
+
+    } finally {
+      Orient.instance().getProfiler()
+          .updateCounter("distributed.replication.msgReceived", "Number of replication messages received in current node", +1);
+
+      Orient
+          .instance()
+          .getProfiler()
+          .updateCounter("distributed.replication." + response.getExecutorNodeName() + ".msgReceived",
+              "Number of replication messages received in current node from a node", +1);
+    }
   }
 
   public void shutdown() {
     for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet())
       m.getValue().shutdown();
-
-    internalThreadQueues.clear();
 
     asynchMessageManager.cancel();
     responsesByRequestIds.clear();
@@ -246,33 +224,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     if (queueSize > 0)
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
           "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
-  }
-
-  /**
-   * Processes the response asynchronously.
-   * 
-   * @return true if the response should be sent to the internal thread queue, otherwise no
-   */
-  protected boolean processAsynchResponse(final ODistributedResponse response) {
-    final long reqId = response.getRequestId();
-
-    // GET ASYNCHRONOUS MSG MANAGER IF ANY
-    final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(reqId);
-    if (asynchMgr == null) {
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), response.getSenderNodeName(), DIRECTION.OUT,
-            "received response for message %d after the timeout", reqId);
-
-      return false;
-    }
-
-    boolean processSynchronously = asynchMgr.waitForSynchronousResponses();
-
-    if (asynchMgr.addResponse(response))
-      // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER
-      responsesByRequestIds.remove(reqId);
-
-    return processSynchronously;
   }
 
   /**

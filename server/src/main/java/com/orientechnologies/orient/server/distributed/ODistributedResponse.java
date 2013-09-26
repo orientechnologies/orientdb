@@ -26,8 +26,6 @@ public interface ODistributedResponse {
 
   String getSenderNodeName();
 
-  long getSenderThreadId();
-
   Object getPayload();
 
   long getRequestId();
