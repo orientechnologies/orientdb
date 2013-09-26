@@ -114,11 +114,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     final int expectedSynchronousResponses = Math.min(availableNodes, quorum);
-    final boolean executeOnLocalNode = nodes.contains(manager.getLocalNodeName());
+    final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
 
     // CREATE THE RESPONSE MANAGER
     final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(iRequest.getId(), nodes,
-        expectedSynchronousResponses, quorum, executeOnLocalNode, iRequest.getPayload().getTotalTimeout(queueSize));
+        expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getPayload().getTotalTimeout(queueSize));
 
     msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
@@ -197,7 +197,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     }
 
-    if (currentResponseMgr.isExecuteOnLocalNode() && !currentResponseMgr.isReceivedCurrentNode())
+    if (currentResponseMgr.isWaitForLocalNode() && !currentResponseMgr.isReceivedCurrentNode())
       ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), manager.getLocalNodeName(), DIRECTION.IN,
           "no response received from local node about message %d", iRequest.getId());
 
@@ -214,11 +214,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
 
-  public void configureDatabase() {
+  public void configureDatabase(final ODatabaseDocumentTx iDatabase) {
     // TODO: USE THE POOL!
-    final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-    database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-        replicatorUser.password);
+    if (iDatabase == null) {
+      // OPEN IT
+      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+          ODistributedAbstractPlugin.REPLICATOR_USER);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+          replicatorUser.password);
+    } else
+      database = iDatabase;
 
     // CREATE A QUEUE PER DATABASE
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
@@ -268,7 +273,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         }
       }
     }).start();
-    
+
     checkLocalNodeInConfiguration();
   }
 
