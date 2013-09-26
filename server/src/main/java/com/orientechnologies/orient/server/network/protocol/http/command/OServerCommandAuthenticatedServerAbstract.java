@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.io.IOException;
 
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -64,7 +63,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
       final String[] authParts = iRequest.authorization.split(":");
       serverUser = authParts[0];
       serverPassword = authParts[1];
-      if (authParts.length == 2 && OServerMain.server().authenticate(serverUser, serverPassword, resource))
+      if (authParts.length == 2 && server.authenticate(serverUser, serverPassword, resource))
         // AUTHORIZED
         return true;
     }
@@ -75,14 +74,11 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
   }
 
   protected boolean checkGuestAccess() {
-    return OServerMain.server().authenticate(OServerConfiguration.SRV_ROOT_GUEST, null, resource);
+    return server.authenticate(OServerConfiguration.SRV_ROOT_GUEST, null, resource);
   }
 
   protected void sendNotAuthorizedResponse(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
-    // UNAUTHORIZED
-    iRequest.sessionId = SESSIONID_UNAUTHORIZED;
-    iResponse.send(OHttpUtils.STATUS_FORBIDDEN_CODE, OHttpUtils.STATUS_FORBIDDEN_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "403 Forbidden.", "WWW-Authenticate: Basic realm=\"OrientDB Server\"", false);
+    sendAuthorizationRequest(iRequest, iResponse);
   }
 
   protected void sendAuthorizationRequest(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {

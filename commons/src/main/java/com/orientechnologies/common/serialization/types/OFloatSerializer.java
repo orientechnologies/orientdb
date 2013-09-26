@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteOrder;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -62,11 +64,11 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   public void serializeNative(Float object, byte[] stream, int startPosition) {
-    CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object));
+    CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
 
   public Float deserializeNative(byte[] stream, int startPosition) {
-    return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition));
+    return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
   @Override

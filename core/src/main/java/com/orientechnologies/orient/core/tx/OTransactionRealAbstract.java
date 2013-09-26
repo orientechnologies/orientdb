@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -51,6 +52,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
+  private final OOperationUnitId                              operationUnitId;
+
   protected int                                               newObjectCounter      = -2;
 
   /**
@@ -73,9 +76,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     public OPERATION operation;
   }
 
-  protected OTransactionRealAbstract(ODatabaseRecordTx iDatabase, int iId) {
-    super(iDatabase);
-    id = iId;
+  protected OTransactionRealAbstract(ODatabaseRecordTx database, int id) {
+    super(database);
+    this.id = id;
+    this.operationUnitId = OOperationUnitId.generateId();
   }
 
   public void close() {
@@ -95,7 +99,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public void clearRecordEntries() {
-    allEntries.putAll(recordEntries);
+    for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+      final ORID key = entry.getKey();
+
+      // ID NEW CREATE A COPY OF RID TO AVOID IT CHANGES IDENTITY+HASHCODE AND IT'S UNREACHEABLE THEREAFTER
+      allEntries.put(key.isNew() ? key.copy() : key, entry.getValue());
+    }
+
     recordEntries.clear();
   }
 
@@ -108,13 +118,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public ORecordOperation getRecordEntry(ORID rid) {
+    ORecordOperation e = allEntries.get(rid);
+    if (e != null)
+      return e;
+
     if (rid.isTemporary()) {
       final ORecord<?> record = temp2persistent.get(rid);
       if (record != null && !record.getIdentity().equals(rid))
         rid = record.getIdentity();
     }
 
-    ORecordOperation e = recordEntries.get(rid);
+    e = recordEntries.get(rid);
     if (e != null)
       return e;
 
@@ -286,8 +300,20 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     }
   }
 
-  public void updateIndexIdentityAfterCommit(final ORID oldRid, final ORID newRid) {
-    List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
+  public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid) {
+    if (oldRid.equals(newRid))
+      // NO CHANGE, IGNORE IT
+      return;
+
+    if (oldRid.isNew()) {
+      // REMOVE AND RE-PUT THE OPERATION BECAUSE KEY IS CHANGED
+      final ORecordOperation rec = allEntries.remove(oldRid);
+      if (rec != null)
+        allEntries.put(newRid, rec);
+    }
+
+    // UPDATE INDEXES
+    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
     if (transactionIndexOperations != null) {
       for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
         OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);

@@ -27,13 +27,21 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 
 public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> {
+  private boolean skipDocument = false;
+
   /**
    * @param iCommand
    * @param iTarget
    */
   public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget) {
+    this(iCommand, iTarget, false);
+  }
+
+  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, final boolean iSkipDocument) {
     super(iCommand, iTarget);
-    command.getContext().incrementDepth();
+    skipDocument = iSkipDocument;
+    if (!skipDocument)
+      command.getContext().incrementDepth();
   }
 
   public OIdentifiable process() {
@@ -52,21 +60,22 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         return drop();
       }
 
-    // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
-    command.getContext().addTraversed(target);
-
     if (command.getPredicate() != null) {
       final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
       if (conditionResult != Boolean.TRUE)
         return drop();
     }
 
-    // MATCH!
+    // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
+    command.getContext().addTraversed(target);
 
-    final List<String> fields = new ArrayList<String>();
+    // MATCH!
+    final List<Object> fields = new ArrayList<Object>();
 
     // TRAVERSE THE DOCUMENT ITSELF
-    for (String cfgField : command.getFields()) {
+    for (Object cfgFieldObject : command.getFields()) {
+      String cfgField = cfgFieldObject.toString();
+
       if ("*".equals(cfgField) || OSQLFilterItemFieldAll.FULL_NAME.equalsIgnoreCase(cfgField)
           || OSQLFilterItemFieldAny.FULL_NAME.equalsIgnoreCase(cfgField)) {
 
@@ -93,14 +102,23 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
 
           cfgField = cfgField.substring(pos + 1);
 
-        }
-        fields.add(cfgField);
+          fields.add(cfgField);
+        } else
+          fields.add(cfgFieldObject);
       }
     }
 
-    new OTraverseFieldProcess(command, fields.iterator());
+    final OTraverseFieldProcess field = new OTraverseFieldProcess(command, fields.iterator());
 
-    return target;
+    if (skipDocument) {
+      // GO DIRECTLY TO THE FIELD
+      final OIdentifiable res = field.process();
+      if (res != null)
+        return res;
+      return drop();
+    } else
+      // RETURN THE DOCUMENT ITSELF
+      return target;
   }
 
   @Override
@@ -120,7 +138,8 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
    */
   @Override
   public OIdentifiable drop() {
-    command.getContext().decrementDepth();
+    if (!skipDocument)
+      command.getContext().decrementDepth();
     return super.drop();
   }
 }

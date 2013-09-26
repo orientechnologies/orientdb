@@ -19,21 +19,21 @@ import com.orientechnologies.common.exception.OException;
 
 public class OHttpRequestException extends OException {
 
-	private static final long	serialVersionUID	= 12132321321321L;
+  private static final long serialVersionUID = 12132321321321L;
 
-	public OHttpRequestException() {
-		super();
-	}
+  public OHttpRequestException() {
+    super();
+  }
 
-	public OHttpRequestException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public OHttpRequestException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-	public OHttpRequestException(String message) {
-		super(message);
-	}
+  public OHttpRequestException(String message) {
+    super(message);
+  }
 
-	public OHttpRequestException(Throwable cause) {
-		super(cause);
-	}
+  public OHttpRequestException(Throwable cause) {
+    super(cause);
+  }
 }

@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -25,12 +24,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.orientechnologies.common.collection.OLimitedMap;
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
@@ -38,6 +39,7 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
@@ -49,25 +51,37 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 @SuppressWarnings("serial")
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
-  protected final OMVRBTreeProvider<K, V>                  dataProvider;
+  protected OMVRBTreeProvider<K, V>                        dataProvider;
   protected ORecord<?>                                     owner;
   protected final Set<OMVRBTreeEntryPersistent<K, V>>      recordsToCommit    = new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
   // STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
-  protected int                                            optimizeThreshold;
   protected volatile int                                   optimization       = 0;
-  private int                                              insertionCounter   = 0;
   protected int                                            entryPointsSize;
 
   protected float                                          optimizeEntryPointsFactor;
   private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>> entryPoints;
-  private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>  cache              = new HashMap<ORID, OMVRBTreeEntryPersistent<K, V>>();
+  private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>  cache;
   protected static final OJVMProfiler                      PROFILER           = Orient.instance().getProfiler();
 
   private static final int                                 OPTIMIZE_MAX_RETRY = 10;
 
   public OMVRBTreePersistent(OMVRBTreeProvider<K, V> iProvider) {
     super();
+    cache = new OLimitedMap<ORID, OMVRBTreeEntryPersistent<K, V>>(256, 0.90f,
+        OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger()) {
+      /**
+       * Set the optimization rather than remove eldest element.
+       */
+      @Override
+      protected boolean removeEldestEntry(final Map.Entry<ORID, OMVRBTreeEntryPersistent<K, V>> eldest) {
+        if (super.removeEldestEntry(eldest))
+          // TOO MANY ITEMS: SET THE OPTIMIZATION
+          setOptimization(2);
+        return false;
+      }
+    };
+
     if (comparator != null)
       entryPoints = new TreeMap<K, OMVRBTreeEntryPersistent<K, V>>(comparator);
     else
@@ -203,19 +217,19 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     try {
       recordsToCommit.clear();
-      if (root != null) {
-        try {
-          ((OMVRBTreeEntryPersistent<K, V>) root).delete();
-        } catch (ORecordNotFoundException e) {
-        }
-        super.clear();
-        markDirty();
-      }
       entryPoints.clear();
       cache.clear();
+      if (root != null)
+        try {
+          ((OMVRBTreeEntryPersistent<K, V>) root).delete();
+        } catch (Exception e) {
+          // IGNORE ANY EXCEPTION
+          dataProvider = dataProvider.copy();
+        }
 
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on deleting the tree: " + dataProvider, e, OStorageException.class);
+      super.clear();
+      markDirty();
+
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.clear"), "Clear a MVRBTree", timer);
     }
@@ -242,7 +256,15 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       recordsToCommit.clear();
       root = null;
 
-      load();
+      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null && !db.isClosed() && db.getStorage() instanceof OStorageEmbedded) {
+        // RELOAD IT
+        try {
+          load();
+        } catch (Exception e) {
+          // IGNORE IT
+        }
+      }
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unload the tree: " + dataProvider, e, OStorageException.class);
@@ -612,12 +634,23 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     return optimization;
   }
 
-  public void setOptimization(final int i) {
-    if (i > 0 && optimization == -1)
+  /**
+   * Set the optimization to be executed at the next call.
+   * 
+   * @param iMode
+   *          <ul>
+   *          <li>-1 = ALREADY RUNNING</li>
+   *          <li>0 = NO OPTIMIZATION (DEFAULT)</li>
+   *          <li>1 = SOFT MODE</li>
+   *          <li>2 = HARD MODE</li>
+   *          </ul>
+   */
+  public void setOptimization(final int iMode) {
+    if (iMode > 0 && optimization == -1)
       // IGNORE IT, ALREADY RUNNING
       return;
 
-    optimization = i;
+    optimization = iMode;
   }
 
   /**
@@ -629,19 +662,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       throw new OLowMemoryException("Optimization level: " + optimization);
   }
 
-  public int getOptimizeThreshold() {
-    return optimizeThreshold;
-  }
-
-  public void setOptimizeThreshold(int iOptimizeThreshold) {
-    this.optimizeThreshold = iOptimizeThreshold;
-  }
-
   public int getEntryPointSize() {
     return entryPointsSize;
   }
 
-  public void setEntryPointSize(int entryPointSize) {
+  public void setEntryPointSize(final int entryPointSize) {
     this.entryPointsSize = entryPointSize;
   }
 
@@ -700,15 +725,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     for (int i = 0; i < OPTIMIZE_MAX_RETRY; ++i) {
       try {
-        final V previous = super.put(key, value);
+        return super.put(key, value);
 
-        if (optimizeThreshold > -1 && ++insertionCounter >= optimizeThreshold) {
-          insertionCounter = 0;
-          optimization = 2;
-          optimize(true);
-        }
-
-        return previous;
       } catch (OLowMemoryException e) {
         OLogManager.instance().debug(this, "Optimization required during put %d/%d", i, OPTIMIZE_MAX_RETRY);
         freeMemory(i);
@@ -762,7 +780,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
    * empty.
    */
   @Override
-  protected OMVRBTreeEntry<K, V> getFirstEntry() {
+  public OMVRBTreeEntry<K, V> getFirstEntry() {
     if (!entryPoints.isEmpty()) {
       // FIND THE FIRST ELEMENT STARTING FROM THE FIRST ENTRY-POINT IN MEMORY
       final Map.Entry<K, OMVRBTreeEntryPersistent<K, V>> entry = entryPoints.firstEntry();
@@ -837,7 +855,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       markDirty();
     pageLoadFactor = OGlobalConfiguration.MVRBTREE_LOAD_FACTOR.getValueAsFloat();
     optimizeEntryPointsFactor = OGlobalConfiguration.MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR.getValueAsFloat();
-    optimizeThreshold = OGlobalConfiguration.MVRBTREE_OPTIMIZE_THRESHOLD.getValueAsInteger();
     entryPointsSize = OGlobalConfiguration.MVRBTREE_ENTRYPOINTS.getValueAsInteger();
   }
 

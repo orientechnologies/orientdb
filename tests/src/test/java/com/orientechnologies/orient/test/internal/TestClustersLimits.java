@@ -2,12 +2,12 @@ package com.orientechnologies.orient.test.internal;
 
 import java.io.IOException;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+
+import org.testng.annotations.Test;
 
 @Test
 public class TestClustersLimits {
@@ -29,8 +29,8 @@ public class TestClustersLimits {
   protected static void executeTest(String url, CLUSTER_TYPE clusterType) throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 
-    if (ODatabaseHelper.existsDatabase(database))
-      ODatabaseHelper.dropDatabase(database);
+    if (ODatabaseHelper.existsDatabase(database, "plocal"))
+      ODatabaseHelper.dropDatabase(database, "plocal");
 
     ODatabaseHelper.createDatabase(database, url);
 

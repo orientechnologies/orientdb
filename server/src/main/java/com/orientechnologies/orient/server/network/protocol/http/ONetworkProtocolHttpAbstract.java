@@ -23,9 +23,11 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -72,7 +74,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
-    super(Orient.getThreadGroup(), "IO-HTTP");
+    super(Orient.instance().getThreadGroup(), "IO-HTTP");
   }
 
   @Override
@@ -83,7 +85,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       additionalResponseHeaders = addHeaders.split(";");
 
     // CREATE THE CLIENT CONNECTION
-    connection = OClientConnectionManager.instance().connect(iSocket, this);
+    connection = OClientConnectionManager.instance().connect(this);
 
     server = iServer;
     requestMaxContentLength = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
@@ -119,6 +121,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
 
+    waitNodeIsOnline();
+
     final long begin = System.currentTimeMillis();
 
     boolean isChain;
@@ -134,11 +138,25 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       final String commandString = getCommandString(command);
 
       final OServerCommand cmd = (OServerCommand) cmdManager.getCommand(commandString);
+      Map<String, String> requestParams = cmdManager.extractUrlTokens(commandString);
+      if (requestParams != null) {
+        if (request.parameters == null) {
+          request.parameters = new HashMap<String, String>();
+        }
+        for (Map.Entry<String, String> entry : requestParams.entrySet()) {
+          request.parameters.put(entry.getKey(), URLDecoder.decode(entry.getValue(), "UTF-8"));
+        }
+      }
+
       if (cmd != null)
         try {
           if (cmd.beforeExecute(request, response))
-            // EXECUTE THE COMMAND
-            isChain = cmd.execute(request, response);
+            try {
+              // EXECUTE THE COMMAND
+              isChain = cmd.execute(request, response);
+            } finally {
+              cmd.afterExecute(request, response);
+            }
 
         } catch (Exception e) {
           handleError(e);

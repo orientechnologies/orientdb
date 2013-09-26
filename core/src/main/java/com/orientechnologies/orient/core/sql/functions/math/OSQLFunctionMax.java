@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Compute the maximum value for a field. Uses the context to save the last maximum number. When different Number class are used,
@@ -31,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   public static final String NAME = "max";
 
-  private Comparable<Object> context;
+  private Object             context;
 
   public OSQLFunctionMax() {
     super(NAME, 1, -1);
@@ -40,36 +41,38 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] == null)
-      return null;
 
-    // calculate max value for current record.
+    // calculate max value for current record
+    // consider both collection of parameters and collection in each parameter
     Object max = null;
-    if (iParameters.length > 0) {
-      for (Object item : iParameters) {
+    for (Object item : iParameters) {
+      if (item instanceof Collection<?>) {
+        for (Object subitem : ((Collection<?>) item)) {
+          if (max == null || subitem != null && ((Comparable) subitem).compareTo(max) > 0)
+            max = subitem;
+        }
+      } else {
         if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
           max = item;
       }
-    } else if (iParameters[0] instanceof Collection<?>) {
-      // for a projection with multiple results find out the max value
-      for (Object item : ((Collection<?>) iParameters[0])) {
-        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
-          max = item;
-      }
-    } else {
-      // this is the max as is an unique value
-      max = (Comparable<Object>) iParameters[0];
     }
 
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
-    if (aggregateResults()) {
+    if (aggregateResults() && max != null) {
       if (context == null)
         // FIRST TIME
         context = (Comparable) max;
-      else if (context.compareTo((Comparable) max) < 0)
-        // BIGGER
-        context = (Comparable) max;
+      else {
+        if (context instanceof Number && max instanceof Number) {
+          final Number[] casted = OType.castComparableNumber((Number) context, (Number) max);
+          context = casted[0];
+          max = casted[1];
+        }
+        if (((Comparable<Object>) context).compareTo((Comparable) max) < 0)
+          // BIGGER
+          context = (Comparable) max;
+      }
 
       return null;
     }

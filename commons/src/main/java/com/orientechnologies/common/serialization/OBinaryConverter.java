@@ -15,26 +15,28 @@
  */
 package com.orientechnologies.common.serialization;
 
+import java.nio.ByteOrder;
+
 /**
  * @author Andrey Lomakin
  * @since 26.07.12
  */
 public interface OBinaryConverter {
-  void putInt(byte[] buffer, int index, int value);
+  void putInt(byte[] buffer, int index, int value, ByteOrder byteOrder);
 
-  int getInt(byte[] buffer, int index);
+  int getInt(byte[] buffer, int index, ByteOrder byteOrder);
 
-  void putShort(byte[] buffer, int index, short value);
+  void putShort(byte[] buffer, int index, short value, ByteOrder byteOrder);
 
-  short getShort(byte[] buffer, int index);
+  short getShort(byte[] buffer, int index, ByteOrder byteOrder);
 
-  void putLong(byte[] buffer, int index, long value);
+  void putLong(byte[] buffer, int index, long value, ByteOrder byteOrder);
 
-  long getLong(byte[] buffer, int index);
+  long getLong(byte[] buffer, int index, ByteOrder byteOrder);
 
-  void putChar(byte[] buffer, int index, char character);
+  void putChar(byte[] buffer, int index, char character, ByteOrder byteOrder);
 
-  char getChar(byte[] buffer, int index);
+  char getChar(byte[] buffer, int index, ByteOrder byteOrder);
 
   boolean nativeAccelerationUsed();
 }

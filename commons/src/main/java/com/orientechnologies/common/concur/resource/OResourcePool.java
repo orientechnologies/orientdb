@@ -31,6 +31,8 @@ public class OResourcePool<K, V> {
   private OResourcePoolListener<K, V> listener;
 
   public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
+    if (iMaxResources < 1)
+      throw new IllegalArgumentException("iMaxResource must be major than 0");
     listener = iListener;
     sem = new Semaphore(iMaxResources + 1, true);
     unmodifiableresources = Collections.unmodifiableCollection(resources);
@@ -41,10 +43,10 @@ public class OResourcePool<K, V> {
     // First, get permission to take or create a resource
     try {
       if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("Cannot acquire lock on requested resource: " + iKey);
+        throw new OLockException("Not more resources available in pool. Requested resource: " + iKey);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new OLockException("Cannot acquire lock on requested resource: " + iKey, e);
+      throw new OLockException("Not more resources available in pool. Requested resource: " + iKey, e);
     }
 
     V res;

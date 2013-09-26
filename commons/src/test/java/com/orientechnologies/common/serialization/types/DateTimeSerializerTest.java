@@ -22,10 +22,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
+@Test
 public class DateTimeSerializerTest {
   private final static int    FIELD_SIZE = 8;
   private static final Date   OBJECT     = new Date();
@@ -37,14 +41,31 @@ public class DateTimeSerializerTest {
     dateTimeSerializer = new ODateTimeSerializer();
   }
 
-  @Test
   public void testFieldSize() {
     Assert.assertEquals(dateTimeSerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
-  @Test
   public void testSerialize() {
     dateTimeSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(dateTimeSerializer.deserialize(stream, 0), OBJECT);
+  }
+
+  public void testSerializeNative() {
+    dateTimeSerializer.serializeNative(OBJECT, stream, 0);
+    Assert.assertEquals(dateTimeSerializer.deserializeNative(stream, 0), OBJECT);
+  }
+
+  public void testNativeDirectMemoryCompatibility() {
+    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    dateTimeSerializer.serializeNative(OBJECT, stream, 0);
+
+    long pointer = directMemory.allocate(stream);
+    try {
+      Assert.assertEquals(dateTimeSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT);
+    } finally {
+      directMemory.free(pointer);
+    }
+
   }
 }

@@ -45,6 +45,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
@@ -797,7 +799,7 @@ public class CRUDDocumentPhysicalTest {
         database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
           public void call(ORecordId iRID, OClusterPosition iParameter) {
-            System.out.println("asynchInsertion callback for record " + iRID + ": " + callBackCalled.incrementAndGet());
+            callBackCalled.incrementAndGet();
           }
         }, null);
       }
@@ -838,9 +840,6 @@ public class CRUDDocumentPhysicalTest {
 
   @Test(dependsOnMethods = "cleanAll")
   public void testEmbeddeDocumentInTx() {
-    if (url.startsWith("plocal:"))
-      return;
-
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
     ODocument bank = database.newInstance("Account");
@@ -949,5 +948,28 @@ public class CRUDDocumentPhysicalTest {
     doc.field("out");
     final byte[] streamDest = doc.toStream();
     Assert.assertEquals(streamOrigin, streamDest);
+  }
+
+  public void testUpdateNoVersionCheck() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+
+    try {
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+      ODocument doc = result.get(0);
+      doc.field("name", "modified");
+      int oldVersion = doc.getVersion();
+
+      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+      recordVersion.setCounter(-2);
+      doc.getRecordVersion().copyFrom(recordVersion);
+
+      doc.save();
+
+      doc.reload();
+      Assert.assertEquals(doc.getVersion(), oldVersion);
+      Assert.assertEquals(doc.field("name"), "modified");
+    } finally {
+      database.close();
+    }
   }
 }

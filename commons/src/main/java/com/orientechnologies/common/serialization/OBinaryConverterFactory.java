@@ -5,23 +5,27 @@ package com.orientechnologies.common.serialization;
  * @since 26.07.12
  */
 public class OBinaryConverterFactory {
-  private static final OBinaryConverter INSTANCE;
+  private static final boolean unsafeWasDetected;
 
   static {
-    Class<?> sunClass = null;
+    boolean unsafeDetected = false;
+
     try {
-      sunClass = Class.forName("sun.misc.Unsafe");
-    } catch (Exception e) {
-      // ignore
+      Class<?> sunClass = Class.forName("sun.misc.Unsafe");
+      unsafeDetected = sunClass != null;
+    } catch (ClassNotFoundException cnfe) {
+      // Ignore
     }
 
-    if (sunClass == null)
-      INSTANCE = new OSafeBinaryConverter();
-    else
-      INSTANCE = new OUnsafeBinaryConverter();
+    unsafeWasDetected = unsafeDetected;
   }
 
   public static OBinaryConverter getConverter() {
-    return INSTANCE;
+    boolean useUnsafe = Boolean.valueOf(System.getProperty("memory.useUnsafe"));
+
+    if (useUnsafe && unsafeWasDetected)
+      return OUnsafeBinaryConverter.INSTANCE;
+
+    return OSafeBinaryConverter.INSTANCE;
   }
 }

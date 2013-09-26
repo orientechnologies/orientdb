@@ -16,30 +16,50 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.updatePageRecord.OUpdatePageRecord;
+
 /**
  * @author Andrey Lomakin
  * @since 25.04.13
  */
 public class OWALRecordsFactory {
-  public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
+  private Map<Byte, Class>               idToTypeMap = new HashMap<Byte, Class>();
+  private Map<Class, Byte>               typeToIdMap = new HashMap<Class, Byte>();
+
+  public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
 
   public byte[] toStream(OWALRecord walRecord) {
     int contentSize = walRecord.serializedSize() + 1;
     byte[] content = new byte[contentSize];
 
-    if (walRecord instanceof OSetPageDataRecord)
+    if (walRecord instanceof OUpdatePageRecord)
       content[0] = 0;
-    else if (walRecord instanceof OShiftPageDataRecord)
+    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
       content[0] = 1;
-    else if (walRecord instanceof OStartAtomicPageUpdateRecord)
+    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
       content[0] = 2;
-    else if (walRecord instanceof OEndAtomicPageUpdateRecord)
+    else if (walRecord instanceof ODirtyPagesRecord)
       content[0] = 3;
-    else if (walRecord instanceof OCheckpointStartRecord)
+    else if (walRecord instanceof OFullCheckpointStartRecord)
       content[0] = 4;
     else if (walRecord instanceof OCheckpointEndRecord)
       content[0] = 5;
-    else
+    else if (walRecord instanceof OAddNewPageRecord)
+      content[0] = 6;
+    else if (walRecord instanceof OClusterStateRecord)
+      content[0] = 7;
+    else if (walRecord instanceof OAtomicUnitStartRecord)
+      content[0] = 8;
+    else if (walRecord instanceof OAtomicUnitEndRecord)
+      content[0] = 9;
+    else if (walRecord instanceof OFreePageChangeRecord)
+      content[0] = 10;
+    else if (typeToIdMap.containsKey(walRecord.getClass())) {
+      content[0] = typeToIdMap.get(walRecord.getClass());
+    } else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
     walRecord.toStream(content, 1);
@@ -51,29 +71,58 @@ public class OWALRecordsFactory {
     OWALRecord walRecord;
     switch (content[0]) {
     case 0:
-      walRecord = new OSetPageDataRecord();
+      walRecord = new OUpdatePageRecord();
       break;
     case 1:
-      walRecord = new OShiftPageDataRecord();
+      walRecord = new OFuzzyCheckpointStartRecord();
       break;
     case 2:
-      walRecord = new OStartAtomicPageUpdateRecord();
+      walRecord = new OFuzzyCheckpointEndRecord();
       break;
     case 3:
-      walRecord = new OEndAtomicPageUpdateRecord();
+      walRecord = new ODirtyPagesRecord();
       break;
     case 4:
-      walRecord = new OCheckpointStartRecord();
+      walRecord = new OFullCheckpointStartRecord();
       break;
     case 5:
       walRecord = new OCheckpointEndRecord();
       break;
+    case 6:
+      walRecord = new OAddNewPageRecord();
+      break;
+    case 7:
+      walRecord = new OClusterStateRecord();
+      break;
+    case 8:
+      walRecord = new OAtomicUnitStartRecord();
+      break;
+    case 9:
+      walRecord = new OAtomicUnitEndRecord();
+      break;
+    case 10:
+      walRecord = new OFreePageChangeRecord();
+      break;
     default:
-      throw new IllegalStateException("Can not deserialize passed in wal record.");
+      if (idToTypeMap.containsKey(content[0]))
+        try {
+          walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
+        } catch (InstantiationException e) {
+          throw new IllegalStateException("Can not deserialize passed in record", e);
+        } catch (IllegalAccessException e) {
+          throw new IllegalStateException("Can not deserialize passed in record", e);
+        }
+      else
+        throw new IllegalStateException("Can not deserialize passed in wal record.");
     }
 
     walRecord.fromStream(content, 1);
 
     return walRecord;
+  }
+
+  public void registerNewRecord(byte id, Class<? extends OWALRecord> type) {
+    typeToIdMap.put(type, id);
+    idToTypeMap.put(id, type);
   }
 }

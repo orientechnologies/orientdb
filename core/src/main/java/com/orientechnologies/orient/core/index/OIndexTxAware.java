@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
-  protected ODatabaseRecord     database;
+  protected ODatabaseRecord database;
 
   public OIndexTxAware(final ODatabaseRecord iDatabase, final OIndex<T> iDelegate) {
     super(iDelegate);

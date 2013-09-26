@@ -247,7 +247,7 @@ public class SQLFindReferencesTest {
       database.reload();
     }
     while (database.getClusterIdByName(iClass) > -1) {
-      database.dropCluster(iClass);
+      database.dropCluster(iClass, true);
       database.reload();
     }
   }

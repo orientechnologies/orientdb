@@ -20,10 +20,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
+@Test
 public class ShortSerializerTest {
   private static final int   FIELD_SIZE = 2;
   private static final Short OBJECT     = 1;
@@ -35,14 +39,30 @@ public class ShortSerializerTest {
     shortSerializer = new OShortSerializer();
   }
 
-  @Test
   public void testFieldSize() {
     Assert.assertEquals(shortSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
-  @Test
   public void testSerialize() {
     shortSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(shortSerializer.deserialize(stream, 0), OBJECT);
+  }
+
+  public void testSerializeNative() {
+    shortSerializer.serializeNative(OBJECT, stream, 0);
+    Assert.assertEquals(shortSerializer.deserializeNative(stream, 0), OBJECT);
+  }
+
+  public void testNativeDirectMemoryCompatibility() {
+    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    shortSerializer.serializeNative(OBJECT, stream, 0);
+
+    long pointer = directMemory.allocate(stream);
+    try {
+      Assert.assertEquals(shortSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT);
+    } finally {
+      directMemory.free(pointer);
+    }
   }
 }

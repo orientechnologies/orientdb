@@ -24,12 +24,8 @@ public abstract class OMMapManagerAbstract implements OMMapManager {
   /**
    * {@inheritDoc}
    */
-  public void release(OMMapBufferEntry[] entries, OPERATION_TYPE operationType) {
-    for (int i = entries.length - 1; i >= 0; --i) {
-      if (OPERATION_TYPE.WRITE.equals(operationType))
-        entries[i].releaseWriteLock();
-      else
-        entries[i].releaseReadLock();
-    }
+  public void release(final OMMapBufferEntry[] entries, final OPERATION_TYPE operationType) {
+    for (int i = entries.length - 1; i >= 0; --i)
+      entries[i].releaseLock();
   }
 }

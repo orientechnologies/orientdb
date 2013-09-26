@@ -18,12 +18,74 @@
            ,::::,,,. `:   ,,   :::::    :     :   .:  DB
            ,,:` `,,.                                  
           ,,,    .,`                                  
-         ,,.     `,                 DOCUMENT-GRAPH DBMS   
-       ``        `.                   ORIENT DATABASE                      
-                 ``           http://www.orientechnologies.com                               
-                 `                                 
-*******************************************************************************
-This document enlist the last changes to the OrientDB project.
+         ,,.     `,                 DOCUMENT-GRAPH DBMS
+       ``        `.                   ORIENT DATABASE
+                 ``           http://www.orientechnologies.com
+
+***************************************************************************************************
+This document contains the last changes to the OrientDB project.
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.5.1 - (September, 3rd 2013)
+---------------------------------------------------------------------------------------------------
+This is a minor release, only bug fixing.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=9&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.5.0 - (July, 30th 2013)
+---------------------------------------------------------------------------------------------------
+- New PLOCAL (Paginated Local) storage engine. In comparison with LOCAL it's more durable (no usage
+  of MMAP) and supports better concurrency on parallel transactions
+- New Hash Index type with better performance on lookups. It does not support ranges
+- New "transactional" SQL command to execute commands inside a transaction. This is useful for
+  "create edge" SQL command to avoid the graph get corrupted
+- Import now migrates RIDs allowing to import databases in a different one from the original
+- "Breadth first" strategy added on traversing (Java and SQL APIs)
+- Server can limit maximum live connections (to prevent DOS)
+- Fetch plan support in SQL statements and in binary protocol for synchronous commands too
+- Distributed configuration
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=5&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.2 - (July, 29th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=7&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.1 - (June, 18th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=6&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.4.0 - (June, 7th 2013)
+---------------------------------------------------------------------------------------------------
+- Graph: total rewrite of Blueprints API that now are the default Java interface, support for
+         light-weight edges (no document), labeled relationships using separate classes and vertex
+         fields
+- Storage: new Paged-Local compressed "plocal" engine  (not yet transactional)
+- SQL: INSERT and UPDATE supports JSON syntax, improved usage of indexes upon ORDER BY, supported
+       timeout in query and global, new create function command, flatten() now is expand(), new
+       OSQLMethod classes to handle methods even in chain, new encode() and decode() functions,
+       support for new dictionary:<key> as target in SELECT and TRAVERSE
+- new SCHEDULER component using CRON syntax
+- new OTriggered class to use JS as hook
+- MMap: auto flush of pages on regular basis
+- Fetch-plan: support for skip field using "-2"
+- Index: auto rebuild in background, usage of different data-segment
+- Export: supported partial export like schema, few clusters, etc.
+- Console: improved formatting of resultsets
+- HTTP: new /batch command supporting transaction too, faster connection through /connect command,
+        /document returns a JSON
+- Studio: UML display of class
+
+Full list: https://github.com/nuvolabase/orientdb/issues?milestone=2&state=closed
 
 -------------------------------------------------------------------------------
 VERSION 1.3.0 - (December, 19th 2012)

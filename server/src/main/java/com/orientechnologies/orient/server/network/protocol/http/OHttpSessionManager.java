@@ -15,12 +15,8 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
@@ -41,7 +37,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
   protected OHttpSessionManager() {
     expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
 
-    Orient.getTimer().schedule(new TimerTask() {
+    Orient.instance().getTimer().schedule(new TimerTask() {
       @Override
       public void run() {
         final int expired = checkSessionsValidity();

@@ -3,12 +3,8 @@ package com.orientechnologies.orient.server.handler;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -22,7 +18,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
 public class OAutomaticBackup extends OServerHandlerAbstract {
@@ -36,9 +31,12 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
   private String      targetFileName;
   private Set<String> includeDatabases = new HashSet<String>();
   private Set<String> excludeDatabases = new HashSet<String>();
+  private OServer     serverInstance;
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
+    serverInstance = iServer;
+
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
@@ -87,7 +85,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 
         int ok = 0, errors = 0;
 
-        final Map<String, String> databaseNames = OServerMain.server().getAvailableStorageNames();
+        final Map<String, String> databaseNames = serverInstance.getAvailableStorageNames();
         for (final Entry<String, String> dbName : databaseNames.entrySet()) {
           boolean include;
 
@@ -156,9 +154,9 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
     };
 
     if (firstTime == null)
-      Orient.getTimer().schedule(timerTask, delay, delay);
+      Orient.instance().getTimer().schedule(timerTask, delay, delay);
     else
-      Orient.getTimer().schedule(timerTask, firstTime, delay);
+      Orient.instance().getTimer().schedule(timerTask, firstTime, delay);
   }
 
   @Override

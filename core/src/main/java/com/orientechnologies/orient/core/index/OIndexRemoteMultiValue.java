@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("unchecked")
 public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiable>> {
-  protected final static String QUERY_GET = "select FLATTEN( rid ) from index:%s where key = ?";
+  protected final static String QUERY_GET = "select EXPAND( rid ) from index:%s where key = ?";
 
   public OIndexRemoteMultiValue(final String iName, final String iWrappedType, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {

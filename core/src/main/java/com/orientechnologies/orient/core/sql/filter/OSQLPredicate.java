@@ -304,7 +304,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
                 word = word.substring(0, word.length() - 1);
             }
           }
-        }
+        } else if (uWord.equals("AND"))
+          // SPECIAL CASE IN "BETWEEN X AND Y"
+          result[i] = word;
 
         while (word.endsWith(")")) {
           final int openParenthesis = word.indexOf('(');

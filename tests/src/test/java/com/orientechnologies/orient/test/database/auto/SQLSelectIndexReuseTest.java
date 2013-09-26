@@ -1,11 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -216,7 +211,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
       oldcompositeIndexUsed2 = 0;
 
     if (oldcompositeIndexUsed21 == -1)
-      oldcompositeIndexUsed2 = 0;
+      oldcompositeIndexUsed21 = 0;
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select * from sqlSelectIndexReuseTestClass where prop1 = 1")).execute();

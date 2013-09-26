@@ -36,7 +36,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract {
+public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract {
   public static final String NAME = "move";
 
   public OSQLFunctionMove() {
@@ -47,15 +47,25 @@ public class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract {
     super(iName, iMin, iMax);
   }
 
+  protected abstract Object move(final OrientBaseGraph graph, final OIdentifiable iRecord, final String[] iLabels);
+
+  public String getSyntax() {
+    return "Syntax error: " + name + "([<labels>])";
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    final Direction direction = Direction
-        .valueOf(OStringSerializerHelper.getStringContent(iParameters[0].toString().toUpperCase()));
     final String[] labels;
-    if (iParameters.length > 1 && iParameters[1] != null)
-      labels = OMultiValue.array(iParameters[1], String.class);
+    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+      labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+
+        @Override
+        public Object call(final Object iArgument) {
+          return OStringSerializerHelper.getStringContent(iArgument);
+        }
+      });
     else
       labels = null;
 
@@ -63,35 +73,28 @@ public class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract {
       return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
         public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, direction, labels);
+          return move(graph, iArgument, labels);
         }
       }, iCurrentResult, iContext);
     } else
-      return move(graph, iCurrentRecord.getRecord(), direction, labels);
+      return move(graph, iCurrentRecord.getRecord(), labels);
   }
 
-  public Object executeSub(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
-      final OCommandContext iContext, final Direction iDirection) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+  protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
+    final ODocument rec = iRecord.getRecord();
 
-    final String[] labels;
-    if (iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(iParameters[0], String.class);
-    else
-      labels = null;
+    if (rec.getSchemaClass() != null)
+      if (rec.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+        // VERTEX
+        final OrientVertex vertex = graph.getVertex(rec);
+        if (vertex != null)
+          return vertex.getVertices(iDirection, iLabels);
+      }
 
-    if (iCurrentRecord == null) {
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, iDirection, labels);
-        }
-      }, iCurrentResult, iContext);
-    } else
-      return move(graph, iCurrentRecord.getRecord(), iDirection, labels);
+    return null;
   }
 
-  protected Object move(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
+  protected Object v2e(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
@@ -100,29 +103,25 @@ public class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract {
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
           return vertex.getEdges(iDirection, iLabels);
-
-      } else if (rec.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
-        // EDGE
-        final OrientEdge edge = graph.getEdge(rec);
-        if (edge != null) {
-          final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
-
-          if (iLabels == null || iLabels.length == 0)
-            return out;
-
-          // FILTER BY LABEL
-          final String vLabel = out.getLabel();
-          if (vLabel != null)
-            for (String l : iLabels)
-              if (vLabel.equals(l))
-                return out;
-        }
       }
 
     return null;
   }
 
-  public String getSyntax() {
-    return "Syntax error: move(<direction>, [<labels>])";
+  protected Object e2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
+    final ODocument rec = iRecord.getRecord();
+
+    if (rec.getSchemaClass() != null)
+      if (rec.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+        // EDGE
+        final OrientEdge edge = graph.getEdge(rec);
+        if (edge != null) {
+          final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
+
+          return out;
+        }
+      }
+
+    return null;
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -32,12 +34,18 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 @Test
 public class ConcurrentUpdatesTest {
 
-  protected String url;
-  private boolean  level1CacheEnabled;
-  private boolean  level2CacheEnabled;
-  private boolean  mvccEnabled;
+  private final static int CYCLES       = 50;
+  private final static int MAX_RETRIES  = 100;
 
-  static class UpdateField implements Runnable {
+  protected String         url;
+  private boolean          level1CacheEnabled;
+  private boolean          level2CacheEnabled;
+  private boolean          mvccEnabled;
+
+  private final AtomicLong counter      = new AtomicLong();
+  private final AtomicLong totalRetries = new AtomicLong();
+
+  class UpdateField implements Runnable {
 
     ODatabaseDocumentTx db;
     ORID                rid1;
@@ -55,8 +63,8 @@ public class ConcurrentUpdatesTest {
 
     public void run() {
       try {
-        for (int i = 0; i < 50; i++) {
-          while (true) {
+        for (int i = 0; i < CYCLES; i++) {
+          for (int retry = 0; retry < MAX_RETRIES; ++retry) {
             try {
               db.begin(TXTYPE.OPTIMISTIC);
 
@@ -69,9 +77,13 @@ public class ConcurrentUpdatesTest {
               vDoc2.save();
 
               db.commit();
+
+              counter.incrementAndGet();
+              totalRetries.addAndGet(retry);
               break;
             } catch (ONeedRetryException e) {
-              System.out.println("Retry... " + Thread.currentThread().getName() + " " + i);
+              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
+              Thread.sleep(retry * 10);
             }
           }
           fieldValue += ";" + i;
@@ -79,6 +91,7 @@ public class ConcurrentUpdatesTest {
 
       } catch (Throwable e) {
         e.printStackTrace();
+        Assert.assertTrue(false);
       }
     }
   }
@@ -114,9 +127,6 @@ public class ConcurrentUpdatesTest {
 
   @Test
   public void concurrentUpdates() throws Exception {
-    if (url.startsWith("plocal:"))
-      return;
-
     ODatabaseDocumentTx database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
     ODatabaseDocumentTx database3 = new ODatabaseDocumentTx(url).open("admin", "admin");
@@ -147,6 +157,11 @@ public class ConcurrentUpdatesTest {
     vThread2.join();
     vThread3.join();
 
+    System.out.println("Done! Total updates executed in parallel: " + counter.get() + " average retries: "
+        + ((float) totalRetries.get() / (float) counter.get()));
+
+    Assert.assertEquals(counter.get(), CYCLES * 3);
+
     doc1 = database1.load(rid1, null, true);
     Assert.assertEquals(doc1.field(vUpdate1.threadName), vUpdate1.fieldValue, vUpdate1.threadName);
     Assert.assertEquals(doc1.field(vUpdate2.threadName), vUpdate2.fieldValue, vUpdate2.threadName);
@@ -164,5 +179,4 @@ public class ConcurrentUpdatesTest {
     database1.close();
     database2.close();
   }
-
 }

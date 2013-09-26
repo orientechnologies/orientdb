@@ -69,6 +69,11 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     OGremlinHelper.global().create();
   }
 
+  @Override
+  protected boolean isCollectingCommands(final String iLine) {
+    return super.isCollectingCommands(iLine) || iLine.startsWith("gremlin");
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
   public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
     checkForDatabase();
@@ -76,15 +81,17 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     if (iScriptText == null || iScriptText.length() == 0)
       return;
 
-    long start = System.currentTimeMillis();
-
     currentResultSet.clear();
 
+    long start = System.currentTimeMillis();
     try {
-      Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
+      final Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
+
+      float elapsedSeconds = (System.currentTimeMillis() - start) / 1000;
+
       out.println("\n" + result);
 
-      out.printf("\nScript executed in %f sec(s).", (float) (System.currentTimeMillis() - start) / 1000);
+      out.printf("\nScript executed in %f sec(s).", elapsedSeconds);
     } catch (OStorageException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof OCommandExecutorNotFoundException)

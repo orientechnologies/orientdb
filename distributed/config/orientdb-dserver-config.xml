@@ -11,6 +11,10 @@
 				<parameter name="alignment.startup" value="true" />
 				<parameter name="alignment.timer" value="120000" />
 				<parameter name="conflict.resolver.impl" value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" />
+				
+				<!-- REPLICATION STRATEGIES -->
+				<parameter name="replication.strategy.auto"
+					value="com.orientechnologies.orient.server.hazelcast.strategy.OAutoReplicationStrategy" />
 			</parameters>
 		</handler>
 		<!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
@@ -22,6 +26,20 @@
 				<parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json" /><!-- ${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
 				<parameter name="db.include" value="" /><!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
 				<parameter name="db.exclude" value="" /><!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
+			</parameters>
+		</handler>
+		<!-- MAIL, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
+		<handler class="com.orientechnologies.orient.server.plugin.mail.OMailPlugin">
+			<parameters>
+				<parameter name="enabled" value="true" />
+				<!-- CREATE MULTIPLE PROFILES WITH profile.<name>... -->
+				<parameter name="profile.default.mail.smtp.host" value="localhost" />
+				<parameter name="profile.default.mail.smtp.port" value="25" />
+				<parameter name="profile.default.mail.smtp.auth" value="true" />
+				<parameter name="profile.default.mail.smtp.starttls.enable" value="true" />
+				<parameter name="profile.default.mail.smtp.user" value="" />
+				<parameter name="profile.default.mail.smtp.password" value="" />
+				<parameter name="profile.default.mail.date.format" value="yyyy-MM-dd HH:mm:ss" />
 			</parameters>
 		</handler>
 		<!-- SERVER SIDE SCRIPT INTERPRETER. WARNING! THIS CAN BE A SECURITY HOLE: ENABLE IT ONLY IF CLIENTS ARE TRUCT, TO TURN ON SET THE 'ENABLED' PARAMETER 
@@ -66,8 +84,6 @@
 		</cluster>
 	</network>
 	<storages>
-		<!-- Default in-memory storage. Data are not saved permanently. -->
-		<storage path="memory:temp" name="temp" userName="admin" userPassword="admin" loaded-at-startup="true" />
 	</storages>
 	<users>
 	</users>
@@ -75,7 +91,21 @@
 		<!-- Uses the Hazelcast's distributed cache as 2nd level cache -->
 		<!-- <entry name="cache.level2.impl" value="com.orientechnologies.orient.server.hazelcast.OHazelcastCache" /> -->
 
-		<!-- Enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
+		<!-- DATABASE POOL: size min/max -->
+		<entry name="db.pool.min" value="1" />
+		<entry name="db.pool.max" value="20" />
+		
+		<!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
+		<entry name="cache.level1.enabled" value="false" />
+		<entry name="cache.level1.size" value="1000" />
+		<entry name="cache.level2.enabled" value="true" />
+		<entry name="cache.level2.size" value="1000" />
+		
+		<!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->
+		<entry name="profiler.enabled" value="true" />
+		<!-- <entry name="profiler.config" value="30,10,10" />  -->		
+
+		<!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, warning -->
 		<entry name="log.console.level" value="info" />
 		<entry name="log.file.level" value="fine" />
 	</properties>

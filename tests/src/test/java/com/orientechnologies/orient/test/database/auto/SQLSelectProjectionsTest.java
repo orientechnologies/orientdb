@@ -261,13 +261,13 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out ) FROM OGraphVertex WHERE out TRAVERSE(1,1) (@class = 'OGraphEdge')"))
+        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out ) FROM V WHERE out TRAVERSE(1,1) (@class = 'E')"))
         .execute();
 
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertTrue(d.getSchemaClass().isSubClassOf("OGraphEdge"));
+      Assert.assertTrue(d.getSchemaClass().isSubClassOf("E"));
       Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
     }
 
@@ -281,7 +281,7 @@ public class SQLSelectProjectionsTest {
     try {
       database.command(
           new OSQLSynchQuery<ODocument>(
-              "SELECT FLATTEN( out ), in FROM OGraphVertex WHERE out TRAVERSE(1,1) (@class = 'OGraphEdge')")).execute();
+              "SELECT FLATTEN( out ), in FROM V WHERE out TRAVERSE(1,1) (@class = 'E')")).execute();
 
     } finally {
       database.close();

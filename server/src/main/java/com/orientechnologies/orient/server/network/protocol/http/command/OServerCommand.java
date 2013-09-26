@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
@@ -34,6 +35,14 @@ public interface OServerCommand {
   public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
 
   /**
+   * Called after to execute. Useful to free resources.
+   * 
+   * @param iResponse
+   *          TODO
+   */
+  public boolean afterExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
+
+  /**
    * Executes the command requested.
    * 
    * @return boolean value that indicates if this command is part of a chain
@@ -41,4 +50,6 @@ public interface OServerCommand {
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception;
 
   public String[] getNames();
+
+  public void configure(OServer server);
 }

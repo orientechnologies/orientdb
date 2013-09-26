@@ -28,6 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
@@ -50,25 +51,49 @@ public enum OGlobalConfiguration {
   MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
       Float.class, 0.70),
 
+  MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
+
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
   DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
 
-  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, false),
+  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
 
-  WAL_CACHE_SIZE("storage.wal.cacheSize", "Maximum size of WAL cache (in byte) <= 0 means that caching will be switched off.",
-      Integer.class, 100 * 1024 * 1024),
+  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 500),
+  WAL_CACHE_SIZE("storage.wal.cacheSize",
+      "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
+      Integer.class, 3000),
 
-  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 10 * 1024),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 50 * 1024),
+
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 150 * 1024),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
+  WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events when background flush thread"
+      + " will receive shutdown command and when background flush will be stopped (in ms.)", Integer.class, 10000),
+
+  WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
+      Integer.class, 2592000),
+
+  WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
+      "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),
+
+  WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fullCheckpointShutdownTimeout",
+      "Timeout till DB will wait that full checkpoint is finished during DB close (in seconds))", Integer.class, 60 * 10),
+
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but"
       + " it is highly recomended to use separate disk to store log operations", String.class, null),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
+      "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
@@ -88,9 +113,9 @@ public enum OGlobalConfiguration {
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.FALSE),
+      Boolean.class, Boolean.TRUE),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 5000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 5000),
@@ -101,11 +126,11 @@ public enum OGlobalConfiguration {
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
 
   CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 10000),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -148,11 +173,15 @@ public enum OGlobalConfiguration {
 
   NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
       "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
-      "manindex"),
+      OMetadata.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
       true),
+
+  TX_AUTO_RETRY("tx.autoRetry",
+      "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
+      Integer.class, 10),
 
   TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
@@ -225,7 +254,7 @@ public enum OGlobalConfiguration {
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
   // FILE
-  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, false),
+  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
 
   FILE_DEFRAG_STRATEGY("file.defrag.strategy", "Strategy to recycle free space: 0 = synchronous defrag, 1 = asynchronous defrag, ",
       Integer.class, 0),
@@ -239,10 +268,10 @@ public enum OGlobalConfiguration {
       "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
 
   FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
-      int.class, 0),
+      int.class, 30),
 
   FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
-      "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 60),
+      "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 30),
 
   FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
       "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
@@ -298,11 +327,13 @@ public enum OGlobalConfiguration {
           + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
 
   // NETWORK
+  NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000),
+
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768),
 
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
-  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 10000),
+  NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
@@ -380,7 +411,7 @@ public enum OGlobalConfiguration {
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 5),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 20),
 
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
       "Maximum time which client should wait connection from the pool", Integer.class, 5000),
@@ -393,6 +424,11 @@ public enum OGlobalConfiguration {
       5000),
 
   SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
+
+  SERVER_CACHE_2Q_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
+
+  SERVER_CACHE_2Q_INCREASE_STEP("server.cache.2q.increaseStep",
+      "Increase 2q cache step in percent. Will only work if server.cache.2q.increaseOnDemand is true", Float.class, 0.1f),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
@@ -472,7 +508,7 @@ public enum OGlobalConfiguration {
 
   public float getValueAsFloat() {
     final Object v = value != null ? value : defValue;
-    return v instanceof Float ? ((Float) v).floatValue() : OFileUtils.getSizeAsNumber(v.toString());
+    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
   }
 
   public String getKey() {
@@ -575,5 +611,7 @@ public enum OGlobalConfiguration {
     } else {
       // 32 BIT, USE THE DEFAULT CONFIGURATION
     }
+
+    System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
   }
 }

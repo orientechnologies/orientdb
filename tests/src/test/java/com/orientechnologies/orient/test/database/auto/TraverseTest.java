@@ -205,6 +205,22 @@ public class TraverseTest {
   }
 
   @Test
+  public void traverseAPISelectAndTraverseNestedDepthFirst() {
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+            + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )")).execute();
+    Assert.assertEquals(result1.size(), totalElements);
+  }
+
+  @Test
+  public void traverseAPISelectAndTraverseNestedBreadthFirst() {
+    List<ODocument> result1 = database.command(
+        new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
+            + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )")).execute();
+    Assert.assertEquals(result1.size(), totalElements);
+  }
+
+  @Test
   public void traverseSQLIterating() {
     int cycles = 0;
     for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from Movie while $depth < 2")) {

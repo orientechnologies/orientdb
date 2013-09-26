@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -213,14 +214,16 @@ public class OServerAdmin {
    * 
    * @return true if exists, otherwise false
    * @throws IOException
+   * @param storageType
    */
-  public synchronized boolean existsDatabase() throws IOException {
+  public synchronized boolean existsDatabase(String storageType) throws IOException {
     storage.checkConnection();
 
     try {
       final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
       try {
         network.writeString(storage.getName());
+        network.writeString(storageType);
       } finally {
         storage.endRequest(network);
       }
@@ -244,12 +247,14 @@ public class OServerAdmin {
    * Deprecated. Use dropDatabase() instead.
    * 
    * @return The instance itself. Useful to execute method in chain
-   * @see #dropDatabase()
+   * @see #dropDatabase(String)
    * @throws IOException
+   * @param storageType
+   *          Type of storage of server database.
    */
   @Deprecated
-  public OServerAdmin deleteDatabase() throws IOException {
-    return dropDatabase();
+  public OServerAdmin deleteDatabase(String storageType) throws IOException {
+    return dropDatabase(storageType);
   }
 
   /**
@@ -257,8 +262,9 @@ public class OServerAdmin {
    * 
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
+   * @param storageType
    */
-  public synchronized OServerAdmin dropDatabase() throws IOException {
+  public synchronized OServerAdmin dropDatabase(String storageType) throws IOException {
     storage.checkConnection();
     boolean retry = true;
 
@@ -268,6 +274,7 @@ public class OServerAdmin {
         final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
         try {
           network.writeString(storage.getName());
+          network.writeString(storageType);
         } finally {
           storage.endRequest(network);
         }
@@ -308,13 +315,14 @@ public class OServerAdmin {
     return retry;
   }
 
-  public synchronized OServerAdmin freezeDatabase() throws IOException {
+  public synchronized OServerAdmin freezeDatabase(String storageType) throws IOException {
     storage.checkConnection();
     try {
       final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
 
       try {
         network.writeString(storage.getName());
+        network.writeString(storageType);
       } finally {
         storage.endRequest(network);
       }
@@ -327,13 +335,14 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin releaseDatabase() throws IOException {
+  public synchronized OServerAdmin releaseDatabase(String storageType) throws IOException {
     storage.checkConnection();
     try {
       final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
 
       try {
         network.writeString(storage.getName());
+        network.writeString(storageType);
       } finally {
         storage.endRequest(network);
       }
@@ -346,7 +355,7 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin freezeCluster(int clusterId) throws IOException {
+  public synchronized OServerAdmin freezeCluster(int clusterId, String storageType) throws IOException {
     storage.checkConnection();
     try {
       final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
@@ -354,6 +363,7 @@ public class OServerAdmin {
       try {
         network.writeString(storage.getName());
         network.writeShort((short) clusterId);
+        network.writeString(storageType);
       } finally {
         storage.endRequest(network);
       }
@@ -369,7 +379,7 @@ public class OServerAdmin {
     return this;
   }
 
-  public synchronized OServerAdmin releaseCluster(int clusterId) throws IOException {
+  public synchronized OServerAdmin releaseCluster(int clusterId, String storageType) throws IOException {
     storage.checkConnection();
     try {
       final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
@@ -377,6 +387,7 @@ public class OServerAdmin {
       try {
         network.writeString(storage.getName());
         network.writeShort((short) clusterId);
+        network.writeString(storageType);
       } finally {
         storage.endRequest(network);
       }
@@ -455,12 +466,13 @@ public class OServerAdmin {
    *         involved. Example {"10022":"1#10:3"}
    * @throws IOException
    */
-  public synchronized ODocument getReplicationJournal(final String iDatabaseName, final String iRemoteServer) throws IOException {
+  public synchronized ODocument getReplicationJournal(final String iDatabaseName, final String iRemoteServer, final int iMaxRecords)
+      throws IOException {
     OLogManager.instance().debug(this, "Retrieving the replication log for database '%s' from server '%s'...", iDatabaseName,
         storage.getURL());
 
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION,
-        new ODocument().field("operation", "getJournal").field("node", iRemoteServer).field("db", iDatabaseName),
+        new ODocument().fields("operation", "getJournal", "node", iRemoteServer, "db", iDatabaseName, "limit", iMaxRecords),
         "Retrieve replication log");
 
     OLogManager.instance().debug(this,
@@ -671,9 +683,9 @@ public class OServerAdmin {
           storage.endRequest(network);
         }
 
-        storage.beginResponse(network);
         retry = false;
         try {
+          storage.beginResponse(network);
           return new ODocument(network.readBytes());
         } finally {
           storage.endResponse(network);

@@ -20,6 +20,7 @@ import java.io.IOException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -57,6 +58,26 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public boolean useWal() {
+    return false;
+  }
+
+  @Override
+  public float recordGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public float recordOverflowGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public String compression() {
+    return ONothingCompression.NAME;
   }
 
   public OClusterEntryIterator absoluteIterator() {
@@ -133,6 +154,11 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
   }
 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+  }
+
+  @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    return true;
   }
 
   public void lock() {

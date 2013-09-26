@@ -24,69 +24,69 @@ import java.util.Map;
  * @author Luca Garulli
  */
 public class OHttpSession {
-	private String							id;
-	private final long					createdOn;
-	private long								lastUpdatedOn;
-	private final String				databaseName;
-	private final String				userName;
-	private Map<Object, Object>	parameters;
+  private String              id;
+  private final long          createdOn;
+  private long                lastUpdatedOn;
+  private final String        databaseName;
+  private final String        userName;
+  private Map<Object, Object> parameters;
 
-	protected OHttpSession(final String iId, final String iDatabaseName, final String iUserName) {
-		id = iId;
-		createdOn = System.currentTimeMillis();
-		lastUpdatedOn = createdOn;
+  protected OHttpSession(final String iId, final String iDatabaseName, final String iUserName) {
+    id = iId;
+    createdOn = System.currentTimeMillis();
+    lastUpdatedOn = createdOn;
 
-		databaseName = iDatabaseName;
-		userName = iUserName;
-	}
+    databaseName = iDatabaseName;
+    userName = iUserName;
+  }
 
-	public long getCreatedOn() {
-		return createdOn;
-	}
+  public long getCreatedOn() {
+    return createdOn;
+  }
 
-	public long getUpdatedOn() {
-		return lastUpdatedOn;
-	}
+  public long getUpdatedOn() {
+    return lastUpdatedOn;
+  }
 
-	public OHttpSession updateLastUpdatedOn() {
-		this.lastUpdatedOn = System.currentTimeMillis();
-		return this;
-	}
+  public OHttpSession updateLastUpdatedOn() {
+    this.lastUpdatedOn = System.currentTimeMillis();
+    return this;
+  }
 
-	public Object getParameters(final Object iKey) {
-		if (this.parameters == null)
-			return null;
+  public Object getParameters(final Object iKey) {
+    if (this.parameters == null)
+      return null;
 
-		return parameters.entrySet();
-	}
+    return parameters.entrySet();
+  }
 
-	public Object getParameter(final Object iKey) {
-		if (this.parameters == null)
-			return null;
+  public Object getParameter(final Object iKey) {
+    if (this.parameters == null)
+      return null;
 
-		return parameters.get(iKey);
-	}
+    return parameters.get(iKey);
+  }
 
-	public OHttpSession setParameter(final Object iKey, final Object iValue) {
-		if (this.parameters == null)
-			this.parameters = new HashMap<Object, Object>();
+  public OHttpSession setParameter(final Object iKey, final Object iValue) {
+    if (this.parameters == null)
+      this.parameters = new HashMap<Object, Object>();
 
-		if (iValue == null)
-			this.parameters.remove(iKey);
-		else
-			this.parameters.put(iKey, iValue);
-		return this;
-	}
+    if (iValue == null)
+      this.parameters.remove(iKey);
+    else
+      this.parameters.put(iKey, iValue);
+    return this;
+  }
 
-	public String getDatabaseName() {
-		return databaseName;
-	}
+  public String getDatabaseName() {
+    return databaseName;
+  }
 
-	public String getUserName() {
-		return userName;
-	}
+  public String getUserName() {
+    return userName;
+  }
 
-	public String getId() {
-		return id;
-	}
+  public String getId() {
+    return id;
+  }
 }

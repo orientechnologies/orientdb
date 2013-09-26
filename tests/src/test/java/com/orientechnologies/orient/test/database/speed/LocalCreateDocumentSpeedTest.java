@@ -23,16 +23,18 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
-@Test(enabled = false)
+@Test
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
   private ODocument         record;
   private Date              date = new Date();
 
+  @Test(enabled = false)
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
     test.data.go(test);
@@ -43,14 +45,17 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   @Override
+  @Test(enabled = false)
   public void init() {
-    Orient.instance().getProfiler().startRecording();
-
     database = new ODatabaseDocumentTx(System.getProperty("url"));
-    if (database.exists())
+    if (database.exists()) {
       database.open("admin", "admin");
-    else
-      database.create();
+      database.drop();
+    }
+
+    database.create();
+    OSchema schema = database.getMetadata().getSchema();
+    schema.createClass("Account");
 
     record = database.newInstance();
 
@@ -59,6 +64,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   @Override
+  @Test(enabled = false)
   public void cycle() {
     record.reset();
 
@@ -76,6 +82,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   }
 
   @Override
+  @Test(enabled = false)
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 

@@ -36,7 +36,7 @@ public class OMVRBTreeDatabase<K, V> extends OMVRBTreePersistent<K, V> {
     super(new OMVRBTreeMapProvider<K, V>(null, iDatabase.getClusterNameById(iRID.getClusterId()), iRID));
   }
 
-  public OMVRBTreeDatabase(String iClusterName, final OBinarySerializer<K> iKeySerializer,
+  public OMVRBTreeDatabase(final String iClusterName, final OBinarySerializer<K> iKeySerializer,
       final OStreamSerializer iValueSerializer, int keySize) {
     super(new OMVRBTreeMapProvider<K, V>(null, iClusterName, iKeySerializer, iValueSerializer), keySize);
   }

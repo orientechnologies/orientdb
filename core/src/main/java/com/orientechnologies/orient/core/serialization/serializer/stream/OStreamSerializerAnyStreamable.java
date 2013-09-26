@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -32,6 +33,8 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
   private static final byte[]                        SCRIPT_COMMAND_CLASS_ASBYTES = SCRIPT_COMMAND_CLASS.getBytes();
   private static final String                        SQL_COMMAND_CLASS            = "c";
   private static final byte[]                        SQL_COMMAND_CLASS_ASBYTES    = SQL_COMMAND_CLASS.getBytes();
+  private static final String                        QUERY_COMMAND_CLASS          = "q";
+  private static final byte[]                        QUERY_COMMAND_CLASS_ASBYTES  = QUERY_COMMAND_CLASS.getBytes();
 
   public static final OStreamSerializerAnyStreamable INSTANCE                     = new OStreamSerializerAnyStreamable();
   public static final String                         NAME                         = "at";
@@ -90,7 +93,9 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 
     // SERIALIZE THE CLASS NAME
     final byte[] className;
-    if (iObject instanceof OCommandSQL)
+    if (iObject instanceof OQuery<?>)
+      className = QUERY_COMMAND_CLASS_ASBYTES;
+    else if (iObject instanceof OCommandSQL)
       className = SQL_COMMAND_CLASS_ASBYTES;
     else if (iObject instanceof OCommandScript)
       className = SCRIPT_COMMAND_CLASS_ASBYTES;

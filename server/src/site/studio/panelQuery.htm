@@ -148,13 +148,17 @@
 	function refreshSavedQueries() {
 		var savedQueries = controller.parameter('savedQueries');
 		var options = '';
+		var last = "";
 		for (q in savedQueries) {
+			if( last == "" )
+				last = savedQueries[q];
+
 			options += '<option value="' + escape( savedQueries[q] ) + '">'
 					+ savedQueries[q] + '</option>';
 		}
 		$("#savedQueries").html(options);
 		$("#savedQueries").attr('selectedIndex', 1);
-		return $("#savedQueries").val();
+		return last;
 	}
 
 	function clearResultset() {

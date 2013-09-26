@@ -71,4 +71,9 @@ public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements O
     execute(1);
     return null;
   }
+
+  @Override
+  public boolean isAsynchronous() {
+    return true;
+  }
 }

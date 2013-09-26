@@ -30,14 +30,14 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public class OHttpMultipartDatabaseImportContentParser implements OHttpMultipartContentParser<InputStream> {
 
-	@Override
-	public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
-			final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
-		final String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
+  @Override
+  public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
+      final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
+    final String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
 
-		if (fileName.endsWith(".gz") || fileName.endsWith(".gzip"))
-			return new GZIPInputStream(in);
+    if (fileName.endsWith(".gz") || fileName.endsWith(".gzip"))
+      return new GZIPInputStream(in);
 
-		return in;
-	}
+    return in;
+  }
 }

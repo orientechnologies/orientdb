@@ -47,13 +47,13 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
       doc.save();
 
+      iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          doc.toJSON(), null, true);
+
     } finally {
       if (db != null)
         db.close();
     }
-
-    iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        doc.getIdentity(), null, true);
     return false;
   }
 

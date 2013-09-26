@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.delete.
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
@@ -42,7 +44,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetProfiler;
@@ -65,7 +66,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
-  private static final String ORIENT_SERVER_DB = "OrientDB Server v." + OConstants.getVersion();
+  private static final String ORIENT_SERVER_DB         = "OrientDB Server v." + OConstants.getVersion();
+  private static final int    CURRENT_PROTOCOL_VERSION = 10;
 
   @Override
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
@@ -77,9 +79,9 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
       // FIRST TIME REGISTERS THE STATELESS COMMANDS
       registerStatelessCommands(iStatelessCommands);
 
-    cmdManager = new OHttpNetworkCommandManager(sharedCmdManager);
+    cmdManager = new OHttpNetworkCommandManager(server, sharedCmdManager);
     for (Object cmdConfig : iStatefulCommands)
-      cmdManager.registerCommand(OServerNetworkListener.createCommand((OServerCommandConfiguration) cmdConfig));
+      cmdManager.registerCommand(OServerNetworkListener.createCommand(server, (OServerCommandConfiguration) cmdConfig));
 
     cmdManager.registerCommand(new OServerCommandPostImportDatabase());
     cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
@@ -88,12 +90,22 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     connection.data.serverInfo = ORIENT_SERVER_DB;
   }
 
+  @Override
+  public int getVersion() {
+    return CURRENT_PROTOCOL_VERSION;
+  }
+
+  @Override
+  protected void afterExecution() throws InterruptedException {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
   public String getType() {
     return "http";
   }
 
   protected void registerStatelessCommands(final List<?> iStatelessCommands) {
-    sharedCmdManager = new OHttpNetworkCommandManager(null);
+    sharedCmdManager = new OHttpNetworkCommandManager(server, null);
 
     sharedCmdManager.registerCommand(new OServerCommandGetConnect());
     sharedCmdManager.registerCommand(new OServerCommandGetDisconnect());
@@ -105,13 +117,13 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     sharedCmdManager.registerCommand(new OServerCommandGetDocumentByClass());
     sharedCmdManager.registerCommand(new OServerCommandGetQuery());
     sharedCmdManager.registerCommand(new OServerCommandGetServer());
+    sharedCmdManager.registerCommand(new OServerCommandGetConnections());
     sharedCmdManager.registerCommand(new OServerCommandGetStorageAllocation());
     sharedCmdManager.registerCommand(new OServerCommandGetFileDownload());
     sharedCmdManager.registerCommand(new OServerCommandGetIndex());
     sharedCmdManager.registerCommand(new OServerCommandGetListDatabases());
     sharedCmdManager.registerCommand(new OServerCommandGetExportDatabase());
     sharedCmdManager.registerCommand(new OServerCommandGetProfiler());
-    sharedCmdManager.registerCommand(new OServerCommandGetGephi());
     sharedCmdManager.registerCommand(new OServerCommandPostBatch());
     sharedCmdManager.registerCommand(new OServerCommandPostClass());
     sharedCmdManager.registerCommand(new OServerCommandPostCommand());

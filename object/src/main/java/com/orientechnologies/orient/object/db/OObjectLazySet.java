@@ -93,15 +93,21 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   public boolean add(final TYPE e) {
+    if (underlying != null && underlying.size() > 0 && !converted) {
+      convertAllInternal();
+    }
     if (converted && e instanceof ORID)
       converted = false;
     setDirty();
     boolean thisModified = super.add(e);
-    OIdentifiable record = getDatabase().getRecordByUserObject(e, false);
-    if (sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-    boolean underlyingModified = underlying.add(record);
-    return thisModified || underlyingModified;
+    if (thisModified) {
+      OIdentifiable record = getDatabase().getRecordByUserObject(e, false);
+      if (sourceRecord != null)
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      boolean underlyingModified = underlying.add(record);
+      return thisModified || underlyingModified;
+    }
+    return false;
   }
 
   public boolean remove(final Object o) {
@@ -124,15 +130,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   public boolean addAll(final Collection<? extends TYPE> c) {
-    setDirty();
-    final ODatabasePojoAbstract<TYPE> database = getDatabase();
-    boolean modified = super.addAll(c);
+    boolean modified = false;
     for (Object o : c) {
-      OIdentifiable record = database.getRecordByUserObject(o, false);
-      if (sourceRecord != null)
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-      if (!underlying.add(record))
-        modified = true;
+      modified = modified || add((TYPE) o);
     }
     return modified;
   }
@@ -261,6 +261,27 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
       }
     }
 
+    converted = true;
+  }
+
+  protected void convertAllInternal() {
+    if (converted || !convertToRecord)
+      return;
+
+    final Set<Object> copy = new HashSet<Object>(underlying);
+    super.clear();
+    final ODatabasePojoAbstract<TYPE> database = getDatabase();
+    for (Object e : copy) {
+      if (e != null) {
+        if (e instanceof ORID)
+          super.add(database.getUserObjectByRecord(
+              (ORecordInternal<?>) ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+        else if (e instanceof ODocument)
+          super.add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
+        else
+          super.add((TYPE) e);
+      }
+    }
     converted = true;
   }
 

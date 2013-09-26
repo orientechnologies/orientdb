@@ -20,11 +20,9 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
@@ -44,12 +42,12 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 public class OMetadata {
   public static final String          CLUSTER_INTERNAL_NAME     = "internal";
   public static final String          CLUSTER_INDEX_NAME        = "index";
   public static final String          CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String          DATASEGMENT_INDEX_NAME    = "index";
 
   protected int                       schemaClusterId;
 
@@ -71,6 +69,7 @@ public class OMetadata {
 
       if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
         return;
+
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
           timer, "db.*.metadata.load");
@@ -80,9 +79,9 @@ public class OMetadata {
   public void create() throws IOException {
     init(false);
 
-    security.create();
     schema.create();
     indexManager.create();
+    security.create();
     functionLibrary.create();
     security.createClassTrigger();
     scheduler.create();
@@ -127,21 +126,12 @@ public class OMetadata {
               instance = new OIndexManagerShared(database);
 
             if (iLoad)
-              instance.load();
-
-            // rebuild indexes if index cluster wasn't closed properly
-            if (iLoad && OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean()
-                && (database.getStorage() instanceof OStorageLocalAbstract)
-                && !((OStorageLocalAbstract) database.getStorage()).isClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME))
-              for (OIndex<?> idx : instance.getIndexes())
-                if (idx.isAutomatic()) {
-                  try {
-                    OLogManager.instance().info(idx, "Rebuilding index " + idx.getName() + "..");
-                    idx.rebuild();
-                  } catch (Throwable e) {
-                    OLogManager.instance().info(idx, "Continue with remaining indexes...");
-                  }
-                }
+              try {
+                instance.load();
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "[OMetadata] Error on loading index manager, reset index configuration", e);
+                instance.create();
+              }
 
             return instance;
           }
@@ -179,13 +169,13 @@ public class OMetadata {
             return instance;
           }
         }), database);
-    scheduler = new OSchedulerListenerProxy(database.getStorage().getResource(OSchedulerListener.class.getSimpleName(), 
+    scheduler = new OSchedulerListenerProxy(database.getStorage().getResource(OSchedulerListener.class.getSimpleName(),
         new Callable<OSchedulerListener>() {
           public OSchedulerListener call() {
             final OSchedulerListenerImpl instance = new OSchedulerListenerImpl();
-    	    if (iLoad)
+            if (iLoad)
               instance.load();
-    	    return instance;
+            return instance;
           }
         }), database);
   }

@@ -124,7 +124,7 @@ public class IndexCustomKeyTest {
     @Override
     public void serializeInDirectMemory(ComparableBinary object, ODirectMemory memory, long pointer) {
       final byte[] buffer = object.toByteArray();
-      memory.set(pointer, buffer, buffer.length);
+      memory.set(pointer, buffer, 0, buffer.length);
     }
 
     @Override
@@ -200,9 +200,6 @@ public class IndexCustomKeyTest {
   }
 
   public void testTransactionalUsageWorks() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     // OIndex<?> index = getManualIndex();
     ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -223,9 +220,6 @@ public class IndexCustomKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     OIndex<?> index = getIndex();
     ComparableBinary key5 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
@@ -246,9 +240,6 @@ public class IndexCustomKeyTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     OIndex<?> index = getIndex();
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     ComparableBinary key7 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,

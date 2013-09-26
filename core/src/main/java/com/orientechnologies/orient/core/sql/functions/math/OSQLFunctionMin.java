@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * Compute the minimum value for a field. Uses the context to save the last minimum number. When different Number class are used,
@@ -31,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
   public static final String NAME = "min";
 
-  private Comparable<Object> context;
+  private Object             context;
 
   public OSQLFunctionMin() {
     super(NAME, 1, -1);
@@ -40,36 +41,39 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
-    if (iParameters[0] == null)
-      return null;
 
-    // calculate max value for current record.
+    // calculate min value for current record
+    // consider both collection of parameters and collection in each parameter
     Object min = null;
-    if (iParameters.length > 0) {
-      for (Object item : iParameters) {
+    for (Object item : iParameters) {
+      if (item instanceof Collection<?>) {
+        for (Object subitem : ((Collection<?>) item)) {
+          if (min == null || subitem != null && ((Comparable) subitem).compareTo(min) < 0)
+            min = subitem;
+        }
+      } else {
         if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
           min = item;
       }
-    } else if (iParameters[0] instanceof Collection<?>) {
-      // for a projection with multiple results find out the max value
-      for (Object item : ((Collection<?>) iParameters[0])) {
-        if (min == null || item != null && ((Comparable) item).compareTo(min) < 0)
-          min = item;
-      }
-    } else {
-      // this is the max as is an unique value
-      min = (Comparable<Object>) iParameters[0];
     }
 
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
-    if (aggregateResults()) {
+    if (aggregateResults() && min != null) {
       if (context == null)
         // FIRST TIME
         context = (Comparable) min;
-      else if (context.compareTo((Comparable) min) > 0)
-        // MINOR
-        context = (Comparable) min;
+      else {
+        if (context instanceof Number && min instanceof Number) {
+          final Number[] casted = OType.castComparableNumber((Number) context, (Number) min);
+          context = casted[0];
+          min = casted[1];
+        }
+
+        if (((Comparable<Object>) context).compareTo((Comparable) min) > 0)
+          // MINOR
+          context = (Comparable) min;
+      }
 
       return null;
     }

@@ -22,17 +22,24 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 
+import com.orientechnologies.common.concur.resource.OAdaptiveLock;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OChannelBinaryClient extends OChannelBinaryAsynch {
-  final protected int socketTimeout;     // IN MS
-  final private short srvProtocolVersion;
+  final protected int                 socketTimeout;     // IN MS
+  final private short                 srvProtocolVersion;
+  private OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
       final int iProtocolVersion) throws IOException {
+    this(remoteHost, remotePort, iConfig, iProtocolVersion, null);
+  }
+
+  public OChannelBinaryClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
+      final int iProtocolVersion, final ORemoteServerEventListener asynchEventListener) throws IOException {
     super(new Socket(), iConfig);
     socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
@@ -67,18 +74,29 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
           + ": " + e);
     }
 
-    if (Math.abs(srvProtocolVersion - iProtocolVersion) > 2) {
-      close();
-      throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
-          + ", server=" + srvProtocolVersion);
+    if (srvProtocolVersion != iProtocolVersion) {
+      OLogManager.instance().warn(
+          this,
+          "The Client driver version is different than Server version: client=" + iProtocolVersion + ", server="
+              + srvProtocolVersion
+              + ". You could not use the full features of the newer version. Assure to have the same versions on both");
+      // close();
+      // throw new ONetworkProtocolException("Binary protocol is incompatible with the Server connected: client=" + iProtocolVersion
+      // + ", server=" + srvProtocolVersion);
     }
 
+    if (asynchEventListener != null)
+      serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
   }
 
-  public void reconnect() throws IOException {
-    SocketAddress address = socket.getRemoteSocketAddress();
-    socket.close();
-    socket.connect(address, socketTimeout);
+  @Override
+  public void close() {
+    super.close();
+    if (serviceThread != null) {
+      final OAsynchChannelServiceThread s = serviceThread;
+      serviceThread = null;
+      s.sendShutdown();
+    }
   }
 
   /**
@@ -98,5 +116,13 @@ public class OChannelBinaryClient extends OChannelBinaryAsynch {
    */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;
+  }
+
+  public OAdaptiveLock getLockRead() {
+    return lockRead;
+  }
+
+  public OAdaptiveLock getLockWrite() {
+    return lockWrite;
   }
 }

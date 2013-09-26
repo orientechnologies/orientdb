@@ -162,8 +162,19 @@ public class SQLFunctionsTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void queryUnionAsAggregation() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(name) as name from City")).execute();
+  public void queryUnionAsAggregationNotRemoveDuplicates() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from City")).execute();
+    int count = result.size();
+
+    result = database.command(new OSQLSynchQuery<ODocument>("select union(name) as name from City")).execute();
+    Collection<Object> citiesFound = (Collection<Object>) result.get(0).field("name");
+    Assert.assertEquals(citiesFound.size(), count);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void querySetNotDuplicates() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select set(name) as name from City")).execute();
 
     Assert.assertTrue(result.size() == 1);
 
@@ -216,8 +227,7 @@ public class SQLFunctionsTest {
 
   @Test
   public void queryUnionAsInline() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from OGraphVertex"))
-        .execute();
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from V")).execute();
 
     Assert.assertTrue(result.size() > 1);
     for (ODocument d : result) {

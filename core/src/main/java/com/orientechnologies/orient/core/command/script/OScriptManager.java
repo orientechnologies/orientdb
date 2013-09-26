@@ -30,6 +30,7 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
@@ -79,9 +80,14 @@ public class OScriptManager {
     }
 
     if (!existsEngine(DEF_LANGUAGE)) {
-      // GET DIRECTLY THE LANGUAGE BY NAME (DON'T KNOW WHY SOMETIMES DOESN'T RETURN IT WITH getEngineFactories() ABOVE!
-      registerEngine(DEF_LANGUAGE, scriptEngineManager.getEngineByName(DEF_LANGUAGE).getFactory());
-      defaultLanguage = DEF_LANGUAGE;
+      final ScriptEngine defEngine = scriptEngineManager.getEngineByName(DEF_LANGUAGE);
+      if (defEngine == null) {
+        OLogManager.instance().warn(this, "Cannot find default script language for %s", DEF_LANGUAGE);
+      } else {
+        // GET DIRECTLY THE LANGUAGE BY NAME (DON'T KNOW WHY SOMETIMES DOESN'T RETURN IT WITH getEngineFactories() ABOVE!
+        registerEngine(DEF_LANGUAGE, defEngine.getFactory());
+        defaultLanguage = DEF_LANGUAGE;
+      }
     }
 
     registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
@@ -277,7 +283,7 @@ public class OScriptManager {
   public List<OScriptInjection> getInjections() {
     return injections;
   }
-  
+
   public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
     engines.put(iLanguage, iEngine);
     return this;

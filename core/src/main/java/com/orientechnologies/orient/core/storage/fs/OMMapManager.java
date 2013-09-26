@@ -87,8 +87,9 @@ public interface OMMapManager {
    * 
    * @param iFile
    *          that will be flushed.
+   * @return 
    */
-  void flushFile(OFileMMap iFile);
+  boolean flushFile(OFileMMap iFile);
 
   /**
    * This method flush all files and clear information about mmap from itself.

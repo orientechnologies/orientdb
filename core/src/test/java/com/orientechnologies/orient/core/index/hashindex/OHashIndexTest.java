@@ -39,22 +39,20 @@ public class OHashIndexTest {
       db.close();
   }
 
-  @Test(enabled = false)
   public void testCreateAutomaticHashIndex() throws Exception {
     final OClass oClass = db.getMetadata().getSchema().createClass("testClass");
     oClass.createProperty("name", OType.STRING);
-    final OIndex<?> index = oClass.createIndex("testClassNameIndex", OClass.INDEX_TYPE.UNIQUE_HASH, "name");
+    final OIndex<?> index = oClass.createIndex("testClassNameIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "name");
 
     Assert.assertNotNull(index);
   }
 
-  @Test
   public void testCreateManualHashIndex() throws Exception {
     final OIndex<?> index = db
         .getMetadata()
         .getIndexManager()
-        .createIndex("manualHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH.toString(), new OSimpleKeyIndexDefinition(OType.STRING),
-            null, null);
+        .createIndex("manualHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(),
+            new OSimpleKeyIndexDefinition(OType.STRING), null, null);
 
     Assert.assertNotNull(index);
   }

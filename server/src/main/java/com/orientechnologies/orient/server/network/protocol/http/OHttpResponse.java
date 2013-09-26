@@ -96,10 +96,6 @@ public class OHttpResponse {
     writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
     writeHeaders(contentType, iKeepAlive);
 
-    if (additionalHeaders != null)
-      for (String h : additionalHeaders)
-        writeLine(h);
-
     if (iHeaders != null)
       writeLine(iHeaders);
 

@@ -22,7 +22,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
@@ -49,10 +48,8 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  */
 public class OFileMMap extends OAbstractFile {
   public final static String                 NAME                      = "mmap";
-  protected volatile int                     filledUpTo;                                                         // PART OF
-                                                                                                                  // HEADER
-  // (4
-  // bytes)
+  // PART OF HEADER (4 bytes)
+  protected volatile long                    filledUpTo;
   protected volatile MappedByteBuffer        headerBuffer;
   protected static final Queue<ByteBuffer>   bufferPool                = new ConcurrentLinkedQueue<ByteBuffer>();
 
@@ -62,7 +59,6 @@ public class OFileMMap extends OAbstractFile {
   private static long                        metricPooledBufferCreated = 0;
   private static long                        metricPooledBufferUsed    = 0;
   private static long                        metricNonPooledBufferUsed = 0;
-  private AtomicBoolean                      initCompleted             = new AtomicBoolean(false);
 
   static {
     Orient
@@ -92,6 +88,9 @@ public class OFileMMap extends OAbstractFile {
                 return metricNonPooledBufferUsed;
               }
             });
+
+    BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
+    strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
   }
 
   @Override
@@ -105,22 +104,11 @@ public class OFileMMap extends OAbstractFile {
     }
   }
 
-  @Override
-  public OFileMMap init(String iFileName, String iMode) {
-    if (initCompleted.compareAndSet(false, true)) {
-      super.init(iFileName, iMode);
-      BYTEBUFFER_POOLABLE_SIZE = OGlobalConfiguration.FILE_MMAP_BUFFER_SIZE.getValueAsInteger();
-      strategy = OMMapManager.ALLOC_STRATEGY.values()[OGlobalConfiguration.FILE_MMAP_STRATEGY.getValueAsInteger()];
-    }
-    return this;
-
-  }
-
-  public int getFileSize() {
+  public long getFileSize() {
     return size;
   }
 
-  public int getFilledUpTo() {
+  public long getFilledUpTo() {
     return filledUpTo;
   }
 
@@ -553,12 +541,15 @@ public class OFileMMap extends OAbstractFile {
    * Synchronizes buffered changes to the file.
    */
   @Override
-  public void synch() {
+  public boolean synch() {
     acquireWriteLock();
     try {
 
-      OMMapManagerLocator.getInstance().flushFile(this);
+      boolean allFlushed = OMMapManagerLocator.getInstance().flushFile(this);
       flushHeader();
+
+      return allFlushed;
+
     } finally {
       releaseWriteLock();
     }
@@ -593,38 +584,39 @@ public class OFileMMap extends OAbstractFile {
   public void close() throws IOException {
     acquireWriteLock();
     try {
-      if (headerBuffer != null) {
-        setSoftlyClosed(true);
-        headerBuffer = null;
-      }
-      OMMapManagerLocator.getInstance().flush();
+      OMMapManagerLocator.getInstance().flushFile(this);
 
       super.close();
+      headerBuffer = null;
     } finally {
       releaseWriteLock();
     }
   }
 
-  public boolean isSoftlyClosed() {
-    acquireReadLock();
-    try {
-      return headerBuffer.get(SOFTLY_CLOSED_OFFSET) == 1;
-    } finally {
-      releaseReadLock();
-    }
-  }
-
-  public void setSoftlyClosed(final boolean iValue) {
+  public void setSoftlyClosed(final boolean value) {
     acquireWriteLock();
     try {
       if (headerBuffer == null)
         return;
 
-      headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (iValue ? 1 : 0));
+      headerBuffer.put(SOFTLY_CLOSED_OFFSET, (byte) (value ? 1 : 0));
       setHeaderDirty();
       flushHeader();
     } finally {
       releaseWriteLock();
+    }
+  }
+
+  @Override
+  public boolean isSoftlyClosed() throws IOException {
+    acquireReadLock();
+    try {
+      if (version == 0)
+        return headerBuffer.get(SOFTLY_CLOSED_OFFSET_V_0) > 0;
+
+      return headerBuffer.get(SOFTLY_CLOSED_OFFSET) > 0;
+    } finally {
+      releaseReadLock();
     }
   }
 
@@ -634,8 +626,8 @@ public class OFileMMap extends OAbstractFile {
   }
 
   @Override
-  protected void openChannel(final int iNewSize) throws IOException {
-    super.openChannel(iNewSize);
+  protected void openChannel(final long newSize) throws IOException {
+    super.openChannel(newSize);
     headerBuffer = channel.map(mode.equals("r") ? FileChannel.MapMode.READ_ONLY : FileChannel.MapMode.READ_WRITE, 0, HEADER_SIZE);
   }
 
@@ -691,30 +683,64 @@ public class OFileMMap extends OAbstractFile {
 
   @Override
   protected void init() {
-    size = headerBuffer.getInt(SIZE_OFFSET);
-    filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET);
-  }
-
-  @Override
-  protected void setFilledUpTo(final int iHow) {
-    if (iHow != filledUpTo) {
-      filledUpTo = iHow;
-      headerBuffer.putInt(FILLEDUPTO_OFFSET, filledUpTo);
-      setHeaderDirty();
+    acquireWriteLock();
+    try {
+      if (version == 0) {
+        size = headerBuffer.getInt(SIZE_OFFSET_V_0);
+        filledUpTo = headerBuffer.getInt(FILLEDUPTO_OFFSET_V_0);
+      } else {
+        size = headerBuffer.getLong(SIZE_OFFSET);
+        filledUpTo = headerBuffer.getLong(FILLEDUPTO_OFFSET);
+      }
+    } finally {
+      releaseWriteLock();
     }
   }
 
   @Override
-  public void setSize(final int iSize) throws IOException {
+  protected void setFilledUpTo(final long iHow) {
+    setFilledUpTo(iHow, false);
+  }
+
+  protected void setFilledUpTo(final long iHow, boolean force) {
     acquireWriteLock();
     try {
-      if (maxSize > 0 && iSize > maxSize)
-        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(iSize)
-            + " because the max is " + OFileUtils.getSizeAsString(maxSize));
-      if (iSize != size) {
-        checkSize(iSize);
-        size = iSize;
-        headerBuffer.putInt(SIZE_OFFSET, size);
+      if (force || iHow != filledUpTo) {
+        filledUpTo = iHow;
+        headerBuffer.putLong(FILLEDUPTO_OFFSET, filledUpTo);
+        setHeaderDirty();
+      }
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  protected void setVersion(int version) throws IOException {
+    acquireWriteLock();
+    try {
+      headerBuffer.put(VERSION_OFFSET, (byte) version);
+      setHeaderDirty();
+    } finally {
+      releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setSize(final long iSize) throws IOException {
+    setSize(iSize, false);
+  }
+
+  protected void setSize(final long size, final boolean force) throws IOException {
+    acquireWriteLock();
+    try {
+      if (maxSize > 0 && size > maxSize)
+        throw new IllegalArgumentException("Cannot extend the file to " + OFileUtils.getSizeAsString(size) + " because the max is "
+            + OFileUtils.getSizeAsString(maxSize));
+      if (force || this.size != size) {
+        checkSize(size);
+        this.size = size;
+        headerBuffer.putLong(SIZE_OFFSET, size);
         setHeaderDirty();
       }
     } finally {

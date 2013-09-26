@@ -9,7 +9,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
 
   private OStorageRemote storage;
 
-  public OStorageRemoteAsynchEventListener(OStorageRemote storage) {
+  public OStorageRemoteAsynchEventListener(final OStorageRemote storage) {
     this.storage = storage;
   }
 
@@ -20,8 +20,12 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
     else if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG) {
       storage.updateClusterConfiguration((byte[]) obj);
 
-      if (OLogManager.instance().isInfoEnabled())
-        OLogManager.instance().info(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON(""));
+      if (OLogManager.instance().isDebugEnabled()) {
+        synchronized (storage.getClusterConfiguration()) {
+          OLogManager.instance()
+              .debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON(""));
+        }
+      }
     }
   }
 

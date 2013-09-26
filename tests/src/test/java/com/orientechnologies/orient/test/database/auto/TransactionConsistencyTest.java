@@ -579,19 +579,19 @@ public class TransactionConsistencyTest {
 
       // Step 3a
       result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test1'"));
-      Assert.assertEquals(1, result.size());
+      Assert.assertEquals(result.size(), 1);
       // Step 4a
       db.removeVertex(result.get(0));
 
       // Step 3b
       result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test2'"));
-      Assert.assertEquals(1, result.size());
+      Assert.assertEquals(result.size(), 1);
       // Step 4b
       db.removeVertex(result.get(0));
 
       // Step 3c
       result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test3'"));
-      Assert.assertEquals(1, result.size());
+      Assert.assertEquals(result.size(), 1);
       // Step 4c
       db.removeVertex(result.get(0));
 

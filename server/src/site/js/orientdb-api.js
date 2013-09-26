@@ -187,7 +187,8 @@ function ODatabase(databasePath) {
 			async : false,
 			success : function(msg) {
 				this.setErrorMessage(null);
-				this.setDatabaseInfo(this.transformResponse(msg));
+				if( msg )
+				  this.setDatabaseInfo(this.transformResponse(msg));
 			},
 			error : function(msg, textStatus, errorThrown) {
 				this.setErrorMessage('Connect error: ' + msg.responseText);
@@ -236,7 +237,7 @@ function ODatabase(databasePath) {
 	}
 
 
-	ODatabase.prototype.metadata = function(userName, userPass, authProxy, type) {
+	ODatabase.prototype.metadata = function() {
 		$.ajax({
 			type : 'GET',
 			url : this.urlPrefix + 'database/' + this.encodedDatabaseName
@@ -364,11 +365,7 @@ function ODatabase(databasePath) {
 			}
 		});
 
-		if (methodType == 'PUT') {
-			return rid;
-		} else {
-			return this.getCommandResult();
-		}
+		return this.getCommandResult();
 	}
 
 	ODatabase.prototype.remove = function(obj, onsuccess, onerror) {

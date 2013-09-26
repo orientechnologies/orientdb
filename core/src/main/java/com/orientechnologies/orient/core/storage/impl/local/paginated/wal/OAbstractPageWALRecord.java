@@ -16,60 +16,65 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 
 /**
  * @author Andrey Lomakin
  * @since 29.04.13
  */
-public abstract class OAbstractPageWALRecord implements OWALRecord {
+public abstract class OAbstractPageWALRecord extends OOperationUnitRecord implements OClusterAwareWALRecord {
   private OLogSequenceNumber lsn;
 
   private long               pageIndex;
-  private String             fileName;
+  private int                clusterId;
 
   protected OAbstractPageWALRecord() {
   }
 
-  protected OAbstractPageWALRecord(long pageIndex, String fileName) {
+  protected OAbstractPageWALRecord(long pageIndex, int clusterId, OOperationUnitId operationUnitId) {
+    super(operationUnitId);
     this.pageIndex = pageIndex;
-    this.fileName = fileName;
+    this.clusterId = clusterId;
   }
 
   @Override
   public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+
     OLongSerializer.INSTANCE.serializeNative(pageIndex, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OStringSerializer.INSTANCE.serializeNative(fileName, content, offset);
-    offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
+    OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     return offset;
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+
     pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    fileName = OStringSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
+    clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    return OLongSerializer.LONG_SIZE + OStringSerializer.INSTANCE.getObjectSize(fileName);
+    return super.serializedSize() + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   public long getPageIndex() {
     return pageIndex;
   }
 
-  public String getFileName() {
-    return fileName;
+  public int getClusterId() {
+    return clusterId;
   }
 
   @Override
@@ -88,14 +93,14 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
+    if (!super.equals(o))
+      return false;
 
     OAbstractPageWALRecord that = (OAbstractPageWALRecord) o;
 
+    if (clusterId != that.clusterId)
+      return false;
     if (pageIndex != that.pageIndex)
-      return false;
-    if (!fileName.equals(that.fileName))
-      return false;
-    if (!lsn.equals(that.lsn))
       return false;
 
     return true;
@@ -103,9 +108,16 @@ public abstract class OAbstractPageWALRecord implements OWALRecord {
 
   @Override
   public int hashCode() {
-    int result = lsn.hashCode();
+    int result = super.hashCode();
+
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    result = 31 * result + fileName.hashCode();
+    result = 31 * result + clusterId;
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "OAbstractPageWALRecord{" + "lsn=" + lsn + ", pageIndex=" + pageIndex + ", clusterId=" + clusterId + "} "
+        + super.toString();
   }
 }

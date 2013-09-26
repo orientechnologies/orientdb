@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 /**
  * @author Andrey Lomakin
- * @since 30.04.13
+ * @since 5/2/13
  */
 public class OCheckpointEndRecord implements OWALRecord {
   private OLogSequenceNumber lsn;
@@ -63,16 +62,11 @@ public class OCheckpointEndRecord implements OWALRecord {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OCheckpointEndRecord that = (OCheckpointEndRecord) o;
-
-    if (!lsn.equals(that.lsn))
-      return false;
-
     return true;
   }
 
   @Override
-  public int hashCode() {
-    return lsn.hashCode();
+  public String toString() {
+    return "OCheckpointEndRecord{" + "lsn=" + lsn + '}';
   }
 }

@@ -19,9 +19,9 @@ import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import sun.misc.Unsafe;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+
+import sun.misc.Unsafe;
 
 /**
  * @author Andrey Lomakin
@@ -31,7 +31,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 public class OUnsafeMemory implements ODirectMemory {
   public static final OUnsafeMemory INSTANCE;
 
-  protected static final Unsafe       unsafe;
+  protected static final Unsafe     unsafe;
   private static final boolean      unaligned;
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
@@ -54,7 +54,8 @@ public class OUnsafeMemory implements ODirectMemory {
 
     try {
       unsafe.getClass().getDeclaredMethod("copyMemory", Object.class, long.class, Object.class, long.class, long.class);
-      Class<?> unsafeMemoryJava7 = OUnsafeMemory.class.getClassLoader().loadClass("com.orientechnologies.common.directmemory.OUnsafeMemoryJava7");
+      Class<?> unsafeMemoryJava7 = OUnsafeMemory.class.getClassLoader().loadClass(
+          "com.orientechnologies.common.directmemory.OUnsafeMemoryJava7");
       futureInstance = (OUnsafeMemory) unsafeMemoryJava7.newInstance();
     } catch (Exception e) {
       futureInstance = new OUnsafeMemory();
@@ -68,7 +69,7 @@ public class OUnsafeMemory implements ODirectMemory {
   @Override
   public long allocate(byte[] bytes) {
     final long pointer = unsafe.allocateMemory(bytes.length);
-    set(pointer, bytes, bytes.length);
+    set(pointer, bytes, 0, bytes.length);
 
     return pointer;
   }
@@ -102,8 +103,8 @@ public class OUnsafeMemory implements ODirectMemory {
   }
 
   @Override
-  public void set(long pointer, byte[] content, int length) {
-    for (int i = 0; i < length; i++)
+  public void set(long pointer, byte[] content, int arrayOffset, int length) {
+    for (int i = arrayOffset; i < length + arrayOffset; i++)
       unsafe.putByte(pointer++, content[i]);
   }
 

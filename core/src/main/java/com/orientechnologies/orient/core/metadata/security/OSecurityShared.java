@@ -22,11 +22,14 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -56,6 +59,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public static final String ONCREATE_FIELD         = "onCreate.fields";
 
   public OSecurityShared() {
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
+        .getValueAsInteger(), true);
   }
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
@@ -172,7 +177,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     try {
 
       final List<ODocument> result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("*:-1"))
+          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
           .execute();
 
       if (result != null && !result.isEmpty())
@@ -255,8 +260,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     try {
 
       final List<ODocument> result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1").setFetchPlan("*:-1"))
-          .execute();
+          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1")).execute();
 
       if (result != null && !result.isEmpty())
         return new ORole(result.get(0));
@@ -375,6 +379,9 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     acquireExclusiveLock();
     try {
 
+      getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
+      getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
+
       return createMetadata();
 
     } finally {
@@ -396,8 +403,15 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       // MIGRATE AUTOMATICALLY TO 1.2.0
       roleClass.setSuperClass(identityClass);
 
-    if (!roleClass.existsProperty("name"))
+    if (!roleClass.existsProperty("name")) {
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final Set<OIndex<?>> indexes = roleClass.getInvolvedIndexes("name");
+      if (indexes.isEmpty())
+        roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
+
     if (!roleClass.existsProperty("mode"))
       roleClass.createProperty("mode", OType.BYTE);
     if (!roleClass.existsProperty("rules"))
@@ -412,8 +426,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       // MIGRATE AUTOMATICALLY TO 1.2.0
       userClass.setSuperClass(identityClass);
 
-    if (!userClass.existsProperty("name"))
+    if (!userClass.existsProperty("name")) {
       userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    }
     if (!userClass.existsProperty("password"))
       userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
     if (!userClass.existsProperty("roles"))
@@ -423,8 +439,10 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
     // CREATE ROLES AND USERS
     ORole adminRole = getRole(ORole.ADMIN);
-    if (adminRole == null)
+    if (adminRole == null) {
       adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
+      adminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
+    }
 
     OUser adminUser = getUser(OUser.ADMIN);
     if (adminUser == null)
@@ -479,7 +497,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
 
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
-
     }
   }
 

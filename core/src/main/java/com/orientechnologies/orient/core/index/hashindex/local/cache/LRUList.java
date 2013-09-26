@@ -20,6 +20,7 @@ import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
@@ -101,7 +102,7 @@ class LRUList implements Iterable<LRUEntry> {
       tail = lruEntry.before;
   }
 
-  public LRUEntry putToMRU(long fileId, long pageIndex, long dataPointer, boolean isDirty) {
+  public LRUEntry putToMRU(long fileId, long pageIndex, long dataPointer, boolean isDirty, OLogSequenceNumber loadedLSN) {
     long hashCode = hashCode(fileId, pageIndex);
     int index = index(hashCode);
 
@@ -133,6 +134,7 @@ class LRUList implements Iterable<LRUEntry> {
 
     lruEntry.dataPointer = dataPointer;
     lruEntry.isDirty = isDirty;
+    lruEntry.loadedLSN = loadedLSN;
 
     removeFromLRUList(lruEntry);
 
@@ -218,10 +220,14 @@ class LRUList implements Iterable<LRUEntry> {
 
   public LRUEntry removeLRU() {
     LRUEntry entryToRemove = head;
-    while (entryToRemove.usageCounter != 0) {
+    while (entryToRemove != null && entryToRemove.usageCounter != 0) {
       entryToRemove = entryToRemove.after;
     }
-    return remove(entryToRemove.fileId, entryToRemove.pageIndex);
+    if (entryToRemove != null) {
+      return remove(entryToRemove.fileId, entryToRemove.pageIndex);
+    } else {
+      return null;
+    }
   }
 
   public LRUEntry getLRU() {

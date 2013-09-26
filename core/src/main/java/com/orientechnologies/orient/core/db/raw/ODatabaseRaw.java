@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.db.raw;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
@@ -31,6 +35,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -45,6 +50,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -52,7 +58,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -64,14 +70,14 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw implements ODatabase {
-  protected String                      url;
-  protected OStorage                    storage;
-  protected STATUS                      status;
-  protected OIntent                     currentIntent;
+  protected String                     url;
+  protected OStorage                   storage;
+  protected STATUS                     status;
+  protected OIntent                    currentIntent;
 
-  private ODatabaseRecord               databaseOwner;
-  private final Map<String, Object>     properties = new HashMap<String, Object>();
-  private final List<ODatabaseListener> listeners  = new ArrayList<ODatabaseListener>();
+  private ODatabaseRecord              databaseOwner;
+  private final Map<String, Object>    properties = new HashMap<String, Object>();
+  private final Set<ODatabaseListener> listeners  = Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64));
 
   public ODatabaseRaw(final String iURL) {
     if (iURL == null)
@@ -100,16 +106,8 @@ public class ODatabaseRaw implements ODatabase {
 
       status = STATUS.OPEN;
 
-      // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onOpen(getDatabaseOwner());
-
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : listeners)
-        try {
-          listener.onOpen(this);
-        } catch (Throwable t) {
-        }
+      callOnOpenListeners();
 
     } catch (OException e) {
       // PASS THROUGH
@@ -425,12 +423,12 @@ public class ODatabaseRaw implements ODatabase {
     return storage.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, null, null, false, iLocation, iStartSize);
   }
 
-  public boolean dropCluster(final String iClusterName) {
-    return storage.dropCluster(iClusterName);
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    return storage.dropCluster(iClusterName, iTruncate);
   }
 
-  public boolean dropCluster(int iClusterId) {
-    return storage.dropCluster(iClusterId);
+  public boolean dropCluster(int iClusterId, final boolean iTruncate) {
+    return storage.dropCluster(iClusterId, iTruncate);
   }
 
   public int addDataSegment(final String iSegmentName, final String iLocation) {
@@ -501,20 +499,21 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void registerListener(final ODatabaseListener iListener) {
-    if (!listeners.contains(iListener))
-      listeners.add(iListener);
+    if (iListener == null)
+      return;
+
+    listeners.add(iListener);
   }
 
-  public void unregisterListener(final ODatabaseListener iListener) {
-    for (int i = 0; i < listeners.size(); ++i)
-      if (listeners.get(i) == iListener) {
-        listeners.remove(i);
-        break;
-      }
+  public void unregisterListener(final ODatabaseListener listener) {
+    if (listener == null)
+      return;
+
+    listeners.remove(listener);
   }
 
   public List<ODatabaseListener> getListeners() {
-    return listeners;
+    return new ArrayList<ODatabaseListener>(listeners);
   }
 
   public OLevel2RecordCache getLevel2Cache() {
@@ -570,7 +569,7 @@ public class ODatabaseRaw implements ODatabase {
       else
         db = new OGraphDatabase(url);
 
-      return db.getMetadata().getSchema().existsClass("OGraphVertex");
+      return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
       return storage.getConfiguration().dateFormat;
 
@@ -588,6 +587,9 @@ public class ODatabaseRaw implements ODatabase {
 
     case CHARSET:
       return storage.getConfiguration().getCharset();
+
+    case CUSTOM:
+      return storage.getConfiguration().properties;
     }
 
     return null;
@@ -655,6 +657,18 @@ public class ODatabaseRaw implements ODatabase {
       storage.getConfiguration().update();
       break;
 
+    case CUSTOM:
+      if (iValue.toString().indexOf("=") == -1) {
+        if (iValue.toString().equalsIgnoreCase("clear")) {
+          clearCustomInternal();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+      } else {
+        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
+        setCustomInternal(words.get(0).trim(), words.get(1).trim());
+      }
+      break;
+
     default:
       throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
 
@@ -663,18 +677,82 @@ public class ODatabaseRaw implements ODatabase {
     return (DB) this;
   }
 
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+  public String getCustom(final String iName) {
+    if (storage.getConfiguration().properties == null)
+      return null;
+
+    for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
+      if (e.name.equals(iName))
+        return e.value;
+    }
+    return null;
+  }
+
+  public void setCustomInternal(final String iName, final String iValue) {
+    if (iValue == null || "null".equalsIgnoreCase(iValue)) {
+      // REMOVE
+      if (storage.getConfiguration().properties != null) {
+        for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
+          final OStorageEntryConfiguration e = it.next();
+          if (e.name.equals(iName)) {
+            it.remove();
+            break;
+          }
+        }
+      }
+
+    } else {
+      // SET
+      if (storage.getConfiguration().properties == null)
+        storage.getConfiguration().properties = new ArrayList<OStorageEntryConfiguration>();
+
+      boolean found = false;
+      for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
+        if (e.name.equals(iName)) {
+          e.value = iValue;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found)
+        // CREATE A NEW ONE
+        storage.getConfiguration().properties.add(new OStorageEntryConfiguration(iName, iValue));
+    }
+
+    storage.getConfiguration().update();
+  }
+
+  public void clearCustomInternal() {
+    storage.getConfiguration().properties = null;
+  }
+
+  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
   @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
+  public <V> V callInRecordLock(final Callable<V> iCallable, final ORID rid, final boolean iExclusiveLock) {
     return storage.callInRecordLock(iCallable, rid, iExclusiveLock);
   }
 
   @Override
-  public ORecordMetadata getRecordMetadata(ORID rid) {
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
+  }
+
+  public void callOnOpenListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onOpen(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : new ArrayList<ODatabaseListener>(listeners))
+      try {
+        listener.onOpen(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
   }
 
   public void callOnCloseListeners() {
@@ -691,7 +769,7 @@ public class ODatabaseRaw implements ODatabase {
       }
   }
 
-  protected boolean isClusterBoundedToClass(int iClusterId) {
+  protected boolean isClusterBoundedToClass(final int iClusterId) {
     return false;
   }
 
@@ -700,48 +778,43 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   public void freeze() {
-    final OStorageLocalAbstract storage;
-    if (getStorage() instanceof OStorageLocalAbstract)
-      storage = ((OStorageLocalAbstract) getStorage());
-    else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
-      return;
+    final OFreezableStorage storage = getFreezableStorage();
+    if (storage != null) {
+      storage.freeze(false);
     }
-
-    storage.freeze(false);
   }
 
-  public void freeze(boolean throwException) {
-    final OStorageLocalAbstract storage;
-    if (getStorage() instanceof OStorageLocalAbstract)
-      storage = ((OStorageLocalAbstract) getStorage());
-    else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
-      return;
+  public void freeze(final boolean throwException) {
+    final OFreezableStorage storage = getFreezableStorage();
+    if (storage != null) {
+      storage.freeze(throwException);
     }
-
-    storage.freeze(throwException);
   }
 
   public void release() {
-    final OStorageLocalAbstract storage;
-    if (getStorage() instanceof OStorageLocalAbstract)
-      storage = ((OStorageLocalAbstract) getStorage());
-    else {
-      OLogManager.instance().error(this, "We can not freeze non local storage.");
-      return;
+    final OFreezableStorage storage = getFreezableStorage();
+    if (storage != null) {
+      storage.release();
     }
+  }
 
-    storage.release();
+  private OFreezableStorage getFreezableStorage() {
+    OStorage s = getStorage();
+    if (s instanceof OFreezableStorage)
+      return (OFreezableStorage) s;
+    else {
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
+      return null;
+    }
   }
 
   @Override
-  public void freezeCluster(int iClusterId) {
+  public void freezeCluster(final int iClusterId) {
     freezeCluster(iClusterId, false);
   }
 
   @Override
-  public void releaseCluster(int iClusterId) {
+  public void releaseCluster(final int iClusterId) {
     final OLocalPaginatedStorage storage;
     if (getStorage() instanceof OLocalPaginatedStorage)
       storage = ((OLocalPaginatedStorage) getStorage());
@@ -754,7 +827,7 @@ public class ODatabaseRaw implements ODatabase {
   }
 
   @Override
-  public void freezeCluster(int iClusterId, boolean throwException) {
+  public void freezeCluster(final int iClusterId, final boolean throwException) {
     if (getStorage() instanceof OLocalPaginatedStorage) {
       final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
       paginatedStorage.freeze(throwException, iClusterId);

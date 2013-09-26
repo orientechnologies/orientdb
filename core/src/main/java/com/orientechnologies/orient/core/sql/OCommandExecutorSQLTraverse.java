@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -52,6 +53,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbstract {
   public static final String KEYWORD_WHILE    = "WHILE";
   public static final String KEYWORD_TRAVERSE = "TRAVERSE";
+  public static final String KEYWORD_STRATEGY = "STRATEGY";
 
   // HANDLES ITERATION IN LAZY WAY
   private OTraverse          traverse         = new OTraverse();
@@ -100,7 +102,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     parserSkipWhiteSpaces();
 
     if (!parserIsEnded()) {
-      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT)) {
+      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
         final String w = parserGetLastWord();
         if (w.equals(KEYWORD_LIMIT))
           parseLimit(w);
@@ -108,6 +110,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
           parseSkip(w);
         else if (w.equals(KEYWORD_TIMEOUT))
           parseTimeout(w);
+        else if (w.equals(KEYWORD_STRATEGY))
+          parseStrategy(w);
       }
     }
 
@@ -148,7 +152,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     // BROWSE ALL THE RECORDS AND COLLECTS RESULT
     final List<OIdentifiable> result = (List<OIdentifiable>) traverse.execute();
     for (OIdentifiable r : result)
-      handleResult(r);
+      handleResult(r, true);
 
     return getResult();
   }
@@ -180,6 +184,10 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     return this;
   }
 
+  public String getSyntax() {
+    return "TRAVERSE <field>* FROM <target> [WHILE <condition>] [STRATEGY <strategy>]";
+  }
+
   protected int parseFields() {
     int currentPos = 0;
     final StringBuilder word = new StringBuilder();
@@ -192,15 +200,21 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     if (fromPosition == -1)
       throw new OQueryParsingException("Missed " + KEYWORD_FROM, parserText, currentPos);
 
-    Set<String> fields = new HashSet<String>();
+    Set<Object> fields = new HashSet<Object>();
 
     final String fieldString = parserText.substring(currentPos, fromPosition).trim();
     if (fieldString.length() > 0) {
       // EXTRACT PROJECTIONS
       final List<String> items = OStringSerializerHelper.smartSplit(fieldString, ',');
 
-      for (String field : items)
-        fields.add(field.trim());
+      for (String field : items) {
+        final String fieldName = field.trim();
+
+        if (fieldName.contains("("))
+          fields.add(OSQLHelper.parseValue((OBaseParser) null, fieldName, context));
+        else
+          fields.add(fieldName);
+      }
     } else
       throw new OQueryParsingException("Missed field list to cross in TRAVERSE. Use " + getSyntax(), parserText, currentPos);
 
@@ -211,7 +225,21 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     return currentPos;
   }
 
-  public String getSyntax() {
-    return "TRAVERSE <field>* FROM <target> [WHILE <condition>]";
+  /**
+   * Parses the strategy keyword if found.
+   */
+  protected boolean parseStrategy(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_STRATEGY))
+      return false;
+
+    parserNextWord(true);
+    final String strategyWord = parserGetLastWord();
+
+    try {
+      traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));
+    } catch (IllegalArgumentException e) {
+      throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + OTraverse.STRATEGY.values());
+    }
+    return true;
   }
 }

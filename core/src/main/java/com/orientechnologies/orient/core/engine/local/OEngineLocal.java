@@ -66,9 +66,14 @@ public class OEngineLocal extends OEngineAbstract {
                 null,
                 "[OEngineLocal.createStorage] Cannot lock virtual memory, the orientdb-nativeos.jar is not in classpath or there is not a native implementation for the current OS: "
                     + System.getProperty("os.name") + " v." + System.getProperty("os.name"));
-      } catch (NoSuchMethodException e) {
-        throw new OMemoryLockException("Error while locking memory", e);
       } catch (InvocationTargetException e) {
+        OLogManager
+            .instance()
+            .config(
+                null,
+                "[OEngineLocal.createStorage] Cannot lock virtual memory, the orientdb-nativeos.jar is not in classpath or there is not a native implementation for the current OS: "
+                    + System.getProperty("os.name") + " v." + System.getProperty("os.name"));
+      } catch (NoSuchMethodException e) {
         throw new OMemoryLockException("Error while locking memory", e);
       } catch (IllegalAccessException e) {
         throw new OMemoryLockException("Error while locking memory", e);

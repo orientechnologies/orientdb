@@ -48,11 +48,6 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
         Orient.instance().getProfiler().stopRecording();
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Recording stopped", null);
 
-      } else if (command.equalsIgnoreCase("reset")) {
-        Orient.instance().getProfiler().stopRecording();
-        Orient.instance().getProfiler().startRecording();
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Profiler restarted", null);
-
       } else if (command.equalsIgnoreCase("configure")) {
         Orient.instance().getProfiler().configure(parts[2]);
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Profiler configured with: " + parts[2],

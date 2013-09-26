@@ -25,15 +25,24 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPage;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
@@ -41,28 +50,36 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * @since 25.04.13
  */
 public class OWriteAheadLog {
-  private static final long      ONE_KB               = 1024L;
-  private OLogSequenceNumber     lastCheckpoint;
+  private static final long            ONE_KB               = 1024L;
 
-  private final Object           syncObject           = new Object();
+  private OLogSequenceNumber           lastCheckpoint;
 
-  private final List<LogSegment> logSegments          = new ArrayList<LogSegment>();
-  private final RandomAccessFile masterRecordLSNHolder;
-  private boolean                useFirstMasterRecord = true;
+  private final Object                 syncObject           = new Object();
 
-  private final int              maxRecordsCacheSize;
-  private final int              commitDelay;
+  private final List<LogSegment>       logSegments          = new ArrayList<LogSegment>();
 
-  private final long             maxSegmentSize;
-  private final long             maxLogSize;
+  private boolean                      useFirstMasterRecord = true;
 
-  private long                   logSize;
+  private final int                    maxPagesCacheSize;
+  private final int                    commitDelay;
 
-  private final File             walLocation;
-  private final String           storageName;
-  private File                   masterRecordFile;
-  private OLogSequenceNumber     firstMasterRecord;
-  private OLogSequenceNumber     secondMasterRecord;
+  private final long                   maxSegmentSize;
+  private final long                   maxLogSize;
+
+  private long                         logSize;
+
+  private final File                   walLocation;
+
+  private File                         masterRecordFile;
+  private final RandomAccessFile       masterRecordLSNHolder;
+
+  private OLogSequenceNumber           firstMasterRecord;
+  private OLogSequenceNumber           secondMasterRecord;
+
+  private volatile OLogSequenceNumber  flushedLsn;
+  private final OLocalPaginatedStorage paginatedStorage;
+
+  private boolean                      closed;
 
   private static String calculateWalPath(OLocalPaginatedStorage storage) {
     String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
@@ -75,19 +92,19 @@ public class OWriteAheadLog {
   public OWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_MAX_SIZE
-            .getValueAsInteger() * ONE_KB * ONE_KB, storage.getName(), calculateWalPath(storage));
+            .getValueAsInteger() * ONE_KB * ONE_KB, storage);
   }
 
-  public OWriteAheadLog(int maxRecordsCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize, String storageName,
-      String walPath) throws IOException {
-    this.maxRecordsCacheSize = maxRecordsCacheSize;
+  public OWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize, OLocalPaginatedStorage storage)
+      throws IOException {
+    this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
     this.maxLogSize = maxLogSize;
-    this.storageName = storageName;
+    this.paginatedStorage = storage;
 
     try {
-      this.walLocation = new File(walPath);
+      this.walLocation = new File(calculateWalPath(paginatedStorage));
 
       File[] walFiles = this.walLocation.listFiles(new FilenameFilter() {
         @Override
@@ -97,25 +114,36 @@ public class OWriteAheadLog {
       });
 
       if (walFiles.length == 0) {
-        logSegments.add(new LogSegment(new File(this.walLocation, getSegmentName(0)), maxRecordsCacheSize));
+        LogSegment logSegment = new LogSegment(new File(this.walLocation, getSegmentName(0)), maxPagesCacheSize);
+        logSegment.init();
+        logSegment.startFlush();
+        logSegments.add(logSegment);
 
         logSize = 0;
+
+        flushedLsn = null;
       } else {
+
         for (File walFile : walFiles) {
-          LogSegment logSegment = new LogSegment(walFile, maxRecordsCacheSize);
+          LogSegment logSegment = new LogSegment(walFile, maxPagesCacheSize);
+          logSegment.init();
+
           logSegments.add(logSegment);
-          logSize += logSegment.size();
+          logSize += logSegment.filledUpTo();
         }
 
         Collections.sort(logSegments);
+
+        logSegments.get(logSegments.size() - 1).startFlush();
+        flushedLsn = readFlushedLSN();
       }
 
-      masterRecordFile = new File(walLocation, storageName + ".wmr");
-      masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rwd");
+      masterRecordFile = new File(walLocation, paginatedStorage.getName() + ".wmr");
+      masterRecordLSNHolder = new RandomAccessFile(masterRecordFile, "rws");
 
       if (masterRecordLSNHolder.length() > 0) {
-        firstMasterRecord = readMasterRecord(storageName, 0);
-        secondMasterRecord = readMasterRecord(storageName, 1);
+        firstMasterRecord = readMasterRecord(paginatedStorage.getName(), 0);
+        secondMasterRecord = readMasterRecord(paginatedStorage.getName(), 1);
 
         if (firstMasterRecord == null) {
           useFirstMasterRecord = true;
@@ -133,10 +161,13 @@ public class OWriteAheadLog {
           }
         }
       }
+
+      fixMasterRecords();
+
     } catch (FileNotFoundException e) {
       // never happened
-      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, storageName);
-      throw new IllegalStateException("Error during file initialization for storage " + storageName, e);
+      OLogManager.instance().error(this, "Error during file initialization for storage %s", e, paginatedStorage.getName());
+      throw new IllegalStateException("Error during file initialization for storage " + paginatedStorage.getName(), e);
     }
   }
 
@@ -144,14 +175,42 @@ public class OWriteAheadLog {
     return walLocation;
   }
 
-  public void restore() throws IOException {
+  public OLogSequenceNumber begin() throws IOException {
     synchronized (syncObject) {
-      for (LogSegment logSegment : logSegments) {
-        logSegment.restore();
+      checkForClose();
+
+      LogSegment first = logSegments.get(0);
+      if (first.filledUpTo() == 0)
+        return null;
+
+      return first.begin();
+    }
+  }
+
+  public OLogSequenceNumber end() throws IOException {
+    synchronized (syncObject) {
+      checkForClose();
+
+      int lastIndex = logSegments.size() - 1;
+      LogSegment last = logSegments.get(lastIndex);
+      while (last.filledUpTo == 0) {
+        lastIndex--;
+        if (lastIndex >= 0)
+          last = logSegments.get(lastIndex);
+        else
+          return null;
       }
 
-      fixSize();
-      fixMasterRecords();
+      return last.end();
+    }
+  }
+
+  public void flush() {
+    synchronized (syncObject) {
+      checkForClose();
+
+      LogSegment last = logSegments.get(logSegments.size() - 1);
+      last.flush();
     }
   }
 
@@ -162,7 +221,7 @@ public class OWriteAheadLog {
         firstMasterRecord = null;
       } else {
         LogSegment firstMasterRecordSegment = logSegments.get(index);
-        if (firstMasterRecordSegment.size() <= firstMasterRecord.getPosition())
+        if (firstMasterRecordSegment.filledUpTo() <= firstMasterRecord.getPosition())
           firstMasterRecord = null;
       }
     }
@@ -173,10 +232,13 @@ public class OWriteAheadLog {
         secondMasterRecord = null;
       } else {
         LogSegment secondMasterRecordSegment = logSegments.get(index);
-        if (secondMasterRecordSegment.size() <= secondMasterRecord.getPosition())
+        if (secondMasterRecordSegment.filledUpTo() <= secondMasterRecord.getPosition())
           secondMasterRecord = null;
       }
     }
+
+    if (firstMasterRecord != null && secondMasterRecord != null)
+      return;
 
     if (firstMasterRecord == null && secondMasterRecord == null) {
       masterRecordLSNHolder.setLength(0);
@@ -192,13 +254,6 @@ public class OWriteAheadLog {
 
       writeMasterRecord(0, firstMasterRecord);
       writeMasterRecord(1, secondMasterRecord);
-    }
-  }
-
-  private void fixSize() throws IOException {
-    logSize = 0;
-    for (LogSegment logSegment : logSegments) {
-      logSize += logSegment.size();
     }
   }
 
@@ -244,35 +299,64 @@ public class OWriteAheadLog {
   }
 
   private String getSegmentName(int order) {
-    return storageName + "." + order + ".wal";
+    return paginatedStorage.getName() + "." + order + ".wal";
   }
 
-  public OLogSequenceNumber logCheckPointStart() throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointStart() throws IOException {
     synchronized (syncObject) {
-      OCheckpointStartRecord record = new OCheckpointStartRecord();
-      logRecord(record);
+      checkForClose();
+
+      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint);
+      log(record);
       return record.getLsn();
     }
   }
 
-  public OLogSequenceNumber logCheckPointEnd() throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException {
     synchronized (syncObject) {
-      OCheckpointEndRecord record = new OCheckpointEndRecord();
-      logRecord(record);
+      checkForClose();
+
+      OFuzzyCheckpointEndRecord record = new OFuzzyCheckpointEndRecord();
+      log(record);
       return record.getLsn();
     }
   }
 
-  public OLogSequenceNumber logRecord(OWALRecord record) throws IOException {
+  public OLogSequenceNumber log(OWALRecord record) throws IOException {
     synchronized (syncObject) {
+      checkForClose();
+
       final byte[] serializedForm = OWALRecordsFactory.INSTANCE.toStream(record);
-      final int entrySize = calculateEntrySize(serializedForm);
 
-      if (logSize + entrySize > maxLogSize) {
+      LogSegment last = logSegments.get(logSegments.size() - 1);
+      long lastSize = last.filledUpTo();
+
+      final OLogSequenceNumber lsn = last.logRecord(serializedForm);
+      record.setLsn(lsn);
+
+      if (record.isUpdateMasterRecord()) {
+        lastCheckpoint = lsn;
+        if (useFirstMasterRecord) {
+          firstMasterRecord = lsn;
+          writeMasterRecord(0, firstMasterRecord);
+          useFirstMasterRecord = false;
+        } else {
+          secondMasterRecord = lsn;
+          writeMasterRecord(1, secondMasterRecord);
+          useFirstMasterRecord = true;
+        }
+      }
+
+      final long sizeDiff = last.filledUpTo() - lastSize;
+      logSize += sizeDiff;
+
+      if (logSize >= maxLogSize) {
         LogSegment first = logSegments.get(0);
-        logSize -= first.size();
+        first.stopFlush(false);
 
-        if (!first.delete())
+        logSize -= first.filledUpTo();
+
+        if (!first.delete(false))
           OLogManager.instance().error(this, "Log segment %s can not be removed from WAL", first.getPath());
 
         logSegments.remove(0);
@@ -280,22 +364,15 @@ public class OWriteAheadLog {
         fixMasterRecords();
       }
 
-      LogSegment last = logSegments.get(logSegments.size() - 1);
+      if (last.filledUpTo() >= maxSegmentSize) {
+        last.stopFlush(true);
 
-      if (last.size() + entrySize > maxSegmentSize) {
-        last.flush();
+        last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize);
+        last.init();
+        last.startFlush();
 
-        last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxRecordsCacheSize);
         logSegments.add(last);
       }
-
-      final OLogSequenceNumber lsn = last.logRecord(serializedForm, record.isUpdateMasterRecord());
-      record.setLsn(lsn);
-
-      if (record.isUpdateMasterRecord())
-        lastCheckpoint = lsn;
-
-      logSize += entrySize;
 
       return lsn;
     }
@@ -308,46 +385,67 @@ public class OWriteAheadLog {
   }
 
   public void close() throws IOException {
+    close(true);
+  }
+
+  public void close(boolean flush) throws IOException {
     synchronized (syncObject) {
+      if (closed)
+        return;
+
+      closed = true;
+
       for (LogSegment logSegment : logSegments)
-        logSegment.close();
+        logSegment.close(flush);
+
       masterRecordLSNHolder.close();
     }
+
+  }
+
+  private void checkForClose() {
+    if (closed)
+      throw new OStorageException("WAL log " + walLocation + " has been closed");
   }
 
   public void delete() throws IOException {
+    delete(false);
+  }
+
+  public void delete(boolean flush) throws IOException {
     synchronized (syncObject) {
-      close();
+      close(flush);
 
       for (LogSegment logSegment : logSegments)
-        if (!logSegment.delete())
-          OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(), storageName);
+        if (!logSegment.delete(false))
+          OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(),
+              paginatedStorage.getName());
 
       if (!masterRecordFile.delete())
-        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", storageName);
+        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", paginatedStorage.getName());
     }
   }
 
-  public void logDirtyPages(Set<ODirtyPageId> dirtyPages) {
+  public void logDirtyPages(Set<ODirtyPage> dirtyPages) throws IOException {
     synchronized (syncObject) {
+      checkForClose();
 
-    }
-  }
-
-  public void logPage(OLocalPage localPage) {
-    synchronized (syncObject) {
-
+      log(new ODirtyPagesRecord(dirtyPages));
     }
   }
 
   public OLogSequenceNumber getLastCheckpoint() {
     synchronized (syncObject) {
+      checkForClose();
+
       return lastCheckpoint;
     }
   }
 
   public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
     synchronized (syncObject) {
+      checkForClose();
+
       int segment = lsn.getSegment();
       int index = segment - logSegments.get(0).getOrder();
 
@@ -366,8 +464,10 @@ public class OWriteAheadLog {
     }
   }
 
-  public OWALRecord readNext(OLogSequenceNumber lsn) throws IOException {
+  public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
     synchronized (syncObject) {
+      checkForClose();
+
       int order = lsn.getSegment();
       int index = order - logSegments.get(0).getOrder();
 
@@ -378,16 +478,41 @@ public class OWriteAheadLog {
       OLogSequenceNumber nextLSN = logSegment.getNextLSN(lsn);
 
       if (nextLSN == null) {
-        order++;
         index++;
         if (index >= logSegments.size())
           return null;
 
-        nextLSN = new OLogSequenceNumber(order, 0);
+        LogSegment nextSegment = logSegments.get(index);
+        if (nextSegment.filledUpTo() == 0)
+          return null;
+
+        nextLSN = nextSegment.begin();
       }
 
-      return read(nextLSN);
+      return nextLSN;
     }
+  }
+
+  public OLogSequenceNumber getFlushedLSN() {
+    synchronized (syncObject) {
+      checkForClose();
+
+      return flushedLsn;
+    }
+  }
+
+  private OLogSequenceNumber readFlushedLSN() throws IOException {
+    int segment = logSegments.size() - 1;
+    while (segment >= 0) {
+      LogSegment logSegment = logSegments.get(segment);
+      OLogSequenceNumber flushedLSN = logSegment.readFlushedLSN();
+      if (flushedLSN == null)
+        segment--;
+      else
+        return flushedLSN;
+    }
+
+    return null;
   }
 
   public static boolean validateName(String name) {
@@ -410,34 +535,140 @@ public class OWriteAheadLog {
     return true;
   }
 
-  private static int calculateEntrySize(byte[] logEntry) {
-    return logEntry.length + 2 * OIntegerSerializer.INT_SIZE;
+  public OLogSequenceNumber logFullCheckpointStart() throws IOException {
+    return log(new OFullCheckpointStartRecord(lastCheckpoint));
+  }
+
+  public void logFullCheckpointEnd() throws IOException {
+    synchronized (syncObject) {
+      checkForClose();
+
+      log(new OCheckpointEndRecord());
+    }
   }
 
   private final class LogSegment implements Comparable<LogSegment> {
-    private final RandomAccessFile rndFile;
-    private final File             file;
-    private long                   size;
+    private final RandomAccessFile                rndFile;
+    private final File                            file;
 
-    private final int              order;
-    private final int              maxRecordsCacheSize;
-    private boolean                closed;
+    private long                                  filledUpTo;
 
-    private final List<CacheEntry> records = new ArrayList<CacheEntry>();
-    private int                    recordsCacheSize;
+    private final int                             order;
+    private final int                             maxPagesCacheSize;
+    private boolean                               closed;
 
-    private LogSegment(File file, int maxRecordsCacheSize) throws IOException {
+    private OWALPage                              currentPage;
+    private final ConcurrentLinkedQueue<OWALPage> pagesCache     = new ConcurrentLinkedQueue<OWALPage>();
+
+    private ODirectMemory                         directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    private long                                  nextPositionToFlush;
+    private long                                  flushId;
+
+    private final ScheduledExecutorService        commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                   @Override
+                                                                   public Thread newThread(Runnable r) {
+                                                                     Thread thread = new Thread(r);
+                                                                     thread.setDaemon(true);
+                                                                     thread.setName("WAL Flush Task");
+                                                                     return thread;
+                                                                   }
+                                                                 });
+
+    private OLogSequenceNumber                    last           = null;
+
+    private volatile boolean                      flushNewData   = true;
+
+    private LogSegment(File file, int maxPagesCacheSize) throws IOException {
       this.file = file;
-      this.maxRecordsCacheSize = maxRecordsCacheSize;
+      this.maxPagesCacheSize = maxPagesCacheSize;
 
-      rndFile = new RandomAccessFile(file, "rw");
-      size = rndFile.length();
       order = extractOrder(file.getName());
       closed = false;
+      rndFile = new RandomAccessFile(file, "rw");
+    }
+
+    public void startFlush() {
+      if (commitDelay > 0)
+        commitExecutor.scheduleAtFixedRate(new FlushTask(), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+    }
+
+    public void stopFlush(boolean flush) {
+      if (flush)
+        flush();
+
+      if (!commitExecutor.isShutdown()) {
+        commitExecutor.shutdown();
+        try {
+          if (!commitExecutor
+              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+            throw new OStorageException("WAL flush task for " + getPath() + " segment can not be stopped.");
+
+        } catch (InterruptedException e) {
+          OLogManager.instance().error(this, "Can not shutdown background WAL commit thread.");
+        }
+      }
     }
 
     public int getOrder() {
       return order;
+    }
+
+    public void init() throws IOException {
+      selfCheck();
+
+      initPageCache();
+      initLastPage();
+    }
+
+    private void initLastPage() throws IOException {
+      synchronized (rndFile) {
+        long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+        long currentPage = pagesCount - 1;
+        if (currentPage < 0)
+          return;
+
+        do {
+          rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+          byte[] content = new byte[OWALPage.PAGE_SIZE];
+          rndFile.readFully(content);
+
+          long pointer = directMemory.allocate(content);
+          try {
+            final OWALPage page = new OWALPage(pointer, false);
+            int lastPosition = findLastRecord(page, true);
+            if (lastPosition > -1) {
+              last = new OLogSequenceNumber(order, currentPage * OWALPage.PAGE_SIZE + lastPosition);
+              return;
+            }
+
+            currentPage--;
+          } finally {
+            directMemory.free(pointer);
+          }
+        } while (currentPage >= 0);
+      }
+    }
+
+    private void initPageCache() throws IOException {
+      synchronized (rndFile) {
+        long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+        if (pagesCount == 0)
+          return;
+
+        rndFile.seek((pagesCount - 1) * OWALPage.PAGE_SIZE);
+        byte[] content = new byte[OWALPage.PAGE_SIZE];
+        rndFile.readFully(content);
+
+        flushId = OLongSerializer.INSTANCE.deserializeNative(content, OWALPage.FLUSH_ID_OFFSET);
+
+        long pointer = directMemory.allocate(content);
+        currentPage = new OWALPage(pointer, false);
+        filledUpTo = (pagesCount - 1) * OWALPage.PAGE_SIZE + currentPage.getFilledUpTo();
+        nextPositionToFlush = (pagesCount - 1) * OWALPage.PAGE_SIZE;
+
+        pagesCache.add(currentPage);
+      }
     }
 
     private int extractOrder(String name) {
@@ -465,12 +696,42 @@ public class OWriteAheadLog {
       return 0;
     }
 
-    public long size() throws IOException {
-      return size;
+    public long filledUpTo() throws IOException {
+      return filledUpTo;
     }
 
-    public boolean delete() throws IOException {
-      close();
+    public OLogSequenceNumber begin() throws IOException {
+      if (!pagesCache.isEmpty())
+        return new OLogSequenceNumber(order, OWALPage.RECORDS_OFFSET);
+
+      if (rndFile.length() > 0)
+        return new OLogSequenceNumber(order, OWALPage.RECORDS_OFFSET);
+
+      return null;
+    }
+
+    public OLogSequenceNumber end() {
+      return last;
+    }
+
+    private int findLastRecord(OWALPage page, boolean skipTailRecords) {
+      int prevOffset = OWALPage.RECORDS_OFFSET;
+      int pageOffset = OWALPage.RECORDS_OFFSET;
+      int maxOffset = page.getFilledUpTo();
+
+      while (pageOffset < maxOffset) {
+        prevOffset = pageOffset;
+        pageOffset += page.getSerializedRecordSize(pageOffset);
+      }
+
+      if (skipTailRecords && page.recordTail(prevOffset))
+        return -1;
+
+      return prevOffset;
+    }
+
+    public boolean delete(boolean flush) throws IOException {
+      close(flush);
       return file.delete();
     }
 
@@ -478,98 +739,124 @@ public class OWriteAheadLog {
       return file.getAbsolutePath();
     }
 
-    public OLogSequenceNumber logRecord(byte[] record, boolean updateMasterRecord) throws IOException {
-      final OLogSequenceNumber lsn = new OLogSequenceNumber(order, size);
-      final int entrySize = calculateEntrySize(record);
+    public OLogSequenceNumber logRecord(byte[] record) throws IOException {
+      flushNewData = true;
+      int pageOffset = (int) (filledUpTo % OWALPage.PAGE_SIZE);
+      long pageIndex = filledUpTo / OWALPage.PAGE_SIZE;
 
-      records.add(new CacheEntry(record, lsn, updateMasterRecord));
+      if (pageOffset == 0 && pageIndex > 0)
+        pageIndex--;
 
-      size += entrySize;
-      recordsCacheSize += entrySize;
+      int pos = 0;
+      boolean firstChunk = true;
 
-      if (recordsCacheSize >= maxRecordsCacheSize)
-        flushWALCache();
+      OLogSequenceNumber lsn = null;
 
-      return lsn;
-    }
+      while (pos < record.length) {
+        if (currentPage == null) {
+          long pointer = directMemory.allocate(OWALPage.PAGE_SIZE);
+          currentPage = new OWALPage(pointer, true);
+          pagesCache.add(currentPage);
+          filledUpTo += OWALPage.RECORDS_OFFSET;
+        }
 
-    private void flushWALCache() throws IOException {
-      if (records.isEmpty()) {
-        assert rndFile.length() == size;
-        return;
-      }
+        int freeSpace = currentPage.getFreeSpace();
+        if (freeSpace < OWALPage.MIN_RECORD_SIZE) {
+          filledUpTo += freeSpace + OWALPage.RECORDS_OFFSET;
+          long pointer = directMemory.allocate(OWALPage.PAGE_SIZE);
+          currentPage = new OWALPage(pointer, true);
+          pagesCache.add(currentPage);
+          pageIndex++;
 
-      rndFile.seek(rndFile.length());
-      final CRC32 crc32 = new CRC32();
+          freeSpace = currentPage.getFreeSpace();
+        }
 
-      for (CacheEntry cacheEntry : records) {
-        crc32.reset();
-        crc32.update(cacheEntry.record);
+        final OWALPage walPage = currentPage;
+        synchronized (walPage) {
+          final int entrySize = OWALPage.calculateSerializedSize(record.length - pos);
+          int addedChunkOffset;
+          if (entrySize <= freeSpace) {
+            if (pos == 0)
+              addedChunkOffset = walPage.appendRecord(record, false, !firstChunk);
+            else
+              addedChunkOffset = walPage.appendRecord(Arrays.copyOfRange(record, pos, record.length), false, !firstChunk);
 
-        long crc = crc32.getValue();
-
-        long position = rndFile.length();
-
-        rndFile.writeInt((int) crc);
-        rndFile.writeInt(cacheEntry.record.length);
-        rndFile.write(cacheEntry.record);
-
-        if (cacheEntry.updateMasterRecord) {
-          if (useFirstMasterRecord) {
-            firstMasterRecord = new OLogSequenceNumber(order, position);
-            writeMasterRecord(0, firstMasterRecord);
-            useFirstMasterRecord = false;
+            pos = record.length;
           } else {
-            secondMasterRecord = new OLogSequenceNumber(order, position);
-            writeMasterRecord(1, secondMasterRecord);
-            useFirstMasterRecord = true;
+            int chunkSize = OWALPage.calculateRecordSize(freeSpace);
+            if (chunkSize > record.length - pos)
+              chunkSize = record.length - pos;
+
+            addedChunkOffset = walPage.appendRecord(Arrays.copyOfRange(record, pos, pos + chunkSize), true, !firstChunk);
+            pos += chunkSize;
           }
+
+          if (firstChunk) {
+            lsn = new OLogSequenceNumber(order, pageIndex * OWALPage.PAGE_SIZE + addedChunkOffset);
+          }
+
+          int spaceDiff = freeSpace - walPage.getFreeSpace();
+          filledUpTo += spaceDiff;
+
+          firstChunk = false;
         }
       }
 
-      rndFile.getFD().sync();
+      if (pagesCache.size() > maxPagesCacheSize) {
+        OLogManager.instance().info(this, "Max cache limit is reached (%d vs. %d), sync flush is performed.", maxPagesCacheSize,
+            pagesCache.size());
+        flush();
+      }
 
-      records.clear();
-      recordsCacheSize = 0;
-
-      assert rndFile.length() == size;
+      last = lsn;
+      return last;
     }
 
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
       assert lsn.getSegment() == order;
 
-      if (!records.isEmpty() && records.get(0).lsn.compareTo(lsn) <= 0) {
-        for (CacheEntry cacheEntry : records) {
-          if (cacheEntry.lsn.equals(lsn))
-            return cacheEntry.record;
-        }
-
-        return null;
-      }
-
-      final long pos = lsn.getPosition();
-      if (rndFile.length() <= pos)
+      if (lsn.getPosition() >= filledUpTo)
         return null;
 
-      byte[] record;
-      try {
-        rndFile.seek(pos);
-        final int crc = rndFile.readInt();
-        final int entrySize = rndFile.readInt();
+      if (flushedLsn == null || flushedLsn.compareTo(lsn) < 0)
+        flush();
 
-        record = new byte[entrySize];
-        rndFile.readFully(record);
+      byte[] record = null;
+      long pageIndex = lsn.getPosition() / OWALPage.PAGE_SIZE;
+      int pageOffset = (int) (lsn.getPosition() % OWALPage.PAGE_SIZE);
 
-        CRC32 crc32 = new CRC32();
-        crc32.update(record);
+      long pageCount = (filledUpTo + OWALPage.PAGE_SIZE - 1) / OWALPage.PAGE_SIZE;
 
-        if (crc != ((int) crc32.getValue())) {
-          OLogManager.instance().error(this, "WAL record with LSN %s is broken.", lsn);
-          throw new OWriteAheadLogRecordIsBrokenException("WAL record with LSN " + lsn + " is broken.");
+      while (pageIndex < pageCount) {
+        synchronized (rndFile) {
+          byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
+          rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+          rndFile.readFully(pageContent);
+
+          long pointer = directMemory.allocate(pageContent);
+          try {
+            OWALPage page = new OWALPage(pointer, false);
+
+            byte[] content = page.getRecord(pageOffset);
+            if (record == null)
+              record = content;
+            else {
+              byte[] oldRecord = record;
+
+              record = new byte[record.length + content.length];
+              System.arraycopy(oldRecord, 0, record, 0, oldRecord.length);
+              System.arraycopy(content, 0, record, oldRecord.length, record.length - oldRecord.length);
+            }
+
+            if (page.mergeWithNextPage(pageOffset)) {
+              pageOffset = OWALPage.RECORDS_OFFSET;
+              pageIndex++;
+            } else
+              break;
+          } finally {
+            directMemory.free(pointer);
+          }
         }
-      } catch (EOFException eofException) {
-        OLogManager.instance().error(this, "WAL record with LSN %s is broken.", lsn, eofException);
-        throw new OWriteAheadLogRecordIsBrokenException("WAL record with LSN " + lsn + " is broken.", eofException);
       }
 
       return record;
@@ -581,104 +868,328 @@ public class OWriteAheadLog {
         return null;
 
       long pos = lsn.getPosition();
-      pos += calculateEntrySize(record);
+      long pageIndex = pos / OWALPage.PAGE_SIZE;
+      int pageOffset = (int) (pos - pageIndex * OWALPage.PAGE_SIZE);
 
-      if (pos >= size)
+      int restOfRecord = record.length;
+      while (restOfRecord > 0) {
+        int entrySize = OWALPage.calculateSerializedSize(restOfRecord);
+        if (entrySize + pageOffset < OWALPage.PAGE_SIZE) {
+          if (entrySize + pageOffset <= OWALPage.PAGE_SIZE - OWALPage.MIN_RECORD_SIZE)
+            pos += entrySize;
+          else
+            pos += OWALPage.PAGE_SIZE - pageOffset + OWALPage.RECORDS_OFFSET;
+          break;
+        } else if (entrySize + pageOffset == OWALPage.PAGE_SIZE) {
+          pos += entrySize + OWALPage.RECORDS_OFFSET;
+          break;
+        } else {
+          int chunkSize = OWALPage.calculateRecordSize(OWALPage.PAGE_SIZE - pageOffset);
+          restOfRecord -= chunkSize;
+
+          pos += OWALPage.PAGE_SIZE - pageOffset + OWALPage.RECORDS_OFFSET;
+          pageOffset = OWALPage.RECORDS_OFFSET;
+        }
+      }
+
+      if (pos >= filledUpTo)
         return null;
 
       return new OLogSequenceNumber(order, pos);
     }
 
-    public void close() throws IOException {
+    public void close(boolean flush) throws IOException {
       if (!closed) {
-        flush();
+        stopFlush(flush);
+
         rndFile.close();
+
         closed = true;
+
+        if (!pagesCache.isEmpty()) {
+          for (OWALPage page : pagesCache)
+            directMemory.free(page.getPagePointer());
+        }
+
+        currentPage = null;
       }
     }
 
-    public void flush() throws IOException {
-      flushWALCache();
+    private void selfCheck() throws IOException {
+      if (!pagesCache.isEmpty())
+        throw new IllegalStateException("WAL cache is not empty, we can not verify WAL after it was started to be used");
+
+      synchronized (rndFile) {
+        long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+
+        if (rndFile.length() % OWALPage.PAGE_SIZE > 0) {
+          OLogManager.instance().error(this, "Last WAL page was written partially, auto fix.");
+
+          rndFile.setLength(OWALPage.PAGE_SIZE * pagesCount);
+        }
+
+        long currentPage = pagesCount - 1;
+        CRC32 crc32 = new CRC32();
+        while (currentPage >= 0) {
+          crc32.reset();
+
+          byte[] content = new byte[OWALPage.PAGE_SIZE];
+          rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+          rndFile.readFully(content);
+
+          int pageCRC = OIntegerSerializer.INSTANCE.deserializeNative(content, 0);
+
+          crc32.update(content, OIntegerSerializer.INT_SIZE, OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE);
+          int calculatedCRC = (int) crc32.getValue();
+
+          if (pageCRC != calculatedCRC) {
+            OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
+
+            currentPage--;
+            pagesCount = currentPage + 1;
+            rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+          } else
+            break;
+        }
+
+        if (currentPage < 0)
+          return;
+
+        byte[] content = new byte[OWALPage.PAGE_SIZE];
+        rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+        rndFile.readFully(content);
+        currentPage--;
+
+        long intialFlushId = OLongSerializer.INSTANCE.deserializeNative(content, OWALPage.FLUSH_ID_OFFSET);
+        long loadedFlushId = intialFlushId;
+
+        int flushedPagesCount = 1;
+        while (currentPage >= 0) {
+          content = new byte[OWALPage.PAGE_SIZE];
+          rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+          rndFile.readFully(content);
+
+          crc32.reset();
+          crc32.update(content, OIntegerSerializer.INT_SIZE, OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE);
+
+          int calculatedCRC = (int) crc32.getValue();
+          int pageCRC = OIntegerSerializer.INSTANCE.deserializeNative(content, 0);
+
+          if (pageCRC != calculatedCRC) {
+            OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
+
+            currentPage--;
+            pagesCount = currentPage + 1;
+            rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+            flushedPagesCount = 0;
+          } else {
+            loadedFlushId = OLongSerializer.INSTANCE.deserializeNative(content, OWALPage.FLUSH_ID_OFFSET);
+            if (loadedFlushId == intialFlushId) {
+              flushedPagesCount++;
+              currentPage--;
+            } else
+              break;
+          }
+        }
+
+        if (flushedPagesCount != 0) {
+          content = new byte[OWALPage.PAGE_SIZE];
+          rndFile.seek((currentPage + 1) * OWALPage.PAGE_SIZE);
+          rndFile.readFully(content);
+
+          final int firstFlushIndex = OIntegerSerializer.INSTANCE.deserializeNative(content, OWALPage.FLUSH_INDEX_OFFSET);
+          if (firstFlushIndex != 0) {
+            OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage + 1);
+            pagesCount = currentPage + 1;
+            rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+            flushedPagesCount = 0;
+          }
+        }
+
+        currentPage += flushedPagesCount;
+        while (currentPage >= 0) {
+          rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+          rndFile.readFully(content);
+
+          long pointer = directMemory.allocate(content);
+          try {
+            OWALPage page = new OWALPage(pointer, false);
+            int pageOffset = findLastRecord(page, false);
+            if (pageOffset >= 0) {
+              if (page.mergeWithNextPage(pageOffset)) {
+                page.truncateTill(pageOffset);
+                rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
+                content = directMemory.get(pointer, OWALPage.PAGE_SIZE);
+                rndFile.write(content);
+
+                if (page.isEmpty()) {
+                  OLogManager.instance().error(this, "%d WAL page has been broken and will be truncated.", currentPage);
+                  currentPage--;
+
+                  pagesCount = currentPage + 1;
+                  rndFile.setLength(pagesCount * OWALPage.PAGE_SIZE);
+                } else
+                  break;
+              } else
+                break;
+            } else
+              break;
+          } finally {
+            directMemory.free(pointer);
+          }
+        }
+
+        rndFile.getFD().sync();
+      }
     }
 
-    public void restore() throws IOException {
-      flushWALCache();
+    public OLogSequenceNumber readFlushedLSN() throws IOException {
+      long pages = rndFile.length() / OWALPage.PAGE_SIZE;
+      if (pages == 0)
+        return null;
 
-      rndFile.seek(0);
-      while (rndFile.getFilePointer() < rndFile.length()) {
-        long startPos = rndFile.getFilePointer();
+      long pageIndex = pages - 1;
 
+      while (true) {
+        rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+
+        byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
+        rndFile.readFully(pageContent);
+
+        long pointer = directMemory.allocate(pageContent);
         try {
-          final int crc = rndFile.readInt();
-          final int entrySize = rndFile.readInt();
 
-          byte[] record = new byte[entrySize];
-          rndFile.readFully(record);
+          OWALPage page = new OWALPage(pointer, false);
+          int pageOffset = findLastRecord(page, true);
 
-          CRC32 crc32 = new CRC32();
-          crc32.update(record);
+          if (pageOffset < 0) {
+            pageIndex--;
+            if (pageIndex < 0)
+              return null;
 
-          if (crc != ((int) crc32.getValue())) {
-            rndFile.setLength(startPos);
-            size = startPos;
-
-            OLogManager.instance().warn(this,
-                "In WAL segment %s broken record with LSN %s was detected, segment is size truncated to %d bytes", file.getPath(),
-                new OLogSequenceNumber(order, startPos), startPos);
-
-            break;
+            continue;
           }
-        } catch (EOFException e) {
-          rndFile.setLength(startPos);
-          size = startPos;
 
-          OLogManager.instance().warn(this,
-              "In WAL segment %s broken record with LSN %s was detected, segment is size truncated to %d bytes", file.getPath(),
-              new OLogSequenceNumber(order, startPos), startPos);
-
-          break;
+          return new OLogSequenceNumber(order, pageIndex * OWALPage.PAGE_SIZE + pageOffset);
+        } finally {
+          directMemory.free(pointer);
         }
       }
-      rndFile.getFD().sync();
+    }
+
+    public void flush() {
+      if (!commitExecutor.isShutdown()) {
+        try {
+          commitExecutor.submit(new FlushTask()).get();
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          throw new OStorageException("Thread was interrupted during flush", e);
+        } catch (ExecutionException e) {
+          throw new OStorageException("Error during WAL segment " + getPath() + " flush.");
+        }
+      } else {
+        new FlushTask().run();
+      }
+
+    }
+
+    private final class FlushTask implements Runnable {
+      private FlushTask() {
+      }
+
+      @Override
+      public void run() {
+        try {
+          commit();
+        } catch (Throwable e) {
+          OLogManager.instance().error(this, "Error during WAL background flush", e);
+        }
+      }
+
+      private void commit() throws IOException {
+        if (pagesCache.isEmpty())
+          return;
+
+        if (!flushNewData)
+          return;
+
+        flushNewData = false;
+
+        final int maxSize = pagesCache.size();
+
+        long[] pagesToFlush = new long[maxSize];
+
+        long filePointer = nextPositionToFlush;
+        int lastRecordOffset = -1;
+        long lastPageIndex = -1;
+
+        int flushedPages = 0;
+
+        Iterator<OWALPage> pageIterator = pagesCache.iterator();
+        while (flushedPages < maxSize) {
+          final OWALPage page = pageIterator.next();
+          synchronized (page) {
+            long dataPointer;
+            if (flushedPages == maxSize - 1) {
+              dataPointer = directMemory.allocate(OWALPage.PAGE_SIZE);
+              directMemory.copyData(page.getPagePointer(), dataPointer, OWALPage.PAGE_SIZE);
+            } else {
+              dataPointer = page.getPagePointer();
+            }
+
+            pagesToFlush[flushedPages] = dataPointer;
+            int recordOffset = findLastRecord(page, true);
+            if (recordOffset >= 0) {
+              lastRecordOffset = recordOffset;
+              lastPageIndex = flushedPages;
+            }
+          }
+
+          flushedPages++;
+        }
+
+        flushId++;
+
+        synchronized (rndFile) {
+          rndFile.seek(filePointer);
+          for (int i = 0; i < pagesToFlush.length; i++) {
+            long dataPointer = pagesToFlush[i];
+            byte[] pageContent = directMemory.get(dataPointer, OWALPage.PAGE_SIZE);
+            if (i == pagesToFlush.length - 1)
+              directMemory.free(dataPointer);
+
+            OLongSerializer.INSTANCE.serializeNative(flushId, pageContent, OWALPage.FLUSH_ID_OFFSET);
+            OIntegerSerializer.INSTANCE.serializeNative(i, pageContent, OWALPage.FLUSH_INDEX_OFFSET);
+
+            flushPage(pageContent);
+            filePointer += OWALPage.PAGE_SIZE;
+          }
+
+          rndFile.getFD().sync();
+        }
+
+        long oldPositionToFlush = nextPositionToFlush;
+        nextPositionToFlush = filePointer - OWALPage.PAGE_SIZE;
+
+        if (lastRecordOffset >= 0)
+          flushedLsn = new OLogSequenceNumber(order, oldPositionToFlush + lastPageIndex * OWALPage.PAGE_SIZE + lastRecordOffset);
+
+        for (int i = 0; i < flushedPages - 1; i++) {
+          OWALPage page = pagesCache.poll();
+          directMemory.free(page.getPagePointer());
+        }
+
+        assert !pagesCache.isEmpty();
+      }
+
+      private void flushPage(byte[] content) throws IOException {
+        CRC32 crc32 = new CRC32();
+        crc32.update(content, OIntegerSerializer.INT_SIZE, OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE);
+        OIntegerSerializer.INSTANCE.serializeNative((int) crc32.getValue(), content, 0);
+
+        rndFile.write(content);
+      }
     }
   }
 
-  private static final class CacheEntry {
-    private final byte[]             record;
-    private final OLogSequenceNumber lsn;
-    private final boolean            updateMasterRecord;
-
-    private CacheEntry(byte[] record, OLogSequenceNumber lsn, boolean updateMasterRecord) {
-      this.record = record;
-      this.lsn = lsn;
-      this.updateMasterRecord = updateMasterRecord;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      CacheEntry that = (CacheEntry) o;
-
-      if (updateMasterRecord != that.updateMasterRecord)
-        return false;
-      if (!lsn.equals(that.lsn))
-        return false;
-      if (!Arrays.equals(record, that.record))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Arrays.hashCode(record);
-      result = 31 * result + lsn.hashCode();
-      result = 31 * result + (updateMasterRecord ? 1 : 0);
-      return result;
-    }
-  }
 }

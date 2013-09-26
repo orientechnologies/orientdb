@@ -20,14 +20,13 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,21 +34,15 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 @SuppressWarnings("unchecked")
 public class OJSONWriter {
-  private static final String           DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2";
-  private Writer                        out;
-  private boolean                       prettyPrint    = false;
-  private boolean                       firstAttribute = true;
-  private final String                  format;
-  private static final SimpleDateFormat dateFormat;
-
-  static {
-    dateFormat = new SimpleDateFormat(ORecordSerializerJSON.DEF_DATE_FORMAT);
-    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-  }
+  private static final String DEF_FORMAT     = "rid,type,version,class,attribSameRow,indent:2,dateAsLong";
+  private Writer              out;
+  private boolean             prettyPrint    = false;
+  private boolean             firstAttribute = true;
+  private final String        format;
 
   public OJSONWriter(final Writer out) {
     this(out, DEF_FORMAT);
@@ -57,7 +50,7 @@ public class OJSONWriter {
 
   public OJSONWriter(final Writer out, final String iJsonFormat) {
     this.out = out;
-    format = iJsonFormat;
+    this.format = iJsonFormat;
   }
 
   public OJSONWriter beginObject() throws IOException {
@@ -134,7 +127,7 @@ public class OJSONWriter {
     format(iIdentLevel, iNewLine);
 
     if (iName != null && !iName.isEmpty()) {
-      out.append(writeValue(iName));
+      out.append(writeValue(iName, format));
       out.append(":");
     }
     out.append("[");
@@ -187,7 +180,13 @@ public class OJSONWriter {
 
     out.append(writeValue(iName, iFormat));
     out.append(":");
-    out.append(writeValue(iValue, iFormat));
+
+    if (iFormat.contains("graph") && (iValue == null || iValue instanceof OIdentifiable)
+        && (iName.startsWith("in_") || iName.startsWith("out_"))) {
+      // FORCE THE OUTPUT AS COLLECTION
+      out.append("[1]");
+    } else
+      out.append(writeValue(iValue, iFormat));
 
     firstAttribute = false;
     return this;
@@ -229,8 +228,12 @@ public class OJSONWriter {
         buffer.append('\"');
         linked.getIdentity().toString(buffer);
         buffer.append('\"');
-      } else
-        buffer.append(linked.getRecord().toJSON(iFormat));
+      } else {
+        if (iFormat != null && iFormat.contains("shallow"))
+          buffer.append("{}");
+        else
+          buffer.append(linked.getRecord().toJSON(iFormat));
+      }
 
     } else if (iValue.getClass().isArray()) {
 
@@ -238,16 +241,23 @@ public class OJSONWriter {
         buffer.append('\"');
         final byte[] source = (byte[]) iValue;
 
-        buffer.append(OBase64Utils.encodeBytes(source));
+        if (iFormat != null && iFormat.contains("shallow"))
+          buffer.append(source.length);
+        else
+          buffer.append(OBase64Utils.encodeBytes(source));
 
         buffer.append('\"');
       } else {
         buffer.append('[');
-        for (int i = 0; i < Array.getLength(iValue); ++i) {
-          if (i > 0)
-            buffer.append(",");
-          buffer.append(writeValue(Array.get(iValue, i), iFormat));
-        }
+        int size = Array.getLength(iValue);
+        if (iFormat != null && iFormat.contains("shallow"))
+          buffer.append(size);
+        else
+          for (int i = 0; i < size; ++i) {
+            if (i > 0)
+              buffer.append(",");
+            buffer.append(writeValue(Array.get(iValue, i), iFormat));
+          }
         buffer.append(']');
 
       }
@@ -267,13 +277,13 @@ public class OJSONWriter {
     }
 
     else if (iValue instanceof Date) {
-      buffer.append('"');
-      final String d;
-      synchronized (dateFormat) {
-        d = dateFormat.format(iValue);
+      if (iFormat.indexOf("dateAsLong") > -1)
+        buffer.append(((Date) iValue).getTime());
+      else {
+        buffer.append('"');
+        buffer.append(ODateHelper.getDateTimeFormatInstance().format(iValue));
+        buffer.append('"');
       }
-      buffer.append(d);
-      buffer.append('"');
     } else if (iValue instanceof String) {
       final String v = (String) iValue;
       buffer.append('"');
@@ -296,12 +306,24 @@ public class OJSONWriter {
     return buffer.toString();
   }
 
-  protected static void iteratorToJSON(Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
+  protected static void iteratorToJSON(final Iterator<?> it, final String iFormat, final StringBuilder buffer) throws IOException {
     buffer.append('[');
-    for (int i = 0; it.hasNext(); ++i) {
-      if (i > 0)
-        buffer.append(",");
-      buffer.append(writeValue(it.next(), iFormat));
+    if (iFormat != null && iFormat.contains("shallow")) {
+      if (it instanceof OMultiCollectionIterator<?>)
+        buffer.append(((OMultiCollectionIterator<?>) it).size());
+      else {
+        // COUNT THE MULTI VALUE
+        int i;
+        for (i = 0; it.hasNext(); ++i)
+          it.next();
+        buffer.append(i);
+      }
+    } else {
+      for (int i = 0; it.hasNext(); ++i) {
+        if (i > 0)
+          buffer.append(",");
+        buffer.append(writeValue(it.next(), iFormat));
+      }
     }
     buffer.append(']');
   }
@@ -358,20 +380,24 @@ public class OJSONWriter {
       // WRITE RECORDS
       json.beginCollection(0, false, null);
       if (iRecords != null) {
-        int counter = 0;
-        String objectJson;
-        for (OIdentifiable rec : iRecords) {
-          if (rec != null)
-            try {
-              objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
+        if (iFormat != null && iFormat.contains("shallow")) {
+          buffer.append("" + iRecords.size());
+        } else {
+          int counter = 0;
+          String objectJson;
+          for (OIdentifiable rec : iRecords) {
+            if (rec != null)
+              try {
+                objectJson = iFormat != null ? rec.getRecord().toJSON(iFormat) : rec.getRecord().toJSON();
 
-              if (counter++ > 0)
-                buffer.append(",");
+                if (counter++ > 0)
+                  buffer.append(",");
 
-              buffer.append(objectJson);
-            } catch (Exception e) {
-              OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-            }
+                buffer.append(objectJson);
+              } catch (Exception e) {
+                OLogManager.instance().error(json, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+              }
+          }
         }
       }
       json.endCollection(0, false);

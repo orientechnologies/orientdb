@@ -251,6 +251,20 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
     final StringBuilder buffer = new StringBuilder();
 
     Map<String, Object> hookValuesSnapshots = null;
+
+    if (iQuery.equalsIgnoreCase("reset")) {
+      if (iPar1 == null) {
+        stopRecording();
+        startRecording();
+        return "Profiler restarted";
+      } else {
+        if (iPar1.equals("realtime")) {
+          realTime.clear(iPar2);
+          return "Profiler realtime reset";
+        }
+      }
+    }
+
     if (iQuery.equals("realtime"))
       // GET LATETS HOOK VALUES
       hookValuesSnapshots = archiveHooks();
@@ -576,13 +590,16 @@ public class OProfiler extends OSharedResourceAbstract implements OProfilerMBean
 
   public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
       final OProfilerHookValue iHookValue, final String iMetadataName) {
-    unregisterHookValue(iName);
-    updateMetadata(iMetadataName, iDescription, iType);
-    hooks.put(iName, iHookValue);
+    if (iName != null) {
+      unregisterHookValue(iName);
+      updateMetadata(iMetadataName, iDescription, iType);
+      hooks.put(iName, iHookValue);
+    }
   }
 
   public void unregisterHookValue(final String iName) {
-    hooks.remove(iName);
+    if (iName != null)
+      hooks.remove(iName);
   }
 
   public void setAutoDump(final int iSeconds) {

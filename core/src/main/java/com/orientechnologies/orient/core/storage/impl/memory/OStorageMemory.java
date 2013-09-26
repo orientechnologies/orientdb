@@ -16,14 +16,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -42,14 +35,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -86,12 +72,13 @@ public class OStorageMemory extends OStorageEmbedded {
     try {
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
+      addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
 
-      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, null, true);
+      // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
@@ -215,12 +202,14 @@ public class OStorageMemory extends OStorageEmbedded {
     throw new UnsupportedOperationException();
   }
 
-  public boolean dropCluster(final int iClusterId) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
       final OCluster c = clusters.get(iClusterId);
       if (c != null) {
+        if (iTruncate)
+          c.truncate();
         c.delete();
         clusters.set(iClusterId, null);
         getLevel2Cache().freeCluster(iClusterId);
@@ -409,18 +398,41 @@ public class OStorageMemory extends OStorageEmbedded {
         }
 
         if (!iVersion.isUntracked()) {
-          if (iVersion.getCounter() > -1) {
-            // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-            if (!iVersion.equals(ppos.recordVersion))
-              if (OFastConcurrentModificationException.enabled())
-                throw OFastConcurrentModificationException.instance();
-              else
-                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
-
+          // VERSION CONTROL CHECK
+          switch (iVersion.getCounter()) {
+          // DOCUMENT UPDATE, NO VERSION CONTROL
+          case -1:
             ppos.recordVersion.increment();
-          } else
-            ppos.recordVersion.decrement();
+            cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            break;
+
+          // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+          case -2:
+            break;
+
+          default:
+            // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+            if (iVersion.getCounter() > -1) {
+              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+              if (!iVersion.equals(ppos.recordVersion))
+                if (OFastConcurrentModificationException.enabled())
+                  throw OFastConcurrentModificationException.instance();
+                else
+                  throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
+              ppos.recordVersion.increment();
+              cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            } else {
+              // DOCUMENT ROLLBACKED
+              iVersion.clearRollbackMode();
+              ppos.recordVersion.copyFrom(iVersion);
+              cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+            }
+          }
         }
+
+        if (ppos.recordType != iRecordType)
+          cluster.updateRecordType(iRid.clusterPosition, iRecordType);
 
         final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
         dataSegment.updateRecord(ppos.dataSegmentPos, iContent);
@@ -725,7 +737,7 @@ public class OStorageMemory extends OStorageEmbedded {
       }
 
       // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-      OTransactionAbstract.updateCacheFromEntries(this, iTx, iTx.getAllRecordEntries(), true);
+      OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
     } catch (IOException e) {
       rollback(iTx);
 
@@ -841,27 +853,7 @@ public class OStorageMemory extends OStorageEmbedded {
     return size;
   }
 
-  @Override
-  public void changeRecordIdentity(ORID originalId, ORID newId) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireExclusiveLock();
-    try {
-      moveRecord(originalId, newId);
-    } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on changing method identity from " + originalId + " to " + newId, ioe);
-    } finally {
-      lock.releaseExclusiveLock();
-
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + name + ".changeRecordIdentity", "Change the identity of a record in memory database", timer,
-              "db.*.changeRecordIdentity");
-    }
-  }
-
-  @Override
+	@Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     if (ppos.dataSegmentId > 0)
       return false;
@@ -895,14 +887,26 @@ public class OStorageMemory extends OStorageEmbedded {
     case ORecordOperation.CREATED:
       if (rid.isNew()) {
         // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-        byte[] stream = txEntry.getRecord().toStream();
+        final byte[] stream = txEntry.getRecord().toStream();
+
+        if (stream == null) {
+          OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
+          break;
+        }
 
         if (rid.isNew()) {
+          final ORecordId oldRID = rid.copy();
+
           txEntry.getRecord().onBeforeIdentityChanged(rid);
           final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream,
               OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult();
+
           txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
+
+          iTx.updateIdentityAfterCommit(oldRID, rid);
+
           txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
+
         } else {
           txEntry
               .getRecord()
@@ -915,7 +919,12 @@ public class OStorageMemory extends OStorageEmbedded {
       break;
 
     case ORecordOperation.UPDATED:
-      byte[] stream = txEntry.getRecord().toStream();
+      final byte[] stream = txEntry.getRecord().toStream();
+
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
+        break;
+      }
 
       txEntry
           .getRecord()

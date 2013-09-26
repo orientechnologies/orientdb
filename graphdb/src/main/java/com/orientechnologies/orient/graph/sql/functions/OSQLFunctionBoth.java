@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
- * Hi-level function that return the both the incoming and outgoing connections. If the current element is a vertex, then will be
- * returned edges otherwise vertices.
+ * Gets the incoming and outgoing Vertices of current Vertex.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -33,12 +32,8 @@ public class OSQLFunctionBoth extends OSQLFunctionMove {
     super(NAME, 0, 1);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
-      final OCommandContext iContext) {
-    return executeSub(iCurrentRecord, iCurrentResult, iParameters, iContext, Direction.BOTH);
-  }
-
-  public String getSyntax() {
-    return "Syntax error: both([<labels>])";
+  @Override
+  protected Object move(final OrientBaseGraph graph, final OIdentifiable iRecord, final String[] iLabels) {
+    return v2v(graph, iRecord, Direction.BOTH, iLabels);
   }
 }

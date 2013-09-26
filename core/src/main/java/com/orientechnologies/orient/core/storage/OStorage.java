@@ -155,7 +155,7 @@ public interface OStorage extends OSharedContainer {
   public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       boolean forceListBased, Object... iParameters);
 
-  public boolean dropCluster(String iClusterName);
+  public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
   /**
    * Drops a cluster.
@@ -163,7 +163,7 @@ public interface OStorage extends OSharedContainer {
    * @param iId
    * @return true if has been removed, otherwise false
    */
-  public boolean dropCluster(int iId);
+  public boolean dropCluster(int iId, final boolean iTruncate);
 
   /**
    * Add a new data segment in the default segment directory and with filename equals to the cluster name.
@@ -255,21 +255,7 @@ public interface OStorage extends OSharedContainer {
    */
   public STATUS getStatus();
 
-  /**
-   * Changes record identity from one to another.
-   * <p/>
-   * Second level cache is changed accordingly, but not first level one.
-   * <p/>
-   * Important ! This method for internal use only. Do not call it if you not sure, otherwise your data consistency will be broken.
-   * 
-   * @param originalId
-   *          Id of record which identity should be changed.
-   * @param newId
-   *          New record identity.
-   */
-  public void changeRecordIdentity(final ORID originalId, final ORID newId);
-
-  /**
+	/**
    * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
    */
   public boolean isHashClustersAreUsed();

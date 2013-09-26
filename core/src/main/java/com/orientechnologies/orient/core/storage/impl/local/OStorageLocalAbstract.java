@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public abstract class OStorageLocalAbstract extends OStorageEmbedded {
+public abstract class OStorageLocalAbstract extends OStorageEmbedded implements OFreezableStorage {
   public OStorageLocalAbstract(String name, String filePath, String mode) {
     super(name, filePath, mode);
   }
@@ -45,13 +45,9 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded {
   protected abstract OPhysicalPosition createRecord(ODataLocal dataSegment, OCluster cluster, byte[] recordContent,
       byte recordType, ORecordId rid, ORecordVersion recordVersion);
 
-  public abstract void freeze(boolean b);
-
-  public abstract void release();
-
   public abstract ODiskCache getDiskCache();
 
-  public abstract boolean isClusterSoftlyClosed(String clusterIndexName);
+  public abstract boolean wasClusterSoftlyClosed(String clusterIndexName);
 
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 }

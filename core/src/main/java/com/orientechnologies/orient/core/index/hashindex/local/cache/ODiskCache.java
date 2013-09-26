@@ -1,16 +1,17 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 
 /**
  * @author Andrey Lomakin
  * @since 14.03.13
  */
 public interface ODiskCache {
-  long openFile(OStorageSegmentConfiguration fileConfiguration, String fileExtension) throws IOException;
+  long openFile(String fileName) throws IOException;
 
   void markDirty(long fileId, long pageIndex);
 
@@ -23,6 +24,8 @@ public interface ODiskCache {
   void flushFile(long fileId) throws IOException;
 
   void closeFile(long fileId) throws IOException;
+
+  void closeFile(long fileId, boolean flush) throws IOException;
 
   void deleteFile(long fileId) throws IOException;
 
@@ -41,4 +44,11 @@ public interface ODiskCache {
   void close() throws IOException;
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
+
+  Set<ODirtyPage> logDirtyPagesTable() throws IOException;
+
+  void forceSyncStoredChanges() throws IOException;
+
+  boolean isOpen(long fileId);
+
 }

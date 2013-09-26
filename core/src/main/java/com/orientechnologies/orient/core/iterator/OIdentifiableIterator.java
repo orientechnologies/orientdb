@@ -98,7 +98,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   }
 
   protected ORecordInternal<?> getTransactionEntry() {
-    final boolean noPhysicalRecordToBrowse;
+    boolean noPhysicalRecordToBrowse;
 
     if (current.clusterPosition.isTemporary())
       noPhysicalRecordToBrowse = true;
@@ -106,6 +106,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       noPhysicalRecordToBrowse = lastClusterEntry.compareTo(currentEntry) <= 0;
     else
       noPhysicalRecordToBrowse = currentEntry.compareTo(firstClusterEntry) <= 0;
+
+    if (!noPhysicalRecordToBrowse && positionsToProcess.length == 0)
+      noPhysicalRecordToBrowse = true;
 
     if (noPhysicalRecordToBrowse && txEntries != null) {
       // IN TX
@@ -278,6 +281,10 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
         } else
           iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
       } catch (ODatabaseException e) {
+        if (Thread.interrupted())
+          // THREAD INTERRUPTED: RETURN
+          throw e;
+
         OLogManager.instance().error(this, "Error on fetching record during browsing. The record has been skipped", e);
       }
 

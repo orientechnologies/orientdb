@@ -6,13 +6,6 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
@@ -20,6 +13,13 @@ import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -48,8 +48,8 @@ public class LocalHashTableIterationTest {
 
     databaseDocumentTx.create();
 
-    buffer = new O2QCache(400 * 1024 * 1024, ODirectMemoryFactory.INSTANCE.directMemory(), OHashIndexBucket.MAX_BUCKET_SIZE_BYTES,
-        (OStorageLocal) databaseDocumentTx.getStorage(), false);
+    buffer = new O2QCache(400 * 1024 * 1024, 15000, ODirectMemoryFactory.INSTANCE.directMemory(), null,
+        OHashIndexBucket.MAX_BUCKET_SIZE_BYTES, (OStorageLocal) databaseDocumentTx.getStorage(), false);
 
     OHashFunction<Integer> hashFunction = new OHashFunction<Integer>() {
       @Override
@@ -58,8 +58,7 @@ public class LocalHashTableIterationTest {
       }
     };
 
-    localHashTable = new OLocalHashTable<Integer, String>(OAbstractLocalHashIndex.METADATA_CONFIGURATION_FILE_EXTENSION,
-        OAbstractLocalHashIndex.TREE_STATE_FILE_EXTENSION, OAbstractLocalHashIndex.BUCKET_FILE_EXTENSION, hashFunction);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", hashFunction);
 
     localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE,
         (OStorageLocal) databaseDocumentTx.getStorage());
@@ -146,6 +145,7 @@ public class LocalHashTableIterationTest {
     }
   }
 
+  @Test(enabled = false)
   public void testNextHaveRightOrderUsingNextMethod() throws Exception {
     List<Integer> keys = new ArrayList<Integer>();
     keys.clear();

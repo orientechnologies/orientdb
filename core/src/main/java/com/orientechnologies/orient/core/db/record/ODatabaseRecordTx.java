@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -268,7 +269,10 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord) {
-    throw new UnsupportedOperationException("delete(ORID)");
+    final ORecord<?> rec = iRecord.getRecord();
+    if (rec != null)
+      rec.delete();
+    return this;
   }
 
   @Override

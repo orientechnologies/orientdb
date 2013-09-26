@@ -23,12 +23,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -88,12 +83,7 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
         return null;
 
       final Object indexResult = index.get(key);
-      if (indexResult instanceof Collection)
-        result = (Collection<OIdentifiable>) indexResult;
-      else if (indexResult == null)
-        result = Collections.emptyList();
-      else
-        result = Collections.singletonList((OIdentifiable) indexResult);
+      result = convertIndexResult(indexResult);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -109,15 +99,34 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null)
         return null;
 
-      final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
+      if (internalIndex.hasRangeQuerySupport()) {
+        final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (fetchLimit > -1)
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-      else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true);
+        if (fetchLimit > -1)
+          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
+        else
+          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+      } else {
+        if (indexDefinition.getParamCount() == keyParams.size()) {
+          final Object indexResult = index.get(keyOne);
+          result = convertIndexResult(indexResult);
+        } else
+          return null;
+      }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
+    return result;
+  }
+
+  private Object convertIndexResult(Object indexResult) {
+    Object result;
+    if (indexResult instanceof Collection)
+      result = indexResult;
+    else if (indexResult == null)
+      result = Collections.emptyList();
+    else
+      result = Collections.singletonList((OIdentifiable) indexResult);
     return result;
   }
 

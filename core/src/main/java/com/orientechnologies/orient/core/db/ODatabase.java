@@ -54,7 +54,7 @@ public interface ODatabase extends Closeable {
   }
 
   public static enum ATTRIBUTES {
-    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET
+    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM
   }
 
   /**
@@ -368,7 +368,7 @@ public interface ODatabase extends Closeable {
    * @param iClusterName
    * @return
    */
-  public boolean dropCluster(String iClusterName);
+  public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
   /**
    * Drops a cluster by its id. Physical clusters will be completely deleted.
@@ -376,7 +376,7 @@ public interface ODatabase extends Closeable {
    * @param iClusterId
    * @return true if has been removed, otherwise false
    */
-  public boolean dropCluster(int iClusterId);
+  public boolean dropCluster(int iClusterId, final boolean iTruncate);
 
   /**
    * Adds a data segment where to store record content. Data segments contain the content of records. Cluster segments contain the

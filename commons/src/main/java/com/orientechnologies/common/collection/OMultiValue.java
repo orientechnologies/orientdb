@@ -19,7 +19,9 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +29,8 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OSizeable;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -44,7 +48,8 @@ public class OMultiValue {
    * @return true if it's an array, a collection or a map, otherwise false
    */
   public static boolean isMultiValue(final Class<?> iType) {
-    return (iType.isArray() || Collection.class.isAssignableFrom(iType) || Map.class.isAssignableFrom(iType));
+    return (iType.isArray() || Collection.class.isAssignableFrom(iType) || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class
+        .isAssignableFrom(iType));
   }
 
   /**
@@ -73,11 +78,12 @@ public class OMultiValue {
     if (iObject == null)
       return 0;
 
+    if (iObject instanceof OSizeable)
+      return ((OSizeable) iObject).size();
+
     if (!isMultiValue(iObject))
       return 0;
 
-    if (iObject instanceof OMultiCollectionIterator<?>)
-      return ((OMultiCollectionIterator<?>) iObject).size();
     if (iObject instanceof Collection<?>)
       return ((Collection<Object>) iObject).size();
     if (iObject instanceof Map<?, ?>)
@@ -386,11 +392,170 @@ public class OMultiValue {
     return iObject;
   }
 
+  /**
+   * Utility function that remove a value from the main object. It takes care about collections/array and single values.
+   * 
+   * @param iObject
+   *          MultiValue where to add value(s)
+   * @param iToRemove
+   *          Single value, array of values or collections of values. Map are not supported.
+   * @param iAllOccurrences
+   *          True if the all occurrences must be removed or false of only the first one (Like java.util.Collection.remove())
+   * @return
+   */
+  public static Object remove(Object iObject, Object iToRemove, final boolean iAllOccurrences) {
+    if (iObject != null) {
+      if (iObject instanceof OMultiCollectionIterator<?>) {
+        final Collection<Object> list = new LinkedList<Object>();
+        for (Object o : ((OMultiCollectionIterator<?>) iObject))
+          list.add(o);
+        iObject = list;
+      }
+
+      if (iToRemove instanceof OMultiCollectionIterator<?>) {
+        // TRANSFORM IN SET ONCE TO OPTIMIZE LOOPS DURING REMOVE
+        final Set<Object> set = new HashSet<Object>();
+        for (Object o : ((OMultiCollectionIterator<?>) iToRemove))
+          set.add(o);
+        iToRemove = set;
+      }
+
+      if (iObject instanceof Collection<?>) {
+        // COLLECTION - ?
+        final Collection<Object> coll = (Collection<Object>) iObject;
+
+        if (iToRemove instanceof Collection<?>) {
+          // COLLECTION - COLLECTION
+          for (Object o : (Collection<Object>) iToRemove) {
+            if (isMultiValue(o))
+              remove(coll, o, iAllOccurrences);
+            else
+              coll.remove(o);
+          }
+        }
+
+        else if (iToRemove != null && iToRemove.getClass().isArray()) {
+          // ARRAY - COLLECTION
+          for (int i = 0; i < Array.getLength(iToRemove); ++i) {
+            Object o = Array.get(iToRemove, i);
+            if (isMultiValue(o))
+              remove(coll, o, iAllOccurrences);
+            else
+              coll.remove(o);
+          }
+
+        } else if (iToRemove instanceof Map<?, ?>) {
+          // MAP
+          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToRemove).entrySet())
+            coll.remove(entry.getKey());
+        } else if (iToRemove instanceof Iterator<?>) {
+          // ITERATOR
+          if (iToRemove instanceof OMultiCollectionIterator<?>)
+            ((OMultiCollectionIterator<?>) iToRemove).reset();
+
+          if (iAllOccurrences) {
+            OMultiCollectionIterator<?> it = (OMultiCollectionIterator<?>) iToRemove;
+            batchRemove(coll, it);
+          } else {
+            for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
+              final Object itemToRemove = it.next();
+              while (coll.remove(itemToRemove))
+                if (!iAllOccurrences)
+                  // REMOVE ONLY THE FIRST ITEM
+                  break;
+              // REMOVE ALL THE ITEM
+            }
+          }
+        } else
+          coll.remove(iToRemove);
+
+      } else if (iObject.getClass().isArray()) {
+        // ARRAY - ?
+
+        final Object[] copy;
+        if (iToRemove instanceof Collection<?>) {
+          // ARRAY - COLLECTION
+          final int sourceTot = Array.getLength(iObject);
+          final int tot = sourceTot - ((Collection<Object>) iToRemove).size();
+          copy = new Object[tot];
+
+          int k = 0;
+          for (int i = 0; i < sourceTot; ++i) {
+            Object o = Array.get(iObject, i);
+            if (o != null) {
+              boolean found = false;
+              for (Object toRemove : (Collection<Object>) iToRemove) {
+                if (o.equals(toRemove)) {
+                  // SKIP
+                  found = true;
+                  break;
+                }
+              }
+
+              if (!found)
+                copy[k++] = o;
+            }
+          }
+
+        } else if (iToRemove != null && iToRemove.getClass().isArray()) {
+          throw new UnsupportedOperationException("Cannot execute remove() against an array");
+
+        } else {
+          throw new UnsupportedOperationException("Cannot execute remove() against an array");
+        }
+        return copy;
+
+      } else
+        throw new IllegalArgumentException("Object " + iObject + " is not a multi value");
+    }
+
+    return iObject;
+  }
+
+  private static void batchRemove(Collection<Object> coll, Iterator<?> it) {
+    int approximateRemainingSize;
+    if (it instanceof OSizeable) {
+      approximateRemainingSize = ((OSizeable) it).size();
+    } else {
+      approximateRemainingSize = -1;
+    }
+
+    while (it.hasNext()) {
+      Set batch = prepareBatch(it, approximateRemainingSize);
+      coll.removeAll(batch);
+      approximateRemainingSize -= batch.size();
+    }
+  }
+
+  private static Set prepareBatch(Iterator<?> it, int approximateRemainingSize) {
+    final HashSet batch;
+    if (approximateRemainingSize > -1) {
+      if (approximateRemainingSize > 10000)
+        batch = new HashSet(13400);
+      else
+        batch = new HashSet((int) (approximateRemainingSize / 0.75));
+    } else {
+      batch = new HashSet();
+    }
+
+    int count = 0;
+    while (count < 10000 && it.hasNext()) {
+      batch.add(it.next());
+      count++;
+    }
+
+    return batch;
+  }
+
   public static Object[] array(final Object iValue) {
     return array(iValue, Object.class);
   }
 
   public static <T> T[] array(final Object iValue, final Class<? extends T> iClass) {
+    return array(iValue, iClass, null);
+  }
+
+  public static <T> T[] array(final Object iValue, final Class<? extends T> iClass, final OCallable<Object, Object> iCallback) {
     if (iValue == null)
       return null;
 
@@ -401,12 +566,12 @@ public class OMultiValue {
       result = (T[]) Array.newInstance(iClass, getSize(iValue));
       int i = 0;
       for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext(); ++i)
-        result[i] = it.next();
+        result[i] = (T) convert(it.next(), iCallback);
     } else if (isIterable(iValue)) {
       // SIZE UNKNOWN: USE A LIST AS TEMPORARY OBJECT
       final List<T> temp = new ArrayList<T>();
       for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext();)
-        temp.add(it.next());
+        temp.add((T) convert(it.next(), iCallback));
 
       if (iClass.equals(Object.class))
         result = (T[]) temp.toArray();
@@ -416,9 +581,13 @@ public class OMultiValue {
 
     } else {
       result = (T[]) Array.newInstance(iClass, 1);
-      result[0] = (T) iValue;
+      result[0] = (T) (T) convert(iValue, iCallback);
     }
 
     return result;
+  }
+
+  public static Object convert(final Object iObject, final OCallable<Object, Object> iCallback) {
+    return iCallback != null ? iCallback.call(iObject) : iObject;
   }
 }

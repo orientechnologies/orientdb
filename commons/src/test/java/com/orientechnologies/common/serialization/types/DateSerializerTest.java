@@ -23,10 +23,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
+@Test
 public class DateSerializerTest {
   private final static int FIELD_SIZE = 8;
   private final Date       OBJECT     = new Date();
@@ -38,12 +42,10 @@ public class DateSerializerTest {
     dateSerializer = new ODateSerializer();
   }
 
-  @Test
   public void testFieldSize() {
     Assert.assertEquals(dateSerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
-  @Test()
   public void testSerialize() {
     dateSerializer.serialize(OBJECT, stream, 0);
     Calendar calendar = Calendar.getInstance();
@@ -53,5 +55,35 @@ public class DateSerializerTest {
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
     Assert.assertEquals(dateSerializer.deserialize(stream, 0), calendar.getTime());
+  }
+
+  public void testSerializeNative() {
+    dateSerializer.serializeNative(OBJECT, stream, 0);
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(OBJECT);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    Assert.assertEquals(dateSerializer.deserializeNative(stream, 0), calendar.getTime());
+  }
+
+  public void testNativeDirectMemoryCompatibility() {
+    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+
+    dateSerializer.serializeNative(OBJECT, stream, 0);
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(OBJECT);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+
+    long pointer = directMemory.allocate(stream);
+    try {
+      Assert.assertEquals(dateSerializer.deserializeFromDirectMemory(directMemory, pointer), calendar.getTime());
+    } finally {
+      directMemory.free(pointer);
+    }
   }
 }

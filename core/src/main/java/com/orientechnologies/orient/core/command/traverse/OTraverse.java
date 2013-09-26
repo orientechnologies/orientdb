@@ -34,10 +34,15 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   private OTraverseContext                  context     = new OTraverseContext();
   private OCommandPredicate                 predicate;
   private Iterator<? extends OIdentifiable> target;
-  private List<String>                      fields      = new ArrayList<String>();
+  private List<Object>                      fields      = new ArrayList<Object>();
   private long                              resultCount = 0;
   private long                              limit       = 0;
   private OIdentifiable                     lastTraversed;
+  private STRATEGY                          strategy    = STRATEGY.DEPTH_FIRST;
+
+  public enum STRATEGY {
+    DEPTH_FIRST, BREADTH_FIRST
+  };
 
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
@@ -146,14 +151,14 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return predicate;
   }
 
-  public OTraverse field(final String iFieldName) {
-    if (!fields.contains(iFieldName))
-      fields.add(iFieldName);
+  public OTraverse field(final Object iField) {
+    if (!fields.contains(iField))
+      fields.add(iField);
     return this;
   }
 
-  public OTraverse fields(final Collection<String> iFields) {
-    for (String f : iFields)
+  public OTraverse fields(final Collection<Object> iFields) {
+    for (Object f : iFields)
       field(f);
     return this;
   }
@@ -164,7 +169,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return this;
   }
 
-  public List<String> getFields() {
+  public List<Object> getFields() {
     return fields;
   }
 
@@ -190,5 +195,13 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public OIdentifiable getLastTraversed() {
     return lastTraversed;
+  }
+
+  public STRATEGY getStrategy() {
+    return strategy;
+  }
+
+  public void setStrategy(STRATEGY strategy) {
+    this.strategy = strategy;
   }
 }

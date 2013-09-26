@@ -38,12 +38,12 @@ import com.orientechnologies.common.log.OLogManager;
  * @copyrights Orient Technologies.com
  */
 public class OProfilerData {
-  private long                        recordingFrom = 0;
-  private long                        recordingTo   = Long.MAX_VALUE;
-  private Map<String, Long>           counters;
-  private Map<String, OProfilerEntry> chronos;
-  private Map<String, OProfilerEntry> stats;
-  private Map<String, Object>         hooks;
+  private long                              recordingFrom = 0;
+  private long                              recordingTo   = Long.MAX_VALUE;
+  private final Map<String, Long>           counters;
+  private final Map<String, OProfilerEntry> chronos;
+  private final Map<String, OProfilerEntry> stats;
+  private final Map<String, Object>         hooks;
 
   public class OProfilerEntry {
     public String name    = null;
@@ -89,6 +89,50 @@ public class OProfilerData {
     chronos.clear();
     stats.clear();
     hooks.clear();
+  }
+
+  public void clear(final String iFilter) {
+    List<String> names = new ArrayList<String>(hooks.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
+      hooks.remove(k);
+    }
+
+    // CHRONOS
+    names = new ArrayList<String>(chronos.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
+      chronos.remove(k);
+    }
+
+    // STATISTICS
+    names = new ArrayList<String>(stats.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+      stats.remove(k);
+    }
+
+    // COUNTERS
+    names = new ArrayList<String>(counters.keySet());
+    Collections.sort(names);
+    for (String k : names) {
+      if (iFilter != null && !k.startsWith(iFilter))
+        // APPLIED FILTER: DOESN'T MATCH
+        continue;
+
+      counters.remove(k);
+    }
   }
 
   public long endRecording() {

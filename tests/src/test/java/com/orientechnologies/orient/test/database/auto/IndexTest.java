@@ -1015,9 +1015,6 @@ public class IndexTest {
 
   @Test(dependsOnMethods = "linkedIndexedProperty")
   public void testLinkedIndexedPropertyInTx() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -1063,9 +1060,6 @@ public class IndexTest {
   }
 
   public void testConcurrentRemoveDelete() {
-    if (database.getURL().startsWith("plocal:"))
-      return;
-
     ODatabaseDocument db = new ODatabaseDocumentTx(database.getURL());
     db.open("admin", "admin");
 
@@ -1357,7 +1351,7 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTx() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("remote:"))
       return;
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
@@ -1397,7 +1391,7 @@ public class IndexTest {
 
   @Test
   public void testManualIndexInTxRecursiveStore() {
-    if (database.getURL().startsWith("plocal:"))
+    if (database.getURL().startsWith("remote:"))
       return;
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
@@ -1544,6 +1538,12 @@ public class IndexTest {
     database.delete(database.detachAll(loadedProfile, true));
 
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
+  }
+
+  @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
+  public void testRestoreUniqueIndex() {
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

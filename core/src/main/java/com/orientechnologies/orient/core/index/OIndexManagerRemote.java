@@ -16,11 +16,12 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,13 +34,12 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     super(iDatabase);
   }
 
-  @Override
-  protected OIndex<?> getIndexInstance(final OIndex<?> iIndex) {
-    if (iIndex instanceof OIndexMultiValues)
-      return new OIndexRemoteMultiValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
-          getConfiguration(), iIndex.getClusters());
-    return new OIndexRemoteOneValue(iIndex.getName(), iIndex.getType(), iIndex.getIdentity(), iIndex.getDefinition(),
-        getConfiguration(), iIndex.getClusters());
+  protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
+      OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
+    if (isMultiValueIndex)
+      return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
+
+    return new OIndexRemoteOneValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
@@ -92,20 +92,22 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   @Override
   protected void fromStream() {
     acquireExclusiveLock();
-
     try {
+      clearMetadata();
 
       final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
-
-      indexes.clear();
-      classPropertyIndex.clear();
-
       if (idxs != null) {
-        OIndexInternal<?> index;
-        for (final ODocument d : idxs) {
-          index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
-          if (((OIndexInternal<?>) index).loadFromConfiguration(d))
-            addIndexInternal(index);
+        for (ODocument d : idxs) {
+          try {
+            OIndexInternal<?> newIndex = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+            OIndexInternal.IndexMetadata newIndexMetadata = newIndex.loadMetadata(d);
+
+            addIndexInternal(getRemoteIndexInstance(newIndex instanceof OIndexMultiValues, newIndexMetadata.getType(),
+                newIndexMetadata.getName(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
+                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
+          }
         }
       }
     } finally {
@@ -113,32 +115,22 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  /**
-   * Binds POJO to ODocument.
-   */
   @Override
   public ODocument toStream() {
-    acquireExclusiveLock();
+    throw new UnsupportedOperationException("Remote index cannot be streamed");
+  }
 
-    try {
-      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+  @Override
+  public void recreateIndexes() {
+    throw new UnsupportedOperationException("recreateIndexes()");
+  }
 
-      try {
-        final ORecordTrackedSet idxs = new ORecordTrackedSet(document);
+  @Override
+  public void waitTillIndexRestore() {
+  }
 
-        for (final OIndexInternal<?> i : indexes.values()) {
-          idxs.add(i.updateConfiguration());
-        }
-        document.field(CONFIG_INDEXES, idxs, OType.EMBEDDEDSET);
-
-      } finally {
-        document.setInternalStatus(ORecordElement.STATUS.LOADED);
-      }
-      document.setDirty();
-
-      return document;
-    } finally {
-      releaseExclusiveLock();
-    }
+  @Override
+  public boolean autoRecreateIndexesAfterCrash() {
+    return false;
   }
 }

@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 
 /**
  * Handles the database configuration in one big record.
@@ -78,18 +79,20 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   @Override
   public void update() throws OSerializationException {
     try {
-      if (!segment.getFile().isOpen())
+      final OFile f = segment.getFile();
+
+      if (!f.isOpen())
         return;
 
       final byte[] buffer = toStream();
 
       final int len = buffer.length + OBinaryProtocol.SIZE_INT;
 
-      if (len > segment.getFile().getFilledUpTo())
-        segment.getFile().allocateSpace(len - segment.getFile().getFilledUpTo());
+      if (len > f.getFilledUpTo())
+        f.allocateSpace(len - f.getFilledUpTo());
 
-      segment.getFile().writeInt(0, buffer.length);
-      segment.getFile().write(OBinaryProtocol.SIZE_INT, buffer);
+      f.writeInt(0, buffer.length);
+      f.write(OBinaryProtocol.SIZE_INT, buffer);
     } catch (Exception e) {
       throw new OSerializationException("Error on update storage configuration", e);
     }

@@ -19,21 +19,21 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 
 public abstract class OServerCommandPatternAbstract extends OServerCommandAbstract {
 
-	private String[]	pattern;
+  private String[] pattern;
 
-	public OServerCommandPatternAbstract(final OServerCommandConfiguration iConfig) {
-		if (iConfig.pattern == null)
-			throw new IllegalArgumentException("Command pattern missed");
+  public OServerCommandPatternAbstract(final OServerCommandConfiguration iConfig) {
+    if (iConfig.pattern == null)
+      throw new IllegalArgumentException("Command pattern missed");
 
-		pattern = iConfig.pattern.split(" ");
-	}
+    pattern = iConfig.pattern.split(" ");
+  }
 
-	public OServerCommandPatternAbstract(String[] pattern) {
-		this.pattern = pattern;
-	}
+  public OServerCommandPatternAbstract(String[] pattern) {
+    this.pattern = pattern;
+  }
 
-	@Override
-	public String[] getNames() {
-		return pattern;
-	}
+  @Override
+  public String[] getNames() {
+    return pattern;
+  }
 }

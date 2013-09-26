@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -159,8 +160,6 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void delete() throws IOException {
     acquireExclusiveLock();
     try {
-      truncate();
-
       localHashTable.delete();
       clusterStateHolder.delete();
     } finally {
@@ -169,7 +168,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
 
   }
 
-  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+  public void set(final ATTRIBUTES iAttribute, final Object iValue) throws IOException {
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 
@@ -272,6 +271,26 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public boolean useWal() {
+    return false;
+  }
+
+  @Override
+  public float recordGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public float recordOverflowGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public String compression() {
+    return ONothingCompression.NAME;
   }
 
   @Override
@@ -452,6 +471,18 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
       clusterStateHolder.setSoftlyClosed(softlyClosed);
     } finally {
       releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    acquireSharedLock();
+    try {
+      boolean wasSoftlyClosed = localHashTable.wasSoftlyClosed();
+      wasSoftlyClosed = wasSoftlyClosed && clusterStateHolder.wasSoftlyClosedAtPreviousTime();
+      return wasSoftlyClosed;
+    } finally {
+      releaseSharedLock();
     }
   }
 

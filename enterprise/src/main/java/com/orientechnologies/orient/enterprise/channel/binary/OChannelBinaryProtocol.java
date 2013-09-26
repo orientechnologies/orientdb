@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import java.io.IOException;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -57,7 +58,6 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_RECORD_UPDATE                  = 32;
   public static final byte  REQUEST_RECORD_DELETE                  = 33;
   public static final byte  REQUEST_RECORD_COPY                    = 34;
-  public static final byte  REQUEST_RECORD_CHANGE_IDENTITY         = 35; // since 1.2.0
   public static final byte  REQUEST_POSITIONS_HIGHER               = 36; // since 1.3.0
   public static final byte  REQUEST_POSITIONS_LOWER                = 37; // since 1.3.0
   public static final byte  REQUEST_RECORD_CLEAN_OUT               = 38; // since 1.3.0
@@ -88,8 +88,8 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DB_FREEZE                      = 94; // SINCE 1.1.0
   public static final byte  REQUEST_DB_RELEASE                     = 95; // SINCE 1.1.0
 
-  public static final byte REQUEST_DATACLUSTER_FREEZE = 96;
-  public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
+  public static final byte  REQUEST_DATACLUSTER_FREEZE             = 96;
+  public static final byte  REQUEST_DATACLUSTER_RELEASE            = 97;
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                     = 0;
@@ -99,7 +99,9 @@ public class OChannelBinaryProtocol {
   // CONSTANTS
   public static final short RECORD_NULL                            = -2;
   public static final short RECORD_RID                             = -3;
-  public static final int   CURRENT_PROTOCOL_VERSION               = 15; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+
+  // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
+  public static final int   CURRENT_PROTOCOL_VERSION               = 17; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryClient network) throws IOException {
     final int classId = network.readShort();

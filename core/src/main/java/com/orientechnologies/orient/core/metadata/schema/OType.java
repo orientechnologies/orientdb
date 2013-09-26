@@ -235,6 +235,15 @@ public enum OType {
     return iValue.toString();
   }
 
+  public boolean isMultiValue() {
+    return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
+        || this == LINKSET;
+  }
+
+  public boolean isLink() {
+    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP;
+  }
+
   public static boolean isSimpleType(final Object iObject) {
     if (iObject == null)
       return false;
@@ -507,12 +516,73 @@ public enum OType {
         + b.getClass() + ")");
   }
 
-  public boolean isMultiValue() {
-    return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
-        || this == LINKSET;
-  }
+  public static Number[] castComparableNumber(Number context, Number max) {
+    // CHECK FOR CONVERSION
+    if (context instanceof Integer) {
+      // SHORT
+      if (max instanceof Integer)
+        context = context.intValue();
+      else if (max instanceof Long)
+        context = context.longValue();
+      else if (max instanceof Float)
+        context = context.floatValue();
+      else if (max instanceof Double)
+        context = context.doubleValue();
+      else if (max instanceof BigDecimal)
+        context = new BigDecimal(context.intValue());
 
-  public boolean isLink() {
-    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP;
+    } else if (context instanceof Integer) {
+      // INTEGER
+      if (max instanceof Long)
+        context = context.longValue();
+      else if (max instanceof Float)
+        context = context.floatValue();
+      else if (max instanceof Double)
+        context = context.doubleValue();
+      else if (max instanceof BigDecimal)
+        context = new BigDecimal(context.intValue());
+      else if (max instanceof Short)
+        max = max.intValue();
+
+    } else if (context instanceof Long) {
+      // LONG
+      if (max instanceof Float)
+        context = context.floatValue();
+      else if (max instanceof Double)
+        context = context.doubleValue();
+      else if (max instanceof BigDecimal)
+        context = new BigDecimal(context.longValue());
+      else if (max instanceof Integer || max instanceof Short)
+        max = max.longValue();
+
+    } else if (context instanceof Float) {
+      // FLOAT
+      if (max instanceof Double)
+        context = context.doubleValue();
+      else if (max instanceof BigDecimal)
+        context = new BigDecimal(context.floatValue());
+      else if (max instanceof Short || max instanceof Integer || max instanceof Long)
+        max = max.floatValue();
+
+    } else if (context instanceof Double) {
+      // DOUBLE
+      if (max instanceof BigDecimal)
+        context = new BigDecimal(context.doubleValue());
+      else if (max instanceof Short || max instanceof Integer || max instanceof Long || max instanceof Float)
+        max = max.doubleValue();
+
+    } else if (context instanceof BigDecimal) {
+      // DOUBLE
+      if (max instanceof Integer)
+        max = new BigDecimal((Integer) max);
+      else if (max instanceof Float)
+        max = new BigDecimal((Float) max);
+      else if (max instanceof Double)
+        max = new BigDecimal((Double) max);
+      else if (max instanceof Short)
+        max = new BigDecimal((Short) max);
+    }
+
+    return new Number[] { context, max };
   }
 }

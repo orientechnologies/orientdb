@@ -21,10 +21,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -38,8 +36,6 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public class OIndexFullText extends OIndexMultiValues {
 
-  public static final String  TYPE_ID                = OClass.INDEX_TYPE.FULLTEXT.toString();
-
   private static final String CONFIG_STOP_WORDS      = "stopWords";
   private static final String CONFIG_SEPARATOR_CHARS = "separatorChars";
   private static final String CONFIG_IGNORE_CHARS    = "ignoreChars";
@@ -52,39 +48,9 @@ public class OIndexFullText extends OIndexMultiValues {
   private final String        ignoreChars            = DEF_IGNORE_CHARS;
   private final Set<String>   stopWords;
 
-  public OIndexFullText() {
-    super(TYPE_ID);
+  public OIndexFullText(String typeId, OIndexEngine<Set<OIdentifiable>> indexEngine) {
+    super(typeId, indexEngine);
     stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
-  }
-
-  /**
-   * Index an entire document field by field and save the index at the end.
-   * 
-   * @param iDocument
-   *          The document to index
-   */
-  public void indexDocument(final ODocument iDocument) {
-    modificationLock.requestModificationLock();
-
-    try {
-      Object fieldValue;
-
-      for (final String fieldName : iDocument.fieldNames()) {
-        fieldValue = iDocument.field(fieldName);
-        put(fieldValue, iDocument);
-      }
-
-      acquireExclusiveLock();
-      try {
-
-        map.save();
-
-      } finally {
-        releaseExclusiveLock();
-      }
-    } finally {
-      modificationLock.releaseModificationLock();
-    }
   }
 
   /**
@@ -92,14 +58,16 @@ public class OIndexFullText extends OIndexMultiValues {
    * the caller.
    */
   @Override
-  public OIndexFullText put(final Object iKey, final OIdentifiable iSingleValue) {
-    if (iKey == null)
+  public OIndexFullText put(final Object key, final OIdentifiable iSingleValue) {
+    checkForRebuild();
+
+    if (key == null)
       return this;
 
     modificationLock.requestModificationLock();
 
     try {
-      final List<String> words = splitIntoWords(iKey.toString());
+      final List<String> words = splitIntoWords(key.toString());
 
       // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
       for (final String word : words) {
@@ -109,7 +77,7 @@ public class OIndexFullText extends OIndexMultiValues {
           Set<OIdentifiable> refs;
 
           // SEARCH FOR THE WORD
-          refs = map.get(word);
+          refs = indexEngine.get(word);
 
           if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
@@ -121,7 +89,7 @@ public class OIndexFullText extends OIndexMultiValues {
           refs.add(iSingleValue);
 
           // SAVE THE INDEX ENTRY
-          map.put(word, refs);
+          indexEngine.put(word, refs);
 
         } finally {
           releaseExclusiveLock();
@@ -137,32 +105,33 @@ public class OIndexFullText extends OIndexMultiValues {
    * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
    * passed in value.
    * 
-   * @param iKey
+   * @param key
    *          Key to remove.
    * @param value
    *          Value to remove.
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
-  public boolean remove(final Object iKey, final OIdentifiable value) {
+  public boolean remove(final Object key, final OIdentifiable value) {
+    checkForRebuild();
 
     modificationLock.requestModificationLock();
 
     try {
-      final List<String> words = splitIntoWords(iKey.toString());
+      final List<String> words = splitIntoWords(key.toString());
       boolean removed = false;
 
       for (final String word : words) {
         acquireExclusiveLock();
         try {
 
-          final Set<OIdentifiable> recs = map.get(word);
+          final Set<OIdentifiable> recs = indexEngine.get(word);
           if (recs != null && !recs.isEmpty()) {
             if (recs.remove(value)) {
               if (recs.isEmpty())
-                map.remove(word);
+                indexEngine.remove(word);
               else
-                map.put(word, recs);
+                indexEngine.put(word, recs);
               removed = true;
             }
           }
@@ -178,24 +147,23 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   @Override
-  public OIndexInternal<?> create(String iName, OIndexDefinition iIndexDefinition, ODatabaseRecord iDatabase,
-      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener, OStreamSerializer iValueSerializer) {
+  public OIndexInternal<?> create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
+      Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener, OStreamSerializer valueSerializer) {
 
-    if (iIndexDefinition.getFields().size() > 1) {
-      throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+    if (indexDefinition.getFields().size() > 1) {
+      throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
 
-    return super.create(iName, iIndexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener,
-        iValueSerializer);
+    return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, valueSerializer);
   }
 
   @Override
-  public OIndexMultiValues create(String iName, OIndexDefinition indexDefinition, ODatabaseRecord iDatabase,
-      String iClusterIndexName, int[] iClusterIdsToIndex, OProgressListener iProgressListener) {
+  public OIndexMultiValues create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
+      Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
     if (indexDefinition.getFields().size() > 1) {
-      throw new OIndexException(TYPE_ID + " indexes cannot be used as composite ones.");
+      throw new OIndexException(type + " indexes cannot be used as composite ones.");
     }
-    return super.create(iName, indexDefinition, iDatabase, iClusterIndexName, iClusterIdsToIndex, iProgressListener);
+    return super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener);
   }
 
   @Override

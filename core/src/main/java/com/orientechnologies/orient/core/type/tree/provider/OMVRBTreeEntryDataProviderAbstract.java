@@ -62,7 +62,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     leftRid = new ORecordId();
     rightRid = new ORecordId();
 
-    record = new ORecordBytesLazy(this);
+    record = (ORecordBytesLazy) new ORecordBytesLazy(this).unpin();
     if (iRID != null) {
       record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
       if (treeDataProvider.storage == null)

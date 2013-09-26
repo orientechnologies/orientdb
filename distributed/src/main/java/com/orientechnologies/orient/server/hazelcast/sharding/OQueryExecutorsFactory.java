@@ -37,24 +37,24 @@ public class OQueryExecutorsFactory {
   public static final OQueryExecutorsFactory INSTANCE             = new OQueryExecutorsFactory();
 
   private static final Set<Class>            ALWAYS_DISTRIBUTABLE = new HashSet<Class>(Arrays.<Class> asList(
-          OCommandExecutorSQLCreateClass.class,// int
-          OCommandExecutorSQLAlterClass.class,// null
-          OCommandExecutorSQLTruncateClass.class,// long
-          OCommandExecutorSQLDropClass.class,// boolean
+                                                                      OCommandExecutorSQLCreateClass.class,// int
+                                                                      OCommandExecutorSQLAlterClass.class,// null
+                                                                      OCommandExecutorSQLTruncateClass.class,// long
+                                                                      OCommandExecutorSQLDropClass.class,// boolean
 
-          OCommandExecutorSQLCreateCluster.class,// int
-          OCommandExecutorSQLAlterCluster.class,// null
-          OCommandExecutorSQLTruncateCluster.class,// long
-          OCommandExecutorSQLDropCluster.class,// boolean
+                                                                      OCommandExecutorSQLCreateCluster.class,// int
+                                                                      OCommandExecutorSQLAlterCluster.class,// null
+                                                                      OCommandExecutorSQLTruncateCluster.class,// long
+                                                                      OCommandExecutorSQLDropCluster.class,// boolean
 
-          OCommandExecutorSQLCreateProperty.class,// int
-          OCommandExecutorSQLAlterProperty.class,// null
-          OCommandExecutorSQLDropProperty.class,// null
+                                                                      OCommandExecutorSQLCreateProperty.class,// int
+                                                                      OCommandExecutorSQLAlterProperty.class,// null
+                                                                      OCommandExecutorSQLDropProperty.class,// null
 
-          OCommandExecutorSQLCreateIndex.class,// long
-          OCommandExecutorSQLRebuildIndex.class,// long
-          OCommandExecutorSQLDropIndex.class// null
-  ));
+                                                                      OCommandExecutorSQLCreateIndex.class,// long
+                                                                      OCommandExecutorSQLRebuildIndex.class,// long
+                                                                      OCommandExecutorSQLDropIndex.class// null
+                                                                      ));
 
   private OQueryExecutorsFactory() {
   }

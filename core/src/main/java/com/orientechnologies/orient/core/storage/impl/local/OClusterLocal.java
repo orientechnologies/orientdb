@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -197,7 +198,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     acquireExclusiveLock();
     try {
 
-      truncate();
       for (OFile f : fileSegment.files)
         f.delete();
 
@@ -224,8 +224,11 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
             .inc()) {
           final OPhysicalPosition pposToDelete = getPhysicalPosition(ppos);
 
-          if (pposToDelete != null && storage.checkForRecordValidity(pposToDelete))
-            storage.getDataSegmentById(pposToDelete.dataSegmentId).deleteRecord(pposToDelete.dataSegmentPos);
+          if (pposToDelete != null && storage.checkForRecordValidity(pposToDelete)) {
+            final ODataLocal data = storage.getDataSegmentById(pposToDelete.dataSegmentId);
+            if (data != null)
+              data.deleteRecord(pposToDelete.dataSegmentPos);
+          }
         }
       }
 
@@ -296,7 +299,27 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     }
   }
 
-  /**
+  @Override
+  public boolean useWal() {
+    return false;
+  }
+
+  @Override
+  public float recordGrowFactor() {
+    return 1;
+  }
+
+  @Override
+  public float recordOverflowGrowFactor() {
+    return 1;
+  }
+
+	@Override
+	public String compression() {
+		return ONothingCompression.NAME;
+	}
+
+	/**
    * Update position in data segment (usually on defrag)
    * 
    * @throws IOException
@@ -612,6 +635,18 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
 
     } finally {
       releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public boolean wasSoftlyClosed() throws IOException {
+    acquireSharedLock();
+    try {
+      boolean wasSoftlyClosed = fileSegment.wasSoftlyClosedAtPreviousTime();
+      wasSoftlyClosed = wasSoftlyClosed && holeSegment.wasSoftlyClosedAtPreviousTime();
+      return wasSoftlyClosed;
+    } finally {
+      releaseSharedLock();
     }
   }
 

@@ -26,10 +26,9 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Deprecated
 @SuppressWarnings({ "unchecked" })
@@ -246,15 +245,8 @@ public class OLazyObjectList<TYPE> implements OLazyObjectListInterface<TYPE>, OL
 
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-    if (o != null) {
-      ODocument doc = new ODocument();
-      if (o instanceof ORID) {
-        doc = database.load((ORID) o, fetchPlan);
-      } else if (o instanceof ODocument) {
-        doc = (ODocument) o;
-      }
-      list.set(iIndex, (TYPE) database.getUserObjectByRecord((ORecordInternal<?>) o, fetchPlan));
-    }
+    if (o != null && o instanceof OIdentifiable)
+      list.set(iIndex, (TYPE) database.getUserObjectByRecord(((OIdentifiable) o).getRecord(), fetchPlan));
   }
 
   @Override

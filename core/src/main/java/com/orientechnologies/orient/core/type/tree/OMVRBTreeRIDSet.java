@@ -51,6 +51,10 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     this(new OMVRBTreeRID());
   }
 
+  public OMVRBTreeRIDSet(int binaryThreshold) {
+    this(new OMVRBTreeRID(binaryThreshold));
+  }
+
   public OMVRBTreeRIDSet(final OIdentifiable iRecord) {
     this(new OMVRBTreeRID((ODocument) iRecord.getRecord()));
   }
@@ -82,6 +86,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     tree.setOwner(iClone);
   }
 
+  @Override
   public int size() {
     return tree.size();
   }
@@ -98,7 +103,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     return tree.iterator(iAutoConvertToRecord);
   }
 
-  public OLazyIterator<OIdentifiable> iterator() {
+  public Iterator<OIdentifiable> iterator() {
     return tree.iterator();
   }
 

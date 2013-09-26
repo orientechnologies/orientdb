@@ -44,7 +44,7 @@ public class ORemoteFetchListener implements OFetchListener {
   }
 
   public void processStandardField(ORecordSchemaAware<?> iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
-      final Object iusObject) throws OFetchException {
+      final Object iusObject, final String iFormat) throws OFetchException {
   }
 
   public void parseLinked(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,

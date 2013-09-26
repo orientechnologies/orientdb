@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.orientechnologies.orient.core.db.document;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexMVRBTreeAbstract;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -42,7 +43,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
@@ -55,26 +56,26 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     super(iSource);
   }
 
-  private void freezeIndexes(final List<OIndexMVRBTreeAbstract<?>> indexesToFreeze, boolean throwException) {
+  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, boolean throwException) {
     if (indexesToFreeze != null) {
-      for (OIndexMVRBTreeAbstract<?> indexToLock : indexesToFreeze) {
+      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
         indexToLock.freeze(throwException);
       }
     }
   }
 
-  private void flushIndexes(List<OIndexMVRBTreeAbstract<?>> indexesToFlush) {
-    for (OIndexMVRBTreeAbstract<?> index : indexesToFlush) {
+  private void flushIndexes(List<OIndexAbstract<?>> indexesToFlush) {
+    for (OIndexAbstract<?> index : indexesToFlush) {
       index.flush();
     }
   }
 
-  private List<OIndexMVRBTreeAbstract<?>> prepareIndexesToFreeze(Collection<? extends OIndex<?>> indexes) {
-    List<OIndexMVRBTreeAbstract<?>> indexesToFreeze = null;
+  private List<OIndexAbstract<?>> prepareIndexesToFreeze(Collection<? extends OIndex<?>> indexes) {
+    List<OIndexAbstract<?>> indexesToFreeze = null;
     if (indexes != null && !indexes.isEmpty()) {
-      indexesToFreeze = new ArrayList<OIndexMVRBTreeAbstract<?>>(indexes.size());
+      indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
       for (OIndex<?> index : indexes) {
-        indexesToFreeze.add((OIndexMVRBTreeAbstract<?>) index.getInternal());
+        indexesToFreeze.add((OIndexAbstract<?>) index.getInternal());
       }
 
       Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
@@ -99,7 +100,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void freeze(final boolean throwException) {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
@@ -109,7 +110,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     final long startTime = Orient.instance().getProfiler().startChrono();
 
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
+    final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
 
     freezeIndexes(indexesToLock, true);
     flushIndexes(indexesToLock);
@@ -122,7 +123,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void freeze() {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
 
@@ -132,7 +133,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     final long startTime = Orient.instance().getProfiler().startChrono();
 
     final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    final List<OIndexMVRBTreeAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
+    final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
 
     freezeIndexes(indexesToLock, false);
     flushIndexes(indexesToLock);
@@ -145,7 +146,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   @Override
   public void release() {
-    if (!(getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
       return;
@@ -431,8 +432,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       underlying.delete(iRecord);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-          iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
+      if (iRecord instanceof ODocument)
+        OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
+            iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
+      else
+        OLogManager.instance().exception("Error on deleting record %s", e, ODatabaseException.class, iRecord.getIdentity());
     }
     return this;
   }

@@ -1,22 +1,14 @@
 package com.orientechnologies.orient.server.hazelcast.sharding.hazelcast;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.Member;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.*;
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTConfiguration;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNode;
 import com.orientechnologies.orient.server.hazelcast.sharding.distributed.ODHTNodeLookup;
@@ -35,8 +27,10 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
   private final Timer                             timer       = new Timer("DHT timer", true);
   private String                                  configFile;
   private ODHTConfiguration                       dhtConfiguration;
+  private OServer                                 server;
 
-  public ServerInstance(String configFile) {
+  public ServerInstance(final OServer iServer, final String configFile) {
+    this.server = iServer;
     this.configFile = configFile;
   }
 
@@ -47,7 +41,7 @@ public class ServerInstance implements MembershipListener, ODHTNodeLookup {
       throw new OConfigurationException("Error on creation Hazelcast instance");
     }
 
-    localNode = new OLocalDHTNode(getNodeId(hazelcastInstance.getCluster().getLocalMember()));
+    localNode = new OLocalDHTNode(server, getNodeId(hazelcastInstance.getCluster().getLocalMember()));
     localNode.setNodeLookup(this);
     localNode.setDhtConfiguration(dhtConfiguration);
     INSTANCES.put(hazelcastInstance.getCluster().getLocalMember().getUuid(), this);

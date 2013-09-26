@@ -16,6 +16,8 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import java.nio.ByteOrder;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
@@ -62,11 +64,11 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   }
 
   public void serializeNative(Double object, byte[] stream, int startPosition) {
-    CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object));
+    CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object), ByteOrder.nativeOrder());
   }
 
   public Double deserializeNative(byte[] stream, int startPosition) {
-    return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition));
+    return Double.longBitsToDouble(CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
   @Override

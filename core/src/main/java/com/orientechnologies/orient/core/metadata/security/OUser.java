@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -85,7 +86,13 @@ public class OUser extends ODocumentWrapper {
     final Collection<ODocument> loadedRoles = iSource.field("roles");
     if (loadedRoles != null)
       for (final ODocument d : loadedRoles) {
-        roles.add(document.getDatabase().getMetadata().getSecurity().getRole((String) d.field("name")));
+        final ORole role = document.getDatabase().getMetadata().getSecurity().getRole((String) d.field("name"));
+        if (role == null) {
+          OLogManager.instance().warn(this, "User '%s' declare to have the role '%s' but it does not exist in database, skipt it",
+              getName(), d.field("name"));
+          document.getDatabase().getMetadata().getSecurity().repair();
+        } else
+          roles.add(role);
       }
   }
 
@@ -124,9 +131,13 @@ public class OUser extends ODocumentWrapper {
    * @return The role that has granted the permission if any, otherwise null
    */
   public ORole checkIfAllowed(final String iResource, final int iOperation) {
-    for (ORole r : roles)
-      if (r.allow(iResource, iOperation))
+    for (ORole r : roles) {
+      if (r == null)
+        OLogManager.instance().warn(this,
+            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+      else if (r.allow(iResource, iOperation))
         return r;
+    }
 
     return null;
   }
@@ -140,7 +151,10 @@ public class OUser extends ODocumentWrapper {
    */
   public boolean isRuleDefined(final String iResource) {
     for (ORole r : roles)
-      if (r.hasRule(iResource))
+      if (r == null)
+        OLogManager.instance().warn(this,
+            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+      else if (r.hasRule(iResource))
         return true;
 
     return false;

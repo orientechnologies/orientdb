@@ -24,21 +24,21 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 
 public class OrientServer implements OrientServerMBean {
-	protected List<OStorage>	storages;
-	protected String					info;
+  protected List<OStorage> storages;
+  protected String         info;
 
-	@Override
-	public OStorage[] getOpenedStorages() {
-		OStorage[] output = new OStorage[Orient.instance().getStorages().size()];
-		output = Orient.instance().getStorages().toArray(output);
-		return output;
-	}
+  @Override
+  public OStorage[] getOpenedStorages() {
+    OStorage[] output = new OStorage[Orient.instance().getStorages().size()];
+    output = Orient.instance().getStorages().toArray(output);
+    return output;
+  }
 
-	@Override
-	public OClientConnection[] getConnections() {
-		final Collection<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
-		final OClientConnection[] output = new OClientConnection[conns.size()];
-		conns.toArray(output);
-		return output;
-	}
+  @Override
+  public OClientConnection[] getConnections() {
+    final Collection<OClientConnection> conns = OClientConnectionManager.instance().getConnections();
+    final OClientConnection[] output = new OClientConnection[conns.size()];
+    conns.toArray(output);
+    return output;
+  }
 }

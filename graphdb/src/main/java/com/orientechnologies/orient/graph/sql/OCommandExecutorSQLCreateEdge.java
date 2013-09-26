@@ -124,7 +124,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       for (ORecordId to : toIds) {
         final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
 
-        final String clsName = graph.getEdgeBaseType().equals(clazz) ? null : clazz.getName();
+        final String clsName = clazz.getName();
 
         if (fields != null)
           // EVALUATE FIELDS
@@ -135,12 +135,16 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
         final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
 
-        if (content != null)
+        if (content != null) {
+          if (!edge.getRecord().getIdentity().isValid())
+            // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
+            edge.convertToDocument();
           edge.getRecord().merge(content, true, false);
+        }
 
         edge.save(clusterName);
 
-        edges.add(edge.getId());
+        edges.add(edge);
       }
     }
 

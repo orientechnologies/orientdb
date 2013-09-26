@@ -274,17 +274,20 @@ public class ORecordId implements ORID {
     return generateString(clusterId, clusterPosition.inc());
   }
 
-	@Override
-	public ORID nextRid() {
-		return new ORecordId(clusterId, clusterPosition.inc());
-	}
+  @Override
+  public ORID nextRid() {
+    return new ORecordId(clusterId, clusterPosition.inc());
+  }
 
-	public ORID getIdentity() {
+  public ORID getIdentity() {
     return this;
   }
 
   @SuppressWarnings("unchecked")
   public <T extends ORecord<?>> T getRecord() {
+    if (!isValid())
+      return null;
+
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db == null)
       throw new ODatabaseException(

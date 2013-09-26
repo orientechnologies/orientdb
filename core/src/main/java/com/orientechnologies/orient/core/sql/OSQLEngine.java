@@ -137,6 +137,10 @@ public class OSQLEngine {
   public OSQLFunction getFunction(String iFunctionName) {
     iFunctionName = iFunctionName.toUpperCase(Locale.ENGLISH);
 
+    if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
+      // SPECIAL FUNCTIONS
+      return null;
+
     final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
     while (ite.hasNext()) {
       final OSQLFunctionFactory factory = ite.next();
@@ -289,20 +293,25 @@ public class OSQLEngine {
   }
 
   public static Object foreachRecord(final OCallable<Object, OIdentifiable> iCallable, final Object iCurrent,
-      OCommandContext iContext) {
+      final OCommandContext iContext) {
     if (iCurrent == null)
       return null;
 
-    if (!iContext.checkTimeout())
+    if (iContext != null && !iContext.checkTimeout())
       return null;
 
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
       final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
-        if (!iContext.checkTimeout())
+        if (iContext != null && !iContext.checkTimeout())
           return null;
 
-        result.add(iCallable.call((OIdentifiable) o));
+        if (OMultiValue.isMultiValue(o) || o instanceof Iterator) {
+          for (Object inner : OMultiValue.getMultiValueIterable(o)) {
+            result.add(iCallable.call((OIdentifiable) inner));
+          }
+        } else
+          result.add(iCallable.call((OIdentifiable) o));
       }
       return result;
     } else if (iCurrent instanceof OIdentifiable)

@@ -56,7 +56,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OBinarySerializer<K> iKeySerializer,
       final OStreamSerializer iValueSerializer) {
-    super(new ORecordBytesLazy(), iStorage, iClusterName);
+    super(new ORecordBytesLazy().unpin(), iStorage, iClusterName);
     ((ORecordBytesLazy) record).recycle(this);
     stream = new OMemoryStream();
     keySerializer = iKeySerializer;
@@ -69,6 +69,11 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   public OMVRBTreeEntryDataProvider<K, V> createEntry() {
     return new OMVRBTreeMapEntryProvider<K, V>(this);
+  }
+
+  @Override
+  public OMVRBTreeProvider<K, V> copy() {
+    return new OMVRBTreeMapProvider<K, V>(storage, clusterName, keySerializer, valueSerializer);
   }
 
   @Override
@@ -194,5 +199,13 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
     throw new OSerializationException("Given serializer " + streamKeySerializer.getClass().getName()
         + " can not be converted into " + OBinarySerializer.class.getName() + ".");
+  }
+
+  public OBinarySerializer<K> getKeySerializer() {
+    return keySerializer;
+  }
+
+  public OStreamSerializer getValueSerializer() {
+    return valueSerializer;
   }
 }

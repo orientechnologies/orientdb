@@ -35,6 +35,8 @@ public interface OIndexManager {
 
   public void create();
 
+  public void recreateIndexes();
+
   public Collection<? extends OIndex<?>> getIndexes();
 
   public OIndex<?> getIndex(final String iName);
@@ -115,4 +117,8 @@ public interface OIndexManager {
   public Set<OIndex<?>> getClassIndexes(String className);
 
   public OIndex<?> getClassIndex(String className, String indexName);
+
+  public void waitTillIndexRestore();
+
+	public boolean autoRecreateIndexesAfterCrash();
 }

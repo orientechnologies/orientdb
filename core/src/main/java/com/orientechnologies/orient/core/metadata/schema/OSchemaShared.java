@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
@@ -31,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -43,6 +40,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -125,12 +123,18 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OClass getOrCreateClass(final String iClassName) {
+    return getOrCreateClass(iClassName, null);
+  }
+
+  public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
     return getDatabase().getStorage().callInLock(new Callable<OClass>() {
       @Override
       public OClass call() throws Exception {
         OClass cls = classes.get(iClassName.toLowerCase());
         if (cls == null)
-          cls = createClass(iClassName);
+          cls = createClass(iClassName, iSuperClass);
+        else if (iSuperClass != null && !cls.isSubClassOf(iSuperClass))
+          throw new IllegalArgumentException("Class '" + iClassName + "' is not an instance of " + iSuperClass.getShortName());
         return cls;
       }
     }, true);
@@ -198,7 +202,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
 
         getDatabase().command(new OCommandSQL(cmd.toString())).execute();
-        getDatabase().reload();
+        if (!(getDatabase().getStorage() instanceof OStorageEmbedded))
+          getDatabase().reload();
 
         if (classes.containsKey(key))
           return classes.get(key);
@@ -257,7 +262,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
           for (OIndex<?> index : iSuperClass.getIndexes())
             for (String clusterName : clusterNames)
-              index.getInternal().addCluster(clusterName);
+              if (clusterName != null)
+                index.getInternal().addCluster(clusterName);
         }
 
         return cls;
@@ -606,6 +612,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     db.getStorage().getConfiguration().update();
   }
 
+  public void close() {
+    classes.clear();
+    document.clear();
+  }
+
   public void saveInternal() {
     final ODatabaseRecord db = getDatabase();
 
@@ -675,13 +686,16 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  public void close() {
-    classes.clear();
-    document.clear();
-  }
-
   private void saveInternal(final String iClusterName) {
     document.setDirty();
+    for (int retry = 0; retry < 10; retry++)
+      try {
+        super.save(OMetadata.CLUSTER_INTERNAL_NAME);
+        break;
+      } catch (OConcurrentModificationException e) {
+        reload(null, true);
+      }
+
     super.save(OMetadata.CLUSTER_INTERNAL_NAME);
   }
 }

@@ -15,8 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -25,16 +26,20 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
 public class ConcurrentQueriesTest {
-  private final static int    THREADS = 10;
+  private final static int    THREADS      = 10;
+  private final static int    CYCLES       = 50;
+  private final static int    MAX_RETRIES  = 50;
+
   protected String            url;
   private ODatabaseDocumentTx db;
+  private final AtomicLong    counter      = new AtomicLong();
+  private final AtomicLong    totalRetries = new AtomicLong();
 
-  static class CommandExecutor implements Runnable {
+  class CommandExecutor implements Runnable {
 
     String url;
     String threadName;
@@ -47,16 +52,19 @@ public class ConcurrentQueriesTest {
 
     public void run() {
       try {
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < CYCLES; i++) {
           ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
           try {
-            while (true) {
+            for (int retry = 0; retry < MAX_RETRIES; ++retry) {
               try {
-                List<ODocument> result = db.command(new OCommandSQL("select from Concurrent")).execute();
+                db.command(new OCommandSQL("select from Concurrent")).execute();
+
+                counter.incrementAndGet();
+                totalRetries.addAndGet(retry);
                 break;
               } catch (ONeedRetryException e) {
-                // e.printStackTrace();
-                System.out.println("Retry...");
+                System.out.println("Retry " + retry + "/" + MAX_RETRIES + "...");
+                Thread.sleep(retry * 10);
               }
             }
           } finally {
@@ -66,6 +74,7 @@ public class ConcurrentQueriesTest {
 
       } catch (Throwable e) {
         e.printStackTrace();
+        Assert.assertTrue(false);
       }
     }
   }
@@ -111,5 +120,10 @@ public class ConcurrentQueriesTest {
     for (int i = 0; i < THREADS; ++i) {
       threads[i].join();
     }
+
+    System.out.println("Done! Total queries executed in parallel: " + counter.get() + " average retries: "
+        + ((float) totalRetries.get() / (float) counter.get()));
+
+    Assert.assertEquals(counter.get(), CYCLES * THREADS);
   }
 }

@@ -3,9 +3,9 @@
 
 	<test name="Default" preserve-order="true">
 		<classes>
-			<class name="com.orientechnologies.orient.graph.gremlin.TestLoadGraph" />
-			<class name="com.orientechnologies.orient.graph.gremlin.LocalGremlinTest" />
-			<!-- <class name="com.orientechnologies.orient.graph.gremlin.RemoteGremlinTest" />  -->
+			<class name="com.orientechnologies.orient.graph.blueprints.TestLoadGraph" />
+			<class name="com.orientechnologies.orient.graph.blueprints.LocalGremlinTest" />
+			<!-- <class name="com.orientechnologies.orient.graph.blueprints.RemoteGremlinTest" />  -->
 		</classes>
 	</test>
 </suite>

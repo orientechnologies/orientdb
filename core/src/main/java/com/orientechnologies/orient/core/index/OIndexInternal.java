@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -39,15 +40,11 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
   public static final String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
 
   /**
-   * Flushes in-memory changes to disk.
-   */
-  public void flush();
-
-  /**
    * Loads the index giving the configuration.
    * 
    * @param iConfig
    *          ODocument instance containing the configuration
+   * 
    */
   public boolean loadFromConfiguration(ODocument iConfig);
 
@@ -89,6 +86,8 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    */
   public boolean canBeUsedInEqualityOperators();
 
+  public boolean hasRangeQuerySupport();
+
   /**
    * Prohibit index modifications. Only index read commands are allowed after this call.
    * 
@@ -113,4 +112,70 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * Is used to indicate that several index changes are going to be seen as single unit from users point of view were completed.
    */
   public void releaseModificationLock();
+
+  public IndexMetadata loadMetadata(ODocument iConfig);
+
+  public void setRebuildingFlag();
+
+  public void close();
+
+  public final class IndexMetadata {
+    private final String           name;
+    private final OIndexDefinition indexDefinition;
+    private final Set<String>      clustersToIndex;
+    private final String           type;
+
+    public IndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type) {
+      this.name = name;
+      this.indexDefinition = indexDefinition;
+      this.clustersToIndex = clustersToIndex;
+      this.type = type;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public OIndexDefinition getIndexDefinition() {
+      return indexDefinition;
+    }
+
+    public Set<String> getClustersToIndex() {
+      return clustersToIndex;
+    }
+
+    public String getType() {
+      return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      IndexMetadata that = (IndexMetadata) o;
+
+      if (!clustersToIndex.equals(that.clustersToIndex))
+        return false;
+      if (indexDefinition != null ? !indexDefinition.equals(that.indexDefinition) : that.indexDefinition != null)
+        return false;
+      if (!name.equals(that.name))
+        return false;
+      if (!type.equals(that.type))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + (indexDefinition != null ? indexDefinition.hashCode() : 0);
+      result = 31 * result + clustersToIndex.hashCode();
+      result = 31 * result + type.hashCode();
+      return result;
+    }
+  }
 }

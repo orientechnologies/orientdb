@@ -152,6 +152,6 @@ public class OClusterLocalHole extends OSingleFileSegment {
    * @return
    */
   public int getHoles() {
-    return file.getFilledUpTo() / RECORD_SIZE;
+    return (int) file.getFilledUpTo() / RECORD_SIZE;
   }
 }

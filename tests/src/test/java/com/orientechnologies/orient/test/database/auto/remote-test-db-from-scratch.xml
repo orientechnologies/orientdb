@@ -53,6 +53,7 @@
     </test>
     <test name="Index">
         <classes>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLSelectHashIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexClusterTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ByteArrayKeyTest"/>
@@ -73,12 +74,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
 
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetValuesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetValuesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareMultiValueGetEntriesTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.IndexTxAwareOneValueGetEntriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
         </classes>
     </test>
@@ -95,9 +90,7 @@
     </test>
     <test name="Graph">
         <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.GraphTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.GraphDatabaseTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.GraphTestFixedDensity"/>
             <!--  <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexAndEdgeTest"/> -->
         </classes>
     </test>

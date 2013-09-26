@@ -77,7 +77,7 @@ public class OStorageLocalTxExecuter {
   }
 
   protected OPhysicalPosition createRecord(final int iTxId, final ODataLocal iDataSegment, final OCluster iClusterSegment,
-      final ORecordId iRid, final byte[] iContent, final ORecordVersion iRecordVersion, final byte iRecordType, int dataSegmentId) {
+      final ORecordId iRid, final byte[] iContent, final ORecordVersion iRecordVersion, final byte iRecordType) {
 
     try {
       final OPhysicalPosition ppos = storage.createRecord(iDataSegment, iClusterSegment, iContent, iRecordType, iRid,
@@ -85,7 +85,7 @@ public class OStorageLocalTxExecuter {
 
       // SAVE INTO THE LOG THE POSITION OF THE RECORD JUST CREATED. IF TX FAILS AT THIS POINT A GHOST RECORD IS CREATED UNTIL DEFRAG
       txSegment.addLog(OTxSegment.OPERATION_CREATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, OVersionFactory
-          .instance().createVersion(), null, dataSegmentId);
+          .instance().createVersion(), null, iDataSegment.getId());
 
       return ppos;
     } catch (IOException e) {
@@ -186,7 +186,7 @@ public class OStorageLocalTxExecuter {
       }
 
       // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-      OTransactionAbstract.updateCacheFromEntries(storage, iTx, iTx.getAllRecordEntries(), true);
+      OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
     } finally {
       currentTransaction = null;
     }
@@ -230,9 +230,13 @@ public class OStorageLocalTxExecuter {
 
     case ORecordOperation.CREATED: {
       // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-      byte[] stream = txEntry.getRecord().toStream();
+      final byte[] stream = txEntry.getRecord().toStream();
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
+        break;
+      }
 
-      final ORID oldRid = rid.copy();
+      final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
       if (rid.isNew()) {
         txEntry.getRecord().onBeforeIdentityChanged(rid);
@@ -243,7 +247,7 @@ public class OStorageLocalTxExecuter {
         final OPhysicalPosition ppos;
         if (iUseLog)
           ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry
-              .getRecord().getRecordType(), txEntry.dataSegmentId);
+              .getRecord().getRecordType());
         else
           ppos = iTx
               .getDatabase()
@@ -255,7 +259,8 @@ public class OStorageLocalTxExecuter {
         txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
         txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
-        iTx.updateIndexIdentityAfterCommit(oldRid, rid);
+        iTx.updateIdentityAfterCommit(oldRID, rid);
+
       } else {
         if (iUseLog)
           txEntry
@@ -278,7 +283,11 @@ public class OStorageLocalTxExecuter {
     }
 
     case ORecordOperation.UPDATED: {
-      byte[] stream = txEntry.getRecord().toStream();
+      final byte[] stream = txEntry.getRecord().toStream();
+      if (stream == null) {
+        OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
+        break;
+      }
 
       if (iUseLog)
         txEntry

@@ -17,19 +17,17 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 @Test(groups = "schema")
 public class AbstractClassTest {
@@ -44,7 +42,7 @@ public class AbstractClassTest {
   @BeforeClass
   public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
-    if (ODatabaseHelper.existsDatabase(database))
+    if (ODatabaseHelper.existsDatabase(database, "plocal"))
       database.open("admin", "admin");
     else
       database.create();
@@ -61,31 +59,31 @@ public class AbstractClassTest {
   public void testCannotCreateInstances() {
     new ODocument("AbstractPerson").save();
   }
-//
-//  @Test
-//  public void testAlterClass() {
-//    OClass abstractPerson = database.getMetadata().getSchema().getClass("AbstractPerson");
-//    Assert.assertNotNull(abstractPerson);
-//
-//    abstractPerson.setAbstract(false);
-//    ODocument doc = new ODocument("AbstractPerson").save();
-//
-//    try {
-//      abstractPerson.setAbstract(true);
-//      Assert.assertTrue(false);
-//    } catch (OCommandExecutionException e) {
-//      Assert.assertTrue(e.getCause() instanceof IllegalStateException);
-//    }
-//
-//    doc.delete();
-//
-//    abstractPerson.setAbstract(true);
-//
-//    try {
-//      doc.load();
-//      Assert.assertTrue(false);
-//    } catch (ORecordNotFoundException e) {
-//      Assert.assertTrue(true);
-//    }
-//  }
+  //
+  // @Test
+  // public void testAlterClass() {
+  // OClass abstractPerson = database.getMetadata().getSchema().getClass("AbstractPerson");
+  // Assert.assertNotNull(abstractPerson);
+  //
+  // abstractPerson.setAbstract(false);
+  // ODocument doc = new ODocument("AbstractPerson").save();
+  //
+  // try {
+  // abstractPerson.setAbstract(true);
+  // Assert.assertTrue(false);
+  // } catch (OCommandExecutionException e) {
+  // Assert.assertTrue(e.getCause() instanceof IllegalStateException);
+  // }
+  //
+  // doc.delete();
+  //
+  // abstractPerson.setAbstract(true);
+  //
+  // try {
+  // doc.load();
+  // Assert.assertTrue(false);
+  // } catch (ORecordNotFoundException e) {
+  // Assert.assertTrue(true);
+  // }
+  // }
 }

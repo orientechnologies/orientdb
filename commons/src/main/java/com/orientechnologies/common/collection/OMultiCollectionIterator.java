@@ -23,20 +23,22 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.util.OResettable;
+import com.orientechnologies.common.util.OSizeable;
 
 /**
  * Iterator that allow to iterate against multiple collection of elements.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable {
+public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable {
   private Collection<Object> sources;
   private Iterator<?>        iteratorOfInternalCollections;
   private Iterator<T>        partialIterator;
-  private List<T>            temp    = null;
+  private List<T>            temp     = null;
 
-  private int                browsed = 0;
-  private int                limit   = -1;
+  private int                browsed  = 0;
+  private int                limit    = -1;
+  private boolean            embedded = false;
 
   public OMultiCollectionIterator() {
     sources = new ArrayList<Object>();
@@ -102,7 +104,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   public void add(final Object iValue) {
     if (iteratorOfInternalCollections != null)
-      throw new IllegalStateException("Flatten iterator is in use and new collections cannot be added");
+      throw new IllegalStateException("MultiCollection iterator is in use and new collections cannot be added");
 
     sources.add(iValue);
   }
@@ -116,7 +118,15 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
           size += ((Collection<?>) o).size();
         else if (o instanceof Map<?, ?>)
           size += ((Map<?, ?>) o).size();
-        else
+        else if (o instanceof OSizeable)
+          size += ((OSizeable) o).size();
+        else if (o instanceof Iterator<?> && o instanceof OResettable) {
+          while (((Iterator<?>) o).hasNext()) {
+            size++;
+            ((Iterator<?>) o).next();
+          }
+          ((OResettable) o).reset();
+        } else
           size++;
     }
     return size;
@@ -124,7 +134,7 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
 
   @Override
   public void remove() {
-    throw new UnsupportedOperationException("OFlattenIterator.remove()");
+    throw new UnsupportedOperationException("OMultiCollectionIterator.remove()");
   }
 
   public int getLimit() {
@@ -168,5 +178,14 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
       }
 
     return false;
+  }
+
+  public boolean isEmbedded() {
+    return embedded;
+  }
+
+  public OMultiCollectionIterator<T> setEmbedded(final boolean embedded) {
+    this.embedded = embedded;
+    return this;
   }
 }

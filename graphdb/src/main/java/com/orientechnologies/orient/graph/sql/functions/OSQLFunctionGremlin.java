@@ -30,9 +30,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElementIterable;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
@@ -65,19 +65,21 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
         new OGremlinHelper.OGremlinCallback() {
 
           @Override
-          public boolean call(ScriptEngine iEngine, OrientGraph iGraph) {
+          public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph) {
             final ODocument document = (ODocument) iCurrentRecord;
             if (db.isVertex(document)) {
               // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
 
             } else if (db.isEdge(document)) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
             } else
 
               // UNKNOWN CLASS: IGNORE IT

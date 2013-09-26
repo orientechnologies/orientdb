@@ -17,6 +17,7 @@ package com.orientechnologies.orient.console;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,8 +31,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -47,12 +50,21 @@ public class OTableFormatter {
   protected int                      minColumnSize   = 4;
   protected int                      maxWidthSize    = 132;
   protected final static Set<String> prefixedColumns = new HashSet<String>(Arrays.asList(new String[] { "#", "@RID" }));
+  protected final SimpleDateFormat   DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
   public OTableFormatter() {
   }
 
   public OTableFormatter(final PrintStream out) {
     this.out = out;
+  }
+
+  public OTableFormatter hideRID(final boolean iValue) {
+    if (iValue)
+      prefixedColumns.remove("@RID");
+    else
+      prefixedColumns.add("@RID");
+    return this;
   }
 
   public void writeRecords(final Collection<OIdentifiable> resultSet, final int limit) {
@@ -139,7 +151,9 @@ public class OTableFormatter {
     else if (iRecord instanceof ORecordBytes)
       value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
 
-    if (value instanceof Collection<?>)
+    if (value instanceof OMultiCollectionIterator<?>)
+      value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
+    else if (value instanceof Collection<?>)
       value = "[" + ((Collection<?>) value).size() + "]";
     else if (value instanceof ORecord<?>) {
       if (((ORecord<?>) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
@@ -147,10 +161,14 @@ public class OTableFormatter {
       } else {
         value = ((ORecord<?>) value).getIdentity().toString();
       }
-    } else if (value instanceof Date)
-      value = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
-          .format((Date) value);
-    else if (value instanceof byte[])
+    } else if (value instanceof Date) {
+      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null)
+        value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
+      else {
+        value = DEF_DATEFORMAT.format((Date) value);
+      }
+    } else if (value instanceof byte[])
       value = "byte[" + ((byte[]) value).length + "]";
 
     return value;
@@ -163,7 +181,10 @@ public class OTableFormatter {
     for (Entry<String, Integer> column : iColumns.entrySet()) {
       if (i++ > 0)
         out.print('|');
-      out.printf("%-" + column.getValue() + "s", column.getKey());
+      String colName = column.getKey();
+      if (colName.length() > column.getValue())
+        colName = colName.substring(0, column.getValue());
+      out.printf("%-" + column.getValue() + "s", colName);
     }
     out.printf("\n");
     printHeaderLine(iColumns);
@@ -272,13 +293,13 @@ public class OTableFormatter {
     return columns;
   }
 
-  private Integer getColumnSize(final Integer iIndex, final ORecord<?> iRecord, final String fieldName, Integer origSize) {
+  private Integer getColumnSize(final Integer iIndex, final ORecord<?> iRecord, final String fieldName, final Integer origSize) {
     Integer newColumnSize;
     if (origSize == null)
       // START FROM THE FIELD NAME SIZE
       newColumnSize = fieldName.length();
     else
-      newColumnSize = origSize;
+      newColumnSize = Math.max(origSize, fieldName.length());
 
     final Object fieldValue = getFieldValue(iIndex, iRecord, fieldName);
 

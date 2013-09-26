@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -95,8 +95,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   protected transient List<WeakReference<ORecordElement>>                _owners             = null;
 
   protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
-
-  private long                                                           serializationId     = -1;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -418,7 +416,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
-    return ODocumentHelper.hasSameContentOf(this, getDatabase(), iOther, getDatabase());
+    final ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
   @Override
@@ -522,7 +521,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_fieldValues == null || _fieldValues.size() == 0)
       return EMPTY_STRINGS;
 
-    return _fieldValues.keySet().toArray(new String[_fieldValues.keySet().size()]);
+    return _fieldValues.keySet().toArray(new String[_fieldValues.size()]);
   }
 
   /**
@@ -532,7 +531,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     checkForLoading();
     checkForFields();
 
-    return _fieldValues.values().toArray(new Object[_fieldValues.values().size()]);
+    return _fieldValues.values().toArray(new Object[_fieldValues.size()]);
   }
 
   public <RET> RET rawField(final String iFieldName) {
@@ -567,10 +566,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_lazyLoad && value instanceof ORID && t != OType.LINK && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
-      removeCollectionChangeListener(iFieldName);
-      removeCollectionTimeLine(iFieldName);
-      _fieldValues.put(iFieldName, value);
-      addCollectionChangeListener(iFieldName, value);
+      if (!iFieldName.contains(".")) {
+        removeCollectionChangeListener(iFieldName);
+        removeCollectionTimeLine(iFieldName);
+        _fieldValues.put(iFieldName, value);
+        addCollectionChangeListener(iFieldName, value);
+      }
     }
 
     // CHECK FOR CONVERSION
@@ -653,6 +654,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Fills a document passing the field names/values.
    */
   public ODocument fields(final String iFieldName, final Object iFieldValue, final Object... iFields) {
+    if (iFields != null && iFields.length % 2 != 0)
+      throw new IllegalArgumentException("Fields must be passed in pairs as name and value");
+
     field(iFieldName, iFieldValue);
     if (iFields != null && iFields.length > 0)
       for (int i = 0; i < iFields.length; i += 2) {
@@ -690,6 +694,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument field(String iFieldName, Object iPropertyValue, OType iFieldType) {
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
+      return this;
+    } else if ("@rid".equals(iFieldName)) {
+      _recordId.fromString(iPropertyValue.toString());
       return this;
     }
 
@@ -1593,19 +1600,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<String, Object>) event);
     }
-  }
-
-  /**
-   * ID which is used to track document instance identity during serialization.
-   * 
-   * @return ID which is used to track document instance identity during serialization.
-   */
-  public long getSerializationId() {
-    return serializationId;
-  }
-
-  public void setSerializationId(long serializationId) {
-    this.serializationId = serializationId;
   }
 
   @Override

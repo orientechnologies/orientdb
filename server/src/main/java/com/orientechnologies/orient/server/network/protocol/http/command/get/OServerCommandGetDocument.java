@@ -55,7 +55,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
       if (db != null)
         db.close();
     }
-    
+
     return false;
   }
 

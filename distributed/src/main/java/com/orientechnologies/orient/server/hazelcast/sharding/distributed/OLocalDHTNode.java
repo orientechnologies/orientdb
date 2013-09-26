@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedThreadLocal;
 import com.orientechnologies.orient.server.hazelcast.sharding.OCommandResultSerializationHelper;
@@ -47,29 +47,31 @@ import com.orientechnologies.orient.server.hazelcast.sharding.hazelcast.OHazelca
  * @since 17.08.12
  */
 public class OLocalDHTNode implements ODHTNode {
-  public static final String                    REPLICATOR_USER   = "replicator";
+  public static final String                 REPLICATOR_USER   = "replicator";
 
-  private AtomicLong                            predecessor       = new AtomicLong(-1);
+  private AtomicLong                         predecessor       = new AtomicLong(-1);
 
-  private final long                            id;
-  private final AtomicLongArray                 fingerPoints      = new AtomicLongArray(63);
+  private final long                         id;
+  private final AtomicLongArray              fingerPoints      = new AtomicLongArray(63);
 
-  private volatile long                         migrationId       = -1;
-  private volatile ODHTNodeLookup               nodeLookup;
-  private volatile ODHTConfiguration            dhtConfiguration;
-  private final AtomicInteger                   next              = new AtomicInteger(1);
+  private volatile long                      migrationId       = -1;
+  private volatile ODHTNodeLookup            nodeLookup;
+  private volatile ODHTConfiguration         dhtConfiguration;
+  private final AtomicInteger                next              = new AtomicInteger(1);
 
-  private final OLockManager<ORID, Runnable>    lockManager       = new OLockManager<ORID, Runnable>(true, 500);
+  private final OLockManager<ORID, Runnable> lockManager       = new OLockManager<ORID, Runnable>(true, 500);
 
-  private final ExecutorService                 executorService   = Executors.newCachedThreadPool();
-  private final Queue<Long>                     notificationQueue = new ConcurrentLinkedQueue<Long>();
+  private final ExecutorService              executorService   = Executors.newCachedThreadPool();
+  private final Queue<Long>                  notificationQueue = new ConcurrentLinkedQueue<Long>();
 
-  private volatile NodeState                    state;
+  private volatile NodeState                 state;
 
-  private boolean                               inheritedDatabase;
-  private static final OServerUserConfiguration replicatorUser    = OServerMain.server().getUser(REPLICATOR_USER);
+  private boolean                            inheritedDatabase;
 
-  public OLocalDHTNode(long id) {
+  private OServer                            server;
+
+  public OLocalDHTNode(final OServer iServer, final long id) {
+    this.server = iServer;
     this.id = id;
     for (int i = 0; i < fingerPoints.length(); i++)
       fingerPoints.set(i, -1);
@@ -79,11 +81,11 @@ public class OLocalDHTNode implements ODHTNode {
     return nodeLookup;
   }
 
-  public void setNodeLookup(ODHTNodeLookup nodeLookup) {
+  public void setNodeLookup(final ODHTNodeLookup nodeLookup) {
     this.nodeLookup = nodeLookup;
   }
 
-  public void setDhtConfiguration(ODHTConfiguration dhtConfiguration) {
+  public void setDhtConfiguration(final ODHTConfiguration dhtConfiguration) {
     this.dhtConfiguration = dhtConfiguration;
   }
 
@@ -101,7 +103,7 @@ public class OLocalDHTNode implements ODHTNode {
     return id;
   }
 
-  public boolean join(long joinNodeId) {
+  public boolean join(final long joinNodeId) {
     try {
       log("Join is started using node with id " + joinNodeId);
 
@@ -134,7 +136,7 @@ public class OLocalDHTNode implements ODHTNode {
     }
   }
 
-  public long findSuccessor(long keyId) {
+  public long findSuccessor(final long keyId) {
     final long successorId = fingerPoints.get(0);
 
     if (insideInterval(id, successorId, keyId, true))
@@ -146,7 +148,7 @@ public class OLocalDHTNode implements ODHTNode {
     return node.findSuccessor(keyId);
   }
 
-  private long findClosestPrecedingFinger(long keyId) {
+  private long findClosestPrecedingFinger(final long keyId) {
     for (int i = fingerPoints.length() - 1; i >= 0; i--) {
       final long fingerPoint = fingerPoints.get(i);
       if (fingerPoint > -1 && insideInterval(this.id, keyId, fingerPoint, false)) {
@@ -165,14 +167,14 @@ public class OLocalDHTNode implements ODHTNode {
     return predecessor.get();
   }
 
-  public void requestMigration(long requesterId) {
+  public void requestMigration(final long requesterId) {
     executorService.submit(new MergeCallable(requesterId));
     log("Data migration was started for node " + requesterId);
   }
 
   @Override
-  public OPhysicalPosition createRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iRecordVersion,
-      byte iRecordType) {
+  public OPhysicalPosition createRecord(final String storageName, final ORecordId iRecordId, final byte[] iContent,
+      final ORecordVersion iRecordVersion, final byte iRecordType) {
     while (state == NodeState.JOIN) {
       log("Wait till node will be joined.");
       try {
@@ -185,9 +187,9 @@ public class OLocalDHTNode implements ODHTNode {
     return executeCreateRecord(storageName, iRecordId, iContent, iRecordVersion, iRecordType);
   }
 
-  private OPhysicalPosition executeCreateRecord(String storageName, ORecordId iRecordId, byte[] iContent,
-      ORecordVersion iRecordVersion, byte iRecordType) {
-    ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+  private OPhysicalPosition executeCreateRecord(final String storageName, final ORecordId iRecordId, final byte[] iContent,
+      final ORecordVersion iRecordVersion, final byte iRecordType) {
+    ODistributedThreadLocal.INSTANCE.set("");
     try {
       final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
 
@@ -205,12 +207,12 @@ public class OLocalDHTNode implements ODHTNode {
         closeDatabase(database);
       }
     } finally {
-      ODistributedThreadLocal.INSTANCE.distributedExecution = false;
+      ODistributedThreadLocal.INSTANCE.set(null);
     }
   }
 
   @Override
-  public ORawBuffer readRecord(String storageName, ORID iRid) {
+  public ORawBuffer readRecord(final String storageName, final ORID iRid) {
     while (state == NodeState.JOIN) {
       log("Wait till node will be joined.");
       try {
@@ -237,7 +239,7 @@ public class OLocalDHTNode implements ODHTNode {
     return executeReadRecord(storageName, iRid);
   }
 
-  private ORawBuffer executeReadRecord(String storageName, ORID iRid) {
+  private ORawBuffer executeReadRecord(final String storageName, final ORID iRid) {
     lockManager.acquireLock(Thread.currentThread(), iRid, OLockManager.LOCK.EXCLUSIVE);
     try {
       final ODatabaseDocumentTx database = openDatabase(storageName);
@@ -257,8 +259,8 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public ORecordVersion updateRecord(String storageName, ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
-      byte iRecordType) {
+  public ORecordVersion updateRecord(final String storageName, final ORecordId iRecordId, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(iRecordType);
 
     lockManager.acquireLock(Thread.currentThread(), iRecordId, OLockManager.LOCK.EXCLUSIVE);
@@ -299,7 +301,7 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public boolean deleteRecord(String storageName, ORecordId iRecordId, ORecordVersion iVersion) {
+  public boolean deleteRecord(final String storageName, final ORecordId iRecordId, final ORecordVersion iVersion) {
     boolean result = false;
 
     while (state == NodeState.JOIN) {
@@ -322,7 +324,7 @@ public class OLocalDHTNode implements ODHTNode {
   }
 
   @Override
-  public Object command(String storageName, OCommandRequestText request, boolean serializeResult) {
+  public Object command(final String storageName, final OCommandRequestText request, final boolean serializeResult) {
 
     while (state != NodeState.STABLE) {
       log("Wait till node will be joined.");
@@ -394,7 +396,7 @@ public class OLocalDHTNode implements ODHTNode {
     return true;
   }
 
-  private boolean executeDeleteRecord(String storageName, final ORecordId iRecordId, ORecordVersion iVersion) {
+  private boolean executeDeleteRecord(final String storageName, final ORecordId iRecordId, final ORecordVersion iVersion) {
     lockManager.acquireLock(Thread.currentThread(), iRecordId, OLockManager.LOCK.EXCLUSIVE);
     try {
       final ODatabaseDocumentTx database = openDatabase(storageName);
@@ -414,7 +416,7 @@ public class OLocalDHTNode implements ODHTNode {
     }
   }
 
-  protected ODatabaseDocumentTx openDatabase(String databaseName) {
+  protected ODatabaseDocumentTx openDatabase(final String databaseName) {
     inheritedDatabase = true;
 
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -426,8 +428,9 @@ public class OLocalDHTNode implements ODHTNode {
     }
 
     inheritedDatabase = false;
-    return (ODatabaseDocumentTx) OServerMain.server().openDatabase("document", databaseName, replicatorUser.name,
-        replicatorUser.password);
+
+    final OServerUserConfiguration replicatorUser = server.getUser(REPLICATOR_USER);
+    return (ODatabaseDocumentTx) server.openDatabase("document", databaseName, replicatorUser.name, replicatorUser.password);
   }
 
   protected void closeDatabase(final ODatabaseDocumentTx iDatabase) {
@@ -651,11 +654,11 @@ public class OLocalDHTNode implements ODHTNode {
                 node.createRecord(storageName, (ORecordId) rec.getIdentity(), rec.toStream(), rec.getRecordVersion(),
                     rec.getRecordType());
 
-                ODistributedThreadLocal.INSTANCE.distributedExecution = true;
+                ODistributedThreadLocal.INSTANCE.set("");
                 try {
                   rec.delete();
                 } finally {
-                  ODistributedThreadLocal.INSTANCE.distributedExecution = false;
+                  ODistributedThreadLocal.INSTANCE.set(null);
                 }
               }
             } finally {

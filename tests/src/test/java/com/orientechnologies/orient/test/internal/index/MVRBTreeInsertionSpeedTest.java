@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import java.util.Random;
-
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
@@ -21,7 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   private ODatabaseDocumentTx databaseDocumentTx;
   private OIndexUnique        index;
-  private Random              random = new Random();
+  private MersenneTwisterFast random = new MersenneTwisterFast();
 
   public MVRBTreeInsertionSpeedTest() {
     super(5000000);
@@ -33,7 +32,7 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue("");
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(10000);
 
-    String buildDirectory = System.getProperty("buildDirectory", "/temp");
+    String buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
       buildDirectory = ".";
 

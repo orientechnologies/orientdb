@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
@@ -50,6 +51,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
@@ -103,7 +105,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     databaseOwner = this;
 
     recordType = iRecordType;
-    level1Cache = new OLevel1RecordCache();
+    level1Cache = new OLevel1RecordCache(new OCacheLevelOneLocatorImpl());
 
     mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
@@ -155,6 +157,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+      if (metadata.getIndexManager().autoRecreateIndexesAfterCrash())
+        metadata.getIndexManager().recreateIndexes();
     } catch (OException e) {
       close();
       throw e;
@@ -177,7 +182,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       getStorage().getConfiguration().update();
 
       if (!(getStorage() instanceof OStorageProxy)) {
-      	registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
+        registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
         registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
         registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
@@ -206,14 +211,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
 
-		setCurrentDatabaseinThreadLocal();
+    setCurrentDatabaseinThreadLocal();
 
-		if (metadata != null) {
-			metadata.close();
-			metadata = null;
-		}
+    if (metadata != null) {
+      metadata.close();
+      metadata = null;
+    }
 
-		super.drop();
+    super.drop();
   }
 
   @Override
@@ -221,6 +226,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     setCurrentDatabaseinThreadLocal();
 
     if (metadata != null) {
+      if (!(getStorage() instanceof OStorageProxy)) {
+        final OIndexManager indexManager = metadata.getIndexManager();
+
+        if (indexManager != null)
+          indexManager.waitTillIndexRestore();
+      }
+
       metadata.close();
       metadata = null;
     }
@@ -231,6 +243,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     user = null;
     level1Cache.shutdown();
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   public ODictionary<ORecordInternal<?>> getDictionary() {
@@ -714,6 +727,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
+    iRecord.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
       final boolean wasNew = iForceCreate || rid.isNew();
       if (wasNew && rid.clusterId == -1 && iClusterName != null)
@@ -742,15 +756,21 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (wasNew) {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED)
+            if (callbackHooks(TYPE.BEFORE_CREATE, iRecord) == RESULT.RECORD_CHANGED) {
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              iRecord.unsetDirty();
+              iRecord.setDirty();
               stream = iRecord.toStream();
+            }
           } else {
             // CHECK ACCESS ON CLUSTER
             checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED)
+            if (callbackHooks(TYPE.BEFORE_UPDATE, iRecord) == RESULT.RECORD_CHANGED) {
               // RECORD CHANGED IN TRIGGER, REACQUIRE IT
+              iRecord.unsetDirty();
+              iRecord.setDirty();
               stream = iRecord.toStream();
+            }
           }
       }
 
@@ -806,6 +826,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } catch (Throwable t) {
       // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on saving record in cluster #" + iRecord.getIdentity().getClusterId(), t);
+    } finally {
+      iRecord.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
     }
     return (RET) iRecord;
   }
@@ -933,7 +955,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public void setUser(OUser user) {
     this.user = user;
   }
-  
+
   public boolean isMVCC() {
     return mvcc;
   }
@@ -957,7 +979,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
-    return registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
+    return (DB) registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {

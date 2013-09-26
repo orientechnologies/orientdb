@@ -27,172 +27,187 @@ import com.orientechnologies.common.util.OArrays;
  * 
  */
 public class OMemoryInputStream extends InputStream {
-	private byte[]	buffer;
-	private int			position	= 0;
+  private byte[] buffer;
+  private int    position = 0;
 
-	public OMemoryInputStream() {
-	}
+  public OMemoryInputStream() {
+  }
 
-	public OMemoryInputStream(final byte[] iBuffer) {
-		setSource(iBuffer);
-	}
+  public OMemoryInputStream(final byte[] iBuffer) {
+    setSource(iBuffer);
+  }
 
-	public byte[] getAsByteArrayFixed(final int iSize) throws IOException {
-		if (position >= buffer.length)
-			return null;
+  public byte[] getAsByteArrayFixed(final int iSize) throws IOException {
+    if (position >= buffer.length)
+      return null;
 
-		final byte[] portion = OArrays.copyOfRange(buffer, position, position + iSize);
-		position += iSize;
+    final byte[] portion = OArrays.copyOfRange(buffer, position, position + iSize);
+    position += iSize;
 
-		return portion;
-	}
+    return portion;
+  }
 
-	/**
-	 * Browse the stream but just return the begin of the byte array. This is used to lazy load the information only when needed.
-	 * 
-	 */
-	public int getAsByteArrayOffset() {
-		if (position >= buffer.length)
-			return -1;
+  /**
+   * Browse the stream but just return the begin of the byte array. This is used to lazy load the information only when needed.
+   * 
+   */
+  public int getAsByteArrayOffset() {
+    if (position >= buffer.length)
+      return -1;
 
-		final int begin = position;
+    final int begin = position;
 
-		final int size = OBinaryProtocol.bytes2int(buffer, position);
-		position += OBinaryProtocol.SIZE_INT + size;
+    final int size = OBinaryProtocol.bytes2int(buffer, position);
+    position += OBinaryProtocol.SIZE_INT + size;
 
-		return begin;
-	}
+    return begin;
+  }
 
-	@Override
-	public int read() throws IOException {
-		return buffer[position++];
-	}
+  @Override
+  public int read() throws IOException {
+    if (position >= buffer.length)
+      return -1;
 
-	@Override
-	public int read(final byte[] b) throws IOException {
-		return read(b, 0, b.length);
-	}
+    return buffer[position++] & 0xFF;
+  }
 
-	@Override
-	public int read(final byte[] b, final int off, final int len) throws IOException {
-		if (position >= buffer.length)
-			return 0;
+  @Override
+  public int read(final byte[] b) throws IOException {
+    return read(b, 0, b.length);
+  }
 
-		System.arraycopy(buffer, position, b, off, len);
-		position += len;
+  @Override
+  public int read(final byte[] b, final int off, final int len) throws IOException {
+    if (position >= buffer.length)
+      return -1;
 
-		return len;
-	}
+    int newLen;
+    if (position + len >= buffer.length)
+      newLen = buffer.length - position;
+    else
+      newLen = len;
 
-	public byte[] getAsByteArray(int iOffset) throws IOException {
-		if (buffer == null || iOffset >= buffer.length)
-			return null;
+    if (off + newLen >= b.length)
+      newLen = b.length - off;
 
-		final int size = OBinaryProtocol.bytes2int(buffer, iOffset);
+    if (newLen <= 0)
+      return 0;
 
-		if (size == 0)
-			return null;
+    System.arraycopy(buffer, position, b, off, newLen);
+    position += newLen;
 
-		iOffset += OBinaryProtocol.SIZE_INT;
+    return newLen;
+  }
 
-		return OArrays.copyOfRange(buffer, iOffset, iOffset + size);
-	}
+  public byte[] getAsByteArray(int iOffset) throws IOException {
+    if (buffer == null || iOffset >= buffer.length)
+      return null;
 
-	public byte[] getAsByteArray() throws IOException {
-		if (position >= buffer.length)
-			return null;
+    final int size = OBinaryProtocol.bytes2int(buffer, iOffset);
 
-		final int size = OBinaryProtocol.bytes2int(buffer, position);
-		position += OBinaryProtocol.SIZE_INT;
+    if (size == 0)
+      return null;
 
-		final byte[] portion = OArrays.copyOfRange(buffer, position, position + size);
-		position += size;
+    iOffset += OBinaryProtocol.SIZE_INT;
 
-		return portion;
-	}
+    return OArrays.copyOfRange(buffer, iOffset, iOffset + size);
+  }
 
-	public boolean getAsBoolean() throws IOException {
-		return buffer[position++] == 1;
-	}
+  public byte[] getAsByteArray() throws IOException {
+    if (position >= buffer.length)
+      return null;
 
-	public char getAsChar() throws IOException {
-		final char value = OBinaryProtocol.bytes2char(buffer, position);
-		position += OBinaryProtocol.SIZE_CHAR;
-		return value;
-	}
+    final int size = OBinaryProtocol.bytes2int(buffer, position);
+    position += OBinaryProtocol.SIZE_INT;
 
-	public byte getAsByte() throws IOException {
-		return buffer[position++];
-	}
+    final byte[] portion = OArrays.copyOfRange(buffer, position, position + size);
+    position += size;
 
-	public long getAsLong() throws IOException {
-		final long value = OBinaryProtocol.bytes2long(buffer, position);
-		position += OBinaryProtocol.SIZE_LONG;
-		return value;
-	}
+    return portion;
+  }
 
-	public int getAsInteger() throws IOException {
-		final int value = OBinaryProtocol.bytes2int(buffer, position);
-		position += OBinaryProtocol.SIZE_INT;
-		return value;
-	}
+  public boolean getAsBoolean() throws IOException {
+    return buffer[position++] == 1;
+  }
 
-	public short getAsShort() throws IOException {
-		final short value = OBinaryProtocol.bytes2short(buffer, position);
-		position += OBinaryProtocol.SIZE_SHORT;
-		return value;
-	}
+  public char getAsChar() throws IOException {
+    final char value = OBinaryProtocol.bytes2char(buffer, position);
+    position += OBinaryProtocol.SIZE_CHAR;
+    return value;
+  }
 
-	public void close() {
-		buffer = null;
-	}
+  public byte getAsByte() throws IOException {
+    return buffer[position++];
+  }
 
-	public byte peek() {
-		return buffer[position];
-	}
+  public long getAsLong() throws IOException {
+    final long value = OBinaryProtocol.bytes2long(buffer, position);
+    position += OBinaryProtocol.SIZE_LONG;
+    return value;
+  }
 
-	public void setSource(final byte[] iBuffer) {
-		buffer = iBuffer;
-		position = 0;
-	}
+  public int getAsInteger() throws IOException {
+    final int value = OBinaryProtocol.bytes2int(buffer, position);
+    position += OBinaryProtocol.SIZE_INT;
+    return value;
+  }
 
-	public OMemoryInputStream jump(final int iOffset) {
-		position += iOffset;
-		return this;
-	}
+  public short getAsShort() throws IOException {
+    final short value = OBinaryProtocol.bytes2short(buffer, position);
+    position += OBinaryProtocol.SIZE_SHORT;
+    return value;
+  }
 
-	public byte[] move(final int iOffset, final int iCopyToOffset) {
-		final byte[] copy = new byte[buffer.length - iOffset + iCopyToOffset];
-		System.arraycopy(buffer, iOffset, copy, iCopyToOffset, copy.length);
-		return copy;
-	}
+  public void close() {
+    buffer = null;
+  }
 
-	public byte[] copy() {
-		if (buffer == null)
-			return null;
+  public byte peek() {
+    return buffer[position];
+  }
 
-		final int size = position > 0 ? position : buffer.length;
+  public void setSource(final byte[] iBuffer) {
+    buffer = iBuffer;
+    position = 0;
+  }
 
-		final byte[] copy = new byte[size];
-		System.arraycopy(buffer, 0, copy, 0, size);
-		return copy;
-	}
+  public OMemoryInputStream jump(final int iOffset) {
+    position += iOffset;
+    return this;
+  }
 
-	public int getVariableSize() throws IOException {
-		if (position >= buffer.length)
-			return -1;
+  public byte[] move(final int iOffset, final int iCopyToOffset) {
+    final byte[] copy = new byte[buffer.length - iOffset + iCopyToOffset];
+    System.arraycopy(buffer, iOffset, copy, iCopyToOffset, copy.length);
+    return copy;
+  }
 
-		final int size = OBinaryProtocol.bytes2int(buffer, position);
-		position += OBinaryProtocol.SIZE_INT;
+  public byte[] copy() {
+    if (buffer == null)
+      return null;
 
-		return size;
-	}
+    final int size = position > 0 ? position : buffer.length;
 
-	public int getSize() {
-		return buffer.length;
-	}
+    final byte[] copy = new byte[size];
+    System.arraycopy(buffer, 0, copy, 0, size);
+    return copy;
+  }
 
-	public int getPosition() {
-		return position;
-	}
+  public int getVariableSize() throws IOException {
+    if (position >= buffer.length)
+      return -1;
+
+    final int size = OBinaryProtocol.bytes2int(buffer, position);
+    position += OBinaryProtocol.SIZE_INT;
+
+    return size;
+  }
+
+  public int getSize() {
+    return buffer.length;
+  }
+
+  public int getPosition() {
+    return position;
+  }
 }

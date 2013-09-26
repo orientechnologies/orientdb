@@ -91,7 +91,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
 
     OShortSerializer.INSTANCE.serializeInDirectMemory((short) r.getClusterId(), memory, pointer);
 
-    memory.set(pointer + OShortSerializer.SHORT_SIZE, r.getClusterPosition().toStream(), CLUSTER_POS_SIZE);
+    memory.set(pointer + OShortSerializer.SHORT_SIZE, r.getClusterPosition().toStream(), 0, CLUSTER_POS_SIZE);
   }
 
   @Override

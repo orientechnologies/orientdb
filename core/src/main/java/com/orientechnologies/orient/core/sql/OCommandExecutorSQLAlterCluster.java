@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -39,7 +41,7 @@ import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest{
+public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER   = "ALTER";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
@@ -52,8 +54,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 
@@ -125,6 +126,9 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
     try {
       cluster.set(attribute, value);
+      final OStorage storage = getDatabase().getStorage();
+      if (storage instanceof OLocalPaginatedStorage)
+        ((OLocalPaginatedStorage) storage).makeFullCheckpoint();
     } catch (IOException ioe) {
       throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
     }
