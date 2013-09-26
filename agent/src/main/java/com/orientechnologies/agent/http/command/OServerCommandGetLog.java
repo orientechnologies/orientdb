@@ -17,8 +17,13 @@ package com.orientechnologies.agent.http.command;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +45,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 	private static final String		FILE					= "file";
 
 	private static final String		SEARCH				= "search";
-	
-	private static final String		ALLFILES				= "files";
-	
-	
+
+	private static final String		ALLFILES			= "files";
 
 	SimpleDateFormat							dateFormatter	= new SimpleDateFormat("yyyy-MM-dd");
 
@@ -69,6 +72,32 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 
 		String logType = iRequest.getParameter("logtype");
 
+		String dateFrom = iRequest.getParameter("dateFrom");
+
+		String dateTo = iRequest.getParameter("dateTo");
+
+		String hourFrom = iRequest.getParameter("hourFrom");
+
+		String hourTo = iRequest.getParameter("hourTo");
+
+		Date dFrom = null;
+		if (dateFrom != null) {
+			dFrom = new Date(new Long(dateFrom));
+			setDateNoTime(dFrom);
+		}
+		Time hFrom = null;
+		if (hourFrom != null) {
+			hFrom = setTimeFromParameter(hourFrom);
+		}
+		Date dTo = null;
+		if (dateTo != null) {
+			dTo = new Date(new Long(dateTo));
+			setDateNoTime(dTo);
+		}
+		Time hTo = null;
+		if (hourTo != null) {
+			hTo = setTimeFromParameter(hourTo);
+		}
 		String orientdb_home = System.getenv("ORIENTDB_HOME");
 
 		orientdb_home = "/home/marco/Documenti/Lavoro/orientbi";
@@ -101,175 +130,26 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		if (TAIL.equals(type)) {
 
 			// if tail it must be a size
-			if (size == null) {
-				return false;
-			}
-			Integer valueInt = new Integer(size);
-			File f = files[0];
-			BufferedReader br = new BufferedReader(new FileReader(f));
-			valueInt = new Integer(size);
-			for (int i = 0; i < valueInt && line != null; i++) {
-				line = br.readLine();
-				if (line != null) {
-					String[] split = line.split(" ");
-					if (split != null) {
-						Date day = null;
-
-						try {
-
-							day = dateFormatter.parse(split[0]);
-							// trying to create a Date
-							if (doc.field("day") != null) {
-								doc.field("info", info);
-								doc.field("file", f.getName());
-								checkInsertForTail(value, logType, subdocuments, typeToDoc, info, doc);
-								doc = new ODocument();
-							}
-
-							// Created new Doc
-							dayToDoc = split[0];
-							hour = split[1];
-							typeToDoc = split[2];
-
-							if (doc.field("day") == null) {
-								doc = new ODocument();
-								addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-							}
-							line = line.replace(split[0], "");
-							line = line.replace(split[1], "");
-							line = line.replace(split[2], "");
-							info = line;
-
-						} catch (Exception e) {
-							// stack trace
-							info = info.concat(line);
-						}
-					}
-				} else {
-					if (doc.field("day") != null) {
-						addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-						doc.field("info", info);
-						doc.field("file", f.getName());
-						checkInsertForTail(value, logType, subdocuments, typeToDoc, info, doc);
-					}
-				}
-			}
-			br.close();
+			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[0]);
 		} else if (FILE.equals(type)) {
 			Integer valueInt = new Integer(value);
 			File f = files[new Integer(valueInt)];
-			BufferedReader br = new BufferedReader(new FileReader(f));
-			while (line != null) {
-				line = br.readLine();
-				if (line != null) {
-					String[] split = line.split(" ");
-					if (split != null) {
-						Date day = null;
-
-						try {
-
-							day = dateFormatter.parse(split[0]);
-							if (doc.field("day") != null) {
-								doc.field("info", info);
-								subdocuments.add(doc);
-								doc.field("file", f.getName());
-								doc = new ODocument();
-							}
-
-							dayToDoc = split[0];
-							hour = split[1];
-							typeToDoc = split[2];
-
-							if (doc.field("day") == null) {
-								doc = new ODocument();
-								addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-							}
-							line = line.replace(split[0], "");
-							line = line.replace(split[1], "");
-							line = line.replace(split[2], "");
-							info = line;
-
-						} catch (Exception e) {
-							info = info.concat(line);
-						}
-					}
-
-				} else {
-					if (doc.field("day") != null) {
-						addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-						doc.field("info", info);
-						doc.field("file", f.getName());
-						subdocuments.add(doc);
-					}
-				}
-
-			}
-			br.close();
+			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, f);
 		} else if (SEARCH.equals(type)) {
-
 			for (int i = 0; i < files.length - 1; i++) {
 				line = "";
-				BufferedReader br = new BufferedReader(new FileReader(files[i]));
-				while (line != null) {
-					line = br.readLine();
-					if (line != null) {
-						String[] split = line.split(" ");
-						if (split != null) {
-							Date day = null;
-
-							try {
-
-								day = dateFormatter.parse(split[0]);
-								if (doc.field("day") != null) {
-									doc.field("info", info);
-									if (info.contains(value)) {
-										doc.field("file", files[i].getName());
-										subdocuments.add(doc);
-									}
-									doc = new ODocument();
-								}
-
-								dayToDoc = split[0];
-								hour = split[1];
-								typeToDoc = split[2];
-
-								if (doc.field("day") == null) {
-									doc = new ODocument();
-									addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-								}
-								line = line.replace(split[0], "");
-								line = line.replace(split[1], "");
-								line = line.replace(split[2], "");
-								info = line;
-
-							} catch (Exception e) {
-								info = info.concat(line);
-							}
-						}
-
-					} else {
-						if (doc.field("day") != null) {
-							addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
-							doc.field("info", info);
-							if (info.contains(value)) {
-								doc.field("file", files[i].getName());
-								subdocuments.add(doc);
-							}
-						}
-					}
-				}
-
+				insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
 			}
 
-		}else if (ALLFILES.equals(type)) {
+		} else if (ALLFILES.equals(type)) {
 			for (int i = 0; i < files.length - 1; i++) {
 				doc = new ODocument();
 				files[i].getName();
 				doc.field("name", files[i].getName());
 				subdocuments.add(doc);
-				
+
 			}
-			
+
 			result.field("files", subdocuments);
 			iResponse.writeRecord(result, null, "");
 
@@ -284,22 +164,134 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		return false;
 	}
 
-	private void checkInsertForTail(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info, ODocument doc) {
-		if (value == null && logType == null) {
-			subdocuments.add(doc);
-			return;
-		} else if (value != null && logType != null) {
-			if (info.toLowerCase().contains(value.toLowerCase()) && typeToDoc.equalsIgnoreCase(logType)) {
-				subdocuments.add(doc);
-				return;
+	private void insertFromFile(String value, String size, String logType, Date dFrom, Time hFrom, Date dTo, Time hTo, File[] files, List<ODocument> subdocuments, String line,
+			String dayToDoc, String hour, String typeToDoc, String info, ODocument doc, File file) throws FileNotFoundException, IOException {
+		// Integer valueInt = new Integer(size);
+		// valueInt = new Integer(size);
+		File f = file;
+		BufferedReader br = new BufferedReader(new FileReader(f));
+		Date day = null;
+		// for (int i = 0; i < valueInt && line != null; i++) {
+		while (line != null) {
+			line = br.readLine();
+			if (line != null) {
+				String[] split = line.split(" ");
+				if (split != null) {
+
+					try {
+
+						day = dateFormatter.parse(split[0]);
+
+						// trying to create a Date
+						if (doc.field("day") != null) {
+							doc.field("info", info);
+							doc.field("file", f.getName());
+							checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hFrom, hour, dTo, hTo);
+							doc = new ODocument();
+						}
+
+						// Created new Doc
+						dayToDoc = split[0];
+						hour = split[1];
+
+						typeToDoc = split[2];
+
+						if (doc.field("day") == null) {
+							doc = new ODocument();
+							addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+						}
+						line = line.replace(split[0], "");
+						line = line.replace(split[1], "");
+						line = line.replace(split[2], "");
+						info = line;
+
+					} catch (Exception e) {
+						// stack trace
+						info = info.concat(line);
+					}
+				}
+			} else {
+				if (doc.field("day") != null) {
+					addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
+					doc.field("info", info);
+					doc.field("file", f.getName());
+					checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hFrom, hour, dTo, hTo);
+				}
 			}
-		} else if (logType != null && typeToDoc.equalsIgnoreCase(logType)) {
-			subdocuments.add(doc);
-			return;
-		} else if (value != null && info.toLowerCase().contains(value.toLowerCase())) {
+		}
+		br.close();
+	}
+
+	private Time setTimeFromParameter(String hourFrom) throws UnsupportedEncodingException {
+		Time hFrom;
+		hourFrom = URLDecoder.decode(hourFrom, "UTF-8");
+		String[] splitHourFrom = hourFrom.split(" ");
+		String[] hoursMinutes = splitHourFrom[0].split(":");
+		Integer h = new Integer(hoursMinutes[0]);
+		if (splitHourFrom[1].equals("PM"))
+			h = h + 12;
+		Integer m = new Integer(hoursMinutes[1]);
+		hFrom = new Time(h, m, 0);
+		return hFrom;
+	}
+
+	private void setDateNoTime(Date dFrom) {
+		dFrom.setHours(0);
+		dFrom.setMinutes(0);
+		dFrom.setSeconds(0);
+	}
+
+	private Time setTime(String hour) {
+		if (hour == null)
+			return null;
+		Integer h = new Integer(hour.split(":")[0]);
+		Integer m = new Integer(hour.split(":")[1]);
+		Integer s = new Integer(0);
+		Time result = new Time(h, m, s);
+		return result;
+	}
+
+	private void checkInsert(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info, ODocument doc, Date dFrom, Date day, Time hFrom, String hour,
+			Date dTo, Time hTo) {
+		Time tHour = setTime(hour);
+
+		if (value == null && logType == null && dFrom == null && hFrom == null && dTo == null && hTo == null) {
 			subdocuments.add(doc);
 			return;
 		}
+
+		// check Date and Hour From
+		if (dFrom != null) {
+			if (!(day.equals(dFrom) || day.after(dFrom))) {
+				return;
+			} else if (hFrom != null) {
+				if (day.equals(dFrom) && !(tHour.after(hFrom) || tHour.equals(hFrom))) {
+					return;
+				}
+			}
+		}
+		// check Date and Hour TO
+		if (dTo != null) {
+			if (!(day.equals(dTo) || day.before(dTo))) {
+				return;
+			} else if (hTo != null) {
+				if (day.equals(dTo) && !(tHour.before(hTo) || tHour.equals(hTo))) {
+					return;
+				}
+			}
+		}
+		if (value != null) {
+			if (!(info.toLowerCase().contains(value.toLowerCase()))) {
+				return;
+			}
+		}
+		if (logType != null) {
+			if (!(typeToDoc.equalsIgnoreCase(logType))) {
+				return;
+			}
+		}
+		subdocuments.add(doc);
+		return;
 	}
 
 	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc, ODocument doc) {
