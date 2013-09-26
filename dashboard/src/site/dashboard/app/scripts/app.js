@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('MonitorApp', ['ngI18n', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives'])
+angular.module('MonitorApp', ['ngI18n','workbench-logs.controller', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives'])
 .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
@@ -38,7 +38,7 @@ angular.module('MonitorApp', ['ngI18n', 'monitor.services', 'ui-nvd3', 'ngMoment
             })
             .when('/dashboard/log/:rid', {
                 templateUrl: 'views/server/log.html',
-                controller: 'ServerMonitorController'
+                controller: 'LogsController'
             })
 
 
