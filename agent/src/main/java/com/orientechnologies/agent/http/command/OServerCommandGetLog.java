@@ -60,12 +60,11 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-
+		
 		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: log/<type>?<value>");
 
 		String type = urlParts[1]; // the type of the log tail search or file
 
-		// String value = urlParts[2];
 		String value = iRequest.getParameter("searchvalue");
 
 		String size = iRequest.getParameter("size");
@@ -79,6 +78,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		String hourFrom = iRequest.getParameter("hourFrom");
 
 		String hourTo = iRequest.getParameter("hourTo");
+		
+		String selectedFile = iRequest.getParameter("file");
 
 		Date dFrom = null;
 		if (dateFrom != null) {
@@ -128,19 +129,17 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		ODocument doc = new ODocument();
 
 		if (TAIL.equals(type)) {
-
-			// if tail it must be a size
 			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[0]);
 		} else if (FILE.equals(type)) {
-			Integer valueInt = new Integer(value);
-			File f = files[new Integer(valueInt)];
-			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, f);
+			for(int i = 0 ; i<files.length-1;i++){
+				if(files[i].getName().equals(selectedFile))
+					insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
+			}
 		} else if (SEARCH.equals(type)) {
 			for (int i = 0; i < files.length - 1; i++) {
 				line = "";
 				insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
 			}
-
 		} else if (ALLFILES.equals(type)) {
 			for (int i = 0; i < files.length - 1; i++) {
 				doc = new ODocument();
@@ -259,26 +258,17 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 			subdocuments.add(doc);
 			return;
 		}
-
 		// check Date and Hour From
-		if (dFrom != null) {
-			if (!(day.equals(dFrom) || day.after(dFrom))) {
-				return;
-			} else if (hFrom != null) {
-				if (day.equals(dFrom) && !(tHour.after(hFrom) || tHour.equals(hFrom))) {
-					return;
-				}
-			}
+		if (dFrom != null && day.before(dFrom))
+			return;
+		if (hFrom != null && tHour.before(hFrom)) {
+			return;
 		}
 		// check Date and Hour TO
-		if (dTo != null) {
-			if (!(day.equals(dTo) || day.before(dTo))) {
-				return;
-			} else if (hTo != null) {
-				if (day.equals(dTo) && !(tHour.before(hTo) || tHour.equals(hTo))) {
-					return;
-				}
-			}
+		if (dTo != null && day.after(dTo))
+			return;
+		if (hTo != null && tHour.after(hTo)) {
+			return;
 		}
 		if (value != null) {
 			if (!(info.toLowerCase().contains(value.toLowerCase()))) {
