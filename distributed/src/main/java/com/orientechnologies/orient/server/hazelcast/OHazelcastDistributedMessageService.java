@@ -129,9 +129,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
               "received response for message %d after the timeout (%dms)", reqId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
-      }
-
-      if (asynchMgr.addResponse(response))
+      } else if (asynchMgr.addResponse(response))
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER
         responsesByRequestIds.remove(reqId);
 
