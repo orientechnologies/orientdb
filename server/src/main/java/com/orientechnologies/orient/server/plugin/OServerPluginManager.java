@@ -139,7 +139,7 @@ public class OServerPluginManager implements OService {
   protected String updatePlugin(final File pluginFile) {
     final String pluginFileName = pluginFile.getName();
 
-    if (!pluginFile.isDirectory() && !pluginFileName.endsWith(".jar"))
+    if (!pluginFile.isDirectory() && !pluginFileName.endsWith(".jar") && !pluginFileName.endsWith(".zip"))
       // SKIP IT
       return null;
 
@@ -180,7 +180,7 @@ public class OServerPluginManager implements OService {
 
       if (pluginConfigFile == null || pluginConfigFile.available() == 0) {
         // JAVA7 ONLY
-        //pluginClassLoader.close();
+        // pluginClassLoader.close();
         OLogManager.instance().error(this, "Error on loading plugin.json for dynamic plugin '%s'", pluginName);
         throw new IllegalArgumentException(String.format("Error on loading plugin.json for dynamic plugin '%s'", pluginName));
       }
