@@ -42,6 +42,7 @@ public abstract class OServerCommandAuthenticatedServerAbstract extends OServerC
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws IOException {
+    super.beforeExecute(iRequest, iResponse);
     return authenticate(iRequest, iResponse, true);
   }
 

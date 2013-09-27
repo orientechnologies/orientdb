@@ -46,6 +46,7 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
       return super.beforeExecute(iRequest, iResponse);
 
     // USER+PASSWD AS PARAMETERS
+    setNoCache(iResponse);
     return true;
   }
 

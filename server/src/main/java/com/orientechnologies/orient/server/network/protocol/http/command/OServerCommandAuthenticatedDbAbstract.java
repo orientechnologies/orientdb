@@ -55,6 +55,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    super.beforeExecute(iRequest, iResponse);
+    
     final String[] urlParts = iRequest.url.substring(1).split("/");
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
