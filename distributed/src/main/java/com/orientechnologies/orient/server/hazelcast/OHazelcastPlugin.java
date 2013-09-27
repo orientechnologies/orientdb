@@ -106,6 +106,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (nodeName == null) {
       // GENERATE NODE NAME
       nodeName = "node" + System.currentTimeMillis();
+      OLogManager.instance().warn(this, "Generating new node name for current node: %s", nodeName);
 
       // SALVE THE NODE NAME IN CONFIGURATION
       boolean found = false;
