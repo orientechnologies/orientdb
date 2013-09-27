@@ -1,13 +1,17 @@
 package com.orientechnologies.orient.graph.handler;
 
+import javax.script.Bindings;
+
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
+import com.orientechnologies.orient.graph.script.OScriptGraphOrientWrapper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OGraphServerHandler extends OServerPluginAbstract {
+public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
   private boolean enabled      = true;
   private int     graphPoolMax = OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger();
 
@@ -46,5 +50,15 @@ public class OGraphServerHandler extends OServerPluginAbstract {
       return;
 
     OGremlinHelper.global().destroy();
+  }
+
+  @Override
+  public void bind(Bindings binding) {
+    binding.put("orient", new OScriptGraphOrientWrapper());
+  }
+
+  @Override
+  public void unbind(Bindings binding) {
+    binding.remove("orient");
   }
 }

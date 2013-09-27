@@ -187,6 +187,7 @@ public class OScriptManager {
       // BIND FIXED VARIABLES
       binding.put("db", new OScriptDocumentDatabaseWrapper(db));
       binding.put("gdb", new OScriptGraphDatabaseWrapper(db));
+      binding.put("orient", new OScriptOrientWrapper(db));
     }
     binding.put("util", new OFunctionUtilWrapper(null));
 
