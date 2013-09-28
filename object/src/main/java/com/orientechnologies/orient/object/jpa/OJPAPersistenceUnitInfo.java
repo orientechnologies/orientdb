@@ -17,7 +17,6 @@ import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
 
 import com.orientechnologies.orient.object.jpa.parsing.JPAVersion;
-import com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil;
 
 /**
  * An implementation of PersistenceUnit for parsed persistence unit metadata
@@ -35,9 +34,10 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 	private final PersistenceUnitTransactionType	transactionType;
 
 	/**
-	 * 
+	 * The JAR file or directory whose META-INF directory contains persistence.xml is called the root of the persistence unit. The
+	 * scope of the persistence unit is determined by the persistence unit’s root.
 	 */
-	private URL																		unitRootUrl;
+	private final URL															unitRootUrl;
 	/**
 	 * the list of mapping file names that the persistence provider must load to determine the mappings for the entity classes
 	 */
@@ -96,20 +96,19 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 	 *          must not be null
 	 * @param transactionType
 	 *          may be null
+	 * @param unitRootUrl
+	 *          root of the persistence unit
 	 * @param schemaVersion
 	 *          The version of the JPA schema used in persistence.xml
 	 */
-	public OJPAPersistenceUnitInfo(String unitName, String transactionType, String xmlSchemaVersion) {
+	public OJPAPersistenceUnitInfo(String unitName, String transactionType, URL unitRootUrl, String xmlSchemaVersion) {
 		this.unitName = unitName;
+		this.unitRootUrl = unitRootUrl;
 		if (unitName == null || unitName.isEmpty()) {
 			throw new IllegalStateException("PersistenceUnitName for entity manager should not be null or empty");
 		}
 		this.xmlSchemaVersion = JPAVersion.parse(xmlSchemaVersion);
 		this.transactionType = initTransactionType(transactionType);
-		try {
-			unitRootUrl = new URL("file:///" + PersistenceXmlUtil.PERSISTENCE_XML_ROOT);
-		} catch (MalformedURLException e) {
-		}
 	}
 
 	/**
