@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.object.jpa;
 
-import java.net.MalformedURLException;
+import static com.orientechnologies.orient.core.entity.OEntityManager.getEntityManagerByDatabaseURL;
+import static com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil.PERSISTENCE_XML;
+
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
@@ -26,48 +28,51 @@ import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.ProviderUtil;
 
+import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.object.jpa.parsing.PersistenceXmlUtil;
 
 @SuppressWarnings("rawtypes")
 public class OJPAPersistenceProvider implements PersistenceProvider {
 	/** the log used by this class. */
-	private static Logger															logger	= Logger.getLogger(PersistenceXmlUtil.class.getName());
-	private Collection<? extends PersistenceUnitInfo>	persistenceUnits;
+	private static Logger															logger						= Logger.getLogger(OJPAPersistenceProvider.class.getName());
+
+	private Collection<? extends PersistenceUnitInfo>	persistenceUnits	= null;
 
 	public OJPAPersistenceProvider() {
+		URL persistenceXml = Thread.currentThread().getContextClassLoader().getResource(PERSISTENCE_XML);
 		try {
-			URL persistenceUnitRootUrl = new URL("file://" + PersistenceXmlUtil.PERSISTENCE_XML);
-			persistenceUnits = PersistenceXmlUtil.parse(persistenceUnitRootUrl);
-		} catch (MalformedURLException e) {
-			logger.severe(e.getMessage());
+			persistenceUnits = PersistenceXmlUtil.parse(persistenceXml);
+		} catch (Exception e) {
+			logger.info("Can't parse '" + PERSISTENCE_XML + "' :" + e.getMessage());
 		}
 	}
 
 	@Override
-	public EntityManagerFactory createEntityManagerFactory(String emName, Map map) {
+	public synchronized EntityManagerFactory createEntityManagerFactory(String emName, Map map) {
 		if (emName == null) {
 			throw new IllegalStateException("Name of the persistence unit should not be null");
 		}
 
-		synchronized (emName) {
-			PersistenceUnitInfo unitInfo = PersistenceXmlUtil.findPersistenceUnit(emName, persistenceUnits);
-			return createContainerEntityManagerFactory(unitInfo, map);
-		}
+		PersistenceUnitInfo unitInfo = PersistenceXmlUtil.findPersistenceUnit(emName, persistenceUnits);
+		return createContainerEntityManagerFactory(unitInfo, map);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public EntityManagerFactory createContainerEntityManagerFactory(PersistenceUnitInfo info, Map map) {
-		if (info == null || info.getPersistenceUnitName() == null) {
-			throw new IllegalStateException("Name of the persistence unit should not be null");
+	public synchronized EntityManagerFactory createContainerEntityManagerFactory(PersistenceUnitInfo info, Map map) {
+
+		OJPAProperties properties = ((info == null) ? new OJPAProperties() : (OJPAProperties) info.getProperties());
+
+		// Override parsed properties with user specified
+		if (map != null && !map.isEmpty()) {
+			properties.putAll(map);
 		}
 
-		synchronized (info) {
-			if (map != null && !map.isEmpty()) {
-				info.getProperties().putAll(map);
-			}
-			return new OJPAEntityManagerFactory((OJPAProperties) info.getProperties());
-		}
+		// register entities from <class> tag
+		OEntityManager entityManager = getEntityManagerByDatabaseURL(properties.getURL());
+		entityManager.registerEntityClasses(info.getManagedClassNames());
+
+		return new OJPAEntityManagerFactory(properties);
 	}
 
 	@Override

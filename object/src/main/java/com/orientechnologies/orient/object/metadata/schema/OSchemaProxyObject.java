@@ -202,7 +202,7 @@ public class OSchemaProxyObject implements OSchema {
 
     List<Class<?>> classes = null;
     try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+      classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
       throw new OException(e);
     }

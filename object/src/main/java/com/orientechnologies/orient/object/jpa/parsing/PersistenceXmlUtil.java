@@ -31,18 +31,20 @@ public final class PersistenceXmlUtil {
 	/**
 	 * URI for the JPA persistence namespace
 	 */
-	public static final String						PERSISTENCE_NS_URI		= "http://java.sun.com/xml/ns/persistence";
+	public static final String						PERSISTENCE_NS_URI				= "http://java.sun.com/xml/ns/persistence";
 
-	private final static SchemaFactory		schemaFactory					= SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-	private final static SAXParserFactory	parserFactory					= SAXParserFactory.newInstance();
+	private final static SchemaFactory		schemaFactory							= SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
+	private final static SAXParserFactory	parserFactory							= SAXParserFactory.newInstance();
 	static {
 		parserFactory.setNamespaceAware(true);
 	}
 	/** The persistence xml root */
-	public static final String						PERSISTENCE_XML_ROOT	= "META-INF";
-	public static final String						PERSISTENCE_XSD_DIR		= PERSISTENCE_XML_ROOT + "/persistence";
-	/** The persistence xml location */
-	public static final String						PERSISTENCE_XML				= PERSISTENCE_XML_ROOT + "persistence.xml";
+	public static final String						PERSISTENCE_XML_ROOT			= "META-INF/";
+	public static final String						PERSISTENCE_XML_BASE_NAME	= "persistence.xml";
+	/** The persistence XSD location */
+	public static final String						PERSISTENCE_XSD_DIR				= PERSISTENCE_XML_ROOT + "persistence/";
+	/** The persistence XML location */
+	public static final String						PERSISTENCE_XML						= PERSISTENCE_XML_ROOT + PERSISTENCE_XML_BASE_NAME;
 
 	private PersistenceXmlUtil() {
 	}
@@ -51,9 +53,13 @@ public final class PersistenceXmlUtil {
 	 * Parse the persistence.xml files referenced by the URLs in the collection
 	 * 
 	 * @param persistenceXml
-	 * @return A collection of parsed persistence units.
+	 * @return A collection of parsed persistence units, or null if nothing has been found
 	 */
 	public static PersistenceUnitInfo findPersistenceUnit(String unitName, Collection<? extends PersistenceUnitInfo> units) {
+		if (units == null || unitName == null) {
+			return null;
+		}
+
 		for (PersistenceUnitInfo unit : units) {
 			if (unitName.equals(unit.getPersistenceUnitName())) {
 				return unit;
@@ -81,7 +87,8 @@ public final class PersistenceXmlUtil {
 			is = new BufferedInputStream(persistenceXml.openStream());
 			is.mark(Integer.MAX_VALUE);
 
-			Schema schema = getSchema(is);
+			JPAVersion jpaVersion = getSchemaVersion(is);
+			Schema schema = getSchema(jpaVersion);
 
 			if (schema == null) {
 				throw new PersistenceException("Schema is unknown");
@@ -90,9 +97,12 @@ public final class PersistenceXmlUtil {
 			// Get back to the beginning of the stream
 			is.reset();
 
-			// parserFactory.setSchema(schema);
 			parserFactory.setNamespaceAware(true);
-			return getPersistenceUnits(is);
+			
+			int endIndex = persistenceXml.getPath().length() - PERSISTENCE_XML_BASE_NAME.length();
+			URL persistenceXmlRoot = new URL("file://" + persistenceXml.getFile().substring(0, endIndex));
+
+			return getPersistenceUnits(is, persistenceXmlRoot, jpaVersion);
 		} catch (Exception e) {
 			throw new PersistenceException("Something goes wrong while parsing persistence.xml", e);
 		} finally {
@@ -105,21 +115,21 @@ public final class PersistenceXmlUtil {
 		}
 	}
 
-	public static Schema getSchema(String schemaVersion) throws SAXException {
-		JPAVersion version = JPAVersion.parse(schemaVersion);
-		String schemaPath = PERSISTENCE_XSD_DIR + '/' + version.getFilename();
+	public static Schema getSchema(JPAVersion version) throws SAXException {
+		String schemaPath = PERSISTENCE_XSD_DIR + version.getFilename();
 		InputStream inputStream = PersistenceXmlUtil.class.getClassLoader().getResourceAsStream(schemaPath);
 		return schemaFactory.newSchema(new StreamSource(inputStream));
 	}
 
-	public static Schema getSchema(InputStream is) throws ParserConfigurationException, SAXException, IOException {
+	public static JPAVersion getSchemaVersion(InputStream is) throws ParserConfigurationException, SAXException, IOException {
 		SchemaLocatingHandler schemaHandler = parse(is, new SchemaLocatingHandler());
-		return getSchema(schemaHandler.getVersion());
+		return JPAVersion.parse(schemaHandler.getVersion());
 	}
 
-	public static Collection<? extends PersistenceUnitInfo> getPersistenceUnits(InputStream is) throws ParserConfigurationException,
-			SAXException, IOException {
-		return parse(is, new JPAHandler()).getPersistenceUnits();
+	public static Collection<? extends PersistenceUnitInfo> getPersistenceUnits(InputStream is, URL xmlRoot,
+ JPAVersion version) throws ParserConfigurationException, SAXException, IOException {
+		JPAHandler handler = new JPAHandler(xmlRoot, version);
+		return parse(is, handler).getPersistenceUnits();
 	}
 
 	/**

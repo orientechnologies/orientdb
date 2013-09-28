@@ -11,6 +11,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -28,7 +29,17 @@ import com.orientechnologies.common.log.OLogManager;
 public class OReflectionHelper {
   private static final String CLASS_EXTENSION = ".class";
 
-  public static List<Class<?>> getClassesForPackage(final String iPackageName, final ClassLoader iClassLoader)
+
+  public static List<Class<?>> getClassesFor(final Collection<String> classNames, final ClassLoader classLoader)
+      throws ClassNotFoundException {
+    List<Class<?>> classes = new ArrayList<Class<?>>(classNames.size());
+    for (String className : classNames) {
+      classes.add(Class.forName(className, true, classLoader));
+    }
+    return classes;
+  }
+  
+  public static List<Class<?>> getClassesFor(final String iPackageName, final ClassLoader iClassLoader)
       throws ClassNotFoundException {
     // This will hold a list of directories matching the pckgname.
     // There may be more than one if a package is split over multiple jars/paths
@@ -136,7 +147,7 @@ public class OReflectionHelper {
   public static List<Class<?>> getClassessOfInterface(String thePackage, Class<?> theInterface, final ClassLoader iClassLoader) {
     List<Class<?>> classList = new ArrayList<Class<?>>();
     try {
-      for (Class<?> discovered : getClassesForPackage(thePackage, iClassLoader)) {
+      for (Class<?> discovered : getClassesFor(thePackage, iClassLoader)) {
         if (Arrays.asList(discovered.getInterfaces()).contains(theInterface)) {
           classList.add(discovered);
         }
