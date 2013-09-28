@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -283,8 +284,12 @@ public class OClassTrigger extends ODocumentHookAbstract {
     for (OScriptInjection i : scriptManager.getInjections())
       i.bind(binding);
     binding.put("doc", iDocument);
-    if (db != null)
+    if (db != null) {
       binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
+      binding.put("orient", new OScriptOrientWrapper(db));
+    } else
+      binding.put("orient", new OScriptOrientWrapper());
+
     // scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
 
     String result = null;

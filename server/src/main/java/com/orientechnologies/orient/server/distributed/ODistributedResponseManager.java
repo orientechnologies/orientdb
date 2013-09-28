@@ -105,8 +105,7 @@ public class ODistributedResponseManager {
 
     // TODO: CHECK FOR CONFLICTS
 
-    final boolean completed = getExpectedResponses() == receivedResponses;
-    if (completed) {
+    if (receivedResponses >= expectedSynchronousResponses) {
       // NOTIFY WAITER THE RESPONSE IS COMPLETE NOW
       lock.lock();
       try {
@@ -116,7 +115,7 @@ public class ODistributedResponseManager {
       }
     }
 
-    return completed;
+    return getExpectedResponses() == receivedResponses;
   }
 
   public long getMessageId() {
