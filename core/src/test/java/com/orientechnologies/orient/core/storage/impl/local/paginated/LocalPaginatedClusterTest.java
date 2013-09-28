@@ -185,7 +185,7 @@ public class LocalPaginatedClusterTest {
   }
 
   public void testAddManyBigRecords() throws IOException {
-    final int records = 10000;
+    final int records = 5000;
 
     long seed = System.currentTimeMillis();
     MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
@@ -308,7 +308,7 @@ public class LocalPaginatedClusterTest {
   }
 
   public void testRemoveHalfBigRecords() throws IOException {
-    final int records = 10000;
+    final int records = 5000;
     long seed = System.currentTimeMillis();
     MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
 
@@ -628,7 +628,7 @@ public class LocalPaginatedClusterTest {
   }
 
   public void testUpdateManyBigRecords() throws IOException {
-    final int records = 10000;
+    final int records = 5000;
 
     long seed = System.currentTimeMillis();
     MersenneTwisterFast mersenneTwisterFast = new MersenneTwisterFast(seed);
