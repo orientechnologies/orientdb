@@ -21,10 +21,11 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
 
     if (!$scope.doc) {
         $scope.reload();
+
     } else {
+
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
-        //$scope.incomings = Database.getEdge($scope.doc, 'in');
         $scope.outgoings = Database.getEdge($scope.doc, 'out');
         $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
     }
@@ -100,6 +101,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
                 types = name + '=' + Database.getMappingFor(type);
             }
             $scope.doc['@fieldTypes'] = types;
+            $scope.$broadcast('fieldAdded',name);
             $scope.headers.push(name);
         }
     }
@@ -229,11 +231,11 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
     $scope.reload = function () {
 
         $scope.doc = DocumentApi.get({ database: $scope.database, document: $scope.rid}, function () {
-            $scope.headers = Database.getPropertyFromDoc($scope.doc);
+            /*$scope.headers = Database.getPropertyFromDoc($scope.doc);
             $scope.isGraph = Database.isGraph($scope.doc['@class']);
             $scope.incomings = Database.getEdge($scope.doc, 'in_');
             $scope.outgoings = Database.getEdge($scope.doc, 'out_');
-            $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
+            $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));*/
         }, function (error) {
             Notification.push({content: JSON.stringify(error)});
             $location.path('404');
@@ -293,6 +295,8 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
                 }
                 $scope.doc['@fieldTypes'] = types;
             }
+
+            $scope.$broadcast('fieldAdded',name);
             $scope.headers.push(name);
         } else {
             var modalScope = $scope.$new(true);

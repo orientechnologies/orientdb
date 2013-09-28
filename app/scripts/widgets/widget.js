@@ -33,7 +33,7 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         }
         formScope.getTemplate = function (header) {
             if (formScope.doc['@class']) {
-                var type = findType(formScope, header)
+                var type = findType(formScope, header);
                 if (type) {
                     return 'views/widget/' + type.toLowerCase() + '.html';
                 }
@@ -102,13 +102,16 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             }
             reader.readAsDataURL(files[0]);
         }
-        scope.$watch("headers",function(data){
-
-            data.forEach(function(elem,idx,array){
-                formScope.fieldTypes[elem] = formScope.getTemplate(elem);
-            }) ;
-            console.log(formScope.fieldTypes);
-            formScope.headers = data;
+        scope.$on('fieldAdded',function(event,field){
+            formScope.fieldTypes[field] = formScope.getTemplate(field);
+        });
+        scope.$parent.$watch("headers", function (data) {
+            if (data) {
+                data.forEach(function (elem, idx, array) {
+                    formScope.fieldTypes[elem] = formScope.getTemplate(elem);
+                });
+                formScope.headers = data;
+            }
 
         });
         var el = angular.element($compile(response.data)(formScope));
@@ -133,7 +136,7 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         if (!property) {
 
             var fieldTypes = scope.doc['@fieldTypes'];
-            var type = Database.findTypeFromFieldTipes(scope.doc,name);
+            var type = Database.findTypeFromFieldTipes(scope.doc, name);
             if (!type)
                 type = guessType(scope.doc[name])
             property = new Object;
