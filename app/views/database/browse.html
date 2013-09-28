@@ -92,9 +92,14 @@
             </div>
         </div>
     </div>
+    <!--<div ng-hide="table">-->
+        <!--<div class="row-fluid viewJson">-->
+            <!--<textarea jsontext ui-codemirror="viewerOptions" ng-model='rawData'></textarea>-->
+        <!--</div>-->
+    <!--</div>-->
     <div ng-hide="table">
-        <div class="row-fluid viewJson">
-            <textarea jsontext ui-codemirror="viewerOptions" ng-model='rawData'></textarea>
+        <div class="row-fluid">
+            <textarea ng-model='rawData' style="width: 100%; height: 100px;"></textarea>
         </div>
     </div>
 </div>

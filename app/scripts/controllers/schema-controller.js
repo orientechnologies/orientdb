@@ -86,60 +86,52 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 
 
 }]);
-schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route) {
-
+schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi) {
 
     var clazz = $routeParams.clazz;
 
     $scope.class2show = clazz;
 
     $scope.database = Database;
-
-
-    $scope.listClasses = $scope.database.listNameOfClasses();
+    $scope.database.refreshMetadata($routeParams.database);
+    $scope.modificati = undefined;
 
 
     $scope.limit = 20;
     $scope.queries = new Array;
 
     $scope.classClickedHeaders = ['name', 'type', 'linkedType', 'linkedClass', 'mandatory', 'readonly', 'notNull', 'min', 'max', 'Actions'];
-
+    $scope.property = null;
     $scope.property = Database.listPropertiesForClass(clazz);
-
     $scope.propertyNames = new Array;
+
     for (inn in $scope.property) {
         $scope.propertyNames.push($scope.property[inn]['name'])
     }
-    // console.log($scope.propertyNames)
+    $scope.listClasses = $scope.database.listNameOfClasses();
 
+
+    $scope.indexes = null;
     $scope.indexes = Database.listIndexesForClass(clazz);
-    // for(zz in $scope.indexes)
-    // 	console.log(zz)
 
     $scope.queryText = ""
     $scope.modificati = new Array;
     $scope.listTypes = ['BINARY', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
 
-
     $scope.modificato = function (result, prop) {
         var key = result['name'];
-        // console.log(result[prop])
         if ($scope.modificati[result['name']] == undefined) {
             $scope.modificati[result['name']] = new Array(prop);
         }
-
         else {
-
             var elem = $scope.modificati[result['name']]
             var already = false;
             for (i in elem) {
                 if (prop == elem[i]) {
                     already = true
-
                 }
             }
             if (already == false) {
-
                 elem.push(prop);
             }
 
@@ -152,7 +144,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
         modalScope.propertiesName = $scope.propertyNames;
-        // modalScope.rid = rid;
         var modalPromise = $modal({template: 'views/database/newIndex.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
@@ -164,7 +155,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
         modalScope.propertiesName = $scope.propertyNames;
-        // modalScope.rid = rid;
         var modalPromise = $modal({template: 'views/database/newProperty.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
@@ -179,42 +169,65 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
             //il nome da andare a cercare nella lista dei modificati
             var keyName = properties[result]['name'];
+
             //l'array da modificare
             var arrayToUpdate = $scope.modificati[keyName];
 
-            if (arrayToUpdate != undefined) {
+            if (!$scope.recursiveSaveProperty(arrayToUpdate, clazz, properties, result, keyName)) {
 
-                for (i in arrayToUpdate) {
-
-                    var prop = arrayToUpdate[i];
-                    var newValue = properties[result][prop] != '' ? properties[result][prop] : null;
-                    var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName + ' ' + prop + ' ' + newValue;
-                    // console.log(sql);
-                    CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-
-                    });
-                }
+                return;
             }
+
+
+//                }
         }
         //clear
-        $scope.modificati = new Array;
+        $scope.modificati = undefined;
+        $scope.database.refreshMetadata($routeParams.database);
     }
+    $scope.recursiveSaveProperty = function (arrayToUpdate, clazz, properties, result, keyName) {
+
+        if (arrayToUpdate != undefined && arrayToUpdate.length > 0) {
+
+            var prop = arrayToUpdate[0];
+            var newValue = properties[result][prop] != '' ? properties[result][prop] : null;
+            var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName + ' ' + prop + ' ' + newValue;
+
+
+            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                if (data) {
+                    var index = arrayToUpdate.indexOf(prop);
+                    arrayToUpdate.splice(index, 1);
+                    $scope.recursiveSaveProperty(arrayToUpdate, clazz);
+                }
+            }, function (error) {
+                if (error) {
+                    console.log('error')
+                    return false;
+
+                }
+            });
+
+        }
+        return true;
+    }
+
     $scope.dropIndex = function (nameIndex) {
 
 
         Utilities.confirm($scope, $modal, $q, {
 
             title: 'Warning!',
-            body: 'You are dropping index ' + nameIndex + '. Are you sure?',
+            body: 'You are dropping index ' + nameIndex.name + '. Are you sure?',
             success: function () {
-                var sql = 'DROP INDEX ' + nameIndex;
+                var sql = 'DROP INDEX ' + nameIndex.name;
 
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-
+                    var index = $scope.indexes.indexOf(nameIndex)
+                    $scope.indexes.splice(index, 1);
+                    $scope.indexes.splice();
                 });
-                var index = $scope.indexes.indexOf($scope.indexes[nameIndex])
-                $scope.indexes.splice(index, 1)
-                $scope.indexes.splice()
+
 
             }
 
@@ -223,7 +236,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     }
 
     $scope.dropProperty = function (result, elementName) {
-        console.log(result);
+//        console.log(result);
         Utilities.confirm($scope, $modal, $q, {
 
             title: 'Warning!',
@@ -286,7 +299,12 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
     }
     $scope.refreshPage = function () {
-
+        $scope.database.refreshMetadata($routeParams.database);
+//        Database.refreshMetadata($scope.database,function(data){
+//                   console.log('aaa');
+//        });
+//        console.log('refresh');
+//        $window.location.reload()
         $route.reload();
     }
 
@@ -299,7 +317,9 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     }
 
 
-}]);
+}
+])
+;
 
 
 schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q) {
@@ -368,10 +388,13 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
 
 
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-            $scope.hide();
-            $scope.parentScope.refreshPage();
+            if (data) {
+                console.log(data);
+                $scope.hide();
+//                $scope.parentScope.database.refreshMetadata($routeParams.database);
+                $scope.parentScope.refreshPage();
+            }
         });
-        console.log(sql);
 
 
     }
@@ -403,7 +426,6 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
 
         if (propName == undefined || propType == undefined)
             return;
-
         var linkedType = prop['linkedType'] != null ? prop['linkedType'] : '';
         var linkedClass = prop['linkedClass'] != null ? prop['linkedClass'] : '';
         var sql = 'CREATE PROPERTY ' + $scope.classInject + '.' + propName + ' ' + propType + ' ' + linkedType + ' ' + linkedClass;

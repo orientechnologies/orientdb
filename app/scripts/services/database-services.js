@@ -36,9 +36,9 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
         mapping: { 'BINARY': 'b', 'BYTE': 'b', 'DATE': 'a', 'DATETIME': 't', 'FLOAT': 'f', 'DECIMAL': 'c', 'LONG': 'l', 'DOUBLE': 'd', 'SHORT': 's', 'LINKSET': 'e'},
         getMetadata: function () {
             /*if (current.metadata == null) {
-                var tmp = localStorageService.get("CurrentDB");
-                if (tmp != null) current = tmp;
-            } */
+             var tmp = localStorageService.get("CurrentDB");
+             if (tmp != null) current = tmp;
+             } */
             return current.metadata;
         },
         setMetadata: function (metadata) {
@@ -291,7 +291,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             var iterator = clazz;
             while ((iterator = this.getSuperClazz(iterator)) != "") {
                 sup = iterator;
-                if(sup == 'V' || sup == 'E'){
+                if (sup == 'V' || sup == 'E') {
                     return true;
                 }
             }
@@ -484,13 +484,17 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
                     var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
                     Notification.push({content: noti});
                 }
-                callback(data);
+                if (data!=undefined)
+                    callback(data);
+                else
+                    callback('ok');
             }).error(function (data) {
                     Notification.push({content: data});
                     if (error) error(data);
                 });
         }
     }
+
     resource.getAll = function (database, clazz, callback) {
         var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
         var query = "select * from " + clazz;
@@ -594,6 +598,5 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
                 if (error) error(data);
             });
     }
-
     return resource;
 });
