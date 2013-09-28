@@ -1,11 +1,13 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window) {
 
     //for pagination
     $scope.countPage = 10;
     $scope.countPageOptions = [10, 20, 50, 100];
     $scope.currentPage = 1;
 
+    $scope.database = Database;
+    $scope.database.refreshMetadata($routeParams.database);
     $scope.database = Database;
     $scope.listClassesTotal = $scope.database.listClasses();
 
@@ -20,6 +22,11 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     }
     $scope.openClass = function (clazz) {
         $location.path("/database/" + $scope.database.getName() + "/browse/editclass/" + clazz.name);
+    }
+    $scope.refreshWindow = function () {
+//        $scope.database.refreshMetadata($routeParams.database);
+        $window.location.reload();
+//        $route.reload();
     }
     $scope.$watch("countPage", function (data) {
         if ($scope.listClassesTotal) {
@@ -39,10 +46,10 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
 
-                    var elem = $scope.listClasses.indexOf(nameClass);
+                    var elem = $scope.listClassesTotal.indexOf(nameClass);
                     console.log(elem);
-                    $scope.listClasses.splice(elem, 1)
-                    $scope.listClasses.splice();
+                    $scope.listClassesTotal.splice(elem, 1)
+                    $scope.listClassesTotal.splice();
                 });
 
             }
@@ -300,10 +307,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     }
     $scope.refreshPage = function () {
         $scope.database.refreshMetadata($routeParams.database);
-//        Database.refreshMetadata($scope.database,function(data){
-//                   console.log('aaa');
-//        });
-//        console.log('refresh');
 //        $window.location.reload()
         $route.reload();
     }
@@ -502,33 +505,28 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
 
     $scope.saveNewClass = function () {
         var sql = 'CREATE CLASS ' + $scope.property['name'];
-
         var abstract = $scope.property['abstract'] ? ' ABSTRACT ' : '';
-
         var alias = $scope.property['alias'] == null || $scope.property['alias'] == '' ? null : $scope.property['alias'];
-
-
         sql = sql + abstract;
-
         var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
-
         sql = sql + supercl;
+
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
             if (alias != null) {
                 sql = 'ALTER CLASS ' + $scope.property['name'] + ' SHORTNAME ' + alias;
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-                    $route.reload();
                     $scope.hide();
+                    $scope.parentScope.refreshPage();
+                }, function (error) {
+                    $scope.hide();
+                    $scope.parentScope.refreshPage();
                 });
             }
             else {
-                $route.reload();
+                console.log('reload');
+                $scope.parentScope.refreshWindow();
                 $scope.hide();
             }
-
         });
-
-
     }
-
 }]);
