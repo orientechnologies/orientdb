@@ -391,12 +391,11 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
 
 
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-            if (data) {
-                console.log(data);
                 $scope.hide();
-//                $scope.parentScope.database.refreshMetadata($routeParams.database);
                 $scope.parentScope.refreshPage();
-            }
+        },function(error){
+            $scope.testMsgClass = 'alert alert-error'
+            $scope.testMsg = error;
         });
 
 
@@ -518,8 +517,8 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
                     $scope.hide();
                     $scope.parentScope.refreshPage();
                 }, function (error) {
-                    $scope.hide();
-                    $scope.parentScope.refreshPage();
+                    $scope.testMsg = error;
+                    $scope.testMsgClass = 'alert alert-error'
                 });
             }
             else {
@@ -527,6 +526,9 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
                 $scope.parentScope.refreshWindow();
                 $scope.hide();
             }
+        }, function (error) {
+            $scope.testMsgClass = 'alert alert-error'
+            $scope.testMsg = error;
         });
     }
 }]);

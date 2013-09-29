@@ -37,6 +37,10 @@
 			</div>
 		</div>
 	</div>
+    <div ng-class="testMsgClass" ng-show="testMsg">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ testMsg }}
+    </div>
 	<div class="modal-footer">
 
         <button type="button" class="btn" ng-click="hide()">Close</button>
