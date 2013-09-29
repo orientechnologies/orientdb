@@ -1,4 +1,4 @@
 
 
-var API = '/api/';
-//var API = '/';
+//var API = '/api/';
+var API = '/';
