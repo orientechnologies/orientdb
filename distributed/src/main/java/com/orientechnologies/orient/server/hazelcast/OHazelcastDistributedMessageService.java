@@ -203,15 +203,15 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       if (timeElapsed > timeout) {
         // EXPIRED, FREE IT!
         final List<String> missingNodes = resp.getMissingNodes();
-        if (missingNodes.size() > 0) {
-          ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.IN,
-              "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
-              resp.getMessageId(), missingNodes, timeElapsed, timeout);
-        }
+        
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), missingNodes.toString(), DIRECTION.IN,
+            "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
+            resp.getMessageId(), missingNodes, timeElapsed, timeout);
 
         Orient.instance().getProfiler()
             .updateCounter("distributed.replication.timeouts", "Number of timeouts on replication messages responses", +1);
 
+        resp.timeout();
         it.remove();
       }
     }

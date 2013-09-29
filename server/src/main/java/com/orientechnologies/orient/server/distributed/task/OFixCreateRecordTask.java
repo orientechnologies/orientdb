@@ -23,98 +23,86 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
- * Distributed updated record task used for synchronization.
+ * Distributed task to fix records in conflict on synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
+public class OFixCreateRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
+  protected ORecordId       ridAssigned;
+  protected ORecordVersion  version;
   protected byte[]          content;
   protected byte            recordType;
+  protected ORecordId       ridToAssign;
 
-  public OUpdateRecordTask() {
+  public OFixCreateRecordTask() {
   }
 
-  public OUpdateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(iRid, iVersion);
+  public OFixCreateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType,
+      final ORecordId iRIDToAssign) {
+    ridAssigned = iRid;
     content = iContent;
+    version = iVersion;
     recordType = iRecordType;
+    ridToAssign = iRIDToAssign;
   }
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%s",
-        database.getName(), rid.toString(), version.toString());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "fixing create record %s/%s v.%s by applying a %s", database.getName(), ridAssigned.toString(), version.toString());
 
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-
-    record.fill(rid, version, content, true);
+    ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    record.fill(ridAssigned, version, content, true);
     database.save(record);
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
-        database.getName(), rid.toString(), record.getRecordVersion().toString());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "+-> fixed create record %s/%s v.%s", database.getName(), record.getIdentity().toString(), record.getRecordVersion()
+            .toString());
 
-    return record.getRecordVersion();
+    return Boolean.TRUE;
   }
 
-  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, final ODistributedResponse iGoodResponse) {
-    return new OFixUpdateRecordTask(rid, ((OBuffer) iGoodResponse.getPayload()).getBuffer(), version);
-  }
-
-  @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
+    out.writeUTF(ridAssigned.toString());
     out.writeInt(content.length);
     out.write(content);
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
-    out.write(recordType);
+    out.writeUTF(ridToAssign.toString());
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
+    ridAssigned = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
-    recordType = in.readByte();
+    ridToAssign = new ORecordId(in.readUTF());
   }
 
   @Override
   public String getName() {
-    return "record_update";
+    return "fix_record_create";
   }
-
-  @Override
-  public String toString() {
-    if (version.isTemporary())
-      return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
-    else
-      return super.toString();
-  }
-
 }

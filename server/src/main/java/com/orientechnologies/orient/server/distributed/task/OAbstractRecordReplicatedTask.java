@@ -37,14 +37,6 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   @Override
-  public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
-    super.copy(iCopy);
-    ((OAbstractRecordReplicatedTask) iCopy).rid = rid.copy();
-    ((OAbstractRecordReplicatedTask) iCopy).version = version.copy();
-    return iCopy;
-  }
-
-  @Override
   public String toString() {
     return super.toString() + "(" + rid + " v." + version + ")";
   }

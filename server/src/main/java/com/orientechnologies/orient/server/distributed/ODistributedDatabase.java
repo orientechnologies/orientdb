@@ -23,4 +23,6 @@ package com.orientechnologies.orient.server.distributed;
 public interface ODistributedDatabase {
   public ODistributedResponse send(ODistributedRequest iRequest) throws InterruptedException;
 
+  void send2Node(ODistributedRequest iRequest, String iTargetNode);
+
 }

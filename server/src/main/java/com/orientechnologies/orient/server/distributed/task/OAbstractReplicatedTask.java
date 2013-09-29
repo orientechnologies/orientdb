@@ -15,7 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 
 /**
  * Base class for Replicated tasks.
@@ -26,29 +27,7 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  public OAbstractReplicatedTask() {
-  }
-
-  public abstract OAbstractReplicatedTask copy();
+  public abstract OAbstractRemoteTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iGoodResponse);
 
   public abstract String getPayload();
-
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   * @param remoteResult2
-   */
-  public void handleConflict(String iDatabaseName, final String iRemoteNode, Object localResult, Object remoteResult,
-      OReplicationConflictResolver iConfictStrategy) {
-  }
-
-  @Override
-  public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
-    super.copy(iCopy);
-    return iCopy;
-  }
 }

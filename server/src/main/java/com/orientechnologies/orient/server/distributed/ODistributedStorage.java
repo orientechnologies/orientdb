@@ -277,7 +277,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       else if (result instanceof Throwable)
         throw new ODistributedException("Error on execution distributed DELETE_RECORD", (Throwable) result);
 
-      return new OStorageOperationResult<Boolean>((Boolean) result);
+      return new OStorageOperationResult<Boolean>(true);
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH

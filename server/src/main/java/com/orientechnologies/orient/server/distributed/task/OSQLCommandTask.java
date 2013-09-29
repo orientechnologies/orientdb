@@ -23,10 +23,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
 /**
  * Distributed task used for synchronization.
@@ -46,27 +47,6 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
     text = iCommand;
   }
 
-  @Override
-  public OSQLCommandTask copy() {
-    final OSQLCommandTask copy = (OSQLCommandTask) super.copy(new OSQLCommandTask());
-    copy.text = text;
-    return copy;
-  }
-
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   */
-  @Override
-  public void handleConflict(String iDatabaseName, final String iRemoteNodeId, final Object localResult, final Object remoteResult,
-      OReplicationConflictResolver iConfictStrategy) {
-    iConfictStrategy.handleCommandConflict(iRemoteNodeId, text, localResult, remoteResult);
-  }
-
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
@@ -75,15 +55,18 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
     return database.command(new OCommandSQL(text)).execute();
   }
 
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
+  }
+
   @Override
   public long getTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
-  public OSQLCommandTask copy(final OSQLCommandTask iCopy) {
-    super.copy(iCopy);
-    iCopy.text = text;
-    return iCopy;
+  @Override
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iGoodResponse) {
+    return null;
   }
 
   @Override

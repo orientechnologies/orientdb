@@ -27,6 +27,8 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -49,15 +51,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
   public OCopyDatabaseChunkTask(final byte[] chunk) {
     chunkContent = chunk;
-  }
-
-  @Override
-  public OCopyDatabaseChunkTask copy() {
-    final OCopyDatabaseChunkTask copy = (OCopyDatabaseChunkTask) super.copy(new OCopyDatabaseChunkTask());
-    copy.databaseName = databaseName;
-    copy.chunkContent = chunkContent;
-    copy.lastChunk = lastChunk;
-    return copy;
   }
 
   @Override
@@ -102,8 +95,17 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     return Boolean.TRUE;
   }
 
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
+  }
+
   @Override
   public String getPayload() {
+    return null;
+  }
+
+  @Override
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iGoodResponse) {
     return null;
   }
 

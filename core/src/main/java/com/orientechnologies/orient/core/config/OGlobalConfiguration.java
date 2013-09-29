@@ -154,6 +154,7 @@ public enum OGlobalConfiguration {
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
 
+  @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
   DB_MVCC_THROWFAST(

@@ -25,6 +25,8 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -42,12 +44,6 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
   protected final static int CHUNK_MAX_SIZE   = 1048576; // 1MB
 
   public ODeployDatabaseTask() {
-  }
-
-  @Override
-  public ODeployDatabaseTask copy() {
-    final ODeployDatabaseTask copy = (ODeployDatabaseTask) super.copy(new ODeployDatabaseTask());
-    return copy;
   }
 
   @Override
@@ -118,6 +114,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
     return RESULT_STRATEGY.UNION;
   }
 
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
+  }
+
   @Override
   public long getTimeout() {
     return 60000;
@@ -139,5 +139,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  }
+
+  @Override
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iGoodResponse) {
+    return null;
   }
 }

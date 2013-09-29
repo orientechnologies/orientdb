@@ -68,7 +68,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
@@ -212,33 +211,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  private void checkForConflicts(final String iDatabaseName, final OAbstractReplicatedTask taskToPropagate,
-      final Object localResult, final Map<String, Object> remoteResults, final int minSuccessfulOperations) {
-
-    int successfulReplicatedNodes = 0;
-
-    for (Entry<String, Object> entry : remoteResults.entrySet()) {
-      final String remoteNode = entry.getKey();
-      final Object remoteResult = entry.getValue();
-
-      if (!(remoteResult instanceof Exception)) {
-        successfulReplicatedNodes++;
-
-        if ((localResult == null && remoteResult != null) || (localResult != null && remoteResult == null)
-            || (localResult != null && !localResult.equals(remoteResult))) {
-          // CONFLICT
-          taskToPropagate.handleConflict(iDatabaseName, remoteNode, localResult, remoteResult, null);
-        }
-      }
-    }
-
-    if (successfulReplicatedNodes < minSuccessfulOperations)
-      // ERROR: MINIMUM SUCCESSFUL OPERATION NOT REACHED: RESTORE OLD RECORD
-      // TODO: MANAGE ROLLBACK OF TASK
-      // taskToPropagate.rollbackLocalChanges();
-      ;
-  }
-
   @Override
   public ODocument getClusterConfiguration() {
     if (!enabled)
@@ -330,6 +302,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return null;
   }
 
+  @Override
+  public void sendRequest2Node(final String iDatabaseName, final String iTargetNodeName, final OAbstractRemoteTask iTask) {
+    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, null, iTask,
+        EXECUTION_MODE.NO_RESPONSE);
+
+    final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
+
+    db.send2Node(req, iTargetNodeName);
+  }
+
   public String[] getManagedDatabases() {
     synchronized (managedDatabases) {
       return managedDatabases.keySet().toArray(new String[managedDatabases.size()]);
@@ -353,6 +335,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     onOpen(iDatabase);
   }
 
+  @SuppressWarnings("unchecked")
   public ODocument getStats() {
     final ODocument doc = new ODocument();
 
@@ -380,7 +363,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       } else {
         final String dbName = names[3];
 
-        node.put(dbName + ".requests", queue.size());
+        Map<String, Object> db = (HashMap<String, Object>) node.get(dbName);
+        if (db == null) {
+          db = new HashMap<String, Object>(2);
+          node.put(dbName, db);
+        }
+
+        db.put("requests", queue.size());
+        if (!queue.isEmpty())
+          db.put("lastMessage", queue.peek().toString());
       }
     }
 

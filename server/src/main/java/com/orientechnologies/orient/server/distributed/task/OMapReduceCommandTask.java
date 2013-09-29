@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+
 /**
  * Distributed map and reduce task that collect and merge the result.
  * 
@@ -36,19 +37,8 @@ public class OMapReduceCommandTask extends OSQLCommandTask {
     return RESULT_STRATEGY.MERGE;
   }
 
-  public boolean isWriteOperation() {
-    return false;
-  }
-
-  @Override
-  public OMapReduceCommandTask copy() {
-    final OMapReduceCommandTask copy = (OMapReduceCommandTask) super.copy(new OMapReduceCommandTask());
-    return copy;
-  }
-
-  public OMapReduceCommandTask copy(final OMapReduceCommandTask iCopy) {
-    super.copy(iCopy);
-    return iCopy;
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
   }
 
   @Override

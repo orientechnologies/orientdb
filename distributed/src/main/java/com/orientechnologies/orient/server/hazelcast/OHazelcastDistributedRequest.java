@@ -121,6 +121,16 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   }
 
   @Override
+  public EXECUTION_MODE getExecutionMode() {
+    return executionMode;
+  }
+
+  public OHazelcastDistributedRequest setExecutionMode(final EXECUTION_MODE executionMode) {
+    this.executionMode = executionMode;
+    return this;
+  }
+
+  @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(id);
     out.writeUTF(senderNodeName);
@@ -145,15 +155,5 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   @Override
   public String toString() {
     return payload != null ? payload.toString() : null;
-  }
-
-  @Override
-  public EXECUTION_MODE getExecutionMode() {
-    return executionMode;
-  }
-
-  public OHazelcastDistributedRequest setExecutionMode(final EXECUTION_MODE executionMode) {
-    this.executionMode = executionMode;
-    return this;
   }
 }

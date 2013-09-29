@@ -45,6 +45,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -80,11 +81,30 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   @Override
+  public void send2Node(final ODistributedRequest iRequest, final String iTargetNode) {
+    final IQueue<ODistributedRequest> queue = msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(
+        iTargetNode, iRequest.getDatabaseName()));
+
+    try {
+      queue.offer(iRequest, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS);
+
+      Orient.instance().getProfiler()
+          .updateCounter("distributed.replication.fixMsgSent", "Number of replication fix messages sent from current node", +1);
+
+    } catch (Throwable e) {
+      throw new ODistributedException("Error on sending distributed request against " + iTargetNode, e);
+    }
+
+  }
+
+  @Override
   public ODistributedResponse send(final ODistributedRequest iRequest) {
+    // TODO: remove threadId
     final Thread currentThread = Thread.currentThread();
     final long threadId = currentThread.getId();
 
     final String databaseName = iRequest.getDatabaseName();
+
     final String clusterName = iRequest.getClusterName();
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
@@ -96,7 +116,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final IQueue<ODistributedRequest>[] reqQueues = getRequestQueues(databaseName, nodes);
 
     final int queueSize = nodes.size();
-    final int quorum = iRequest.getPayload().isWriteOperation() ? cfg.getWriteQuorum(clusterName) : queueSize;
+    int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes, queueSize);
 
     iRequest.setSenderNodeName(manager.getLocalNodeName());
     iRequest.setSenderThreadId(threadId);
@@ -112,11 +132,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     }
 
-    final int expectedSynchronousResponses = Math.min(availableNodes, quorum);
+    int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : queueSize;
     final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
 
     // CREATE THE RESPONSE MANAGER
-    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(iRequest, nodes,
+    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, nodes,
         expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getPayload().getSynchronousTimeout(
             expectedSynchronousResponses), iRequest.getPayload().getTotalTimeout(queueSize));
 
@@ -153,6 +173,39 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   }
 
+  protected int calculateQuorum(final ODistributedRequest iRequest, final String clusterName, final ODistributedConfiguration cfg,
+      final Set<String> nodes, final int queueSize) {
+    final QUORUM_TYPE quorumType = iRequest.getPayload().getQuorumType();
+
+    int quorum = 0;
+
+    switch (quorumType) {
+    case NONE:
+      quorum = 0;
+      break;
+    case READ:
+      quorum = cfg.getReadQuorum(clusterName);
+      break;
+    case WRITE:
+      quorum = cfg.getWriteQuorum(clusterName);
+      break;
+    }
+
+    final boolean failureAvailableNodesLessQuorum = cfg.getFailureAvailableNodesLessQuorum(clusterName);
+
+    if (quorum > queueSize)
+      if (failureAvailableNodesLessQuorum)
+        throw new ODistributedException(
+            "Quorum cannot be reached because it is major than available nodes and 'failureAvailableNodesLessQuorum' settings is true");
+      else {
+        // SET THE QUORUM TO THE AVAILABLE NODE SIZE
+        ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), nodes.toString(), DIRECTION.OUT,
+            "quorum less then available nodes, downgrade quorum to %d", queueSize);
+        quorum = queueSize;
+      }
+    return quorum;
+  }
+
   protected ODistributedResponse collectResponses(final ODistributedRequest iRequest,
       final ODistributedResponseManager currentResponseMgr) throws InterruptedException {
     if (iRequest.getExecutionMode() == EXECUTION_MODE.NO_RESPONSE)
@@ -172,12 +225,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), manager.getLocalNodeName(), DIRECTION.IN,
           "no response received from local node about request %s", iRequest);
 
-    if (currentResponseMgr.getReceivedResponses() < currentResponseMgr.getQuorum()) {
-      // UNDO REQUEST
-      // TODO: UNDO
-      iRequest.undo();
-    }
-
+    // QUORUM REACHED
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
 

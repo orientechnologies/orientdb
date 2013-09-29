@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.common.io.OIOUtils;
+
 public class OBuffer implements Externalizable {
   public byte[] buffer;
 
@@ -60,7 +62,15 @@ public class OBuffer implements Externalizable {
     return buffer;
   }
 
-  public void setBuffer(byte[] buffer) {
+  public void setBuffer(final byte[] buffer) {
     this.buffer = buffer;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (!(o instanceof OBuffer))
+      return false;
+
+    return OIOUtils.equals(buffer, ((OBuffer) o).buffer);
   }
 }

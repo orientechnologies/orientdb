@@ -13,7 +13,9 @@
         },
         "*": {
             "replication": true,
+            "readQuorum": 1,
             "writeQuorum": 2,
+            "failureAvailableNodesLessQuorum": false,
             "readYourWrites": true,
             "partitioning": {
                 "strategy": "round-robin",

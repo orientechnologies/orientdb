@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -28,68 +27,50 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
 /**
- * Distributed task to fix records in conflict on synchronization.
+ * Distributed task to fix update record in conflict on synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OFixRecordTask extends OAbstractRecordReplicatedTask {
+public class OFixUpdateRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  protected byte            operationType;
-  protected byte[]          content;
-  protected byte            recordType;
+  private ORecordId         rid;
+  private byte[]            content;
+  private ORecordVersion    version;
 
-  public OFixRecordTask() {
+  public OFixUpdateRecordTask() {
   }
 
-  public OFixRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(iRid, iVersion);
+  public OFixUpdateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion) {
+    rid = iRid;
     content = iContent;
-    recordType = iRecordType;
-  }
-
-  @Override
-  public OUpdateRecordTask copy() {
-    final OUpdateRecordTask copy = (OUpdateRecordTask) super.copy(new OUpdateRecordTask());
-    copy.content = content;
-    copy.recordType = recordType;
-    return copy;
+    version = iVersion;
   }
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "fixing record %s/%s v.%s",
-        database.getName(), rid.toString(), version.toString());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "fixing update record %s/%s v.%s", database.getName(), rid.toString(), version.toString());
 
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-
+    final ORecordInternal<?> record = rid.getRecord();
     record.fill(rid, version, content, true);
     database.save(record);
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> fixed record %s/%s v.%s",
-        database.getName(), rid.toString(), record.getRecordVersion().toString());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "+-> fixed update record %s/%s v.%s", database.getName(), record.getIdentity().toString(), record.getRecordVersion()
+            .toString());
 
-    return record.getRecordVersion();
+    return Boolean.TRUE;
   }
 
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   */
-  @Override
-  public void handleConflict(String iDatabaseName, final String iRemoteNodeId, final Object localResult, final Object remoteResult,
-      OReplicationConflictResolver iConfictStrategy) {
-    iConfictStrategy.handleUpdateConflict(iRemoteNodeId, rid, version, (ORecordVersion) remoteResult);
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
   }
 
   @Override
@@ -100,7 +81,6 @@ public class OFixRecordTask extends OAbstractRecordReplicatedTask {
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().writeTo(out, version);
-    out.write(recordType);
   }
 
   @Override
@@ -112,20 +92,10 @@ public class OFixRecordTask extends OAbstractRecordReplicatedTask {
     if (version == null)
       version = OVersionFactory.instance().createUntrackedVersion();
     version.getSerializer().readFrom(in, version);
-    recordType = in.readByte();
   }
 
   @Override
   public String getName() {
-    return "record_update";
+    return "fix_record_update";
   }
-
-  @Override
-  public String toString() {
-    if (version.isTemporary())
-      return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
-    else
-      return super.toString();
-  }
-
 }

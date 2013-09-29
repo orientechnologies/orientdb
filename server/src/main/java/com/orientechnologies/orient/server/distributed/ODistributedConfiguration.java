@@ -51,11 +51,29 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns the read quorum.
+   */
+  public int getReadQuorum(final String iClusterName) {
+    synchronized (configuration) {
+      return (Integer) getClusterConfiguration(iClusterName).field("readQuorum");
+    }
+  }
+
+  /**
    * Returns the write quorum.
    */
   public int getWriteQuorum(final String iClusterName) {
     synchronized (configuration) {
       return (Integer) getClusterConfiguration(iClusterName).field("writeQuorum");
+    }
+  }
+
+  /**
+   * Returns the write quorum.
+   */
+  public boolean getFailureAvailableNodesLessQuorum(final String iClusterName) {
+    synchronized (configuration) {
+      return (Boolean) getClusterConfiguration(iClusterName).field("failureAvailableNodesLessQuorum");
     }
   }
 

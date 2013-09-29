@@ -262,4 +262,15 @@ public class OIOUtils {
 
     return s;
   }
+
+  public static boolean equals(final byte[] buffer, final byte[] buffer2) {
+    if (buffer == null || buffer2 == null || buffer.length != buffer2.length)
+      return false;
+
+    for (int i = 0; i < buffer.length; ++i)
+      if (buffer[i] != buffer2[i])
+        return false;
+
+    return true;
+  }
 }

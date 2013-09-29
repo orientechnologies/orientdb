@@ -27,10 +27,11 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
 /**
  * Distributed create record task used for synchronization.
@@ -54,18 +55,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OCreateRecordTask copy() {
-    final OCreateRecordTask copy = (OCreateRecordTask) super.copy(new OCreateRecordTask());
-    copy.content = content;
-    copy.recordType = recordType;
-    return copy;
-  }
-
-  public Object getDistributedKey() {
-    return rid;
-  }
-
-  @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%s...",
@@ -86,22 +75,17 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
   }
-
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   */
+  
   @Override
-  public void handleConflict(String iDatabaseName, final String iRemoteNodeId, final Object localResult, final Object remoteResult,
-      OReplicationConflictResolver iConfictStrategy) {
-    final OPhysicalPosition remote = (OPhysicalPosition) remoteResult;
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
 
-    iConfictStrategy.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(),
-        remote == null ? null : remote.clusterPosition), remote == null ? null : remote.recordVersion.getCounter());
+  @Override
+  public OFixCreateRecordTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iGoodResponse) {
+    OPhysicalPosition goodResult = (OPhysicalPosition) iGoodResponse.getPayload();
+    return new OFixCreateRecordTask(rid, content, version, recordType,
+        new ORecordId(rid.getClusterId(), goodResult.clusterPosition));
   }
 
   @Override

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
 
 /**
  * Execute a read of a record from a distributed node.
@@ -62,6 +63,10 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     rid = new ORecordId(in.readUTF());
+  }
+
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.READ;
   }
 
   @Override

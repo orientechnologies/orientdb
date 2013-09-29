@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 
 /**
  * Base class for Tasks to be executed remotely.
@@ -33,7 +32,11 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   private static final long serialVersionUID = 1L;
 
   public enum RESULT_STRATEGY {
-    FIRST_RESPONSE, MERGE, UNION
+    ANY, MERGE, UNION
+  }
+
+  public enum QUORUM_TYPE {
+    NONE, READ, WRITE
   }
 
   protected transient boolean inheritedDatabase;
@@ -47,7 +50,9 @@ public abstract class OAbstractRemoteTask implements Externalizable {
 
   public abstract String getName();
 
-  public abstract Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+  public abstract QUORUM_TYPE getQuorumType();
+
+  public abstract Object execute(OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
       throws Exception;
 
   public long getTimeout() {
@@ -63,39 +68,12 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   }
 
   public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.FIRST_RESPONSE;
-  }
-
-  public boolean isWriteOperation() {
-    return true;
-  }
-
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param iDatabaseName
-   *          TODO
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   * @param iConfictStrategy
-   *          TODO
-   * @param remoteResult2
-   */
-  public void handleConflict(String iDatabaseName, final String iRemoteNode, Object localResult, Object remoteResult,
-      OReplicationConflictResolver iConfictStrategy) {
+    return RESULT_STRATEGY.ANY;
   }
 
   @Override
   public String toString() {
     return getName();
-  }
-
-  public OAbstractRemoteTask copy(final OAbstractRemoteTask iCopy) {
-    iCopy.nodeSource = nodeSource;
-    iCopy.inheritedDatabase = inheritedDatabase;
-    return iCopy;
   }
 
   public String getNodeSource() {

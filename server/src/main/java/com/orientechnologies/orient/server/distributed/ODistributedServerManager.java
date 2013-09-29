@@ -82,7 +82,10 @@ public interface ODistributedServerManager {
 
   public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
+  public void sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask);
+
   public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
 
   public ODocument getStats();
+
 }
