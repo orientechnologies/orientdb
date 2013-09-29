@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import java.util.List;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -55,7 +56,13 @@ public class ODistributedConfiguration {
    */
   public int getReadQuorum(final String iClusterName) {
     synchronized (configuration) {
-      return (Integer) getClusterConfiguration(iClusterName).field("readQuorum");
+      final Object value = getClusterConfiguration(iClusterName).field("readQuorum");
+      if (value != null)
+        return (Integer) value;
+      else {
+        OLogManager.instance().warn(this, "readQuorum setting not found in distributed-config.json");
+        return 1;
+      }
     }
   }
 
@@ -64,7 +71,13 @@ public class ODistributedConfiguration {
    */
   public int getWriteQuorum(final String iClusterName) {
     synchronized (configuration) {
-      return (Integer) getClusterConfiguration(iClusterName).field("writeQuorum");
+      final Object value = getClusterConfiguration(iClusterName).field("writeQuorum");
+      if (value != null)
+        return (Integer) value;
+      else {
+        OLogManager.instance().warn(this, "writeQuorum setting not found in distributed-config.json");
+        return 2;
+      }
     }
   }
 
@@ -73,7 +86,13 @@ public class ODistributedConfiguration {
    */
   public boolean getFailureAvailableNodesLessQuorum(final String iClusterName) {
     synchronized (configuration) {
-      return (Boolean) getClusterConfiguration(iClusterName).field("failureAvailableNodesLessQuorum");
+      final Object value = getClusterConfiguration(iClusterName).field("failureAvailableNodesLessQuorum");
+      if (value != null)
+        return (Boolean) value;
+      else {
+        OLogManager.instance().warn(this, "failureAvailableNodesLessQuorum setting not found in distributed-config.json");
+        return false;
+      }
     }
   }
 
@@ -82,19 +101,37 @@ public class ODistributedConfiguration {
    */
   public Boolean isReadYourWrites(final String iClusterName) {
     synchronized (configuration) {
-      return (Boolean) getClusterConfiguration(iClusterName).field("readYourWrites");
+      final Object value = getClusterConfiguration(iClusterName).field("readYourWrites");
+      if (value != null)
+        return (Boolean) value;
+      else {
+        OLogManager.instance().warn(this, "readYourWrites setting not found in distributed-config.json");
+        return true;
+      }
     }
   }
 
-  public String getDefaultPartition(final String iClusterName) {
+  public int getDefaultPartition(final String iClusterName) {
     synchronized (configuration) {
-      return (String) getPartitioningConfiguration(iClusterName).field("default");
+      final Object value = getClusterConfiguration(iClusterName).field("default");
+      if (value != null)
+        return (Integer) value;
+      else {
+        OLogManager.instance().warn(this, "default setting not found in distributed-config.json");
+        return 0;
+      }
     }
   }
 
   public String getPartitionStrategy(final String iClusterName) {
     synchronized (configuration) {
-      return (String) getPartitioningConfiguration(iClusterName).field("strategy");
+      final Object value = getPartitioningConfiguration(iClusterName).field("strategy");
+      if (value != null)
+        return (String) value;
+      else {
+        OLogManager.instance().warn(this, "strategy setting not found in distributed-config.json");
+        return "round-robin";
+      }
     }
   }
 
