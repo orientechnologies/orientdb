@@ -35,7 +35,7 @@ public class OJPAPersistenceUnitInfo implements PersistenceUnitInfo {
 
 	/**
 	 * The JAR file or directory whose META-INF directory contains persistence.xml is called the root of the persistence unit. The
-	 * scope of the persistence unit is determined by the persistence unit’s root.
+	 * scope of the persistence unit is determined by the persistence unit's root.
 	 */
 	private final URL															unitRootUrl;
 	/**
