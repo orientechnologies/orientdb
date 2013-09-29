@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.object.jpa.parsing;
 
+import java.net.URL;
 import java.util.Collection;
 import java.util.Stack;
 
@@ -16,27 +17,31 @@ import com.orientechnologies.orient.object.jpa.OJPAPersistenceUnitInfo;
 public class JPAHandler extends DefaultHandler {
 	/** The Persistence Units that we have parsed */
 	private final Stack<OJPAPersistenceUnitInfo>	persistenceUnits	= new Stack<OJPAPersistenceUnitInfo>();
+	/** root of the persistence unit */
+	private final URL															persistenceXmlRoot;
+	/** The version of the persistence.xml file */
+	private String													xmlSchemaVersion;
 	/** The name of the current element */
 	private PersistenceXml												element;
-	/** The version of the persistence.xml file */
-	private String																xmlSchemaVersion;
 	/** A StringBuilder for caching the information from getCharacters */
 	private StringBuilder													builder						= new StringBuilder();
 
-	/**
-	 * Create a new JPA Handler for the given persistence.xml. If no xmlSchemaVersion defined it will be parsed
-	 */
-	public JPAHandler() {
-	}
+	// /**
+	// * Create a new JPA Handler for the given persistence.xml. If no xmlSchemaVersion defined it will be parsed
+	// */
+	// public JPAHandler() {
+	// }
 
 	/**
 	 * Create a new JPA Handler for the given persistence.xml
 	 * 
-	 * @param xmlSchemaVersion
+	 * @param persistenceXmlRoot
+	 * @param jpaVersion
 	 *          the version of the JPA schema used in the xml
 	 */
-	public JPAHandler(String xmlSchemaVersion) {
-		this.xmlSchemaVersion = xmlSchemaVersion;
+	public JPAHandler(URL persistenceXmlRoot, JPAVersion jpaVersion) {
+		this.persistenceXmlRoot = persistenceXmlRoot;
+		this.xmlSchemaVersion = jpaVersion.getVersion();
 	}
 
 	@Override
@@ -53,7 +58,7 @@ public class JPAHandler extends DefaultHandler {
 		case TAG_PERSISTENCE_UNIT:
 			String unitName = attributes.getValue(PersistenceXml.ATTR_UNIT_NAME.toString());
 			String transactionType = attributes.getValue(PersistenceXml.ATTR_TRANSACTION_TYPE.toString());
-			persistenceUnits.push(new OJPAPersistenceUnitInfo(unitName, transactionType, xmlSchemaVersion));
+			persistenceUnits.push(new OJPAPersistenceUnitInfo(unitName, transactionType, persistenceXmlRoot, xmlSchemaVersion));
 			break;
 		case TAG_EXCLUDE_UNLISTED_CLASSES:
 			persistenceUnits.peek().setExcludeUnlisted(true);
