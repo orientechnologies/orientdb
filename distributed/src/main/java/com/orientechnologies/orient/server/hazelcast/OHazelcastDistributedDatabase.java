@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
+import com.orientechnologies.orient.server.distributed.task.OResynchTask;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -78,6 +80,18 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     this.databaseName = iDatabaseName;
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
+
+    long resyncEvery = manager.getDatabaseConfiguration(databaseName).getResynchEvery();
+    if (resyncEvery > 0) {
+      resyncEvery *= 1000; // TRANSFORM IN SECONDS
+      // CREATE A TIMER TASK TO RESYNCH
+      Orient.instance().getTimer().schedule(new TimerTask() {
+        @Override
+        public void run() {
+          resynch();
+        }
+      }, resyncEvery, resyncEvery);
+    }
   }
 
   @Override
@@ -88,8 +102,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     try {
       queue.offer(iRequest, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS);
 
-      Orient.instance().getProfiler()
-          .updateCounter("distributed.replication.fixMsgSent", "Number of replication fix messages sent from current node", +1);
+      Orient
+          .instance()
+          .getProfiler()
+          .updateCounter("distributed.replication." + databaseName + ".fixMsgSent",
+              "Number of replication fix messages sent from current node", +1, "distributed.replication.fixMsgSent");
 
     } catch (Throwable e) {
       throw new ODistributedException("Error on sending distributed request against " + iTargetNode, e);
@@ -115,8 +132,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final IQueue<ODistributedRequest>[] reqQueues = getRequestQueues(databaseName, nodes);
 
-    final int queueSize = nodes.size();
-    int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes, queueSize);
+    int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes);
 
     iRequest.setSenderNodeName(manager.getLocalNodeName());
     iRequest.setSenderThreadId(threadId);
@@ -131,7 +147,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "skip listening of response because node '%s' is not online", node);
       }
     }
-
+    
+    final int queueSize = nodes.size();
     int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : queueSize;
     final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
 
@@ -161,8 +178,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         requestLock.unlock();
       }
 
-      Orient.instance().getProfiler()
-          .updateCounter("distributed.replication.msgSent", "Number of replication messages sent from current node", +1);
+      Orient
+          .instance()
+          .getProfiler()
+          .updateCounter("distributed.replication." + databaseName + ".msgSent",
+              "Number of replication messages sent from current node", +1, "distributed.replication.*.msgSent");
 
       return collectResponses(iRequest, currentResponseMgr);
 
@@ -173,12 +193,30 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   }
 
+  protected void resynch() {
+    final long startTimer = System.currentTimeMillis();
+
+    try {
+      send(new OHazelcastDistributedRequest(manager.getLocalNodeName(), databaseName, null, new OResynchTask(),
+          EXECUTION_MODE.RESPONSE));
+    } catch (ODistributedException e) {
+      // HIDE EXCEPTION IF ANY ERROR ON QUORUM
+    }
+
+    Orient
+        .instance()
+        .getProfiler()
+        .stopChrono("distributed.replication." + databaseName + ".resynch", "Synchronization time among all the nodes", startTimer,
+            "distributed.replication.*.resynch");
+  }
+
   protected int calculateQuorum(final ODistributedRequest iRequest, final String clusterName, final ODistributedConfiguration cfg,
-      final Set<String> nodes, final int queueSize) {
+      final Set<String> nodes) {
     final QUORUM_TYPE quorumType = iRequest.getPayload().getQuorumType();
 
-    int quorum = 0;
+    final int queueSize = nodes.size();
 
+    int quorum = 0;
     switch (quorumType) {
     case NONE:
       quorum = 0;
@@ -189,11 +227,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     case WRITE:
       quorum = cfg.getWriteQuorum(clusterName);
       break;
+    case ALL:
+      quorum = queueSize;
+      break;
     }
 
-    final boolean failureAvailableNodesLessQuorum = cfg.getFailureAvailableNodesLessQuorum(clusterName);
-
-    if (quorum > queueSize)
+    if (quorum > queueSize) {
+      final boolean failureAvailableNodesLessQuorum = cfg.getFailureAvailableNodesLessQuorum(clusterName);
       if (failureAvailableNodesLessQuorum)
         throw new ODistributedException(
             "Quorum cannot be reached because it is major than available nodes and 'failureAvailableNodesLessQuorum' settings is true");
@@ -203,6 +243,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             "quorum less then available nodes, downgrade quorum to %d", queueSize);
         quorum = queueSize;
       }
+    }
+
     return quorum;
   }
 

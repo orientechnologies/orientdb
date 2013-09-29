@@ -56,8 +56,14 @@ public class OProfilerData {
     public String payLoad;
     public String description;
 
+    public String toJSON() {
+      final StringBuilder buffer = new StringBuilder();
+      toJSON(buffer);
+      return buffer.toString();
+    }
+
     public void toJSON(final StringBuilder buffer) {
-      buffer.append(String.format("\"%s\":{", OIOUtils.encode(name)));
+      buffer.append('{');
       buffer.append(String.format("\"%s\":%d,", "entries", entries));
       buffer.append(String.format("\"%s\":%d,", "last", last));
       buffer.append(String.format("\"%s\":%d,", "min", min));
@@ -66,7 +72,7 @@ public class OProfilerData {
       buffer.append(String.format("\"%s\":%d", "total", total));
       if (payLoad != null)
         buffer.append(String.format("\"%s\":%d", "payload", payLoad));
-      buffer.append("}");
+      buffer.append('}');
     }
 
     @Override
@@ -239,6 +245,8 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
+      
+      buffer.append(String.format("\"%s\":", OIOUtils.encode(k)));
       chronos.get(k).toJSON(buffer);
     }
     buffer.append("}");

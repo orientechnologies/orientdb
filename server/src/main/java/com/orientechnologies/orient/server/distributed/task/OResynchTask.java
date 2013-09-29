@@ -20,56 +20,41 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
- * Execute a read of a record from a distributed node.
+ * Execute a resynch task to align asynchronous nodes.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OReadRecordTask extends OAbstractRemoteTask {
+public class OResynchTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  protected ORecordId       rid;
-
-  public OReadRecordTask() {
-  }
-
-  public OReadRecordTask(final ORecordId iRid) {
-    rid = iRid;
+  public OResynchTask() {
   }
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    final ORecordInternal<?> record = database.load(rid);
-    if (record == null)
-      return null;
-
-    return new ORawBuffer(record);
+    return Boolean.TRUE;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
   }
 
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.READ;
+    return QUORUM_TYPE.ALL;
   }
 
   @Override
   public String getName() {
-    return "record_read";
+    return "resynch";
   }
 }

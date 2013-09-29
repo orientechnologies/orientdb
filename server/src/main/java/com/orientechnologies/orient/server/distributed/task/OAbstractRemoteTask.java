@@ -36,7 +36,7 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   }
 
   public enum QUORUM_TYPE {
-    NONE, READ, WRITE
+    NONE, READ, WRITE, ALL
   }
 
   protected transient boolean inheritedDatabase;

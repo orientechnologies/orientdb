@@ -43,6 +43,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -149,7 +150,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
 
     cachedClusterNodes.clear();
-    managedDatabases.clear();
 
     try {
       hazelcastInstance = Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
@@ -312,10 +312,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     db.send2Node(req, iTargetNodeName);
   }
 
-  public String[] getManagedDatabases() {
-    synchronized (managedDatabases) {
-      return managedDatabases.keySet().toArray(new String[managedDatabases.size()]);
-    }
+  public Set<String> getManagedDatabases() {
+    return messageService.getDatabases();
   }
 
   public String getLocalNodeName() {
@@ -341,6 +339,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final Map<String, HashMap<String, Object>> nodes = new HashMap<String, HashMap<String, Object>>();
     doc.field("nodes", nodes);
+
+    Map<String, Object> localNode = new HashMap<String, Object>();
+    doc.field("localNode", localNode);
+
+    localNode.put("name", getLocalNodeName());
+
+    Map<String, Object> databases = new HashMap<String, Object>();
+    localNode.put("databases", databases);
+    for (String dbName : messageService.getDatabases()) {
+      Map<String, Object> db = new HashMap<String, Object>();
+      databases.put(dbName, db);
+      final OProfilerEntry chrono = Orient.instance().getProfiler().getChrono("distributed.replication." + dbName + ".resynch");
+      if (chrono != null)
+        db.put("resync", new ODocument().fromJSON(chrono.toJSON()));
+    }
 
     for (Entry<String, QueueConfig> entry : hazelcastInstance.getConfig().getQueueConfigs().entrySet()) {
       final String queueName = entry.getKey();
@@ -370,8 +383,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
 
         db.put("requests", queue.size());
-        if (!queue.isEmpty())
-          db.put("lastMessage", queue.peek().toString());
+        final Object lastMessage = queue.peek();
+        if (lastMessage != null)
+          db.put("lastMessage", lastMessage.toString());
       }
     }
 

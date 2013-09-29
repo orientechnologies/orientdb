@@ -438,6 +438,9 @@ public class OFetchHelper {
             iListener.parseLinked(iRootRecord, d, iUserObject, key.toString(), iContext);
           }
         }
+      } else if (o instanceof Map) {
+        fetchMap(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot, iFieldDepthLevel,
+            parsedRecords, iFieldPathFromRoot, iListener, iContext);
       } else if (OMultiValue.isMultiValue(o)) {
         fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot,
             iFieldDepthLevel, parsedRecords, iFieldPathFromRoot, iListener, iContext);

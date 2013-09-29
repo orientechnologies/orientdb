@@ -1,6 +1,7 @@
 {
     "replication": true,
     "autoDeploy": true,
+    "resynchEvery": 15,
     "clusters": {
         "internal": {
             "replication": false

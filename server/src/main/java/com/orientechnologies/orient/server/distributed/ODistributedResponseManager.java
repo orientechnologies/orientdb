@@ -217,8 +217,8 @@ public class ODistributedResponseManager {
                   dManager.getLocalNodeName(),
                   null,
                   DIRECTION.NONE,
-                  "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached",
-                  a, b, quorum);
+                  "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request: %s",
+                  a, b, quorum, request);
           // DON'T FIX RECORDS
           return;
         }
@@ -228,7 +228,8 @@ public class ODistributedResponseManager {
 
       // START WITH THE FIXING
       ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-          "detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records", conflicts, quorum);
+          "detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request: %s", conflicts, quorum,
+          request);
 
       for (List<ODistributedResponse> responseGroup : responseGroups) {
         if (responseGroup != bestResponsesGroup) {
@@ -245,9 +246,14 @@ public class ODistributedResponseManager {
       }
 
     } else
-      ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-          "detected %d conflicts where the quorum (%d) has not been reached, cannot guarantee coherency against this resources",
-          conflicts, quorum);
+      ODistributedServerLog
+          .error(
+              this,
+              dManager.getLocalNodeName(),
+              null,
+              DIRECTION.NONE,
+              "detected %d conflicts where the quorum (%d) has not been reached, cannot guarantee coherency against this resources: %s",
+              conflicts, quorum, request);
   }
 
   public long getMessageId() {
@@ -396,5 +402,9 @@ public class ODistributedResponseManager {
     }
 
     return bestResponsesGroup.get(0);
+  }
+
+  public String getDatabaseName() {
+    return request.getDatabaseName();
   }
 }

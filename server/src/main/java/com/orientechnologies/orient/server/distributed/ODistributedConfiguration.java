@@ -111,6 +111,21 @@ public class ODistributedConfiguration {
     }
   }
 
+  /**
+   * Returns the delay timer to resynch asynchronous nodes.
+   */
+  public int getResynchEvery() {
+    synchronized (configuration) {
+      final Object value = configuration.field("resyncEvery");
+      if (value != null)
+        return (Integer) value;
+      else {
+        OLogManager.instance().warn(this, "resyncEvery setting not found in distributed-config.json");
+        return 15;
+      }
+    }
+  }
+
   public int getDefaultPartition(final String iClusterName) {
     synchronized (configuration) {
       final Object value = getClusterConfiguration(iClusterName).field("default");
