@@ -43,16 +43,16 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
   public static final String                VERSION           = OConstants.ORIENT_VERSION;
   static final String                       SYSTEM_CONFIG     = "system.config";
 
-  public static final String                       CLASS_SERVER      = "Server";
-  public static final String                       CLASS_LOG         = "Log";
-  public static final String                       CLASS_EVENT         = "Event";
-  public static final String                       CLASS_SNAPSHOT    = "Snapshot";
-  public static final String                       CLASS_METRIC      = "Metric";
-  public static final String                       CLASS_COUNTER     = "Counter";
-  public static final String                       CLASS_CHRONO      = "Chrono";
-  public static final String                       CLASS_STATISTIC   = "Statistic";
-  public static final String                       CLASS_INFORMATION = "Information";
-  public static final String                       CLASS_DICTIONARY  = "Dictionary";
+  public static final String                CLASS_SERVER      = "Server";
+  public static final String                CLASS_LOG         = "Log";
+  public static final String                CLASS_EVENT       = "Event";
+  public static final String                CLASS_SNAPSHOT    = "Snapshot";
+  public static final String                CLASS_METRIC      = "Metric";
+  public static final String                CLASS_COUNTER     = "Counter";
+  public static final String                CLASS_CHRONO      = "Chrono";
+  public static final String                CLASS_STATISTIC   = "Statistic";
+  public static final String                CLASS_INFORMATION = "Information";
+  public static final String                CLASS_DICTIONARY  = "Dictionary";
 
   private OServer                           serverInstance;
   private long                              updateTimer;
@@ -110,6 +110,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
   }
 
   public void updateActiveServerList() {
+    db.getLevel1Cache().clear();
+    db.getLevel2Cache().clear();
+
     Map<String, OMonitoredServer> tmpServers = new HashMap<String, OMonitoredServer>();
     final List<ODocument> enabledServers = db.query(new OSQLSynchQuery<Object>("select from Server where enabled = true"));
     for (ODocument s : enabledServers) {
@@ -201,13 +204,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
     final OClass information = schema.createClass(CLASS_INFORMATION).setSuperClass(metric);
     information.createProperty("value", OType.STRING);
-    
+
     final OClass events = schema.createClass(CLASS_EVENT);
     events.createProperty("name", OType.STRING);
     events.createProperty("enabled", OType.BOOLEAN);
     events.createProperty("clazz", OType.STRING);
-    events.createProperty("condition", OType.LINK,schema.getClass(OFunction.class));
-    events.createProperty("action", OType.LINK,schema.getClass(OFunction.class));
+    events.createProperty("condition", OType.LINK, schema.getClass(OFunction.class));
+    events.createProperty("action", OType.LINK, schema.getClass(OFunction.class));
   }
 
   @Override
