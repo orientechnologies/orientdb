@@ -24,9 +24,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         $location.path("/database/" + $scope.database.getName() + "/browse/editclass/" + clazz.name);
     }
     $scope.refreshWindow = function () {
-//        $scope.database.refreshMetadata($routeParams.database);
         $window.location.reload();
-//        $route.reload();
     }
     $scope.$watch("countPage", function (data) {
         if ($scope.listClassesTotal) {
@@ -77,8 +75,6 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         modalScope.db = database;
 
         modalScope.parentScope = $scope;
-        // modalScope.propertiesName = $scope.propertyNames ;
-        // modalScope.rid = rid;
         var modalPromise = $modal({template: 'views/database/newClass.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
@@ -87,26 +83,18 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.rebuildAllIndexes = function () {
         var sql = 'REBUILD INDEX *';
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-
         });
     }
-
-
 }]);
 schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi) {
 
     var clazz = $routeParams.clazz;
-
     $scope.class2show = clazz;
-
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);
     $scope.modificati = undefined;
-
-
     $scope.limit = 20;
     $scope.queries = new Array;
-
     $scope.classClickedHeaders = ['name', 'type', 'linkedType', 'linkedClass', 'mandatory', 'readonly', 'notNull', 'min', 'max', 'Actions'];
     $scope.property = null;
     $scope.property = Database.listPropertiesForClass(clazz);
@@ -141,9 +129,10 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             if (already == false) {
                 elem.push(prop);
             }
-
         }
-
+    }
+    $scope.addIndexFromExt = function(newIndex){
+        $scope.indexes.push(newIndex);
     }
     $scope.newIndex = function () {
         modalScope = $scope.$new(true);
@@ -156,6 +145,9 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             modalEl.modal('show');
         });
     };
+    $scope.refreshWindow = function () {
+        $window.location.reload();
+    }
     $scope.newProperty = function () {
         modalScope = $scope.$new(true);
         modalScope.db = database;
@@ -174,21 +166,14 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
         for (result in properties) {
 
-            //il nome da andare a cercare nella lista dei modificati
             var keyName = properties[result]['name'];
-
-            //l'array da modificare
             var arrayToUpdate = $scope.modificati[keyName];
 
             if (!$scope.recursiveSaveProperty(arrayToUpdate, clazz, properties, result, keyName)) {
 
                 return;
             }
-
-
-//                }
         }
-        //clear
         $scope.modificati = undefined;
         $scope.database.refreshMetadata($routeParams.database);
     }
@@ -199,7 +184,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             var prop = arrayToUpdate[0];
             var newValue = properties[result][prop] != '' ? properties[result][prop] : null;
             var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName + ' ' + prop + ' ' + newValue;
-
 
             CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
                 if (data) {
@@ -218,9 +202,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         }
         return true;
     }
-
     $scope.dropIndex = function (nameIndex) {
-
 
         Utilities.confirm($scope, $modal, $q, {
 
@@ -234,18 +216,11 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                     $scope.indexes.splice(index, 1);
                     $scope.indexes.splice();
                 });
-
-
             }
-
         });
-
     }
-
     $scope.dropProperty = function (result, elementName) {
-//        console.log(result);
         Utilities.confirm($scope, $modal, $q, {
-
             title: 'Warning!',
             body: 'You are dropping property  ' + elementName + '. Are you sure?',
             success: function () {
@@ -262,17 +237,13 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                     }
                     $route.reload();
                 });
-
             }
-
         });
     }
     $scope.checkDisable = function (res, entry) {
         if (res[entry] == null || res[entry] == undefined || res[entry] == "") {
-            // console.log('false');
             return false;
         }
-        // console.log('true')
         return true;
     }
     $scope.checkTypeEdit = function (res) {
@@ -295,47 +266,29 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             res['linkedClass'] = null;
             return true;
         }
-
         if (res['type'] == 'LINK' || res['type'] == 'LINKLIST' || res['type'] == 'LINKSET' || res['type'] == 'LINKMAP' || res['type'] == 'EMBEDDED' || res['type'] == 'EMBEDDEDLIST' || res['type'] == 'EMBEDDEDSET' || res['type'] == 'EMBEDDEDMAP') {
             return false;
         }
-
         res['linkedClass'] = null;
         return true;
-
-
     }
     $scope.refreshPage = function () {
         $scope.database.refreshMetadata($routeParams.database);
-//        $window.location.reload()
         $route.reload();
     }
-
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-            // $scope.hide();
-            // $scope.parentScope.refreshPage();
         });
     }
-
-
-}
-])
-;
-
-
+}]);
 schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q) {
-
 
     $scope.listTypeIndex = [ 'DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE', 'DICTIONARY_HASH_INDEX', 'FULLTEXT_HASH_INDEX', 'UNIQUE_HASH_INDEX', 'NOTUNIQUE_HASH_INDEX' ];
     $scope.newIndex = {"name": "", "type": "", "fields": "" }
     $scope.namesProp = $scope.propertiesName;
     $scope.prop2add = new Array;
     $scope.nameIndexToShow = $scope.classInject + '.';
-
-    // for(zz in $scope.namesProp )
-    // console.log($scope.namesProp[zz])
 
     $scope.addedField = function (nameField) {
         var index = $scope.prop2add.indexOf(nameField);
@@ -357,11 +310,8 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
             else {
                 $scope.nameIndexToShow = $scope.nameIndexToShow + '_' + $scope.prop2add[entry];
             }
-
         }
-
     }
-
     $scope.saveNewIndex = function () {
 
         if ($scope.nameIndexToShow == undefined || $scope.nameIndexToShow == "" || $scope.nameIndexToShow == null)
@@ -380,52 +330,37 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
             else {
                 proppps = proppps + ',' + $scope.prop2add[entry];
             }
-            // console.log(proppps);
-
 
         }
         var nameInddd = proppps;
         nameInddd.replace(')', '');
-
         var sql = 'CREATE INDEX ' + $scope.nameIndexToShow + ' ON ' + $scope.classInject + ' ( ' + proppps + ' ) ' + $scope.newIndex['type'];
-
+        $scope.newIndex['name'] = $scope.nameIndexToShow;
+        $scope.newIndex['fields'] =  proppps ;
 
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-                $scope.hide();
-                $scope.parentScope.refreshPage();
-        },function(error){
+            $scope.hide();
+            $scope.parentScope.addIndexFromExt($scope.newIndex);
+        }, function (error) {
             $scope.testMsgClass = 'alert alert-error'
             $scope.testMsg = error;
         });
-
-
     }
-
-
 }]);
-
 
 schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q) {
 
 
     $scope.property = {"name": "", "type": "", "linkedType": "", "linkedClass": "", "mandatory": "false", "readonly": "false", "notNull": "false", "min": null, "max": null}
-
     $scope.listTypes = ['BINARY', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAp', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
-
     $scope.database = Database;
-
     $scope.listClasses = $scope.database.listNameOfClasses();
-
 
     $scope.salvaProperty = function () {
 
-
         var prop = $scope.property;
-
         var propName = $scope.property['name'];
-        console.log(propName)
         var propType = $scope.property['type'];
-
         if (propName == undefined || propType == undefined)
             return;
         var linkedType = prop['linkedType'] != null ? prop['linkedType'] : '';
@@ -454,10 +389,8 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
 
     $scope.checkDisable = function (entry) {
         if ($scope.property[entry] == null || $scope.property[entry] == undefined || $scope.property[entry] == "") {
-            // console.log('false');
             return false;
         }
-        // console.log('true')
         return true;
     }
     $scope.checkDisableLinkedType = function (entry) {
@@ -488,19 +421,12 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
         $scope.property['linkedClass'] = null;
         return true;
     }
-
-
 }]);
 schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route) {
 
-
     $scope.property = {"name": "", "alias": null, "superclass": null, "abstract": false}
-
-
     $scope.database = Database;
-
     $scope.listClasses = $scope.database.listNameOfClasses();
-
 
     $scope.saveNewClass = function () {
         var sql = 'CREATE CLASS ' + $scope.property['name'];

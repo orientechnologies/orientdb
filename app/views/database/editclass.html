@@ -100,7 +100,7 @@
 
 					</thead>
 					<tbody>
-						<tr ng-repeat="index in indexes |  orderBy:'name'">
+						<tr ng-repeat="index in indexes track by $index|  orderBy:'name'">
 							<td>
 								{{index.name}} 
 							</td>
