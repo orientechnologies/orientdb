@@ -1,11 +1,6 @@
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -107,10 +102,17 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+      final int keySize;
+      if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
+        keySize = 1;
+      else
+        keySize = indexDefinition.getTypes().length;
+
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
 
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();

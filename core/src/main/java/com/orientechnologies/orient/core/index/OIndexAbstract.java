@@ -17,15 +17,8 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -176,7 +169,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
 
       try {
-        indexEngine.load(rid, name, isAutomatic());
+        indexEngine.load(rid, name, indexDefinition, isAutomatic());
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
           if (isAutomatic() && getDatabase().getStorage() instanceof OStorageEmbedded)
