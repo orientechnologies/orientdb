@@ -16,25 +16,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
@@ -117,9 +101,10 @@ public class OWriteAheadLog {
         }
       });
 
-      if(walFiles == null)
-        walFiles = new File[0];
-      
+      if (walFiles == null)
+        throw new IllegalStateException(
+            "Passed in WAL location does not exist, or IO error was happened. DB can not work in durable mode in such case.");
+
       if (walFiles.length == 0) {
         LogSegment logSegment = new LogSegment(new File(this.walLocation, getSegmentName(0)), maxPagesCacheSize);
         logSegment.init();
