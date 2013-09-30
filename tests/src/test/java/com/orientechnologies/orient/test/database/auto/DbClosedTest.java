@@ -32,14 +32,6 @@ public class DbClosedTest {
     url = iURL;
   }
 
-  public void testStorageClosed() {
-    if (SetupTest.instance().isReuseDatabase())
-      return;
-
-    ODatabaseDocumentPool.global().close();
-    OObjectDatabasePool.global().close();
-  }
-
   public void testDoubleDb() {
     OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
@@ -58,5 +50,14 @@ public class DbClosedTest {
     dbAnother.close();
 
     db.close();
+  }
+
+  @Test(dependsOnMethods = { "testDoubleDb", "testDoubleDbWindowsPath" })
+  public void testStorageClosed() {
+    if (SetupTest.instance().isReuseDatabase())
+      return;
+
+    ODatabaseDocumentPool.global().close();
+    OObjectDatabasePool.global().close();
   }
 }
