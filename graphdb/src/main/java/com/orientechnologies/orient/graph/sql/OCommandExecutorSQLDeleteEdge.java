@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,7 +37,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -148,10 +144,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
         Set<ORID> fromIds = null;
         if (fromExpr != null)
-          fromIds = parseTarget(graph.getRawGraph(), fromExpr);
+          fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr);
         Set<ORID> toIds = null;
         if (toExpr != null)
-          toIds = parseTarget(graph.getRawGraph(), toExpr);
+          toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr);
 
         if (fromIds != null && toIds != null) {
           // REMOVE ALL THE EDGES BETWEEN VERTICES
@@ -224,29 +220,5 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
   @Override
   public void end() {
-  }
-
-  protected Set<ORID> parseTarget(final ODatabaseRecord database, final String iTarget) {
-    final Set<ORID> ids;
-    if (iTarget.startsWith("(")) {
-      // SUB-QUERY
-      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
-      if (result == null || result.isEmpty())
-        ids = Collections.emptySet();
-      else {
-        ids = new HashSet<ORID>((int) (result.size() * 1.3));
-        for (OIdentifiable aResult : result)
-          ids.add(aResult.getIdentity());
-      }
-    } else if (iTarget.startsWith("[")) {
-      // COLLECTION OF RIDS
-      final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
-      ids = new HashSet<ORID>((int) (idsAsStrings.length * 1.3));
-      for (String idsAsString : idsAsStrings)
-        ids.add(new ORecordId(idsAsString));
-    } else
-      // SINGLE RID
-      ids = Collections.<ORID> singleton(new ORecordId(iTarget));
-    return ids;
   }
 }
