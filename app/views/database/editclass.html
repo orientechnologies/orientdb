@@ -100,7 +100,7 @@
 
 					</thead>
 					<tbody>
-						<tr ng-repeat="index in indexes |  orderBy:'name'">
+						<tr ng-repeat="index in indexes track by $index|  orderBy:'name'">
 							<td>
 								{{index.name}} 
 							</td>
@@ -112,7 +112,7 @@
 							</td>
 							<td>
 								<a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)" > <i class="icon-refresh" ></i> Rebuild</a>
-								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index.name)" > <i class="icon-white icon-trash" ></i> Drop</a>
+								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index)" > <i class="icon-white icon-trash" ></i> Drop</a>
 
 							</td>
 						</tr>
