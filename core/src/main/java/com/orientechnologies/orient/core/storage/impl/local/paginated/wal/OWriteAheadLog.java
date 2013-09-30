@@ -103,7 +103,7 @@ public class OWriteAheadLog {
 
       if (walFiles == null)
         throw new IllegalStateException(
-            "Passed in WAL location does not exist, or IO error was happened. DB can not work in durable mode in such case.");
+            "Location passed in WAL does not exist, or IO error was happened. DB can not work in durable mode in such case.");
 
       if (walFiles.length == 0) {
         LogSegment logSegment = new LogSegment(new File(this.walLocation, getSegmentName(0)), maxPagesCacheSize);
