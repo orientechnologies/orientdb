@@ -69,8 +69,8 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="result in results" ng-click="openRecord(result)">
-                    <td ng-repeat="header in headers">{{result[header]}}</td>
+                <tr ng-repeat="result in results">
+                    <td ng-repeat="header in headers" ridrender>{{result[header]}}</td>
                 </tr>
                 </tbody>
             </table>

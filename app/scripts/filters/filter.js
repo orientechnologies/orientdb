@@ -7,7 +7,7 @@ angular.module('filters', []).filter('capitalize',function () {
         return function (input) {
             return input ? '\u2713' : '\u2718';
         };
-    }).filter('sizeFormat', function () {
+    }).filter('sizeFormat',function () {
 
         return function (size) {
 
@@ -27,3 +27,5 @@ angular.module('filters', []).filter('capitalize',function () {
             return size;
         };
     });
+
+

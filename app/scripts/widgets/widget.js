@@ -314,3 +314,22 @@ Widget.directive('orientdate', function (Database) {
         }
     };
 });
+
+Widget.directive('ridrender', function (Database) {
+
+
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr, ngModel) {
+
+            var value = scope.result[scope.header];
+            if(typeof value == 'string'){
+                if(value.indexOf('#')==0){
+                    var dbName = Database.getName();
+                    var link = '<a href="#/database/'+ dbName + '/browse/edit/' + value.replace('#','') +'">' +value+ '</a>';
+                    element.html(link);
+                }
+            }
+        }
+    };
+});
