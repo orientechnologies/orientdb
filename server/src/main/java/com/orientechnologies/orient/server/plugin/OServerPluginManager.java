@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.server.plugin;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -33,6 +32,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.core.Orient;
@@ -103,7 +103,7 @@ public class OServerPluginManager implements OService {
   }
 
   private void updatePlugins() {
-    final File pluginsDirectory = new File("plugins/");
+    final File pluginsDirectory = new File(OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/plugins/"));
     if (!pluginsDirectory.exists())
       pluginsDirectory.mkdirs();
 
@@ -226,27 +226,27 @@ public class OServerPluginManager implements OService {
     }
   }
 
-  protected void registerStaticDirectory(final OServerPluginInfo currentPluginData) {
-    Object pluginWWW = currentPluginData.getParameter("www");
+  protected void registerStaticDirectory(final OServerPluginInfo iPluginData) {
+    Object pluginWWW = iPluginData.getParameter("www");
     if (pluginWWW == null)
-      pluginWWW = currentPluginData.getName();
+      pluginWWW = iPluginData.getName();
 
     final OServerNetworkListener httpListener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     final OServerCommandGetStaticContent command = (OServerCommandGetStaticContent) httpListener
         .getCommand(OServerCommandGetStaticContent.class);
 
     if (command != null) {
-      final URL wwwURL = currentPluginData.getClassLoader().findResource("www/");
+      final URL wwwURL = iPluginData.getClassLoader().findResource("www/");
 
       final OCallable<Object, String> callback;
-      if (wwwURL != null && currentPluginData.getInstance() == null)
-        callback = createStaticLinkCallback(wwwURL);
+      if (wwwURL != null && iPluginData.getInstance() == null)
+        callback = createStaticLinkCallback(iPluginData, wwwURL);
       else
-        // LET TO THE COMMAND TO CONTROL TH
+        // LET TO THE COMMAND TO CONTROL IT
         callback = new OCallable<Object, String>() {
           @Override
           public Object call(final String iArgument) {
-            return currentPluginData.getInstance().getContent(iArgument);
+            return iPluginData.getInstance().getContent(iArgument);
           }
         };
 
@@ -254,20 +254,18 @@ public class OServerPluginManager implements OService {
     }
   }
 
-  protected OCallable<Object, String> createStaticLinkCallback(final URL wwwURL) {
+  protected OCallable<Object, String> createStaticLinkCallback(final OServerPluginInfo iPluginData, final URL wwwURL) {
     return new OCallable<Object, String>() {
       @Override
       public Object call(final String iArgument) {
-        File f = new File(wwwURL.getFile() + iArgument);
-        if (f.exists() && f.isFile()) {
+        String fileName = "www/" + iArgument;
+        final URL url = iPluginData.getClassLoader().findResource(fileName);
+
+        if (url != null) {
           final OServerCommandGetStaticContent.OStaticContent content = new OStaticContent();
-          try {
-            content.is = new FileInputStream(f);
-          } catch (FileNotFoundException e) {
-            OLogManager.instance().warn(this, "Cannot load static file under path: %s", e, f);
-          }
-          content.contentSize = f.length();
-          content.type = OServerCommandGetStaticContent.getContentType(f.getName());
+          content.is = new BufferedInputStream(iPluginData.getClassLoader().getResourceAsStream(fileName));
+          content.contentSize = -1;
+          content.type = OServerCommandGetStaticContent.getContentType(url.getFile());
           return content;
         }
         return null;

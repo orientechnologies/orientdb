@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -282,10 +283,25 @@ public class OHttpResponse {
       send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
   }
 
-  public void sendStream(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
-      final long iSize) throws IOException {
+  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
+      throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
+    if (iSize < 0) {
+      // SIZE UNKNOWN: USE A MEMORY BUFFER
+      final ByteArrayOutputStream o = new ByteArrayOutputStream();
+      if (iContent != null) {
+        int b;
+        while ((b = iContent.read()) > -1)
+          o.write(b);
+      }
+
+      byte[] content = o.toByteArray();
+
+      iContent = new ByteArrayInputStream(content);
+      iSize = content.length;
+    }
+
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
     writeLine(null);
 
