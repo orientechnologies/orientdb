@@ -258,8 +258,12 @@ public enum OGlobalConfiguration {
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
 
   // SBTREE
-  SBTREE_MAX_ENTREE_SIZE("sbtree.maxEntree.size",
-      "Maximum size of key-value pair which can be put in SBTree in bytes (24576000 by default)", Integer.class, 24576000),
+  SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
+      Integer.class, 10240),
+
+  SBTREE_MAX_EMBEDDED_VALUE_SIZE("sbtree.maxEmbeddedValueSize",
+      "Maximum size of value which can be put in SBTree without creation link to standalone page in bytes (40960 by default)",
+      Integer.class, 40960),
 
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),

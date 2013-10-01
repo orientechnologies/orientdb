@@ -25,7 +25,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @since 20.08.13
  */
 public class OPaginatedClusterState extends ODurablePage {
-  private static final int RECORDS_SIZE_OFFSET = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int RECORDS_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET         = RECORDS_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_LIST_OFFSET    = SIZE_OFFSET + OLongSerializer.LONG_SIZE;
 
