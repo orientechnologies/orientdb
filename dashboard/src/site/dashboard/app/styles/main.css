@@ -142,7 +142,10 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+.btn-trasparent {
+    background-color: transparent;
 
+}
 .nav-pills > li > a {
     border-radius: 0 0 0 0 !important;
 }

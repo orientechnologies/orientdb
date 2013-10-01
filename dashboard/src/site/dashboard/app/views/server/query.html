@@ -43,6 +43,7 @@
                 <thead>
                 <tr>
                     <th></th>
+                    <th>{{ 'queryprofiler.type' | i18n }}</th>
                     <th>{{ 'queryprofiler.command' | i18n }}</th>
                     <th>{{ 'queryprofiler.entries' | i18n }}</th>
                     <th>{{ 'queryprofiler.average' | i18n }}</th>
@@ -57,7 +58,8 @@
                     <td>
                         <i class="icon-info"></i>
                     </td>
-                    <td>{{ command.name }}</td>
+                    <td>{{ command.name | ctype }}</td>
+                    <td>{{ command.name | cname }}</td>
                     <td>{{ command.entries }}</td>
                     <td>{{ command.average }}</td>
                     <td>{{ command.total }}</td>

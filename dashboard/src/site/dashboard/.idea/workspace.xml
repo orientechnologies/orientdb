@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" line="66" mnemonic="7" />
+    <bookmark url="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" line="68" mnemonic="7" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="99461234-2958-484a-a89f-f302ab6271ce" name="Default" comment="" />
     <ignored path="studioee.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
-    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380038312425" ignored="false" />
+    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380665331479" ignored="false" />
     <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380209642386" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986969312" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378998637428" ignored="false" />
@@ -39,7 +39,7 @@
     <file path="/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379270651163" ignored="false" />
     <file path="/moment-filters.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378757736470" ignored="false" />
     <file path="/filter.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379185430924" ignored="false" />
-    <file path="/server.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379954600259" ignored="false" />
+    <file path="/server.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380664910324" ignored="false" />
     <file path="/main.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379099539164" ignored="false" />
     <file path="/settings.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379198123975" ignored="false" />
     <file path="/servers.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378763564214" ignored="false" />
@@ -73,7 +73,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/modal/yesno.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378827905815" ignored="false" />
     <file path="/yesno.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378827905815" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/scripts/util/library.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378828543332" ignored="false" />
-    <file path="/metrics.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379954679478" ignored="false" />
+    <file path="/metrics.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380665415110" ignored="false" />
     <file path="/query.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379253601254" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378901054338" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/allocation.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378905514164" ignored="false" />
@@ -101,7 +101,7 @@
     <file path="$PROJECT_DIR$/app/components/bootstrap/js/tests/vendor/qunit.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
     <file path="/newModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379193137627" ignored="false" />
     <file path="/editModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379183402502" ignored="false" />
-    <file path="/angularjs.nvd3.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379532281018" ignored="false" />
+    <file path="/angularjs.nvd3.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380665747549" ignored="false" />
     <file path="/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378979835798" ignored="false" />
     <file path="/newDatabase.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986010895" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/newDatabase.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986011297" ignored="false" />
@@ -161,39 +161,39 @@
     <file path="$PROJECT_DIR$/../../../../../orientbi/www/biconsole/js/biconsole-controller-reporttree.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379948315943" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientbi/www/biconsole/partials/reportlist.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379948315943" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientbi/www/biconsole/js/biconsole-app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379948706774" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/js/services/biconsole-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380207657730" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/js/biconsole-controller-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380207590440" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/js/services/biconsole-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380207657730" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/js/biconsole-controller-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380207590440" ignored="false" />
     <file path="/biconsole-controller-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380206278710" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/js/biconsole-app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/js/biconsole-app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
     <file path="/biconsole-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380207657018" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/partials/log.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210220940" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/partials/log.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210220940" ignored="false" />
     <file path="/log.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380208542637" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/spin.js/assets/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/angular-strap/vendor/bootstrap-timepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap-timepicker/css/bootstrap-timepicker.min.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/css/enterprise-style.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap/docs/assets/css/bootstrap.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap/less/forms.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/css/bootstrap-select.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/jquery/jquery.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/js/bootstrap-select.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap-datepicker/js/bootstrap-datepicker.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/angular/angular.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/angular-strap/dist/angular-strap.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap/js/tests/vendor/jquery.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap/docs/assets/js/jquery.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/font-awesome/src/assets/less/bootstrap-2.3.2/bootstrap.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/spin.js/assets/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/angular-strap/vendor/bootstrap-timepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap-timepicker/css/bootstrap-timepicker.min.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/css/enterprise-style.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap/docs/assets/css/bootstrap.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap/less/forms.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/css/bootstrap-select.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/jquery/jquery.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/js/bootstrap-select.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap-datepicker/js/bootstrap-datepicker.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/angular/angular.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/angular-strap/dist/angular-strap.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap/js/tests/vendor/jquery.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap/docs/assets/js/jquery.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380183518989" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/font-awesome/src/assets/less/bootstrap-2.3.2/bootstrap.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380039009073" ignored="false" />
     <file path="/enterprise-style.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380097662701" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/angular-ui-bootstrap-bower/ui-bootstrap.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap-datepicker/tests/assets/qunit.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/bootstrap/js/tests/vendor/qunit.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/json3/vendor/require.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/font-awesome/src/assets/js/backbone.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../../orientbi/www/biconsole/bower_components/codemirror/mode/javascript/javascript.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/angular-ui-bootstrap-bower/ui-bootstrap.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap-datepicker/tests/assets/qunit.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/bootstrap/js/tests/vendor/qunit.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/json3/vendor/require.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/font-awesome/src/assets/js/backbone.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
+    <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/codemirror/mode/javascript/javascript.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="/datepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210153179" ignored="false" />
     <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380212622654" ignored="false" />
     <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380212685101" ignored="false" />
@@ -219,28 +219,16 @@
       <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="2" column="24" selection-start="98" selection-end="105" vertical-scroll-proportion="-0.6415094">
+            <state line="105" column="32" selection-start="4011" selection-end="4011" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/index.html">
+      <file leaf-file-name="server.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="23" column="79" selection-start="1127" selection-end="1127" vertical-scroll-proportion="-15.038462">
-              <folding>
-                <marker date="1380209662000" expanded="true" signature="1380:1617" placeholder="..." />
-                <marker date="1380209662000" expanded="true" signature="1449:1483" placeholder="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="datepicker.css" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/components/bootstrap-datepicker/css/datepicker.css">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="53" column="63" selection-start="1130" selection-end="1130" vertical-scroll-proportion="-6.76">
+            <state line="171" column="27" selection-start="5966" selection-end="5966" vertical-scroll-proportion="-2.6470587">
               <folding />
             </state>
           </provider>
@@ -255,6 +243,15 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="angularjs.nvd3.js" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="213" column="46" selection-start="6577" selection-end="6577" vertical-scroll-proportion="0.61072665">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="app.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
           <provider selected="true" editor-type-id="text-editor">
@@ -264,19 +261,19 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="monitor.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
+      <file leaf-file-name="metrics.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="3" column="115" selection-start="153" selection-end="159" vertical-scroll-proportion="0.0">
+            <state line="47" column="131" selection-start="2239" selection-end="2239" vertical-scroll-proportion="-16.833334">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="metrics.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
+      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="17" column="54" selection-start="800" selection-end="800" vertical-scroll-proportion="-11.115385">
+            <state line="144" column="9" selection-start="2779" selection-end="2779" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -285,25 +282,25 @@
       <file leaf-file-name="dashboard.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="34" column="19" selection-start="1427" selection-end="1627" vertical-scroll-proportion="-10.461538">
+            <state line="28" column="27" selection-start="879" selection-end="1182" vertical-scroll-proportion="-6.8333335">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="log.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
+      <file leaf-file-name="monitor.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="3.9230769">
+            <state line="13" column="59" selection-start="476" selection-end="476" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="67" column="78" selection-start="1963" selection-end="1963" vertical-scroll-proportion="0.71453285">
+            <state line="67" column="78" selection-start="1963" selection-end="1963" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -322,27 +319,27 @@
         <option value="$PROJECT_DIR$/component.json" />
         <option value="$PROJECT_DIR$/app/components/nvd3/src/models/multiBar.js" />
         <option value="$PROJECT_DIR$/app/components/nvd3/nv.d3.js" />
-        <option value="$PROJECT_DIR$/app/styles/main.css" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
         <option value="$PROJECT_DIR$/app/views/server/general.html" />
-        <option value="$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
-        <option value="$PROJECT_DIR$/app/views/server/metrics.html" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
         <option value="$PROJECT_DIR$/app/views/server/log.html" />
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
+        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
+        <option value="$PROJECT_DIR$/app/styles/main.css" />
+        <option value="$PROJECT_DIR$/app/views/server/metrics.html" />
+        <option value="$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-10" />
-    <option name="y" value="19" />
-    <option name="width" value="1386" />
-    <option name="height" value="759" />
+    <option name="x" value="-1" />
+    <option name="y" value="-771" />
+    <option name="width" value="1368" />
+    <option name="height" value="772" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -370,7 +367,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -467,6 +463,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -475,7 +472,13 @@
     <property name="DefaultHtmlFileTemplate" value="Html5" />
     <property name="GoToClass.includeJavaFiles" value="false" />
   </component>
-  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
+  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
+    <servers>
+      <server id="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
+        <serverdata />
+      </server>
+    </servers>
+  </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app/scripts/controllers" />
@@ -538,7 +541,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-10" y="19" width="1386" height="759" extended-state="6" />
+    <frame x="-1" y="-771" width="1368" height="772" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -620,23 +623,9 @@
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="402" column="19" selection-start="7848" selection-end="7848" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
       <provider selected="true" editor-type-id="text-editor">
         <state line="51" column="32" selection-start="2130" selection-end="2130" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="111" column="42" selection-start="3300" selection-end="3300" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -655,61 +644,23 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="184" column="0" selection-start="6258" selection-end="6258" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="54" selection-start="800" selection-end="800" vertical-scroll-proportion="-11.115385">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="19" selection-start="1427" selection-end="1627" vertical-scroll-proportion="-10.461538">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/index.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="23" column="79" selection-start="1127" selection-end="1127" vertical-scroll-proportion="-15.038462">
-          <folding>
-            <marker date="1380209662000" expanded="true" signature="1380:1617" placeholder="..." />
-            <marker date="1380209662000" expanded="true" signature="1449:1483" placeholder="..." />
-          </folding>
+        <state line="23" column="79" selection-start="1127" selection-end="1127" vertical-scroll-proportion="0.0">
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/components/bootstrap-datepicker/css/datepicker.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="53" column="63" selection-start="1130" selection-end="1130" vertical-scroll-proportion="-6.76">
+        <state line="53" column="63" selection-start="1130" selection-end="1130" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="3.9230769">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="115" selection-start="153" selection-end="159" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="24" selection-start="98" selection-end="105" vertical-scroll-proportion="-0.6415094">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -730,7 +681,56 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="67" column="78" selection-start="1963" selection-end="1963" vertical-scroll-proportion="0.71453285">
+        <state line="67" column="78" selection-start="1963" selection-end="1963" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="59" selection-start="476" selection-end="476" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="105" column="32" selection-start="4011" selection-end="4011" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="28" column="27" selection-start="879" selection-end="1182" vertical-scroll-proportion="-6.8333335">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="47" column="131" selection-start="2239" selection-end="2239" vertical-scroll-proportion="-16.833334">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="144" column="9" selection-start="2779" selection-end="2779" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="171" column="27" selection-start="5966" selection-end="5966" vertical-scroll-proportion="-2.6470587">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="213" column="46" selection-start="6577" selection-end="6577" vertical-scroll-proportion="0.61072665">
           <folding />
         </state>
       </provider>

@@ -94,7 +94,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             names.push(del);
             names.push(read);
         });
-        Metric.getOperationMetrics({names: names, server: $scope.rid }, function (data) {
+        Metric.getMetrics({names: names, server: $scope.rid }, function (data) {
             $scope.serverLoad = new Array;
             var tmpArr = new Array;
 
@@ -128,7 +128,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         var update = 'db.' + db + DOT + UPDATE_LABEL;
         var del = 'db.' + db + DOT + DELETE_LABEL;
         var read = 'db.' + db + DOT + READ_LABEL;
-        Metric.getOperationMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
+        Metric.getMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
             $scope.operationData = new Array;
             var tmpArr = new Array;
 
@@ -168,6 +168,8 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
 
     $scope.rid = $routeParams.server;
+    $scope.names = new Array;
+    $scope.render = 'area';
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
@@ -179,11 +181,14 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 
         console.log(data);
     });
-
-    $scope.$watch("metric", function (data) {
+    $scope.addMetric = function(){
+        $scope.names.push($scope.metric);
+        $scope.refreshData();
+    }
+    /*$scope.$watch("metric", function (data) {
 
         if (data) {
-            Metric.getMetrics({ name: data, server: $scope.rid}, function (data) {
+            Metric.getMetrics({ names: $scope.names, server: $scope.rid}, function (data) {
                 $scope.metricsData = new Array;
                 var tmpArr = new Array;
 
@@ -192,12 +197,40 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
                         tmpArr[elem.name] = new Array;
                     }
                     var el = undefined;
-                    el = elem.value || elem.entries;
+
+                    if(elem['class'] == 'Information'){
+                        el = elem.value
+                    } else {
+                        el =  elem.entries;
+                    }
                     tmpArr[elem.name].push([elem.dateTo, el]);
                 });
 
                 $scope.metricsData = tmpArr;
             })
         }
-    });
+    });*/
+    $scope.refreshData = function(){
+        Metric.getMetrics({ names: $scope.names, server: $scope.rid}, function (data) {
+            $scope.metricsData = new Array;
+            var tmpArr = new Array;
+
+
+            data.result.forEach(function (elem, idx, array) {
+                if (!tmpArr[elem.name]) {
+                    tmpArr[elem.name] = new Array;
+                }
+                var el = undefined;
+
+                if(elem['class'] == 'Information'){
+                    el = elem.value
+                } else {
+                    el =  elem.entries;
+                }
+                tmpArr[elem.name][elem.dateTo] = el; //([elem.dateTo, el]);
+            });
+            console.log(tmpArr);
+            $scope.metricsData = tmpArr;
+        })
+    }
 });
