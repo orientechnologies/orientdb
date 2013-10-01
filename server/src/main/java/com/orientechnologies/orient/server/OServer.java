@@ -122,6 +122,8 @@ public class OServer {
     if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
       config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
 
+    Orient.instance().startup();
+
     startup(new File(config));
 
     Orient
