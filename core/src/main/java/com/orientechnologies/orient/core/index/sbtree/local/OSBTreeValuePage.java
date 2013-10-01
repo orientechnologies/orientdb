@@ -30,10 +30,16 @@ public class OSBTreeValuePage extends ODurablePage {
   private static final int NEXT_VALUE_PAGE_OFFSET     = PAGE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int BINARY_CONTENT_OFFSET      = NEXT_VALUE_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private static final int MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
+  public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(long pagePointer, TrackMode trackMode) {
+  public OSBTreeValuePage(long pagePointer, TrackMode trackMode, boolean isNew) throws IOException {
     super(pagePointer, trackMode);
+
+    if (isNew) {
+      setNextFreeListPage(-1);
+      setNextPage(-1);
+    }
+
   }
 
   public void setNextPage(long nextPage) throws IOException {
@@ -41,7 +47,7 @@ public class OSBTreeValuePage extends ODurablePage {
   }
 
   public int getSize() {
-    return getIntValue(PAGE_VALUE_SIZE_OFFSET);
+    return getIntValue(WHOLE_VALUE_SIZE_OFFSET);
   }
 
   public int fillBinaryContent(byte[] data, int offset) throws IOException {
@@ -59,6 +65,15 @@ public class OSBTreeValuePage extends ODurablePage {
     return offset + maxSize;
   }
 
+  public int readBinaryContent(byte[] data, int offset) throws IOException {
+    int valueSize = getIntValue(PAGE_VALUE_SIZE_OFFSET);
+    byte[] content = getBinaryValue(BINARY_CONTENT_OFFSET, valueSize);
+
+    System.arraycopy(content, 0, data, offset, valueSize);
+
+    return offset + valueSize;
+  }
+
   public long getNextPage() {
     return getLongValue(NEXT_VALUE_PAGE_OFFSET);
   }
@@ -72,6 +87,6 @@ public class OSBTreeValuePage extends ODurablePage {
   }
 
   public static int calculateAmountOfPage(int contentSize) {
-    return (int) Math.ceil(1.0 * contentSize / (MAX_PAGE_SIZE_BYTES - 16));
+    return (int) Math.ceil(1.0 * contentSize / MAX_BINARY_VALUE_SIZE);
   }
 }

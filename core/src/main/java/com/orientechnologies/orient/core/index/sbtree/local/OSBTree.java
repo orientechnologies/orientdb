@@ -250,7 +250,7 @@ public class OSBTree<K, V> extends ODurableComponent {
       OCacheEntry valueEntry = diskCache.load(fileId, removedLink, false);
       OCachePointer valuePointer = valueEntry.getCachePointer();
       try {
-        OSBTreeValuePage valuePage = new OSBTreeValuePage(valuePointer.getDataPointer(), getTrackMode());
+        OSBTreeValuePage valuePage = new OSBTreeValuePage(valuePointer.getDataPointer(), getTrackMode(), false);
         nextPage = valuePage.getNextPage();
       } finally {
         diskCache.release(valueEntry);
@@ -282,7 +282,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     OCachePointer valuePointer = valueEntry.getCachePointer();
     valuePointer.acquireExclusiveLock();
     try {
-      OSBTreeValuePage valuePage = new OSBTreeValuePage(valuePointer.getDataPointer(), getTrackMode());
+      OSBTreeValuePage valuePage = new OSBTreeValuePage(valuePointer.getDataPointer(), getTrackMode(), false);
       valuePage.setNextFreeListPage(prevFreeListItem);
 
       valueEntry.markDirty();
@@ -300,16 +300,30 @@ public class OSBTree<K, V> extends ODurableComponent {
     final int amountOfPages = OSBTreeValuePage.calculateAmountOfPage(serializeValue.length);
 
     int position = 0;
-    OCacheEntry cacheEntry = allocateValuePage();
+    long freeListPageIndex = allocateValuePageFromFreeList();
+
+    OCacheEntry cacheEntry;
+    if (freeListPageIndex < 0)
+      cacheEntry = diskCache.allocateNewPage(fileId);
+    else
+      cacheEntry = diskCache.load(fileId, freeListPageIndex, false);
+
     final long valueLink = cacheEntry.getPageIndex();
     OCachePointer cachePointer = cacheEntry.getCachePointer();
-
+    cachePointer.acquireExclusiveLock();
     try {
-      OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), getTrackMode());
+      OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), getTrackMode(), freeListPageIndex >= 0);
       position = valuePage.fillBinaryContent(serializeValue, position);
 
+      valuePage.setNextFreeListPage(-1);
+      valuePage.setNextPage(-1);
+
       cacheEntry.markDirty();
-      logPageChanges(valuePage, fileId, cacheEntry.getPageIndex(), true);
+
+      if (freeListPageIndex < 0)
+        logPageChanges(valuePage, fileId, cacheEntry.getPageIndex(), true);
+      else
+        logPageChanges(valuePage, fileId, cacheEntry.getPageIndex(), false);
     } finally {
       cachePointer.releaseExclusiveLock();
       diskCache.release(cacheEntry);
@@ -317,15 +331,27 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     long prevPage = valueLink;
     for (int i = 1; i < amountOfPages; i++) {
-      cacheEntry = allocateValuePage();
-      cachePointer = cacheEntry.getCachePointer();
+      freeListPageIndex = allocateValuePageFromFreeList();
 
+      if (freeListPageIndex < 0)
+        cacheEntry = diskCache.allocateNewPage(fileId);
+      else
+        cacheEntry = diskCache.load(fileId, freeListPageIndex, false);
+
+      cachePointer = cacheEntry.getCachePointer();
+      cachePointer.acquireExclusiveLock();
       try {
-        OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), getTrackMode());
+        OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), getTrackMode(), freeListPageIndex >= 0);
         position = valuePage.fillBinaryContent(serializeValue, position);
 
+        valuePage.setNextFreeListPage(-1);
+        valuePage.setNextPage(-1);
+
         cacheEntry.markDirty();
-        logPageChanges(valuePage, fileId, cacheEntry.getPageIndex(), true);
+        if (freeListPageIndex < 0)
+          logPageChanges(valuePage, fileId, cacheEntry.getPageIndex(), true);
+        else
+          logPageChanges(valuePage, fileId, cacheEntry.getPageIndex(), false);
       } finally {
         cachePointer.releaseExclusiveLock();
         diskCache.release(cacheEntry);
@@ -335,10 +361,11 @@ public class OSBTree<K, V> extends ODurableComponent {
       OCachePointer prevPageCachePointer = prevPageCacheEntry.getCachePointer();
       prevPageCachePointer.acquireExclusiveLock();
       try {
-        OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), getTrackMode());
+        OSBTreeValuePage valuePage = new OSBTreeValuePage(prevPageCachePointer.getDataPointer(), getTrackMode(),
+            freeListPageIndex >= 0);
         valuePage.setNextPage(cacheEntry.getPageIndex());
 
-        cacheEntry.markDirty();
+        prevPageCacheEntry.markDirty();
         logPageChanges(valuePage, fileId, prevPage, false);
       } finally {
         prevPageCachePointer.releaseExclusiveLock();
@@ -351,7 +378,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     return valueLink;
   }
 
-  private OCacheEntry allocateValuePage() throws IOException {
+  private long allocateValuePageFromFreeList() throws IOException {
     OCacheEntry rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
     OCachePointer rootCachePointer = rootCacheEntry.getCachePointer();
     OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootCachePointer.getDataPointer(), keySerializer, valueSerializer,
@@ -366,31 +393,39 @@ public class OSBTree<K, V> extends ODurableComponent {
     if (freeListFirstIndex >= 0) {
       OCacheEntry freePageEntry = diskCache.load(fileId, freeListFirstIndex, false);
       OCachePointer freePageCachePointer = freePageEntry.getCachePointer();
-      OSBTreeValuePage valuePage = new OSBTreeValuePage(freePageCachePointer.getDataPointer(), getTrackMode());
+      OSBTreeValuePage valuePage = new OSBTreeValuePage(freePageCachePointer.getDataPointer(), getTrackMode(), false);
       freePageCachePointer.acquireExclusiveLock();
 
-      long nextFreeListIndex = valuePage.getNextFreeListPage();
-
-      rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
-      rootCachePointer = rootCacheEntry.getCachePointer();
-      rootCachePointer.acquireExclusiveLock();
-      rootBucket = new OSBTreeBucket<K, V>(rootCachePointer.getDataPointer(), keySerializer, valueSerializer, getTrackMode());
       try {
-        rootBucket.setValuesFreeListFirstIndex(nextFreeListIndex);
+        long nextFreeListIndex = valuePage.getNextFreeListPage();
 
-        rootCacheEntry.markDirty();
-        logPageChanges(rootBucket, fileId, ROOT_INDEX, false);
+        rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
+        rootCachePointer = rootCacheEntry.getCachePointer();
+        rootCachePointer.acquireExclusiveLock();
+        rootBucket = new OSBTreeBucket<K, V>(rootCachePointer.getDataPointer(), keySerializer, valueSerializer, getTrackMode());
+        try {
+          rootBucket.setValuesFreeListFirstIndex(nextFreeListIndex);
+
+          rootCacheEntry.markDirty();
+          logPageChanges(rootBucket, fileId, ROOT_INDEX, false);
+        } finally {
+          rootCachePointer.releaseExclusiveLock();
+          diskCache.release(rootCacheEntry);
+        }
+
+        valuePage.setNextFreeListPage(-1);
+
+        freePageEntry.markDirty();
+        logPageChanges(valuePage, fileId, freePageEntry.getPageIndex(), false);
       } finally {
-        rootCachePointer.releaseExclusiveLock();
-        diskCache.release(rootCacheEntry);
+        freePageCachePointer.releaseExclusiveLock();
+        diskCache.release(freePageEntry);
       }
 
-      valuePage.setNextFreeListPage(-1);
-
-      return freePageEntry;
+      return freePageEntry.getPageIndex();
     }
 
-    return diskCache.allocateNewPage(fileId);
+    return -1;
   }
 
   private void rollback(OStorageTransaction transaction) {
@@ -1117,6 +1152,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         return new BucketSearchResult(keyIndex - indexToSplit - 1, resultPath);
 
       } else {
+        final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
         final long treeSize = bucketToSplit.getTreeSize();
 
         final byte keySerializeId = bucketToSplit.getKeySerializerId();
@@ -1170,6 +1206,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         bucketToSplit.setTreeSize(treeSize);
         bucketToSplit.setKeySerializerId(keySerializeId);
         bucketToSplit.setValueSerializerId(valueSerializerId);
+        bucketToSplit.setValuesFreeListFirstIndex(freeListPage);
 
         bucketToSplit.addEntry(0,
             new OSBTreeBucket.SBTreeEntry<K, V>(leftBucketEntry.getPageIndex(), rightBucketEntry.getPageIndex(), separationKey,
@@ -1259,14 +1296,15 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     OCacheEntry cacheEntry = diskCache.load(fileId, sbTreeValue.getLink(), false);
     OCachePointer cachePointer = cacheEntry.getCachePointer();
-    OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+
+    OSBTreeValuePage valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, false);
 
     int totalSize = valuePage.getSize();
     int currentSize = 0;
     byte[] value = new byte[totalSize];
 
     while (currentSize < totalSize) {
-      currentSize = valuePage.fillBinaryContent(value, currentSize);
+      currentSize = valuePage.readBinaryContent(value, currentSize);
 
       long nextPage = valuePage.getNextPage();
       if (nextPage >= 0) {
@@ -1274,7 +1312,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         cacheEntry = diskCache.load(fileId, nextPage, false);
         cachePointer = cacheEntry.getCachePointer();
 
-        valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+        valuePage = new OSBTreeValuePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, false);
       }
     }
 

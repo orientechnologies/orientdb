@@ -159,7 +159,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
                   + OByteSerializer.BYTE_SIZE) + OByteSerializer.BYTE_SIZE;
         else {
           entrySize = keySize + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
-          linkValue = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + keySize
+          linkValue = OLongSerializer.INSTANCE.deserializeFromDirectMemory(directMemory, pagePointer + entryPosition + keySize
               + OByteSerializer.BYTE_SIZE);
         }
       }
