@@ -81,7 +81,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
 
-    long resyncEvery = manager.getDatabaseConfiguration(databaseName).getResynchEvery();
+    long resyncEvery = manager.getDatabaseConfiguration(databaseName).getResyncEvery();
     if (resyncEvery > 0) {
       resyncEvery *= 1000; // TRANSFORM IN SECONDS
       // CREATE A TIMER TASK TO RESYNCH

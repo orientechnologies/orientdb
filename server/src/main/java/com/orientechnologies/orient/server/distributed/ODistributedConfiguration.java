@@ -112,9 +112,9 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the delay timer to resynch asynchronous nodes.
+   * Returns the delay timer to resync asynchronous nodes.
    */
-  public int getResynchEvery() {
+  public int getResyncEvery() {
     synchronized (configuration) {
       final Object value = configuration.field("resyncEvery");
       if (value != null)
