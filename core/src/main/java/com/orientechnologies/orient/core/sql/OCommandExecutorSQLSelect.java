@@ -33,7 +33,6 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -482,36 +481,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
     ORuntimeResult group = null;
 
+    Object key = null;
     if (groupedResult == null)
       groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
-    else {
-      if (fieldValue != null && fieldValue.getClass().isArray()) {
+
+    if (fieldValue != null) {
+      if (fieldValue.getClass().isArray()) {
         // LOOK IT BY HASH (FASTER THAN COMPARE EACH SINGLE VALUE)
         final Object[] array = (Object[]) fieldValue;
-        group = groupedResult.get(OArrays.hash(array));
-        if (group != null) {
-          final Object[] v = (Object[]) group.getFieldValue();
-          if (v.length == array.length) {
-            for (int i = 0; i < array.length; ++i) {
-              if (!array[i].equals(v[i])) {
-                // SAME HAS BUT NOT REALLY EQUALS!
-                group = null;
-                break;
-              }
-            }
-          }
+
+        final StringBuilder keyArray = new StringBuilder();
+        for (Object o : array) {
+          if (keyArray.length() > 0)
+            keyArray.append(",");
+          if (o != null)
+            keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
+          else
+            keyArray.append("null");
         }
+
+        key = keyArray.toString();
       } else
         // LOKUP FOR THE FIELD
-        group = groupedResult.get(fieldValue);
+        key = fieldValue;
     }
 
+    group = groupedResult.get(key);
     if (group == null) {
       group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
-      if (fieldValue != null && fieldValue.getClass().isArray())
-        groupedResult.put(OArrays.hash((Object[]) fieldValue), group);
-      else
-        groupedResult.put(fieldValue, group);
+      groupedResult.put(key, group);
     }
     return group;
   }
