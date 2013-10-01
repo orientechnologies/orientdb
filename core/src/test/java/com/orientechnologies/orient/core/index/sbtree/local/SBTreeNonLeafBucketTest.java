@@ -21,7 +21,7 @@ public class SBTreeNonLeafBucketTest {
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
   public void testInitialization() throws Exception {
-    long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
+    long pointer = directMemory.allocate(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
@@ -45,11 +45,11 @@ public class SBTreeNonLeafBucketTest {
     TreeSet<Long> keys = new TreeSet<Long>();
     Random random = new Random(seed);
 
-    while (keys.size() < 2 * OSBTreeBucket.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
+    while (keys.size() < 2 * OSBTreeBucket.MAX_PAGE_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
       keys.add(random.nextLong());
     }
 
-    long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
+    long pointer = directMemory.allocate(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
@@ -102,11 +102,11 @@ public class SBTreeNonLeafBucketTest {
     TreeSet<Long> keys = new TreeSet<Long>();
     Random random = new Random(seed);
 
-    while (keys.size() < 2 * OSBTreeBucket.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
+    while (keys.size() < 2 * OSBTreeBucket.MAX_PAGE_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
       keys.add(random.nextLong());
     }
 
-    long pointer = directMemory.allocate(OSBTreeBucket.MAX_BUCKET_SIZE_BYTES);
+    long pointer = directMemory.allocate(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 

@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeBucket;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -340,15 +339,15 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final Object lastKey = sbTree.lastKey();
       sbTree.loadEntriesBetween(firstKey, true, lastKey, true, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
+        public boolean addResult(Map.Entry<Object, V> entry) {
           if (transformer == null) {
-            if (entry.value.equals(value))
-              keySetToRemove.add(entry.key);
+            if (entry.getValue().equals(value))
+              keySetToRemove.add(entry.getKey());
           } else {
-            Collection<OIdentifiable> identifiables = transformer.transformFromValue(entry.value);
+            Collection<OIdentifiable> identifiables = transformer.transformFromValue(entry.getValue());
             for (OIdentifiable identifiable : identifiables) {
               if (identifiable.equals(value))
-                keySetToRemove.add(entry.key);
+                keySetToRemove.add(entry.getKey());
             }
           }
           return true;
@@ -373,8 +372,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.loadEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          addToResult(transformer, result, entry.value, maxValuesToFetch);
+        public boolean addResult(Map.Entry<Object, V> entry) {
+          addToResult(transformer, result, entry.getValue(), maxValuesToFetch);
 
           if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
             return false;
@@ -398,8 +397,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.loadEntriesMajor(fromKey, isInclusive, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          addToResult(transformer, result, entry.value, maxValuesToFetch);
+        public boolean addResult(Map.Entry<Object, V> entry) {
+          addToResult(transformer, result, entry.getValue(), maxValuesToFetch);
 
           if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
             return false;
@@ -423,8 +422,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.loadEntriesMinor(toKey, isInclusive, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          addToResult(transformer, result, entry.value, maxValuesToFetch);
+        public boolean addResult(Map.Entry<Object, V> entry) {
+          addToResult(transformer, result, entry.getValue(), maxValuesToFetch);
 
           if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
             return false;
@@ -448,9 +447,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.loadEntriesMajor(fromKey, isInclusive, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          final Object key = entry.key;
-          final V value = entry.value;
+        public boolean addResult(Map.Entry<Object, V> entry) {
+          final Object key = entry.getKey();
+          final V value = entry.getValue();
 
           addToEntriesResult(transformer, result, key, value, maxEntriesToFetch);
 
@@ -476,9 +475,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.loadEntriesMinor(toKey, isInclusive, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          final Object key = entry.key;
-          final V value = entry.value;
+        public boolean addResult(Map.Entry<Object, V> entry) {
+          final Object key = entry.getKey();
+          final V value = entry.getValue();
 
           addToEntriesResult(transformer, result, key, value, maxEntriesToFetch);
 
@@ -504,9 +503,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       sbTree.loadEntriesBetween(rangeFrom, inclusive, rangeTo, inclusive, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          final Object key = entry.key;
-          final V value = entry.value;
+        public boolean addResult(Map.Entry<Object, V> entry) {
+          final Object key = entry.getKey();
+          final V value = entry.getValue();
 
           addToEntriesResult(transformer, result, key, value, maxEntriesToFetch);
 
@@ -635,24 +634,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private void prefetchData(boolean firstTime) {
       sbTree.loadEntriesMajor(firstKey, firstTime, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(final OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          preFetchedValues.add(new Map.Entry<Object, V>() {
-            @Override
-            public Object getKey() {
-              return entry.key;
-            }
-
-            @Override
-            public V getValue() {
-              return entry.value;
-            }
-
-            @Override
-            public V setValue(V v) {
-              throw new UnsupportedOperationException("setValue");
-            }
-          });
-
+        public boolean addResult(final Map.Entry<Object, V> entry) {
+          preFetchedValues.add(entry);
           return preFetchedValues.size() <= 8000;
         }
       });
@@ -705,23 +688,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private void prefetchData(boolean firstTime) {
       sbTree.loadEntriesMinor(lastKey, firstTime, new OSBTree.RangeResultListener<Object, V>() {
         @Override
-        public boolean addResult(final OSBTreeBucket.SBTreeEntry<Object, V> entry) {
-          preFetchedValues.add(new Map.Entry<Object, V>() {
-            @Override
-            public Object getKey() {
-              return entry.key;
-            }
-
-            @Override
-            public V getValue() {
-              return entry.value;
-            }
-
-            @Override
-            public V setValue(V v) {
-              throw new UnsupportedOperationException("setValue");
-            }
-          });
+        public boolean addResult(final Map.Entry<Object, V> entry) {
+          preFetchedValues.add(entry);
 
           return preFetchedValues.size() <= 8000;
         }
@@ -765,9 +733,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private int count;
 
     @Override
-    public boolean addResult(OSBTreeBucket.SBTreeEntry<Object, V> entry) {
+    public boolean addResult(Map.Entry<Object, V> entry) {
       if (valuesTransformer != null)
-        count += valuesTransformer.transformFromValue(entry.value).size();
+        count += valuesTransformer.transformFromValue(entry.getValue()).size();
       else
         count++;
 
