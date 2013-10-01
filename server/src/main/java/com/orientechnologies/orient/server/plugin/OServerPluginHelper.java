@@ -23,45 +23,55 @@ import com.orientechnologies.orient.server.OServer;
 public class OServerPluginHelper {
 
   public static void invokeHandlerCallbackOnClientConnection(final OServer iServer, final OClientConnection connection) {
-    final Collection<OServerPluginInfo> handlers = iServer.getPlugins();
-    if (handlers != null)
-      for (OServerPluginInfo handler : handlers) {
-        handler.getInstance().onClientConnection(connection);
+    final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
+    if (plugins != null)
+      for (OServerPluginInfo plugin : plugins) {
+        final OServerPlugin pluginInstance = plugin.getInstance();
+        if (pluginInstance != null)
+          plugin.getInstance().onClientConnection(connection);
       }
   }
 
   public static void invokeHandlerCallbackOnClientDisconnection(final OServer iServer, final OClientConnection connection) {
-    final Collection<OServerPluginInfo> handlers = iServer.getPlugins();
-    if (handlers != null)
-      for (OServerPluginInfo handler : handlers) {
-        handler.getInstance().onClientDisconnection(connection);
+    final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
+    if (plugins != null)
+      for (OServerPluginInfo plugin : plugins) {
+        final OServerPlugin pluginInstance = plugin.getInstance();
+        if (pluginInstance != null)
+          pluginInstance.onClientDisconnection(connection);
       }
   }
 
   public static void invokeHandlerCallbackOnBeforeClientRequest(final OServer iServer, final OClientConnection connection,
       final byte iRequestType) {
-    final Collection<OServerPluginInfo> handlers = iServer.getPlugins();
-    if (handlers != null)
-      for (OServerPluginInfo handler : handlers) {
-        handler.getInstance().onBeforeClientRequest(connection, iRequestType);
+    final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
+    if (plugins != null)
+      for (OServerPluginInfo plugin : plugins) {
+        final OServerPlugin pluginInstance = plugin.getInstance();
+        if (pluginInstance != null)
+          pluginInstance.onBeforeClientRequest(connection, iRequestType);
       }
   }
 
   public static void invokeHandlerCallbackOnAfterClientRequest(final OServer iServer, final OClientConnection connection,
       final byte iRequestType) {
-    final Collection<OServerPluginInfo> handlers = iServer.getPlugins();
-    if (handlers != null)
-      for (OServerPluginInfo handler : handlers) {
-        handler.getInstance().onAfterClientRequest(connection, iRequestType);
+    final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
+    if (plugins != null)
+      for (OServerPluginInfo plugin : plugins) {
+        final OServerPlugin pluginInstance = plugin.getInstance();
+        if (pluginInstance != null)
+          pluginInstance.onAfterClientRequest(connection, iRequestType);
       }
   }
 
   public static void invokeHandlerCallbackOnClientError(final OServer iServer, final OClientConnection connection,
       final Throwable iThrowable) {
-    final Collection<OServerPluginInfo> handlers = iServer.getPlugins();
-    if (handlers != null)
-      for (OServerPluginInfo handler : handlers) {
-        handler.getInstance().onClientError(connection, iThrowable);
+    final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
+    if (plugins != null)
+      for (OServerPluginInfo plugin : plugins) {
+        final OServerPlugin pluginInstance = plugin.getInstance();
+        if (pluginInstance != null)
+          pluginInstance.onClientError(connection, iThrowable);
       }
   }
 
