@@ -32,7 +32,7 @@ angular.module('login.controller', ['database.services']).controller("LoginContr
                 modalScope.hide();
             });
         }
-        var modalPromise = $modal({template: '/views/database/newDatabase.html', scope: modalScope});
+        var modalPromise = $modal({template: 'views/database/newDatabase.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });
