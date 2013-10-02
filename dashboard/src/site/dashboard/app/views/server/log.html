@@ -124,6 +124,22 @@
         </table>
         <br>
 
+        <div class="row-fluid">
+            <div class="pagination span10">
+                <ul>
+                    <li><a href="javascript:void(0)" ng-click="previous()">«</a></li>
+                    <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage ">
+                        <a
+                                href="javascript:void(0)" ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
+                    <li><a href="javascript:void(0)" ng-click="next()">»</a></li>
+                </ul>
+            </div>
+            <div class="span2 pagination_select">
+                <select class="input-medium" ng-model="countPage">
+                    <option ng-repeat="options in countPageOptions"> {{ options }}</option>
+                </select>
+            </div>
+        </div>
         <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">
             <thead>
             <tr>
@@ -145,7 +161,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr ng-repeat="result in results['logs']">
+            <tr ng-repeat="result in results">
                 <td>
                     {{result['day']}}
 

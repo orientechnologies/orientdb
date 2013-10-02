@@ -13,13 +13,6 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
     console.log(resource);
     resource.getLogs = function (params, callback) {
 
-//        params.file
-//        params.dateFrom
-//        params.dateTo
-//        params.hourFrom
-//        params.hourTo
-//        params.type
-//        params.info
         var datefrom = params.dateFrom
 
         $http.get('/log/tail/' + datefrom).success(function (data) {
@@ -36,7 +29,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
         var dateTo = '';
         var hourTo = '';
         var file = '';
-        var server = '&name='+params.server;
+        var server = '&name=' + params.server;
 
         if (params.searchvalue) {
             searchValue = '&searchvalue=' + params.searchvalue
@@ -71,10 +64,10 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
             })
     }
 
-    resource.getListFiles = function (callback) {
-
-
-        $http.get('/log/files').success(function (data) {
+    resource.getListFiles = function (params,callback) {
+                                             console.log(params.server);
+        var server = '?name=' + params.server;
+        $http.get('/log/files'+server).success(function (data) {
             callback(data);
         }).error(function (data) {
             })

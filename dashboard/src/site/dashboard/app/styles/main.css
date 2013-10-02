@@ -318,8 +318,8 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .log-list li > div {
     margin-bottom: 5px;
 }
-
 .select2-container .select2-choice {
+
     -moz-user-select: none;
     background: none repeat scroll 0 0 #FFFFFF;
     border: 2px solid #CCCCCC;
@@ -417,8 +417,24 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 }
 .metric-range span {
 }
-/*.btn-padding{*/
-    /*padding: 5px 14px;*/
-    /*border-radius: 4px 4px 4px 4px;*/
-/*}*/
+
+table.form-search-width>tbody>tr>td select{
+    width: 72%;
+    height: 34px;
+}
+table.form-search-width>tbody>tr>td input{
+    height: 24px;
+    width: 65%;
+}
+
+table.align-left>tbody>tr>td{
+    text-align: left !important;
+}
+
+
+
+
+table.align-left>tbody>tr>td{
+    text-align: left !important;
+}
 

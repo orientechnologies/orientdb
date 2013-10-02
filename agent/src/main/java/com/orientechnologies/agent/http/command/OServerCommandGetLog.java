@@ -63,7 +63,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		
 		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: log/<type>?<value>");
 
-		String type = urlParts[1]; // the type of the log tail search or file
+ 		String type = urlParts[1]; // the type of the log tail search or file
 
 		String value = iRequest.getParameter("searchvalue");
 
@@ -101,9 +101,9 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		}
 		String orientdb_home = System.getenv("ORIENTDB_HOME");
 
-		orientdb_home = "/home/marco/Documenti/Lavoro/orientbi";
+		orientdb_home = "/home/marco/";
 
-		String logsDirectory = orientdb_home.concat("/log");
+		String logsDirectory = orientdb_home.concat("/logss");
 
 		File directory = new File(logsDirectory);
 		// Reading directory contents
