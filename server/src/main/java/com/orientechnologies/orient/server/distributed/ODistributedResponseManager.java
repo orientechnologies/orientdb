@@ -235,9 +235,9 @@ public class ODistributedResponseManager {
         if (responseGroup != bestResponsesGroup) {
           for (ODistributedResponse r : responseGroup) {
             ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                "fixing response for request=%s in server %s to be: %s", r.getExecutorNodeName(), request, goodResponse);
+                "fixing response for request=%s in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
 
-            final OAbstractRemoteTask fixRequest = ((OAbstractReplicatedTask) request.getPayload()).getFixTask(request,
+            final OAbstractRemoteTask fixRequest = ((OAbstractReplicatedTask) request.getPayload()).getFixTask(request, r,
                 goodResponse);
 
             dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixRequest);
@@ -339,13 +339,16 @@ public class ODistributedResponseManager {
     lock.lock();
     try {
 
-      if ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) {
-        // WAIT FOR THE RESPONSES
-        if (!synchronousResponsesArrived.await(synchTimeout, TimeUnit.MILLISECONDS))
-          return false;
-      }
+      do {
+        if ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) {
+          // WAIT FOR THE RESPONSES
+          if (synchronousResponsesArrived.await(synchTimeout, TimeUnit.MILLISECONDS))
+            break;
+        }
+      } while (waitForLocalNode && !receivedCurrentNode);
 
-      return true;
+      return receivedResponses >= expectedSynchronousResponses;
+      
     } finally {
       lock.unlock();
 
