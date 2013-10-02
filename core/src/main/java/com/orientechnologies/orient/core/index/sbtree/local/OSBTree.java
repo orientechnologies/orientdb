@@ -211,6 +211,8 @@ public class OSBTree<K, V> extends ODurableComponent {
       }
 
       while (!keyBucket.addEntry(insertionIndex, new OSBTreeBucket.SBTreeEntry<K, V>(-1, -1, key, treeValue), true)) {
+        logPageChanges(keyBucket, fileId, keyBucketCacheEntry.getPageIndex(), false);
+
         keyBucketPointer.releaseExclusiveLock();
         diskCache.release(keyBucketCacheEntry);
 
