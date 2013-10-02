@@ -73,15 +73,13 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     for (int i = 0; i < configuredParameters.length; ++i) {
       if (configuredParameters[i] instanceof OSQLFilterItemField) {
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iContext);
-        if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
-          // LOOK INTO THE CURRENT RESULT
+        if (runtimeParameters[i] == null)
           runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult, iContext);
       } else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
         runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iCurrentRecord, iCurrentResult, iContext);
       else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iContext);
-        if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
-          // LOOK INTO THE CURRENT RESULT
+        if (runtimeParameters[i] == null)
           runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
               iContext);
       } else if (configuredParameters[i] instanceof OCommandSQL) {
