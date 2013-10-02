@@ -27,7 +27,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  public abstract OAbstractRemoteTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iGoodResponse);
+  public abstract OAbstractRemoteTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
+      ODistributedResponse iGoodResponse);
 
   public abstract String getPayload();
 }

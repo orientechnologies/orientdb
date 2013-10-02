@@ -75,16 +75,18 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
   }
-  
+
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
   }
 
   @Override
-  public OFixCreateRecordTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iGoodResponse) {
+  public OFixCreateRecordTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
+      final ODistributedResponse iGoodResponse) {
+    OPhysicalPosition badResult = (OPhysicalPosition) iBadResponse.getPayload();
     OPhysicalPosition goodResult = (OPhysicalPosition) iGoodResponse.getPayload();
-    return new OFixCreateRecordTask(rid, content, version, recordType,
+    return new OFixCreateRecordTask(new ORecordId(rid.getClusterId(), badResult.clusterPosition), content, version, recordType,
         new ORecordId(rid.getClusterId(), goodResult.clusterPosition));
   }
 

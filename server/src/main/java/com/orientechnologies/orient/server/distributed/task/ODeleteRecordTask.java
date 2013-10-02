@@ -68,7 +68,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OFixDeleteRecordTask getFixTask(ODistributedRequest iRequest, final ODistributedResponse iGoodResponse) {
+  public OFixDeleteRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, final ODistributedResponse iGoodResponse) {
     return new OFixDeleteRecordTask(rid, version);
   }
 

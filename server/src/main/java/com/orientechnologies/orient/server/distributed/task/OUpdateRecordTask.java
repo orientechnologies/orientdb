@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
@@ -77,8 +76,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, final ODistributedResponse iGoodResponse) {
-    return new OFixUpdateRecordTask(rid, ((OBuffer) iGoodResponse.getPayload()).getBuffer(), version);
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
+      final ODistributedResponse iGoodResponse) {
+    return new OFixUpdateRecordTask(rid, ((OUpdateRecordTask) iRequest.getPayload()).content, version);
   }
 
   @Override

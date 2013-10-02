@@ -65,7 +65,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iGoodResponse) {
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, ODistributedResponse iGoodResponse) {
     return null;
   }
 
