@@ -19,7 +19,8 @@
     "moment" : "latest",
     "angular-ui-bootstrap-bower" : "latest",
     "spin.js" : "latest",
-    "nnnick-chartjs" : "latest"
+    "nnnick-chartjs" : "latest",
+    "bootstrap-datetimepicker": "latest"
 
   },
   "devDependencies": {

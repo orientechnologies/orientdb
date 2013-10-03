@@ -102,7 +102,7 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             }
             reader.readAsDataURL(files[0]);
         }
-        scope.$on('fieldAdded',function(event,field){
+        scope.$on('fieldAdded', function (event, field) {
             formScope.fieldTypes[field] = formScope.getTemplate(field);
         });
         scope.$parent.$watch("headers", function (data) {
@@ -296,6 +296,7 @@ Widget.directive('orientdate', function (Database) {
                 if (input) {
                     var form = moment(input, 'DD/MM/YYYY').format(formatter.toUpperCase());
                 }
+                console.log(form);
                 return form;
             }
 
@@ -314,7 +315,48 @@ Widget.directive('orientdate', function (Database) {
         }
     };
 });
+Widget.directive('orientdatetime', function (Database) {
 
+
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function (scope, element, attr, ngModel) {
+
+            function into(input) {
+
+                var values = Database.getMetadata()['config']['values'];
+                var formatter = undefined;
+                values.forEach(function (val, idx, array) {
+                    if (val.name == 'dateTimeFormat') {
+                        formatter = val.value;
+                    }
+                });
+                var form = input;
+
+                console.log(input);
+                if (input) {
+                    var form = moment(input).format(formatter.toUpperCase());
+                }
+                return form;
+            }
+
+            function out(data) {
+                var form = data
+
+                if (data) {
+                    form = moment(data).format('DD/MM/YYYY HH:mm:ss');
+                }
+                return form;
+            }
+
+            ngModel.$parsers.push(into);
+            ngModel.$formatters.push(out);
+
+
+        }
+    };
+});
 Widget.directive('ridrender', function (Database) {
 
 
@@ -323,13 +365,31 @@ Widget.directive('ridrender', function (Database) {
         link: function (scope, element, attr, ngModel) {
 
             var value = scope.result[scope.header];
-            if(typeof value == 'string'){
-                if(value.indexOf('#')==0){
+            if (typeof value == 'string') {
+                if (value.indexOf('#') == 0) {
                     var dbName = Database.getName();
-                    var link = '<a href="#/database/'+ dbName + '/browse/edit/' + value.replace('#','') +'">' +value+ '</a>';
+                    var link = '<a href="#/database/' + dbName + '/browse/edit/' + value.replace('#', '') + '">' + value + '</a>';
                     element.html(link);
                 }
             }
+        }
+    };
+});
+Widget.directive('dtpicker', function () {
+
+
+    return {
+        restrict: 'A',
+        require: 'ngModel',
+        link: function (scope, element, attr,ngModel) {
+
+            element.datetimepicker({
+                format: 'dd/MM/yyyy hh:mm:ss',
+                language: 'en'
+            });
+            element.on('changeDate', function(e) {
+                ngModel.$setViewValue(e.date);
+            });
         }
     };
 });
