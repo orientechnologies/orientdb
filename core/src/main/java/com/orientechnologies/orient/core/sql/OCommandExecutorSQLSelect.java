@@ -608,8 +608,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     if (searchForIndexes(cls)) {
-      // final OJVMProfiler profiler = Orient.instance().getProfiler();
-      // profiler.updateCounter(profiler.getDatabaseMetrics(getDatabase().getName(), "query.indexUsed"), 1);
     } else
       super.searchInClasses();
   }
@@ -693,19 +691,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (opType == null)
           opType = INDEX_OPERATION_TYPE.GET;
 
-        Object result = operator.executeIndexQuery(context, index, opType, keyParams, fetchLimit);
-        if (result == null)
-          continue;
+        try {
+          Object result = operator.executeIndexQuery(context, index, opType, keyParams, fetchLimit);
 
-        if (opType == INDEX_OPERATION_TYPE.COUNT) {
-          // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
-          final String projName = projectionDefinition.keySet().iterator().next();
-          projectionDefinition.clear();
-          getProjectionGroup(null).applyValue(projName, result);
-        } else
-          fillSearchIndexResultSet(result);
+          if (result == null)
+            continue;
 
-        return true;
+          if (opType == INDEX_OPERATION_TYPE.COUNT) {
+            // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
+            final String projName = projectionDefinition.keySet().iterator().next();
+            projectionDefinition.clear();
+            getProjectionGroup(null).applyValue(projName, result);
+          } else
+            fillSearchIndexResultSet(result);
+
+          return true;
+        } catch (Exception e) {
+          OLogManager.instance().error(this,
+              "Error on using index %s in query. Probably you need to rebuild indexes. Now executing query using cluster scan", e,
+              index);
+          return false;
+        }
       }
     }
     return false;
