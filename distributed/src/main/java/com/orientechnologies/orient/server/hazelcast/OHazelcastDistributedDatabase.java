@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.core.IMap;
@@ -46,7 +47,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
+import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.distributed.task.OResynchTask;
 
 /**
@@ -72,6 +75,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public static final String                          NODE_QUEUE_UNDO_POSTFIX    = ".undo";
 
   private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  private static AtomicBoolean                        online                     = new AtomicBoolean(false);
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -92,6 +96,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         }
       }, resyncEvery, resyncEvery);
     }
+  }
+
+  public OHazelcastDistributedDatabase setOnline(final boolean iStatus) {
+    online.set(iStatus);
+    return this;
   }
 
   @Override
@@ -118,7 +127,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public ODistributedResponse send(final ODistributedRequest iRequest) {
     // TODO: remove threadId
     final Thread currentThread = Thread.currentThread();
-    final long threadId = currentThread.getId();
 
     final String databaseName = iRequest.getDatabaseName();
 
@@ -135,7 +143,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes);
 
     iRequest.setSenderNodeName(manager.getLocalNodeName());
-    iRequest.setSenderThreadId(threadId);
 
     int availableNodes = 0;
     for (String node : nodes) {
@@ -147,7 +154,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "skip listening of response because node '%s' is not online", node);
       }
     }
-    
+
     final int queueSize = nodes.size();
     int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : queueSize;
     final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
@@ -271,7 +278,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
   }
 
-  public void configureDatabase(final ODatabaseDocumentTx iDatabase) {
+  public OHazelcastDistributedDatabase configureDatabase(final ODatabaseDocumentTx iDatabase) {
     // TODO: USE THE POOL!
     if (iDatabase == null) {
       // OPEN IT
@@ -332,36 +339,47 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }).start();
 
     checkLocalNodeInConfiguration();
+
+    return this;
   }
 
   /**
    * Execute the remote call on the local node and send back the result
    */
   protected void onMessage(final ODistributedRequest iRequest) {
+    final OAbstractRemoteTask task = iRequest.getPayload();
+
+    if (!online.get() && !(task instanceof ODeployDatabaseTask)) {
+      // SKIP IT
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+          "skip request because the node is not online yet, request=%s", iRequest);
+
+      return;
+    }
+
     OScenarioThreadLocal.INSTANCE.set(RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(),
-            iRequest.getSenderNodeName() + ":" + iRequest.getSenderThreadId(), DIRECTION.IN, "request %s", iRequest.getPayload());
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.IN, "request %s",
+            task);
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
       try {
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
-        iRequest.getPayload().setNodeSource(iRequest.getSenderNodeName());
+        task.setNodeSource(iRequest.getSenderNodeName());
         responsePayload = manager.executeOnLocalNode(iRequest, database);
       } finally {
         database.getLevel1Cache().clear();
       }
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(),
-            iRequest.getSenderNodeName() + ":" + iRequest.getSenderThreadId(), DIRECTION.OUT,
-            "sending back response %s to request %s", responsePayload, iRequest.getPayload());
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+            "sending back response %s to request %s", responsePayload, task);
 
       final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(),
-          manager.getLocalNodeName(), iRequest.getSenderNodeName(), iRequest.getSenderThreadId(), responsePayload);
+          manager.getLocalNodeName(), iRequest.getSenderNodeName(), responsePayload);
 
       try {
         // GET THE SENDER'S RESPONSE QUEUE
@@ -369,12 +387,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             .getResponseQueueName(iRequest.getSenderNodeName()));
 
         if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
-          throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName()
-              + ":" + iRequest.getSenderThreadId());
+          throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
 
       } catch (Exception e) {
-        throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName() + ":"
-            + iRequest.getSenderThreadId(), e);
+        throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName(), e);
       }
 
     } finally {

@@ -78,11 +78,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   }
 
   @Override
-  public long getSenderThreadId() {
-    return senderThreadId;
-  }
-
-  @Override
   public OAbstractRemoteTask getPayload() {
     return payload;
   }
@@ -96,12 +91,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   @Override
   public OHazelcastDistributedRequest setClusterName(String clusterName) {
     this.clusterName = clusterName;
-    return this;
-  }
-
-  @Override
-  public OHazelcastDistributedRequest setSenderThreadId(long threadId) {
-    this.senderThreadId = threadId;
     return this;
   }
 

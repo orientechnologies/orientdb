@@ -327,7 +327,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void onCreate(final ODatabase iDatabase) {
-    final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
+    final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName()).setOnline(true);
     distribDatabase.configureDatabase((ODatabaseDocumentTx) ((ODatabaseComplex<?>) iDatabase).getDatabaseOwner());
     // distribDatabase.
     onOpen(iDatabase);
@@ -536,7 +536,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   /**
-   * Initializes distributed databases.
+   * Initializes all the available server's databases as distributed.
    */
   protected void loadDistributedDatabases() {
     for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
@@ -551,7 +551,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
         }
 
-        messageService.registerDatabase(databaseName).configureDatabase(null);
+        messageService.registerDatabase(databaseName).configureDatabase(null).setOnline(true);
       }
     }
 
@@ -570,7 +570,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           final ODocument config = (ODocument) entry.getValue();
           final Boolean autoDeploy = config.field("autoDeploy");
           if (autoDeploy != null && autoDeploy) {
-            final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(databaseName);
+
+            final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName).configureDatabase(
+                null);
 
             final Map<String, OBuffer> results = (Map<String, OBuffer>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
                 EXECUTION_MODE.RESPONSE);
@@ -603,7 +605,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               db.close();
               Orient.instance().unregisterStorageByName(db.getName());
 
-              distribDatabase.configureDatabase(null);
+              distrDatabase.setOnline(true);
 
             } catch (IOException e) {
               ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
