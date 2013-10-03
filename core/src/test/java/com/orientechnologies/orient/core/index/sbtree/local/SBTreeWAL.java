@@ -9,12 +9,9 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mockito.Mockito;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -32,13 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageVariablePars
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
  * @author Andrey Lomakin
@@ -64,9 +55,17 @@ public class SBTreeWAL extends SBTreeTest {
 
   private OSBTree<Integer, OIdentifiable> expectedSBTree;
 
+  private OLocalPaginatedStorage          expectedStorage;
+  private OStorageConfiguration           expectedStorageConfiguration;
+  private OStorageConfiguration           actualStorageConfiguration;
+
   @BeforeClass
   @Override
   public void beforeClass() {
+    actualStorage = mock(OLocalPaginatedStorage.class);
+    actualStorageConfiguration = mock(OStorageConfiguration.class);
+    expectedStorage = mock(OLocalPaginatedStorage.class);
+    expectedStorageConfiguration = mock(OStorageConfiguration.class);
   }
 
   @AfterClass
@@ -76,6 +75,8 @@ public class SBTreeWAL extends SBTreeTest {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
+    Mockito.reset(actualStorage, expectedStorage, expectedStorageConfiguration, actualStorageConfiguration);
+
     buildDirectory = System.getProperty("buildDirectory", ".");
 
     buildDirectory += "/sbtreeWithWALTest";
@@ -101,10 +102,8 @@ public class SBTreeWAL extends SBTreeTest {
   }
 
   private void createActualSBTree() throws IOException {
-    actualStorage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    actualStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
+    actualStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     actualStorageDir = buildDirectory + "/sbtreeWithWALTestActual";
     when(actualStorage.getStoragePath()).thenReturn(actualStorageDir);
@@ -129,20 +128,18 @@ public class SBTreeWAL extends SBTreeTest {
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     when(actualStorage.getVariableParser()).thenReturn(variableParser);
-    when(actualStorage.getConfiguration()).thenReturn(storageConfiguration);
+    when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
+    when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
   private void createExpectedSBTree() {
-    final OLocalPaginatedStorage expectedStorage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    expectedStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
+    expectedStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     expectedStorageDir = buildDirectory + "/sbtreeWithWALTestExpected";
     when(expectedStorage.getStoragePath()).thenReturn(expectedStorageDir);
@@ -165,10 +162,10 @@ public class SBTreeWAL extends SBTreeTest {
     when(expectedStorage.getDiskCache()).thenReturn(expectedDiskCache);
     when(expectedStorage.getWALInstance()).thenReturn(null);
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
-    when(expectedStorage.getConfiguration()).thenReturn(storageConfiguration);
+    when(expectedStorage.getConfiguration()).thenReturn(expectedStorageConfiguration);
     when(expectedStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
+    when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
     expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);

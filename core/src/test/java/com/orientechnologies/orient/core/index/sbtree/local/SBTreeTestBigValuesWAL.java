@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -52,10 +53,17 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   private OLocalPaginatedStorage   actualStorage;
 
   private OSBTree<Integer, byte[]> expectedSBTree;
+  private OLocalPaginatedStorage   expectedStorage;
+  private OStorageConfiguration    expectedStorageConfiguration;
+  private OStorageConfiguration    actualStorageConfiguration;
 
   @BeforeClass
   @Override
   public void beforeClass() {
+    actualStorage = mock(OLocalPaginatedStorage.class);
+    actualStorageConfiguration = mock(OStorageConfiguration.class);
+    expectedStorage = mock(OLocalPaginatedStorage.class);
+    expectedStorageConfiguration = mock(OStorageConfiguration.class);
   }
 
   @AfterClass
@@ -65,6 +73,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
+    Mockito.reset(actualStorage, expectedStorage, expectedStorageConfiguration, actualStorageConfiguration);
+
     buildDirectory = System.getProperty("buildDirectory", ".");
 
     buildDirectory += "/sbtreeWithBigValuesWALTest";
@@ -87,13 +97,12 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     Assert.assertTrue(new File(actualStorageDir).delete());
     Assert.assertTrue(new File(expectedStorageDir).delete());
     Assert.assertTrue(new File(buildDirectory).delete());
+
   }
 
   private void createActualSBTree() throws IOException {
-    actualStorage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    actualStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
+    actualStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     actualStorageDir = buildDirectory + "/sbtreeWithBigValuesWALTestActual";
     when(actualStorage.getStoragePath()).thenReturn(actualStorageDir);
@@ -118,20 +127,18 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     when(actualStorage.getVariableParser()).thenReturn(variableParser);
-    when(actualStorage.getConfiguration()).thenReturn(storageConfiguration);
+    when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
+    when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
     sbTree = new OSBTree<Integer, byte[]>(".sbt", 1, true);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, actualStorage);
   }
 
   private void createExpectedSBTree() {
-    final OLocalPaginatedStorage expectedStorage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    expectedStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
+    expectedStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     expectedStorageDir = buildDirectory + "/sbtreeWithBigValuesWALTestExpected";
     when(expectedStorage.getStoragePath()).thenReturn(expectedStorageDir);
@@ -154,10 +161,10 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     when(expectedStorage.getDiskCache()).thenReturn(expectedDiskCache);
     when(expectedStorage.getWALInstance()).thenReturn(null);
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
-    when(expectedStorage.getConfiguration()).thenReturn(storageConfiguration);
+    when(expectedStorage.getConfiguration()).thenReturn(expectedStorageConfiguration);
     when(expectedStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
+    when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
     expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", 1, true);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, expectedStorage);
