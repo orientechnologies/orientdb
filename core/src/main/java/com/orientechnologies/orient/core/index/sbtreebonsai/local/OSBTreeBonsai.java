@@ -48,6 +48,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * 
  * Oriented for usage of several instances inside of one file.
  * 
+ * Creation of several instances that represent the same collection is not allowed.
+ * 
  * @author Andrey Lomakin
  * @author Artem Orobets
  * @since 1.6.0
@@ -239,13 +241,14 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         }
 
         logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem(), false);
-
-        setSize(size() + 1);
       }
 
       keyBucketCacheEntry.markDirty();
       keyBucketPointer.releaseExclusiveLock();
       diskCache.release(keyBucketCacheEntry);
+
+      if (bucketSearchResult.itemIndex < 0)
+        setSize(size() + 1);
 
       endDurableOperation(transaction, false);
     } catch (IOException e) {
@@ -420,12 +423,12 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         logPageChanges(keyBucket, fileId, keyBucketCacheEntry.getPageIndex(), false);
         keyBucketCacheEntry.markDirty();
 
-        setSize(size() - 1);
         endDurableOperation(transaction, false);
         return removed;
       } finally {
         keyBucketPointer.releaseExclusiveLock();
         diskCache.release(keyBucketCacheEntry);
+        setSize(size() - 1);
       }
 
     } catch (IOException e) {
