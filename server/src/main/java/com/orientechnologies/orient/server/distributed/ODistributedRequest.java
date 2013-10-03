@@ -43,9 +43,9 @@ public interface ODistributedRequest {
 
   ODistributedRequest setSenderNodeName(String localNodeName);
 
-  OAbstractRemoteTask getPayload();
+  OAbstractRemoteTask getTask();
 
-  ODistributedRequest setPayload(final OAbstractRemoteTask payload);
+  ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
   void undo();
 }
