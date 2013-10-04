@@ -105,6 +105,9 @@ public class OSBTreeBonsaiTest {
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
+    final double mx = Integer.MAX_VALUE / 2.;
+    final double dx = Integer.MAX_VALUE / 8.;
+
     NavigableSet<Integer> keys = new TreeSet<Integer>();
     long seed = System.currentTimeMillis();
 
@@ -113,9 +116,7 @@ public class OSBTreeBonsaiTest {
     MersenneTwisterFast random = new MersenneTwisterFast(seed);
 
     while (keys.size() < KEYS_COUNT) {
-      int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+      int key = generateGaussianKey(mx, dx, random);
 
       sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
       keys.add(key);
@@ -128,6 +129,14 @@ public class OSBTreeBonsaiTest {
 
     for (int key : keys)
       Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+  }
+
+  private int generateGaussianKey(double mx, double dx, MersenneTwisterFast random) {
+    double v;
+    do {
+      v = random.nextGaussian() * dx + mx;
+    } while (v < 0 || v > Integer.MAX_VALUE);
+    return (int) v;
   }
 
   public void testKeyDeleteRandomUniform() throws Exception {
@@ -159,6 +168,9 @@ public class OSBTreeBonsaiTest {
   }
 
   public void testKeyDeleteRandomGaussian() throws Exception {
+    final double mx = Integer.MAX_VALUE / 2.;
+    final double dx = Integer.MAX_VALUE / 8.;
+
     NavigableSet<Integer> keys = new TreeSet<Integer>();
 
     long seed = System.currentTimeMillis();
@@ -167,9 +179,7 @@ public class OSBTreeBonsaiTest {
     MersenneTwisterFast random = new MersenneTwisterFast(seed);
 
     while (keys.size() < KEYS_COUNT) {
-      int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+      int key = generateGaussianKey(mx, dx, random);
 
       sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
       keys.add(key);
