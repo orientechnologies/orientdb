@@ -33,7 +33,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   private long   requestId;
   private String executorNodeName;
   private String senderNodeName;
-  private long   senderThreadId;
   private Object payload;
 
   /**
@@ -43,11 +42,10 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
   }
 
   public OHazelcastDistributedResponse(final long iRequestId, final String executorNodeName, final String senderNodeName,
-      final long senderThreadId, final Serializable payload) {
+      final Serializable payload) {
     this.requestId = iRequestId;
     this.executorNodeName = executorNodeName;
     this.senderNodeName = senderNodeName;
-    this.senderThreadId = senderThreadId;
     this.payload = payload;
   }
 
@@ -79,10 +77,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     this.senderNodeName = senderNodeName;
   }
 
-  public void setSenderThreadId(final long senderThreadId) {
-    this.senderThreadId = senderThreadId;
-  }
-
   public ODistributedResponse setPayload(final Object payload) {
     this.payload = payload;
     return this;
@@ -98,7 +92,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     out.writeLong(requestId);
     out.writeUTF(executorNodeName);
     out.writeUTF(senderNodeName);
-    out.writeLong(senderThreadId);
     out.writeObject(payload);
   }
 
@@ -107,7 +100,6 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     requestId = in.readLong();
     executorNodeName = in.readUTF();
     senderNodeName = in.readUTF();
-    senderThreadId = in.readLong();
     payload = (Serializable) in.readObject();
   }
 

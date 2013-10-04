@@ -184,6 +184,23 @@ public class ODistributedResponseManager {
     return bestGroupSoFar;
   }
 
+  /**
+   * Returns all the servers in conflict.
+   * 
+   * @return
+   */
+  public List<String> getConflictServers() {
+    final List<String> servers = new ArrayList<String>();
+    int bestGroupSoFar = getBestResponsesGroup();
+    for (int i = 0; i < responseGroups.size(); ++i) {
+      if (i != bestGroupSoFar) {
+        for (ODistributedResponse r : responseGroups.get(i))
+          servers.add(r.getExecutorNodeName());
+      }
+    }
+    return servers;
+  }
+
   protected void manageConflicts() {
     if (quorum == 0)
       // NO QUORUM
@@ -237,7 +254,7 @@ public class ODistributedResponseManager {
             ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
                 "fixing response for request=%s in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
 
-            final OAbstractRemoteTask fixRequest = ((OAbstractReplicatedTask) request.getPayload()).getFixTask(request, r,
+            final OAbstractRemoteTask fixRequest = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r,
                 goodResponse);
 
             dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixRequest);
@@ -348,7 +365,7 @@ public class ODistributedResponseManager {
       } while (waitForLocalNode && !receivedCurrentNode);
 
       return receivedResponses >= expectedSynchronousResponses;
-      
+
     } finally {
       lock.unlock();
 
@@ -371,6 +388,9 @@ public class ODistributedResponseManager {
   public ODistributedResponse getResponse(final RESULT_STRATEGY resultStrategy) {
     manageConflicts();
 
+    final int bestResponsesGroupIndex = getBestResponsesGroup();
+    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
+
     if (receivedResponses == 0)
       throw new ODistributedException("No response received from any of nodes " + getExpectedNodes() + " for request " + request);
 
@@ -378,11 +398,10 @@ public class ODistributedResponseManager {
       // QUORUM NOT REACHED, UNDO REQUEST
       // TODO: UNDO
       request.undo();
-      throw new ODistributedException("Quorum " + getQuorum() + " not reached for request: " + request);
-    }
 
-    final int bestResponsesGroupIndex = getBestResponsesGroup();
-    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
+      throw new ODistributedException("Quorum " + getQuorum() + " not reached for request=" + request
+          + ". Servers in conflicts are: " + getConflictServers());
+    }
 
     switch (resultStrategy) {
     case ANY:

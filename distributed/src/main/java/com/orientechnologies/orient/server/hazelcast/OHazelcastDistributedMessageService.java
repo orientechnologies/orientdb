@@ -257,5 +257,4 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public Set<String> getDatabases() {
     return databases.keySet();
   }
-
 }

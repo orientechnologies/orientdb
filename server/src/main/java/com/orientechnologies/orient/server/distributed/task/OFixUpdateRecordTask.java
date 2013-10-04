@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
@@ -59,6 +58,10 @@ public class OFixUpdateRecordTask extends OAbstractRemoteTask {
         "fixing update record %s/%s v.%s", database.getName(), rid.toString(), version.toString());
 
     final ORecordInternal<?> record = rid.getRecord();
+    if (record == null)
+      // DELETED, CANNOT FIX IT
+      return Boolean.FALSE;
+
     record.fill(rid, version, content, true);
     database.save(record);
 

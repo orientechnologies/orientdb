@@ -78,7 +78,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
       final ODistributedResponse iGoodResponse) {
-    return new OFixUpdateRecordTask(rid, ((OUpdateRecordTask) iRequest.getPayload()).content, version);
+    return new OFixUpdateRecordTask(rid, ((OUpdateRecordTask) iRequest.getTask()).content, version);
   }
 
   @Override

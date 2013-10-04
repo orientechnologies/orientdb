@@ -142,7 +142,8 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, ODistributedResponse iGoodResponse) {
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
+      ODistributedResponse iGoodResponse) {
     return null;
   }
 }

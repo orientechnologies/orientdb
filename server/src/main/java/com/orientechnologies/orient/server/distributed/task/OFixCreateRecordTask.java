@@ -61,7 +61,8 @@ public class OFixCreateRecordTask extends OAbstractRemoteTask {
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "fixing create record %s/%s v.%s by applying a %s", database.getName(), ridAssigned.toString(), version.toString());
+        "fixing create record %s/%s by applying rid=%s v=%s", database.getName(), ridAssigned.toString(),
+        this.ridToAssign.toString(), version.toString());
 
     ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     record.fill(ridAssigned, version, content, true);
@@ -80,6 +81,7 @@ public class OFixCreateRecordTask extends OAbstractRemoteTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeByte(recordType);
     out.writeUTF(ridAssigned.toString());
     out.writeInt(content.length);
     out.write(content);
@@ -91,6 +93,7 @@ public class OFixCreateRecordTask extends OAbstractRemoteTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    recordType = in.readByte();
     ridAssigned = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     content = new byte[contentSize];

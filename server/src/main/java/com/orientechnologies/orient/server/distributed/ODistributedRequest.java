@@ -43,13 +43,9 @@ public interface ODistributedRequest {
 
   ODistributedRequest setSenderNodeName(String localNodeName);
 
-  long getSenderThreadId();
+  OAbstractRemoteTask getTask();
 
-  ODistributedRequest setSenderThreadId(final long threadId);
-
-  OAbstractRemoteTask getPayload();
-
-  ODistributedRequest setPayload(final OAbstractRemoteTask payload);
+  ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
   void undo();
 }

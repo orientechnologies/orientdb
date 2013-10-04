@@ -54,7 +54,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected static final String                           FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                       serverInstance;
-  protected Map<String, String>                           managedDatabases            = new ConcurrentHashMap<String, String>();
   protected Map<String, ODocument>                        loadedDatabaseConfiguration = new ConcurrentHashMap<String, ODocument>();
   protected Map<String, ODocument>                        cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 

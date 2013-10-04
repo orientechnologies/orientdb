@@ -31,8 +31,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
@@ -138,7 +140,14 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
               fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
           }
 
-        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName);
+
+        if (fields != null && !fields.isEmpty()) {
+          if (!edge.getRecord().getIdentity().isValid())
+            edge.convertToDocument();
+
+          OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+        }
 
         if (content != null) {
           if (!edge.getRecord().getIdentity().isValid())
