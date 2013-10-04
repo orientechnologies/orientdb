@@ -30,17 +30,17 @@ public class OSBTreeBonsaiLeafBucketTest {
   public void testInitialization() throws Exception {
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
 
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+    treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE,
         ODurablePage.TrackMode.FULL);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
-    Assert.assertEquals(treeBucket.getLeftSibling(), -1);
-    Assert.assertEquals(treeBucket.getRightSibling(), -1);
+    Assert.assertFalse(treeBucket.getLeftSibling().isValid());
+    Assert.assertFalse(treeBucket.getRightSibling().isValid());
 
     directMemory.free(pointer);
   }
@@ -57,14 +57,14 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key, new ORecordId(index,
-          OClusterPositionFactory.INSTANCE.valueOf(index))), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, OClusterPositionFactory.INSTANCE.valueOf(index))), true))
         break;
       keyIndexMap.put(key, index);
       index++;
@@ -92,14 +92,14 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key, new ORecordId(index,
-          OClusterPositionFactory.INSTANCE.valueOf(index))), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, OClusterPositionFactory.INSTANCE.valueOf(index))), true))
         break;
 
       keyIndexMap.put(key, index);
@@ -114,8 +114,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
-      Assert.assertEquals(entry, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, keyIndexEntry.getKey(),
-          new ORecordId(keyIndexEntry.getValue() + 5, OClusterPositionFactory.INSTANCE.valueOf(keyIndexEntry.getValue() + 5))));
+      Assert.assertEquals(entry, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, keyIndexEntry.getKey(), new ORecordId(keyIndexEntry.getValue() + 5,
+              OClusterPositionFactory.INSTANCE.valueOf(keyIndexEntry.getValue() + 5))));
       Assert.assertEquals(keyIndexEntry.getKey(), treeBucket.getKey(keyIndexEntry.getValue()));
     }
 
@@ -134,13 +135,13 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key, new ORecordId(index,
-          OClusterPositionFactory.INSTANCE.valueOf(index))), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, OClusterPositionFactory.INSTANCE.valueOf(index))), true))
         break;
 
       index++;
@@ -171,8 +172,8 @@ public class OSBTreeBonsaiLeafBucketTest {
     while (keysIterator.hasNext() && index < originalSize) {
       Long key = keysIterator.next();
 
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key, new ORecordId(index,
-          OClusterPositionFactory.INSTANCE.valueOf(index))), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, OClusterPositionFactory.INSTANCE.valueOf(index))), true))
         break;
 
       keyIndexMap.put(key, index);
@@ -183,8 +184,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
-      Assert.assertEquals(entry, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, keyIndexEntry.getKey(),
-          new ORecordId(keyIndexEntry.getValue(), OClusterPositionFactory.INSTANCE.valueOf(keyIndexEntry.getValue()))));
+      Assert.assertEquals(entry, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, keyIndexEntry.getKey(), new ORecordId(keyIndexEntry.getValue(),
+              OClusterPositionFactory.INSTANCE.valueOf(keyIndexEntry.getValue()))));
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize);
@@ -205,13 +207,13 @@ public class OSBTreeBonsaiLeafBucketTest {
     }
 
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key, new ORecordId(index,
-          OClusterPositionFactory.INSTANCE.valueOf(index))), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, OClusterPositionFactory.INSTANCE.valueOf(index))), true))
         break;
 
       index++;
@@ -246,8 +248,8 @@ public class OSBTreeBonsaiLeafBucketTest {
     while (keysIterator.hasNext() && index < originalSize) {
       Long key = keysIterator.next();
 
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key, new ORecordId(index,
-          OClusterPositionFactory.INSTANCE.valueOf(index))), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, OClusterPositionFactory.INSTANCE.valueOf(index))), true))
         break;
 
       keyIndexMap.put(key, index);
@@ -258,8 +260,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
-      Assert.assertEquals(entry, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, keyIndexEntry.getKey(),
-          new ORecordId(keyIndexEntry.getValue(), OClusterPositionFactory.INSTANCE.valueOf(keyIndexEntry.getValue()))));
+      Assert.assertEquals(entry, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
+          OBonsaiBucketPointer.NULL, keyIndexEntry.getKey(), new ORecordId(keyIndexEntry.getValue(),
+              OClusterPositionFactory.INSTANCE.valueOf(keyIndexEntry.getValue()))));
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize);
@@ -270,20 +273,22 @@ public class OSBTreeBonsaiLeafBucketTest {
 
   public void testSetLeftSibling() throws Exception {
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
-    treeBucket.setLeftSibling(123);
-    Assert.assertEquals(treeBucket.getLeftSibling(), 123);
+    final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123);
+    treeBucket.setLeftSibling(p);
+    Assert.assertEquals(treeBucket.getLeftSibling(), p);
 
     directMemory.free(pointer);
   }
 
   public void testSetRightSibling() throws Exception {
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
-    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, true,
+    OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
-    treeBucket.setRightSibling(123);
-    Assert.assertEquals(treeBucket.getRightSibling(), 123);
+    final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123);
+    treeBucket.setRightSibling(p);
+    Assert.assertEquals(treeBucket.getRightSibling(), p);
 
     directMemory.free(pointer);
   }
