@@ -85,7 +85,7 @@ monitor.factory('Metric', function ($http, $resource) {
             callback(data);
         })
     }
-    resource.getMetrics = function (params, callback) {
+    /*resource.getMetrics = function (params, callback) {
         var url = API + 'command/monitor/sql/-/-1';
         var query = "select @class,snapshot.dateTo as dateTo, name, entries, last, min, max, average, total,value from Metric where  name = '{{name}}' and  snapshot.server = '{{server}}'";
         if (params.dateFrom) {
@@ -102,8 +102,8 @@ monitor.factory('Metric', function ($http, $resource) {
         } else {
             throw 'name and server params required';
         }
-    }
-    resource.getOperationMetrics = function (params, callback) {
+    } */
+    resource.getMetrics = function (params, callback) {
         var url = API + 'command/monitor/sql/-/-1';
         if (params.names) {
             params.name = "";
@@ -115,7 +115,7 @@ monitor.factory('Metric', function ($http, $resource) {
         } else {
 
         }
-        var query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value total from Metric where  name in [{{name}}] ";
+        var query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where  name in [{{name}}] ";
         if (params.dateFrom) {
             query += "and snapshot.dateFrom >= {{dateFrom}} ";
         }

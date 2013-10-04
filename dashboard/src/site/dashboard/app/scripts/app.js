@@ -40,8 +40,10 @@ angular.module('MonitorApp', ['ngI18n','workbench-logs.controller', 'monitor.ser
                 templateUrl: 'views/server/log.html',
                 controller: 'LogsController'
             })
-
-
+            .when('/dashboard/logjava/:rid', {
+                templateUrl: 'views/server/logjava.html',
+                controller: 'LogsJavaController'
+            })
             .otherwise({
                 redirectTo: '/'
             });

@@ -1,0 +1,119 @@
+<div class="row-fluid" ng-controller="LogsJavaController">
+    <div class="span12">
+
+        <table class="form-search-width">
+            <tr>
+
+                <td>
+                    Date from:
+                </td>
+                <td>
+                    <div class="input-append">
+                        <input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateFrom"
+                                >
+                        <a href="javascript:void(0)" class="btn" data-toggle="datepicker"> <i class="icon-calendar"></i>
+                        </a>
+
+                    </div>
+                </td>
+                <td>
+                    Hour from:
+                </td>
+                <td>
+                    <div class="input-append">
+                        <input type="text" bs-timepicker ng-model="selectedHourFrom" ng-disabled="checkDateFrom()">
+                        <a href="javascript:void(0)" class="btn" data-toggle="timepicker"> <i class="icon-time"></i>
+                        </a>
+                    </div>
+                </td>
+                <td>
+                    Date to:
+                </td>
+                <td>
+                    <div class="input-append">
+                        <input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateTo"
+                                >
+                        <a href="javascript:void(0)" class="btn" data-toggle="datepicker"> <i class="icon-calendar"></i>
+                        </a>
+
+                    </div>
+                </td>
+                <td>
+                    Hour to:
+                </td>
+                <td>
+                    <div class="input-append">
+                        <input type="text" bs-timepicker ng-model="selectedHourTo" ng-disabled="checkDateTo()">
+                        <a href="javascript:void(0)" class="btn" data-toggle="timepicker"> <i class="icon-time"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Level:
+                </td>
+                <td>
+                    <div class="input-append">
+                        <select ng-model="level" ng-options="t for t in levels">
+                            <option value=""></option>
+                        </select>
+                        <a href="javascript:void(0)" class="btn" ng-click="clearLevel()"> <i class="icon-remove"></i>
+                        </a>
+                    </div>
+                </td>
+                <td>
+                    Info:
+                </td>
+                <td>
+                    <div class="input-append">
+                        <input type="text" ng-model="description">
+                        <a href="javascript:void(0)" class="btn" ng-click="clearSearch()"> <i class="icon-remove"></i>
+                        </a>
+                    </div>
+                </td>
+                <td>
+                </td>
+                <td>
+                    <div>
+                        <a href="javascript:void(0)" class="btn" ng-click="search()"> <i class="icon-search"></i>Search
+                        </a>
+                    </div>
+                </td>
+                <td>
+                </td>
+            </tr>
+        </table>
+        <br>
+
+        <div class="row-fluid">
+            <div class="pagination span10">
+                <ul>
+                    <li><a href="javascript:void(0)" ng-click="previous()">«</a></li>
+                    <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage ">
+                        <a
+                                href="javascript:void(0)" ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
+                    <li><a href="javascript:void(0)" ng-click="next()">»</a></li>
+                </ul>
+            </div>
+            <div class="span2 pagination_select">
+                <select class="input-medium" ng-model="countPage">
+                    <option ng-repeat="options in countPageOptions"> {{ options }}</option>
+                </select>
+            </div>
+        </div>
+        <table class="table table-striped table-bordered table-hover table-condensed" ng-show="headers">
+            <thead>
+            <tr>
+                <th ng-repeat="header in headers">{{header}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="result in results">
+                <td ng-repeat="header in headers">{{result[header]}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>

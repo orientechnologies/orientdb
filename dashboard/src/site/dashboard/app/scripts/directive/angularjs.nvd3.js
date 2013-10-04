@@ -57,7 +57,9 @@ Widget.directive('stackedchart', function () {
                     return new Number(unix);
                 })
                 .y(function (d) {
-                    return d[1];
+                    var ret = d[1] > 1000 ? d[1] / 1000 : d[1];
+
+                    return ret;
                 })
                 .clipEdge(true);
 
@@ -91,25 +93,25 @@ Widget.directive('stackedchart', function () {
                     var formatted = new Array;
                     /*var keys = new Array;
 
-                    Object.keys(data).forEach(function (elem, idx, array) {
-                        data[elem].forEach(function(el,i,a){
-                            if(keys.indexOf(el[0])==-1)
-                                keys.push(el[0]);
-                        });
-                    });
-                    keys.sort(function(a,b){
-                        var aDate =  moment(a,"YYYY-MM-DD HH:mm:ss").unix();
-                        var bDate =  moment(b,"YYYY-MM-DD HH:mm:ss").unix();
-                        return aDate - bDate;
-                    });
-                    console.log(keys);
-                    data['hidden'] = new Array;
-                    keys.forEach(function(elem,idx,array){
-                        data['hidden'].push([elem,0]);
-                    });
+                     Object.keys(data).forEach(function (elem, idx, array) {
+                     data[elem].forEach(function(el,i,a){
+                     if(keys.indexOf(el[0])==-1)
+                     keys.push(el[0]);
+                     });
+                     });
+                     keys.sort(function(a,b){
+                     var aDate =  moment(a,"YYYY-MM-DD HH:mm:ss").unix();
+                     var bDate =  moment(b,"YYYY-MM-DD HH:mm:ss").unix();
+                     return aDate - bDate;
+                     });
+                     console.log(keys);
+                     data['hidden'] = new Array;
+                     keys.forEach(function(elem,idx,array){
+                     data['hidden'].push([elem,0]);
+                     });
 
-                    var obj = { "key": 'hidden', "values": data['hidden'], "disabled" : true };
-                    formatted.push(obj);*/
+                     var obj = { "key": 'hidden', "values": data['hidden'], "disabled" : true };
+                     formatted.push(obj);*/
                     Object.keys(data).forEach(function (elem, idx, array) {
                         if (elem != "hidden") {
                             var obj = { "key": elem, "values": data[elem] };
@@ -119,8 +121,97 @@ Widget.directive('stackedchart', function () {
                     });
 
 
-
                     createStacked(formatted, element);
+                }
+            })
+
+        }
+    };
+});
+Widget.directive('stackedarea', function () {
+
+    var createStackedArea = function (data, element,render) {
+
+        nv.addGraph(function () {
+            if(render == 'bar'){
+                var chart = nv.models.multiBarChart();
+            }else {
+                var chart = nv.models.stackedAreaChart();
+            }
+
+            chart.x(function (d) {
+                var unix = moment(d[0], "YYYY-MM-DD HH:mm:ss").format("X");
+                return new Number(unix);
+            })
+                .y(function (d) {
+                    var ret = d[1];
+                    if (ret > 1000000) {
+                        ret = ret / 1000000;
+                    }
+                    return ret;
+                })
+                .clipEdge(true);
+
+            chart.xAxis
+                .tickFormat(function (d) {
+                    return  moment("" + d, "X").format("DD-MM-YYYY HH:mm:ss");
+                });
+
+            chart.yAxis
+                .tickFormat(d3.format(',.2f'));
+
+            $(element[0]).html("");
+            d3.select(element[0])
+                .datum(data)
+                .transition().duration(1200)
+                .call(chart);
+
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    }
+
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr) {
+            var data = attr.stackedarea;
+            var render = attr.stackedrender;
+
+            var manipulateData = function(data){
+                var keys = new Array;
+                Object.keys(data).forEach(function (elem, idx, array) {
+                    Object.keys(data[elem]).forEach(function (el, i, a) {
+                        if (keys.indexOf(el) == -1)
+                            keys.push(el);
+                    });
+                });
+                var formatted = new Array;
+                Object.keys(data).forEach(function (elem, idx, array) {
+                    if (elem != "hidden") {
+                        var values = new Array;
+                        keys.forEach(function (e, i, a) {
+                            var v = data[elem][e];
+                            if (!v) {
+                                v = 0;
+                            }
+                            values.push([e, v]);
+                        });
+                        var obj = { "key": elem, "values": values };
+                        formatted.push(obj)
+                    }
+
+                });
+
+                createStackedArea(formatted, element,scope[render]);
+            }
+            scope.$watch(data, function (data) {
+                if (data) {
+                   manipulateData(data);
+                }
+            }) ;
+            scope.$watch(render,function(ren){
+                if(scope[data]){
+                    manipulateData(scope[data]);
                 }
             })
 

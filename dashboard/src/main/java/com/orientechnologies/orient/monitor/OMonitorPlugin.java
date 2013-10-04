@@ -46,6 +46,10 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
   public static final String                       CLASS_SERVER      = "Server";
   public static final String                       CLASS_LOG         = "Log";
   public static final String                       CLASS_EVENT         = "Event";
+  public static final String                       CLASS_EVENT_WHEN         = "EventWhen";
+  public static final String                       CLASS_SCHEDULER_WHEN         = "SchedulerWhen";
+  public static final String                       CLASS_EVENT_WHAT         = "EventWhat";
+		  
   public static final String                       CLASS_SNAPSHOT    = "Snapshot";
   public static final String                       CLASS_METRIC      = "Metric";
   public static final String                       CLASS_COUNTER     = "Counter";
@@ -202,12 +206,20 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
     final OClass information = schema.createClass(CLASS_INFORMATION).setSuperClass(metric);
     information.createProperty("value", OType.STRING);
     
+    final OClass eventWhat = schema.createClass(CLASS_EVENT_WHAT);
+    final OClass eventWhen = schema.createClass(CLASS_EVENT_WHEN);
+    
+    
+    
     final OClass events = schema.createClass(CLASS_EVENT);
     events.createProperty("name", OType.STRING);
-    events.createProperty("enabled", OType.BOOLEAN);
-    events.createProperty("clazz", OType.STRING);
-    events.createProperty("condition", OType.LINK,schema.getClass(OFunction.class));
-    events.createProperty("action", OType.LINK,schema.getClass(OFunction.class));
+    events.createProperty("when", OType.EMBEDDED,eventWhen);
+    events.createProperty("what", OType.LINK,eventWhat);
+    
+    
+    final OClass scheduler = schema.createClass(CLASS_SCHEDULER_WHEN);
+    scheduler.setSuperClass(eventWhen);
+    scheduler.createProperty("cronExp", OType.STRING);
   }
 
   @Override

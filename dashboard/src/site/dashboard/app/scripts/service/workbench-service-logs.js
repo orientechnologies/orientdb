@@ -6,8 +6,10 @@
  * To change this template use File | Settings | File Templates.
  */
 var biconsole = angular.module('workbench-logs.services', ['ngResource']);
-
 biconsole.factory('CommandLogApi', function ($http, $resource) {
+
+
+    var exclude =  ["@type", "@fieldTypes", "$then", "$resolved"];
 
     var resource = $resource($http);
     console.log(resource);
@@ -64,15 +66,60 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
             })
     }
 
-    resource.getListFiles = function (params,callback) {
-                                             console.log(params.server);
+    resource.getListFiles = function (params, callback) {
         var server = '?name=' + params.server;
-        $http.get('/log/files'+server).success(function (data) {
+        $http.get('/log/files' + server).success(function (data) {
             callback(data);
         }).error(function (data) {
             })
     }
 
+    resource.queryText = function (params, callback, error) {
+        var startTime = new Date().getTime();
+        var limit = params.limit || 20;
+        var verbose = params.verbose != undefined ? params.verbose : true;
+        var shallow = params.shallow != undefined ? '' : ',shallow';
+        var text = '/command/' + 'monitor' + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
+        if (params.text) {
+            var query = params.text.trim();
+                             console.log(query);
+            console.log(text);
+            $http.post(text, query).success(function (data) {
+                var time = ((new Date().getTime() - startTime) / 1000);
+                var records = data.result ? data.result.length : "";
+                if (verbose) {
+                    var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
+                }
+                if (data != undefined)
+                    callback(data);
+                else
+                    callback('ok');
+            }).error(function (data) {
+                    if (error) {
+                        error(data);
+                    }
+                });
+        }
+    }
+    resource.getPropertyTableFromResults =  function (results) {
+        var self = this;
+        var headers = new Array;
+        results.forEach(function (element, index, array) {
+            var tmp = Object.keys(element);
+            if (headers.length == 0) {
+                headers = headers.concat(tmp);
+            } else {
+                var tmp2 = tmp.filter(function (element, index, array) {
+                    return headers.indexOf(element) == -1;
+                });
+                headers = headers.concat(tmp2);
+            }
+        });
+        var all = headers.filter(function (element, index, array) {
+            return exclude.indexOf(element) == -1;
+        });
+        return all;
+    }
     return resource;
 });
 

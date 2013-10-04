@@ -16,6 +16,7 @@
 		</handler>
 	</handlers>
 	<network>
+	
 		<protocols>
 			<protocol implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" name="http" />
 		</protocols>
@@ -55,7 +56,9 @@
 		</listeners>
 	</network>
 	<storages>
+		
 	</storages>
+	
 	<users>
 		<user resources="*" password="root" name="root" />
 		<user resources="connect,server.listDatabases" password="guest" name="guest" />
