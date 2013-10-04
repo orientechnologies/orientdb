@@ -55,6 +55,7 @@
     <target name="test-local" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-ea -Dstorage.lockTimeout=60000"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -69,7 +70,7 @@
     <target name="test-plocal" depends="test-init">
         <echo>EXECUTING TESTS USING PAGINATED LOCAL DATABASE: plocal:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Dstorage.lockTimeout=60000"/>
+            <jvmarg value="-ea -Dstorage.lockTimeout=60000"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -119,7 +120,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-            <jvmarg line="-Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
+            <jvmarg line="-ea -Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
