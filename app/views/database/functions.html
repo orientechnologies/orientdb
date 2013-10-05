@@ -12,18 +12,11 @@
                 <button type="submit" class="btn btn-primary" ng-disabled="propertyForm.$invalid"
                         ng-click="saveFunction()">Save
                 </button>
-
-
-                <!--<a href="javascript:void(0)" class="btn btn-primary" ng-disabled="functionForm.$invalid" ng-click="saveFunction()"> <i-->
-                <!--class="icon-white icon-ok"></i>-->
-                <!--Save</a>-->
             </div>
 
 
         </div>
         <div class="span12 console_class_functions">
-
-
             <div class="row-fluid">
                 <div class="span2">
                     <input class="input input_functions" placeholder="Search" ng-model="queryy">
@@ -82,20 +75,31 @@
                         <ul class="horizontallist">
                             <b>{{functionToExecute['name']}}(</b>
 
-                            <li ng-repeat="ppppp in parametersToExecute track by $index">
+                            <li ng-repeat="element in parametersToExecute track by $index">
                                 <input type="text" ng-model="parametersToExecute[$index]">
                             </li>
                             <b>)</b>
                         </ul>
-                        <form class="form-inline">
-                            <a href="javascript:void(0)" class="btn btn-success" ng-click="executeFunction()"> <i
-                                    class="icon-white icon-ok"></i>
-                                Execute</a>
-                            <br>
-                        </form>
-                        <form class="form-inline functions_consoleresult">
-                            <textarea ng-model="resultExecute" value="{{resultExecute}}"></textarea>
-                        </form>
+
+                        <table>
+                            <tr>
+
+                                <td>
+                                    <a href="javascript:void(0)" class="btn btn-success" ng-click="executeFunction()">
+                                        <i
+                                                class="icon-white icon-ok"></i>
+                                        Execute</a>
+                                </td>
+                                <td>
+                                    <textarea class="functions_consoleresult" ng-model="resultExecute"
+                                              value="{{resultExecute}}" style="width: 600px;"></textarea>
+
+                                </td>
+
+                            </tr>
+
+                        </table>
+
                     </div>
                     </p>
                 </div>
