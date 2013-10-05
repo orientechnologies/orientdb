@@ -118,28 +118,23 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
 
 dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor) {
 
-//query java
     var sql = "select * from Log";
-
 
     $scope.level = undefined;
     $scope.description = undefined;
     $scope.date = undefined;
     $scope.levels = ['1', '2', '3', '4', '5', '6', '7'];
-
     $scope.selectedDateFrom = undefined;
     $scope.selectedHourFrom = undefined;
-
     $scope.selectedDateTo = undefined;
     $scope.selectedHourTo = undefined;
-
-
     $scope.countPage = 1000;
     $scope.countPageOptions = [100, 500, 1000];
-    console.log($routeParams.database);
+
     $scope.getJavaLogs = function () {
         CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql }, function (data) {
             if (data) {
+                $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
                 $scope.resultTotal = data;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
@@ -161,10 +156,8 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         }
         return '';
     }
-
     $scope.search = function () {
         var day = moment($scope.selectedDateFrom);
-        console.log(day.format("YYYY-MM-DD"));
 
         var hourFrom = moment(new Date());
 
@@ -218,11 +211,9 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
                 sql = sql.concat(sqlapp);
             }
         }
-
         CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql }, function (data) {
             if (data) {
-                $scope.headers  = CommandLogApi.getPropertyTableFromResults(data.result);
-                console.log($scope.headers);
+                $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
                 $scope.resultTotal = data;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
@@ -242,5 +233,4 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         }
         return false
     }
-
 }]);
