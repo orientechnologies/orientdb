@@ -114,11 +114,12 @@ public class OServerPluginManager implements OService {
       currentDynamicPlugins.add(entry.getKey());
     }
 
-    for (File plugin : plugins) {
-      final String pluginName = updatePlugin(plugin);
-      if (pluginName != null)
-        currentDynamicPlugins.remove(pluginName);
-    }
+    if (plugins != null)
+      for (File plugin : plugins) {
+        final String pluginName = updatePlugin(plugin);
+        if (pluginName != null)
+          currentDynamicPlugins.remove(pluginName);
+      }
 
     // REMOVE MISSING PLUGIN
     for (String pluginName : currentDynamicPlugins)
