@@ -5,14 +5,14 @@
     <ignored path="studioee.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
-    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380276439726" ignored="false" />
+    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380898123310" ignored="false" />
     <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380209642386" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986969312" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380898300891" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380277123510" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380117768014" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380901554676" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816329630" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985831148" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/styles/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378995696968" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/styles/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380898124470" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378997926230" ignored="false" />
     <file path="/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379024712981" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/header-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379070375206" ignored="false" />
@@ -85,7 +85,7 @@
     <file path="/editVertex.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378908875025" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editVertex.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378990706577" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380373785742" ignored="false" />
-    <file path="/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986965893" ignored="false" />
+    <file path="/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380898300407" ignored="false" />
     <file path="/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378915596273" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378979906760" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/angular-ui-codemirror/ui-codemirror.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378978890702" ignored="false" />
@@ -147,7 +147,7 @@
     <file path="/dialog.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186712384" ignored="false" />
     <file path="/baseEditModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379197825195" ignored="false" />
     <file path="/custom.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379274919815" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380830452824" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380901941590" ignored="false" />
     <file path="/multiBar.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379449691980" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/studio/www/scripts/scripts.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380448807915" ignored="false" />
     <file path="/fragment.js2" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380889485567" ignored="false" />
@@ -300,7 +300,7 @@
       <file leaf-file-name="logjava.html" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="118" column="20" selection-start="4632" selection-end="4632" vertical-scroll-proportion="0.79435486">
+            <state line="86" column="10" selection-start="3351" selection-end="3351" vertical-scroll-proportion="0.34879032">
               <folding />
             </state>
           </provider>
@@ -663,7 +663,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="118" column="20" selection-start="4632" selection-end="4632" vertical-scroll-proportion="0.79435486">
+        <state line="86" column="10" selection-start="3351" selection-end="3351" vertical-scroll-proportion="0.34879032">
           <folding />
         </state>
       </provider>
