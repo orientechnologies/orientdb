@@ -148,6 +148,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
+    setStatus(STATUS.STARTING);
+    
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
 
     cachedClusterNodes.clear();
@@ -199,8 +201,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void shutdown() {
     if (!enabled)
       return;
-
-    setStatus(STATUS.OFFLINE);
+    setStatus(STATUS.SHUTDOWNING);
 
     messageService.shutdown();
 
@@ -210,6 +211,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
+    setStatus(STATUS.OFFLINE);
   }
 
   @Override
@@ -560,6 +562,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @SuppressWarnings("unchecked")
   protected void installNewDatabases() {
+    setStatus(STATUS.ALIGNING);
+
     // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
     synchronized (installDatabaseLock) {
       final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
