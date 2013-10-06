@@ -165,53 +165,71 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
 
 });
-app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
+app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig) {
 
     $scope.rid = $routeParams.server;
     $scope.names = new Array;
     $scope.render = 'area';
+    $scope.fields = ['value','entries','min','max','average','total'];
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
-            $scope.metric = $scope.metrics[0].name  ;
+            $scope.metric = $scope.metrics[0].name;
 
         }
     });
+    $scope.refreshMetricConfig = function () {
+        MetricConfig.getAll(function (data) {
+            $scope.savedMetrics = data.result;
+            if($scope.savedMetrics.length>0){
+                $scope.selectedConfig = $scope.savedMetrics[0];
+            }
+        });
+    }
     $scope.$watch("range", function (data) {
 
-        console.log(data);
+
     });
-    $scope.addMetric = function(){
-        $scope.names.push($scope.metric);
-        $scope.refreshData();
+
+
+    $scope.newMetricConfig = function () {
+        $scope.selectedConfig = MetricConfig.create();
     }
-    /*$scope.$watch("metric", function (data) {
-
-        if (data) {
-            Metric.getMetrics({ names: $scope.names, server: $scope.rid}, function (data) {
-                $scope.metricsData = new Array;
-                var tmpArr = new Array;
-
-                data.result.forEach(function (elem, idx, array) {
-                    if (!tmpArr[elem.name]) {
-                        tmpArr[elem.name] = new Array;
-                    }
-                    var el = undefined;
-
-                    if(elem['class'] == 'Information'){
-                        el = elem.value
-                    } else {
-                        el =  elem.entries;
-                    }
-                    tmpArr[elem.name].push([elem.dateTo, el]);
-                });
-
-                $scope.metricsData = tmpArr;
-            })
+    $scope.saveMetricConfig = function () {
+        MetricConfig.saveConfig($scope.selectedConfig, function (data) {
+            $scope.refreshMetricConfig();
+        });
+    }
+    $scope.selectConfig = function (config) {
+        $scope.selectedConfig = config;
+    }
+    $scope.addConfig = function () {
+        if (!$scope.selectedConfig['config']) {
+            $scope.selectedConfig['config'] = new Array;
         }
-    });*/
-    $scope.refreshData = function(){
-        Metric.getMetrics({ names: $scope.names, server: $scope.rid}, function (data) {
+        $scope.selectedConfig['config'].push({});
+    }
+    $scope.$watch("selectedConfig", function (data) {
+
+        if (data && data.config) {
+            $scope.refreshData(data);
+        }
+    });
+    $scope.removeMetric = function(met){
+        var idx = $scope.selectedConfig['config'].indexOf(met);
+        $scope.selectedConfig['config'].splice(idx,1);
+    }
+    $scope.refreshMetricConfig();
+
+    $scope.refreshData = function (metrics) {
+
+        var names = new Array;
+        var configs = new Array;
+        metrics.config.forEach(function (elem, idx, array) {
+            names.push(elem.name);
+            configs[elem.name] = elem.field;
+        });
+        Metric.getMetrics({ names: names, server: $scope.rid}, function (data) {
             $scope.metricsData = new Array;
             var tmpArr = new Array;
 
@@ -222,14 +240,15 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
                 }
                 var el = undefined;
 
-                if(elem['class'] == 'Information'){
+                if(configs[elem.name]){
+                  el = elem[configs[elem.name]];
+                } else if (elem['class'] == 'Information') {
                     el = elem.value
                 } else {
-                    el =  elem.entries;
+                    el = elem.entries;
                 }
                 tmpArr[elem.name][elem.dateTo] = el; //([elem.dateTo, el]);
             });
-            console.log(tmpArr);
             $scope.metricsData = tmpArr;
         })
     }

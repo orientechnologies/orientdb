@@ -85,24 +85,6 @@ monitor.factory('Metric', function ($http, $resource) {
             callback(data);
         })
     }
-    /*resource.getMetrics = function (params, callback) {
-        var url = API + 'command/monitor/sql/-/-1';
-        var query = "select @class,snapshot.dateTo as dateTo, name, entries, last, min, max, average, total,value from Metric where  name = '{{name}}' and  snapshot.server = '{{server}}'";
-        if (params.dateFrom) {
-            query += "and snapshot.dateFrom >= {{dateFrom}} ";
-        }
-        if (params.dateTo) {
-            query += "and snapshot.dateTo <= {{dateTo}} ";
-        }
-        if (params.name && params.server) {
-            query = S(query).template(params).s;
-            $http.post(url, query).success(function (data) {
-                callback(data);
-            });
-        } else {
-            throw 'name and server params required';
-        }
-    } */
     resource.getMetrics = function (params, callback) {
         var url = API + 'command/monitor/sql/-/-1';
         if (params.names) {
@@ -164,6 +146,36 @@ monitor.factory('Server', function ($http, $resource, Metric) {
             var databases = data.result[0]['system.databases'].split(",");
             callback(databases)
         });
+    }
+    return resource;
+});
+
+monitor.factory('MetricConfig', function ($http, $resource) {
+    var resource = $resource(API + 'database/:database');
+
+
+    resource.getAll = function (callback) {
+        var query = 'select * from MetricConfig fetchPlan *:1'
+        $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
+            callback(data);
+        });
+    }
+    resource.create = function(){
+        var obj = {};
+        obj['@rid'] = '#-1:-1';
+        obj['@class'] = 'MetricConfig';
+        return obj;
+    }
+    resource.saveConfig = function(config,callback){
+        if (config['@rid'].replace("#", '') == '-1:-1') {
+            $http.post(API + 'document/monitor/-1:-1', config).success(function (data) {
+                callback(data);
+            });
+        } else {
+            $http.put(API + 'document/monitor/' + config['@rid'].replace("#", ''), config).success(function (data) {
+                callback(data);
+            });
+        }
     }
     return resource;
 });
