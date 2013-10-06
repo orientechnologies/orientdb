@@ -276,8 +276,6 @@ form .required label:after {
     position: relative;
 }
 
-
-
 ul a > i {
     vertical-align: inherit !important;
     margin-top: auto !important;
@@ -301,8 +299,6 @@ button.exportButton {
 
 .horizontallist li {
     display: inline;
-
-    /*float: left;*/
 }
 
 ul.horizontallist, ol.horizontallist {
@@ -311,7 +307,7 @@ ul.horizontallist, ol.horizontallist {
 }
 
 .functions_consoleresult textarea {
-    width: 97%;
+    width: 400px;
 }
 
 .functions_list {
@@ -320,9 +316,11 @@ ul.horizontallist, ol.horizontallist {
     overflow-y: scroll;
     width: 90%;
 }
-       .input_functions{
-           width: 105%;
-       }
+
+.input_functions {
+    width: 105%;
+}
+
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #262626;
     border-bottom: 5px solid #FF6600;
@@ -405,30 +403,3 @@ ul.horizontallist, ol.horizontallist {
 .pagination_select {
     margin-top: 22px;
 }
-
-/*.btn {
-    background-color: #E5E5E5;
-    background-image: none;
-    border: 0 none;
-    border-radius: 0 0 0 0 !important;
-    box-shadow: none !important;
-    color: #333333;
-    cursor: pointer;
-    filter: none;
-    outline: medium none;
-    padding: 7px 14px;
-    text-shadow: none;
-}
-
-.btn:hover {
-    background: #d8d8d8;
-} */
-
-/*.well {
-    background: none repeat scroll 0 0 #F5F5F5;
-    border: 0 none;
-    box-shadow: none !important;
-    padding: 20px;
-    text-shadow: none !important;
-} */
-
