@@ -152,7 +152,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             return type;
         },
         isLink: function (type) {
-            return type == "LINKSET";
+            return type == "LINKSET" ||  type == "LINKLIST";
         },
         listField: function (clazz) {
             var metadata = this.getMetadata();
@@ -390,6 +390,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                 if (!type) {
                     type = self.findTypeFromFieldTipes(doc, element);
                 }
+                console.log(type);
                 return self.isLink(type);
             });
             return all;
