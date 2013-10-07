@@ -123,6 +123,12 @@ public enum OGlobalConfiguration {
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
 
+  // RECORDS
+  RECORD_DOWNSIZING_ENABLED(
+      "record.downsizing.enabled",
+      "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
+      Boolean.class, true),
+
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
