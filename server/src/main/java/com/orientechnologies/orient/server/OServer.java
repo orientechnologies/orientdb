@@ -462,7 +462,7 @@ public class OServer {
     }
 
     for (OServerPluginInfo h : getPlugins())
-      if (h.getInstance().getClass().equals(iPluginClass))
+      if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass))
         return (RET) h.getInstance();
 
     return null;
