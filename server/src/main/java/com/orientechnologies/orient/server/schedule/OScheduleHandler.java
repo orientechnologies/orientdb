@@ -94,6 +94,7 @@ public class OScheduleHandler extends OServerPluginAbstract {
     while (sKeys.hasNext()) {
       String key = sKeys.next();
       OScheduler scheduler = schedulers.get(key);
+      scheduler.setDatabase(db);
       if (OLogManager.instance().isDebugEnabled()) {
         OLogManager.instance().debug(this, "check : " + scheduler.toString());
       }
@@ -109,11 +110,13 @@ public class OScheduleHandler extends OServerPluginAbstract {
     try {
       String url = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(BASEPATH + this.databaseName)
           .getPath()));
-      if (this.exists(url)) {
+      if(this.existsPLocal(url)) {
+        db = new ODatabaseDocumentTx("plocal:" + url).open(this.user, this.pass);
+      } else if (this.existsLocal(url)) {
         db = new ODatabaseDocumentTx("local:" + url).open(this.user, this.pass);
       } else {
         db = null;
-        OLogManager.instance().error(this, "database pharos not exist");
+        OLogManager.instance().error(this, "database " + this.databaseName + " not exist");
       }
     } catch (Exception ex) {
       ex.printStackTrace();
@@ -122,9 +125,13 @@ public class OScheduleHandler extends OServerPluginAbstract {
     }
     return db;
   }
-
-  private boolean exists(String path) {
-    return new File(path + "/default.0.oda").exists();
+  
+  private boolean existsLocal(String path) {
+    return new File(path + "/default.odh").exists();
+  }
+  
+  private boolean existsPLocal(String path) {
+    return new File(path + "/default.pcl").exists();
   }
 }
 
