@@ -21,7 +21,14 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDictionary;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexFullText;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
@@ -65,6 +72,9 @@ public class OHashIndexFactory implements OIndexFactory {
     if (storageType.equals("memory"))
       indexEngine = new OMemoryHashMapIndexEngine();
     else if (storageType.equals("local") || storageType.equals("plocal"))
+      indexEngine = new OLocalHashTableIndexEngine();
+    else if (storageType.equals("distributed"))
+      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
       indexEngine = new OLocalHashTableIndexEngine();
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
