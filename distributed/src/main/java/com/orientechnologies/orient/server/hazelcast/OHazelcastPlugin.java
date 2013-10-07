@@ -148,8 +148,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
-    setStatus(STATUS.STARTING);
-    
+    status = STATUS.STARTING;
+
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
 
     cachedClusterNodes.clear();
@@ -176,6 +176,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       messageService = new OHazelcastDistributedMessageService(this);
 
       loadDistributedDatabases();
+
+      installNewDatabases();
 
       // REGISTER CURRENT MEMBERS
       setStatus(STATUS.ONLINE);
@@ -487,6 +489,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public boolean isOfflineNodeById(final String iNodeId) {
     final ODocument cfg = getNodeConfigurationById(iNodeId);
     return cfg == null || !cfg.field("status").equals(STATUS.ONLINE.toString());
+  }
+
+  public void waitUntilOnline() throws InterruptedException {
+    while (!status.equals(STATUS.ONLINE))
+      Thread.sleep(100);
   }
 
   public HazelcastInstance getHazelcastInstance() {
