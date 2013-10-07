@@ -296,7 +296,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
     try {
       if (func.getLanguage() == null)
         throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
-      final String funcStr = scriptManager.getFunctionDefinition(func);
+      //final String funcStr = scriptManager.getFunctionDefinition(func);
+      final String funcStr = scriptManager.getLibrary(db, func.getLanguage());
       if (funcStr != null) {
         try {
           scriptEngine.eval(funcStr);
