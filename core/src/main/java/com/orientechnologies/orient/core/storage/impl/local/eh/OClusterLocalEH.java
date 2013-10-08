@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.local.eh;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -29,10 +30,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
@@ -154,6 +152,42 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public OModificationLock getExternalModificationLock() {
+    throw new UnsupportedOperationException("getExternalModificationLock");
+  }
+
+  @Override
+  public void close(boolean flush) throws IOException {
+    close();
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+    throw new UnsupportedOperationException("createRecord");
+  }
+
+  @Override
+  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("deleteRecord");
+  }
+
+  @Override
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    throw new UnsupportedOperationException("updateRecord");
+  }
+
+  @Override
+  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("readRecord");
+  }
+
+  @Override
+  public boolean exists() {
+    throw new UnsupportedOperationException("exists");
   }
 
   @Override

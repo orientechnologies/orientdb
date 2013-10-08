@@ -20,10 +20,10 @@ import java.io.IOException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public abstract class OClusterMemory extends OSharedResourceAdaptive implements OCluster {
   public static final String TYPE = "MEMORY";
@@ -93,6 +93,37 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public void close(boolean flush) throws IOException {
+    close();
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+    throw new UnsupportedOperationException("createRecord");
+  }
+
+  @Override
+  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("deleteRecord");
+  }
+
+  @Override
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    throw new UnsupportedOperationException("updateRecord");
+  }
+
+  @Override
+  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("readRecord");
+  }
+
+  @Override
+  public boolean exists() {
+    throw new UnsupportedOperationException("exists");
   }
 
   public void open() throws IOException {
