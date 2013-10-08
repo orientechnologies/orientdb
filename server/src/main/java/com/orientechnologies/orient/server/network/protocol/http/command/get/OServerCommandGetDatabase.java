@@ -254,7 +254,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
     json.writeAttribute("alias", cls.getShortName());
     json.writeAttribute("abstract", cls.isAbstract());
-    json.writeAttribute("strictmode", cls.isStrictMode());
+     json.writeAttribute("strictmode", cls.isStrictMode());
     json.writeAttribute("clusters", cls.getClusterIds());
     json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
     if (cls instanceof OClassImpl) {
