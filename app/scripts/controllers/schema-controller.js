@@ -131,7 +131,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             }
         }
     }
-    $scope.addIndexFromExt = function(newIndex){
+    $scope.addIndexFromExt = function (newIndex) {
         $scope.indexes.push(newIndex);
     }
     $scope.newIndex = function () {
@@ -336,7 +336,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
         nameInddd.replace(')', '');
         var sql = 'CREATE INDEX ' + $scope.nameIndexToShow + ' ON ' + $scope.classInject + ' ( ' + proppps + ' ) ' + $scope.newIndex['type'];
         $scope.newIndex['name'] = $scope.nameIndexToShow;
-        $scope.newIndex['fields'] =  proppps ;
+        $scope.newIndex['fields'] = proppps;
 
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
             $scope.hide();
