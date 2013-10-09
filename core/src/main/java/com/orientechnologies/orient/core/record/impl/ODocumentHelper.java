@@ -736,8 +736,12 @@ public class ODocumentHelper {
     final Object fieldValue = iEntry.getValue();
 
     if (fieldValue != null) {
-      // LISTS
-      if (fieldValue instanceof ORecordLazyList) {
+      if (fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid()) {
+        // EMBEDDED DOCUMENT
+        iCloned._fieldValues.put(iEntry.getKey(), ((ODocument) fieldValue).copy());
+
+        // LISTS
+      } else if (fieldValue instanceof ORecordLazyList) {
         iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazyList) fieldValue).copy(iCloned));
 
       } else if (fieldValue instanceof ORecordTrackedList) {
@@ -855,6 +859,8 @@ public class ODocumentHelper {
           return null;
         }
       });
+    else
+      iCurrent.checkForFields();
 
     if (iOtherDb != null)
       makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
@@ -863,6 +869,8 @@ public class ODocumentHelper {
           return null;
         }
       });
+    else
+      iOther.checkForFields();
 
     if (iCurrent._fieldValues.size() != iOther._fieldValues.size())
       return false;
@@ -873,6 +881,9 @@ public class ODocumentHelper {
     for (Entry<String, Object> f : iCurrent._fieldValues.entrySet()) {
       myFieldValue = f.getValue();
       otherFieldValue = iOther._fieldValues.get(f.getKey());
+
+      if (myFieldValue == otherFieldValue)
+        continue;
 
       // CHECK FOR NULLS
       if (myFieldValue == null) {
@@ -892,7 +903,8 @@ public class ODocumentHelper {
           if (!compareMaps(iMyDb, (Map<Object, Object>) myFieldValue, iOtherDb, (Map<Object, Object>) otherFieldValue, ridMapper))
             return false;
         } else if (myFieldValue instanceof ODocument && otherFieldValue instanceof ODocument) {
-          return hasSameContentOf((ODocument) myFieldValue, iMyDb, (ODocument) otherFieldValue, iOtherDb, ridMapper);
+          if (!hasSameContentOf((ODocument) myFieldValue, iMyDb, (ODocument) otherFieldValue, iOtherDb, ridMapper))
+            return false;
         } else {
           if (!compareScalarValues(myFieldValue, otherFieldValue, ridMapper))
             return false;
