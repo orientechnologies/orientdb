@@ -199,8 +199,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       f.read(buffer);
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      updateCachedDatabaseConfiguration(iDatabaseName, doc);
       loadedDatabaseConfiguration.put(iDatabaseName, doc);
-      updateDatabaseConfiguration(iDatabaseName, doc);
       return doc;
 
     } catch (Exception e) {
@@ -214,7 +214,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     return null;
   }
 
-  public void updateDatabaseConfiguration(final String iDatabaseName, final ODocument cfg) {
+  public void updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg) {
     synchronized (cachedDatabaseConfiguration) {
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
@@ -252,7 +252,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       oldVersion = 0;
     cfg.field("version", oldVersion.intValue() + 1);
 
-    updateDatabaseConfiguration(iDatabaseName, cfg);
+    updateCachedDatabaseConfiguration(iDatabaseName, cfg);
     loadedDatabaseConfiguration.put(iDatabaseName, cfg);
 
     FileOutputStream f = null;

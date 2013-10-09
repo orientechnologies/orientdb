@@ -71,7 +71,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
           "listening for incoming responses on queue: %s", queueName);
 
-    checkForPendingMessages(nodeResponseQueue, queueName);
+    checkForPendingMessages(nodeResponseQueue, queueName, false);
 
     // CREATE TASK THAT CHECK ASYNCHRONOUS MESSAGE RECEIVED
     asynchMessageManager = new TimerTask() {
@@ -221,11 +221,17 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
   }
 
-  protected void checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName) {
+  protected void checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
     final int queueSize = iQueue.size();
-    if (queueSize > 0)
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-          "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
+    if (queueSize > 0) {
+      if (!iUnqueuePendingMessages) {
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
+        iQueue.clear();
+      } else
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
+    }
   }
 
   /**

@@ -41,6 +41,7 @@ import com.hazelcast.core.IQueue;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
@@ -148,6 +149,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
+    super.startup();
+
     status = STATUS.STARTING;
 
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
@@ -180,11 +183,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // PUBLISH LOCAL NODE CFG
       getConfigurationMap().put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
 
+      installNewDatabases(true);
+
       loadDistributedDatabases();
-
-      installNewDatabases();
-
-      super.startup();
 
     } catch (FileNotFoundException e) {
       throw new OConfigurationException("Error on creating Hazelcast instance", e);
@@ -337,7 +338,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void onCreate(final ODatabase iDatabase) {
     final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-    distribDatabase.configureDatabase((ODatabaseDocumentTx) ((ODatabaseComplex<?>) iDatabase).getDatabaseOwner(), false)
+    distribDatabase.configureDatabase((ODatabaseDocumentTx) ((ODatabaseComplex<?>) iDatabase).getDatabaseOwner(), false, false)
         .setOnline();
     onOpen(iDatabase);
   }
@@ -441,14 +442,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void entryAdded(EntryEvent<String, Object> iEvent) {
     final String key = iEvent.getKey();
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
-      final ODocument cfg = (ODocument) iEvent.getValue();
-      cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+      if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
+        final ODocument cfg = (ODocument) iEvent.getValue();
+        cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
 
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
-          getNodeName(iEvent.getMember()), cachedClusterNodes.size());
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
+            getNodeName(iEvent.getMember()), cachedClusterNodes.size());
 
-      installNewDatabases();
+        installNewDatabases(false);
+      }
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       saveDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
@@ -467,9 +470,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
-      installNewDatabases();
-      saveDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue());
-      OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+      if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
+        final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
+
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "update configuration db=%s from=%s", dbName,
+            getNodeName(iEvent.getMember()));
+
+        installNewDatabases(false);
+        saveDatabaseConfiguration(dbName, (ODocument) iEvent.getValue());
+        OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+      }
     }
   }
 
@@ -568,19 +578,26 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (messageService.getDatabase(databaseName) == null) {
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
 
+        final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
         if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
           // PUBLISH CFG FIRST TIME
-          final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
           getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
         }
 
-        messageService.registerDatabase(databaseName).configureDatabase(null, true).setOnline();
+        final boolean hotAlignment = cfg.isHotAlignment();
+
+        messageService.registerDatabase(databaseName).configureDatabase(null, hotAlignment, hotAlignment).setOnline();
       }
     }
   }
 
   @SuppressWarnings("unchecked")
-  protected void installNewDatabases() {
+  protected void installNewDatabases(final boolean iStartup) {
+    if (cachedClusterNodes.size() <= 1)
+      // NO OTHER NODES WHERE ALIGN
+      return;
+
     setStatus(STATUS.ALIGNING);
 
     // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
@@ -597,60 +614,65 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
             final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
-            if (configuredDatabases.contains(databaseName) && hotAlignment != null && !hotAlignment) {
-              // DROP THE DATABASE ON CURRENT NODE
-              final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
-              db.drop();
+            if (configuredDatabases.contains(databaseName)) {
+              if (iStartup && hotAlignment != null && !hotAlignment) {
+                // DROP THE DATABASE ON CURRENT NODE
+                ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+                    "dropping local database %s in %s and get a fresh copy from a remote node...", databaseName, dbPath);
+
+                Orient.instance().unregisterStorageByName(databaseName);
+
+                OFileUtils.deleteRecursively(new File(dbPath));
+              } else
+                // HOT ALIGNMENT RUNNING, DON'T INSTALL THE DB FROM SCRATCH BUT RATHER LET TO THE NODE TO ALIGN BY READING THE QUEUE
+                continue;
             }
 
-            if (!configuredDatabases.contains(databaseName)) {
+            final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
-              final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
+            // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY
+            distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class);
+            distrDatabase.configureDatabase(null, false, false);
 
-              // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY
-              distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class);
-              distrDatabase.configureDatabase(null, false);
+            final Map<String, OBuffer> results = (Map<String, OBuffer>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
+                EXECUTION_MODE.RESPONSE);
 
-              final Map<String, OBuffer> results = (Map<String, OBuffer>) sendRequest(databaseName, null,
-                  new ODeployDatabaseTask(), EXECUTION_MODE.RESPONSE);
+            // EXTRACT THE REAL RESULT
+            OBuffer result = null;
+            for (Entry<String, OBuffer> r : results.entrySet())
+              if (r.getValue().getBuffer() != null && r.getValue().getBuffer().length > 0) {
+                result = r.getValue();
 
-              // EXTRACT THE REAL RESULT
-              OBuffer result = null;
-              for (Entry<String, OBuffer> r : results.entrySet())
-                if (r.getValue().getBuffer() != null && r.getValue().getBuffer().length > 0) {
-                  result = r.getValue();
+                ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "installing database %s in %s...",
+                    databaseName, dbPath);
 
-                  ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "installing database %s in %s...",
-                      databaseName, dbPath);
-
-                  break;
-                }
-
-              if (result == null)
-                throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
-
-              new File(dbPath).mkdirs();
-              final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
-
-              final ByteArrayInputStream in = new ByteArrayInputStream(result.getBuffer());
-              try {
-                db.restore(in, null);
-                in.close();
-
-                db.close();
-                Orient.instance().unregisterStorageByName(db.getName());
-
-                ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-                    "installed database %s in %s, setting it online...", databaseName, dbPath);
-
-                distrDatabase.setOnline();
-
-                ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database %s in online", databaseName);
-
-              } catch (IOException e) {
-                ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-                    "error on copying database '%s' on local server", e, databaseName);
+                break;
               }
+
+            if (result == null)
+              throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
+
+            new File(dbPath).mkdirs();
+            final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+
+            final ByteArrayInputStream in = new ByteArrayInputStream(result.getBuffer());
+            try {
+              db.restore(in, null);
+              in.close();
+
+              db.close();
+              Orient.instance().unregisterStorageByName(db.getName());
+
+              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+                  "installed database %s in %s, setting it online...", databaseName, dbPath);
+
+              distrDatabase.setOnline();
+
+              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database %s in online", databaseName);
+
+            } catch (IOException e) {
+              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
+                  "error on copying database '%s' on local server", e, databaseName);
             }
           }
         }
@@ -670,7 +692,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
             "loaded database configuration from active cluster");
 
-        updateDatabaseConfiguration(iDatabaseName, cfg);
+        updateCachedDatabaseConfiguration(iDatabaseName, cfg);
         return cfg;
       }
     }
