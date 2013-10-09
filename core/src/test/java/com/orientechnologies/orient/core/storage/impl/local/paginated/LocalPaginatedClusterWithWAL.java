@@ -392,31 +392,44 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   private void assertClusterContentIsTheSame(String expectedCluster, String actualCluster) throws IOException {
-    File expectedFile = new File(testStorageDir, expectedCluster + ".pcl");
-    RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".pcl"), "r");
+    File expectedDataFile = new File(testStorageDir, expectedCluster + ".pcl");
+    RandomAccessFile datFileOne = new RandomAccessFile(expectedDataFile, "r");
+    RandomAccessFile datFileTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".pcl"), "r");
 
-    Assert.assertEquals(fileOne.length(), fileTwo.length());
+    assertFileContentIsTheSame(datFileOne, datFileTwo);
+
+    datFileOne.close();
+    datFileTwo.close();
+
+    File expectedRIDMapFile = new File(testStorageDir, expectedCluster + ".cpm");
+    RandomAccessFile ridMapOne = new RandomAccessFile(expectedRIDMapFile, "r");
+    RandomAccessFile ridMapTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".cpm"), "r");
+
+    assertFileContentIsTheSame(ridMapOne, ridMapTwo);
+
+    ridMapOne.close();
+    ridMapTwo.close();
+
+  }
+
+  private void assertFileContentIsTheSame(RandomAccessFile datFileOne, RandomAccessFile datFileTwo) throws IOException {
+    Assert.assertEquals(datFileOne.length(), datFileTwo.length());
 
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+    datFileOne.seek(OAbstractFile.HEADER_SIZE);
+    datFileTwo.seek(OAbstractFile.HEADER_SIZE);
 
-    int bytesRead = fileOne.read(expectedContent);
+    int bytesRead = datFileOne.read(expectedContent);
     while (bytesRead >= 0) {
-      fileTwo.readFully(actualContent, 0, bytesRead);
+      datFileTwo.readFully(actualContent, 0, bytesRead);
 
       Assert.assertEquals(expectedContent, actualContent);
 
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
-      bytesRead = fileOne.read(expectedContent);
+      bytesRead = datFileOne.read(expectedContent);
     }
-
-    fileOne.close();
-    fileTwo.close();
-
   }
 }

@@ -16,17 +16,8 @@
 package com.orientechnologies.orient.object.db;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -97,12 +88,10 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (ODatabaseComplex<T>) underlying.begin(iTx);
   }
 
-  public ODatabaseComplex<T> commit() {
+  public Map<ORID, ORID> commit() {
     clearNewEntriesFromCache();
 
-    underlying.commit();
-
-    return this;
+    return underlying.commit();
   }
 
   public ODatabaseComplex<T> rollback() {

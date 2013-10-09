@@ -40,24 +40,32 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-  protected ORecordId                      _recordId;
-  protected ORecordVersion                 _recordVersion = OVersionFactory.instance().createVersion();
+  protected ORecordId                             _recordId;
+  protected ORecordVersion                        _recordVersion            = OVersionFactory.instance().createVersion();
 
-  protected byte[]                         _source;
-  protected int                            _size;
-  protected String                         _dataSegmentName;
-  protected transient ORecordSerializer    _recordFormat;
-  protected Boolean                        _pinned        = null;
-  protected boolean                        _dirty         = true;
-  protected ORecordElement.STATUS          _status        = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener> _listeners     = null;
+  protected byte[]                                _source;
+  protected int                                   _size;
+  protected String                                _dataSegmentName;
+  protected transient ORecordSerializer           _recordFormat;
+  protected Boolean                               _pinned                   = null;
+  protected boolean                               _dirty                    = true;
+  protected ORecordElement.STATUS                 _status                   = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener>        _listeners                = null;
+
+  private transient Set<OIdentityChangedListener> _identityChangedListeners = null;
+  private ORID                                    _oldRid                   = null;
+
+  private ORecordListener                         _identityChangeListener   = new IdentityChangeRecordListener();
 
   public ORecordAbstract() {
+    addListener(_identityChangeListener);
   }
 
   public ORecordAbstract(final byte[] iSource) {
     _source = iSource;
     _size = iSource.length;
+
+    addListener(_identityChangeListener);
     unsetDirty();
   }
 
@@ -154,7 +162,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
-  public void onBeforeIdentityChanged(final ORID iRID) {
+  public void onBeforeIdentityChanged(final ORID rid) {
+    _oldRid = rid.copy();
   }
 
   public void onAfterIdentityChanged(final ORecord<?> iRecord) {
@@ -398,6 +407,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     _listeners.add(iListener);
   }
 
+  public void addIdentityChangeListener(final OIdentityChangedListener identityChangedListener) {
+    if (_identityChangedListeners == null)
+      _identityChangedListeners = Collections.newSetFromMap(new WeakHashMap<OIdentityChangedListener, Boolean>());
+
+    _identityChangedListeners.add(identityChangedListener);
+  }
+
+  public void removeIdentityChangeListener(final OIdentityChangedListener identityChangedListener) {
+    if (_identityChangedListeners != null)
+      _identityChangedListeners.remove(identityChangedListener);
+  }
+
   /**
    * Remove the current event listener.
    * 
@@ -414,8 +435,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
     if (_listeners != null)
       for (final ORecordListener listener : _listeners)
-        if (listener != null)
-          listener.onEvent(this, iEvent);
+        if (listener != null) {
+          if (iEvent.equals(ORecordListener.EVENT.IDENTITY_CHANGED))
+            listener.onEvent(this, iEvent, _oldRid, getIdentity().copy());
+          else
+            listener.onEvent(this, iEvent);
+        }
   }
 
   public <RET extends ORecord<T>> RET flatCopy() {
@@ -425,5 +450,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected void checkForLoading() {
     if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
       reload(null, true);
+  }
+
+  private class IdentityChangeRecordListener implements ORecordListener {
+    @Override
+    public void onEvent(ORecord<?> record, EVENT iEvent, Object... params) {
+      if (iEvent.equals(EVENT.IDENTITY_CHANGED) && _identityChangedListeners != null)
+        for (OIdentityChangedListener identityChangedListener : _identityChangedListeners)
+          identityChangedListener.onIdentityChanged((ORID) params[0], (ORID) params[1], record);
+    }
   }
 }

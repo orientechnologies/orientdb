@@ -17,7 +17,9 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -26,6 +28,9 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OIdentityChangedListener;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -201,11 +206,32 @@ public class TransactionOptimisticTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     db.open("admin", "admin");
 
+    final Map<ORID, ORID> createdRecords = new HashMap<ORID, ORID>();
+
+    OIdentityChangedListener identityChangedListener = new OIdentityChangedListener() {
+      @Override
+      public void onIdentityChanged(ORID oldRid, ORID newRid, ORecord<?> record) {
+        if (oldRid.isTemporary())
+          Assert.assertTrue(newRid.isPersistent());
+        else if (oldRid.isNew())
+          Assert.assertTrue(newRid.isTemporary());
+        else
+          Assert.fail();
+
+        if (oldRid.isTemporary())
+          createdRecords.put(oldRid, newRid);
+      }
+    };
+
     db.begin();
 
     ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
     ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
     ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
+
+    kim.addIdentityChangeListener(identityChangedListener);
+    teri.addIdentityChangeListener(identityChangedListener);
+    jack.addIdentityChangeListener(identityChangedListener);
 
     ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
     ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
@@ -213,7 +239,26 @@ public class TransactionOptimisticTest {
 
     jack.save();
 
-    db.commit();
+    ORID kimTempRid = kim.getIdentity().copy();
+    ORID teriTempRid = teri.getIdentity().copy();
+    ORID jackTempRid = jack.getIdentity().copy();
+
+    Assert.assertTrue(kim.getIdentity().isTemporary());
+    Assert.assertTrue(teri.getIdentity().isTemporary());
+    Assert.assertTrue(jack.getIdentity().isTemporary());
+
+    final Map<ORID, ORID> commitCreatedRecords = db.commit();
+
+    Assert.assertTrue(kim.getIdentity().isPersistent());
+    Assert.assertTrue(teri.getIdentity().isPersistent());
+    Assert.assertTrue(jack.getIdentity().isPersistent());
+
+    Assert.assertEquals(createdRecords.size(), 3);
+    Assert.assertEquals(commitCreatedRecords.size(), 3);
+
+    Assert.assertEquals(createdRecords.get(kimTempRid), kim.getIdentity());
+    Assert.assertEquals(createdRecords.get(teriTempRid), teri.getIdentity());
+    Assert.assertEquals(createdRecords.get(jackTempRid), jack.getIdentity());
 
     System.out
         .println("Kim indexed: " + db.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndex().get("Kim"));

@@ -22,7 +22,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.type.tree.provider.OIdentityChangedListener;
+import com.orientechnologies.orient.core.record.OIdentityChangedListener;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeEntryDataProvider;
 
 /**
@@ -642,29 +643,29 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     return right;
   }
 
-  public void onIdentityChanged(ORID rid) {
+  public void onIdentityChanged(ORID oldRid, ORID newRid, ORecord<?> record) {
     if (left != null) {
-      if (left.dataProvider.setParent(rid))
+      if (left.dataProvider.setParent(newRid))
         left.markDirty();
     }
 
     if (right != null) {
-      if (right.dataProvider.setParent(rid))
+      if (right.dataProvider.setParent(newRid))
         right.markDirty();
     }
 
     if (parent != null) {
       if (parent.left == this) {
-        if (parent.dataProvider.setLeft(rid))
+        if (parent.dataProvider.setLeft(newRid))
           parent.markDirty();
       } else if (parent.right == this) {
-        if (parent.dataProvider.setRight(rid))
+        if (parent.dataProvider.setRight(newRid))
           parent.markDirty();
       } else {
         OLogManager.instance().error(this, "[save]: Tree inconsistent entries.");
       }
     } else if (pTree.getRoot() == this) {
-      if (pTree.dataProvider.setRoot(rid))
+      if (pTree.dataProvider.setRoot(newRid))
         pTree.markDirty();
     }
   }
