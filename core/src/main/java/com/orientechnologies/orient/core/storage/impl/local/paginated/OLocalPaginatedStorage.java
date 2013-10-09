@@ -68,31 +68,31 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int                     ONE_KB                               = 1024;
-  private final int                            DELETE_MAX_RETRIES;
-  private final int                            DELETE_WAIT_TIME;
+  private static final int             ONE_KB                               = 1024;
+  private final int                    DELETE_MAX_RETRIES;
+  private final int                    DELETE_WAIT_TIME;
 
-  private final Map<String, OPaginatedCluster> clusterMap                           = new LinkedHashMap<String, OPaginatedCluster>();
-  private OPaginatedCluster[]                  clusters                             = new OPaginatedCluster[0];
+  private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
+  private OCluster[]                   clusters                             = new OCluster[0];
 
-  private String                               storagePath;
-  private final OStorageVariableParser         variableParser;
-  private int                                  defaultClusterId                     = -1;
+  private String                       storagePath;
+  private final OStorageVariableParser variableParser;
+  private int                          defaultClusterId                     = -1;
 
-  private static String[]                      ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh",
-      ".otx", ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[]              ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
+      ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION                               };
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION };
 
-  private OModificationLock                    modificationLock                     = new OModificationLock();
+  private OModificationLock            modificationLock                     = new OModificationLock();
 
-  private ScheduledExecutorService             fuzzyCheckpointExecutor;
-  private ExecutorService                      checkpointExecutor;
+  private ScheduledExecutorService     fuzzyCheckpointExecutor;
+  private ExecutorService              checkpointExecutor;
 
-  private volatile boolean                     wereDataRestoredAfterOpen            = false;
+  private volatile boolean             wereDataRestoredAfterOpen            = false;
 
-  private boolean                              makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                        .getValueAsBoolean();
+  private boolean                      makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                .getValueAsBoolean();
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -602,11 +602,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           throw new OStorageException("Can not terminate full checkpoint task");
       }
 
-      for (OPaginatedCluster cluster : clusters)
+      for (OCluster cluster : clusters)
         if (cluster != null)
           cluster.close(flush);
 
-      clusters = new OPaginatedCluster[0];
+      clusters = new OCluster[0];
       clusterMap.clear();
 
       if (configuration != null)
@@ -856,11 +856,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private int addClusterInternal(String clusterName, int clusterPos, String location, boolean fullCheckPoint, Object... parameters)
       throws IOException {
 
-    final OPaginatedCluster cluster;
+    final OCluster cluster;
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase();
 
-      cluster = new OPaginatedCluster();
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version);
       cluster.configure(this, clusterPos, clusterName, location, -1, parameters);
 
       if (clusterName.equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME.toLowerCase())) {
@@ -883,8 +883,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       } else {
         cluster.open();
       }
-      configuration.update();
 
+      configuration.update();
     }
 
     return createdClusterId;
@@ -1012,7 +1012,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       final ORecordCallback<OClusterPosition> callback) {
     checkOpeness();
 
-    final OPaginatedCluster cluster = getClusterById(rid.clusterId);
+    final OCluster cluster = getClusterById(rid.clusterId);
     cluster.getExternalModificationLock().requestModificationLock();
     try {
       modificationLock.requestModificationLock();
@@ -1108,8 +1108,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (!rid.isPersistent())
       throw new IllegalArgumentException("Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
-    final OPaginatedCluster localPaginatedCluster = (OPaginatedCluster) clusterSegment;
-    localPaginatedCluster.getExternalModificationLock().requestModificationLock();
+    clusterSegment.getExternalModificationLock().requestModificationLock();
     try {
       if (atomicLock)
         lock.acquireSharedLock();
@@ -1117,7 +1116,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       try {
         lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
         try {
-          return localPaginatedCluster.readRecord(rid.clusterPosition);
+          return clusterSegment.readRecord(rid.clusterPosition);
         } finally {
           lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
         }
@@ -1130,7 +1129,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           lock.releaseSharedLock();
       }
     } finally {
-      localPaginatedCluster.getExternalModificationLock().releaseModificationLock();
+      clusterSegment.getExternalModificationLock().releaseModificationLock();
     }
   }
 
@@ -1138,7 +1137,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
 
-    final OPaginatedCluster cluster = getClusterById(rid.clusterId);
+    final OCluster cluster = getClusterById(rid.clusterId);
 
     cluster.getExternalModificationLock().requestModificationLock();
     try {
@@ -1216,7 +1215,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       ORecordCallback<Boolean> callback) {
     checkOpeness();
 
-    final OPaginatedCluster cluster = getClusterById(rid.clusterId);
+    final OCluster cluster = getClusterById(rid.clusterId);
 
     cluster.getExternalModificationLock().requestModificationLock();
     try {
@@ -1436,7 +1435,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       rid.clusterId = ((ODocument) txEntry.getRecord()).getSchemaClass().getDefaultClusterId();
     }
 
-    final OPaginatedCluster cluster = getClusterById(rid.clusterId);
+    final OCluster cluster = getClusterById(rid.clusterId);
 
     if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
         || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
@@ -1609,7 +1608,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return defaultClusterId;
   }
 
-  public OPaginatedCluster getClusterById(int iClusterId) {
+  public OCluster getClusterById(int iClusterId) {
     lock.acquireSharedLock();
     try {
 
@@ -1619,7 +1618,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       checkClusterSegmentIndexRange(iClusterId);
 
-      final OPaginatedCluster cluster = clusters[iClusterId];
+      final OCluster cluster = clusters[iClusterId];
       if (cluster == null)
         throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
 
@@ -1776,7 +1775,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   public boolean wasClusterSoftlyClosed(String clusterName) {
     lock.acquireSharedLock();
     try {
-      final OPaginatedCluster indexCluster = clusterMap.get(clusterName);
+      final OCluster indexCluster = clusterMap.get(clusterName);
       return indexCluster.wasSoftlyClosed();
     } catch (IOException ioe) {
       throw new OStorageException("Error during index consistency check", ioe);
@@ -1822,7 +1821,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       writeAheadLog.logFullCheckpointStart();
 
-      for (OPaginatedCluster cluster : clusters)
+      for (OCluster cluster : clusters)
         if (cluster != null)
           cluster.synch();
 
@@ -1854,14 +1853,14 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-    OPaginatedCluster cluster = clusterMap.get(iConfig.getName());
+    OCluster cluster = clusterMap.get(iConfig.getName());
 
     if (cluster != null) {
       cluster.configure(this, iConfig);
       return -1;
     }
 
-    cluster = new OPaginatedCluster();
+    cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version);
     cluster.configure(this, iConfig);
 
     return registerCluster(cluster);
@@ -1870,22 +1869,22 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   /**
    * Register the cluster internally.
    * 
-   * @param iCluster
+   * @param cluster
    *          OCluster implementation
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
    * @throws IOException
    */
-  private int registerCluster(final OPaginatedCluster iCluster) throws IOException {
+  private int registerCluster(final OCluster cluster) throws IOException {
     final int id;
 
-    if (iCluster != null) {
+    if (cluster != null) {
       // CHECK FOR DUPLICATION OF NAMES
-      if (clusterMap.containsKey(iCluster.getName()))
-        throw new OConfigurationException("Cannot add segment '" + iCluster.getName()
+      if (clusterMap.containsKey(cluster.getName()))
+        throw new OConfigurationException("Cannot add segment '" + cluster.getName()
             + "' because it is already registered in database '" + name + "'");
       // CREATE AND ADD THE NEW REF SEGMENT
-      clusterMap.put(iCluster.getName(), iCluster);
-      id = iCluster.getId();
+      clusterMap.put(cluster.getName(), cluster);
+      id = cluster.getId();
     } else {
       id = clusters.length;
     }
@@ -1893,16 +1892,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (id >= clusters.length) {
       clusters = OArrays.copyOf(clusters, id + 1);
     }
-    clusters[id] = iCluster;
+    clusters[id] = cluster;
 
     return id;
   }
 
   private void addDefaultClusters() throws IOException {
+    configuration.load();
+
     final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
-    configuration.load();
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
         OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
@@ -1921,7 +1921,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void freeze(boolean throwException, int clusterId) {
-    final OPaginatedCluster cluster = getClusterById(clusterId);
+    final OCluster cluster = getClusterById(clusterId);
 
     final String name = cluster.getName();
     if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
@@ -1939,7 +1939,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void release(int clusterId) {
-    final OPaginatedCluster cluster = getClusterById(clusterId);
+    final OCluster cluster = getClusterById(clusterId);
 
     final String name = cluster.getName();
     if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {

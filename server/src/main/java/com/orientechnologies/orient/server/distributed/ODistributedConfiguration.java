@@ -45,9 +45,10 @@ public class ODistributedConfiguration {
       if (iClusterName != null) {
         ODocument cluster = getClusterConfiguration(iClusterName);
         if (cluster.containsField("replication"))
-          return cluster.field("replication");
+          return cluster.<Boolean> field("replication");
       }
-      return configuration.field("replication");
+
+      return configuration.<Boolean> field("replication");
     }
   }
 
