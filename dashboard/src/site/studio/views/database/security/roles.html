@@ -1,0 +1,72 @@
+<div ng-controller="RolesController">
+    <div class="container-fluid" xmlns="http://www.w3.org/1999/html">
+        <div class="row-fluid">
+
+
+            <div class="span12 console_class_functions">
+
+                <div class="span4 row-fluid">
+
+                    <table class="table table-striped table-bordered table-hover table-condensed pointer">
+
+                        <thead>
+                        <tr>
+
+                            <th>Name</th>
+
+                            <th>Role</th>
+
+
+                        </tr>
+
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="result in usersResult | orderBy:predicate:reverse">
+                            <td ng-click="selectRole(result)">{{result['name']}}</td>
+                            <td ng-click="selectRole(result)">
+                                {{roleMode[result['mode']]}}
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+
+                    </table>
+                </div>
+                <div class="span8 row-fluid">
+
+                    <table class="table table-striped table-bordered table-hover table-condensed pointer">
+
+                        <thead>
+                        <tr>
+
+                            <th>Name</th>
+                            <th>Delete</th>
+                            <th>Update</th>
+                            <th>Read</th>
+                            <th>Create</th>
+
+                        </tr>
+
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="i in rules track by $index ">
+                            <td ng-click="mostra(selectedRole[i])">{{ i }}</td>
+                            <td ng-repeat="m in calcolaBitmask(selectedRole['rules'][i]) track by $index">
+
+                                <input type="checkbox" ng-model=" calcolaBitmask(selectedRole['rules'][i])[$index]" ng-disabled="true">
+
+
+                            </td>
+
+                        </tr>
+
+                        </tbody>
+
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

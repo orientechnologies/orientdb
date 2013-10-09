@@ -11,7 +11,7 @@ angular.module('MonitorApp')
             {name: 'metrics', i18n: 'dashboard.metrics', link: '#/dashboard/metrics/' + $scope.rid, icon: 'icon-bar-chart' },
             {name: 'log', i18n: 'dashboard.log', link: '#/dashboard/log/' + $scope.rid, icon: 'icon-bug' },
             {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/' + $scope.rid, icon: 'icon-bug' },
-            {name: 'alert', i18n: 'dashboard.alert', link: '#/dashboard/alert/' + $scope.rid, icon: 'icon-warning-sign' }
+            {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/' + $scope.rid, icon: 'icon-warning-sign' }
 
         ]
 

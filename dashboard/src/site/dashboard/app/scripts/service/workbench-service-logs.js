@@ -6,22 +6,75 @@
  * To change this template use File | Settings | File Templates.
  */
 var biconsole = angular.module('workbench-logs.services', ['ngResource']);
-biconsole.factory('CommandLogApi', function ($http, $resource) {
+
+biconsole.factory('DatabaseApi', function ($http, $resource) {
+
+    var resource = $resource(API + 'database/:database');
+    resource.listDatabases = function (callback) {
+        $http.get(API + 'listDatabases').success(callback);
+    }
+    resource.connect = function (database, username, password, callback, error) {
+        $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+        $http.get(API + 'connect/' + database).success(callback).error(error);
+    }
+    resource.createDatabase = function (name, type, stype, username, password, callback) {
+        $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+        $http.post(API + 'database/' + name + "/" + stype + "/" + type).success(function (data) {
+            $http.defaults.headers.common['Authorization'] = null;
+            callback(data);
+        });
+    }
+
+    resource.exportDatabase = function (database) {
+        window.open(API + 'export/' + database);
+    }
+    resource.importDatabase = function (database, blob, file) {
+        var fd = new FormData();
+        fd.append("databaseFile", blob, file.name);
+        $http.post(API + 'import/' + database, fd, { headers: { 'Content-Type': undefined }, transformRequest: angular.identity });
+    }
+    resource.getAllocation = function (database, callback) {
+        $http.get(API + 'allocation/' + database).success(callback);
+    }
+    resource.disconnect = function (callback) {
+        $http.get(API + 'disconnect').success(function () {
+            $http.defaults.headers.common['Authorization'] = null;
+            callback();
+        }).error(function () {
+                $http.defaults.headers.common['Authorization'] = null;
+                callback();
+            });
+    }
+    return resource;
+});
 
 
-    var exclude =  ["@type", "@fieldTypes", "$then", "$resolved"];
+biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
+
+    var current = {
+        name: null,
+        username: null,
+        metadata: null
+    }
+
+
+    var exclude = ["@type", "@fieldTypes", "$then", "$resolved"];
 
     var resource = $resource($http);
-    console.log(resource);
     resource.getLogs = function (params, callback) {
 
-        var datefrom = params.dateFrom
+        var datefrom = params.dateFrom;
 
         $http.get('/log/tail/' + datefrom).success(function (data) {
         }).error(function (data) {
-//            console.log(data)
-
             })
+    }
+
+    resource.getMetadata = function () {
+        return current.metadata;
+    }
+    resource.setMetadata = function (metadata) {
+        current.metadata = metadata;
     }
     resource.getLastLogs = function (params, callback) {
         var searchValue = '';
@@ -82,8 +135,6 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
         var text = '/command/' + 'monitor' + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
         if (params.text) {
             var query = params.text.trim();
-                             console.log(query);
-            console.log(text);
             $http.post(text, query).success(function (data) {
                 var time = ((new Date().getTime() - startTime) / 1000);
                 var records = data.result ? data.result.length : "";
@@ -101,7 +152,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
                 });
         }
     }
-    resource.getPropertyTableFromResults =  function (results) {
+    resource.getPropertyTableFromResults = function (results) {
         var self = this;
         var headers = new Array;
         results.forEach(function (element, index, array) {
@@ -119,6 +170,36 @@ biconsole.factory('CommandLogApi', function ($http, $resource) {
             return exclude.indexOf(element) == -1;
         });
         return all;
+    }
+    resource.listClasses = function () {
+        var metadata = this.getMetadata();
+        var classes = metadata['classes'];
+        var fields = new Array
+        for (var entry in classes) {
+            var claq = classes[entry].name
+            fields.push(classes[entry])
+        }
+        return fields;
+    }
+    resource.listClassesForSuperclass = function (superClazz) {
+        var metadata = this.getMetadata();
+        var classes = metadata['classes'];
+        var fields = new Array
+        for (var entry in classes) {
+            var claq = classes[entry].name
+            if (classes[entry].superClass == superClazz)
+                fields.push(classes[entry])
+        }
+        return fields;
+    }
+    resource.refreshMetadata = function (database, callback) {
+        var currentDb = DatabaseApi.get({database: 'monitor'}, function () {
+            current.name = 'monitor';
+            current.username = currentDb.currentUser;
+            current.metadata = currentDb;
+            if (currentDb != null)
+                callback();
+        });
     }
     return resource;
 });

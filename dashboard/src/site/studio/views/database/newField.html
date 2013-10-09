@@ -1,0 +1,14 @@
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+	<h3>New Field </h3>
+</div>
+<div class="modal-body edge">
+	<input type="text" class="input-xlarge" ng-model="name" placeholder="Field name">
+	<select class="span2" ng-model="type" ng-options="c for c in types">
+		
+	</select>
+</div>
+<div class="modal-footer">
+	<button type="button" class="btn" ng-click="hide()">Close</button>
+	<button class="btn btn-primary" ng-click="modal.saved=true;hide();addField(name,type)">Add field</button>
+</div>

@@ -1,0 +1,10 @@
+<div class="container-fluid">
+    <ul class="nav nav-tabs">
+        <li ng-repeat="tab in tabs" ng-class="{active : tab == active}">
+            <a href="#/database/{{ db }}/security/{{ tab }}">{{ tabsI18n[tab] }}</a>
+        </li>
+    </ul>
+    <div class="row-fluid" ng-repeat="tab in tabs" ng-show="tab == active">
+        <ng-include src="getTemplate(tab)"></ng-include>
+    </div>
+</div>

@@ -1,7 +1,7 @@
 'use strict';
 
-angular.module('MonitorApp', ['ngI18n','workbench-logs.controller', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives'])
-.config(function ($routeProvider) {
+angular.module('MonitorApp', ['ngI18n', 'workbench-logs.controller', 'workbench-events.controller', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives'])
+    .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
                 templateUrl: 'views/login.html',
@@ -43,6 +43,10 @@ angular.module('MonitorApp', ['ngI18n','workbench-logs.controller', 'monitor.ser
             .when('/dashboard/logjava/:rid', {
                 templateUrl: 'views/server/logjava.html',
                 controller: 'LogsJavaController'
+            })
+            .when('/dashboard/events/:rid', {
+                templateUrl: 'views/server/events.html',
+                controller: 'EventsController'
             })
             .otherwise({
                 redirectTo: '/'

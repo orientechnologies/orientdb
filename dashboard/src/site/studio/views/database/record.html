@@ -1,0 +1,27 @@
+<div class="row-fluid"> 
+	<form class="form-horizontal record css-form" name="docForm">
+        <div class="record-header"><h5> {{ label }}: {{doc['@class']}} - {{doc['@rid']}} - Version {{doc['@version']}}</h5></div>
+
+		<fieldset>
+			<div class="control-group">
+				<div class="controls controls-row doc-header controls-row">
+					<label class="span9"></label>
+					<div class="span3">
+						<button type="submit" class="btn btn-primary" ng-show="canSave" ng-click="save(docForm)" ng-disabled="!docValid" tooltip="Save"><i class="icon-ok icon-white"></i> Save</button>
+						<div class="btn-group" ng-show="canAdd">
+							<a class="btn" href="javascript:void(0)">Actions</a>
+							<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+							<ul class="dropdown-menu">
+								<li><a href="javascript:void(0)" ng-click="create()"><i class="icon-plus-sign"></i> New</a></li>
+								<li><a href="javascript:void(0)" ng-click="addField()"><i class="icon-th-list"></i> Add field</a></li>
+								<li><a href="javascript:void(0)" ng-click="delete()"><i class="icon-trash"></i> Delete</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="doc-body" docwidget="">
+			</div>
+		</fieldset>
+	</form>
+</div>

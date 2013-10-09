@@ -1,0 +1,8 @@
+<form name="popoverForm" class="popoverForm">
+    <input type="text" required="" ng-model="popover.name">
+    <div class="btn-group">
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button class="btn btn-primary" ng-disabled="popoverForm.$invalid" ng-click="popover.saved=true;hide();addLink()">Save changes</button>
+    </div>
+
+</form>

@@ -1,0 +1,3 @@
+<select class="input-xlarge-auto" ng-required="isRequired(header)" ng-init="findAll(header)" ng-model="doc[header]">
+    <option ng-repeat="c in options[header]" value="{{ c['@rid'] }}" ng-selected="c['@rid'] == doc[header]">{{ c['@rid'] }}</option>
+</select>

@@ -1,0 +1,59 @@
+<div class="row-fluid" ng-controller="EventsController">
+    <div class="span12">
+        <div class="span12">
+            <div class="">
+                <a href="javascript:void(0)" class="btn" ng-click="createNewFunction()"> <i
+                        class="icon-plus"></i> New Event</a>
+                <button type="submit" class="btn btn-primary" ng-disabled="propertyForm.$invalid"
+                        ng-click="saveFunction()">Save
+                </button>
+            </div>
+
+
+        </div>
+        <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">
+            <thead>
+            <tr>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Event When
+                </th>
+                <th>
+                    Event What
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="result in results">
+                <td>
+                    <input type="text" ng-model="result['name']">
+
+                </td>
+                <td>
+                    <select ng-model="result['when']['@class']">
+                        <option ng-repeat="when in eventsWhen" ng-value="{{ when.name }}">{{when.name}}</option>
+                    </select>
+
+                </td>
+                <td>
+                    <select ng-model="result['what']['@class']">
+                        <option ng-repeat="what in eventsWhat" ng-value="{{ what.name }}">{{what.name}}</option>
+                    </select>
+
+                </td>
+                <td>
+                    <a href="javascript:void(0)" class="btn" ng-click="deleteEvent(result)"> <i class="icon-trash"></i>
+                        Drop</a>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>

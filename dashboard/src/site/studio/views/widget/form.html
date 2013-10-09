@@ -1,0 +1,12 @@
+<ng-form name="formID">
+<div class="control-group" ng-repeat="header in headers">
+	<label class="control-label"> {{header}} {{requiredString(header)}}</label>
+	<div class="controls controls-row">
+		<ng-include src="fieldTypes[header]" class="span8"></ng-include>
+		<select class="span3 form-control" ng-disabled="inSchema(header)" onchange="angular.element(this).scope().changeType('{{ header }}',this.options[this.selectedIndex].value)">
+         <option ng-repeat="t in types" ng-selected="isSelected(header,t)">{{ t }}</option>
+		</select>
+		<a href="javascript:void(0)" class="btn btn-mini pull-right" tooltip="Delete field" ng-click="deleteField(header)"><i class="icon-trash"></i></a>
+	</div>
+</div>
+</ng-form>

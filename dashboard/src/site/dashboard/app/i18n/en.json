@@ -44,7 +44,7 @@
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
     "dashboard.query": "Query Profiler",
-    "dashboard.alert": "Alert",
+    "dashboard.events": "Events",
     "general.title": "Server Management",
     "general.databases": "Database Management",
     "general.db": "Databases",
