@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.OIdentityChangedListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
@@ -211,12 +212,12 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     iSt.deleteRecord((ORecordId) record.getIdentity(), record.getRecordVersion(), (byte) 0, null);
   }
 
-  public void onEvent(ORecord<?> record, ORecordListener.EVENT event) {
+  public void onEvent(ORecord<?> record, EVENT event, Object... params) {
     if (ORecordListener.EVENT.IDENTITY_CHANGED.equals(event))
       if (identityChangedListener != null) {
         final OIdentityChangedListener listener = identityChangedListener.get();
         if (listener != null)
-          listener.onIdentityChanged(record.getIdentity());
+          listener.onIdentityChanged((ORID) params[0], (ORID) params[1], record);
       }
   }
 

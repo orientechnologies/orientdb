@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -39,7 +40,7 @@ public interface OTransaction {
 
   public void begin();
 
-  public void commit();
+  public Map<ORID, ORID> commit();
 
   public void rollback();
 

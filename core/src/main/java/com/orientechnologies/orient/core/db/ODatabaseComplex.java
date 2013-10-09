@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -304,7 +305,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * 
    * @return
    */
-  public ODatabaseComplex<T> commit() throws OTransactionException;
+  public Map<ORID, ORID> commit() throws OTransactionException;
 
   /**
    * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances

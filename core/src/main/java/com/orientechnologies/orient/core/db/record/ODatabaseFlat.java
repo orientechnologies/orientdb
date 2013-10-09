@@ -15,7 +15,10 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
@@ -48,7 +51,7 @@ public class ODatabaseFlat extends ODatabaseRecordTx {
   }
 
   @Override
-  public ODatabaseRecord commit() {
+  public Map<ORID, ORID> commit() {
     try {
       return super.commit();
     } finally {
