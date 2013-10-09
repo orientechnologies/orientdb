@@ -1,6 +1,7 @@
 {
     "replication": true,
     "autoDeploy": true,
+    "hotAlignment": true,
     "resyncEvery": 15,
     "clusters": {
         "internal": {
