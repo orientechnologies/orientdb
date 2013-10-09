@@ -44,7 +44,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
   }
 
   public void testSearch() throws Exception {
-    long seed = System.currentTimeMillis();
+    long seed = 1381299802658L;// System.currentTimeMillis();
     System.out.println("testSearch seed : " + seed);
 
     TreeSet<Long> keys = new TreeSet<Long>();
@@ -62,8 +62,8 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
-          new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE)),
-              new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE)), key, null), true))
+          new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE),
+              8192 * 2), new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE), 8192 * 2), key, null), true))
         break;
 
       keyIndexMap.put(key, index);
@@ -117,8 +117,8 @@ public class OSBTreeBonsaiNonLeafBucketTest {
 
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(index),
-          new OBonsaiBucketPointer(index + 1), key, null), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(index,
+          8192 * 2), new OBonsaiBucketPointer(index + 1, 8192 * 2), key, null), true))
         break;
 
       index++;
@@ -148,8 +148,8 @@ public class OSBTreeBonsaiNonLeafBucketTest {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
       Assert.assertEquals(entry,
-          new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(keyIndexEntry.getValue()),
-              new OBonsaiBucketPointer(keyIndexEntry.getValue() + 1), keyIndexEntry.getKey(), null));
+          new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(keyIndexEntry.getValue(), 8192 * 2),
+              new OBonsaiBucketPointer(keyIndexEntry.getValue() + 1, 8192 * 2), keyIndexEntry.getKey(), null));
     }
 
     int keysToAdd = originalSize - treeBucket.size();
@@ -157,8 +157,8 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     while (keysIterator.hasNext() && index < originalSize) {
       Long key = keysIterator.next();
 
-      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(index),
-          new OBonsaiBucketPointer(index + 1), key, null), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(index,
+          8192 * 2), new OBonsaiBucketPointer(index + 1, 8192 * 2), key, null), true))
         break;
 
       keyIndexMap.put(key, index);
@@ -170,8 +170,8 @@ public class OSBTreeBonsaiNonLeafBucketTest {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
 
       Assert.assertEquals(entry,
-          new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(keyIndexEntry.getValue()),
-              new OBonsaiBucketPointer(keyIndexEntry.getValue() + 1), keyIndexEntry.getKey(), null));
+          new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(keyIndexEntry.getValue(), 8192 * 2),
+              new OBonsaiBucketPointer(keyIndexEntry.getValue() + 1, 8192 * 2), keyIndexEntry.getKey(), null));
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize);

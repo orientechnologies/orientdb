@@ -275,7 +275,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
     OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
-    final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123);
+    final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123, 8192 * 2);
     treeBucket.setLeftSibling(p);
     Assert.assertEquals(treeBucket.getLeftSibling(), p);
 
@@ -286,7 +286,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     long pointer = directMemory.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
     OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(pointer, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
-    final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123);
+    final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123, 8192 * 2);
     treeBucket.setRightSibling(p);
     Assert.assertEquals(treeBucket.getRightSibling(), p);
 

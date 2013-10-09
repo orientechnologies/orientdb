@@ -59,7 +59,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private OBonsaiBucketPointer           rootBucketPointer  = new OBonsaiBucketPointer(0);
+  private OBonsaiBucketPointer           rootBucketPointer;
 
   private final Comparator<? super K>    comparator         = ODefaultComparator.INSTANCE;
 
@@ -108,7 +108,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
       else
         rootCacheEntry = diskCache.load(fileId, rootIndex, false);
 
-      rootBucketPointer = new OBonsaiBucketPointer(rootCacheEntry.getPageIndex());
+      // TODO
+      rootBucketPointer = new OBonsaiBucketPointer(rootCacheEntry.getPageIndex(), 8192 * 2);
 
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
 
@@ -875,7 +876,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
       if (!bucketPointer.equals(rootBucketPointer)) {
         // TODO
         OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
-        final OBonsaiBucketPointer rightBucketPointer = new OBonsaiBucketPointer(rightBucketEntry.getPageIndex());
+        final OBonsaiBucketPointer rightBucketPointer = new OBonsaiBucketPointer(rightBucketEntry.getPageIndex(), 8192 * 2);
 
         OCachePointer rightPointer = rightBucketEntry.getCachePointer();
 
@@ -988,12 +989,12 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
 
         // TODO
         OCacheEntry leftBucketEntry = diskCache.allocateNewPage(fileId);
-        OBonsaiBucketPointer leftBucketPointer = new OBonsaiBucketPointer(leftBucketEntry.getPageIndex());
+        OBonsaiBucketPointer leftBucketPointer = new OBonsaiBucketPointer(leftBucketEntry.getPageIndex(), 8192 * 2);
         OCachePointer leftPointer = leftBucketEntry.getCachePointer();
 
         // TODO
         OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
-        OBonsaiBucketPointer rightBucketPointer = new OBonsaiBucketPointer(rightBucketEntry.getPageIndex());
+        OBonsaiBucketPointer rightBucketPointer = new OBonsaiBucketPointer(rightBucketEntry.getPageIndex(), 8192 * 2);
         leftPointer.acquireExclusiveLock();
         try {
           OSBTreeBonsaiBucket<K, V> newLeftBucket = new OSBTreeBonsaiBucket<K, V>(leftPointer.getDataPointer(),
@@ -1151,11 +1152,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
   private static final class PagePathItemUnit {
     private final OBonsaiBucketPointer bucketPointer;
     private final int                  itemIndex;
-
-    private PagePathItemUnit(long pageIndex, int itemIndex) {
-      this.bucketPointer = new OBonsaiBucketPointer(pageIndex);
-      this.itemIndex = itemIndex;
-    }
 
     private PagePathItemUnit(OBonsaiBucketPointer bucketPointer, int itemIndex) {
       this.bucketPointer = bucketPointer;

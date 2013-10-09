@@ -4,13 +4,14 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OBonsaiBucketPointer {
-  public static final OBonsaiBucketPointer NULL       = new OBonsaiBucketPointer(-1);
+  public static final OBonsaiBucketPointer NULL = new OBonsaiBucketPointer(-1, -1);
 
   private final long                       pageIndex;
-  private final int                        pageOffset = 8192 * 2;
+  private final int                        pageOffset;
 
-  public OBonsaiBucketPointer(long pageIndex) {
+  public OBonsaiBucketPointer(long pageIndex, int pageOffset) {
     this.pageIndex = pageIndex;
+    this.pageOffset = pageOffset;
   }
 
   public long getPageIndex() {
