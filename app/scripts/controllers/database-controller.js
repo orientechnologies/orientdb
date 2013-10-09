@@ -42,6 +42,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.query = function () {
         Spinner.loading = true;
         $scope.queryText = $scope.queryText.trim();
+        $scope.queryText =  $scope.queryText.replace(/\n/g," ");
         if ($scope.queryText.startsWith('g.')) {
             $scope.language = 'gremlin';
         }
