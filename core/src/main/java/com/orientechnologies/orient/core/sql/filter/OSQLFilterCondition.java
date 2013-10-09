@@ -123,56 +123,60 @@ public class OSQLFilterCondition {
   private Object[] checkForConversion(final OIdentifiable o, final Object l, final Object r) {
     Object[] result = null;
 
-    // DEFINED OPERATOR
-    if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
-      result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
+    try {
+      // DEFINED OPERATOR
+      if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
+        result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
+      }
+
+      // NOT_NULL OPERATOR
+      else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
+        result = null;
+      }
+
+      else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
+          && !r.getClass().isAssignableFrom(l.getClass()))
+        // INTEGERS
+        if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
+          if (l instanceof String && ((String) l).indexOf('.') > -1)
+            result = new Object[] { new Float((String) l).intValue(), r };
+          else if (l instanceof Date)
+            result = new Object[] { ((Date) l).getTime(), r };
+          else if (!(l instanceof OQueryRuntimeValueMulti) && !(l instanceof Collection<?>) && !l.getClass().isArray()
+              && !(l instanceof Map))
+            result = new Object[] { getInteger(l), r };
+        } else if (l instanceof Integer && !(r instanceof Number || r instanceof Collection)) {
+          if (r instanceof String && ((String) r).indexOf('.') > -1)
+            result = new Object[] { l, new Float((String) r).intValue() };
+          else if (r instanceof Date)
+            result = new Object[] { l, ((Date) r).getTime() };
+          else if (!(r instanceof OQueryRuntimeValueMulti) && !(r instanceof Collection<?>) && !r.getClass().isArray()
+              && !(r instanceof Map))
+            result = new Object[] { l, getInteger(r) };
+        }
+
+        // DATES
+        else if (r instanceof Date && !(l instanceof Collection || l instanceof Date)) {
+          result = new Object[] { getDate(l), r };
+        } else if (l instanceof Date && !(r instanceof Collection || r instanceof Date)) {
+          result = new Object[] { l, getDate(r) };
+        }
+
+        // FLOATS
+        else if (r instanceof Float && !(l instanceof Float || l instanceof Collection))
+          result = new Object[] { getFloat(l), r };
+        else if (l instanceof Float && !(r instanceof Float || r instanceof Collection))
+          result = new Object[] { l, getFloat(r) };
+
+        // RIDS
+        else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
+          result = new Object[] { new ORecordId((String) l), r };
+        } else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
+          result = new Object[] { l, new ORecordId((String) r) };
+        }
+    } catch (Exception e) {
+      // JUST IGNORE CONVERSION ERRORS
     }
-
-    // NOT_NULL OPERATOR
-    else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
-      result = null;
-    }
-
-    else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass()) && !r.getClass().isAssignableFrom(l.getClass()))
-      // INTEGERS
-      if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
-        if (l instanceof String && ((String) l).indexOf('.') > -1)
-          result = new Object[] { new Float((String) l).intValue(), r };
-        else if (l instanceof Date)
-          result = new Object[] { ((Date) l).getTime(), r };
-        else if (!(l instanceof OQueryRuntimeValueMulti) && !(l instanceof Collection<?>) && !l.getClass().isArray()
-            && !(l instanceof Map))
-          result = new Object[] { getInteger(l), r };
-      } else if (l instanceof Integer && !(r instanceof Number || r instanceof Collection)) {
-        if (r instanceof String && ((String) r).indexOf('.') > -1)
-          result = new Object[] { l, new Float((String) r).intValue() };
-        else if (r instanceof Date)
-          result = new Object[] { l, ((Date) r).getTime() };
-        else if (!(r instanceof OQueryRuntimeValueMulti) && !(r instanceof Collection<?>) && !r.getClass().isArray()
-            && !(r instanceof Map))
-          result = new Object[] { l, getInteger(r) };
-      }
-
-      // DATES
-      else if (r instanceof Date && !(l instanceof Collection || l instanceof Date)) {
-        result = new Object[] { getDate(l), r };
-      } else if (l instanceof Date && !(r instanceof Collection || r instanceof Date)) {
-        result = new Object[] { l, getDate(r) };
-      }
-
-      // FLOATS
-      else if (r instanceof Float && !(l instanceof Float || l instanceof Collection))
-        result = new Object[] { getFloat(l), r };
-      else if (l instanceof Float && !(r instanceof Float || r instanceof Collection))
-        result = new Object[] { l, getFloat(r) };
-
-      // RIDS
-      else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
-        result = new Object[] { new ORecordId((String) l), r };
-      } else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
-        result = new Object[] { l, new ORecordId((String) r) };
-      }
-
     return result;
   }
 
