@@ -244,6 +244,17 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
   }
 
+  /**
+   * Remove the queue.
+   */
+  protected void removeQueue(final String iQueueName) {
+    synchronized (queues) {
+      queues.remove(iQueueName);
+      IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+      queue.clear();
+    }
+  }
+
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
     responsesByRequestIds.put(id, currentResponseMgr);
   }

@@ -53,6 +53,20 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns true if hot alignment is supported.
+   * 
+   * @return
+   */
+  public boolean isHotAlignment() {
+    synchronized (configuration) {
+      final Boolean value = configuration.field("hotAlignment");
+      if (value != null)
+        return value;
+      return true;
+    }
+  }
+
+  /**
    * Returns the read quorum.
    */
   public int getReadQuorum(final String iClusterName) {

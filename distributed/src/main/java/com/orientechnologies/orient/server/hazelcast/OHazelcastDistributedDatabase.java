@@ -536,4 +536,45 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
+  protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
+    // LOAD DATABASE FILE IF ANY
+    manager.loadDatabaseConfiguration(databaseName, manager.getDistributedConfigFile(databaseName));
+
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
+    if (!iForce && cfg.isHotAlignment())
+      // DO NOTHING
+      return;
+
+    boolean dirty = false;
+    for (String clusterName : cfg.getClusterNames()) {
+      final List<List<String>> partitions = cfg.getPartitions(clusterName);
+      if (partitions != null) {
+        for (int p = 0; p < partitions.size(); ++p) {
+          final List<String> partition = partitions.get(p);
+
+          for (int n = 0; n < partition.size(); ++n) {
+            final String node = partition.get(n);
+
+            if (node.equals(iNode)) {
+              // FOUND: REMOVE IT
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+                  "removing node '%s' in partition: %s.%s.%d", iNode, databaseName, clusterName, p);
+
+              partition.remove(n);
+              dirty = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (dirty) {
+      final ODocument doc = cfg.serialize();
+      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, doc);
+      manager.updateDatabaseConfiguration(databaseName, doc);
+    }
+  }
+
 }
