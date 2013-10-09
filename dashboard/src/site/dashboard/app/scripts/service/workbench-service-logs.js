@@ -121,7 +121,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
 
     resource.getListFiles = function (params, callback) {
         var server = '?name=' + params.server;
-        $http.get('/log/files' + server).success(function (data) {
+        $http.get('/log/monitor/files' + server).success(function (data) {
             callback(data);
         }).error(function (data) {
             })
