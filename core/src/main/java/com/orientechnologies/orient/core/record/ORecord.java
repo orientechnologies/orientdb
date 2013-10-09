@@ -239,8 +239,4 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * @return the size in bytes
    */
   public int getSize();
-
-  public void addIdentityChangeListener(final OIdentityChangedListener identityChangedListener);
-
-  public void removeIdentityChangeListener(final OIdentityChangedListener identityChangedListener);
 }

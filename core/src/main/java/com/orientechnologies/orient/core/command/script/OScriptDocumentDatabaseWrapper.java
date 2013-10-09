@@ -203,6 +203,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(final String iString) {
+    // return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
     return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString, true));
   }
 
@@ -437,8 +438,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODatabaseComplex<ORecordInternal<?>> commit() {
-    database.commit();
-    return database;
+    return database.commit();
   }
 
   public ODatabaseComplex<ORecordInternal<?>> rollback() {

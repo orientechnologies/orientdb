@@ -1112,15 +1112,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           for (int i = 0; i < createdRecords; i++) {
             currentRid = network.readRID();
             createdRid = network.readRID();
-
-            assert currentRid.isTemporary();
-            assert createdRid.isPersistent();
-
             for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
               if (txEntry.getRecord().getIdentity().equals(currentRid)) {
-                txEntry.getRecord().onBeforeIdentityChanged(currentRid);
                 txEntry.getRecord().setIdentity(createdRid);
-                txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
                 break;
               }
             }

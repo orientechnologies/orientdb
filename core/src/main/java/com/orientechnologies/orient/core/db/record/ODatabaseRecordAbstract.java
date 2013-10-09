@@ -902,24 +902,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return current;
   }
 
-  public <T extends ODatabaseComplex> T getDatabaseOwner(Class<T> ownerClass) {
-    ODatabaseComplex<?> current = databaseOwner;
-
-    while (current != null && current != this && current.getDatabaseOwner() != current) {
-      ODatabaseComplex<?> owner = current.getDatabaseOwner();
-
-      if (owner != null && owner.getClass().isAssignableFrom(current.getClass()) && !ownerClass.isAssignableFrom(owner.getClass()))
-        return ownerClass.cast(current);
-
-      current = current.getDatabaseOwner();
-    }
-
-    if (current != null && ownerClass.isAssignableFrom(current.getClass()))
-      return ownerClass.cast(current);
-
-    return null;
-  }
-
   @Override
   public ODatabaseComplex<ORecordInternal<?>> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
     databaseOwner = iOwner;

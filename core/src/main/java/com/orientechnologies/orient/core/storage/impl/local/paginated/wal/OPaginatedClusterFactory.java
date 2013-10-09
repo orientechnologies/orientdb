@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.deprecated.OPaginatedWithoutRidReuseCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.depricated.OPaginatedWithoutRidReuseCluster;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>

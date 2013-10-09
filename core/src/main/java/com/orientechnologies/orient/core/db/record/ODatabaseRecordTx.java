@@ -16,8 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Map;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
@@ -98,7 +96,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return this;
   }
 
-  public Map<ORID, ORID> commit() {
+  public ODatabaseRecord commit() {
     setCurrentDatabaseinThreadLocal();
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : underlying.browseListeners())
@@ -113,9 +111,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
             t, OTransactionBlockedException.class, listener.getClass());
       }
 
-    final Map<ORID, ORID> createdRecords;
     try {
-      createdRecords = currentTx.commit();
+      currentTx.commit();
     } catch (RuntimeException e) {
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
@@ -149,7 +146,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
                 t, OTransactionBlockedException.class, listener.getClass());
       }
 
-    return createdRecords;
+    return this;
   }
 
   public ODatabaseRecord rollback() {

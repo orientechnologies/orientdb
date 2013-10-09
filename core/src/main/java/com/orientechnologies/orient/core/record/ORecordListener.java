@@ -26,5 +26,5 @@ public interface ORecordListener {
     CLEAR, RESET, MARSHALL, UNMARSHALL, UNLOAD, IDENTITY_CHANGED
   }
 
-  public void onEvent(ORecord<?> document, EVENT iEvent, Object... params);
+  public void onEvent(ORecord<?> iDocument, EVENT iEvent);
 }

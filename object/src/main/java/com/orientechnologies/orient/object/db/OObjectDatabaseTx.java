@@ -563,11 +563,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public Map<ORID, ORID> commit() {
-    Map<ORID, ORID> createdRecords;
+  public ODatabasePojoAbstract<Object> commit() {
     try {
       // BY PASS DOCUMENT DB
-      createdRecords = ((ODatabaseRecordTx) underlying.getUnderlying()).commit();
+      ((ODatabaseRecordTx) underlying.getUnderlying()).commit();
 
       if (getTransaction().getAllRecordEntries() != null) {
         // UPDATE ID & VERSION FOR ALL THE RECORDS
@@ -590,7 +589,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       getTransaction().close();
     }
 
-    return createdRecords;
+    return this;
   }
 
   @Override

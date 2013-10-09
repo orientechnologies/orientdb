@@ -88,10 +88,12 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (ODatabaseComplex<T>) underlying.begin(iTx);
   }
 
-  public Map<ORID, ORID> commit() {
+  public ODatabaseComplex<T> commit() {
     clearNewEntriesFromCache();
 
-    return underlying.commit();
+    underlying.commit();
+
+    return this;
   }
 
   public ODatabaseComplex<T> rollback() {

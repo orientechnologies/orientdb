@@ -16,9 +16,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
@@ -48,8 +46,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void begin() {
   }
 
-  public Map<ORID, ORID> commit() {
-    return Collections.emptyMap();
+  public void commit() {
   }
 
   public void rollback() {

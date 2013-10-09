@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.type.tree.provider;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.OIdentityChangedListener;
 
 /**
  * Interface to handle persistence of a tree node.

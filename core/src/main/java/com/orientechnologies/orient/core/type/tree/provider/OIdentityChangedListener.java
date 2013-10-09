@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.record;
+package com.orientechnologies.orient.core.type.tree.provider;
 
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
- * Listener that is called when identity of the
- * {@link com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeEntryDataProvider} was changed.
+ * Listener that is called when identity of the {@link OMVRBTreeEntryDataProvider} was changed.
  */
 public interface OIdentityChangedListener {
-  public void onIdentityChanged(ORID oldRid, ORID newRid, ORecord<?> record);
+  public void onIdentityChanged(ORID rid);
 }
