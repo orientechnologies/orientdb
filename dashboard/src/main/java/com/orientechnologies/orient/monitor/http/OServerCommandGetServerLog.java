@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.monitor.http;
 
 import java.net.URL;
+import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -26,10 +27,10 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetServerLog extends
-		OServerCommandAuthenticatedServerAbstract {
+		OServerCommandAuthenticatedDbAbstract {
 
 	private OMonitorPlugin monitor;
 	private static final String[] NAMES = { "GET|log/*" };
@@ -46,11 +47,9 @@ public class OServerCommandGetServerLog extends
 
 	public OServerCommandGetServerLog(
 			final OServerCommandConfiguration iConfiguration) {
-		super(iConfiguration.pattern);
 	}
 
 	public OServerCommandGetServerLog() {
-		super("server.log");
 	}
 
 	@Override
@@ -63,7 +62,7 @@ public class OServerCommandGetServerLog extends
 		final String[] urlParts = checkSyntax(iRequest.url, 1,
 				"Syntax error: log/<type>?<value>");
 
-		String type = urlParts[1]; // the type of the log tail search or file
+		String type = urlParts[2]; // the type of the log tail search or file
 
 		String value = iRequest.getParameter("searchvalue");
 
@@ -83,7 +82,7 @@ public class OServerCommandGetServerLog extends
 
 		// the name of the server
 		String rid = iRequest.getParameter("name");
-
+		rid = URLDecoder.decode(rid);
 		OMonitoredServer s = monitor.getMonitoredServer(rid);
 		ODocument server = s.getConfiguration();
 
@@ -98,7 +97,7 @@ public class OServerCommandGetServerLog extends
 				+ (selectedFile != null ? "&file=" + selectedFile : "");
 
 		final URL remoteUrl = new java.net.URL("http://" + server.field("url")
-				+ "/log/" + type + parameters );
+				+ "/log/" + type + parameters);
 
 		String response = OMonitorUtils
 				.fetchFromRemoteServer(server, remoteUrl);
