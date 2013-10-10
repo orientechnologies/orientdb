@@ -235,7 +235,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                             $scope.property.splice(index, 1)
                         }
                     }
-                    $route.reload();
                 });
             }
         });
