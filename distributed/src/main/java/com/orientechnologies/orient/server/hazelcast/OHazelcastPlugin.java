@@ -187,6 +187,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       loadDistributedDatabases();
 
+      // REGISTER CURRENT MEMBERS
+      setStatus(STATUS.ONLINE);
+
     } catch (FileNotFoundException e) {
       throw new OConfigurationException("Error on creating Hazelcast instance", e);
     }
@@ -598,8 +601,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // NO OTHER NODES WHERE ALIGN
       return;
 
-    setStatus(STATUS.ALIGNING);
-
     // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
     synchronized (installDatabaseLock) {
       for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
@@ -678,9 +679,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
       }
     }
-
-    // REGISTER CURRENT MEMBERS
-    setStatus(STATUS.ONLINE);
   }
 
   @Override

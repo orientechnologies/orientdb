@@ -32,7 +32,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public interface ODistributedServerManager {
 
   public enum STATUS {
-    OFFLINE, STARTING, ONLINE, ALIGNING, SHUTDOWNING
+    OFFLINE, STARTING, ONLINE, SHUTDOWNING
   };
 
   public boolean isEnabled();

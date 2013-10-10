@@ -101,10 +101,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
         }
 
       } else
-        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
             "skip deploying database %s because another node is doing it", databaseName);
     } else
-      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
           "skip deploying database from the same node");
 
     return new OBuffer(new byte[0]);
