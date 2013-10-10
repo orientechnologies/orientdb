@@ -101,7 +101,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, (OStorageLocalAbstract) getDatabase().getStorage());
+    hashTable.load(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 
