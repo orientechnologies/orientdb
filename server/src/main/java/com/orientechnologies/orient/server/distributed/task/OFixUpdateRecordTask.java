@@ -19,9 +19,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
@@ -62,7 +64,11 @@ public class OFixUpdateRecordTask extends OAbstractRemoteTask {
       // DELETED, CANNOT FIX IT
       return Boolean.FALSE;
 
-    record.fill(rid, version, content, true);
+    final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(record.getRecordType());
+    newRecord.fill(rid, version, content, true);
+
+    ((ODocument) record).merge((ODocument) newRecord, false, false);
+
     database.save(record);
 
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
