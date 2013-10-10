@@ -1,0 +1,17 @@
+<div class="row-fluid" ng-controller="FunctionWhatController">
+
+    <ul>
+        <li ng-repeat="header in properties">
+            <div>
+                {{header['name']}}:
+                <input type="text" placeholder="" ng-model="eventWhat[header['name']]  ">
+            </div>
+        </li>
+    </ul>
+    <div class="modal-footer">
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="propertyForm.$invalid" ng-click="salvaProperty()">
+            Save
+        </button>
+    </div>
+</div>

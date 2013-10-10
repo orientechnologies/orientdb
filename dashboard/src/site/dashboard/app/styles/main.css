@@ -441,3 +441,7 @@ table.align-left>tbody>tr>td{
     text-align: left !important;
 }
 
+.btn-events{
+    vertical-align: top;
+    height: 16px;
+}

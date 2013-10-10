@@ -35,20 +35,38 @@
 
                 </td>
                 <td>
-                    <select ng-model="result['when']['@class']">
-                        <option ng-repeat="when in eventsWhen" ng-value="{{ when.name }}">{{when.name}}</option>
-                    </select>
+                    <div>
+                        <select ng-model="selectedWhen[result['name']]">
+                            <option ng-repeat="when in eventsWhen" ng-value="{{ when.name }}"
+                                    ng-selected="when.name == result['when']['@class'] ">{{when.name}}
+                            </option>
+                        </select>
 
+                        <a href="javascript:void(0)" class="btn btn-events" ng-click="onWhenChange(result,result['when'])"> <i
+                                class="icon-save"></i>
+                            Edit</a>
+
+                    </div>
                 </td>
                 <td>
-                    <select ng-model="result['what']['@class']">
-                        <option ng-repeat="what in eventsWhat" ng-value="{{ what.name }}">{{what.name}}</option>
-                    </select>
+                    <div>
+                        <select ng-model="selectedWhat[result['name']]">
+                            <option ng-repeat="what in eventsWhat" ng-value="{{ what.name }}"
+                                    ng-selected="what.name == result['what']['@class'] ">{{what.name}}
+                            </option>
+                        </select>
 
+                        <a href="javascript:void(0)" class="btn btn-events" ng-click="onWhatChange(result,result['when'])"> <i
+                                class="icon-save"></i>
+                            Edit</a>
+
+                    </div>
                 </td>
                 <td>
                     <a href="javascript:void(0)" class="btn" ng-click="deleteEvent(result)"> <i class="icon-trash"></i>
                         Drop</a>
+                    <a href="javascript:void(0)" class="btn" ng-click="saveEvent(result)"> <i class="icon-save"></i>
+                        Save</a>
                 </td>
             </tr>
 
