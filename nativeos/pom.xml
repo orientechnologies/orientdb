@@ -35,7 +35,7 @@
     <properties>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
-        <jna.version>3.5.2</jna.version>
+        <jna.version>4.0.0</jna.version>
     </properties>
 
     <artifactId>orientdb-nativeos</artifactId>
@@ -48,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
-            <artifactId>platform</artifactId>
+            <artifactId>jna-platform</artifactId>
             <version>${jna.version}</version>
         </dependency>
         <dependency>
