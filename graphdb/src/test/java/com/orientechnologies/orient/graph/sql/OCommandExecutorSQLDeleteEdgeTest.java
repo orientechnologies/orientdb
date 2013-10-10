@@ -62,7 +62,7 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
   @Test
   public void testFromSelect() throws Exception {
-    final int res = db.command(
+    final int res = (Integer) db.command(
         new OCommandSQL("delete edge CanAccess from (select from User where username = 'gongolo') to " + folderId1)).execute();
     Assert.assertEquals(res, 1);
     Assert.assertTrue(db.query(new OSQLSynchQuery<Object>("select flatten(out(CanAccess)) from " + userId1)).isEmpty());
@@ -70,7 +70,7 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
   @Test
   public void testFromSelectToSelect() throws Exception {
-    final int res = db
+    final int res = (Integer) db
         .command(
             new OCommandSQL(
                 "delete edge CanAccess from ( select from User where username = 'gongolo' ) to ( select from Folder where keyId = '01234567893' )"))
