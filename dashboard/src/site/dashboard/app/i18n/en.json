@@ -52,6 +52,12 @@
     "general.serverUp": "Server up since",
     "general.lastMsg": "Server last message",
     "server.db.operations": "DB operations",
-    "server.operations": "Server operations"
+    "server.operations": "Server operations",
+    "dashboard.metric.saved": "Saved Configuration",
+    "dashboard.metric.detail": "Configuration detail",
+    "dashboard.metric.create": "New",
+    "dashboard.metric.save": "Save",
+    "dashboard.metric.name" : "Name",
+    "dashboard.metric.preview" : "Preview"
 
 }

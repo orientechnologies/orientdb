@@ -76,9 +76,9 @@ monitor.factory('Metric', function ($http, $resource) {
     }
     resource.getMetricTypes = function (type, callback) {
         var url = API + 'command/monitor/sql/-/-1';
-        if(type){
+        if (type) {
             var query = 'select * from Dictionary where type = "' + type + '" order by name';
-        }   else {
+        } else {
             var query = 'select * from Dictionary order by name';
         }
         $http.post(url, query).success(function (data) {
@@ -93,19 +93,19 @@ monitor.factory('Metric', function ($http, $resource) {
                 params.name += "'" + elem + "',";
             });
             var index = params.name.lastIndexOf(",");
-            params.name = params.name.substring(0,index);
+            params.name = params.name.substring(0, index);
         } else {
 
         }
         var query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where  name in [{{name}}] ";
         if (params.dateFrom) {
-            query += "and snapshot.dateFrom >= {{dateFrom}} ";
+            query += "and snapshot.dateFrom >= '{{dateFrom}}' ";
         }
         if (params.server) {
             query += "and snapshot.server = '{{server}}'";
         }
         if (params.dateTo) {
-            query += "and snapshot.dateTo <= {{dateTo}} ";
+            query += "and snapshot.dateTo <= '{{dateTo}}' ";
         }
         query += " order by name desc , dateTo desc";
         if (params.name && params.server) {
@@ -160,13 +160,13 @@ monitor.factory('MetricConfig', function ($http, $resource) {
             callback(data);
         });
     }
-    resource.create = function(){
+    resource.create = function () {
         var obj = {};
         obj['@rid'] = '#-1:-1';
         obj['@class'] = 'MetricConfig';
         return obj;
     }
-    resource.saveConfig = function(config,callback){
+    resource.saveConfig = function (config, callback) {
         if (config['@rid'].replace("#", '') == '-1:-1') {
             $http.post(API + 'document/monitor/-1:-1', config).success(function (data) {
                 callback(data);
@@ -176,6 +176,13 @@ monitor.factory('MetricConfig', function ($http, $resource) {
                 callback(data);
             });
         }
+    }
+    resource.deleteConfig = function (config, callback) {
+
+        $http.delete(API + 'document/monitor/' + config['@rid'].replace("#", '')).success(function (data) {
+            callback(data);
+        });
+
     }
     return resource;
 });

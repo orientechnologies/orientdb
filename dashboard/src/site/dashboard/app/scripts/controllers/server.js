@@ -188,7 +188,10 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     }
     $scope.$watch("range", function (data) {
 
-
+        if (data && $scope.selectedConfig) {
+            console.log($scope.selectedConfig)
+            $scope.refreshData($scope.selectedConfig,data.start.format("YYYY-MM-DD HH:mm:ss"),data.end.format("YYYY-MM-DD HH:mm:ss"));
+        }
     });
 
 
@@ -200,8 +203,14 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             $scope.refreshMetricConfig();
         });
     }
+
     $scope.selectConfig = function (config) {
         $scope.selectedConfig = config;
+    }
+    $scope.deleteConfig = function(config){
+        MetricConfig.deleteConfig(config,function(data){
+            $scope.refreshMetricConfig();
+        })
     }
     $scope.addConfig = function () {
         if (!$scope.selectedConfig['config']) {
@@ -212,7 +221,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.$watch("selectedConfig", function (data) {
 
         if (data && data.config) {
-            $scope.refreshData(data);
+            $scope.refreshData(data,$scope.range.start.format("YYYY-MM-DD HH:mm:ss"),$scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
         }
     });
     $scope.removeMetric = function(met){
@@ -221,7 +230,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     }
     $scope.refreshMetricConfig();
 
-    $scope.refreshData = function (metrics) {
+    $scope.refreshData = function (metrics,dataFrom,dataTo) {
 
         var names = new Array;
         var configs = new Array;
@@ -229,7 +238,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             names.push(elem.name);
             configs[elem.name] = elem.field;
         });
-        Metric.getMetrics({ names: names, server: $scope.rid}, function (data) {
+        Metric.getMetrics({ names: names, server: $scope.rid, dateFrom : dataFrom , dateTo : dataTo}, function (data) {
             $scope.metricsData = new Array;
             var tmpArr = new Array;
 
