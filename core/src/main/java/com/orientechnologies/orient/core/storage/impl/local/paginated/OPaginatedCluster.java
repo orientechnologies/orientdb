@@ -1235,6 +1235,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       OClusterPosition clusterPosition = position.clusterPosition;
       OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
 
+      if (positionEntry == null)
+        return null;
+
       long pageIndex = positionEntry.getPageIndex();
       int recordPosition = positionEntry.getRecordPosition();
 

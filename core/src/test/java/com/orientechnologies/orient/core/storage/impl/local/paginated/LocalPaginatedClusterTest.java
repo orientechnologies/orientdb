@@ -873,6 +873,7 @@ public class LocalPaginatedClusterTest {
       positions.add(physicalPosition);
     }
 
+    Set<OPhysicalPosition> removedPositions = new HashSet<OPhysicalPosition>();
     for (OPhysicalPosition position : positions) {
       OPhysicalPosition physicalPosition = new OPhysicalPosition();
       physicalPosition.clusterPosition = position.clusterPosition;
@@ -885,6 +886,28 @@ public class LocalPaginatedClusterTest {
       Assert.assertEquals(physicalPosition.recordSize, position.recordSize);
       Assert.assertEquals(physicalPosition.dataSegmentPos, position.dataSegmentPos);
       Assert.assertEquals(physicalPosition.dataSegmentId, position.dataSegmentId);
+      if (mersenneTwisterFast.nextBoolean()) {
+        paginatedCluster.deleteRecord(position.clusterPosition);
+        removedPositions.add(position);
+      }
+    }
+
+    for (OPhysicalPosition position : positions) {
+      OPhysicalPosition physicalPosition = new OPhysicalPosition();
+      physicalPosition.clusterPosition = position.clusterPosition;
+
+      physicalPosition = paginatedCluster.getPhysicalPosition(physicalPosition);
+
+      if (removedPositions.contains(position))
+        Assert.assertNull(physicalPosition);
+      else {
+        Assert.assertEquals(physicalPosition.clusterPosition, position.clusterPosition);
+        Assert.assertEquals(physicalPosition.recordType, position.recordType);
+
+        Assert.assertEquals(physicalPosition.recordSize, position.recordSize);
+        Assert.assertEquals(physicalPosition.dataSegmentPos, position.dataSegmentPos);
+        Assert.assertEquals(physicalPosition.dataSegmentId, position.dataSegmentId);
+      }
     }
   }
 
