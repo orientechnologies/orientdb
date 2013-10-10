@@ -152,6 +152,23 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
                 });
         }
     }
+    resource.listPropertiesForClass = function (clazz) {
+        var metadata = this.getMetadata();
+        var classes = metadata['classes'];
+        var fields = new Array
+        for (var entry in classes) {
+            var defaultCluster = classes[entry]['properties'];
+            if (clazz.toUpperCase() == classes[entry].name.toUpperCase()) {
+                var props = classes[entry]['properties'];
+                for (var f in props) {
+                    fields.push(props[f]);
+                }
+                ;
+                break;
+            }
+        }
+        return fields;
+    }
     resource.getPropertyTableFromResults = function (results) {
         var self = this;
         var headers = new Array;
