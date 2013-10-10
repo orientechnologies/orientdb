@@ -53,6 +53,8 @@
     "general.lastMsg": "Server last message",
     "server.db.operations": "DB operations",
     "server.operations": "Server operations",
+    "server.configuration": "Server configuration",
+    "server.configuration.save": "Save",
     "dashboard.metric.saved": "Saved Configuration",
     "dashboard.metric.detail": "Configuration detail",
     "dashboard.metric.create": "New",

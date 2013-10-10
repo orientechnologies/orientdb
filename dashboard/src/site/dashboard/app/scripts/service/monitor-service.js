@@ -140,6 +140,24 @@ monitor.factory('Server', function ($http, $resource, Metric) {
             });
         server['@class'] = name;
     }
+    resource.getConfiguration = function (server, callback, error) {
+        var url = API + 'configuration/monitor/' + server.name + '';
+
+        $http.get(url).success(function (data) {
+            callback(data);
+        }).error(function (data) {
+                error(data);
+            });
+    }
+    resource.saveConfiguration = function (server, config, callback, error) {
+        var url = API + 'configuration/monitor/' + server.name + '';
+
+        $http.put(url, config).success(function (data) {
+            callback(data);
+        }).error(function (data) {
+                error(data);
+            });
+    }
     resource.findDatabases = function (server, callback) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
         Metric.get(params, function (data) {
