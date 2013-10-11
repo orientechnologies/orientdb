@@ -76,9 +76,9 @@ monitor.factory('Metric', function ($http, $resource) {
     }
     resource.getMetricTypes = function (type, callback) {
         var url = API + 'command/monitor/sql/-/-1';
-        if(type){
+        if (type) {
             var query = 'select * from Dictionary where type = "' + type + '" order by name';
-        }   else {
+        } else {
             var query = 'select * from Dictionary order by name';
         }
         $http.post(url, query).success(function (data) {
@@ -93,7 +93,7 @@ monitor.factory('Metric', function ($http, $resource) {
                 params.name += "'" + elem + "',";
             });
             var index = params.name.lastIndexOf(",");
-            params.name = params.name.substring(0,index);
+            params.name = params.name.substring(0, index);
         } else {
 
         }
@@ -160,21 +160,26 @@ monitor.factory('MetricConfig', function ($http, $resource) {
             callback(data);
         });
     }
-    resource.create = function(){
+    resource.create = function () {
         var obj = {};
         obj['@rid'] = '#-1:-1';
         obj['@class'] = 'MetricConfig';
         return obj;
     }
-    resource.saveConfig = function(config,callback){
+    resource.saveConfig = function (config, callback) {
         if (config['@rid'].replace("#", '') == '-1:-1') {
             $http.post(API + 'document/monitor/-1:-1', config).success(function (data) {
                 callback(data);
-            });
+            }).error(function (error) {
+                    callback(error);
+                });
+
         } else {
             $http.put(API + 'document/monitor/' + config['@rid'].replace("#", ''), config).success(function (data) {
                 callback(data);
-            });
+            }).error(function (error) {
+                    callback(error);
+                });
         }
     }
     return resource;

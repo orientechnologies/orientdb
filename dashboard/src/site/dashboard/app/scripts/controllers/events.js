@@ -1,6 +1,6 @@
 var dbModule = angular.module('workbench-events.controller', ['workbench-logs.services']);
 
-dbModule.controller("EventsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'MetricConfig', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, MetricConfig) {
+dbModule.controller("EventsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'MetricConfig', '$route', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, MetricConfig, $route) {
 
     var sql = "select * from Event";
 
@@ -11,13 +11,18 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
     //query degli event when
 
-    $scope.selectedEventWhen =
+
+    $scope.refresh = function () {
         $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
             $scope.eventsWhen = CommandLogApi.listClassesForSuperclass('EventWhen');
             $scope.eventsWhat = CommandLogApi.listClassesForSuperclass('EventWhat');
             $scope.selectedEventWhen = undefined;
             $scope.selectedEventWhat = undefined;
         });
+    }
+
+    $scope.refresh();
+
     $scope.prova = function (lll) {
         console.log(lll)
     }
@@ -39,8 +44,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
-        console.log(event['when']['@class'])
-        if (event['when']['@class'] != $scope.selectedWhen[event.name] && $scope.selectedWhen[event.name] != undefined) {
+        if (event['when'] == undefined || event['when']['@class'] != $scope.selectedWhen[event.name] && $scope.selectedWhen[event.name] != undefined) {
             event['when'] = {};
             event['when']['@class'] = $scope.selectedWhen[event.name];
             event['when']['@type'] = 'd';
@@ -60,7 +64,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         modalScope.eventParent = event;
         console.log(event['when']['@class'])
-        if (event['what']['@class'] != $scope.selectedWhat[event.name] && $scope.selectedWhat[event.name] != undefined) {
+        if (event['what'] == undefined || (event['what']['@class'] != $scope.selectedWhat[event.name] && $scope.selectedWhat[event.name] != undefined)) {
             event['what'] = {};
             event['what']['@class'] = $scope.selectedWhat[event.name];
             event['what']['@type'] = 'd';
@@ -95,12 +99,40 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
 
     }
-
+    $scope.refreshPage = function () {
+        console.log('refresh');
+        $scope.refresh();
+        $route.reload();
+    }
     $scope.saveEvent = function (result) {
         MetricConfig.saveConfig(result, function (data) {
-        });
+            Utilities.message($scope, $modal, $q, {
+                title: 'Message',
+                body: data,
+                success: function(){
+                    $scope.refreshPage();
+                }
+
+            });
+
+
+        }, function (error) {
+            Utilities.message($scope, $modal, $q, {
+                title: 'Error',
+                body: error
+
+            });
+        })
+    };
+
+    $scope.newEvent = function () {
+        var object = {"name": "", '@rid': "#-1:-1", "@class": "Event"};
+        $scope.results.push(object);
+
     }
-}]);
+}
+])
+;
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 

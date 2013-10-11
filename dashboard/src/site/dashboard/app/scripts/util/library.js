@@ -33,4 +33,23 @@ Utilities.confirm = function ($scope, $modal,$q, params) {
 
     }
 }
+Utilities.message = function ($scope, $modal,$q, params) {
+
+
+    if (params) {
+        var modalScope = $scope.$new(true);
+        modalScope.title = params.title;
+        modalScope.msg = params.body;
+        modalScope.confirm = function(){
+            params.success();
+            modalScope.hide();
+        }
+
+        var modalPromise = $modal({template: 'views/modal/ok.html', persist: true, show: false, backdrop: 'static',scope: modalScope,modalClass : ''});
+        $q.when(modalPromise).then(function(modalEl) {
+            modalEl.modal('show');
+        });
+
+    }
+}
 

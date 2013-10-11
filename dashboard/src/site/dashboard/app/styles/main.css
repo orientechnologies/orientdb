@@ -142,10 +142,12 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+
 .btn-trasparent {
     background-color: transparent;
 
 }
+
 .nav-pills > li > a {
     border-radius: 0 0 0 0 !important;
 }
@@ -321,6 +323,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .log-list li > div {
     margin-bottom: 5px;
 }
+
 .select2-container .select2-choice {
 
     -moz-user-select: none;
@@ -402,6 +405,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .select2-search input:focus {
     box-shadow: none;
 }
+
 .pointer {
     cursor: pointer;
 }
@@ -410,6 +414,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     margin-top: 12px;
     margin-bottom: 12px;
 }
+
 .metric-range {
     background-color: #E02222;
     color: #ffffff;
@@ -418,30 +423,28 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     margin-top: -8px;
     padding: 8px 8px 7px;
 }
+
 .metric-range span {
 }
 
-table.form-search-width>tbody>tr>td select{
+table.form-search-width>tbody>tr>td select {
     width: 72%;
     height: 34px;
 }
-table.form-search-width>tbody>tr>td input{
+
+table.form-search-width>tbody>tr>td input {
     height: 24px;
     width: 65%;
 }
 
-table.align-left>tbody>tr>td{
+table.align-left>tbody>tr>td {
     text-align: left !important;
 }
 
-
-
-
-table.align-left>tbody>tr>td{
-    text-align: left !important;
-}
-
-.btn-events{
+.btn-events {
     vertical-align: top;
     height: 16px;
+}
+table.align-left{
+    margin-top: 28px;
 }
