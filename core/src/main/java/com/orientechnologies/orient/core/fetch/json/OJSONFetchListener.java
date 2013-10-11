@@ -17,76 +17,95 @@
 package com.orientechnologies.orient.core.fetch.json;
 
 import java.io.IOException;
+import java.util.Date;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 /**
  * @author luca.molino
- * 
  */
 public class OJSONFetchListener implements OFetchListener {
 
-  public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
-      final OFetchContext iContext, final Object iusObject, final String iFormat) {
-    try {
-      ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel(), true,
-          iFieldName, iFieldValue);
-    } catch (IOException e) {
-      throw new OFetchException("Error processing field '" + iFieldValue + " of record " + iRecord.getIdentity(), e);
+    public void processStandardField(final ORecordSchemaAware<?> iRecord, Object iFieldValue, final String iFieldName,
+                                     final OFetchContext iContext, final Object iusObject, final String iFormat) {
+        try {
+            if (iFieldValue instanceof Date) {
+                iFieldValue = formatODate(iRecord, iFieldName, iFieldValue);
+            }
+
+            ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel(), true,
+                    iFieldName, iFieldValue);
+        } catch (IOException e) {
+            throw new OFetchException("Error processing field '" + iFieldValue + " of record " + iRecord.getIdentity(), e);
+        }
     }
-  }
 
-  public void processStandardCollectionValue(final Object iFieldValue, final OFetchContext iContext) throws OFetchException {
-    try {
-      ((OJSONFetchContext) iContext).getJsonWriter().writeValue(((OJSONFetchContext) iContext).getIndentLevel(), true,
-          OJSONWriter.encode(iFieldValue));
-    } catch (IOException e) {
-      e.printStackTrace();
+    private Object formatODate(ORecordSchemaAware<?> iRecord, String iFieldName, Object iFieldValue) {
+
+        OProperty prop = iRecord.getSchemaClass().getProperty(iFieldName);
+        OType iFieldType;
+        if (prop != null) {
+            if (prop.getType().equals(OType.DATE)) {
+                iFieldValue = ODateHelper.getDateFormatInstance().format(iFieldValue);
+            }
+        }
+        return iFieldValue;
     }
-  }
 
-  public Object fetchLinked(final ORecordSchemaAware<?> iRecord, final Object iUserObject, final String iFieldName,
-      final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
-    return iLinked;
-  }
-
-  public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRecord, final Object iUserObject, final String iFieldName,
-      final String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
-    return iLinked;
-  }
-
-  public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
-      final String iFieldName, final OFetchContext iContext) throws OFetchException {
-    try {
-      ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
-    } catch (IOException e) {
-      throw new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
-          + iRootRecord.getIdentity(), e);
+    public void processStandardCollectionValue(final Object iFieldValue, final OFetchContext iContext) throws OFetchException {
+        try {
+            ((OJSONFetchContext) iContext).getJsonWriter().writeValue(((OJSONFetchContext) iContext).getIndentLevel(), true,
+                    OJSONWriter.encode(iFieldValue));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-  }
 
-  public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
-      String iFieldName, OFetchContext iContext) throws OFetchException {
-    try {
-      if (((OJSONFetchContext) iContext).isInCollection(iRootRecord)) {
-        ((OJSONFetchContext) iContext).writeLinkedValue(iLinked, iFieldName);
-      } else {
-        ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
-      }
-    } catch (IOException e) {
-      throw new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
-          + iRootRecord.getIdentity(), e);
+    public Object fetchLinked(final ORecordSchemaAware<?> iRecord, final Object iUserObject, final String iFieldName,
+                              final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
+        return iLinked;
     }
-  }
 
-  public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
-      ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
-    return iLinked;
-  }
+    public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRecord, final Object iUserObject, final String iFieldName,
+                                      final String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
+        return iLinked;
+    }
+
+    public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
+                            final String iFieldName, final OFetchContext iContext) throws OFetchException {
+        try {
+            ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
+        } catch (IOException e) {
+            throw new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
+                    + iRootRecord.getIdentity(), e);
+        }
+    }
+
+    public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
+                                           String iFieldName, OFetchContext iContext) throws OFetchException {
+        try {
+            if (((OJSONFetchContext) iContext).isInCollection(iRootRecord)) {
+                ((OJSONFetchContext) iContext).writeLinkedValue(iLinked, iFieldName);
+            } else {
+                ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
+            }
+        } catch (IOException e) {
+            throw new OFetchException("Error writing linked field " + iFieldName + " (record:" + iLinked.getIdentity() + ") of record "
+                    + iRootRecord.getIdentity(), e);
+        }
+    }
+
+    public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
+                                             ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+        return iLinked;
+    }
 
 }
