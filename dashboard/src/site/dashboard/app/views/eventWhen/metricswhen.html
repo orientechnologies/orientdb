@@ -6,22 +6,16 @@
     </div>
 
     <br>
-    <div>
-        <ul>
-            <li ng-repeat="header in properties">
-                <div>
-                    {{header['name']}}:
-                    <input type="text" placeholder="" ng-model="eventWhen[header['name']]  ">
 
+    <form class="form-horizontal">
+        <div class="control-group" ng-repeat="header in properties">
+            <label class="control-label">{{header['name']}}:</label>
 
-                </div>
-
-            </li>
-
-
-        </ul>
-
-    </div>
+            <div class="controls">
+                <input type="text" placeholder="{{header['name']}}" ng-model="eventWhen[header['name']]">
+            </div>
+        </div>
+    </form>
     <div class="modal-footer">
 
         <button type="button" class="btn" ng-click="hide()">Close</button>
