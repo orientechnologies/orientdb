@@ -1,9 +1,13 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OBonsaiBucketPointer {
+  public static final int                  SIZE = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
   public static final OBonsaiBucketPointer NULL = new OBonsaiBucketPointer(-1, -1);
 
   private final long                       pageIndex;

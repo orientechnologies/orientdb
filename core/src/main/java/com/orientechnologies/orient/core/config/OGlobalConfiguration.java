@@ -256,6 +256,10 @@ public enum OGlobalConfiguration {
   SBTREE_MAX_ENTREE_SIZE("sbtree.maxEntree.size",
       "Maximum size of key-value pair which can be put in SBTree in bytes (24576000 by default)", Integer.class, 24576000),
 
+  SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
+      "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize ==0.",
+      Integer.class, 2),
+
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 

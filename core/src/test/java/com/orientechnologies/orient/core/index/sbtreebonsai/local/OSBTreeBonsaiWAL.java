@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Andrey Lomakin
  * @since 8/27/13
  */
-@Test
+@Test(enabled = false)
 public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
   private String                          buildDirectory;
 
@@ -132,7 +132,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
     sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("actualSBTree", 0, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
+    sbTree.create("actualSBTree", OBonsaiBucketPointer.NULL, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
   private void createExpectedSBTree() {

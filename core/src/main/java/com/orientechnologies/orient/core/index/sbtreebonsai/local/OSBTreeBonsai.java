@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -56,28 +57,30 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @see OSBTree
  */
 public class OSBTreeBonsai<K, V> extends ODurableComponent {
-  private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
-  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
+  private static final OAlwaysLessKey       ALWAYS_LESS_KEY    = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey    ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
+  private static final int                  PAGE_SIZE          = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final OBonsaiBucketPointer SYS_BUCKET         = new OBonsaiBucketPointer(0, 0);
 
-  private OBonsaiBucketPointer           rootBucketPointer;
+  private OBonsaiBucketPointer              rootBucketPointer;
 
-  private final Comparator<? super K>    comparator         = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K>       comparator         = ODefaultComparator.INSTANCE;
 
-  private OStorageLocalAbstract          storage;
-  private String                         name;
+  private OStorageLocalAbstract             storage;
+  private String                            name;
 
-  private final String                   dataFileExtension;
+  private final String                      dataFileExtension;
 
-  private ODiskCache                     diskCache;
+  private ODiskCache                        diskCache;
 
-  private long                           fileId;
+  private long                              fileId;
 
-  private int                            keySize;
+  private int                               keySize;
 
-  private OBinarySerializer<K>           keySerializer;
-  private OBinarySerializer<V>           valueSerializer;
+  private OBinarySerializer<K>              keySerializer;
+  private OBinarySerializer<V>              valueSerializer;
 
-  private final boolean                  durableInNonTxMode;
+  private final boolean                     durableInNonTxMode;
 
   public OSBTreeBonsai(String dataFileExtension, int keySize, boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -86,8 +89,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
   }
 
-  public void create(String name, long rootIndex, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OStorageLocalAbstract storageLocal) {
+  public void create(String name, OBonsaiBucketPointer rootBucketPointer, OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -101,15 +104,17 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
       fileId = diskCache.openFile(name + dataFileExtension);
 
       initDurableComponent(storageLocal);
+      initSysBucket();
 
       OCacheEntry rootCacheEntry;
-      if (rootIndex < 0)
-        rootCacheEntry = diskCache.allocateNewPage(fileId);
-      else
-        rootCacheEntry = diskCache.load(fileId, rootIndex, false);
-
-      // TODO
-      rootBucketPointer = new OBonsaiBucketPointer(rootCacheEntry.getPageIndex(), 8192 * 2);
+      if (rootBucketPointer.isValid()) {
+        this.rootBucketPointer = rootBucketPointer;
+        rootCacheEntry = diskCache.load(fileId, this.rootBucketPointer.getPageIndex(), false);
+      } else {
+        final AllocationResult allocationResult = allocateBucket();
+        rootCacheEntry = allocationResult.getCacheEntry();
+        this.rootBucketPointer = allocationResult.getPointer();
+      }
 
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
 
@@ -118,12 +123,12 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         super.startDurableOperation(null);
 
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
-            rootBucketPointer.getPageOffset(), true, keySerializer, valueSerializer, getTrackMode());
+            this.rootBucketPointer.getPageOffset(), true, keySerializer, valueSerializer, getTrackMode());
         rootBucket.setKeySerializerId(keySerializer.getId());
         rootBucket.setValueSerializerId(valueSerializer.getId());
         rootBucket.setTreeSize(0);
 
-        super.logPageChanges(rootBucket, fileId, rootBucketPointer.getPageIndex(), true);
+        super.logPageChanges(rootBucket, fileId, this.rootBucketPointer.getPageIndex(), true);
         rootCacheEntry.markDirty();
       } finally {
         rootPointer.releaseExclusiveLock();
@@ -288,24 +293,27 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
     close(true);
   }
 
-  // TODO don't clear whole file
   public void clear() {
     acquireExclusiveLock();
     OStorageTransaction transaction = storage.getStorageTransaction();
     try {
       startDurableOperation(transaction);
 
-      diskCache.truncateFile(fileId);
+      final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
 
       OCacheEntry cacheEntry = diskCache.load(fileId, rootBucketPointer.getPageIndex(), false);
       OCachePointer rootPointer = cacheEntry.getCachePointer();
       rootPointer.acquireExclusiveLock();
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
-            rootBucketPointer.getPageOffset(), true, keySerializer, valueSerializer, getTrackMode());
+            rootBucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
-        rootBucket.setKeySerializerId(keySerializer.getId());
-        rootBucket.setValueSerializerId(valueSerializer.getId());
+        addChildrenToQueue(subTreesToDelete, rootBucket);
+
+        rootBucket.shrink(0);
+        rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(), rootBucketPointer.getPageOffset(), true,
+            keySerializer, valueSerializer, getTrackMode());
+
         rootBucket.setTreeSize(0);
 
         logPageChanges(rootBucket, fileId, rootBucketPointer.getPageIndex(), true);
@@ -315,6 +323,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         diskCache.release(cacheEntry);
       }
 
+      recycleSubTrees(subTreesToDelete);
+
       endDurableOperation(transaction, false);
     } catch (IOException e) {
       rollback(transaction);
@@ -322,6 +332,85 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
       throw new OSBTreeException("Error during clear of sbtree with name " + name, e);
     } finally {
       releaseExclusiveLock();
+    }
+  }
+
+  private void addChildrenToQueue(Queue<OBonsaiBucketPointer> subTreesToDelete, OSBTreeBonsaiBucket<K, V> rootBucket) {
+    if (!rootBucket.isLeaf()) {
+      final int size = rootBucket.size();
+      if (size > 0)
+        subTreesToDelete.add(rootBucket.getEntry(0).leftChild);
+
+      for (int i = 0; i < size; i++) {
+        final OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = rootBucket.getEntry(i);
+        subTreesToDelete.add(entry.rightChild);
+      }
+    }
+  }
+
+  private void recycleSubTrees(Queue<OBonsaiBucketPointer> subTreesToDelete) throws IOException {
+    OBonsaiBucketPointer head = OBonsaiBucketPointer.NULL;
+    OBonsaiBucketPointer tail = subTreesToDelete.peek();
+
+    int bucketCount = 0;
+    while (!subTreesToDelete.isEmpty()) {
+      final OBonsaiBucketPointer bucketPointer = subTreesToDelete.poll();
+      OCacheEntry cacheEntry = diskCache.load(fileId, bucketPointer.getPageIndex(), false);
+      OCachePointer pointer = cacheEntry.getCachePointer();
+      pointer.acquireExclusiveLock();
+      try {
+        final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
+            bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
+
+        addChildrenToQueue(subTreesToDelete, bucket);
+
+        bucket.setLeftSibling(head);
+        head = bucketPointer;
+
+        logPageChanges(bucket, fileId, bucketPointer.getPageIndex(), false);
+        cacheEntry.markDirty();
+      } finally {
+        pointer.releaseExclusiveLock();
+        diskCache.release(cacheEntry);
+      }
+      bucketCount++;
+    }
+
+    if (head.isValid()) {
+      final OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+      final OCachePointer sysCachePointer = sysCacheEntry.getCachePointer();
+      sysCachePointer.acquireExclusiveLock();
+      try {
+        final OSysBucket sysBucket = new OSysBucket(sysCachePointer.getDataPointer(), getTrackMode());
+
+        attachFreeListHead(tail, sysBucket.getFreeListHead());
+        sysBucket.setFreeListHead(head);
+        sysBucket.setFreeListLength(sysBucket.freeListLength() + bucketCount);
+
+        super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+        sysCacheEntry.markDirty();
+      } finally {
+        sysCachePointer.releaseExclusiveLock();
+        diskCache.release(sysCacheEntry);
+      }
+    }
+  }
+
+  private void attachFreeListHead(OBonsaiBucketPointer bucketPointer, OBonsaiBucketPointer freeListHead) throws IOException {
+    OCacheEntry cacheEntry = diskCache.load(fileId, bucketPointer.getPageIndex(), false);
+    OCachePointer pointer = cacheEntry.getCachePointer();
+    pointer.acquireExclusiveLock();
+    try {
+      final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
+          bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
+
+      bucket.setLeftSibling(freeListHead);
+
+      super.logPageChanges(bucket, fileId, bucketPointer.getPageIndex(), false);
+      cacheEntry.markDirty();
+    } finally {
+      pointer.releaseExclusiveLock();
+      diskCache.release(cacheEntry);
     }
   }
 
@@ -874,9 +963,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         rightEntries.add(bucketToSplit.getEntry(i));
 
       if (!bucketPointer.equals(rootBucketPointer)) {
-        // TODO
-        OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
-        final OBonsaiBucketPointer rightBucketPointer = new OBonsaiBucketPointer(rightBucketEntry.getPageIndex(), 8192 * 2);
+        final AllocationResult allocationResult = allocateBucket();
+        OCacheEntry rightBucketEntry = allocationResult.getCacheEntry();
+        final OBonsaiBucketPointer rightBucketPointer = allocationResult.getPointer();
 
         OCachePointer rightPointer = rightBucketEntry.getCachePointer();
 
@@ -957,7 +1046,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
             diskCache.release(parentCacheEntry);
           }
 
-          logPageChanges(newRightBucket, fileId, rightBucketEntry.getPageIndex(), true);
+          logPageChanges(newRightBucket, fileId, rightBucketEntry.getPageIndex(), allocationResult.isNewPage());
         } finally {
           rightBucketEntry.markDirty();
           rightPointer.releaseExclusiveLock();
@@ -987,14 +1076,14 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         for (int i = 0; i < indexToSplit; i++)
           leftEntries.add(bucketToSplit.getEntry(i));
 
-        // TODO
-        OCacheEntry leftBucketEntry = diskCache.allocateNewPage(fileId);
-        OBonsaiBucketPointer leftBucketPointer = new OBonsaiBucketPointer(leftBucketEntry.getPageIndex(), 8192 * 2);
+        final AllocationResult leftAllocationResult = allocateBucket();
+        OCacheEntry leftBucketEntry = leftAllocationResult.getCacheEntry();
+        OBonsaiBucketPointer leftBucketPointer = leftAllocationResult.getPointer();
         OCachePointer leftPointer = leftBucketEntry.getCachePointer();
 
-        // TODO
-        OCacheEntry rightBucketEntry = diskCache.allocateNewPage(fileId);
-        OBonsaiBucketPointer rightBucketPointer = new OBonsaiBucketPointer(rightBucketEntry.getPageIndex(), 8192 * 2);
+        final AllocationResult rightAllocationResult = allocateBucket();
+        OCacheEntry rightBucketEntry = rightAllocationResult.getCacheEntry();
+        OBonsaiBucketPointer rightBucketPointer = rightAllocationResult.getPointer();
         leftPointer.acquireExclusiveLock();
         try {
           OSBTreeBonsaiBucket<K, V> newLeftBucket = new OSBTreeBonsaiBucket<K, V>(leftPointer.getDataPointer(),
@@ -1004,7 +1093,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
           if (splitLeaf)
             newLeftBucket.setRightSibling(rightBucketPointer);
 
-          logPageChanges(newLeftBucket, fileId, leftBucketEntry.getPageIndex(), true);
+          logPageChanges(newLeftBucket, fileId, leftBucketEntry.getPageIndex(), leftAllocationResult.isNewPage());
           leftBucketEntry.markDirty();
         } finally {
           leftPointer.releaseExclusiveLock();
@@ -1021,7 +1110,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
           if (splitLeaf)
             newRightBucket.setLeftSibling(leftBucketPointer);
 
-          logPageChanges(newRightBucket, fileId, rightBucketEntry.getPageIndex(), true);
+          logPageChanges(newRightBucket, fileId, rightBucketEntry.getPageIndex(), rightAllocationResult.isNewPage());
           rightBucketEntry.markDirty();
         } finally {
           rightPointer.releaseExclusiveLock();
@@ -1110,6 +1199,103 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent {
         bucketPointer = entry.rightChild;
       else
         bucketPointer = entry.leftChild;
+    }
+  }
+
+  private void initSysBucket() throws IOException {
+    final OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+    final OCachePointer cachePointer = sysCacheEntry.getCachePointer();
+    cachePointer.acquireExclusiveLock();
+    try {
+      final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
+      if (sysBucket.isInitialized()) {
+        sysBucket.init();
+        super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), true);
+        sysCacheEntry.markDirty();
+      }
+    } finally {
+      cachePointer.releaseExclusiveLock();
+      diskCache.release(sysCacheEntry);
+    }
+  }
+
+  private AllocationResult allocateBucket() throws IOException {
+    final OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+    final OCachePointer cachePointer = sysCacheEntry.getCachePointer();
+    cachePointer.acquireExclusiveLock();
+    try {
+      final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
+      if (sysBucket.freeListLength() > diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES / 2) {
+        return reuseBucketFromFreeList(sysBucket);
+      } else {
+        final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
+        if (freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES > PAGE_SIZE) {
+          final OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
+          final long pageIndex = cacheEntry.getPageIndex();
+          sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
+
+          super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+          sysCacheEntry.markDirty();
+
+          return new AllocationResult(new OBonsaiBucketPointer(pageIndex, 0), cacheEntry, true);
+        } else {
+          sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(freeSpacePointer.getPageIndex(), freeSpacePointer.getPageOffset()
+              + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
+          final OCacheEntry cacheEntry = diskCache.load(fileId, freeSpacePointer.getPageIndex(), false);
+
+          super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+          sysCacheEntry.markDirty();
+
+          return new AllocationResult(freeSpacePointer, cacheEntry, false);
+        }
+      }
+    } finally {
+      cachePointer.releaseExclusiveLock();
+      diskCache.release(sysCacheEntry);
+    }
+  }
+
+  private AllocationResult reuseBucketFromFreeList(OSysBucket sysBucket) throws IOException {
+    final OBonsaiBucketPointer oldFreeListHead = sysBucket.getFreeListHead();
+
+    OCacheEntry cacheEntry = diskCache.load(fileId, oldFreeListHead.getPageIndex(), false);
+    OCachePointer pointer = cacheEntry.getCachePointer();
+    pointer.acquireExclusiveLock();
+    try {
+      final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
+          oldFreeListHead.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
+
+      sysBucket.setFreeListHead(bucket.getLeftSibling());
+
+      super.logPageChanges(bucket, fileId, oldFreeListHead.getPageIndex(), false);
+      cacheEntry.markDirty();
+    } finally {
+      pointer.releaseExclusiveLock();
+    }
+    return new AllocationResult(oldFreeListHead, cacheEntry, false);
+  }
+
+  private static class AllocationResult {
+    private final OBonsaiBucketPointer pointer;
+    private final OCacheEntry          cacheEntry;
+    private final boolean              newPage;
+
+    private AllocationResult(OBonsaiBucketPointer pointer, OCacheEntry cacheEntry, boolean newPage) {
+      this.pointer = pointer;
+      this.cacheEntry = cacheEntry;
+      this.newPage = newPage;
+    }
+
+    private OBonsaiBucketPointer getPointer() {
+      return pointer;
+    }
+
+    private OCacheEntry getCacheEntry() {
+      return cacheEntry;
+    }
+
+    private boolean isNewPage() {
+      return newPage;
     }
   }
 
