@@ -154,7 +154,7 @@ Widget.directive('stackedarea', function () {
 
             chart.xAxis
                 .tickFormat(function (d) {
-                    return  moment("" + d, "X").format("DD-MM-YYYY HH:mm:ss");
+                    return  moment("" + d, "X").format("DD/MM/YYYY");
                 });
 
             chart.yAxis

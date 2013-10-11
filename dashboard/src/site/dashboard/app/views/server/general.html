@@ -9,7 +9,29 @@
         <div class="span6"><span>{{ 'general.lastMsg' | i18n }}</span></div>
     </div>
 
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="widget">
+                <div class="widget-title">
+                    <div class="widget-caption">
+                        <i class="icon-bolt"></i>
+                        {{ 'server.configuration' | i18n }}
+                    </div>
+                    <div class="actions">
+                        <a class="btn btn-inverse  pull-right"
+                           href="javascript:void(0)" ng-click="saveConfig()">
+                            <i class="icon-save"> {{ 'server.configuration.save' | i18n }}</i>
+                        </a>
+                    </div>
+                </div>
+                <div class="widget-body">
+                    <textarea ui-codemirror="editorOptions" ng-model="configuration"></textarea>
+                </div>
 
+            </div>
+
+        </div>
+    </div>
     <div class="row-fluid">
         <div class="span12">
             <div class="widget">

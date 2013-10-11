@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent;
 
+import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
 import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
 import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
@@ -57,6 +58,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandGetProfiler());
     listener.registerStatelessCommand(new OServerCommandGetDistributed());
     listener.registerStatelessCommand(new OServerCommandGetLog());
+    listener.registerStatelessCommand(new OServerCommandConfiguration());
 
   }
 
@@ -65,5 +67,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
     listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
+    listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
   }
 }

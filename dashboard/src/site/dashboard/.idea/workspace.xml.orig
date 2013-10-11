@@ -6,7 +6,7 @@
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
     <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381420446897" ignored="false" />
-    <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381437313627" ignored="false" />
+    <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381237464375" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986941211" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380277123510" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986935836" ignored="false" />
@@ -27,16 +27,16 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/widget/embeddedmap.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378734347882" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/widgets/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379072617022" ignored="false" />
     <file path="/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379072588436" ignored="false" />
-    <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381440518204" ignored="false" />
+    <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381409865742" ignored="false" />
     <file path="/login.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378744447308" ignored="false" />
     <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379950578164" ignored="false" />
-    <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381438174942" ignored="false" />
+    <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381409456455" ignored="false" />
     <file path="/monitor.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186623070" ignored="false" />
     <file path="/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985701222" ignored="false" />
     <file path="/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379270651163" ignored="false" />
     <file path="/moment-filters.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378757736470" ignored="false" />
     <file path="/filter.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379185430924" ignored="false" />
-    <file path="/server.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381438348119" ignored="false" />
+    <file path="/server.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381409393964" ignored="false" />
     <file path="/main.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379099539164" ignored="false" />
     <file path="/settings.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379198123975" ignored="false" />
     <file path="/servers.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378763564214" ignored="false" />
@@ -70,7 +70,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/modal/yesno.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378827905815" ignored="false" />
     <file path="/yesno.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378827905815" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/scripts/util/library.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378828543332" ignored="false" />
-    <file path="/metrics.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379954679478" ignored="false" />
+    <file path="/metrics.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381409353981" ignored="false" />
     <file path="/query.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379253601254" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378901054338" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/allocation.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378905514164" ignored="false" />
@@ -142,7 +142,7 @@
     <file path="/nav.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379914387817" ignored="false" />
     <file path="/sidenav.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379111373664" ignored="false" />
     <file path="/select2.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379110178110" ignored="false" />
-    <file path="/general.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381440500884" ignored="false" />
+    <file path="/general.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379860593979" ignored="false" />
     <file path="/map.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379178647891" ignored="false" />
     <file path="/dialog.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186712384" ignored="false" />
     <file path="/baseEditModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379197825195" ignored="false" />
@@ -198,7 +198,6 @@
     <file path="/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380364362509" ignored="false" />
     <file path="/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416727337" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/.tmp/styles/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380470600295" ignored="false" />
-    <file path="$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380718830282" ignored="false" />
     <file path="/logjava.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380880823868" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/bower.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380815845714" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.htm" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816364393" ignored="false" />
@@ -228,85 +227,146 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
+<<<<<<< Updated upstream
+      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="9" column="23" selection-start="507" selection-end="519" vertical-scroll-proportion="0.0">
+=======
       <file leaf-file-name="metrics.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="76" column="36" selection-start="2962" selection-end="3590" vertical-scroll-proportion="-21.25">
+            <state line="49" column="87" selection-start="2294" selection-end="2306" vertical-scroll-proportion="-9.333333">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="general.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+<<<<<<< Updated upstream
+      <file leaf-file-name="httpwhat.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/httpwhat.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="22" column="79" selection-start="956" selection-end="956" vertical-scroll-proportion="-11.833333">
+            <state line="15" column="60" selection-start="525" selection-end="534" vertical-scroll-proportion="-9.807693">
+=======
+      <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="24" column="30" selection-start="1089" selection-end="1089" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
         </entry>
       </file>
+<<<<<<< Updated upstream
+      <file leaf-file-name="mailwhat.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="6" column="69" selection-start="238" selection-end="238" vertical-scroll-proportion="-3.9230769">
+=======
       <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="151" column="13" selection-start="5563" selection-end="5563" vertical-scroll-proportion="0.0">
+            <state line="184" column="8" selection-start="6784" selection-end="6784" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/index.html">
+<<<<<<< Updated upstream
+      <file leaf-file-name="functionwhat.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/functionwhat.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="98" column="24" selection-start="4720" selection-end="4720" vertical-scroll-proportion="-16.25">
-              <folding>
-                <marker date="1381437345522" expanded="true" signature="1558:1795" placeholder="..." />
-                <marker date="1381437345522" expanded="true" signature="1627:1661" placeholder="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
+            <state line="15" column="18" selection-start="575" selection-end="575" vertical-scroll-proportion="-9.807693">
+=======
       <file leaf-file-name="en.json" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="56" column="30" selection-start="2352" selection-end="2352" vertical-scroll-proportion="0.7781885">
+            <state line="60" column="41" selection-start="2532" selection-end="2532" vertical-scroll-proportion="0.9445471">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="server.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+<<<<<<< Updated upstream
+      <file leaf-file-name="schedulerwhen.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/schedulerwhen.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="77" column="19" selection-start="2587" selection-end="2587" vertical-scroll-proportion="-16.764706">
+            <state line="32" column="6" selection-start="881" selection-end="881" vertical-scroll-proportion="-20.923077">
+              <folding>
+                <marker date="1381415511000" expanded="true" signature="56:880" placeholder="..." />
+                <marker date="1381415511000" expanded="true" signature="362:601" placeholder="..." />
+              </folding>
+=======
+      <file leaf-file-name="library.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/util/library.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+              <folding />
+>>>>>>> Stashed changes
+            </state>
+          </provider>
+        </entry>
+      </file>
+<<<<<<< Updated upstream
+      <file leaf-file-name="logjava.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="102" column="8" selection-start="4170" selection-end="4605" vertical-scroll-proportion="-8.038462">
+=======
+      <file leaf-file-name="angularjs.nvd3.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="141" column="99" selection-start="4110" selection-end="4110" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
+<<<<<<< Updated upstream
+      <file leaf-file-name="metricswhen.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="14" column="0" selection-start="335" selection-end="335" vertical-scroll-proportion="-9.153846">
+=======
+      <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/index.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="41" column="30" selection-start="1879" selection-end="1879" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="main.css" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="419" column="86" selection-start="8130" selection-end="8130" vertical-scroll-proportion="0.0">
+<<<<<<< Updated upstream
+            <state line="445" column="16" selection-start="8504" selection-end="8504" vertical-scroll-proportion="0.88435376">
+=======
+            <state line="210" column="20" selection-start="7253" selection-end="7265" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="app.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+<<<<<<< Updated upstream
+      <file leaf-file-name="logwhen.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="2" column="247" selection-start="262" selection-end="262" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+            <state line="13" column="17" selection-start="0" selection-end="909" vertical-scroll-proportion="-8.5">
+=======
+      <file leaf-file-name="custom.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="155" column="42" selection-start="5632" selection-end="5632" vertical-scroll-proportion="0.0">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
@@ -315,7 +375,11 @@
       <file leaf-file-name="events.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="44" column="74" selection-start="1620" selection-end="1620" vertical-scroll-proportion="0.0">
+<<<<<<< Updated upstream
+            <state line="44" column="74" selection-start="1620" selection-end="1620" vertical-scroll-proportion="-4.1153846">
+=======
+            <state line="123" column="32" selection-start="4246" selection-end="4246" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
@@ -331,27 +395,46 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
+<<<<<<< Updated upstream
+=======
+        <option value="$PROJECT_DIR$/app/views/server/general.html" />
+        <option value="$PROJECT_DIR$/app/views/header.html" />
+        <option value="$PROJECT_DIR$/app/views/server/log.html" />
+        <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
+>>>>>>> Stashed changes
+        <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
+        <option value="$PROJECT_DIR$/app/scripts/app.js" />
+<<<<<<< Updated upstream
+=======
+        <option value="$PROJECT_DIR$/app/views/server/events.html" />
+>>>>>>> Stashed changes
+        <option value="$PROJECT_DIR$/app/index.html" />
+        <option value="$PROJECT_DIR$/app/views/eventWhen/logWhen.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/logwhen.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/schedulerwhen.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
+<<<<<<< Updated upstream
         <option value="$PROJECT_DIR$/app/views/eventWhat/httpwhat.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/mailwhat.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
-        <option value="$PROJECT_DIR$/app/scripts/app.js" />
-        <option value="$PROJECT_DIR$/app/index.html" />
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
+=======
+        <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
+        <option value="$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" />
+        <option value="$PROJECT_DIR$/app/views/server/metrics.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
-        <option value="$PROJECT_DIR$/app/views/server/general.html" />
+        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
+>>>>>>> Stashed changes
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1" />
+    <option name="x" value="-1367" />
     <option name="y" value="-3" />
     <option name="width" value="1368" />
     <option name="height" value="772" />
@@ -382,6 +465,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -556,7 +640,11 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+<<<<<<< Updated upstream
               <option name="myItemId" value="service" />
+=======
+              <option name="myItemId" value="directive" />
+>>>>>>> Stashed changes
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -580,7 +668,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -665,7 +752,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="-3" width="1368" height="772" extended-state="6" />
+    <frame x="-1367" y="-3" width="1368" height="772" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -747,117 +834,204 @@
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="39" column="30" selection-start="1838" selection-end="1838" vertical-scroll-proportion="-0.65384614">
+          <folding>
+            <marker date="1381332681000" expanded="true" signature="-1:-1" placeholder="..." />
+            <marker date="1381332681000" expanded="true" signature="-1:-1" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="56" column="17" selection-start="2135" selection-end="2135" vertical-scroll-proportion="-0.65384614">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="143" column="30" selection-start="5319" selection-end="5326" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+=======
+    <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="76" selection-start="924" selection-end="924" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/header.js">
+>>>>>>> Stashed changes
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="168" column="50" selection-start="6163" selection-end="6171" vertical-scroll-proportion="0.0">
+=======
+    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="52" column="35" selection-start="2115" selection-end="2115" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="155" column="42" selection-start="5624" selection-end="5624" vertical-scroll-proportion="0.0">
+=======
+    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="56" column="63" selection-start="2135" selection-end="2135" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
+=======
+    <entry file="file://$PROJECT_DIR$/app/scripts/util/library.js">
+>>>>>>> Stashed changes
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="17" selection-start="0" selection-end="909" vertical-scroll-proportion="-8.5">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/schedulerwhen.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="32" column="6" selection-start="881" selection-end="881" vertical-scroll-proportion="-20.923077">
+          <folding>
+            <marker date="1381415511000" expanded="true" signature="56:880" placeholder="..." />
+            <marker date="1381415511000" expanded="true" signature="362:601" placeholder="..." />
+          </folding>
+=======
+    <entry file="file://$PROJECT_DIR$/app/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="41" column="30" selection-start="1879" selection-end="1879" vertical-scroll-proportion="0.0">
+          <folding />
+>>>>>>> Stashed changes
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="102" column="8" selection-start="4170" selection-end="4605" vertical-scroll-proportion="0.0">
+<<<<<<< Updated upstream
+        <state line="102" column="8" selection-start="4170" selection-end="4605" vertical-scroll-proportion="-8.038462">
+=======
+        <state line="24" column="30" selection-start="1089" selection-end="1089" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="0" selection-start="335" selection-end="335" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/httpwhat.html">
+        <state line="14" column="0" selection-start="335" selection-end="335" vertical-scroll-proportion="-9.153846">
+=======
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="60" selection-start="525" selection-end="534" vertical-scroll-proportion="0.0">
+        <state line="123" column="32" selection-start="4246" selection-end="4246" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/httpwhat.html">
+=======
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
+>>>>>>> Stashed changes
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="15" column="60" selection-start="525" selection-end="534" vertical-scroll-proportion="-9.807693">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="69" selection-start="238" selection-end="238" vertical-scroll-proportion="0.0">
+        <state line="6" column="69" selection-start="238" selection-end="238" vertical-scroll-proportion="-3.9230769">
+=======
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="141" column="99" selection-start="4110" selection-end="4110" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/app/views/eventWhat/functionwhat.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="18" selection-start="575" selection-end="575" vertical-scroll-proportion="0.0">
+        <state line="15" column="18" selection-start="575" selection-end="575" vertical-scroll-proportion="-9.807693">
+=======
+    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="49" column="87" selection-start="2294" selection-end="2306" vertical-scroll-proportion="-9.333333">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state line="9" column="23" selection-start="507" selection-end="519" vertical-scroll-proportion="0.0">
+=======
+        <state line="210" column="20" selection-start="7253" selection-end="7265" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
     <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="74" selection-start="1620" selection-end="1620" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="419" column="86" selection-start="8130" selection-end="8130" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="155" column="42" selection-start="5632" selection-end="5632" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="247" selection-start="262" selection-end="262" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="98" column="24" selection-start="4720" selection-end="4720" vertical-scroll-proportion="-16.25">
-          <folding>
-            <marker date="1381437345522" expanded="true" signature="1558:1795" placeholder="..." />
-            <marker date="1381437345522" expanded="true" signature="1627:1661" placeholder="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="76" column="36" selection-start="2962" selection-end="3590" vertical-scroll-proportion="-21.25">
-          <folding />
-        </state>
-      </provider>
-    </entry>
+        <state line="44" column="74" selection-start="1620" selection-end="1620" vertical-scroll-proportion="-4.1153846">
+=======
     <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="151" column="13" selection-start="5563" selection-end="5563" vertical-scroll-proportion="0.0">
+        <state line="184" column="8" selection-start="6784" selection-end="6784" vertical-scroll-proportion="0.0">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+<<<<<<< Updated upstream
+    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="77" column="19" selection-start="2587" selection-end="2587" vertical-scroll-proportion="-16.764706">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="22" column="79" selection-start="956" selection-end="956" vertical-scroll-proportion="-11.833333">
-          <folding />
-        </state>
-      </provider>
-    </entry>
+        <state line="445" column="16" selection-start="8504" selection-end="8504" vertical-scroll-proportion="0.88435376">
+=======
     <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="56" column="30" selection-start="2352" selection-end="2352" vertical-scroll-proportion="0.7781885">
+        <state line="60" column="41" selection-start="2532" selection-end="2532" vertical-scroll-proportion="0.9445471">
+>>>>>>> Stashed changes
           <folding />
         </state>
       </provider>

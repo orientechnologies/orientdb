@@ -72,6 +72,11 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
     $scope.rid = $routeParams.server;
 
+    $scope.editorOptions = {
+        lineWrapping : true,
+        lineNumbers: true,
+        mode: 'xml'
+    };
     Monitor.getServer($scope.rid, function (data) {
         $scope.server = data;
         Server.findDatabases(data.name, function (data) {
@@ -79,8 +84,17 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             var db = $scope.databases[0];
             $scope.dbselected = db;
         });
+        Server.getConfiguration($scope.server, function (data) {
+            $scope.configuration = data.configuration;
+        });
+
 
     });
+    $scope.saveConfig = function(){
+        Server.saveConfiguration($scope.server,$scope.configuration, function (data) {
+            console.log(data);
+        });
+    }
     $scope.getServerMetrics = function () {
 
         var names = new Array;
@@ -170,7 +184,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.rid = $routeParams.server;
     $scope.names = new Array;
     $scope.render = 'area';
-    $scope.fields = ['value','entries','min','max','average','total'];
+    $scope.fields = ['value', 'entries', 'min', 'max', 'average', 'total'];
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
@@ -181,14 +195,17 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.refreshMetricConfig = function () {
         MetricConfig.getAll(function (data) {
             $scope.savedMetrics = data.result;
-            if($scope.savedMetrics.length>0){
+            if ($scope.savedMetrics.length > 0) {
                 $scope.selectedConfig = $scope.savedMetrics[0];
             }
         });
     }
     $scope.$watch("range", function (data) {
 
-
+        if (data && $scope.selectedConfig) {
+            console.log($scope.selectedConfig)
+            $scope.refreshData($scope.selectedConfig, data.start.format("YYYY-MM-DD HH:mm:ss"), data.end.format("YYYY-MM-DD HH:mm:ss"));
+        }
     });
 
 
@@ -200,8 +217,14 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             $scope.refreshMetricConfig();
         });
     }
+
     $scope.selectConfig = function (config) {
         $scope.selectedConfig = config;
+    }
+    $scope.deleteConfig = function (config) {
+        MetricConfig.deleteConfig(config, function (data) {
+            $scope.refreshMetricConfig();
+        })
     }
     $scope.addConfig = function () {
         if (!$scope.selectedConfig['config']) {
@@ -212,16 +235,16 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.$watch("selectedConfig", function (data) {
 
         if (data && data.config) {
-            $scope.refreshData(data);
+            $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
         }
     });
-    $scope.removeMetric = function(met){
+    $scope.removeMetric = function (met) {
         var idx = $scope.selectedConfig['config'].indexOf(met);
-        $scope.selectedConfig['config'].splice(idx,1);
+        $scope.selectedConfig['config'].splice(idx, 1);
     }
     $scope.refreshMetricConfig();
 
-    $scope.refreshData = function (metrics) {
+    $scope.refreshData = function (metrics, dataFrom, dataTo) {
 
         var names = new Array;
         var configs = new Array;
@@ -229,7 +252,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             names.push(elem.name);
             configs[elem.name] = elem.field;
         });
-        Metric.getMetrics({ names: names, server: $scope.rid}, function (data) {
+        Metric.getMetrics({ names: names, server: $scope.rid, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
             $scope.metricsData = new Array;
             var tmpArr = new Array;
 
@@ -240,8 +263,8 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
                 }
                 var el = undefined;
 
-                if(configs[elem.name]){
-                  el = elem[configs[elem.name]];
+                if (configs[elem.name]) {
+                    el = elem[configs[elem.name]];
                 } else if (elem['class'] == 'Information') {
                     el = elem.value
                 } else {

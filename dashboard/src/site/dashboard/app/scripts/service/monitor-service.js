@@ -99,13 +99,13 @@ monitor.factory('Metric', function ($http, $resource) {
         }
         var query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where  name in [{{name}}] ";
         if (params.dateFrom) {
-            query += "and snapshot.dateFrom >= {{dateFrom}} ";
+            query += "and snapshot.dateFrom >= '{{dateFrom}}' ";
         }
         if (params.server) {
             query += "and snapshot.server = '{{server}}'";
         }
         if (params.dateTo) {
-            query += "and snapshot.dateTo <= {{dateTo}} ";
+            query += "and snapshot.dateTo <= '{{dateTo}}' ";
         }
         query += " order by name desc , dateTo desc";
         if (params.name && params.server) {
@@ -139,6 +139,24 @@ monitor.factory('Server', function ($http, $resource, Metric) {
                 error(data);
             });
         server['@class'] = name;
+    }
+    resource.getConfiguration = function (server, callback, error) {
+        var url = API + 'configuration/monitor/' + server.name + '';
+
+        $http.get(url).success(function (data) {
+            callback(data);
+        }).error(function (data) {
+                error(data);
+            });
+    }
+    resource.saveConfiguration = function (server, config, callback, error) {
+        var url = API + 'configuration/monitor/' + server.name + '';
+
+        $http.put(url, config).success(function (data) {
+            callback(data);
+        }).error(function (data) {
+                error(data);
+            });
     }
     resource.findDatabases = function (server, callback) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
@@ -181,6 +199,13 @@ monitor.factory('MetricConfig', function ($http, $resource) {
                     callback(error);
                 });
         }
+    }
+    resource.deleteConfig = function (config, callback) {
+
+        $http.delete(API + 'document/monitor/' + config['@rid'].replace("#", '')).success(function (data) {
+            callback(data);
+        });
+
     }
     return resource;
 });
