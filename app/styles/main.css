@@ -20,8 +20,8 @@ body div.container-studio {
 }
 
 .CodeMirror-scroll {
-    overflow-y: hidden;
-    overflow-x: auto;
+    /*overflow-y: hidden;*/
+    /*overflow-x: auto;*/
 }
 
 .nomargin {
