@@ -16,7 +16,7 @@ body div.container-studio {
 
 .CodeMirror {
     border: 1px solid #eee;
-    /*height: 200px;*/
+    height: 300px;
 }
 
 .CodeMirror-scroll {

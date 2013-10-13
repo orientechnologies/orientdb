@@ -35,15 +35,18 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     $scope.getListFunction = function () {
         $scope.functions = new Array;
+        $scope.functionsrid = new Array;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
             if (data.result) {
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
+                    $scope.functionsrid.push(data.result[i]['name'])
                 }
 
-                if ($scope.functions.length > 0)
-                    $scope.showInConsole($scope.functions[0]);
-
+                if ($scope.functions.length > 0 && $scope.functionToExecute != undefined) {
+                    var index =  $scope.functionsrid.indexOf($scope.functionToExecute['name']);
+                    $scope.showInConsole($scope.functions[index]);
+                }
             }
         });
 
@@ -153,7 +156,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     }
     $scope.saveFunction = function () {
-        console.log($scope.functionToExecute)
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
 
             if ($scope.isNewFunction == true) {
