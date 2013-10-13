@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -81,7 +80,7 @@ public abstract class AbstractServerClusterTest {
     for (ServerRun server : serverInstance) {
       final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
       Assert.assertNotNull(cfg);
-      //Assert.assertEquals(((Collection<?>) cfg.field("members")).size(), serverInstance.size());
+      // Assert.assertEquals(((Collection<?>) cfg.field("members")).size(), serverInstance.size());
     }
 
     System.out.println("Executing test...");

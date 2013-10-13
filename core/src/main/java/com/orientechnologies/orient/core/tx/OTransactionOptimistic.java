@@ -16,7 +16,13 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,7 +49,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
@@ -66,7 +71,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransaction();
     status = TXSTATUS.COMMITTING;
 
-    if (database.getStorage() instanceof OStorageProxy)
+    if (!(database.getStorage() instanceof OStorageEmbedded))
       database.getStorage().commit(this, null);
     else {
       final List<String> involvedIndexes = getInvolvedIndexes();
@@ -268,7 +273,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return;
-    addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
+    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+        : ORecordOperation.CREATED;
+    addRecord(iRecord, operation, iClusterName);
   }
 
   protected void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
