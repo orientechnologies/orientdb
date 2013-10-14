@@ -219,6 +219,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
+    
+    hazelcastInstance.shutdown();
+    
     setStatus(STATUS.OFFLINE);
 
     getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
