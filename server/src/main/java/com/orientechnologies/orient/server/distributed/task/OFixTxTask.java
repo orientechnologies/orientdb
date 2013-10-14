@@ -18,82 +18,75 @@ package com.orientechnologies.orient.server.distributed.task;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
- * Distributed task to fix delete record in conflict on synchronization.
+ * Distributed create record task used for synchronization.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OFixDeleteRecordTask extends OAbstractRemoteTask {
-  private static final long serialVersionUID = 1L;
+public class OFixTxTask extends OAbstractRemoteTask {
+  private static final long                   serialVersionUID = 1L;
 
-  private ORecordId         rid;
-  private ORecordVersion    version;
+  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
 
-  public OFixDeleteRecordTask() {
+  public OFixTxTask() {
   }
 
-  public OFixDeleteRecordTask(final ORecordId iRid, final ORecordVersion iVersion) {
-    rid = iRid;
-    version = iVersion;
+  public void add(final OAbstractRecordReplicatedTask iTask) {
+    tasks.add(iTask);
   }
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "fixing delete record %s/%s v.%s", database.getName(), rid.toString(), version.toString());
+        "fixing conflicts found during committing transaction against db=%s...", database.getName());
 
-    final ORecordInternal<?> record = rid.getRecord();
-    if (record.getVersion() != version.getCounter()) {
-      // DIFFERENT VERSIONS, UPDATE IT BEFORE TO DELETE
-      version.setRollbackMode();
-      record.setVersion(version.getCounter());
-      record.setDirty();
-      record.save();
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    try {
+
+      for (OAbstractRecordReplicatedTask task : tasks) {
+        task.execute(iServer, iManager, database);
+      }
+
+    } catch (Exception e) {
+      return Boolean.FALSE;
     }
-    record.delete();
-
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "+-> fixed delete record %s/%s v.%s", database.getName(), record.getIdentity().toString(), record.getRecordVersion()
-            .toString());
 
     return Boolean.TRUE;
   }
 
+  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().writeTo(out, version);
+    out.writeInt(tasks.size());
+    for (OAbstractRecordReplicatedTask task : tasks)
+      out.writeObject(task);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().readFrom(in, version);
+    final int size = in.readInt();
+    for (int i = 0; i < size; ++i)
+      tasks.add((OAbstractRecordReplicatedTask) in.readObject());
   }
 
   @Override
   public String getName() {
-    return "fix_record_update";
+    return "fix_tx";
   }
 }

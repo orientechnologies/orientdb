@@ -35,10 +35,12 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
@@ -54,11 +56,13 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 /**
@@ -354,12 +358,55 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     return wrapped.getLevel2Cache();
   }
 
-  public void commit(final OTransaction iTx, Runnable callback) {
-    throw new ODistributedException("Transactions are not supported in distributed environment");
+  public void commit(final OTransaction iTx, final Runnable callback) {
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+      // ALREADY DISTRIBUTED
+      wrapped.commit(iTx, callback);
+    else {
+      try {
+        final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
+        if (!dConfig.isReplicationActive(null))
+          // DON'T REPLICATE
+          wrapped.commit(iTx, callback);
+        else {
+          final OTxTask txTask = new OTxTask();
+
+         
+          for (ORecordOperation op : iTx.getCurrentRecordEntries()) {
+            final OAbstractRecordReplicatedTask task;
+
+            final ORecordInternal<?> record = op.getRecord();
+
+            switch (op.type) {
+            case ORecordOperation.CREATED:
+              task = new OCreateRecordTask((ORecordId) op.record.getIdentity(), record.toStream(), record.getRecordVersion(),
+                  record.getRecordType());
+              break;
+            case ORecordOperation.UPDATED:
+              task = new OUpdateRecordTask((ORecordId) op.record.getIdentity(), record.toStream(), record.getRecordVersion(),
+                  record.getRecordType());
+              break;
+            case ORecordOperation.DELETED:
+              task = new ODeleteRecordTask((ORecordId) op.record.getIdentity(), record.getRecordVersion());
+              break;
+            default:
+              continue;
+            }
+
+            txTask.add(task);
+          }
+
+          // REPLICATE IT
+          dManager.sendRequest(getName(), null, txTask, EXECUTION_MODE.RESPONSE);
+        }
+      } catch (Exception e) {
+        handleDistributedException("Cannot route TX operation against distributed node", e);
+      }
+    }
   }
 
   public void rollback(final OTransaction iTx) {
-    throw new ODistributedException("Transactions are not supported in distributed environment");
+    wrapped.rollback(iTx);
   }
 
   public OStorageConfiguration getConfiguration() {

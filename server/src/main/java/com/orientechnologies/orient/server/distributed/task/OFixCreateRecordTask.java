@@ -76,7 +76,7 @@ public class OFixCreateRecordTask extends OAbstractRemoteTask {
   }
 
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.WRITE;
+    return QUORUM_TYPE.NONE;
   }
 
   @Override
