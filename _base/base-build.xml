@@ -67,13 +67,13 @@
             </manifest>
         </jar>
         <copy todir="${project.dist}">
-            <fileset dir="${project.lib}" includes="**/*.jar" excludes="test*.jar"/>
+            <fileset dir="${project.lib}" includes="*.jar" excludes="test*.jar"/>
         </copy>
     </target>
 
     <target name="install" depends="jar">
         <copy todir="${global.lib}">
-            <fileset dir="${project.dist}" includes="**/*.jar">
+            <fileset dir="${project.dist}" includes="*.jar">
                 <exclude name="*test*.jar"/>
                 <exclude name="*-javadoc.jar"/>
                 <exclude name="*-sources.jar"/>

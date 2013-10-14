@@ -1,6 +1,8 @@
 package com.orientechnologies.common.console;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class DefaultConsoleReader implements OConsoleReader {
   final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -18,29 +20,5 @@ public class DefaultConsoleReader implements OConsoleReader {
   }
 
   public void setConsole(OConsoleApplication console) {
-  }
-
-  @Override
-  public boolean hasPromptSupport() {
-    return false;
-  }
-
-  @Override
-  public String readLine(String prompt) {
-    throw new UnsupportedOperationException("readLine(prompt)");
-  }
-
-  @Override
-  public void setPrompt(String prompt) {
-  }
-
-  @Override
-  public Writer getOut() {
-    return new OutputStreamWriter(System.out);
-  }
-
-  @Override
-  public Writer getErr() {
-    return new OutputStreamWriter(System.err);
   }
 }
