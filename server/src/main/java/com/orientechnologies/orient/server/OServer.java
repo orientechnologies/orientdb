@@ -250,8 +250,8 @@ public class OServer {
         OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
       }
 
+    lock.lock();
     try {
-      lock.lock();
 
       final String[] plugins = pluginManager.getPluginNames();
       if (plugins.length > 0) {

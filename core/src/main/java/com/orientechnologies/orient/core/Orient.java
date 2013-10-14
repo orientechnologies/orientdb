@@ -172,7 +172,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       resetListeners();
 
-      timer.cancel();
+      timer.purge();
 
       profiler.shutdown();
 
