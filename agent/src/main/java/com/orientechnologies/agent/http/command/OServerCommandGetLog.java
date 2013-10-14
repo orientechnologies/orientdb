@@ -17,6 +17,7 @@ package com.orientechnologies.agent.http.command;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -60,10 +62,10 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 
 	@Override
 	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		
+
 		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: log/<type>?<value>");
 
- 		String type = urlParts[1]; // the type of the log tail search or file
+		String type = urlParts[1]; // the type of the log tail search or file
 
 		String value = iRequest.getParameter("searchvalue");
 
@@ -78,7 +80,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		String hourFrom = iRequest.getParameter("hourFrom");
 
 		String hourTo = iRequest.getParameter("hourTo");
-		
+
 		String selectedFile = iRequest.getParameter("file");
 
 		Date dFrom = null;
@@ -99,21 +101,17 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		if (hourTo != null) {
 			hTo = setTimeFromParameter(hourTo);
 		}
-		String orientdb_home = System.getenv("ORIENTDB_HOME");
 
-		orientdb_home = "/home/marco/";
-
-		String logsDirectory = orientdb_home.concat("/logss");
-
-		File directory = new File(logsDirectory);
-		// Reading directory contents
-
+		Properties prop = new Properties();
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File directory, String fileName) {
 				return !fileName.endsWith(".lck");
 			}
 		};
 
+		prop.load(new FileInputStream(System.getProperty("user.dir") + "/config/orientdb-server-log.properties"));
+		String logDir = (String) prop.get("java.util.logging.FileHandler.pattern");
+		File directory = new File(logDir).getParentFile();
 		File[] files = directory.listFiles(filter);
 		Arrays.sort(files);
 
@@ -131,8 +129,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		if (TAIL.equals(type)) {
 			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[0]);
 		} else if (FILE.equals(type)) {
-			for(int i = 0 ; i<files.length-1;i++){
-				if(files[i].getName().equals(selectedFile))
+			for (int i = 0; i < files.length - 1; i++) {
+				if (files[i].getName().equals(selectedFile))
 					insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
 			}
 		} else if (SEARCH.equals(type)) {
@@ -165,12 +163,9 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 
 	private void insertFromFile(String value, String size, String logType, Date dFrom, Time hFrom, Date dTo, Time hTo, File[] files, List<ODocument> subdocuments, String line,
 			String dayToDoc, String hour, String typeToDoc, String info, ODocument doc, File file) throws FileNotFoundException, IOException {
-		// Integer valueInt = new Integer(size);
-		// valueInt = new Integer(size);
 		File f = file;
 		BufferedReader br = new BufferedReader(new FileReader(f));
 		Date day = null;
-		// for (int i = 0; i < valueInt && line != null; i++) {
 		while (line != null) {
 			line = br.readLine();
 			if (line != null) {
