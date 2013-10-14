@@ -23,6 +23,9 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -77,9 +80,24 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixCreateRecordTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
+  public OFixTxTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
       final ODistributedResponse iGoodResponse) {
-    return null;
+    final OFixTxTask fixTask = new OFixTxTask();
+
+    for (OAbstractRecordReplicatedTask t : tasks) {
+      final ORecordId rid = t.getRid();
+
+      final ORecordInternal<?> rec = rid.getRecord();
+      if (rec == null)
+        fixTask.add(new ODeleteRecordTask(rid, null));
+      else {
+        final ORecordVersion v = rec.getRecordVersion();
+        v.setRollbackMode();
+        fixTask.add(new OUpdateRecordTask(rid, rec.toStream(), v, rec.getRecordType()));
+      }
+    }
+
+    return fixTask;
   }
 
   @Override
