@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeBucket;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -48,16 +47,16 @@ public class OSBTreeInverseMapEntryIterator<K, V> implements Iterator<Map.Entry<
   private void prefetchData(boolean firstTime) {
     sbTree.loadEntriesMinor(lastKey, firstTime, new OSBTree.RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(final OSBTreeBucket.SBTreeEntry<K, V> entry) {
+      public boolean addResult(final OTree.BucketEntry<K, V> entry) {
         preFetchedValues.add(new Map.Entry<K, V>() {
           @Override
           public K getKey() {
-            return entry.key;
+            return entry.getKey();
           }
 
           @Override
           public V getValue() {
-            return entry.value;
+            return entry.getValue();
           }
 
           @Override

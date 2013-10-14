@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.sbtree.OTree;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 
 /**
@@ -355,7 +356,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     return getLongValue(RIGHT_SIBLING_OFFSET);
   }
 
-  public static final class SBTreeEntry<K, V> implements Comparable<SBTreeEntry<K, V>> {
+  public static final class SBTreeEntry<K, V> implements OTree.BucketEntry<K, V>, Comparable<SBTreeEntry<K, V>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
     public final long                   leftChild;
@@ -368,6 +369,14 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       this.rightChild = rightChild;
       this.key = key;
       this.value = value;
+    }
+
+    public K getKey() {
+      return key;
+    }
+
+    public V getValue() {
+      return value;
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.sbtree.OTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 
 /**
@@ -361,7 +362,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     return getBucketPointer(offset + RIGHT_SIBLING_OFFSET);
   }
 
-  public static final class SBTreeEntry<K, V> implements Comparable<SBTreeEntry<K, V>> {
+  public static final class SBTreeEntry<K, V> implements OTree.BucketEntry<K, V>, Comparable<SBTreeEntry<K, V>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
     public final OBonsaiBucketPointer   leftChild;
@@ -374,6 +375,14 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       this.rightChild = rightChild;
       this.key = key;
       this.value = value;
+    }
+
+    public K getKey() {
+      return key;
+    }
+
+    public V getValue() {
+      return value;
     }
 
     @Override

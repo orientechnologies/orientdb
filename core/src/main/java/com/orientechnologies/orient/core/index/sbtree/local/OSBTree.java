@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.sbtree.OTree;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurableComponent;
@@ -44,7 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Andrey Lomakin
  * @since 8/7/13
  */
-public class OSBTree<K, V> extends ODurableComponent {
+public class OSBTree<K, V> extends ODurableComponent implements OTree<K, V> {
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
@@ -364,6 +365,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  @Override
   public long size() {
     acquireSharedLock();
     try {
@@ -384,6 +386,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  @Override
   public V remove(K key) {
     acquireExclusiveLock();
     OStorageTransaction transaction = storage.getStorageTransaction();
@@ -465,8 +468,8 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     loadEntriesMinor(key, inclusive, new RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(OSBTreeBucket.SBTreeEntry<K, V> entry) {
-        result.add(entry.value);
+      public boolean addResult(BucketEntry<K, V> entry) {
+        result.add(entry.getValue());
         if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
           return false;
 
@@ -536,8 +539,8 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     loadEntriesMajor(key, inclusive, new RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(OSBTreeBucket.SBTreeEntry<K, V> entry) {
-        result.add(entry.value);
+      public boolean addResult(BucketEntry<K, V> entry) {
+        result.add(entry.getValue());
         if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
           return false;
 
@@ -548,6 +551,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     return result;
   }
 
+  @Override
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
@@ -602,8 +606,8 @@ public class OSBTree<K, V> extends ODurableComponent {
     final List<V> result = new ArrayList<V>();
     loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, new RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(OSBTreeBucket.SBTreeEntry<K, V> entry) {
-        result.add(entry.value);
+      public boolean addResult(BucketEntry<K, V> entry) {
+        result.add(entry.getValue());
         if (maxValuesToFetch > 0 && result.size() >= maxValuesToFetch)
           return false;
 
@@ -614,6 +618,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     return result;
   }
 
+  @Override
   public K firstKey() {
     acquireSharedLock();
     try {
@@ -1136,10 +1141,6 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.pageIndex = pageIndex;
       this.itemIndex = itemIndex;
     }
-  }
-
-  public static interface RangeResultListener<K, V> {
-    public boolean addResult(OSBTreeBucket.SBTreeEntry<K, V> entry);
   }
 
 }

@@ -72,7 +72,7 @@ public class OSBTreeRIDSetTest {
     OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
 
     assertNotNull(set.getFileName());
-    assertNotNull(set.getRootIndex());
+    assertNotNull(set.getRootPointer());
     assertTrue(set.isEmpty());
   }
 
@@ -120,6 +120,7 @@ public class OSBTreeRIDSetTest {
     expected.add(new ORecordId("#77:16"));
 
     OSBTreeRIDSet ridSet = new OSBTreeRIDSet(doc);
+    ridSet.setAutoConvertToRecord(false);
     ridSet.addAll(expected);
     assertEquals(ridSet.size(), 5);
 
@@ -240,6 +241,7 @@ public class OSBTreeRIDSetTest {
     initialRecords.add(new ORecordId("#77:16"));
 
     final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    set.setAutoConvertToRecord(false);
     set.addAll(initialRecords);
 
     assertFalse(set.retainAll(initialRecords));

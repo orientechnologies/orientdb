@@ -20,19 +20,16 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeBucket;
-
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
   private LinkedList<Map.Entry<K, V>> preFetchedValues;
-  private final OSBTree<K, V>         sbTree;
+  private final OTree<K, V>           sbTree;
   private K                           firstKey;
   private Map.Entry<K, V>             currentEntry;
 
-  public OSBTreeMapEntryIterator(OSBTree<K, V> sbTree) {
+  public OSBTreeMapEntryIterator(OTree<K, V> sbTree) {
     this.sbTree = sbTree;
     if (sbTree.size() == 0) {
       this.preFetchedValues = null;
@@ -46,18 +43,18 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   }
 
   private void prefetchData(boolean firstTime) {
-    sbTree.loadEntriesMajor(firstKey, firstTime, new OSBTree.RangeResultListener<K, V>() {
+    sbTree.loadEntriesMajor(firstKey, firstTime, new OTree.RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(final OSBTreeBucket.SBTreeEntry<K, V> entry) {
+      public boolean addResult(final OTree.BucketEntry<K, V> entry) {
         preFetchedValues.add(new Map.Entry<K, V>() {
           @Override
           public K getKey() {
-            return entry.key;
+            return entry.getKey();
           }
 
           @Override
           public V getValue() {
-            return entry.value;
+            return entry.getValue();
           }
 
           @Override
