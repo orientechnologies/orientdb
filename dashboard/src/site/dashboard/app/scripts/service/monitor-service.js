@@ -87,17 +87,26 @@ monitor.factory('Metric', function ($http, $resource) {
     }
     resource.getMetrics = function (params, callback) {
         var url = API + 'command/monitor/sql/-/-1';
+        var query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where ";
         if (params.names) {
+            var like = "";
             params.name = "";
             params.names.forEach(function (elem, idx, array) {
                 params.name += "'" + elem + "',";
+                like += "name like '%" + elem + "%' ";
+                if (idx < array.length -1) {
+                    like += " OR ";
+                }
             });
             var index = params.name.lastIndexOf(",");
-            params.name = params.name.substring(0, index);
+            query += '( ' + like + ' ) ';
+            //params.name = params.name.substring(0, index);
+
         } else {
 
         }
-        var query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where  name in [{{name}}] ";
+
+
         if (params.dateFrom) {
             query += "and snapshot.dateFrom >= '{{dateFrom}}' ";
         }

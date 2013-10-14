@@ -7,6 +7,6 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
 	public boolean canExecute(ODocument source, ODocument when) {
 
-		return true;
+		return false;
 	}
 }
