@@ -122,7 +122,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	private void registerExecutors() {
 		OEventController.getInstance().register(new OEventMetricMailExecutor());
-		
+
 	}
 
 	public OMonitoredServer getMonitoredServer(final String iServer) {
@@ -257,6 +257,10 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass metrics = schema.createClass(CLASS_METRICS_WHEN);
 		metrics.setSuperClass(eventWhen);
+		metrics.createProperty("name", OType.STRING);
+		metrics.createProperty("operator", OType.STRING);
+		metrics.createProperty("parameter", OType.STRING);
+		metrics.createProperty("value", OType.STRING);
 
 		final OClass http = schema.createClass(CLASS_HTTP_WHAT);
 		http.setSuperClass(eventWhat);
@@ -268,6 +272,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		mail.createProperty("subject", OType.STRING);
 		mail.createProperty("fromAddress", OType.STRING);
 		mail.createProperty("toAddress", OType.STRING);
+		mail.createProperty("cc", OType.STRING);
+		mail.createProperty("bcc", OType.STRING);
+		
 
 		final OClass function = schema.createClass(CLASS_FUNCTION_WHAT);
 		function.setSuperClass(eventWhat);
