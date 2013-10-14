@@ -10,20 +10,19 @@
         "angular-cookies": "~1.0.5",
         "angular-sanitize": "~1.0.5",
         "angularjs-i18n": "latest",
-        "angular-ui-select2" : "latest",
+        "angular-ui-select2": "latest",
         "font-awesome": "latest",
         "angular-ngi18n": "latest",
-        "bootstrap" : "2.3.2",
-        "angular-strap" : "latest",
-        "moment" : "latest",
-        "jqvmap" : "latest",
-        "d3" : "latest",
-        "nvd3" : "latest",
-        "bootstrap-daterangepicker" : "latest",
-        "stringjs" : "~1.5.1",
-        "flot" : "0.8.1",
-        "angular-ui-codemirror" :"~0.0.5"
-        
+        "bootstrap": "2.3.2",
+        "angular-strap": "latest",
+        "moment": "latest",
+        "jqvmap": "latest",
+        "d3": "latest",
+        "bootstrap-daterangepicker": "latest",
+        "stringjs": "~1.5.1",
+        "flot": "0.8.1",
+        "angular-ui-codemirror": "~0.0.5"
+
     },
     "devDependencies": {
         "angular-mocks": "~1.0.5",
