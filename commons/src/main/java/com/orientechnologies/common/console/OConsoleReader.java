@@ -1,9 +1,21 @@
 package com.orientechnologies.common.console;
 
+import java.io.Writer;
+
 public interface OConsoleReader {
-	public String readLine();
+  public String readLine();
 
-	public void setConsole(OConsoleApplication console);
+  public String readLine(String prompt);
 
-	public OConsoleApplication getConsole();
+  public void setConsole(OConsoleApplication console);
+
+  public OConsoleApplication getConsole();
+
+  public boolean hasPromptSupport();
+
+  public void setPrompt(String prompt);
+
+  public Writer getOut();
+
+  public Writer getErr();
 }

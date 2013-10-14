@@ -85,46 +85,6 @@
             <artifactId>groovy</artifactId>
             <version>1.8.9</version>
         </dependency>
-
-        <!-- TINKERPOP STACK -->
-        <!--
-                <dependency>
-                    <groupId>com.tinkerpop.blueprints</groupId>
-                    <artifactId>blueprints-core</artifactId>
-                    <version>${blueprints.version}</version>
-                    <scope>system</scope>
-                    <systemPath>${project.basedir}/lib/blueprints-core-${blueprints.version}.jar</systemPath>
-                </dependency>
-                <dependency>
-                    <groupId>com.tinkerpop.blueprints</groupId>
-                    <artifactId>blueprints-orient-graph</artifactId>
-                    <version>${blueprints.version}</version>
-                    <scope>system</scope>
-                    <systemPath>${project.basedir}/lib/blueprints-orient-graph-${blueprints.version}.jar</systemPath>
-                </dependency>
-                <dependency>
-                    <groupId>com.tinkerpop</groupId>
-                    <artifactId>pipes</artifactId>
-                    <version>${blueprints.version}</version>
-                    <type>jar</type>
-                    <scope>system</scope>
-                    <systemPath>${project.basedir}/lib/pipes-${blueprints.version}.jar</systemPath>
-                </dependency>
-                <dependency>
-                    <groupId>com.tinkerpop.gremlin</groupId>
-                    <artifactId>gremlin-java</artifactId>
-                    <version>${blueprints.version}</version>
-                    <scope>system</scope>
-                    <systemPath>${project.basedir}/lib/gremlin-java-${blueprints.version}.jar</systemPath>
-                </dependency>
-                <dependency>
-                    <groupId>com.tinkerpop.gremlin</groupId>
-                    <artifactId>gremlin-groovy</artifactId>
-                    <version>${blueprints.version}</version>
-                    <scope>system</scope>
-                    <systemPath>${project.basedir}/lib/gremlin-groovy-${blueprints.version}.jar</systemPath>
-                </dependency>
-         -->
         <dependency>
             <groupId>com.tinkerpop.blueprints</groupId>
             <artifactId>blueprints-core</artifactId>
