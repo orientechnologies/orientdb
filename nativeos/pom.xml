@@ -36,6 +36,7 @@
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jna.version>4.0.0</jna.version>
+        <osgi.export>com.orientechnologies.orient.nio.*</osgi.export>
     </properties>
 
     <artifactId>orientdb-nativeos</artifactId>

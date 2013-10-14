@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.graph.console;
 
-import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
+import com.orientechnologies.orient.console.OJlineConsoleReader;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
@@ -37,27 +37,11 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   }
 
   public static void main(final String[] args) {
-    try {
-      boolean tty = false;
-      try {
-        if (setTerminalToCBreak())
-          tty = true;
+    final OConsoleDatabaseApp console = new OGremlinConsole(args);
+    console.setReader(new OJlineConsoleReader());
 
-      } catch (Exception e) {
-      }
-
-      final OConsoleDatabaseApp console = new OGremlinConsole(args);
-      if (tty)
-        console.setReader(new TTYConsoleReader());
-
-      console.run();
-
-    } finally {
-      try {
-        stty("echo");
-      } catch (Exception e) {
-      }
-    }
+    final int result = console.run();
+    System.exit(result);
   }
 
   @Override
@@ -92,10 +76,12 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       out.println("\n" + result);
 
       out.printf("\nScript executed in %f sec(s).", elapsedSeconds);
+      out.println();
     } catch (OStorageException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof OCommandExecutorNotFoundException)
         out.printf("\nError: the GREMLIN command executor is not installed, check your configuration");
+      out.println();
     }
   }
 }

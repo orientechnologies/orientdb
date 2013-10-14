@@ -1,15 +1,6 @@
 package com.orientechnologies.common.console;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.Reader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -461,4 +452,27 @@ public class TTYConsoleReader implements OConsoleReader {
     return file;
   }
 
+  @Override
+  public boolean hasPromptSupport() {
+    return false;
+  }
+
+  @Override
+  public String readLine(String prompt) {
+    throw new UnsupportedOperationException("readLine(prompt)");
+  }
+
+  @Override
+  public void setPrompt(String prompt) {
+  }
+
+  @Override
+  public Writer getOut() {
+    return new OutputStreamWriter(System.out);
+  }
+
+  @Override
+  public Writer getErr() {
+    return new OutputStreamWriter(System.err);
+  }
 }

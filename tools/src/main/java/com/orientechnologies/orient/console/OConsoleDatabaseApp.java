@@ -15,29 +15,12 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
@@ -59,11 +42,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
+import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -108,39 +87,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   public static void main(final String[] args) {
-    int result = 0;
+    final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+    console.setReader(new OJlineConsoleReader());
 
-    try {
-      boolean tty = false;
-      try {
-        if (setTerminalToCBreak())
-          tty = true;
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-          @Override
-          public void run() {
-            try {
-              stty("echo");
-            } catch (Exception e) {
-            }
-          }
-        });
-
-      } catch (Exception e) {
-      }
-
-      final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
-      if (tty)
-        console.setReader(new TTYConsoleReader());
-
-      result = console.run();
-
-    } finally {
-      try {
-        stty("echo");
-      } catch (Exception e) {
-      }
-    }
+    int result = console.run();
 
     System.exit(result);
   }
@@ -187,10 +137,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     disconnect();
 
     if (iUserPassword == null) {
-      message("Enter password: ");
-      final BufferedReader br = new BufferedReader(new InputStreamReader(this.in));
-      iUserPassword = br.readLine();
-      message("\n");
+      if (reader.hasPromptSupport()) {
+        iUserPassword = reader.readLine("Enter password: ");
+      } else {
+        message("Enter password: ");
+        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        iUserPassword = br.readLine();
+        message("\n");
+      }
     }
 
     currentDatabaseUserName = iUserName;
@@ -1915,11 +1869,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println();
   }
 
-  public String ask(final String iText) {
-    out.print(iText);
-    final Scanner scanner = new Scanner(in);
-    final String answer = scanner.nextLine();
-    scanner.close();
+  public String ask(final String text) {
+    final String answer;
+    if (!reader.hasPromptSupport()) {
+      out.print(text);
+      answer = reader.readLine();
+    } else {
+      answer = reader.readLine(text);
+    }
+
     return answer;
   }
 

@@ -39,6 +39,6 @@ goto setArgs
 :doneSetArgs
 
 set ORIENTDB_SETTINGS=-Dcache.level1.enabled=false -Dcache.level2.enabled=false -Djava.util.logging.config.file="%ORIENTDB_HOME%\config\orientdb-client-log.properties" -Djava.awt.headless=true
-call %JAVA% -client %ORIENTDB_SETTINGS% -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.graph.console.OGremlinConsole %CMD_LINE_ARGS%
+call %JAVA% -client %ORIENTDB_SETTINGS% -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;%ORIENTDB_HOME%\lib\console*;" com.orientechnologies.orient.graph.console.OGremlinConsole %CMD_LINE_ARGS%
 
 :end

@@ -17,20 +17,12 @@ package com.orientechnologies.common.console;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,9 +38,8 @@ public class OConsoleApplication {
     OK, ERROR, EXIT
   };
 
-  protected InputStream           in              = System.in;                       // System.in;
-  protected PrintStream           out             = System.out;
-  protected PrintStream           err             = System.err;
+  protected PrintWriter           out;
+  protected PrintWriter           err;
 
   protected String                wordSeparator   = " ";
   protected String[]              helpCommands    = { "help", "?" };
@@ -56,8 +47,7 @@ public class OConsoleApplication {
 
   protected Map<String, String>   properties      = new HashMap<String, String>();
 
-  // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader        reader          = new DefaultConsoleReader();
+  protected OConsoleReader        reader;
   protected boolean               interactiveMode;
   protected String[]              args;
 
@@ -66,10 +56,16 @@ public class OConsoleApplication {
   public void setReader(OConsoleReader iReader) {
     this.reader = iReader;
     reader.setConsole(this);
+
+    if (reader.hasPromptSupport())
+      reader.setPrompt("orientdb> ");
+
+    out = new PrintWriter(reader.getOut());
+    err = new PrintWriter(reader.getErr());
   }
 
-  public OConsoleApplication(String[] iArgs) {
-    this.args = iArgs;
+  public OConsoleApplication(String[] args) {
+    this.args = args;
   }
 
   public int run() {
@@ -85,8 +81,11 @@ public class OConsoleApplication {
       String consoleInput;
 
       while (true) {
-        out.println();
-        out.print("orientdb> ");
+        if (!reader.hasPromptSupport()) {
+          out.println();
+          out.print("orientdb> ");
+        }
+
         consoleInput = reader.readLine();
 
         if (consoleInput == null || consoleInput.length() == 0)
@@ -484,12 +483,14 @@ public class OConsoleApplication {
     final int verboseLevel = getVerboseLevel();
     if (verboseLevel > 1)
       out.printf(iMessage, iArgs);
+    out.println();
   }
 
   public void error(final String iMessage, final Object... iArgs) {
     final int verboseLevel = getVerboseLevel();
     if (verboseLevel > 0)
       out.printf(iMessage, iArgs);
+    out.println();
   }
 
   public int getVerboseLevel() {
