@@ -28,6 +28,9 @@ echo "       \`\`        \`.                                       "
 echo "                 \`\`                                       "
 echo "                 \`                                        "
 
+#set current working directory
+cd "$(dirname "$0")"
+
 # resolve links - $0 may be a softlink
 PRG="$0"
 
@@ -43,6 +46,7 @@ done
 
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
+cd PRGDIR
 
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
