@@ -15,7 +15,6 @@ set CP=
 
 
 for %%i in (%LIBDIR%\*.jar) do call :concatsep %%i
-for %%i in (%LIBDIR%\gremlin-console\*.jar) do call :concatsep %%i
 
 :: cd ..\..\..\
 

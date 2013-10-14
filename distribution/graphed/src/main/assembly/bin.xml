@@ -169,18 +169,6 @@
                 <exclude>*</exclude>
             </excludes>
         </fileSet>
-
-        <!--
-            Console libraries
-        -->
-        <fileSet>
-            <directory>${basedir}/../../tools/lib/console</directory>
-            <outputDirectory>lib/console</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/../../graphdb/lib/gremlin-console</directory>
-            <outputDirectory>lib/gremlin-console</outputDirectory>
-        </fileSet>
     </fileSets>
 
     <!--
@@ -209,7 +197,6 @@
             <outputDirectory>lib</outputDirectory>
             <excludes>
                 <exclude>*:pom</exclude>
-                <exclude>jline:jar</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>

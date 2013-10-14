@@ -452,27 +452,4 @@ public class TTYConsoleReader implements OConsoleReader {
     return file;
   }
 
-  @Override
-  public boolean hasPromptSupport() {
-    return false;
-  }
-
-  @Override
-  public String readLine(String prompt) {
-    throw new UnsupportedOperationException("readLine(prompt)");
-  }
-
-  @Override
-  public void setPrompt(String prompt) {
-  }
-
-  @Override
-  public Writer getOut() {
-    return new OutputStreamWriter(System.out);
-  }
-
-  @Override
-  public Writer getErr() {
-    return new OutputStreamWriter(System.err);
-  }
 }

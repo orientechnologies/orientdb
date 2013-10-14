@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
@@ -87,10 +88,39 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   public static void main(final String[] args) {
-    final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
-    console.setReader(new OJlineConsoleReader());
+    int result = 0;
 
-    int result = console.run();
+    try {
+      boolean tty = false;
+      try {
+        if (setTerminalToCBreak())
+          tty = true;
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+          @Override
+          public void run() {
+            try {
+              stty("echo");
+            } catch (Exception e) {
+            }
+          }
+        });
+
+      } catch (Exception e) {
+      }
+
+      final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+      if (tty)
+        console.setReader(new TTYConsoleReader());
+
+      result = console.run();
+
+    } finally {
+      try {
+        stty("echo");
+      } catch (Exception e) {
+      }
+    }
 
     System.exit(result);
   }
@@ -137,14 +167,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     disconnect();
 
     if (iUserPassword == null) {
-      if (reader.hasPromptSupport()) {
-        iUserPassword = reader.readLine("Enter password: ");
-      } else {
-        message("Enter password: ");
-        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        iUserPassword = br.readLine();
-        message("\n");
-      }
+      message("Enter password: ");
+      final BufferedReader br = new BufferedReader(new InputStreamReader(this.in));
+      iUserPassword = br.readLine();
+      message("\n");
     }
 
     currentDatabaseUserName = iUserName;
@@ -1869,15 +1895,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println();
   }
 
-  public String ask(final String text) {
-    final String answer;
-    if (!reader.hasPromptSupport()) {
-      out.print(text);
-      answer = reader.readLine();
-    } else {
-      answer = reader.readLine(text);
-    }
-
+  public String ask(final String iText) {
+    out.print(iText);
+    final Scanner scanner = new Scanner(in);
+    final String answer = scanner.nextLine();
+    scanner.close();
     return answer;
   }
 
