@@ -31,6 +31,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
@@ -71,7 +73,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransaction();
     status = TXSTATUS.COMMITTING;
 
-    if (!(database.getStorage() instanceof OStorageEmbedded))
+    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED && !(database.getStorage() instanceof OStorageEmbedded))
       database.getStorage().commit(this, null);
     else {
       final List<String> involvedIndexes = getInvolvedIndexes();
