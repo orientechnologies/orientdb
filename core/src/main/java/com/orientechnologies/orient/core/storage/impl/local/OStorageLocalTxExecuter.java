@@ -245,11 +245,7 @@ public class OStorageLocalTxExecuter {
       final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
       if (rid.isNew()) {
-        txEntry.getRecord().onBeforeIdentityChanged(rid);
         rid.clusterId = cluster.getId();
-      }
-
-      if (rid.isNew()) {
         final OPhysicalPosition ppos;
         if (iUseLog)
           ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry
@@ -264,9 +260,7 @@ public class OStorageLocalTxExecuter {
         rid.clusterPosition = ppos.clusterPosition;
         txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
-        txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         iTx.updateIdentityAfterCommit(oldRID, rid);
-
       } else {
         if (iUseLog)
           txEntry

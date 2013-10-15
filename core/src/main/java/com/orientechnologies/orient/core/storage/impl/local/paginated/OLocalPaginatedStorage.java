@@ -1460,11 +1460,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
       if (rid.isNew()) {
-        txEntry.getRecord().onBeforeIdentityChanged(rid);
         rid.clusterId = cluster.getId();
-      }
-
-      if (rid.isNew()) {
         final OPhysicalPosition ppos;
         ppos = createRecord(-1, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1, null)
             .getResult();
@@ -1472,9 +1468,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         rid.clusterPosition = ppos.clusterPosition;
         txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
-        txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         clientTx.updateIdentityAfterCommit(oldRID, rid);
-
       } else {
         txEntry
             .getRecord()

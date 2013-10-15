@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -31,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -305,11 +301,19 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       // NO CHANGE, IGNORE IT
       return;
 
-    if (oldRid.isNew()) {
-      // REMOVE AND RE-PUT THE OPERATION BECAUSE KEY IS CHANGED
-      final ORecordOperation rec = allEntries.remove(oldRid);
-      if (rec != null)
+    final ORecordOperation rec = getRecordEntry(oldRid);
+    if (rec != null) {
+      if (allEntries.remove(oldRid) != null)
         allEntries.put(newRid, rec);
+
+      if (recordEntries.remove(oldRid) != null)
+        recordEntries.put(newRid, rec);
+
+      if (!rec.getRecord().getIdentity().equals(newRid)) {
+        rec.getRecord().onBeforeIdentityChanged(oldRid);
+        rec.getRecord().setIdentity(new ORecordId(newRid));
+        rec.getRecord().onAfterIdentityChanged(rec.getRecord());
+      }
     }
 
     // UPDATE INDEXES

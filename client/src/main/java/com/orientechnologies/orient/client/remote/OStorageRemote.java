@@ -1112,21 +1112,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           for (int i = 0; i < createdRecords; i++) {
             currentRid = network.readRID();
             createdRid = network.readRID();
-			iTx.updateIdentityAfterCommit(currentRid, createdRid);
+
+            iTx.updateIdentityAfterCommit(currentRid, createdRid);
           }
+
           final int updatedRecords = network.readInt();
           ORecordId rid;
           for (int i = 0; i < updatedRecords; ++i) {
             rid = network.readRID();
 
-            // SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
-            for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
-			  ORecordOperation rop = iTx.getRecordEntry(rid);
-			  if (rop != null) {
-			    rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
-				break;
-			  }
-            }
+            ORecordOperation rop = iTx.getRecordEntry(rid);
+            if (rop != null)
+              rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
           }
 
           committedEntries.clear();
