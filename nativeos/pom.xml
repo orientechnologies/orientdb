@@ -36,6 +36,7 @@
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jna.version>4.0.0</jna.version>
+        <osgi.import>com.sun.jna;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.nio.*</osgi.export>
     </properties>
 
