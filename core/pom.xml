@@ -30,6 +30,7 @@
             com.orientechnologies.orient.graph.console;resolution:=optional,
             com.orientechnologies.orient.graph.gremlin;resolution:=optional,
             com.orientechnologies.orient.graph.handler;resolution:=optional,
+            com.orientechnologies.orient.graph.sql.functions;resolution:=optional,
             org.iq80.snappy;resolution:=optional,
             javax.imageio.spi,sun.misc;resolution:=optional,
             com.orientechnologies.nio;resolution:=optional,
