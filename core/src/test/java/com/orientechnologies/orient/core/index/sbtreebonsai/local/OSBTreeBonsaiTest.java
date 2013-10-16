@@ -52,7 +52,7 @@ public class OSBTreeBonsaiTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+    sbTree.create("OSBTreeBonsaiTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
         (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
