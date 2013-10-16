@@ -43,19 +43,20 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuilderSerializable {
+  public static final String                    INDEX_FILE_EXTENSION = ".irs";
   private OSBTreeBonsai<OIdentifiable, Boolean> tree;
 
-  protected static final OJVMProfiler           PROFILER = Orient.instance().getProfiler();
+  protected static final OJVMProfiler           PROFILER             = Orient.instance().getProfiler();
 
   public OSBTreeIndexRIDContainer(String fileName) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".irs", 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
 
     tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
   }
 
   public OSBTreeIndexRIDContainer(String fileName, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".irs", 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
     tree.load(fileName, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
   }
 
