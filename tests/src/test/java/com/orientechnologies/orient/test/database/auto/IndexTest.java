@@ -81,6 +81,10 @@ public class IndexTest {
   @Parameters(value = "url")
   public IndexTest(String iURL) {
     database = new OObjectDatabaseTx(iURL);
+    if (!database.exists()) {
+      database.create();
+      database.close();
+    }
   }
 
   @Test(dependsOnMethods = "testIndexGetValuesUniqueIndex")
@@ -1075,6 +1079,8 @@ public class IndexTest {
       db.getMetadata().getSchema().save();
     }
 
+    long expectedIndexSize = 0;
+
     final int passCount = 10;
     final int chunkSize = 1000;
     for (int pass = 0; pass < passCount; pass++) {
@@ -1089,12 +1095,20 @@ public class IndexTest {
       }
       db.commit();
 
+      expectedIndexSize += chunkSize;
+      Assert.assertEquals(db.getMetadata().getIndexManager().getClassIndex("MyFruit", "MyFruit.color").getSize(),
+          expectedIndexSize, "After add");
+
       // do delete
       db.begin();
       for (final ODocument recordToDelete : recordsToDelete) {
         Assert.assertNotNull(db.delete(recordToDelete));
       }
       db.commit();
+
+      expectedIndexSize -= recordsToDelete.size();
+      Assert.assertEquals(db.getMetadata().getIndexManager().getClassIndex("MyFruit", "MyFruit.color").getSize(),
+          expectedIndexSize, "After delete");
     }
 
     db.close();

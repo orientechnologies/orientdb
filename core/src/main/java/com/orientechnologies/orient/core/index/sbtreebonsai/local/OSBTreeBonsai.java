@@ -90,8 +90,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
     this.durableInNonTxMode = durableInNonTxMode;
   }
 
-  public void create(String name, OBonsaiBucketPointer rootBucketPointer, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OStorageLocalAbstract storageLocal) {
+  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+      OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -109,15 +109,10 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
       initSysBucket();
 
       super.startDurableOperation(null);
-      OCacheEntry rootCacheEntry;
-      if (rootBucketPointer.isValid()) {
-        this.rootBucketPointer = rootBucketPointer;
-        rootCacheEntry = diskCache.load(fileId, this.rootBucketPointer.getPageIndex(), false);
-      } else {
-        final AllocationResult allocationResult = allocateBucket();
-        rootCacheEntry = allocationResult.getCacheEntry();
-        this.rootBucketPointer = allocationResult.getPointer();
-      }
+
+      final AllocationResult allocationResult = allocateBucket();
+      OCacheEntry rootCacheEntry = allocationResult.getCacheEntry();
+      this.rootBucketPointer = allocationResult.getPointer();
 
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
 
@@ -214,7 +209,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
       OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketPointer.getDataPointer(),
           bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
-      if (bucketSearchResult.itemIndex >= 0) {
+      final boolean itemFound = bucketSearchResult.itemIndex >= 0;
+
+      if (itemFound) {
         while (!keyBucket.updateValue(bucketSearchResult.itemIndex, value)) {
           keyBucketPointer.releaseExclusiveLock();
           diskCache.release(keyBucketCacheEntry);
@@ -259,7 +256,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
       keyBucketPointer.releaseExclusiveLock();
       diskCache.release(keyBucketCacheEntry);
 
-      if (bucketSearchResult.itemIndex < 0)
+      if (!itemFound)
         setSize(size() + 1);
 
       endDurableOperation(transaction, false);

@@ -80,8 +80,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     setLongValue(offset + TREE_SIZE_OFFSET, 0);
 
-    setByteValue(offset + KEY_SERIALIZER_OFFSET, (byte) -1);
-    setByteValue(offset + VALUE_SERIALIZER_OFFSET, (byte) -1);
+    setByteValue(offset + KEY_SERIALIZER_OFFSET, keySerializer.getId());
+    setByteValue(offset + VALUE_SERIALIZER_OFFSET, valueSerializer.getId());
   }
 
   public OSBTreeBonsaiBucket(long cachePointer, int pageOffset, OBinarySerializer<K> keySerializer,

@@ -23,6 +23,7 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -81,8 +82,12 @@ public class OIndexFullText extends OIndexMultiValues {
 
           if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-            refs = new OMVRBTreeRIDSet();
-            ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
+            if (useSBTreeRIDSet) {
+              refs = new OSBTreeIndexRIDContainer(getName());
+            } else {
+              refs = new OMVRBTreeRIDSet();
+              ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
+            }
           }
 
           // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD

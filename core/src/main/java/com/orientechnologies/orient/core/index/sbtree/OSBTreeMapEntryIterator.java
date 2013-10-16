@@ -16,9 +16,14 @@
 
 package com.orientechnologies.orient.core.index.sbtree;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -46,6 +51,13 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
     sbTree.loadEntriesMajor(firstKey, firstTime, new OTree.RangeResultListener<K, V>() {
       @Override
       public boolean addResult(final OTree.BucketEntry<K, V> entry) {
+        final V value = entry.getValue();
+        final V resultValue;
+        if (value instanceof OSBTreeIndexRIDContainer)
+          resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
+        else
+          resultValue = value;
+
         preFetchedValues.add(new Map.Entry<K, V>() {
           @Override
           public K getKey() {
@@ -54,7 +66,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
 
           @Override
           public V getValue() {
-            return entry.getValue();
+            return resultValue;
           }
 
           @Override

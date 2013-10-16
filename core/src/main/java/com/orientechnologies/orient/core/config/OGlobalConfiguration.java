@@ -216,6 +216,8 @@ public enum OGlobalConfiguration {
   INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
       "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
 
+  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault", "", Boolean.class, true),
+
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 

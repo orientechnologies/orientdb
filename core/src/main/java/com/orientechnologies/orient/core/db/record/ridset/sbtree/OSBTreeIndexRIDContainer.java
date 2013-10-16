@@ -21,91 +21,60 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTree;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, ORecordLazyMultiValue {
-  private final String                   fileName;
-  private final OBonsaiBucketPointer     rootPointer;
-  private ORecordInternal<?>             owner;
-  private boolean                        autoConvertToRecord = true;
+public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuilderSerializable {
+  private OSBTreeBonsai<OIdentifiable, Boolean> tree;
 
-  private final OSBTreeCollectionManager collectionManager;
+  protected static final OJVMProfiler           PROFILER = Orient.instance().getProfiler();
 
-  protected static final OJVMProfiler    PROFILER            = Orient.instance().getProfiler();
+  public OSBTreeIndexRIDContainer(String fileName) {
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".irs", 1, false);
 
-  private OSBTreeRIDSet(ODatabaseRecord database) {
-    collectionManager = database.getSbTreeCollectionManager();
-
-    OSBTreeBonsai<OIdentifiable, Boolean> tree = collectionManager.createSBTree();
-    fileName = tree.getName();
-    rootPointer = tree.getRootBucketPointer();
+    tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
+        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
   }
 
-  public OSBTreeRIDSet() {
-    this(ODatabaseRecordThreadLocal.INSTANCE.get());
-    this.owner = null;
-  }
-
-  public OSBTreeRIDSet(ORecordInternal<?> owner) {
-    this(owner.getDatabase());
-    this.owner = owner;
-  }
-
-  public OSBTreeRIDSet(ORecordInternal<?> owner, String fileName, OBonsaiBucketPointer rootPointer) {
-    this.owner = owner;
-    this.fileName = fileName;
-    this.rootPointer = rootPointer;
-
-    if (owner != null)
-      collectionManager = owner.getDatabase().getSbTreeCollectionManager();
-    else
-      collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-  }
-
-  public OSBTreeRIDSet(ODocument owner, Collection<OIdentifiable> iValue) {
-    this(owner);
-    addAll(iValue);
-  }
-
-  private OSBTreeBonsai<OIdentifiable, Boolean> getTree() {
-    return collectionManager.loadSBTree(fileName, rootPointer);
+  public OSBTreeIndexRIDContainer(String fileName, OBonsaiBucketPointer rootPointer) {
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".irs", 1, false);
+    tree.load(fileName, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
   }
 
   protected String getFileName() {
-    return fileName;
+    return tree.getName();
   }
 
   protected OBonsaiBucketPointer getRootPointer() {
-    return rootPointer;
+    return tree.getRootBucketPointer();
   }
 
   @Override
   public int size() {
-    return (int) getTree().size();
+    return (int) tree.size();
   }
 
   @Override
   public boolean isEmpty() {
-    return getTree().size() == 0L;
+    return tree.size() == 0L;
   }
 
   @Override
@@ -114,12 +83,12 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   public boolean contains(OIdentifiable o) {
-    return getTree().get(o) != null;
+    return tree.get(o) != null;
   }
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return new TreeKeyIterator(getTree(), autoConvertToRecord);
+    return new TreeKeyIterator(tree, false);
   }
 
   @Override
@@ -129,9 +98,6 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
 
     for (OIdentifiable identifiable : this) {
-      if (autoConvertToRecord)
-        identifiable = identifiable.getRecord();
-
       list.add(identifiable);
     }
 
@@ -145,9 +111,6 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>(size());
 
     for (OIdentifiable identifiable : this) {
-      if (autoConvertToRecord)
-        identifiable = identifiable.getRecord();
-
       list.add(identifiable);
     }
 
@@ -156,16 +119,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    return add(getTree(), oIdentifiable);
-  }
-
-  private boolean add(OSBTreeBonsai<OIdentifiable, Boolean> tree, OIdentifiable oIdentifiable) {
     // TODO check if we can avoid get operation
-    // TODO fix race condition
-    if (getTree().get(oIdentifiable) != null)
+    if (this.tree.get(oIdentifiable) != null)
       return false;
 
-    getTree().put(oIdentifiable, Boolean.TRUE);
+    this.tree.put(oIdentifiable, Boolean.TRUE);
     return true;
   }
 
@@ -175,7 +133,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   public boolean remove(OIdentifiable o) {
-    return getTree().remove(o) != null;
+    return tree.remove(o) != null;
   }
 
   @Override
@@ -188,10 +146,9 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
-    final OSBTreeBonsai<OIdentifiable, Boolean> tree = getTree();
     boolean modified = false;
     for (OIdentifiable e : c)
-      if (add(tree, e))
+      if (add(e))
         modified = true;
     return modified;
   }
@@ -221,11 +178,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public void clear() {
-    getTree().clear();
+    tree.clear();
   }
 
   @Override
-  public OSBTreeRIDSet toStream(StringBuilder iOutput) throws OSerializationException {
+  public OSBTreeIndexRIDContainer toStream(StringBuilder iOutput) throws OSerializationException {
     final long timer = PROFILER.startChrono();
 
     try {
@@ -255,7 +212,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     throw new UnsupportedOperationException("unimplemented yet");
   }
 
-  public static OSBTreeRIDSet fromStream(String stream, ORecordInternal<?> owner) {
+  public static OSBTreeIndexRIDContainer fromStream(String stream) {
     stream = stream.substring(OStringSerializerHelper.LINKSET_PREFIX.length(), stream.length() - 1);
 
     final ODocument doc = new ODocument();
@@ -264,37 +221,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
         (Integer) doc.field("rootOffset"));
     final String fileName = doc.field("file");
 
-    return new OSBTreeRIDSet(owner, fileName, rootIndex);
-  }
-
-  @Override
-  public Iterator<OIdentifiable> rawIterator() {
-    return new TreeKeyIterator(getTree(), false);
-  }
-
-  @Override
-  public void convertLinks2Records() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean convertRecords2Links() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isAutoConvertToRecord() {
-    return autoConvertToRecord;
-  }
-
-  @Override
-  public void setAutoConvertToRecord(boolean convertToRecord) {
-    autoConvertToRecord = convertToRecord;
-  }
-
-  @Override
-  public boolean detach() {
-    throw new UnsupportedOperationException();
+    return new OSBTreeIndexRIDContainer(fileName, rootIndex);
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {

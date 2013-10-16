@@ -132,7 +132,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
     sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("actualSBTree", OBonsaiBucketPointer.NULL, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
   private void createExpectedSBTree() {
