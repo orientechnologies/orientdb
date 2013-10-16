@@ -227,7 +227,8 @@ public enum OGlobalConfiguration {
   INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
       "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
 
-  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault", "", Boolean.class, true),
+  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
+      "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -274,7 +275,7 @@ public enum OGlobalConfiguration {
       Integer.class, 40960),
 
   SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
-      "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize ==0.",
+      "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0.",
       Integer.class, 2),
 
   // COLLECTIONS
