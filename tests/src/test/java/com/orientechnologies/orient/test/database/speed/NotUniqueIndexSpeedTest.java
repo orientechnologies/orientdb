@@ -49,7 +49,7 @@ public class NotUniqueIndexSpeedTest extends OrientMonoThreadTest {
   @Override
   @Test(enabled = false)
   public void cycle() throws Exception {
-    String fVal = counter + "è+òàù123456790qwertyASD";
+    String fVal = counter + "123456790qwertyASD";
     counter++;
 
     database.command(
