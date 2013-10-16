@@ -272,7 +272,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return currentResponseMgr.getResponse(iRequest.getTask().getResultStrategy());
   }
 
-  public OHazelcastDistributedDatabase configureDatabase(final ODatabaseDocumentTx iDatabase, final boolean iRestoreMessages) {
+  public OHazelcastDistributedDatabase configureDatabase(final ODatabaseDocumentTx iDatabase, final boolean iRestoreMessages, final boolean iUnqueuePendingMessages) {
     // CREATE A QUEUE PER DATABASE
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
     final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
@@ -284,7 +284,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     // UNDO PREVIOUS MESSAGE IF ANY
     final IMap<Object, Object> undoMap = restoreMessagesBeforeFailure(iRestoreMessages);
 
-    msgService.checkForPendingMessages(requestQueue, queueName);
+    msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
 
     // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.<db>.request, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING
     // THE THREAD ID
@@ -496,9 +496,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected void checkLocalNodeInConfiguration() {
     final String localNode = manager.getLocalNodeName();
 
-    // LOAD DATABASE FILE IF ANY
-    manager.loadDatabaseConfiguration(databaseName, manager.getDistributedConfigFile(databaseName));
-
+    // GET DATABASE CFG
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
     for (String clusterName : cfg.getClusterNames()) {
       final List<List<String>> partitions = cfg.getPartitions(clusterName);
@@ -531,8 +529,48 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     if (dirty) {
       final ODocument doc = cfg.serialize();
+      manager.updateCachedDatabaseConfiguration(databaseName, doc);
       manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, doc);
-      manager.updateDatabaseConfiguration(databaseName, doc);
+    }
+  }
+
+  protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
+    // GET DATABASE CFG
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
+    if (!iForce && cfg.isHotAlignment())
+      // DO NOTHING
+      return;
+
+    boolean dirty = false;
+    for (String clusterName : cfg.getClusterNames()) {
+      final List<List<String>> partitions = cfg.getPartitions(clusterName);
+      if (partitions != null) {
+        for (int p = 0; p < partitions.size(); ++p) {
+          final List<String> partition = partitions.get(p);
+
+          for (int n = 0; n < partition.size(); ++n) {
+            final String node = partition.get(n);
+
+            if (node.equals(iNode)) {
+              // FOUND: REMOVE IT
+              ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+                  "removing node '%s' in partition: %s.%s.%d", iNode, databaseName, clusterName, p);
+
+              partition.remove(n);
+              msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
+              dirty = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (dirty) {
+      final ODocument doc = cfg.serialize();
+      manager.updateCachedDatabaseConfiguration(databaseName, doc);
+      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, doc);
     }
   }
 

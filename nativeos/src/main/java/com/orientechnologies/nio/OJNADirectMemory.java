@@ -19,7 +19,6 @@ package com.orientechnologies.nio;
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
 /**
@@ -126,7 +125,7 @@ public class OJNADirectMemory implements ODirectMemory {
 
   @Override
   public void copyData(long srcPointer, long destPointer, long len) {
-    CLibrary.memmove(new Pointer(destPointer), new Pointer(srcPointer), new NativeLong(len));
+    CLibrary.memoryMove(srcPointer, destPointer, len);
   }
 
 }

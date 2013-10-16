@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -124,10 +119,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
             loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
             entry.getValue().record = loadedRecord;
-            
+
             // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
-            updatedRecords.put((ORecordId)entry.getKey(), entry.getValue().getRecord());
-            
+            updatedRecords.put((ORecordId) entry.getKey(), entry.getValue().getRecord());
+
           }
         }
 

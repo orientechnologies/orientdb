@@ -10,80 +10,83 @@
 	the specific language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>1.6.0-SNAPSHOT</version>
-		<relativePath>../</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>1.6.0-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
 
-	<artifactId>orientdb-core</artifactId>
+    <artifactId>orientdb-core</artifactId>
 
-	<name>OrientDB Core</name>
+    <name>OrientDB Core</name>
 
-	<properties>
-		<osgi.import>
-			com.orientechnologies.orient.graph.console;resolution:=optional,
-			com.orientechnologies.orient.graph.gremlin;resolution:=optional,
-			com.orientechnologies.orient.graph.handler;resolution:=optional,
-			org.iq80.snappy;resolution:=optional,
-			*
-		</osgi.import>
-		<osgi.export>com.orientechnologies.orient.core.*</osgi.export>
-	</properties>
+    <properties>
+        <osgi.import>
+            com.orientechnologies.orient.graph.console;resolution:=optional,
+            com.orientechnologies.orient.graph.gremlin;resolution:=optional,
+            com.orientechnologies.orient.graph.handler;resolution:=optional,
+            com.orientechnologies.orient.graph.sql.functions;resolution:=optional,
+            org.iq80.snappy;resolution:=optional,
+            javax.imageio.spi,sun.misc;resolution:=optional,
+            com.orientechnologies.nio;resolution:=optional,
+            *
+        </osgi.import>
+        <osgi.export>com.orientechnologies.orient.core.*</osgi.export>
+    </properties>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.13</version>
-				<configuration>
-					<argLine>-Xmx2048m</argLine>
-					<systemPropertyVariables>
-						<buildDirectory>${project.build.directory}</buildDirectory>
-					</systemPropertyVariables>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <argLine>-Xmx2048m</argLine>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-commons</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orient-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-nativeos</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-nativeos</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
 
-		<dependency>
-			<groupId>org.iq80.snappy</groupId>
-			<artifactId>snappy</artifactId>
-			<version>0.3</version>
-		</dependency>
+        <dependency>
+            <groupId>org.iq80.snappy</groupId>
+            <artifactId>snappy</artifactId>
+            <version>0.3</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>5.14.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-all</artifactId>
-			<version>1.9.5</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.14.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>

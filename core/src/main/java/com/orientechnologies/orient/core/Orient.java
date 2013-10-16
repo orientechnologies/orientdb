@@ -72,7 +72,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final AtomicInteger                   serialId               = new AtomicInteger();
 
   protected OMemoryWatchDog                       memoryWatchDog;
-  protected OJVMProfiler                          profiler;
+  protected final OJVMProfiler                    profiler               = new OJVMProfiler();                                         ;
 
   protected ODatabaseThreadLocalFactory           databaseThreadFactory;
 
@@ -91,7 +91,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         return this;
 
       shutdownHook = new OrientShutdownHook();
-      profiler = new OJVMProfiler();
 
       // REGISTER THE EMBEDDED ENGINE
       registerEngine(new OEngineLocal());
@@ -173,12 +172,9 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       resetListeners();
 
-      timer.cancel();
+      timer.purge();
 
-      if (profiler != null) {
-        profiler.shutdown();
-        profiler = null;
-      }
+      profiler.shutdown();
 
       OLogManager.instance().info(this, "Orient Engine shutdown complete\n");
 

@@ -45,9 +45,24 @@ public class ODistributedConfiguration {
       if (iClusterName != null) {
         ODocument cluster = getClusterConfiguration(iClusterName);
         if (cluster.containsField("replication"))
-          return cluster.field("replication");
+          return cluster.<Boolean> field("replication");
       }
-      return configuration.field("replication");
+
+      return configuration.<Boolean> field("replication");
+    }
+  }
+
+  /**
+   * Returns true if hot alignment is supported.
+   * 
+   * @return
+   */
+  public boolean isHotAlignment() {
+    synchronized (configuration) {
+      final Boolean value = configuration.field("hotAlignment");
+      if (value != null)
+        return value;
+      return true;
     }
   }
 

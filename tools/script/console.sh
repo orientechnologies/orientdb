@@ -3,6 +3,8 @@
 # Copyright (c) 1999-2010 Luca Garulli
 #
 
+cd "$(dirname "$0")"
+
 # resolve links - $0 may be a softlink
 PRG="$0"
 

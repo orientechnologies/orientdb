@@ -29,85 +29,85 @@ import com.orientechnologies.orient.core.id.ORID;
  */
 public interface OMVRBTreeEntryDataProvider<K, V> {
 
-	public ORID getIdentity();
+  public ORID getIdentity();
 
-	public K getKeyAt(int iIndex);
+  public K getKeyAt(int iIndex);
 
-	public V getValueAt(int iIndex);
+  public V getValueAt(int iIndex);
 
-	public ORID getParent();
+  public ORID getParent();
 
-	public ORID getLeft();
+  public ORID getLeft();
 
-	public ORID getRight();
+  public ORID getRight();
 
-	public int getSize();
+  public int getSize();
 
-	public int getPageSize();
+  public int getPageSize();
 
-	public boolean getColor();
+  public boolean getColor();
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean setValueAt(int iIndex, V iValue);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean setValueAt(int iIndex, V iValue);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean insertAt(int iIndex, K iKey, V iValue);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean insertAt(int iIndex, K iKey, V iValue);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean removeAt(int iIndex);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean removeAt(int iIndex);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean copyDataFrom(OMVRBTreeEntryDataProvider<K, V> iFrom, int iStartPosition);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean copyDataFrom(OMVRBTreeEntryDataProvider<K, V> iFrom, int iStartPosition);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean truncate(int iNewSize);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean truncate(int iNewSize);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean setParent(ORID iRid);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean setParent(ORID iRid);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean setLeft(ORID iRid);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean setLeft(ORID iRid);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean setRight(ORID iRid);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean setRight(ORID iRid);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean setColor(final boolean iColor);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean setColor(final boolean iColor);
 
-	/**
-	 * @return <code>true</code> if this entry become dirty with this update.
-	 */
-	public boolean copyFrom(OMVRBTreeEntryDataProvider<K, V> iSource);
+  /**
+   * @return <code>true</code> if this entry become dirty with this update.
+   */
+  public boolean copyFrom(OMVRBTreeEntryDataProvider<K, V> iSource);
 
-	public boolean isEntryDirty();
+  public boolean isEntryDirty();
 
-	public void save();
+  public void save();
 
-	public void delete();
+  public void delete();
 
-	public void setIdentityChangedListener(final OIdentityChangedListener listener);
+  public void setIdentityChangedListener(final OIdentityChangedListener listener);
 
-	public void removeIdentityChangedListener(final OIdentityChangedListener listener);
+  public void removeIdentityChangedListener(final OIdentityChangedListener listener);
 
-	/** SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS */
-	public void clear();
+  /** SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS */
+  public void clear();
 
 }
