@@ -17,8 +17,15 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -61,6 +68,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   private String                    name;
   protected String                  type;
   private String                    algorithm;
+  protected String                  valueContainerAlgorithm;
 
   protected final OIndexEngine<T>   indexEngine;
   private Set<String>               clustersToIndex  = new HashSet<String>();
@@ -74,7 +82,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   private Thread                    rebuildThread    = null;
 
-  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine) {
+  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     acquireExclusiveLock();
@@ -83,6 +91,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       this.type = type;
       this.indexEngine = indexEngine;
       this.algorithm = algorithm;
+      this.valueContainerAlgorithm = valueContainerAlgorithm;
 
       indexEngine.init();
     } finally {
@@ -165,6 +174,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       indexDefinition = indexMetadata.getIndexDefinition();
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
       algorithm = indexMetadata.getAlgorithm();
+      valueContainerAlgorithm = indexMetadata.getValueContainerAlgorithm();
 
       final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
 
@@ -249,7 +259,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS));
 
-    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm);
+    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
   public boolean contains(final Object key) {
@@ -703,6 +713,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
         configuration.field(CONFIG_MAP_RID, indexEngine.getIdentity());
         configuration.field(ALGORITHM, algorithm);
+        configuration.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
 
       } finally {
         configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
