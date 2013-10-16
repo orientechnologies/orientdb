@@ -277,6 +277,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(func.getLanguage());
+    scriptEngine.put("engine", scriptEngine);
     // final ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("javascript");
     final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
     // final Bindings binding = scriptEngine.createBindings();
