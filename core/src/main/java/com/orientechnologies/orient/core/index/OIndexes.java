@@ -100,23 +100,25 @@ public final class OIndexes {
   /**
    * 
    * 
+   * 
    * @param database
    * @param indexType
    *          index type
    * @param algorithm
+   * @param valueContainerAlgorithm
    * @return OIndexInternal
    * @throws OConfigurationException
    *           if index creation failed
    * @throws OIndexException
    *           if index type does not exist
    */
-  public static OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm)
-      throws OConfigurationException, OIndexException {
+  public static OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
+      String valueContainerAlgorithm) throws OConfigurationException, OIndexException {
     final Iterator<OIndexFactory> ite = getAllFactories();
     while (ite.hasNext()) {
       final OIndexFactory factory = ite.next();
       if (factory.getTypes().contains(indexType)) {
-        return factory.createIndex(database, indexType, algorithm);
+        return factory.createIndex(database, indexType, algorithm, valueContainerAlgorithm);
       }
     }
 

@@ -72,7 +72,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -1169,7 +1168,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final Entry<Object, Object> current = it.next();
 
           if (current.getValue() instanceof Collection<?>) {
-            for (OIdentifiable identifiable : ((OMVRBTreeRIDSet) current.getValue()))
+            for (OIdentifiable identifiable : ((Set<OIdentifiable>) current.getValue()))
               if (!handleResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity()), true))
                 break;
           } else if (!handleResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()), true))

@@ -16,7 +16,13 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -32,6 +38,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -88,17 +95,30 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
-    String alghorithm;
     ODatabase database = getDatabase();
     OStorage storage = database.getStorage();
+    final String alghorithm;
     if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
       alghorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
     else
       alghorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
 
+    final String valueContainerAlgorithm;
+    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(iType) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(iType)
+        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(iType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(iType)) {
+      if (storage.getType().equals(OEngineLocalPaginated.NAME)
+          && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
+        valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
+      } else {
+        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
+      }
+    } else {
+      valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
+    }
+
     acquireExclusiveLock();
     try {
-      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType, alghorithm);
+      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType, alghorithm, valueContainerAlgorithm);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
@@ -198,7 +218,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
           final ODocument d = indexConfigurationIterator.next();
           try {
             index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                (String) d.field(OIndexInternal.ALGORITHM));
+                (String) d.field(OIndexInternal.ALGORITHM), document.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
@@ -346,7 +366,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
             for (ODocument idx : idxs) {
               try {
                 String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
-                String alghorithm = idx.field(OIndexInternal.ALGORITHM);
+                String algorithm = idx.field(OIndexInternal.ALGORITHM);
+                String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
 
                 if (indexType == null) {
                   OLogManager.instance().error(this, "Index type is null, will process other record.");
@@ -354,7 +375,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   continue;
                 }
 
-                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType, alghorithm);
+                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType, algorithm, valueContainerAlgorithm);
                 OIndexInternal.IndexMetadata indexMetadata = index.loadMetadata(idx);
                 OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 

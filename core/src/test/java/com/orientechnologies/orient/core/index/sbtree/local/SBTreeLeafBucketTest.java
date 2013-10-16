@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeSet;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;

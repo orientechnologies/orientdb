@@ -31,14 +31,15 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERA
  */
 public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>, ODatabaseListener {
 
-  public static final String CONFIG_KEYTYPE         = "keyType";
-  public static final String CONFIG_AUTOMATIC       = "automatic";
+  public static final String CONFIG_KEYTYPE            = "keyType";
+  public static final String CONFIG_AUTOMATIC          = "automatic";
 
-  public static final String CONFIG_TYPE            = "type";
-  public static final String ALGORITHM              = "algorithm";
-  public static final String CONFIG_NAME            = "name";
-  public static final String INDEX_DEFINITION       = "indexDefinition";
-  public static final String INDEX_DEFINITION_CLASS = "indexDefinitionClass";
+  public static final String CONFIG_TYPE               = "type";
+  public static final String ALGORITHM                 = "algorithm";
+  public static final String VALUE_CONTAINER_ALGORITHM = "valueContainerAlgorithm";
+  public static final String CONFIG_NAME               = "name";
+  public static final String INDEX_DEFINITION          = "indexDefinition";
+  public static final String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
 
   /**
    * Loads the index giving the configuration.
@@ -128,13 +129,16 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
     private final Set<String>      clustersToIndex;
     private final String           type;
     private final String           algorithm;
+    private final String           valueContainerAlgorithm;
 
-    public IndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type, String algorithm) {
+    public IndexMetadata(String name, OIndexDefinition indexDefinition, Set<String> clustersToIndex, String type, String algorithm,
+        String valueContainerAlgorithm) {
       this.name = name;
       this.indexDefinition = indexDefinition;
       this.clustersToIndex = clustersToIndex;
       this.type = type;
       this.algorithm = algorithm;
+      this.valueContainerAlgorithm = valueContainerAlgorithm;
     }
 
     public String getName() {
@@ -188,6 +192,10 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
       result = 31 * result + type.hashCode();
       result = 31 * result + (algorithm != null ? algorithm.hashCode() : 0);
       return result;
+    }
+
+    public String getValueContainerAlgorithm() {
+      return valueContainerAlgorithm;
     }
   }
 }

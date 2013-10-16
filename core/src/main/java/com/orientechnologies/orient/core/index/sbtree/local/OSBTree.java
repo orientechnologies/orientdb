@@ -1,7 +1,28 @@
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -13,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurableComponent;
@@ -24,12 +46,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Andrey Lomakin
  * @since 8/7/13
  */
-public class OSBTree<K, V> extends ODurableComponent {
+public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K, V> {
   private static final int                    MAX_KEY_SIZE            = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE
                                                                           .getValueAsInteger();
   private static final int                    MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
                                                                           .getValueAsInteger();
-
   private static final OAlwaysLessKey         ALWAYS_LESS_KEY         = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey      ALWAYS_GREATER_KEY      = new OAlwaysGreaterKey();
 
@@ -548,6 +569,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  @Override
   public long size() {
     acquireSharedLock();
     try {
@@ -568,6 +590,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  @Override
   public V remove(K key) {
     acquireExclusiveLock();
     OStorageTransaction transaction = storage.getStorageTransaction();
@@ -806,6 +829,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     return result;
   }
 
+  @Override
   public K firstKey() {
     acquireSharedLock();
     try {
@@ -934,7 +958,8 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener) {
+  public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      OTreeInternal.RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
       PartialSearchMode partialSearchModeFrom;
@@ -1390,9 +1415,4 @@ public class OSBTree<K, V> extends ODurableComponent {
       this.itemIndex = itemIndex;
     }
   }
-
-  public static interface RangeResultListener<K, V> {
-    public boolean addResult(Map.Entry<K, V> entry);
-  }
-
 }

@@ -28,6 +28,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeRIDSet;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -54,12 +56,15 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
   public static final char FIELD_VALUE_SEPARATOR = ':';
+  private final boolean    preferSBTreeRIDSet    = OGlobalConfiguration.PREFER_SBTREE_SET.getValueAsBoolean();
 
   protected abstract ORecordSchemaAware<?> newObject(final String iClassName);
 
@@ -74,8 +79,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case EMBEDDEDSET:
       return embeddedCollectionFromStream((ODocument) iSourceRecord, iType, iLinkedClass, iLinkedType, iValue);
 
-    case LINKLIST:
-    case LINKSET: {
+    case LINKSET:
+      if (iValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX))
+        return OSBTreeRIDSet.fromStream(iValue, iSourceRecord);
+    case LINKLIST: {
       if (iValue.length() == 0)
         return null;
 
@@ -344,19 +351,22 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case LINKSET: {
-      final OMVRBTreeRIDSet coll;
+      final OStringBuilderSerializable coll;
 
-      if (!(iValue instanceof OMVRBTreeRIDSet)) {
+      if (!(iValue instanceof OMVRBTreeRIDSet || iValue instanceof OSBTreeRIDSet)) {
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
-        coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
-        ((Collection<? extends OIdentifiable>) iValue).clear();
+        if (preferSBTreeRIDSet && iRecord.getDatabase().getStorage() instanceof OLocalPaginatedStorage)
+          coll = new OSBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
+        else
+          coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 
         iRecord.field(iName, coll);
       } else
         // LAZY SET
-        coll = (OMVRBTreeRIDSet) iValue;
+        coll = (OStringBuilderSerializable) iValue;
 
-      linkSetToStream(iOutput, iRecord, coll);
+      coll.toStream(iOutput);
+
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkSet2string"), "Serialize linkset to string",
           timer);
       break;
@@ -444,11 +454,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     default:
       fieldTypeToString(iOutput, iType, iValue);
     }
-  }
-
-  public static StringBuilder linkSetToStream(final StringBuilder iOutput, final ODocument iRecord, final OMVRBTreeRIDSet iSet) {
-    iSet.toStream(iOutput);
-    return iOutput;
   }
 
   public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
