@@ -71,7 +71,10 @@ public class ODefaultIndexFactory implements OIndexFactory {
   public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm)
       throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
-      if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType))
+      if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)
+          || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)
+          || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType)
+          || OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType))
         valueContainerAlgorithm = MVRBTREE_VALUE_CONTAINER;
       else
         valueContainerAlgorithm = NONE_VALUE_CONTAINER;
