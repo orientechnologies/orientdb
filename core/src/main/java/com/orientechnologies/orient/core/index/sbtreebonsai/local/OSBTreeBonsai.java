@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.index.sbtree.OTree;
+import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @since 1.6.0
  * @see OSBTree
  */
-public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V> {
+public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInternal<K, V> {
   private static final OAlwaysLessKey       ALWAYS_LESS_KEY    = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey    ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
   private static final int                  PAGE_SIZE          = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;

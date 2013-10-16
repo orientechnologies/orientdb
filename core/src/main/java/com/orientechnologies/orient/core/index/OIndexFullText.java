@@ -82,7 +82,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
           if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-            if (useSBTreeRIDSet) {
+            if (ridContainerAlgorithm) {
               refs = new OSBTreeIndexRIDContainer(getName());
             } else {
               refs = new OMVRBTreeRIDSet();

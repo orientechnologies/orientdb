@@ -30,11 +30,11 @@ import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRID
  */
 public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
   private LinkedList<Map.Entry<K, V>> preFetchedValues;
-  private final OTree<K, V>           sbTree;
+  private final OTreeInternal<K, V>   sbTree;
   private K                           firstKey;
   private Map.Entry<K, V>             currentEntry;
 
-  public OSBTreeMapEntryIterator(OTree<K, V> sbTree) {
+  public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree) {
     this.sbTree = sbTree;
     if (sbTree.size() == 0) {
       this.preFetchedValues = null;
@@ -48,7 +48,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   }
 
   private void prefetchData(boolean firstTime) {
-    sbTree.loadEntriesMajor(firstKey, firstTime, new OTree.RangeResultListener<K, V>() {
+    sbTree.loadEntriesMajor(firstKey, firstTime, new OTreeInternal.RangeResultListener<K, V>() {
       @Override
       public boolean addResult(final Map.Entry<K, V> entry) {
         final V value = entry.getValue();

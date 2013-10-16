@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
-import com.orientechnologies.orient.core.index.sbtree.OTree;
+import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.profiler.OJVMProfiler;
@@ -301,7 +301,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     private final boolean                                   autoConvertToRecord;
     private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
-    public TreeKeyIterator(OTree<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
+    public TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
       entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(tree);
       this.autoConvertToRecord = autoConvertToRecord;
     }

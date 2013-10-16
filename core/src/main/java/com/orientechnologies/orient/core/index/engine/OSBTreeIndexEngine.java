@@ -19,7 +19,6 @@ package com.orientechnologies.orient.core.index.engine;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,7 +33,9 @@ import com.orientechnologies.orient.core.index.ODocumentFieldsHashSet;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.sbtree.OTree;
+import com.orientechnologies.orient.core.index.sbtree.OSBTreeInverseMapEntryIterator;
+import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
+import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -188,7 +189,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public Iterator<Map.Entry<Object, V>> iterator() {
     acquireSharedLock();
     try {
-      return new MapEntryIterator<V>(sbTree);
+      return new OSBTreeMapEntryIterator<Object, V>(sbTree);
     } finally {
       releaseSharedLock();
     }
@@ -198,7 +199,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public Iterator<Map.Entry<Object, V>> inverseIterator() {
     acquireSharedLock();
     try {
-      return new InverseMapEntryIterator<V>(sbTree);
+      return new OSBTreeInverseMapEntryIterator<Object, V>(sbTree);
     } finally {
       releaseSharedLock();
     }
@@ -209,7 +210,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     acquireSharedLock();
     try {
       return new Iterator<V>() {
-        private final MapEntryIterator<V> entryIterator = new MapEntryIterator<V>(sbTree);
+        private final OSBTreeMapEntryIterator<Object, V> entryIterator = new OSBTreeMapEntryIterator<Object, V>(sbTree);
 
         @Override
         public boolean hasNext() {
@@ -236,7 +237,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     acquireSharedLock();
     try {
       return new Iterator<V>() {
-        private final InverseMapEntryIterator<V> entryIterator = new InverseMapEntryIterator<V>(sbTree);
+        private final OSBTreeInverseMapEntryIterator<Object, V> entryIterator = new OSBTreeInverseMapEntryIterator<Object, V>(
+                                                                                  sbTree);
 
         @Override
         public boolean hasNext() {
@@ -266,7 +268,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
         @Override
         public Iterator<Object> iterator() {
           return new Iterator<Object>() {
-            final MapEntryIterator<V> entryIterator = new MapEntryIterator<V>(sbTree);
+
+            final OSBTreeMapEntryIterator<Object, V> entryIterator = new OSBTreeMapEntryIterator<Object, V>(sbTree);
 
             @Override
             public boolean hasNext() {
@@ -467,7 +470,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     try {
       final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-      sbTree.loadEntriesMajor(fromKey, isInclusive, new OTree.RangeResultListener<Object, V>() {
+      sbTree.loadEntriesMajor(fromKey, isInclusive, new OTreeInternal.RangeResultListener<Object, V>() {
         @Override
         public boolean addResult(Map.Entry<Object, V> entry) {
           final Object key = entry.getKey();
@@ -495,7 +498,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     try {
       final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-      sbTree.loadEntriesMinor(toKey, isInclusive, new OTree.RangeResultListener<Object, V>() {
+      sbTree.loadEntriesMinor(toKey, isInclusive, new OTreeInternal.RangeResultListener<Object, V>() {
         @Override
         public boolean addResult(Map.Entry<Object, V> entry) {
           final Object key = entry.getKey();
@@ -523,7 +526,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     try {
       final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-      sbTree.loadEntriesBetween(rangeFrom, inclusive, rangeTo, inclusive, new OTree.RangeResultListener<Object, V>() {
+      sbTree.loadEntriesBetween(rangeFrom, inclusive, rangeTo, inclusive, new OTreeInternal.RangeResultListener<Object, V>() {
         @Override
         public boolean addResult(Map.Entry<Object, V> entry) {
           final Object key = entry.getKey();
@@ -632,114 +635,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       document.unsetDirty();
 
       result.add(document);
-    }
-  }
-
-  private static final class MapEntryIterator<V> implements Iterator<Map.Entry<Object, V>> {
-    private LinkedList<Map.Entry<Object, V>> preFetchedValues;
-    private final OSBTree<Object, V>         sbTree;
-    private Object                           firstKey;
-
-    MapEntryIterator(OSBTree<Object, V> sbTree) {
-      this.sbTree = sbTree;
-      if (sbTree.size() == 0) {
-        this.preFetchedValues = null;
-        return;
-      }
-
-      this.preFetchedValues = new LinkedList<Map.Entry<Object, V>>();
-      firstKey = sbTree.firstKey();
-
-      prefetchData(true);
-    }
-
-    private void prefetchData(boolean firstTime) {
-      sbTree.loadEntriesMajor(firstKey, firstTime, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(final Map.Entry<Object, V> entry) {
-          preFetchedValues.add(entry);
-          return preFetchedValues.size() <= 8000;
-        }
-      });
-
-      if (preFetchedValues.isEmpty())
-        preFetchedValues = null;
-      else
-        firstKey = preFetchedValues.getLast().getKey();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return preFetchedValues != null;
-    }
-
-    @Override
-    public Map.Entry<Object, V> next() {
-      final Map.Entry<Object, V> entry = preFetchedValues.removeFirst();
-      if (preFetchedValues.isEmpty())
-        prefetchData(false);
-
-      return entry;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove");
-    }
-  }
-
-  private static final class InverseMapEntryIterator<V> implements Iterator<Map.Entry<Object, V>> {
-    private final OSBTree<Object, V>         sbTree;
-    private LinkedList<Map.Entry<Object, V>> preFetchedValues;
-    private Object                           lastKey;
-
-    InverseMapEntryIterator(OSBTree<Object, V> sbTree) {
-      this.sbTree = sbTree;
-
-      if (sbTree.size() == 0) {
-        this.preFetchedValues = null;
-        return;
-      }
-
-      this.preFetchedValues = new LinkedList<Map.Entry<Object, V>>();
-      lastKey = sbTree.lastKey();
-
-      prefetchData(true);
-    }
-
-    private void prefetchData(boolean firstTime) {
-      sbTree.loadEntriesMinor(lastKey, firstTime, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(final Map.Entry<Object, V> entry) {
-          preFetchedValues.add(entry);
-
-          return preFetchedValues.size() <= 8000;
-        }
-      });
-
-      if (preFetchedValues.isEmpty())
-        preFetchedValues = null;
-      else
-        lastKey = preFetchedValues.getLast().getKey();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return preFetchedValues != null;
-    }
-
-    @Override
-    public Map.Entry<Object, V> next() {
-      final Map.Entry<Object, V> entry = preFetchedValues.removeFirst();
-      if (preFetchedValues.isEmpty())
-        prefetchData(false);
-
-      return entry;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove");
     }
   }
 

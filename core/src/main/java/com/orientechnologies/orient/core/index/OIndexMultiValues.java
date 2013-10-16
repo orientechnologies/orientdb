@@ -15,7 +15,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -42,12 +48,12 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
-  protected final boolean useSBTreeRIDSet;
-  
+  protected final boolean ridContainerAlgorithm;
+
   public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine) {
     super(type, algorithm, indexEngine);
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
-    useSBTreeRIDSet = storage.getType().equals(OEngineLocalPaginated.NAME)
+    ridContainerAlgorithm = storage.getType().equals(OEngineLocalPaginated.NAME)
         && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean();
   }
 
@@ -98,7 +104,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null) {
-          if (useSBTreeRIDSet) {
+          if (ridContainerAlgorithm) {
             values = new OSBTreeIndexRIDContainer(getName());
           } else {
             values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
@@ -168,7 +174,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
     final OStreamSerializer serializer;
-    if (useSBTreeRIDSet)
+    if (ridContainerAlgorithm)
       serializer = OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
     else
       serializer = OStreamSerializerListRID.INSTANCE;

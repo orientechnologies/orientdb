@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public interface OTree<K, V> {
+public interface OTreeInternal<K, V> {
   long size();
 
   void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener);
