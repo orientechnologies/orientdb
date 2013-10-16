@@ -16,9 +16,10 @@
 package com.orientechnologies.orient.core.command;
 
 /**
- * Generic tagged interface to know if the command must be distributed in clustered scenario.
+ * Interface to know if the command must be distributed in clustered scenario.
  * 
  * @author Luca Garulli
  */
 public interface OCommandDistributedReplicateRequest {
+  public boolean isReplicated();
 }

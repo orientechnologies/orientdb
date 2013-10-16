@@ -17,7 +17,7 @@ final class OJPAProperties extends Properties {
 	/**
 	 * OrientDB specific
 	 */
-	public final static String	ENTITY_CLASSES_PACKAGE	= "orientdb.entityClasses";
+	public final static String	ENTITY_CLASSES_PACKAGE	= "com.orientdb.entityClasses";
 
 	public OJPAProperties() {
 	}
@@ -76,11 +76,11 @@ final class OJPAProperties extends Properties {
 		return checkContainsValue(ENTITY_CLASSES_PACKAGE);
 	}
 
-	private boolean checkContainsValue(String propertie) {
-		if (containsKey(propertie)) {
+	private boolean checkContainsValue(String property) {
+		if (!containsKey(property)) {
 			return false;
 		}
-		String value = (String) get(propertie);
+		String value = (String) get(property);
 		return value != null && !value.isEmpty();
 	}
 	

@@ -23,17 +23,22 @@ package com.orientechnologies.common.types;
  * 
  */
 public class ORef<T> {
-	public T	value;
+  public T value;
 
-	public ORef() {
-	}
+  public ORef() {
+  }
 
-	public ORef(final T object) {
-		this.value = object;
-	}
+  public ORef(final T object) {
+    this.value = object;
+  }
 
-	public ORef<T> clear() {
-		value = null;
-		return this;
-	}
+  public ORef<T> clear() {
+    value = null;
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return value != null ? value.toString() : "ORef<null>";
+  }
 }

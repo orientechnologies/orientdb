@@ -41,7 +41,7 @@ public class OCommandFunction extends OCommandRequestTextAbstract {
 
   @Override
   public String toString() {
-    return "function." + OIOUtils.getStringMaxLength(text, 50, "...");
+    return "function." + OIOUtils.getStringMaxLength(text, 200, "...");
   }
 
 }

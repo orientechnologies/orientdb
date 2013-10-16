@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -35,14 +37,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -85,7 +80,8 @@ public class OStorageMemory extends OStorageEmbedded {
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null, OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
+          OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
@@ -167,6 +163,16 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public void delete() {
     close(true);
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("backup");
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("restore");
   }
 
   public void reload() {
@@ -907,16 +913,12 @@ public class OStorageMemory extends OStorageEmbedded {
         if (rid.isNew()) {
           final ORecordId oldRID = rid.copy();
 
-          txEntry.getRecord().onBeforeIdentityChanged(rid);
           final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream,
               OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult();
 
           txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
           iTx.updateIdentityAfterCommit(oldRID, rid);
-
-          txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
-
         } else {
           txEntry
               .getRecord()

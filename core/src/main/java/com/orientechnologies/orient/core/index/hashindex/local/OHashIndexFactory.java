@@ -21,7 +21,14 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexDictionary;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexFullText;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
@@ -57,7 +64,7 @@ public class OHashIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm) throws OConfigurationException {
     OStorage storage = database.getStorage();
     OIndexEngine indexEngine;
 
@@ -66,19 +73,22 @@ public class OHashIndexFactory implements OIndexFactory {
       indexEngine = new OMemoryHashMapIndexEngine();
     else if (storageType.equals("local") || storageType.equals("plocal"))
       indexEngine = new OLocalHashTableIndexEngine();
+    else if (storageType.equals("distributed"))
+      // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
+      indexEngine = new OLocalHashTableIndexEngine();
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else
       throw new OIndexException("Unsupported storage type : " + storageType);
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(indexType, indexEngine);
+      return new OIndexUnique(indexType, algorithm, indexEngine);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(indexType, indexEngine);
+      return new OIndexNotUnique(indexType, algorithm, indexEngine);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, indexEngine);
+      return new OIndexFullText(indexType, algorithm, indexEngine);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(indexType, indexEngine);
+      return new OIndexDictionary(indexType, algorithm, indexEngine);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

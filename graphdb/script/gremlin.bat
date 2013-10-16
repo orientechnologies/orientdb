@@ -51,7 +51,8 @@ FOR %%X IN (%*) DO (
 CALL :concat %%X %1 %2
 
 )
-
+
+
 
 
 java %JAVA_OPTIONS% %JAVA_ARGS% -cp %CP% com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine %strg%

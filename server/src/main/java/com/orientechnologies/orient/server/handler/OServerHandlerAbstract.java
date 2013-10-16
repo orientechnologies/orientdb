@@ -15,41 +15,14 @@
  */
 package com.orientechnologies.orient.server.handler;
 
-import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
- * Abstract class to make OServerHandler implementation easier.
+ * Deprecated, use OServerPluginAbstract instead.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OServerHandlerAbstract implements OServerHandler {
-  public void startup() {
-  }
-
-  public void shutdown() {
-  }
-
-  public void sendShutdown() {
-  }
-
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-  }
-
-  public void onClientConnection(final OClientConnection iConnection) {
-  }
-
-  public void onClientDisconnection(final OClientConnection iConnection) {
-  }
-
-  public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-  }
-
-  public void onAfterClientRequest(final OClientConnection iConnection, final byte iRequestType) {
-  }
-
-  public void onClientError(final OClientConnection iConnection, final Throwable iThrowable) {
-  }
+@Deprecated
+public abstract class OServerHandlerAbstract extends OServerPluginAbstract {
 }

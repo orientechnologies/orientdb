@@ -37,8 +37,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    // DEFAULT = DON'T CACHE
-    iResponse.setHeader("Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache");
+    setNoCache(iResponse);
     return true;
   }
 
@@ -88,4 +87,10 @@ public abstract class OServerCommandAbstract implements OServerCommand {
   public void configure(final OServer server) {
     this.server = server;
   }
+
+  protected void setNoCache(final OHttpResponse iResponse) {
+    // DEFAULT = DON'T CACHE
+    iResponse.setHeader("Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache");
+  }
+
 }

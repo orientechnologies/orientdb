@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -345,10 +344,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return;
     }
 
-    // BROWSE ALL THE RECORDS
-    while (target.hasNext())
-      if (!executeSearchRecord(target.next()))
-        break;
+    final long startFetching = System.currentTimeMillis();
+    try {
+
+      // BROWSE ALL THE RECORDS
+      while (target.hasNext())
+        if (!executeSearchRecord(target.next()))
+          break;
+
+    } finally {
+      context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
+    }
 
     if (request.getResultListener() != null)
       request.getResultListener().end();
@@ -474,41 +480,35 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
     ORuntimeResult group = null;
 
+    Object key = null;
     if (groupedResult == null)
       groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
-    else {
-      if (fieldValue != null && fieldValue.getClass().isArray()) {
-        // SEQUENTIAL SCAN
-        final int arraySize = Array.getLength(fieldValue);
-        for (Entry<Object, ORuntimeResult> entry : groupedResult.entrySet()) {
-          final Object k = entry.getKey();
 
-          boolean same = false;
+    if (fieldValue != null) {
+      if (fieldValue.getClass().isArray()) {
+        // LOOK IT BY HASH (FASTER THAN COMPARE EACH SINGLE VALUE)
+        final Object[] array = (Object[]) fieldValue;
 
-          if (k != null && k.getClass().isArray() && Array.getLength(k) == arraySize) {
-            same = true;
-            for (int i = 0; i < arraySize; ++i) {
-              final Object o1 = Array.get(k, i);
-              final Object o2 = Array.get(fieldValue, i);
-
-              if (o1 == null && o2 != null || o1 != null && o2 == null || o1 != null && !o1.equals(o2)) {
-                same = false;
-                break;
-              }
-            }
-          }
-
-          if (same)
-            group = entry.getValue();
+        final StringBuilder keyArray = new StringBuilder();
+        for (Object o : array) {
+          if (keyArray.length() > 0)
+            keyArray.append(",");
+          if (o != null)
+            keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
+          else
+            keyArray.append("null");
         }
+
+        key = keyArray.toString();
       } else
         // LOKUP FOR THE FIELD
-        group = groupedResult.get(fieldValue);
+        key = fieldValue;
     }
 
+    group = groupedResult.get(key);
     if (group == null) {
-      group = new ORuntimeResult(createProjectionFromDefinition(), resultCount, context);
-      groupedResult.put(fieldValue, group);
+      group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
+      groupedResult.put(key, group);
     }
     return group;
   }
@@ -607,8 +607,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     if (searchForIndexes(cls)) {
-      // final OJVMProfiler profiler = Orient.instance().getProfiler();
-      // profiler.updateCounter(profiler.getDatabaseMetrics(getDatabase().getName(), "query.indexUsed"), 1);
     } else
       super.searchInClasses();
   }
@@ -692,19 +690,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (opType == null)
           opType = INDEX_OPERATION_TYPE.GET;
 
-        Object result = operator.executeIndexQuery(context, index, opType, keyParams, fetchLimit);
-        if (result == null)
-          continue;
+        try {
+          Object result = operator.executeIndexQuery(context, index, opType, keyParams, fetchLimit);
 
-        if (opType == INDEX_OPERATION_TYPE.COUNT) {
-          // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
-          final String projName = projectionDefinition.keySet().iterator().next();
-          projectionDefinition.clear();
-          getProjectionGroup(null).applyValue(projName, result);
-        } else
-          fillSearchIndexResultSet(result);
+          if (result == null)
+            continue;
 
-        return true;
+          if (opType == INDEX_OPERATION_TYPE.COUNT) {
+            // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
+            final String projName = projectionDefinition.keySet().iterator().next();
+            projectionDefinition.clear();
+            getProjectionGroup(null).applyValue(projName, result);
+          } else
+            fillSearchIndexResultSet(result);
+
+          return true;
+        } catch (Exception e) {
+          OLogManager.instance().error(this,
+              "Error on using index %s in query. Probably you need to rebuild indexes. Now executing query using cluster scan", e,
+              index);
+          return false;
+        }
       }
     }
     return false;
@@ -980,15 +986,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (orderedFields == null)
       return;
 
-    if (tempResult instanceof OMultiCollectionIterator) {
-      final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
-      for (OIdentifiable o : tempResult)
-        list.add(o);
-      tempResult = list;
-    }
+    final long startOrderBy = System.currentTimeMillis();
+    try {
 
-    ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields);
-    orderedFields.clear();
+      if (tempResult instanceof OMultiCollectionIterator) {
+        final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+        for (OIdentifiable o : tempResult)
+          list.add(o);
+        tempResult = list;
+      }
+
+      ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields);
+      orderedFields.clear();
+
+    } finally {
+      context.setVariable("orderByElapsed", (System.currentTimeMillis() - startOrderBy));
+    }
   }
 
   /**
@@ -1000,42 +1013,49 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     Object fieldValue;
 
-    if (tempResult == null) {
-      tempResult = new ArrayList<OIdentifiable>();
-      if (expandTarget instanceof OSQLFilterItemVariable) {
-        Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, context);
-        if (r != null) {
-          if (r instanceof OIdentifiable)
-            ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
-          else if (OMultiValue.isMultiValue(r)) {
-            for (Object o : OMultiValue.getMultiValueIterable(r))
-              ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
+    final long startExpand = System.currentTimeMillis();
+    try {
+
+      if (tempResult == null) {
+        tempResult = new ArrayList<OIdentifiable>();
+        if (expandTarget instanceof OSQLFilterItemVariable) {
+          Object r = ((OSQLFilterItemVariable) expandTarget).getValue(null, context);
+          if (r != null) {
+            if (r instanceof OIdentifiable)
+              ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) r);
+            else if (OMultiValue.isMultiValue(r)) {
+              for (Object o : OMultiValue.getMultiValueIterable(r))
+                ((Collection<OIdentifiable>) tempResult).add((OIdentifiable) o);
+            }
           }
         }
-      }
-    } else {
-      final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
-      finalResult.setLimit(limit);
-      for (OIdentifiable id : tempResult) {
-        if (expandTarget instanceof OSQLFilterItem)
-          fieldValue = ((OSQLFilterItem) expandTarget).getValue(id.getRecord(), context);
-        else if (expandTarget instanceof OSQLFunctionRuntime)
-          fieldValue = ((OSQLFunctionRuntime) expandTarget).getResult();
-        else
-          fieldValue = expandTarget.toString();
+      } else {
+        final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
+        finalResult.setLimit(limit);
+        for (OIdentifiable id : tempResult) {
+          if (expandTarget instanceof OSQLFilterItem)
+            fieldValue = ((OSQLFilterItem) expandTarget).getValue(id.getRecord(), context);
+          else if (expandTarget instanceof OSQLFunctionRuntime)
+            fieldValue = ((OSQLFunctionRuntime) expandTarget).getResult();
+          else
+            fieldValue = expandTarget.toString();
 
-        if (fieldValue != null)
-          if (fieldValue instanceof Collection<?>) {
-            finalResult.add((Collection<OIdentifiable>) fieldValue);
-          } else if (fieldValue instanceof Map<?, ?>) {
-            finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
-          } else if (fieldValue instanceof OMultiCollectionIterator) {
-            finalResult.add((OMultiCollectionIterator<OIdentifiable>) fieldValue);
-          } else if (fieldValue instanceof OIdentifiable)
-            finalResult.add((OIdentifiable) fieldValue);
+          if (fieldValue != null)
+            if (fieldValue instanceof Collection<?>) {
+              finalResult.add((Collection<OIdentifiable>) fieldValue);
+            } else if (fieldValue instanceof Map<?, ?>) {
+              finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
+            } else if (fieldValue instanceof OMultiCollectionIterator) {
+              finalResult.add((OMultiCollectionIterator<OIdentifiable>) fieldValue);
+            } else if (fieldValue instanceof OIdentifiable)
+              finalResult.add((OIdentifiable) fieldValue);
+        }
+        tempResult = finalResult;
       }
-      tempResult = finalResult;
+    } finally {
+      context.setVariable("expandElapsed", (System.currentTimeMillis() - startExpand));
     }
+
   }
 
   private void searchInIndex() {
@@ -1109,7 +1129,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           res = index.get(keyValue);
         } else {
           final Object secondKey = getIndexKey(index.getDefinition(), right);
-          res = index.getValuesBetween(keyValue, secondKey);
+          if (keyValue instanceof OCompositeKey && secondKey instanceof OCompositeKey
+              && ((OCompositeKey) keyValue).getKeys().size() == index.getDefinition().getParamCount()
+              && ((OCompositeKey) secondKey).getKeys().size() == index.getDefinition().getParamCount())
+            res = index.get(keyValue);
+          else
+            res = index.getValuesBetween(keyValue, secondKey);
         }
 
         if (res != null)
@@ -1251,14 +1276,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private void handleGroupBy() {
     if (groupedResult != null && tempResult == null) {
-      tempResult = new ArrayList<OIdentifiable>();
 
-      for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
-        if (g.getKey() != null || (groupedResult.size() == 1 && groupByFields == null)) {
-          final ODocument doc = g.getValue().getResult();
-          if (doc != null && !doc.isEmpty())
-            ((List<OIdentifiable>) tempResult).add(doc);
+      final long startGroupBy = System.currentTimeMillis();
+      try {
+
+        tempResult = new ArrayList<OIdentifiable>();
+
+        for (Entry<Object, ORuntimeResult> g : groupedResult.entrySet()) {
+          if (g.getKey() != null || (groupedResult.size() == 1 && groupByFields == null)) {
+            final ODocument doc = g.getValue().getResult();
+            if (doc != null && !doc.isEmpty())
+              ((List<OIdentifiable>) tempResult).add(doc);
+          }
         }
+
+      } finally {
+        context.setVariable("groupByElapsed", (System.currentTimeMillis() - startGroupBy));
       }
     }
   }
@@ -1284,7 +1317,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>]";
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] TIMEOUT <TimeoutInMs>";
   }
 
   /**
@@ -1308,41 +1341,49 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected boolean optimizeExecution() {
     if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && groupByFields == null
         && projections != null && projections.size() == 1) {
-      final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
 
-      if (entry.getValue() instanceof OSQLFunctionRuntime) {
-        final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
-        if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
-            && "*".equals(rf.configuredParameters[0])) {
-          long count = 0;
+      final long startOptimization = System.currentTimeMillis();
+      try {
 
-          if (parsedTarget.getTargetClasses() != null) {
-            final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
-            count = cls.count();
-          } else if (parsedTarget.getTargetClusters() != null) {
-            for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-              count += getDatabase().countClusterElements(cluster);
-            }
-          } else if (parsedTarget.getTargetIndex() != null) {
-            count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
-          } else {
-            final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
-            if (recs != null) {
-              if (recs instanceof Collection<?>)
-                count += ((Collection<?>) recs).size();
-              else {
-                for (Object o : recs)
-                  count++;
+        final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
+
+        if (entry.getValue() instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
+          if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
+              && "*".equals(rf.configuredParameters[0])) {
+            long count = 0;
+
+            if (parsedTarget.getTargetClasses() != null) {
+              final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+              count = cls.count();
+            } else if (parsedTarget.getTargetClusters() != null) {
+              for (String cluster : parsedTarget.getTargetClusters().keySet()) {
+                count += getDatabase().countClusterElements(cluster);
               }
+            } else if (parsedTarget.getTargetIndex() != null) {
+              count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+            } else {
+              final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
+              if (recs != null) {
+                if (recs instanceof Collection<?>)
+                  count += ((Collection<?>) recs).size();
+                else {
+                  for (Object o : recs)
+                    count++;
+                }
+              }
+
             }
 
+            if (tempResult == null)
+              tempResult = new ArrayList<OIdentifiable>();
+            ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
+            return true;
           }
-
-          if (tempResult == null)
-            tempResult = new ArrayList<OIdentifiable>();
-          ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
-          return true;
         }
+
+      } finally {
+        context.setVariable("optimizationElapsed", (System.currentTimeMillis() - startOptimization));
       }
     }
 

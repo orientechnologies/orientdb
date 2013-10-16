@@ -24,7 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public class OStorageLocalTxExecuter {
@@ -115,7 +117,10 @@ public class OStorageLocalTxExecuter {
       final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true, false);
 
       if (buffer == null)
-        throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+        if (OFastConcurrentModificationException.enabled())
+          throw OFastConcurrentModificationException.instance();
+        else
+          throw new OConcurrentModificationException(iRid, new OSimpleVersion(), iVersion, ORecordOperation.UPDATED);
 
       // SAVE INTO THE LOG THE POSITION OF THE OLD RECORD JUST DELETED. IF TX FAILS AT THIS POINT AS ABOVE
       txSegment.addLog(OTxSegment.OPERATION_UPDATE, iTxId, iRid.clusterId, iRid.clusterPosition, iRecordType, buffer.version,
@@ -213,7 +218,8 @@ public class OStorageLocalTxExecuter {
     final OCluster cluster = storage.getClusterById(rid.clusterId);
     final ODataLocal dataSegment = storage.getDataSegmentById(txEntry.dataSegmentId);
 
-    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME) || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
+    if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
+        || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))
       // AVOID TO COMMIT INDEX STUFF
       return;
 
@@ -239,11 +245,7 @@ public class OStorageLocalTxExecuter {
       final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
       if (rid.isNew()) {
-        txEntry.getRecord().onBeforeIdentityChanged(rid);
         rid.clusterId = cluster.getId();
-      }
-
-      if (rid.isNew()) {
         final OPhysicalPosition ppos;
         if (iUseLog)
           ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry
@@ -258,9 +260,7 @@ public class OStorageLocalTxExecuter {
         rid.clusterPosition = ppos.clusterPosition;
         txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
-        txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
         iTx.updateIdentityAfterCommit(oldRID, rid);
-
       } else {
         if (iUseLog)
           txEntry

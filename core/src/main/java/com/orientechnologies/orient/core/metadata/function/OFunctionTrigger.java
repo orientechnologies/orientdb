@@ -26,6 +26,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  */
 public class OFunctionTrigger extends ODocumentHookAbstract {
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
+
   public OFunctionTrigger() {
     setIncludeClasses("OFunction");
   }

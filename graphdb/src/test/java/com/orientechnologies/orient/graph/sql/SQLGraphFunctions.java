@@ -45,24 +45,24 @@ public class SQLGraphFunctions {
     OrientVertex v5 = graph.addVertex(null, "name", "E");
     OrientVertex v6 = graph.addVertex(null, "name", "F");
 
-    v1.addEdge(null, v2, null, null, "weight", 10);
-    v2.addEdge(null, v3, null, null, "weight", 20);
-    v3.addEdge(null, v4, null, null, "weight", 30);
-    v4.addEdge(null, v5, null, null, "weight", 40);
-    v5.addEdge(null, v6, null, null, "weight", 50);
-    v5.addEdge(null, v1, null, null, "weight", 100);
+    v1.addEdge("label", v2, null, null, "weight", 10);
+    v2.addEdge("label", v3, null, null, "weight", 20);
+    v3.addEdge("label", v4, null, null, "weight", 30);
+    v4.addEdge("label", v5, null, null, "weight", 40);
+    v5.addEdge("label", v6, null, null, "weight", 50);
+    v5.addEdge("label", v1, null, null, "weight", 100);
 
     graph.commit();
   }
 
   public void checkDijkstra() {
     String subquery = "select $current, $target, Dijkstra($current, $target , 'weight') as path from V let $target = ( select from V where name = \'C\' ) where 1 > 0";
-    Iterable<ODocument> result = graph.command(new OSQLSynchQuery<ODocument>(subquery)).execute();
+    Iterable<OrientVertex> result = graph.command(new OSQLSynchQuery<OrientVertex>(subquery)).execute();
     Assert.assertTrue(result.iterator().hasNext());
 
-    for (ODocument d : result) {
-      System.out.println("Shortest path from " + ((ODocument) d.field("$current")).field("name") + " and "
-          + ((Collection<ODocument>) d.field("$target")).iterator().next().field("name") + " is: " + d.field("path"));
+    for (OrientVertex d : result) {
+      System.out.println("Shortest path from " + ((ODocument) d.getProperty("$current")).field("name") + " and "
+          + ((Collection<ODocument>) d.getProperty("$target")).iterator().next().field("name") + " is: " + d.getProperty("path"));
     }
   }
 }

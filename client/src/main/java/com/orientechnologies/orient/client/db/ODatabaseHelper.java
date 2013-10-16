@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 
 public class ODatabaseHelper {
   public static void createDatabase(ODatabase database, final String url) throws IOException {
-    createDatabase(database, url, "server", "local");
+    createDatabase(database, url, "server", "plocal");
   }
 
   public static void createDatabase(ODatabase database, final String url, String type) throws IOException {

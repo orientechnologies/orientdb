@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -367,6 +371,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
 
   public void setDataSegmentStrategy(final ODataSegmentStrategy dataSegmentStrategy) {
     underlying.setDataSegmentStrategy(dataSegmentStrategy);
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    underlying.backup(out, options);
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    underlying.restore(in, options);
   }
 
   protected void checkClusterBoundedToClass(int iClusterId) {

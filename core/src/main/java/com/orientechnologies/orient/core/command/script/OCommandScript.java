@@ -87,7 +87,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
   @Override
   public String toString() {
     if (language != null)
-      return language + "." + OIOUtils.getStringMaxLength(text, 50, "...");
-    return "script." + text;
+      return language + "." + OIOUtils.getStringMaxLength(text, 200, "...");
+    return "script." + OIOUtils.getStringMaxLength(text, 200, "...");
   }
 }

@@ -202,7 +202,7 @@ public class OSchemaProxyObject implements OSchema {
 
     List<Class<?>> classes = null;
     try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+      classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
       throw new OException(e);
     }
@@ -236,70 +236,71 @@ public class OSchemaProxyObject implements OSchema {
       generateOClass(iClass, database);
     }
     List<String> fields = OObjectEntitySerializer.getClassFields(iClass);
-    for (String field : fields) {
-      if (schema.existsProperty(field))
-        continue;
-      if (OObjectEntitySerializer.isVersionField(iClass, field) || OObjectEntitySerializer.isIdField(iClass, field))
-        continue;
-      Field f = OObjectEntitySerializer.getField(field, iClass);
-      if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
-        continue;
-      }
-      OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
-      if (t == null) {
-        if (f.getType().isEnum())
-          t = OType.STRING;
-        else {
-          t = OType.LINK;
-        }
-      }
-      switch (t) {
-
-      case LINK:
-        Class<?> linkedClazz = f.getType();
-        generateLinkProperty(database, schema, field, t, linkedClazz);
-        break;
-      case LINKLIST:
-      case LINKMAP:
-      case LINKSET:
-        linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-        if (linkedClazz != null)
-          generateLinkProperty(database, schema, field, t, linkedClazz);
-        break;
-
-      case EMBEDDED:
-        linkedClazz = f.getType();
-        if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-            || f.getType().equals(ORecordBytes.class)) {
+    if (fields != null)
+      for (String field : fields) {
+        if (schema.existsProperty(field))
           continue;
-        } else {
-          generateLinkProperty(database, schema, field, t, linkedClazz);
-        }
-        break;
-
-      case EMBEDDEDLIST:
-      case EMBEDDEDSET:
-      case EMBEDDEDMAP:
-        linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-        if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-            || f.getType().equals(ORecordBytes.class)) {
+        if (OObjectEntitySerializer.isVersionField(iClass, field) || OObjectEntitySerializer.isIdField(iClass, field))
           continue;
-        } else {
-          if (OReflectionHelper.isJavaType(linkedClazz)) {
-            schema.createProperty(field, t, OType.getTypeByClass(linkedClazz));
-          } else if (linkedClazz.isEnum()) {
-            schema.createProperty(field, t, OType.STRING);
+        Field f = OObjectEntitySerializer.getField(field, iClass);
+        if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
+          continue;
+        }
+        OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
+        if (t == null) {
+          if (f.getType().isEnum())
+            t = OType.STRING;
+          else {
+            t = OType.LINK;
+          }
+        }
+        switch (t) {
+
+        case LINK:
+          Class<?> linkedClazz = f.getType();
+          generateLinkProperty(database, schema, field, t, linkedClazz);
+          break;
+        case LINKLIST:
+        case LINKMAP:
+        case LINKSET:
+          linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+          if (linkedClazz != null)
+            generateLinkProperty(database, schema, field, t, linkedClazz);
+          break;
+
+        case EMBEDDED:
+          linkedClazz = f.getType();
+          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
+              || f.getType().equals(ORecordBytes.class)) {
+            continue;
           } else {
             generateLinkProperty(database, schema, field, t, linkedClazz);
           }
-        }
-        break;
+          break;
 
-      default:
-        schema.createProperty(field, t);
-        break;
+        case EMBEDDEDLIST:
+        case EMBEDDEDSET:
+        case EMBEDDEDMAP:
+          linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
+              || f.getType().equals(ORecordBytes.class)) {
+            continue;
+          } else {
+            if (OReflectionHelper.isJavaType(linkedClazz)) {
+              schema.createProperty(field, t, OType.getTypeByClass(linkedClazz));
+            } else if (linkedClazz.isEnum()) {
+              schema.createProperty(field, t, OType.STRING);
+            } else {
+              generateLinkProperty(database, schema, field, t, linkedClazz);
+            }
+          }
+          break;
+
+        default:
+          schema.createProperty(field, t);
+          break;
+        }
       }
-    }
   }
 
   /**

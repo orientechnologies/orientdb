@@ -20,20 +20,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -111,18 +113,23 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    final ORecordId[] fromIds = parseTarget(graph.getRawGraph(), from);
-    final ORecordId[] toIds = parseTarget(graph.getRawGraph(), to);
+    final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
+    final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
 
     // CREATE EDGES
     final List<Object> edges = new ArrayList<Object>();
-    for (ORecordId from : fromIds) {
-      final OrientVertex fromVertex = (OrientVertex) graph.getVertex(from);
+    for (ORID from : fromIds) {
+      final OrientVertex fromVertex = graph.getVertex(from);
       if (fromVertex == null)
         throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
 
-      for (ORecordId to : toIds) {
-        final OrientVertex toVertex = (OrientVertex) graph.getVertex(to);
+      for (ORID to : toIds) {
+        final OrientVertex toVertex;
+        if (from.equals(to)) {
+          toVertex = fromVertex;
+        } else {
+          toVertex = graph.getVertex(to);
+        }
 
         final String clsName = clazz.getName();
 
@@ -133,7 +140,14 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
               fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
           }
 
-        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName);
+
+        if (fields != null && !fields.isEmpty()) {
+          if (!edge.getRecord().getIdentity().isValid())
+            edge.convertToDocument();
+
+          OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+        }
 
         if (content != null) {
           if (!edge.getRecord().getIdentity().isValid())
@@ -155,29 +169,4 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
   public String getSyntax() {
     return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>}";
   }
-
-  protected ORecordId[] parseTarget(final ODatabaseRecord database, final String iTarget) {
-    final ORecordId[] ids;
-    if (iTarget.startsWith("(")) {
-      // SUB-QUERY
-      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
-      if (result == null || result.isEmpty())
-        ids = new ORecordId[0];
-      else {
-        ids = new ORecordId[result.size()];
-        for (int i = 0; i < result.size(); ++i)
-          ids[i] = new ORecordId(result.get(i).getIdentity());
-      }
-    } else if (iTarget.startsWith("[")) {
-      // COLLECTION OF RIDS
-      final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
-      ids = new ORecordId[idsAsStrings.length];
-      for (int i = 0; i < idsAsStrings.length; ++i)
-        ids[i] = new ORecordId(idsAsStrings[i]);
-    } else
-      // SINGLE RID
-      ids = new ORecordId[] { new ORecordId(iTarget) };
-    return ids;
-  }
-
 }

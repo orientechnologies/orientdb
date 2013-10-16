@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -49,8 +50,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware implements OCommandResultListener {
   public static final String NAME    = "DELETE EDGE";
   private ORecordId          rid;
-  private ORecordId          from;
-  private ORecordId          to;
+  private String             fromExpr;
+  private String             toExpr;
   private int                removed = 0;
   private OCommandRequest    query;
   private OSQLFilter         compiledFilter;
@@ -71,18 +72,18 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
     while (temp != null) {
 
       if (temp.equals("FROM")) {
-        from = new ORecordId(parserRequiredWord(false));
+        fromExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
         if (rid != null)
-          throwSyntaxErrorException("FROM '" + from + "' is not allowed when specify a RID (" + rid + ")");
+          throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RID (" + rid + ")");
 
       } else if (temp.equals("TO")) {
-        to = new ORecordId(parserRequiredWord(false));
+        toExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
         if (rid != null)
-          throwSyntaxErrorException("TO '" + to + "' is not allowed when specify a RID (" + rid + ")");
+          throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rid + ")");
 
       } else if (temp.startsWith("#")) {
         rid = new ORecordId(temp);
-        if (from != null || to != null)
+        if (fromExpr != null || toExpr != null)
           throwSyntaxErrorException("Specifying the RID " + rid + " is not allowed with FROM/TO");
 
       } else if (temp.equals(KEYWORD_WHERE)) {
@@ -107,7 +108,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         break;
     }
 
-    if (from == null && to == null && rid == null)
+    if (fromExpr == null && toExpr == null && rid == null)
       if (clazz == null)
         // DELETE ALL THE EDGES
         query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from E", this));
@@ -122,7 +123,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (from == null && to == null && rid == null && query == null && compiledFilter == null)
+    if (fromExpr == null && toExpr == null && rid == null && query == null && compiledFilter == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
@@ -140,17 +141,28 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
       if (query == null) {
         // SELECTIVE TARGET
-        if (from != null && to != null) {
+
+        Set<ORID> fromIds = null;
+        if (fromExpr != null)
+          fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr);
+        Set<ORID> toIds = null;
+        if (toExpr != null)
+          toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr);
+
+        if (fromIds != null && toIds != null) {
           // REMOVE ALL THE EDGES BETWEEN VERTICES
-          for (Edge e : graph.getVertex(from).getEdges(Direction.OUT))
-            if (to.equals(((OrientEdge) e).getInVertex()))
-              edges.add((OrientEdge) e);
-        } else if (from != null)
+          for (ORID fromId : fromIds)
+            for (Edge e : graph.getVertex(fromId).getEdges(Direction.OUT))
+              if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
+                edges.add((OrientEdge) e);
+        } else if (fromIds != null)
           // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
-          edges.add((OrientEdge) graph.getVertex(from).getEdges(Direction.OUT));
-        else if (to != null)
+          for (ORID fromId : fromIds)
+            edges.add((OrientEdge) graph.getVertex(fromId).getEdges(Direction.OUT));
+        else if (toIds != null)
           // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
-          edges.add((OrientEdge) graph.getVertex(to).getEdges(Direction.IN));
+          for (ORID toId : toIds)
+            edges.add((OrientEdge) graph.getVertex(toId).getEdges(Direction.IN));
         else
           throw new OCommandExecutionException("Invalid target");
 
@@ -167,11 +179,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         removed = edges.size();
         for (OrientEdge edge : edges)
           edge.remove();
-      } else if (query != null)
+      } else
         // TARGET IS A CLASS + OPTIONAL CONDITION
         query.execute(iArgs);
-      else
-        throw new OCommandExecutionException("Invalid target");
     }
 
     return removed;

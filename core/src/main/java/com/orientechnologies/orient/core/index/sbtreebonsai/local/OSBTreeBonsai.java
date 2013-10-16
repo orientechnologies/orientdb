@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
@@ -577,7 +578,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
 
     loadEntriesMinor(key, inclusive, new RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(BucketEntry<K, V> entry) {
+      public boolean addResult(Map.Entry<K, V> entry) {
         result.add(entry.getValue());
         if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
           return false;
@@ -643,7 +644,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
 
     loadEntriesMajor(key, inclusive, new RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(BucketEntry<K, V> entry) {
+      public boolean addResult(Map.Entry<K, V> entry) {
         result.add(entry.getValue());
         if (maxValuesToFetch > -1 && result.size() >= maxValuesToFetch)
           return false;
@@ -705,7 +706,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTree<K, V
     final List<V> result = new ArrayList<V>();
     loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, new RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(BucketEntry<K, V> entry) {
+      public boolean addResult(Map.Entry<K, V> entry) {
         result.add(entry.getValue());
         if (maxValuesToFetch > 0 && result.size() >= maxValuesToFetch)
           return false;

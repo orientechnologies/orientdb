@@ -53,8 +53,8 @@ public class SBTreeTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("sbTree", 0, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx
+        .getStorage().getUnderlying());
   }
 
   @AfterMethod

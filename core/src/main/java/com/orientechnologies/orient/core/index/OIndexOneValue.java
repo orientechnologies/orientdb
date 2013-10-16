@@ -37,8 +37,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(final String iType, OIndexEngine<OIdentifiable> engine) {
-    super(iType, engine);
+  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine) {
+    super(type, algorithm, engine);
   }
 
   public OIdentifiable get(final Object iKey) {

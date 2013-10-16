@@ -17,12 +17,8 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOException;
@@ -40,11 +36,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -74,9 +66,8 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
-import com.orientechnologies.orient.server.handler.OServerHandler;
-import com.orientechnologies.orient.server.handler.OServerHandlerHelper;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
+import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
@@ -155,14 +146,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
     }
 
-    OServerHandlerHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
+    OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
   }
 
   @Override
   protected void onAfterRequest() throws IOException {
-    OServerHandlerHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
+    OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
+      if (connection.database != null)
+        connection.database.getLevel1Cache().clear();
+
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
 
@@ -583,6 +577,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String type = channel.readString();
     final String name = channel.readString();
+    int clusterId = -1;
 
     final String location;
     if (connection.data.protocolVersion >= 10 || type.equalsIgnoreCase("PHYSICAL"))
@@ -598,9 +593,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       dataSegmentName = null;
     }
 
+    if (connection.data.protocolVersion >= 18)
+      clusterId = channel.readShort();
+
     Object[] params = null;
 
-    final int num = connection.database.addCluster(type, name, location, dataSegmentName, params);
+    final int num;
+
+    if (clusterId < 0)
+      num = connection.database.addCluster(type, name, location, dataSegmentName, params);
+    else
+      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName, params);
 
     beginResponse();
     try {
@@ -718,7 +721,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         sendDatabaseInformation();
 
-        final OServerHandler plugin = server.getPlugin("cluster");
+        final OServerPlugin plugin = server.getPlugin("cluster");
         ODocument distributedCfg = null;
         if (plugin != null && plugin instanceof ODistributedServerManager)
           distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
@@ -819,34 +822,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } else if (operation.equals("stop")) {
       checkServerAccess("server.replication.stop");
 
-    } else if (operation.equals("align")) {
-      checkServerAccess("server.replication.align");
+    } else if (operation.equals("config")) {
+      checkServerAccess("server.replication.config");
 
-    } else if (operation.equals("getJournal")) {
-      checkServerAccess("server.replication.getJournal");
-
-      final Integer limit = request.field("limit");
-
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-
-      final Iterable<ODocument> result = dbSynch.getLog().query(null, limit != null ? limit : -1);
-      response = new ODocument().field("result", result, OType.EMBEDDEDLIST);
-
-    } else if (operation.equals("resetJournal")) {
-      checkServerAccess("server.replication.resetJournal");
-
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-      dbSynch.getLog().reset();
-
-    } else if (operation.equals("getAllConflicts")) {
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-      response = dbSynch.getConflictResolver().getAllConflicts();
-
-    } else if (operation.equals("resetConflicts")) {
-      final OStorageSynchronizer dbSynch = dManager.getDatabaseSynchronizer((String) request.field("db"));
-      response = dbSynch.getConflictResolver().reset();
+      response = new ODocument().fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).serialize()
+          .toJSON("prettyPrint"));
 
     }
+
     sendResponse(response);
 
   }
@@ -863,10 +846,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       throw new IllegalArgumentException("Cluster operation is null");
 
     if (operation.equals("status")) {
-      final OServerHandler plugin = server.getPlugin("cluster");
+      final OServerPlugin plugin = server.getPlugin("cluster");
       if (plugin != null && plugin instanceof ODistributedServerManager)
         response = ((ODistributedServerManager) plugin).getClusterConfiguration();
-
     } else
       throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");
 
@@ -1472,7 +1454,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   public void startup() {
     super.startup();
-    OServerHandlerHelper.invokeHandlerCallbackOnClientConnection(server, connection);
+    OServerPluginHelper.invokeHandlerCallbackOnClientConnection(server, connection);
   }
 
   @Override
@@ -1483,7 +1465,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection == null)
       return;
 
-    OServerHandlerHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
+    OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
 
     OClientConnectionManager.instance().disconnect(connection);
   }
@@ -1517,7 +1499,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   protected void handleConnectionError(final OChannelBinaryServer iChannel, final Throwable e) {
     super.handleConnectionError(channel, e);
-    OServerHandlerHelper.invokeHandlerCallbackOnClientError(server, connection, e);
+    OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
   }
 
   public String getType() {

@@ -368,9 +368,14 @@ public enum OType {
         } else if (iValue instanceof Number)
           return ((Number) iValue).intValue() != 0;
 
-      } else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
+      } else if (iValue instanceof Collection<?> && !(iValue instanceof Set<?>) && Set.class.isAssignableFrom(iTargetClass)) {
         final Set<Object> set = new HashSet<Object>();
         set.addAll((Collection<? extends Object>) iValue);
+        return set;
+
+      } else if (!(iValue instanceof Collection<?>) && Collection.class.isAssignableFrom(iTargetClass)) {
+        final Set<Object> set = new HashSet<Object>();
+        set.add(iValue);
         return set;
 
       } else if (iTargetClass.equals(Date.class)) {

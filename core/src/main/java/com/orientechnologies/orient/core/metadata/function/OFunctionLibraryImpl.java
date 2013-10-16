@@ -70,7 +70,22 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   }
 
   public OFunction getFunction(final String iName) {
-    return functions.get(iName.toUpperCase());
+    OFunction f = functions.get(iName.toUpperCase());
+
+    if (f == null) {
+      // CHECK IF THE FUNCTION HAS BEEN JUST CREATED ON DB
+      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      if (db.getMetadata().getSchema().existsClass("OFunction")) {
+        List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction where name = ?"), iName);
+        for (ODocument d : result) {
+          f = new OFunction(d);
+          functions.put(d.field("name").toString().toUpperCase(), f);
+
+        }
+      }
+    }
+
+    return f;
   }
 
   public synchronized OFunction createFunction(final String iName) {

@@ -101,6 +101,10 @@ public class OWriteAheadLog {
         }
       });
 
+      if (walFiles == null)
+        throw new IllegalStateException(
+            "Location passed in WAL does not exist, or IO error was happened. DB can not work in durable mode in such case.");
+
       if (walFiles.length == 0) {
         LogSegment logSegment = new LogSegment(new File(this.walLocation, getSegmentName(0)), maxPagesCacheSize);
         logSegment.init();
@@ -380,7 +384,7 @@ public class OWriteAheadLog {
       ListIterator<LogSegment> iterator = logSegments.listIterator(logSegments.size());
       while (iterator.hasPrevious()) {
         final LogSegment logSegment = iterator.previous();
-        if (logSegment.end().compareTo(lsn) >= 0)
+        if (logSegment.end() == null || logSegment.end().compareTo(lsn) >= 0)
           continue;
 
         logSegment.delete(false);

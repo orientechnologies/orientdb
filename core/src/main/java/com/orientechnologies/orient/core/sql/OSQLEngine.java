@@ -33,7 +33,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
@@ -41,17 +44,18 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OSQLEngine {
 
-  private static Set<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
-  private static Set<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
-  private static Set<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
-  private static OQueryOperator[]                SORTED_OPERATORS   = null;
+  private static List<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
+  private static List<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
+  private static List<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
+  private static OQueryOperator[]                 SORTED_OPERATORS   = null;
 
-  protected static final OSQLEngine              INSTANCE           = new OSQLEngine();
+  protected static final OSQLEngine               INSTANCE           = new OSQLEngine();
 
-  private static ClassLoader                     orientClassLoader  = OSQLEngine.class.getClassLoader();
+  private static ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
 
   protected OSQLEngine() {
   }
@@ -166,11 +170,11 @@ public class OSQLEngine {
 
       final Iterator<OSQLFunctionFactory> ite = lookupProviderWithOrientClassLoader(OSQLFunctionFactory.class, orientClassLoader);
 
-      final Set<OSQLFunctionFactory> factories = new HashSet<OSQLFunctionFactory>();
+      final List<OSQLFunctionFactory> factories = new ArrayList<OSQLFunctionFactory>();
       while (ite.hasNext()) {
         factories.add(ite.next());
       }
-      FUNCTION_FACTORIES = Collections.unmodifiableSet(factories);
+      FUNCTION_FACTORIES = Collections.unmodifiableList(factories);
     }
     return FUNCTION_FACTORIES.iterator();
   }
@@ -184,11 +188,11 @@ public class OSQLEngine {
       final Iterator<OQueryOperatorFactory> ite = lookupProviderWithOrientClassLoader(OQueryOperatorFactory.class,
           orientClassLoader);
 
-      final Set<OQueryOperatorFactory> factories = new HashSet<OQueryOperatorFactory>();
+      final List<OQueryOperatorFactory> factories = new ArrayList<OQueryOperatorFactory>();
       while (ite.hasNext()) {
         factories.add(ite.next());
       }
-      OPERATOR_FACTORIES = Collections.unmodifiableSet(factories);
+      OPERATOR_FACTORIES = Collections.unmodifiableList(factories);
     }
     return OPERATOR_FACTORIES.iterator();
   }
@@ -201,7 +205,7 @@ public class OSQLEngine {
 
       final Iterator<OCommandExecutorSQLFactory> ite = lookupProviderWithOrientClassLoader(OCommandExecutorSQLFactory.class,
           orientClassLoader);
-      final Set<OCommandExecutorSQLFactory> factories = new HashSet<OCommandExecutorSQLFactory>();
+      final List<OCommandExecutorSQLFactory> factories = new ArrayList<OCommandExecutorSQLFactory>();
       while (ite.hasNext()) {
         try {
           factories.add(ite.next());
@@ -210,7 +214,7 @@ public class OSQLEngine {
         }
       }
 
-      EXECUTOR_FACTORIES = Collections.unmodifiableSet(factories);
+      EXECUTOR_FACTORIES = Collections.unmodifiableList(factories);
 
     }
     return EXECUTOR_FACTORIES.iterator();
@@ -356,6 +360,30 @@ public class OSQLEngine {
       return before + " > " + after;
     }
 
+  }
+
+  public Set<ORID> parseRIDTarget(final ODatabaseRecord database, final String iTarget) {
+    final Set<ORID> ids;
+    if (iTarget.startsWith("(")) {
+      // SUB-QUERY
+      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
+      if (result == null || result.isEmpty())
+        ids = Collections.emptySet();
+      else {
+        ids = new HashSet<ORID>((int) (result.size() * 1.3));
+        for (OIdentifiable aResult : result)
+          ids.add(aResult.getIdentity());
+      }
+    } else if (iTarget.startsWith("[")) {
+      // COLLECTION OF RIDS
+      final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
+      ids = new HashSet<ORID>((int) (idsAsStrings.length * 1.3));
+      for (String idsAsString : idsAsStrings)
+        ids.add(new ORecordId(idsAsString));
+    } else
+      // SINGLE RID
+      ids = Collections.<ORID> singleton(new ORecordId(iTarget));
+    return ids;
   }
 
 }

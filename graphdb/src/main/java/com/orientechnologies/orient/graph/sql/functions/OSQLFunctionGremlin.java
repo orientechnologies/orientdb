@@ -25,7 +25,7 @@ import javax.script.ScriptEngine;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
@@ -55,7 +55,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
       // NOT DOCUMENT OR GRAPHDB? IGNORE IT
       return null;
 
-    final OGraphDatabase db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+    final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
     if (result == null)
       result = new ArrayList<Object>();
@@ -67,23 +67,21 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
           @Override
           public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph) {
             final ODocument document = (ODocument) iCurrentRecord;
-            if (db.isVertex(document)) {
-              // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
-              OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
-                  .asList(new ODocument[] { document })).iterator().next();
-              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
-              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
-
-            } else if (db.isEdge(document)) {
+            if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf("E")) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
-            } else
 
-              // UNKNOWN CLASS: IGNORE IT
-              return false;
+            } else {
+              
+              // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
+              OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
+                  .asList(new ODocument[] { document })).iterator().next();
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("current", graphElement);
+              iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
+            }
 
             return true;
           }

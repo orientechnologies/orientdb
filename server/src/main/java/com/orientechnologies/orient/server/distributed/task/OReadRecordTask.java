@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
  * Execute a read of a record from a distributed node.
@@ -33,7 +32,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
+public class OReadRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
   protected ORecordId       rid;
@@ -41,37 +40,32 @@ public class OReadRecordTask extends OAbstractRemoteTask<ORawBuffer> {
   public OReadRecordTask() {
   }
 
-  public OReadRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final ORecordId iRid) {
-    super(iServer, iDistributedSrvMgr, iDbName, EXECUTION_MODE.SYNCHRONOUS);
+  public OReadRecordTask(final ORecordId iRid) {
     rid = iRid;
   }
 
   @Override
-  public ORawBuffer call() throws Exception {
-    final ODatabaseDocumentTx database = openDatabase();
-    try {
-      final ORecordInternal<?> record = database.load(rid);
-      if (record == null)
-        return null;
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    final ORecordInternal<?> record = database.load(rid);
+    if (record == null)
+      return null;
 
-      return new ORawBuffer(record);
-
-    } finally {
-      closeDatabase(database);
-    }
+    return new ORawBuffer(record);
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(rid.toString());
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     rid = new ORecordId(in.readUTF());
+  }
+
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.READ;
   }
 
   @Override

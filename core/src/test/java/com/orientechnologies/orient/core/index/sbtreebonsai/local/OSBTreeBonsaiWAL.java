@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
@@ -47,19 +46,19 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  */
 @Test(enabled = false)
 public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
-  private String                          buildDirectory;
+  private String                                buildDirectory;
 
-  private String                          actualStorageDir;
-  private String                          expectedStorageDir;
+  private String                                actualStorageDir;
+  private String                                expectedStorageDir;
 
-  private OWriteAheadLog                  writeAheadLog;
+  private OWriteAheadLog                        writeAheadLog;
 
-  private ODiskCache                      actualDiskCache;
-  private ODiskCache                      expectedDiskCache;
+  private ODiskCache                            actualDiskCache;
+  private ODiskCache                            expectedDiskCache;
 
-  private OLocalPaginatedStorage          actualStorage;
+  private OLocalPaginatedStorage                actualStorage;
 
-  private OSBTree<Integer, OIdentifiable> expectedSBTree;
+  private OSBTreeBonsai<Integer, OIdentifiable> expectedSBTree;
 
   @BeforeClass
   @Override
@@ -167,8 +166,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
-    expectedSBTree.create("expectedSBTree", 0, OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
+    expectedSBTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
   }
 
   @Override

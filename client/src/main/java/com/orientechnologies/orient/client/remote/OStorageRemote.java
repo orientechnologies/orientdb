@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -581,6 +583,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("backup");
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    throw new UnsupportedOperationException("restore");
+  }
+
   public long count(final int iClusterId) {
     return count(new int[] { iClusterId });
   }
@@ -1100,25 +1112,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           for (int i = 0; i < createdRecords; i++) {
             currentRid = network.readRID();
             createdRid = network.readRID();
-            for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
-              if (txEntry.getRecord().getIdentity().equals(currentRid)) {
-                txEntry.getRecord().setIdentity(createdRid);
-                break;
-              }
-            }
+
+            iTx.updateIdentityAfterCommit(currentRid, createdRid);
           }
+
           final int updatedRecords = network.readInt();
           ORecordId rid;
           for (int i = 0; i < updatedRecords; ++i) {
             rid = network.readRID();
 
-            // SEARCH THE RECORD WITH THAT ID TO UPDATE THE VERSION
-            for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
-              if (txEntry.getRecord().getIdentity().equals(rid)) {
-                txEntry.getRecord().getRecordVersion().copyFrom(network.readVersion());
-                break;
-              }
-            }
+            ORecordOperation rop = iTx.getRecordEntry(rid);
+            if (rop != null)
+              rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
           }
 
           committedEntries.clear();
@@ -1186,6 +1191,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
       final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
+    return addCluster(iClusterType, iClusterName, -1, iLocation, iDataSegmentName, forceListBased, iArguments);
+  }
+
+  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
+      boolean forceListBased, Object... iParameters) {
     checkConnection();
 
     OChannelBinaryClient network = null;
@@ -1203,6 +1213,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           else
             network.writeInt(-1);
 
+          if (network.getSrvProtocolVersion() >= 18)
+            network.writeShort((short) iRequestedId);
         } finally {
           endRequest(network);
         }
@@ -1231,11 +1243,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         handleException(network, "Error on add new cluster", e);
       }
     } while (true);
-  }
-
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters) {
-    throw new UnsupportedOperationException();
   }
 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
@@ -1922,7 +1929,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         parseServerURLs();
 
         for (ODocument m : members)
-          if (m != null && !serverURLs.contains((String) m.field("id"))) {
+          if (m != null && !serverURLs.contains((String) m.field("name"))) {
             for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
               if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
                 String url = (String) listener.get("listen");

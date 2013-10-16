@@ -107,7 +107,7 @@ public class OEntityManager {
 
     List<Class<?>> classes = null;
     try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+      classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
     } catch (ClassNotFoundException e) {
       throw new OException(e);
     }
@@ -127,6 +127,33 @@ public class OEntityManager {
   }
 
   /**
+   * Registers provided classes
+   * 
+   * @param iClassNames
+   *          to be registered
+   */
+  public synchronized void registerEntityClasses(final Collection<String> iClassNames) {
+    registerEntityClasses(iClassNames, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Registers provided classes
+   * 
+   * @param iClassNames
+   *          to be registered
+   * @param iClassLoader
+   */
+  public synchronized void registerEntityClasses(final Collection<String> iClassNames, final ClassLoader iClassLoader) {
+    OLogManager.instance().debug(this, "Discovering entity classes for class names: %s", iClassNames);
+    
+    try {
+      registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
+    } catch (ClassNotFoundException e) {
+      throw new OException(e);
+    }
+  }
+
+  /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
    * 
    * @param iPackageName
@@ -141,16 +168,19 @@ public class OEntityManager {
    * 
    * @param iPackageName
    *          The base package
+   * @param iClassLoader
    */
   public synchronized void registerEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
     OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
-
-    List<Class<?>> classes = null;
+    
     try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+      registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
     } catch (ClassNotFoundException e) {
       throw new OException(e);
     }
+  }
+  
+  protected synchronized void registerEntityClasses(final List<Class<?>> classes) {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {

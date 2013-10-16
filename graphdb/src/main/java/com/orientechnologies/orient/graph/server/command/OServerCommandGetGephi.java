@@ -145,11 +145,11 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       json.resetAttributes();
       json.beginObject();
       json.beginObject(1, false, "ae");
-      json.beginObject(2, false, edge.getIdentity());
+      json.beginObject(2, false, edge.getId());
       json.writeAttribute(3, false, "directed", false);
 
-      json.writeAttribute(3, false, "source", edge.getInVertex().getIdentity());
-      json.writeAttribute(3, false, "target", edge.getOutVertex().getIdentity());
+      json.writeAttribute(3, false, "source", edge.getVertex(Direction.IN).getId());
+      json.writeAttribute(3, false, "target", edge.getVertex(Direction.OUT).getId());
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);

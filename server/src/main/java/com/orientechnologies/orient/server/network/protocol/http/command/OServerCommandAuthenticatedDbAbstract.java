@@ -55,6 +55,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    super.beforeExecute(iRequest, iResponse);
+    
     final String[] urlParts = iRequest.url.substring(1).split("/");
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
@@ -85,6 +87,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
         OLogManager.instance().warn(this,
             "Session %s is trying to access to the database '%s', but has been authenticated against the database '%s'",
             iRequest.sessionId, iRequest.databaseName, currentSession.getDatabaseName());
+        OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
         return false;
 
@@ -94,6 +97,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
         OLogManager.instance().warn(this,
             "Session %s is trying to access to the database '%s' with user '%s', but has been authenticated with user '%s'",
             iRequest.sessionId, iRequest.databaseName, authenticationParts.get(0), currentSession.getUserName());
+        OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
         return false;
       }

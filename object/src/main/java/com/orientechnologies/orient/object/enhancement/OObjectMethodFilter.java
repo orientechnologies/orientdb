@@ -75,14 +75,25 @@ public class OObjectMethodFilter implements MethodFilter {
     return fieldName.toString();
   }
 
-  public boolean isSetterMethod(final String fieldName, final Method m) throws SecurityException, NoSuchFieldException {
+  public boolean isSetterMethod(final String methodName, final Method m) throws SecurityException, NoSuchFieldException {
     Class<?> clz = m.getDeclaringClass();
-    if (!fieldName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "set")
-        || (isScalaClass(clz) && !fieldName.endsWith("_$eq")))
+    if (!methodName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(methodName, "set")
+        || (isScalaClass(clz) && !methodName.endsWith("_$eq")))
       return false;
     if (m.getParameterTypes() != null && m.getParameterTypes().length != 1)
       return false;
-    return !OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m));
+    if (OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m)))
+      return false;
+    Class<?>[] parameters = m.getParameterTypes();
+    Field f = OObjectEntitySerializer.getField(getFieldName(m), m.getDeclaringClass());
+    if (!f.getType().isAssignableFrom(parameters[0])) {
+      OLogManager.instance().warn(
+          this,
+          "Setter method " + m.toString() + " for field " + f.getName() + " in class " + m.getDeclaringClass().toString()
+              + " cannot be bound to proxied instance: parameter class don't match with field type " + f.getType().toString());
+      return false;
+    }
+    return true;
   }
 
   public boolean isGetterMethod(String fieldName, Method m) throws SecurityException, NoSuchFieldException {

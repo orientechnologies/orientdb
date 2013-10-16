@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String typeId, OIndexEngine<OIdentifiable> engine) {
-    super(typeId, engine);
+  public OIndexDictionary(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine) {
+    super(typeId, algorithm, engine);
   }
 
   public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {

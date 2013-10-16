@@ -15,24 +15,10 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
@@ -57,11 +43,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
+import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -1458,6 +1440,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Returns the configuration of a distributed database")
+  public void replicationConfig(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName)
+      throws IOException {
+
+    try {
+      if (serverAdmin == null)
+        throw new IllegalStateException("You must be connected to a remote server to align database");
+
+      final ODocument response = serverAdmin.replicationConfig(iDatabaseName);
+
+      message("\nDistributed configuration for database '%s':\n%s", iDatabaseName, response.toJSON("prettyPrint"));
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Check database integrity")
   public void checkDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
       throws IOException {
@@ -1521,12 +1520,57 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Backup a database", splitInWords = false)
+  public void backupDatabase(@ConsoleParameter(name = "options", description = "Backup options") final String iText)
+      throws IOException {
+    checkForDatabase();
+
+    out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
+    // final String options = fileName != null ? iText.substring(
+    // ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
+
+    final long startTime = System.currentTimeMillis();
+    try {
+      currentDatabase.backup(new FileOutputStream(fileName), null);
+
+      message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+
+    } catch (ODatabaseExportException e) {
+      printError(e);
+    }
+  }
+
+  @ConsoleCommand(description = "Restore a database into the current one", splitInWords = false)
+  public void restoreDatabase(@ConsoleParameter(name = "options", description = "Restore options") final String text)
+      throws IOException {
+    checkForDatabase();
+
+    message("\nRestoring database %s...", text);
+
+    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    // final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() :
+    // text;
+
+    final long startTime = System.currentTimeMillis();
+    try {
+      currentDatabase.restore(new FileInputStream(fileName), null);
+
+      message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+
+    } catch (ODatabaseImportException e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Export a database", splitInWords = false)
   public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
       throws IOException {
     checkForDatabase();
 
-    out.println(new StringBuilder("Exporting current database to: ").append(iText).append("..."));
+    out.println(new StringBuilder("Exporting current database to: ").append(iText).append(" in GZipped JSON format ..."));
     final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
     final String fileName = items.size() <= 0 || ((String) items.get(1)).charAt(0) == '-' ? null : (String) items.get(1);
     final String options = fileName != null ? iText.substring(

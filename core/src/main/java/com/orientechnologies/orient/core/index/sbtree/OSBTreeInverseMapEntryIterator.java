@@ -47,7 +47,7 @@ public class OSBTreeInverseMapEntryIterator<K, V> implements Iterator<Map.Entry<
   private void prefetchData(boolean firstTime) {
     sbTree.loadEntriesMinor(lastKey, firstTime, new OSBTree.RangeResultListener<K, V>() {
       @Override
-      public boolean addResult(final OTree.BucketEntry<K, V> entry) {
+      public boolean addResult(final Map.Entry<K, V> entry) {
         preFetchedValues.add(new Map.Entry<K, V>() {
           @Override
           public K getKey() {

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -27,7 +28,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.index.sbtree.OTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 
 /**
@@ -35,7 +35,10 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
  * @since 8/7/13
  */
 public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
-  private static final int            MAX_ENTREE_SIZE         = OGlobalConfiguration.SBTREE_MAX_ENTREE_SIZE.getValueAsInteger();
+  /**
+   * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)
+   */
+  private static final int            MAX_ENTREE_SIZE         = 24576000;
 
   private static final int            FREE_POINTER_OFFSET     = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            SIZE_OFFSET             = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -362,7 +365,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     return getBucketPointer(offset + RIGHT_SIBLING_OFFSET);
   }
 
-  public static final class SBTreeEntry<K, V> implements OTree.BucketEntry<K, V>, Comparable<SBTreeEntry<K, V>> {
+  public static final class SBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<SBTreeEntry<K, V>> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
     public final OBonsaiBucketPointer   leftChild;
@@ -377,12 +380,19 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       this.value = value;
     }
 
+    @Override
     public K getKey() {
       return key;
     }
 
+    @Override
     public V getValue() {
       return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException("SBTreeEntry.setValue");
     }
 
     @Override

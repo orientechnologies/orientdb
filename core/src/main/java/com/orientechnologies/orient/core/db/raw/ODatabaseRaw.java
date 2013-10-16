@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.db.raw;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -172,6 +175,19 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     } catch (Exception e) {
       throw new ODatabaseException("Cannot delete database", e);
     }
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    getStorage().backup(out, options);
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    if (storage == null)
+      storage = Orient.instance().loadStorage(url);
+
+    getStorage().restore(in, options);
   }
 
   public void reload() {

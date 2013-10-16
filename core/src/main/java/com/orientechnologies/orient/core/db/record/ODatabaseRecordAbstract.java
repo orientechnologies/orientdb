@@ -15,12 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
@@ -31,13 +26,8 @@ import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
-import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -46,6 +36,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.DISTRIBUTED_EXECUTION_MODE;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -56,11 +47,7 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -69,11 +56,7 @@ import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -721,7 +704,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> iRecord, String iClusterName,
-      final ORecordVersion iVersion, final byte iRecordType, final boolean iCallTriggers, final OPERATION_MODE iMode,
+      final ORecordVersion iVersion, final byte iRecordType, boolean iCallTriggers, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
@@ -792,12 +775,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           : iRecord.getRecordVersion();
 
       final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, iRecord);
-
+      final OStorageOperationResult<ORecordVersion> operationResult;
       try {
         // SAVE IT
-        final OStorageOperationResult<ORecordVersion> operationResult = underlying.save(dataSegmentId, rid,
-            stream == null ? new byte[0] : stream, realVersion, iRecord.getRecordType(), iMode.ordinal(), iForceCreate,
-            iRecordCreatedCallback, iRecordUpdatedCallback);
+        operationResult = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
+            iRecord.getRecordType(), iMode.ordinal(), iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
         final ORecordVersion version = operationResult.getResult();
 
@@ -820,15 +802,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             callbackHooks(wasNew ? TYPE.CREATE_REPLICATED : TYPE.UPDATE_REPLICATED, iRecord);
           }
         }
-
-        if (stream != null && stream.length > 0 && !operationResult.isMoved())
-          // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-          getLevel1Cache().updateRecord(iRecord);
       } catch (Throwable t) {
         if (iCallTriggers && stream != null && stream.length > 0)
           callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, iRecord);
         throw t;
       }
+
+      if (stream != null && stream.length > 0 && !operationResult.isMoved())
+        // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
+        getLevel1Cache().updateRecord(iRecord);
     } catch (OException e) {
       // RE-THROW THE EXCEPTION
       throw e;
@@ -881,8 +863,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       // CHECK IF ENABLE THE MVCC OR BYPASS IT
       final ORecordVersion realVersion = mvcc ? iVersion : OVersionFactory.instance().createUntrackedVersion();
 
+      final OStorageOperationResult<Boolean> operationResult;
       try {
-        final OStorageOperationResult<Boolean> operationResult;
         if (prohibitTombstones)
           operationResult = new OStorageOperationResult<Boolean>(underlying.cleanOutRecord(rid, realVersion, iRequired,
               (byte) iMode.ordinal()));
@@ -895,16 +877,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           else if (rec != null)
             callbackHooks(TYPE.DELETE_REPLICATED, rec);
         }
-
-        // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-        if (!operationResult.isMoved()) {
-          getLevel1Cache().deleteRecord(rid);
-        }
       } catch (Throwable t) {
         if (iCallTriggers)
           callbackHooks(TYPE.DELETE_FAILED, rec);
         throw t;
       }
+
+      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+      if (!operationResult.isMoved()) {
+        getLevel1Cache().deleteRecord(rid);
+      }
+
     } catch (OException e) {
       // RE-THROW THE EXCEPTION
       throw e;
@@ -1028,8 +1011,22 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (rec == null)
         return RESULT.RECORD_NOT_CHANGED;
 
+      RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+
       boolean recordChanged = false;
       for (ORecordHook hook : hooks.keySet()) {
+        // CHECK IF EXECUTE THE TRIGGER BASED ON STORAGE TYPE: DISTRIBUTED OR NOT
+        switch (runMode) {
+        case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
+          if (getStorage().isDistributed() && hook.getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.TARGET_NODE)
+            // SKIP
+            continue;
+          break; // TARGET NODE
+        case RUNNING_DISTRIBUTED:
+          if (hook.getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE)
+            continue;
+        }
+
         final RESULT res = hook.onTrigger(iType, rec);
 
         if (res == RESULT.RECORD_CHANGED)

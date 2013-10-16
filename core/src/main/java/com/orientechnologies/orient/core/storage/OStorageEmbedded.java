@@ -29,11 +29,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Interface for embedded storage.
@@ -234,7 +231,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     return null;
   }
 
-	/**
+  /**
    * Checks if the storage is open. If it's closed an exception is raised.
    */
   protected void checkOpeness() {

@@ -15,13 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -49,9 +43,9 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
   protected final boolean useSBTreeRIDSet;
-
-  public OIndexMultiValues(final String type, OIndexEngine<Set<OIdentifiable>> indexEngine) {
-    super(type, indexEngine);
+  
+  public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine) {
+    super(type, algorithm, indexEngine);
     OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
     useSBTreeRIDSet = storage.getType().equals(OEngineLocalPaginated.NAME)
         && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean();

@@ -28,6 +28,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 
   @Override
   public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+    super.beforeExecute(iRequest, iResponse);
     return true;
   }
 

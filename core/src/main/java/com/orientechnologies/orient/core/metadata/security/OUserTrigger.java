@@ -30,8 +30,12 @@ public class OUserTrigger extends ODocumentHookAbstract {
     setIncludeClasses("OUser");
   }
 
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
+
   @Override
-  public RESULT onRecordBeforeCreate(ODocument iDocument) {
+  public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     return encodePassword(iDocument);
   }
 

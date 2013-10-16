@@ -78,7 +78,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
       try {
         compiledScript = c.compile(parserText);
       } catch (ScriptException e) {
-        scriptManager.getErrorMessage(e, lib);
+        scriptManager.getErrorMessage(e, parserText);
       }
 
       request.setCompiledScript(compiledScript);

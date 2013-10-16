@@ -123,14 +123,20 @@ public enum OGlobalConfiguration {
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
 
+  // RECORDS
+  RECORD_DOWNSIZING_ENABLED(
+      "record.downsizing.enabled",
+      "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
+      Boolean.class, true),
+
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
   CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
 
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
+  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, false),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 10000),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 0),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -154,6 +160,7 @@ public enum OGlobalConfiguration {
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
 
+  @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
   DB_MVCC_THROWFAST(
@@ -213,6 +220,10 @@ public enum OGlobalConfiguration {
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode, false by default", Boolean.class,
       false),
 
+  INDEX_TX_MODE("index.txMode",
+      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
+      "ROLLBACK_ONLY"),
+
   INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
       "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
 
@@ -255,8 +266,12 @@ public enum OGlobalConfiguration {
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
 
   // SBTREE
-  SBTREE_MAX_ENTREE_SIZE("sbtree.maxEntree.size",
-      "Maximum size of key-value pair which can be put in SBTree in bytes (24576000 by default)", Integer.class, 24576000),
+  SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
+      Integer.class, 10240),
+
+  SBTREE_MAX_EMBEDDED_VALUE_SIZE("sbtree.maxEmbeddedValueSize",
+      "Maximum size of value which can be put in SBTree without creation link to standalone page in bytes (40960 by default)",
+      Integer.class, 40960),
 
   SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
       "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize ==0.",
@@ -447,7 +462,26 @@ public enum OGlobalConfiguration {
       Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE);
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
+
+  // DISTRIBUTED
+  DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
+      10000),
+
+  DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
+
+  DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+
+  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
+      Integer.class, 5000l),
+
+  DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+
+  DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l);
 
   private final String                 key;
   private final Object                 defValue;

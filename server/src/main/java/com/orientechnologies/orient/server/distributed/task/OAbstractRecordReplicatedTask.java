@@ -17,9 +17,6 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
 
 /**
  * Distributed create record task used for synchronization.
@@ -27,33 +24,21 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OAbstractRecordReplicatedTask<T> extends OAbstractReplicatedTask<T> {
+public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
   protected ORecordId      rid;
   protected ORecordVersion version;
 
   public OAbstractRecordReplicatedTask() {
   }
 
-  public OAbstractRecordReplicatedTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final ORecordVersion iVersion) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode);
-    this.rid = iRid;
-    this.version = iVersion;
-  }
-
-  /**
-   * Constructor called on aligning
-   */
-  public OAbstractRecordReplicatedTask(final long iRunId, final long iOperationId, final ORecordId iRid,
-      final ORecordVersion iVersion) {
-    super(iRunId, iOperationId);
+  public OAbstractRecordReplicatedTask(final ORecordId iRid, final ORecordVersion iVersion) {
     this.rid = iRid;
     this.version = iVersion;
   }
 
   @Override
   public String toString() {
-    return getName() + "(" + rid + " v." + version + ")";
+    return super.toString() + "(" + rid + " v." + version + ")";
   }
 
   public ORecordId getRid() {

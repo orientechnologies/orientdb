@@ -65,6 +65,7 @@ import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTes
 import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
+import com.orientechnologies.orient.test.domain.base.Media;
 import com.orientechnologies.orient.test.domain.base.Parent;
 import com.orientechnologies.orient.test.domain.base.PersonTest;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -2248,6 +2249,70 @@ public class CRUDObjectPhysicalTest {
       }
     } catch (IllegalArgumentException iae) {
       Assert.fail("ORecordBytes field getter should not throw this exception", iae);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "oRecordBytesFieldsTest")
+  public void testAddingORecordBytesAfterParentCreation() throws IOException {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ORID rid;
+    try {
+      Media media = new Media();
+      media.setName("TestMedia");
+      media = database.save(media);
+
+      // Add ORecordBytes after
+      database.begin();
+      media.setContent("This is a test".getBytes());
+      media = database.save(media);
+      database.commit();
+      rid = database.getIdentity(media);
+    } finally {
+      database.close();
+    }
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      Media media = database.load(rid);
+      Assert.assertTrue(media.getContent() == null);
+      database.delete(media);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "testAddingORecordBytesAfterParentCreation")
+  public void testObjectDelete() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      Media media = new Media();
+      ORecordBytes testRecord = new ORecordBytes("This is a test".getBytes());
+      media.setContent(testRecord);
+      media = database.save(media);
+
+      Assert.assertEquals(new String(media.getContent().toStream()), "This is a test");
+
+      // try to delete
+      database.delete(media);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "testObjectDelete")
+  public void testOrphanDelete() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      Media media = new Media();
+      ORecordBytes testRecord = new ORecordBytes("This is a test".getBytes());
+      media.setContent(testRecord);
+      media = database.save(media);
+
+      Assert.assertEquals(new String(media.getContent().toStream()), "This is a test");
+
+      // try to delete
+      database.delete(media);
     } finally {
       database.close();
     }

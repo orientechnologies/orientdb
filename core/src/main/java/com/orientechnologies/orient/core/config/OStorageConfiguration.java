@@ -51,7 +51,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                DEFAULT_CHARSET = "UTF-8";
 
-  public static final int                   CURRENT_VERSION = 5;
+  public static final int                   CURRENT_VERSION = 6;
 
   public int                                version         = -1;
   public String                             name;

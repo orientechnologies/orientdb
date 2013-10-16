@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.index.sbtree;
 
+import java.util.Map;
+
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
@@ -16,12 +18,6 @@ public interface OTree<K, V> {
    * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
    */
   interface RangeResultListener<K, V> {
-    boolean addResult(BucketEntry<K, V> entry);
-  }
-
-  interface BucketEntry<K, V> {
-    V getValue();
-
-    K getKey();
+    boolean addResult(Map.Entry<K, V> entry);
   }
 }

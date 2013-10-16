@@ -16,7 +16,13 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +31,8 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
@@ -36,16 +44,18 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
+  private static final boolean useSBTree   = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
+
   private boolean              usingLog;
   private static AtomicInteger txSerial    = new AtomicInteger();
   private int                  autoRetries = OGlobalConfiguration.TX_AUTO_RETRY.getValueAsInteger();
@@ -63,7 +73,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     checkTransaction();
     status = TXSTATUS.COMMITTING;
 
-    if (database.getStorage() instanceof OStorageProxy)
+    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED && !(database.getStorage() instanceof OStorageEmbedded))
       database.getStorage().commit(this, null);
     else {
       final List<String> involvedIndexes = getInvolvedIndexes();
@@ -88,38 +98,46 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 lockedIndexes.add(index);
               }
 
-            // SEARCH FOR INDEX BASED ON DOCUMENT TOUCHED
-            final Collection<? extends OIndex<?>> indexes = database.getMetadata().getIndexManager().getIndexes();
-            List<? extends OIndex<?>> indexesToLock = null;
-            if (indexes != null) {
-              indexesToLock = new ArrayList<OIndex<?>>(indexes);
-              Collections.sort(indexesToLock, new Comparator<OIndex<?>>() {
-                public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
-                  return indexOne.getName().compareTo(indexTwo.getName());
-                }
-              });
-            }
+            if (!useSBTree) {
+              // SEARCH FOR INDEX BASED ON DOCUMENT TOUCHED
+              final Collection<? extends OIndex<?>> indexes = database.getMetadata().getIndexManager().getIndexes();
+              List<? extends OIndex<?>> indexesToLock = null;
+              if (indexes != null) {
+                indexesToLock = new ArrayList<OIndex<?>>(indexes);
+                Collections.sort(indexesToLock, new Comparator<OIndex<?>>() {
+                  public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
+                    return indexOne.getName().compareTo(indexTwo.getName());
+                  }
+                });
+              }
 
-            if (indexesToLock != null && !indexesToLock.isEmpty()) {
-              if (lockedIndexes == null)
-                lockedIndexes = new ArrayList<OIndexAbstract<?>>();
+              if (indexesToLock != null && !indexesToLock.isEmpty()) {
+                if (lockedIndexes == null)
+                  lockedIndexes = new ArrayList<OIndexAbstract<?>>();
 
-              for (OIndex<?> index : indexesToLock) {
-                for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-                  final ORecord<?> record = entry.getValue().record.getRecord();
-                  if (record instanceof ODocument) {
-                    ODocument doc = (ODocument) record;
-                    if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null
-                        && index.getDefinition() != null && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
-                      index.getInternal().acquireModificationLock();
-                      lockedIndexes.add((OIndexAbstract<?>) index.getInternal());
+                for (OIndex<?> index : indexesToLock) {
+                  for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+                    final ORecord<?> record = entry.getValue().record.getRecord();
+                    if (record instanceof ODocument) {
+                      ODocument doc = (ODocument) record;
+                      if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null
+                          && index.getDefinition() != null
+                          && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
+                        index.getInternal().acquireModificationLock();
+                        lockedIndexes.add((OIndexAbstract<?>) index.getInternal());
+                      }
                     }
                   }
                 }
-              }
 
-              for (OIndexAbstract<?> index : lockedIndexes)
-                index.acquireExclusiveLock();
+                for (OIndexAbstract<?> index : lockedIndexes)
+                  index.acquireExclusiveLock();
+              }
+            }
+
+            final Map<String, OIndex> indexes = new HashMap<String, OIndex>();
+            for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
+              indexes.put(index.getName().toLowerCase(), index);
             }
 
             final Runnable callback = new Runnable() {
@@ -128,8 +146,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 final ODocument indexEntries = getIndexChanges();
                 if (indexEntries != null) {
                   for (Entry<String, Object> indexEntry : indexEntries) {
-                    final OIndex<?> index = database.getMetadata().getIndexManager().getIndexInternal(indexEntry.getKey());
-                    index.commit((ODocument) indexEntry.getValue());
+                    final OIndex<?> index = indexes.get(indexEntry.getKey().toLowerCase());
+
+                    if (index == null) {
+                      OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
+                      throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
+                    } else
+                      index.commit((ODocument) indexEntry.getValue());
                   }
                 }
               }
@@ -155,8 +178,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           } finally {
             // RELEASE INDEX LOCKS IF ANY
             if (lockedIndexes != null) {
-              for (OIndexAbstract<?> index : lockedIndexes)
-                index.releaseExclusiveLock();
+              if (!useSBTree) {
+                for (OIndexAbstract<?> index : lockedIndexes)
+                  index.releaseExclusiveLock();
+              }
 
               for (OIndexAbstract<?> index : lockedIndexes)
                 index.releaseModificationLock();
@@ -250,7 +275,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return;
-    addRecord(iRecord, iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED, iClusterName);
+    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+        : ORecordOperation.CREATED;
+    addRecord(iRecord, operation, iClusterName);
   }
 
   protected void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
@@ -300,7 +327,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         } else if (txRecord.record != iRecord) {
           // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
           final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
-          if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
+          if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
+              && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
             OLogManager
                 .instance()
                 .warn(

@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
@@ -31,21 +30,6 @@ public class DbClosedTest {
   @Parameters(value = { "url" })
   public DbClosedTest(final String iURL) {
     url = iURL;
-  }
-
-  public void testStorageClosed() {
-    if (SetupTest.instance().isReuseDatabase())
-      return;
-
-    ODatabaseDocumentPool.global().close();
-    OObjectDatabasePool.global().close();
-
-    if (OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean())
-      return;
-
-    // for (OStorage stg : Orient.instance().getStorages()) {
-    // Assert.assertTrue(stg.isClosed());
-    // }
   }
 
   public void testDoubleDb() {
@@ -66,5 +50,14 @@ public class DbClosedTest {
     dbAnother.close();
 
     db.close();
+  }
+
+  @Test(dependsOnMethods = { "testDoubleDb", "testDoubleDbWindowsPath" })
+  public void testStorageClosed() {
+    if (SetupTest.instance().isReuseDatabase())
+      return;
+
+    ODatabaseDocumentPool.global().close();
+    OObjectDatabasePool.global().close();
   }
 }

@@ -81,10 +81,6 @@ public class IndexTest {
   @Parameters(value = "url")
   public IndexTest(String iURL) {
     database = new OObjectDatabaseTx(iURL);
-    if (!database.exists()) {
-      database.create();
-      database.close();
-    }
   }
 
   @Test(dependsOnMethods = "testIndexGetValuesUniqueIndex")

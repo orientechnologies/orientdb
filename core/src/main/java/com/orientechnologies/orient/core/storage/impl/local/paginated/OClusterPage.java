@@ -34,7 +34,7 @@ public class OClusterPage extends ODurablePage {
 
   private static final int VERSION_SIZE               = OVersionFactory.instance().getVersionSize();
 
-  private static final int NEXT_PAGE_OFFSET           = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_PAGE_OFFSET           = NEXT_FREE_POSITION;
   private static final int PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;

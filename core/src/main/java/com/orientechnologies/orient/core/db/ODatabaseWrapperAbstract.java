@@ -15,8 +15,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
@@ -63,6 +67,16 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
   public void reload() {
     underlying.reload();
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+    underlying.backup(out, options);
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+    underlying.restore(in, options);
   }
 
   public void close() {
