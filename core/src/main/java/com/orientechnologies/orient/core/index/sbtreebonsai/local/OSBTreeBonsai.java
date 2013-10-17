@@ -17,7 +17,13 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -1225,7 +1231,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     try {
       final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
       if (sysBucket.freeListLength() > diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES / 2) {
-        return reuseBucketFromFreeList(sysBucket);
+        final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
+        sysCacheEntry.markDirty();
+        return allocationResult;
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
         if (freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES > PAGE_SIZE) {
