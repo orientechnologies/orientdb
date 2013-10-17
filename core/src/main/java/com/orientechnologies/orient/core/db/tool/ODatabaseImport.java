@@ -141,7 +141,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       database.setStatus(STATUS.IMPORTING);
 
       for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
-        indexesToRebuild.add(index.getName().toLowerCase());
+        if (index.isAutomatic())
+          indexesToRebuild.add(index.getName().toLowerCase());
       }
 
       String tag;
