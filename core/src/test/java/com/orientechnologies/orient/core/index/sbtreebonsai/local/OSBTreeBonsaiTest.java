@@ -1,13 +1,6 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -43,7 +36,7 @@ public class OSBTreeBonsaiTest {
     if (buildDirectory == null)
       buildDirectory = "./target";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeBonsaiTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -51,7 +44,7 @@ public class OSBTreeBonsaiTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
+    sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".irs", 1, false);
     sbTree.create("OSBTreeBonsaiTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
         (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }

@@ -17,13 +17,7 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -386,7 +380,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         sysBucket.setFreeListHead(head);
         sysBucket.setFreeListLength(sysBucket.freeListLength() + bucketCount);
 
-        super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+        logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
         sysCacheEntry.markDirty();
       } finally {
         sysCachePointer.releaseExclusiveLock();
@@ -1239,7 +1233,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
           final long pageIndex = cacheEntry.getPageIndex();
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
 
-          super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+          logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
           sysCacheEntry.markDirty();
 
           return new AllocationResult(new OBonsaiBucketPointer(pageIndex, 0), cacheEntry, true);
@@ -1248,7 +1242,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
               + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
           final OCacheEntry cacheEntry = diskCache.load(fileId, freeSpacePointer.getPageIndex(), false);
 
-          super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+          logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
           sysCacheEntry.markDirty();
 
           return new AllocationResult(freeSpacePointer, cacheEntry, false);
@@ -1272,7 +1266,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       sysBucket.setFreeListHead(bucket.getLeftSibling());
 
-      super.logPageChanges(bucket, fileId, oldFreeListHead.getPageIndex(), false);
+      logPageChanges(bucket, fileId, oldFreeListHead.getPageIndex(), false);
       cacheEntry.markDirty();
     } finally {
       pointer.releaseExclusiveLock();

@@ -94,10 +94,10 @@ public class OStorageLocalTest {
   }
 
   private String getDatabasePath() {
-    String dbPath = System.getProperty("java.io.tmpdir");
-    if (!dbPath.endsWith(File.separator))
-      dbPath += "/";
-    dbPath += "orientdb" + "/" + "test";
-    return dbPath;
+    String buildDirectory = System.getProperty("buildDirectory");
+    if (buildDirectory == null)
+      buildDirectory = "./target";
+
+    return buildDirectory + File.separator + "test";
   }
 }
