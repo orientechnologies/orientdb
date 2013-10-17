@@ -363,7 +363,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
         addChildrenToQueue(subTreesToDelete, bucket);
 
-        bucket.setLeftSibling(head);
+        bucket.setFreeListPointer(head);
         head = bucketPointer;
 
         logPageChanges(bucket, fileId, bucketPointer.getPageIndex(), false);
@@ -403,7 +403,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
           bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
-      bucket.setLeftSibling(freeListHead);
+      bucket.setFreeListPointer(freeListHead);
 
       super.logPageChanges(bucket, fileId, bucketPointer.getPageIndex(), false);
       cacheEntry.markDirty();
@@ -1264,6 +1264,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   private AllocationResult reuseBucketFromFreeList(OSysBucket sysBucket) throws IOException {
     final OBonsaiBucketPointer oldFreeListHead = sysBucket.getFreeListHead();
+    assert oldFreeListHead.isValid();
 
     OCacheEntry cacheEntry = diskCache.load(fileId, oldFreeListHead.getPageIndex(), false);
     OCachePointer pointer = cacheEntry.getCachePointer();
@@ -1272,7 +1273,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
           oldFreeListHead.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
-      sysBucket.setFreeListHead(bucket.getLeftSibling());
+      sysBucket.setFreeListHead(bucket.getFreeListPointer());
+      sysBucket.setFreeListLength(sysBucket.freeListLength() - 1);
 
       logPageChanges(bucket, fileId, oldFreeListHead.getPageIndex(), false);
       cacheEntry.markDirty();
