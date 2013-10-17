@@ -38,24 +38,23 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   /**
    * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)
    */
-  private static final int            MAX_ENTREE_SIZE         = 24576000;
+  private static final int            MAX_ENTREE_SIZE          = 24576000;
 
-  private static final int            FREE_POINTER_OFFSET     = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            SIZE_OFFSET             = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            IS_LEAF_OFFSET          = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            LEFT_SIBLING_OFFSET     = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int            RIGHT_SIBLING_OFFSET    = LEFT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE
-                                                                  + OIntegerSerializer.INT_SIZE;
+  private static final int            FREE_POINTER_OFFSET      = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            SIZE_OFFSET              = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int            IS_LEAF_OFFSET           = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int            FREE_LIST_POINTER_OFFSET = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int            LEFT_SIBLING_OFFSET      = FREE_LIST_POINTER_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int            RIGHT_SIBLING_OFFSET     = LEFT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
 
-  private static final int            TREE_SIZE_OFFSET        = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE
-                                                                  + OIntegerSerializer.INT_SIZE;
+  private static final int            TREE_SIZE_OFFSET         = RIGHT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
 
-  private static final int            KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int            KEY_SERIALIZER_OFFSET    = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int            VALUE_SERIALIZER_OFFSET  = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  private static final int            POSITIONS_ARRAY_OFFSET  = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int            POSITIONS_ARRAY_OFFSET   = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
-  public static final int             MAX_BUCKET_SIZE_BYTES   = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
+  public static final int             MAX_BUCKET_SIZE_BYTES    = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
 
   private final boolean               isLeaf;
   private final int                   offset;
@@ -63,7 +62,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   private final OBinarySerializer<K>  keySerializer;
   private final OBinarySerializer<V>  valueSerializer;
 
-  private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K> comparator               = ODefaultComparator.INSTANCE;
 
   public OSBTreeBonsaiBucket(long cachePointer, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) throws IOException {
@@ -347,6 +346,14 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     if (entreeSize > MAX_ENTREE_SIZE)
       throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
           + ".");
+  }
+
+  public void setFreeListPointer(OBonsaiBucketPointer pointer) throws IOException {
+    setBucketPointer(offset + FREE_LIST_POINTER_OFFSET, pointer);
+  }
+
+  public OBonsaiBucketPointer getFreeListPointer() {
+    return getBucketPointer(offset + FREE_LIST_POINTER_OFFSET);
   }
 
   public void setLeftSibling(OBonsaiBucketPointer pointer) throws IOException {

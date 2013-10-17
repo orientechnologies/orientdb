@@ -363,7 +363,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
         addChildrenToQueue(subTreesToDelete, bucket);
 
-        bucket.setLeftSibling(head);
+        bucket.setFreeListPointer(head);
         head = bucketPointer;
 
         logPageChanges(bucket, fileId, bucketPointer.getPageIndex(), false);
@@ -386,7 +386,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         sysBucket.setFreeListHead(head);
         sysBucket.setFreeListLength(sysBucket.freeListLength() + bucketCount);
 
-        super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+        logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
         sysCacheEntry.markDirty();
       } finally {
         sysCachePointer.releaseExclusiveLock();
@@ -403,7 +403,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
           bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
-      bucket.setLeftSibling(freeListHead);
+      bucket.setFreeListPointer(freeListHead);
 
       super.logPageChanges(bucket, fileId, bucketPointer.getPageIndex(), false);
       cacheEntry.markDirty();
@@ -1231,7 +1231,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     try {
       final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
       if (sysBucket.freeListLength() > diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES / 2) {
-        return reuseBucketFromFreeList(sysBucket);
+        final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
+        sysCacheEntry.markDirty();
+        return allocationResult;
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
         if (freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES > PAGE_SIZE) {
@@ -1239,7 +1241,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
           final long pageIndex = cacheEntry.getPageIndex();
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
 
-          super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+          logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
           sysCacheEntry.markDirty();
 
           return new AllocationResult(new OBonsaiBucketPointer(pageIndex, 0), cacheEntry, true);
@@ -1248,7 +1250,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
               + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
           final OCacheEntry cacheEntry = diskCache.load(fileId, freeSpacePointer.getPageIndex(), false);
 
-          super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
+          logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), false);
           sysCacheEntry.markDirty();
 
           return new AllocationResult(freeSpacePointer, cacheEntry, false);
@@ -1262,6 +1264,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   private AllocationResult reuseBucketFromFreeList(OSysBucket sysBucket) throws IOException {
     final OBonsaiBucketPointer oldFreeListHead = sysBucket.getFreeListHead();
+    assert oldFreeListHead.isValid();
 
     OCacheEntry cacheEntry = diskCache.load(fileId, oldFreeListHead.getPageIndex(), false);
     OCachePointer pointer = cacheEntry.getCachePointer();
@@ -1270,9 +1273,10 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<K, V>(pointer.getDataPointer(),
           oldFreeListHead.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
-      sysBucket.setFreeListHead(bucket.getLeftSibling());
+      sysBucket.setFreeListHead(bucket.getFreeListPointer());
+      sysBucket.setFreeListLength(sysBucket.freeListLength() - 1);
 
-      super.logPageChanges(bucket, fileId, oldFreeListHead.getPageIndex(), false);
+      logPageChanges(bucket, fileId, oldFreeListHead.getPageIndex(), false);
       cacheEntry.markDirty();
     } finally {
       pointer.releaseExclusiveLock();
