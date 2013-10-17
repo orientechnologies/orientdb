@@ -39,10 +39,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -50,7 +52,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -580,6 +584,23 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
       try {
         indexEngine.delete();
+
+        if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
+          final OStorage storage = getDatabase().getStorage();
+          if (storage instanceof OStorageLocal) {
+            final ODiskCache diskCache = ((OStorageLocal) storage).getDiskCache();
+            try {
+              final String fileName = getName() + OSBTreeIndexRIDContainer.INDEX_FILE_EXTENSION;
+              if (diskCache.exists(fileName)) {
+                final long fileId = diskCache.openFile(fileName);
+                diskCache.deleteFile(fileId);
+              }
+            } catch (IOException e) {
+              OLogManager.instance().error(this, "Can't delete file for value containers", e);
+            }
+          }
+        }
+
         return this;
 
       } finally {
