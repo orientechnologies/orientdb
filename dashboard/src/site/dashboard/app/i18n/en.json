@@ -40,7 +40,7 @@
     "dashboard.title": "Dashboard",
     "dashboard.general": "General",
     "dashboard.log": "Log",
-    "dashboard.javalog": "Server Logs",
+    "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
     "dashboard.metrics.title": "Metrics Builder",

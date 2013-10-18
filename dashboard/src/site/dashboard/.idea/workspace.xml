@@ -5,10 +5,10 @@
     <ignored path="studioee.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
-    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381420446897" ignored="false" />
+    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382107144686" ignored="false" />
     <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381581415224" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986941211" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380277123510" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382095296218" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986935836" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816329630" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985831148" ignored="false" />
@@ -138,7 +138,7 @@
     <file path="$PROJECT_DIR$/app/components/bootstrap/less/pager.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
     <file path="$PROJECT_DIR$/app/components/bootstrap/less/dropdowns.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
     <file path="$PROJECT_DIR$/app/components/bootstrap/less/tooltip.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
-    <file path="/dashboard.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379191124283" ignored="false" />
+    <file path="/dashboard.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382106479558" ignored="false" />
     <file path="/nav.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379914387817" ignored="false" />
     <file path="/sidenav.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379111373664" ignored="false" />
     <file path="/select2.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379110178110" ignored="false" />
@@ -230,29 +230,32 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="metrics.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="109" column="4" selection-start="5406" selection-end="7519" vertical-scroll-proportion="-48.125">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="singleMetric.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="6" column="62" selection-start="325" selection-end="325" vertical-scroll-proportion="-3.75">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="metrics.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="25" column="21" selection-start="952" selection-end="952" vertical-scroll-proportion="0.0">
+            <state line="11" column="75" selection-start="383" selection-end="383" vertical-scroll-proportion="0.0">
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sidenav.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="1" column="4" selection-start="62" selection-end="358" vertical-scroll-proportion="-0.21518987">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dashboard.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="25" column="0" selection-start="902" selection-end="902" vertical-scroll-proportion="-16.346153">
+              <folding>
+                <marker date="1382106495000" expanded="true" signature="40:277" placeholder="..." />
+                <marker date="1382106495000" expanded="true" signature="109:143" placeholder="..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -260,7 +263,16 @@
       <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="96" column="41" selection-start="3754" selection-end="3754" vertical-scroll-proportion="0.0">
+            <state line="47" column="35" selection-start="1800" selection-end="1800" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="nav.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -269,37 +281,25 @@
       <file leaf-file-name="general.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="22" column="79" selection-start="956" selection-end="956" vertical-scroll-proportion="-13.75">
+            <state line="3" column="19" selection-start="131" selection-end="138" vertical-scroll-proportion="-1.9615384">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/index.html">
+      <file leaf-file-name="en.json" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="112" column="43" selection-start="5364" selection-end="5364" vertical-scroll-proportion="0.0">
-              <folding>
-                <marker date="1381581418206" expanded="true" signature="1558:1795" placeholder="..." />
-                <marker date="1381581418206" expanded="true" signature="1627:1661" placeholder="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="server.js" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="69" column="23" selection-start="2345" selection-end="2352" vertical-scroll-proportion="-1.0341556">
+            <state line="48" column="18" selection-start="1976" selection-end="1989" vertical-scroll-proportion="-2.21519">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="odirective.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/odirective.js">
+      <file leaf-file-name="main.css" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="3" column="0" selection-start="75" selection-end="1063" vertical-scroll-proportion="0.0">
+            <state line="130" column="29" selection-start="2515" selection-end="2515" vertical-scroll-proportion="0.846293">
               <folding />
             </state>
           </provider>
@@ -333,14 +333,10 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/views/eventWhat/httpwhat.html" />
-        <option value="$PROJECT_DIR$/app/views/eventWhat/mailwhat.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
-        <option value="$PROJECT_DIR$/app/styles/main.css" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
         <option value="$PROJECT_DIR$/app/views/server/general.html" />
-        <option value="$PROJECT_DIR$/app/i18n/en.json" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
@@ -349,13 +345,16 @@
         <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
+        <option value="$PROJECT_DIR$/app/i18n/en.json" />
+        <option value="$PROJECT_DIR$/app/views/sidenav.html" />
+        <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
+        <option value="$PROJECT_DIR$/app/styles/main.css" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1" />
-    <option name="y" value="765" />
-    <option name="width" value="1368" />
+    <option name="y" value="-3" />
+    <option name="width" value="1365" />
     <option name="height" value="772" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
@@ -384,7 +383,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -653,6 +651,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -661,13 +660,7 @@
     <property name="DefaultHtmlFileTemplate" value="Html5" />
     <property name="GoToClass.includeJavaFiles" value="false" />
   </component>
-  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
-    <servers>
-      <server id="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
-        <serverdata />
-      </server>
-    </servers>
-  </component>
+  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app/views/eventWhat" />
@@ -737,13 +730,13 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="765" width="1368" height="772" extended-state="6" />
+    <frame x="0" y="-3" width="1365" height="772" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24869695" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2492515" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -827,40 +820,21 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="23" selection-start="507" selection-end="519" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="45" column="74" selection-start="1652" selection-end="1652" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="422" column="86" selection-start="8107" selection-end="8107" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="155" column="42" selection-start="5632" selection-end="5632" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="2" column="247" selection-start="262" selection-end="262" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="56" column="30" selection-start="2352" selection-end="2352" vertical-scroll-proportion="0.0">
+        <state line="109" column="4" selection-start="5406" selection-end="7519" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="6" column="62" selection-start="325" selection-end="325" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -868,37 +842,20 @@
     <entry file="file://$PROJECT_DIR$/app/index.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="112" column="43" selection-start="5364" selection-end="5364" vertical-scroll-proportion="0.0">
-          <folding>
-            <marker date="1381581418206" expanded="true" signature="1558:1795" placeholder="..." />
-            <marker date="1381581418206" expanded="true" signature="1627:1661" placeholder="..." />
-          </folding>
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="69" column="23" selection-start="2345" selection-end="2352" vertical-scroll-proportion="0.0">
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/odirective.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="3" column="0" selection-start="75" selection-end="1063" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="66" selection-start="534" selection-end="534" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="109" column="4" selection-start="5406" selection-end="7519" vertical-scroll-proportion="-48.125">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="62" selection-start="325" selection-end="325" vertical-scroll-proportion="-3.75">
           <folding />
         </state>
       </provider>
@@ -910,30 +867,68 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="66" selection-start="534" selection-end="534" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="21" selection-start="952" selection-end="952" vertical-scroll-proportion="0.0">
+        <state line="11" column="75" selection-start="383" selection-end="383" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1" column="4" selection-start="62" selection-end="358" vertical-scroll-proportion="-0.21518987">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="48" column="18" selection-start="1976" selection-end="1989" vertical-scroll-proportion="-2.21519">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="25" column="0" selection-start="902" selection-end="902" vertical-scroll-proportion="-16.346153">
+          <folding>
+            <marker date="1382106495000" expanded="true" signature="40:277" placeholder="..." />
+            <marker date="1382106495000" expanded="true" signature="109:143" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3" column="19" selection-start="131" selection-end="138" vertical-scroll-proportion="-1.9615384">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="96" column="41" selection-start="3754" selection-end="3754" vertical-scroll-proportion="0.0">
+        <state line="47" column="35" selection-start="1800" selection-end="1800" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="22" column="79" selection-start="956" selection-end="956" vertical-scroll-proportion="-13.75">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="69" column="23" selection-start="2345" selection-end="2352" vertical-scroll-proportion="-1.0341556">
+        <state line="130" column="29" selection-start="2515" selection-end="2515" vertical-scroll-proportion="0.846293">
           <folding />
         </state>
       </provider>

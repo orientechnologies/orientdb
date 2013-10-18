@@ -245,10 +245,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		events.createProperty("when", OType.EMBEDDED, eventWhen);
 		events.createProperty("what", OType.EMBEDDED, eventWhat);
 
-//		final OClass scheduler = schema.createClass(CLASS_SCHEDULER_WHEN);
-//		scheduler.setSuperClass(eventWhen);
-//		scheduler.createProperty("cronExp", OType.STRING);
-
 		final OClass logEvent = schema.createClass(CLASS_LOG_WHEN);
 		logEvent.setSuperClass(eventWhen);
 		logEvent.createProperty("type", OType.STRING);
