@@ -152,7 +152,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             return type;
         },
         isLink: function (type) {
-            return type == "LINKSET" ||  type == "LINKLIST";
+            return type == "LINKSET" || type == "LINKLIST";
         },
         listField: function (clazz) {
             var metadata = this.getMetadata();
@@ -383,15 +383,18 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             }
             return type;
         },
-        getLink: function (doc) {
+        getLink: function (doc, exclude) {
             var self = this;
             var all = Object.keys(doc).filter(function (element, index, array) {
                 var type = self.getFieldType(doc['@class'], element);
                 if (!type) {
                     type = self.findTypeFromFieldTipes(doc, element);
                 }
-                console.log(type);
-                return self.isLink(type);
+                if (exclude) {
+                    return self.isLink(type) && exclude.indexOf(element) == -1;
+                } else {
+                    return self.isLink(type);
+                }
             });
             return all;
         },
@@ -485,7 +488,7 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
                     var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
                     Notification.push({content: noti});
                 }
-                if (data!=undefined)
+                if (data != undefined)
                     callback(data);
                 else
                     callback('ok');

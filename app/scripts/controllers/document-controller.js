@@ -26,7 +26,6 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
 
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
-        $scope.outgoings = Database.getEdge($scope.doc, 'out');
         $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
     }
 
