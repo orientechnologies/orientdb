@@ -159,6 +159,10 @@
             <fileset dir="server/src/site"/>
         </copy>
 
+        <copy todir="${db.release}/plugins/">
+            <fileset dir="server/plugins"/>
+        </copy>
+
         <copy todir="${db.release}/config/" flatten="true">
             <fileset dir="." includes="tools/config/*"/>
         </copy>

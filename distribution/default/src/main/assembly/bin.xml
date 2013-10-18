@@ -112,6 +112,14 @@
         </fileSet>
 
         <!--
+         | Plugins
+        -->
+        <fileSet>
+            <directory>${basedir}/../../server/plugins</directory>
+            <outputDirectory>plugins</outputDirectory>
+        </fileSet>
+
+        <!--
          | Web part
         -->
         <fileSet>
