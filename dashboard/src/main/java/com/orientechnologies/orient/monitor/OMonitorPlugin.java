@@ -17,7 +17,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -52,7 +51,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String CLASS_EVENT_WHEN = "EventWhen";
 	public static final String CLASS_EVENT_WHAT = "EventWhat";
 
-	public static final String CLASS_SCHEDULER_WHEN = "SchedulerWhen";
+//	public static final String CLASS_SCHEDULER_WHEN = "SchedulerWhen";
 	public static final String CLASS_LOG_WHEN = "LogWhen";
 	private static final String CLASS_METRICS_WHEN = "MetricsWhen";
 
@@ -246,9 +245,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		events.createProperty("when", OType.EMBEDDED, eventWhen);
 		events.createProperty("what", OType.EMBEDDED, eventWhat);
 
-		final OClass scheduler = schema.createClass(CLASS_SCHEDULER_WHEN);
-		scheduler.setSuperClass(eventWhen);
-		scheduler.createProperty("cronExp", OType.STRING);
+//		final OClass scheduler = schema.createClass(CLASS_SCHEDULER_WHEN);
+//		scheduler.setSuperClass(eventWhen);
+//		scheduler.createProperty("cronExp", OType.STRING);
 
 		final OClass logEvent = schema.createClass(CLASS_LOG_WHEN);
 		logEvent.setSuperClass(eventWhen);
