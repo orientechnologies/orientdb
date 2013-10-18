@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL REMOVE INDEX command: Remove an index
@@ -40,8 +38,6 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
   private String             name;
 
   public OCommandExecutorSQLRebuildIndex parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();

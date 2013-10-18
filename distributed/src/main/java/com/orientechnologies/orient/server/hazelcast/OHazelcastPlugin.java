@@ -219,9 +219,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
-    
+
     hazelcastInstance.shutdown();
-    
+
     setStatus(STATUS.OFFLINE);
 
     getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
@@ -434,11 +434,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final Member member = iEvent.getMember();
 
     final String nodeName = getNodeName(member);
-    cachedClusterNodes.remove(nodeName);
+    if (nodeName != null) {
+      cachedClusterNodes.remove(nodeName);
 
-    for (String dbName : messageService.getDatabases()) {
-      final OHazelcastDistributedDatabase db = messageService.getDatabase(dbName);
-      db.removeNodeInConfiguration(nodeName, false);
+      for (String dbName : messageService.getDatabases()) {
+        final OHazelcastDistributedDatabase db = messageService.getDatabase(dbName);
+        db.removeNodeInConfiguration(nodeName, false);
+      }
     }
 
     OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());

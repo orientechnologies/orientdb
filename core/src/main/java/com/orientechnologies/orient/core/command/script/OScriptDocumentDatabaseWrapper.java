@@ -73,6 +73,12 @@ public class OScriptDocumentDatabaseWrapper {
     this.database = new ODatabaseDocumentTx(iURL);
   }
 
+  public void switchUser(final String iUserName, final String iUserPassword) {
+    if (!database.isClosed())
+      database.close();
+    database.open(iUserName, iUserPassword);
+  }
+
   public OIdentifiable[] query(final String iText) {
     return query(iText, (Object[]) null);
   }

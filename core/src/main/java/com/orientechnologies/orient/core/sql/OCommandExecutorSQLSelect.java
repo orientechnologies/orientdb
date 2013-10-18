@@ -581,7 +581,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (word.length() == 0)
         // END CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
-      else if (word.equals(KEYWORD_LIMIT)) {
+      else if (word.equals(KEYWORD_LIMIT) || word.equals(KEYWORD_SKIP)) {
         // NEXT CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
         parserGoBack();

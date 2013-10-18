@@ -27,8 +27,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -37,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest{
+public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER = "ALTER";
   public static final String KEYWORD_CLASS = "CLASS";
 
@@ -47,7 +45,6 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 
@@ -87,7 +84,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     value = parserText.substring(pos + 1).trim();
 
     if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText, oldPos);
+      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
+          oldPos);
 
     if (value.equalsIgnoreCase("null"))
       value = null;

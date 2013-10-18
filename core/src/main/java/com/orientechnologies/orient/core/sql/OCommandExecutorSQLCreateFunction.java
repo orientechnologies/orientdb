@@ -24,8 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -44,11 +42,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateFunction parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("FUNCTION");

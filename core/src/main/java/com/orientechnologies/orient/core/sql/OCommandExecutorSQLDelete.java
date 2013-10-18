@@ -31,8 +31,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -64,7 +62,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelete parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 
