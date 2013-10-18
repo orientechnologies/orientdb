@@ -137,7 +137,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
               fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
           }
 
-        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName);
+        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
 
         if (fields != null && !fields.isEmpty()) {
           if (!edge.getRecord().getIdentity().isValid())
