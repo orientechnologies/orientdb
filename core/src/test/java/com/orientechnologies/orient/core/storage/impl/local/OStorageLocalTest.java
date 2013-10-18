@@ -47,7 +47,7 @@ public class OStorageLocalTest {
     String dbPath = getDatabasePath();
 
     System.out.println("Using db = local:" + dbPath);
-    File dbDir = new File(dbPath).getParentFile();
+    File dbDir = new File(dbPath);
     System.out.println("Clean db directory for test...");
     delTree(dbDir);
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
@@ -98,6 +98,6 @@ public class OStorageLocalTest {
     if (buildDirectory == null)
       buildDirectory = "./target";
 
-    return buildDirectory + File.separator + "test";
+    return buildDirectory + File.separator + "OStorageLocalTestDB__42";
   }
 }
