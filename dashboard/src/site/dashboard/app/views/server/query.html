@@ -7,10 +7,11 @@
     <div ng-controller="QueryMonitorController">
         <div class="row-fluid">
             <form class="form-inline well">
-
+                <label for="dbOnline" class="span2">{{ 'queryprofiler.server' | i18n }}</label>
+                <select ui-select2 ng-model="server" class="span3" ng-options="s.name for s in servers" data-placeholder="Pick a Server">
+                </select>
                 <label for="dbOnline" class="span2">{{ 'queryprofiler.database' | i18n }}</label>
-                <select id="dbOnline" ui-select2 ng-model="db" class="span4" data-placeholder="Pick a Database">
-                    <option ng-repeat="db in databases" value="{{ db }}">{{ db }}</option>
+                <select id="dbOnline" ui-select2 ng-model="db" class="span3" ng-options="d for d in databases"  data-placeholder="Pick a Database">
                 </select>
             </form>
         </div>

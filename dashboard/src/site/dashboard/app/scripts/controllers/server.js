@@ -13,7 +13,26 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
 
 
     $scope.rid = $routeParams.server;
-    $scope.db = $routeParams.db
+    $scope.db = $routeParams.db;
+
+    Monitor.getServers(function (data) {
+        $scope.servers = data.result;
+        if ($scope.rid) {
+            $scope.servers.forEach(function (elem, idx, arr) {
+                if ($scope.rid.replace("#", '') == elem['@rid'].replace("#", '')) {
+                    $scope.server = elem;
+                }
+            });
+        } else {
+            if ($scope.servers.length > 0) {
+                $scope.server = $scope.servers[0];
+            }
+        }
+        if ($scope.server) {
+            $scope.findDatabases($scope.server.name);
+        }
+    });
+
     $scope.refresh = function () {
 
         var metricName = 'db.' + $scope.db + '.command.';
@@ -24,11 +43,7 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
 
         });
     }
-    Monitor.getServer($scope.rid, function (data) {
-        $scope.server = data;
-        $scope.findDatabases(data.name);
 
-    });
     $scope.delete = function () {
         var metricName = 'db.' + $scope.db + '.command.';
         var params = {  server: $scope.sName, type: 'realtime', names: metricName };
@@ -57,14 +72,12 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             $scope.databases = data.result[0]['system.databases'].split(",");
             if ($scope.databases.length > 0 && !$scope.db) {
                 $scope.db = $scope.databases[0];
-                $scope.refresh();
             }
+            if ($scope.db)
+                $scope.refresh();
         });
     }
-    $scope.$watch("db", function (data) {
-        if (data)
-            $location.path("/dashboard/query/" + $scope.rid + "/" + data);
-    })
+
 
 });
 app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
