@@ -52,12 +52,12 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
 
     tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
-        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
+        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
   public OSBTreeIndexRIDContainer(String fileName, OBonsaiBucketPointer rootPointer) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
-    tree.load(fileName, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
+    tree.load(fileName, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
   protected String getFileName() {

@@ -40,7 +40,7 @@ public class OSBTreeCollectionManager {
     OSBTreeBonsai<OIdentifiable, Boolean> tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".sbt", 1, true);
 
     tree.create(FILE_ID, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
-        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
+        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
     treeCache.put(tree.getRootBucketPointer(), tree);
 
@@ -53,7 +53,7 @@ public class OSBTreeCollectionManager {
       return tree;
 
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".sbt", 1, true);
-    tree.load(fileName, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage());
+    tree.load(fileName, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
     treeCache.put(tree.getRootBucketPointer(), tree);
 
