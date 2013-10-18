@@ -218,7 +218,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
           final ODocument d = indexConfigurationIterator.next();
           try {
             index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                (String) d.field(OIndexInternal.ALGORITHM), document.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                (String) d.field(OIndexInternal.ALGORITHM), d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
