@@ -1,9 +1,9 @@
 <div class="row-fluid" ng-controller="NavController">
-    <!--<div class="row-fuid serverBox">-->
-        <!--<select ui-select2 ng-model="rid" class="span10" data-placeholder="Pick a Server">-->
-            <!--<option ng-repeat="server in servers" value="{{ server['@rid'] | nopound }}">{{ server.name }}</option>-->
-        <!--</select>-->
-    <!--</div>-->
+    <div class="row-fuid serverBox">
+        <select ui-select2 ng-model="rid" class="span10" data-placeholder="Pick a Server">
+            <option ng-repeat="server in servers" value="{{ server['@rid'] | nopound }}">{{ server.name }}</option>
+        </select>
+    </div>
     <div class="row-fluid">
         <nav class="navMenu">
             <ul class="nav nav-list">

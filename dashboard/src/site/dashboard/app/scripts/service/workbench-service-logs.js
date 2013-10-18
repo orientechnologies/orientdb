@@ -112,8 +112,9 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
 
             file = '&file=' + params.file;
         }
-
-        $http.get('/log/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
+                  console.log(server);
+        console.log('/log/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file);
+        $http.get('/log/monitor/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
             callback(data);
         }).error(function (data) {
             })

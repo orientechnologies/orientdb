@@ -38,7 +38,7 @@
     "queryprofiler.last": "Last",
     "dashboard": "Dashboard",
     "dashboard.title": "Dashboard",
-    "dashboard.general": "General",
+    "dashboard.general": "Server",
     "dashboard.log": "Log",
     "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",

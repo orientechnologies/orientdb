@@ -5,7 +5,7 @@
     <ignored path="studioee.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
-    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382107144686" ignored="false" />
+    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382108436032" ignored="false" />
     <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381581415224" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986941211" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382095296218" ignored="false" />
@@ -192,8 +192,8 @@
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/font-awesome/src/assets/js/backbone.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/codemirror/mode/javascript/javascript.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="/datepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210153179" ignored="false" />
-    <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381236630574" ignored="false" />
-    <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381407578985" ignored="false" />
+    <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382112156177" ignored="false" />
+    <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382112023882" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416802554" ignored="false" />
     <file path="/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380364362509" ignored="false" />
     <file path="/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416727337" ignored="false" />
@@ -230,19 +230,28 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="metrics.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
+      <file leaf-file-name="sidenav.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="11" column="75" selection-start="383" selection-end="383" vertical-scroll-proportion="0.0">
+            <state line="16" column="64" selection-start="875" selection-end="875" vertical-scroll-proportion="-3.443038">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="sidenav.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
+      <file leaf-file-name="log.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="1" column="4" selection-start="62" selection-end="358" vertical-scroll-proportion="-0.21518987">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="105.84615">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="99" column="8" selection-start="3370" selection-end="3370" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -272,7 +281,7 @@
       <file leaf-file-name="nav.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+            <state line="8" column="54" selection-start="293" selection-end="310" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -287,37 +296,28 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="116" column="32" selection-start="4071" selection-end="4071" vertical-scroll-proportion="0.33092225">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="en.json" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="48" column="18" selection-start="1976" selection-end="1989" vertical-scroll-proportion="-2.21519">
+            <state line="40" column="32" selection-start="1700" selection-end="1700" vertical-scroll-proportion="-3.721519">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.css" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="130" column="29" selection-start="2515" selection-end="2515" vertical-scroll-proportion="0.846293">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="custom.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="81" column="35" selection-start="2785" selection-end="2785" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="metricswhen.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="14" column="66" selection-start="534" selection-end="534" vertical-scroll-proportion="0.0">
+            <state line="159" column="46" selection-start="3157" selection-end="3157" vertical-scroll-proportion="-1.2830188">
               <folding />
             </state>
           </provider>
@@ -333,8 +333,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
-        <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
         <option value="$PROJECT_DIR$/app/views/server/general.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
@@ -345,15 +343,17 @@
         <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
-        <option value="$PROJECT_DIR$/app/i18n/en.json" />
-        <option value="$PROJECT_DIR$/app/views/sidenav.html" />
         <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
+        <option value="$PROJECT_DIR$/app/i18n/en.json" />
+        <option value="$PROJECT_DIR$/app/views/sidenav.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
+        <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="y" value="-3" />
+    <option name="y" value="-771" />
     <option name="width" value="1365" />
     <option name="height" value="772" />
   </component>
@@ -730,7 +730,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="-3" width="1365" height="772" extended-state="0" />
+    <frame x="0" y="-771" width="1365" height="772" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -820,25 +820,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="247" selection-start="262" selection-end="262" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="109" column="4" selection-start="5406" selection-end="7519" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="62" selection-start="325" selection-end="325" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/index.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="112" column="43" selection-start="5364" selection-end="5364" vertical-scroll-proportion="0.0">
@@ -881,27 +862,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="4" selection-start="62" selection-end="358" vertical-scroll-proportion="-0.21518987">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="48" column="18" selection-start="1976" selection-end="1989" vertical-scroll-proportion="-2.21519">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="25" column="0" selection-start="902" selection-end="902" vertical-scroll-proportion="-16.346153">
@@ -926,9 +886,51 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="8" column="54" selection-start="293" selection-end="310" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="40" column="32" selection-start="1700" selection-end="1700" vertical-scroll-proportion="-3.721519">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="16" column="64" selection-start="875" selection-end="875" vertical-scroll-proportion="-3.443038">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="105.84615">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="99" column="8" selection-start="3370" selection-end="3370" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="130" column="29" selection-start="2515" selection-end="2515" vertical-scroll-proportion="0.846293">
+        <state line="159" column="46" selection-start="3157" selection-end="3157" vertical-scroll-proportion="-1.2830188">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="116" column="32" selection-start="4071" selection-end="4071" vertical-scroll-proportion="0.33092225">
           <folding />
         </state>
       </provider>

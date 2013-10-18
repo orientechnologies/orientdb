@@ -153,10 +153,11 @@ button.btn-inverse, .btn.btn-inverse {
     background: none repeat scroll 0 0 #A5360F;
     color: #FFFFFF;
     border-radius: 5px !important;
+    margin-right: 5px;
 }
 
 button.btn-inverse:hover, .btn.btn-inverse:hover {
-    background: none repeat scroll 0 0 #E65C00;
+    background: none repeat scroll 0 0 #A5860F;
 }
 
 .serverNav {
@@ -255,7 +256,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .widget > .widget-title > .widget-caption {
     display: inline-block;
     float: left;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 400;
     margin: 0 0 7px;
     padding: 0;
