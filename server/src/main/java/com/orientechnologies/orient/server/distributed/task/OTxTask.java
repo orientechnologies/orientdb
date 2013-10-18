@@ -21,8 +21,11 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -68,7 +71,12 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       database.commit();
 
+    } catch (ONeedRetryException e) {
+      return Boolean.FALSE;
+    } catch (OTransactionException e) {
+      return Boolean.FALSE;
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on distirbuted transaction commit", e);
       return Boolean.FALSE;
     }
     return Boolean.TRUE;
