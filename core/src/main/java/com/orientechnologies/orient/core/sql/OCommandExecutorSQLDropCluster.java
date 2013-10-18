@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL DROP CLUSTER command: Drop a cluster from the database
@@ -33,17 +31,14 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract  implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP    = "DROP";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
   private String             clusterName;
 
   public OCommandExecutorSQLDropCluster parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 

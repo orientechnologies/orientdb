@@ -92,10 +92,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Compile the filter conditions only the first time.
    */
   public OCommandExecutorSQLResultsetAbstract parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-    OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     init(textRequest);
 

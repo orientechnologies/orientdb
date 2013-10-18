@@ -26,8 +26,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
 
 /**
@@ -45,8 +43,6 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   private String             className;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();

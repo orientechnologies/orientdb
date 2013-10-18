@@ -28,8 +28,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
@@ -51,7 +49,6 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 

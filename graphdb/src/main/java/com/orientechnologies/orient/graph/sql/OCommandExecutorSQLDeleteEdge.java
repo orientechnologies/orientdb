@@ -29,8 +29,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -59,7 +57,6 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
-    graph.getRawGraph().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 
