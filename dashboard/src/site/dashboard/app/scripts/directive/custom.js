@@ -70,3 +70,28 @@ Widget.directive('rangepicker', function () {
     };
 });
 
+Widget.directive('metricchart', function ($http,$compile) {
+
+    var compileChart = function (html,scope,element,attrs){
+
+
+
+        var chartScope = scope.$new(true);
+        chartScope.metric = attrs['metricchart'];
+        chartScope.metricScope = scope;
+        chartScope.rid = scope.rid;
+        var el = angular.element($compile(html.data)(chartScope));
+        element.empty();
+        element.append(el);
+    }
+
+    return {
+        restrict: 'A',
+        link: function (scope,element, attrs) {
+            $http.get('views/server/metric/singleMetric.html').then(function (response) {
+                compileChart(response, scope, element, attrs);
+            });
+        }
+    };
+});
+

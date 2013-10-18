@@ -19,6 +19,9 @@
                 <parameter value="yyyy-MM-dd HH:mm:ss" name="profile.default.mail.date.format"/>
             </parameters>
         </handler>
+        <handler class="com.orientechnologies.agent.OEnterpriseAgent">
+           
+        </handler>
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
                 <parameter value="false" name="enabled"/>
@@ -59,7 +62,7 @@
     </network>
     <storages/>
     <users>
-        <user resources="*" password="275005CD18BBABD3DE8C6F45C0FAF3A28D2C35712F07E73440A352E77EC33090" name="root"/>
+        <user resources="*" password="gino" name="root"/>
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>
     </users>
     <properties>
@@ -67,8 +70,8 @@
         <entry value="20" name="db.pool.max"/>
         <entry value="false" name="cache.level1.enabled"/>
         <entry value="1000" name="cache.level1.size"/>
-        <entry value="false" name="cache.level2.enabled"/>
-        <entry value="0" name="cache.level2.size"/>
+        <entry value="true" name="cache.level2.enabled"/>
+        <entry value="1000" name="cache.level2.size"/>
         <entry value="true" name="profiler.enabled"/>
         <entry value="info" name="log.console.level"/>
         <entry value="fine" name="log.file.level"/>
