@@ -299,7 +299,7 @@
       <file leaf-file-name="workbench-service-logs.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="116" column="32" selection-start="4071" selection-end="4071" vertical-scroll-proportion="0.33092225">
+            <state line="115" column="43" selection-start="3928" selection-end="3928" vertical-scroll-proportion="0.30018082">
               <folding />
             </state>
           </provider>
@@ -930,7 +930,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="116" column="32" selection-start="4071" selection-end="4071" vertical-scroll-proportion="0.33092225">
+        <state line="115" column="43" selection-start="3928" selection-end="3928" vertical-scroll-proportion="0.30018082">
           <folding />
         </state>
       </provider>
