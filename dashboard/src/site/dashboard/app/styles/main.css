@@ -142,6 +142,9 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+.btn-small {
+    padding: 4px 8px;
+}
 
 .btn-trasparent {
     background-color: transparent;

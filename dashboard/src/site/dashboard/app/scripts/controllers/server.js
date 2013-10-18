@@ -73,7 +73,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
     $scope.rid = $routeParams.server;
 
     $scope.editorOptions = {
-        lineWrapping : true,
+        lineWrapping: true,
         lineNumbers: true,
         mode: 'xml'
     };
@@ -90,8 +90,8 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
 
     });
-    $scope.saveConfig = function(){
-        Server.saveConfiguration($scope.server,$scope.configuration, function (data) {
+    $scope.saveConfig = function () {
+        Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
             console.log(data);
         });
     }
@@ -179,7 +179,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
 
 });
-app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig) {
+app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, $odialog, Monitor, Metric, Server, MetricConfig) {
 
     $scope.rid = $routeParams.server;
     $scope.names = new Array;
@@ -215,9 +215,13 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
         $scope.selectedConfig = config;
     }
     $scope.deleteConfig = function (config) {
-        MetricConfig.deleteConfig(config, function (data) {
-            $scope.refreshMetricConfig();
-        })
+        var msg = 'You are removing metric ' + config.name + '. Are you sure?';
+        $odialog.confirm({title: 'Warning', body: msg, success: function () {
+            MetricConfig.deleteConfig(config, function (data) {
+                $scope.refreshMetricConfig();
+            });
+        }});
+
     }
     $scope.addConfig = function () {
         if (!$scope.selectedConfig['config']) {

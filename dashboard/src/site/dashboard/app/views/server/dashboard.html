@@ -44,9 +44,11 @@
                             <td><a href="#/dashboard/general/{{ server['@rid'] | nopound }}">{{ server.name }}</a></td>
                             <td>{{ server.last_success | fromNow }}</td>
                             <td>
-                                <a href="javascript:void(0)" ng-click="editServer(server['@rid'])"><i
+                                <a href="javascript:void(0)"  class="btn btn-small" ng-click="editServer(server['@rid'])"><i
                                         class="icon-edit"></i></a>
-                                <a href="javascript:void(0)" ng-click="deleteServer(server)"><i class="icon-trash"></i></a>
+                                <a href="javascript:void(0)" class="btn btn-small" ng-click="enable(server['@rid'])"><i
+                                        class="icon-time"></i></a>
+                                <a href="javascript:void(0)"  class="btn btn-small" ng-click="deleteServer(server)"><i class="icon-trash"></i></a>
                             </td>
                         </tr>
                         </tbody>

@@ -100,7 +100,7 @@ Widget.directive('stackedchart', function () {
                      });
                      });
                      keys.sort(function(a,b){
-                     var aDate =  moment(a,"YYYY-MM-DD HH:mm:ss").unix();
+                     var aDate =  moment(a,"YYYY-MM-DD HH:mm:ss").unix();s
                      var bDate =  moment(b,"YYYY-MM-DD HH:mm:ss").unix();
                      return aDate - bDate;
                      });
@@ -160,7 +160,7 @@ Widget.directive('stackedarea', function () {
             chart.yAxis
                 .tickFormat(d3.format(',.2f'));
 
-            $(element[0]).html("");
+            $(element[0]).empty();
             d3.select(element[0])
                 .datum(data)
                 .transition().duration(1200)
