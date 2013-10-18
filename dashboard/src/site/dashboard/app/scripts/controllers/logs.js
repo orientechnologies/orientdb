@@ -97,6 +97,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
             typeofS = 'file';
             filess = $scope.selectedFile
         }
+
         CommandLogApi.getLastLogs({server: $scope.server.name, file: filess, typeofSearch: typeofS, searchvalue: $scope.selectedSearch, logtype: $scope.selectedType, dateFrom: $scope.selectedDateFrom, hourFrom: $scope.selectedHourFrom, dateTo: $scope.selectedDateTo, hourTo: $scope.selectedHourTo}, function (data) {
             if (data) {
                 $scope.resultTotal = data;
