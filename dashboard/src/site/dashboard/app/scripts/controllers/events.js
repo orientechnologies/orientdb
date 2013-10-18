@@ -54,7 +54,9 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         }
         modalScope.eventWhen = event['when'];
         modalScope.parentScope = $scope;
-        var modalPromise = $modal({template: 'views/eventWhen/' + event['when']['@class'].toLowerCase() + '.html', scope: modalScope});
+
+        console.log(event['when']['@class'].toLowerCase());
+        var modalPromise = $modal({template: 'views/eventWhen/' + event['when']['@class'].toLowerCase().trim() + '.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });
@@ -109,7 +111,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
             Utilities.message($scope, $modal, $q, {
                 title: 'Message',
                 body: data,
-                success: function(){
+                success: function () {
                     $scope.refreshPage();
                 }
 
@@ -136,26 +138,27 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class']);
+    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
+
 }]);
 
 dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class']);
+    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
 }]);
 
 dbModule.controller("SchedulerWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class']);
+    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
 }]);
 dbModule.controller("HttpWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class']);
+    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class'].trim());
 }]);
 
 
 dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class']);
+    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class'].trim());
 }]);
 
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
