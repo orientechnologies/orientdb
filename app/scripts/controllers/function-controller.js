@@ -15,7 +15,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             }
         }
     };
-
+    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Functions");
     $scope.functions = new Array;
 
     $scope.consoleValue = '';                           //code of the function
@@ -44,7 +44,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 }
 
                 if ($scope.functions.length > 0 && $scope.functionToExecute != undefined) {
-                    var index =  $scope.functionsrid.indexOf($scope.functionToExecute['name']);
+                    var index = $scope.functionsrid.indexOf($scope.functionToExecute['name']);
                     $scope.showInConsole($scope.functions[index]);
                 }
             }
@@ -60,7 +60,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         if ($scope.functionToExecute != undefined) {
             var numPar = parseInt($scope.functionToExecute['parameters']);
 
-            var result = numPar - 1
+            var result = numPar - 1;
 
             $scope.functionToExecute['parameters'].splice(index, 1);
 

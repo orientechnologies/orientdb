@@ -7,7 +7,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
     $scope.canDelete = true;
     $scope.canCreate = true;
     $scope.canAdd = true;
-
+    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Edit-record");
     // Toggle modal
     $scope.showModal = function (rid) {
         modalScope = $scope.$new(true);

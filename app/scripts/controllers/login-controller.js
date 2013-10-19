@@ -11,6 +11,7 @@ angular.module('login.controller', ['database.services']).controller("LoginContr
             $scope.database = $scope.databases[0];
         }
     });
+
     $scope.connect = function () {
         Database.connect($scope.database, $scope.username, $scope.password, function () {
             $location.path("/database/" + $scope.database + "/browse");

@@ -4,6 +4,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.database = Database;
     $scope.limit = 20;
 
+    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Query");
     if(localStorageService.get("Queries")==null){
         localStorageService.add("Queries", new Array);
     }
