@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -1122,10 +1123,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         parseIndexSearchResult(entries);
       } else {
         final Object right = compiledFilter.getRootCondition().getRight();
-        final Object keyValue = getIndexKey(index.getDefinition(), right);
+        Object keyValue = getIndexKey(index.getDefinition(), right);
 
         final Object res;
         if (index.getDefinition().getParamCount() == 1) {
+          // CONVERT BEFORE SEARCH IF NEEDED
+          final OType type = index.getDefinition().getTypes()[0];
+          keyValue = OType.convert(keyValue, type.getDefaultJavaType());
+          
           res = index.get(keyValue);
         } else {
           final Object secondKey = getIndexKey(index.getDefinition(), right);
