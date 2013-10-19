@@ -182,8 +182,8 @@ public class OServerPluginManager implements OService {
       if (pluginConfigFile == null || pluginConfigFile.available() == 0) {
         // JAVA7 ONLY
         // pluginClassLoader.close();
-        OLogManager.instance().error(this, "Error on loading plugin.json for dynamic plugin '%s'", pluginName);
-        throw new IllegalArgumentException(String.format("Error on loading plugin.json for dynamic plugin '%s'", pluginName));
+        OLogManager.instance().error(this, "Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName);
+        throw new IllegalArgumentException(String.format("Error on loading 'plugin.json' file for dynamic plugin '%s'", pluginName));
       }
 
       final ODocument properties = new ODocument().fromJSON(pluginConfigFile);
