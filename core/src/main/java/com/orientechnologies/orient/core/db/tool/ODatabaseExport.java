@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,12 +34,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -251,17 +242,18 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       final String clusterName = database.getClusterNameById(clusterId);
 
-      if (clusterName != null) {
-        // CHECK IF THE CLUSTER IS INCLUDED
-        if (includeClusters != null) {
-          if (!includeClusters.contains(clusterName.toUpperCase()))
-            continue;
-        } else if (excludeClusters != null) {
-          if (excludeClusters.contains(clusterName.toUpperCase()))
-            continue;
-        }
-      } else if (includeClusters != null && !includeClusters.isEmpty())
+      // exclude removed clusters
+      if (clusterName == null)
         continue;
+
+      // CHECK IF THE CLUSTER IS INCLUDED
+      if (includeClusters != null) {
+        if (!includeClusters.contains(clusterName.toUpperCase()))
+          continue;
+      } else if (excludeClusters != null) {
+        if (excludeClusters.contains(clusterName.toUpperCase()))
+          continue;
+      }
 
       writer.beginObject(2, true, null);
 
