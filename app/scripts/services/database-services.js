@@ -390,15 +390,18 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             }
             return type;
         },
-        getLink: function (doc) {
+        getLink: function (doc, exclude) {
             var self = this;
             var all = Object.keys(doc).filter(function (element, index, array) {
                 var type = self.getFieldType(doc['@class'], element);
                 if (!type) {
                     type = self.findTypeFromFieldTipes(doc, element);
                 }
-                console.log(type);
-                return self.isLink(type);
+                if (exclude) {
+                    return self.isLink(type) && exclude.indexOf(element) == -1;
+                } else {
+                    return self.isLink(type);
+                }
             });
             return all;
         },

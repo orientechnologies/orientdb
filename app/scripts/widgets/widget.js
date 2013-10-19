@@ -134,7 +134,6 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             return type;
         }
         if (!property) {
-
             var fieldTypes = scope.doc['@fieldTypes'];
             var type = Database.findTypeFromFieldTipes(scope.doc, name);
             if (!type)
