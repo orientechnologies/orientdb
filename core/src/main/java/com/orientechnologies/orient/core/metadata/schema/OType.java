@@ -326,6 +326,8 @@ public enum OType {
           return iValue;
         else if (iValue instanceof String)
           return Long.parseLong((String) iValue);
+        else if (iValue instanceof Date)
+          return ((Date) iValue).getTime();
         else
           return ((Number) iValue).longValue();
 
