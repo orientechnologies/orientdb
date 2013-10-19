@@ -1,16 +1,11 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Random;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -22,10 +17,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePa
  */
 @Test
 public class SBTreeNonLeafBucketTest {
-  private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
   public void testInitialization() throws Exception {
-    long pointer = directMemory.allocate(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
@@ -39,7 +32,7 @@ public class SBTreeNonLeafBucketTest {
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
     Assert.assertEquals(treeBucket.getRightSibling(), -1);
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testSearch() throws Exception {
@@ -53,7 +46,7 @@ public class SBTreeNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    long pointer = directMemory.allocate(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
@@ -96,7 +89,7 @@ public class SBTreeNonLeafBucketTest {
       prevLeft = entry.leftChild;
     }
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testShrink() throws Exception {
@@ -110,7 +103,7 @@ public class SBTreeNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    long pointer = directMemory.allocate(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
@@ -176,7 +169,7 @@ public class SBTreeNonLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), originalSize);
     Assert.assertEquals(addedKeys, keysToAdd);
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
 }

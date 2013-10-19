@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -72,17 +72,17 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   }
 
   @Override
-  public void serializeInDirectMemory(Double object, ODirectMemory memory, long pointer) {
-    memory.setLong(pointer, Double.doubleToLongBits(object));
+  public void serializeInDirectMemory(Double object, ODirectMemoryPointer pointer, long offset) {
+    pointer.setLong(offset, Double.doubleToLongBits(object));
   }
 
   @Override
-  public Double deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return Double.longBitsToDouble(memory.getLong(pointer));
+  public Double deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return Double.longBitsToDouble(pointer.getLong(offset));
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return DOUBLE_SIZE;
   }
 

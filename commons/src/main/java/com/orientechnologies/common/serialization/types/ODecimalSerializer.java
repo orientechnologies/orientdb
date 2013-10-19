@@ -19,7 +19,7 @@ package com.orientechnologies.common.serialization.types;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for {@link BigDecimal} type.
@@ -83,26 +83,27 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   @Override
-  public void serializeInDirectMemory(BigDecimal object, ODirectMemory memory, long pointer) {
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.scale(), memory, pointer);
-    pointer += OIntegerSerializer.INT_SIZE;
-    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(object.unscaledValue().toByteArray(), memory, pointer);
+  public void serializeInDirectMemory(BigDecimal object, ODirectMemoryPointer pointer, long offset) {
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.scale(), pointer, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(object.unscaledValue().toByteArray(), pointer, offset);
   }
 
   @Override
-  public BigDecimal deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    final int scale = memory.getInt(pointer);
-    pointer += OIntegerSerializer.INT_SIZE;
+  public BigDecimal deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    final int scale = pointer.getInt(offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
-    final byte[] unscaledValue = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(memory, pointer);
+    final byte[] unscaledValue = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
 
     return new BigDecimal(new BigInteger(unscaledValue), scale);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     final int size = OIntegerSerializer.INT_SIZE
-        + OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(memory, pointer + OIntegerSerializer.INT_SIZE);
+        + OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset + OIntegerSerializer.INT_SIZE);
     return size;
   }
 

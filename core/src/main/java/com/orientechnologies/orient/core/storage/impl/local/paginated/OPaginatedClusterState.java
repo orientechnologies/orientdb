@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
@@ -29,7 +30,7 @@ public class OPaginatedClusterState extends ODurablePage {
   private static final int SIZE_OFFSET         = RECORDS_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_LIST_OFFSET    = SIZE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public OPaginatedClusterState(long pagePointer, TrackMode trackMode) {
+  public OPaginatedClusterState(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
     super(pagePointer, trackMode);
   }
 

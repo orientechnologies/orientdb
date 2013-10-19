@@ -5,8 +5,7 @@ import java.util.Random;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 
 /**
@@ -15,10 +14,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePa
  */
 @Test
 public class SBTreeValuePageTest {
-  private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
   public void fillPageDataTest() throws Exception {
-    long pointerOne = directMemory.allocate(ODurablePage.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointerOne = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
     OSBTreeValuePage valuePageOne = new OSBTreeValuePage(pointerOne, ODurablePage.TrackMode.NONE, true);
 
     byte[] data = new byte[ODurablePage.MAX_PAGE_SIZE_BYTES + 100];
@@ -28,7 +25,7 @@ public class SBTreeValuePageTest {
     int offset = valuePageOne.fillBinaryContent(data, 0);
     Assert.assertEquals(offset, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE);
 
-    long pointerTwo = directMemory.allocate(ODurablePage.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointerTwo = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
     OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(pointerTwo, ODurablePage.TrackMode.NONE, true);
     offset = valuePageTwo.fillBinaryContent(data, offset);
 
@@ -47,16 +44,17 @@ public class SBTreeValuePageTest {
 
     Assert.assertEquals(data, readData);
 
-    directMemory.free(pointerOne);
-    directMemory.free(pointerTwo);
+    pointerOne.free();
+    pointerTwo.free();
   }
 
   public void testFreeListPointer() throws Exception {
-    long pointer = directMemory.allocate(ODurablePage.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
+
     OSBTreeValuePage valuePage = new OSBTreeValuePage(pointer, ODurablePage.TrackMode.NONE, true);
     valuePage.setNextFreeListPage(124);
     Assert.assertEquals(valuePage.getNextFreeListPage(), 124);
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 }

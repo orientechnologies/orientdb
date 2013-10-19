@@ -17,7 +17,6 @@
 package com.orientechnologies.nio;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
@@ -59,16 +58,6 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public void set(long pointer, byte[] content, int arrayOffset, int length) {
     new Pointer(pointer).write(0, content, arrayOffset, length);
-  }
-
-  @Override
-  public <T> T get(long pointer, OBinarySerializer<T> serializer) {
-    return serializer.deserializeFromDirectMemory(this, pointer);
-  }
-
-  @Override
-  public <T> void set(long pointer, T data, OBinarySerializer<T> serializer) {
-    serializer.serializeInDirectMemory(data, this, pointer);
   }
 
   @Override

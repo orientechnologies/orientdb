@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
@@ -32,7 +33,7 @@ public class OSBTreeValuePage extends ODurablePage {
 
   public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(long pagePointer, TrackMode trackMode, boolean isNew) throws IOException {
+  public OSBTreeValuePage(ODirectMemoryPointer pagePointer, TrackMode trackMode, boolean isNew) throws IOException {
     super(pagePointer, trackMode);
 
     if (isNew) {

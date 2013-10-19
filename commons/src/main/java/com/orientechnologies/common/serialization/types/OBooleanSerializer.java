@@ -16,7 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for boolean type .
@@ -69,17 +69,17 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public void serializeInDirectMemory(Boolean object, ODirectMemory memory, long pointer) {
-    memory.setByte(pointer, object ? (byte) 1 : 0);
+  public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset) {
+    pointer.setByte(offset, object ? (byte) 1 : 0);
   }
 
   @Override
-  public Boolean deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getByte(pointer) > 0;
+  public Boolean deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getByte(offset) > 0;
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return BOOLEAN_SIZE;
   }
 

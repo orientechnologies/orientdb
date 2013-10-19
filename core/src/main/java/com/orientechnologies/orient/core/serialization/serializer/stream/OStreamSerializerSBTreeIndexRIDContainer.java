@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
@@ -129,14 +129,14 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public void serializeInDirectMemory(OSBTreeIndexRIDContainer object, ODirectMemory memory, long pointer) {
+  public void serializeInDirectMemory(OSBTreeIndexRIDContainer object, ODirectMemoryPointer pointer, long offset) {
     final byte[] serializedSet = object.toStream();
-    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, memory, pointer);
+    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
   }
 
   @Override
-  public OSBTreeIndexRIDContainer deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(memory, pointer);
+  public OSBTreeIndexRIDContainer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
 
     final String s = OBinaryProtocol.bytes2string(serializedSet);
 
@@ -149,7 +149,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
-    return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(memory, pointer);
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
   }
 }

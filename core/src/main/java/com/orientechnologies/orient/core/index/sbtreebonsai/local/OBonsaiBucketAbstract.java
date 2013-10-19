@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 
@@ -9,7 +10,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePa
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OBonsaiBucketAbstract extends ODurablePage {
-  public OBonsaiBucketAbstract(long pagePointer, TrackMode trackMode) {
+  public OBonsaiBucketAbstract(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
     super(pagePointer, trackMode);
   }
 

@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -72,17 +72,17 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public void serializeInDirectMemory(Float object, ODirectMemory memory, long pointer) {
-    memory.setInt(pointer, Float.floatToIntBits(object));
+  public void serializeInDirectMemory(Float object, ODirectMemoryPointer pointer, long offset) {
+    pointer.setInt(offset, Float.floatToIntBits(object));
   }
 
   @Override
-  public Float deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return Float.intBitsToFloat(memory.getInt(pointer));
+  public Float deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return Float.intBitsToFloat(pointer.getInt(offset));
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return FLOAT_SIZE;
   }
 

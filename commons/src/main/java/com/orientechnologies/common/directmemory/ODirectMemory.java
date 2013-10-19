@@ -16,8 +16,6 @@
 
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-
 /**
  * Abstraction of different kind of implementations of non-GC memory, memory that managed not by GC but directly by application.
  * Access to such memory is slower than to "native" Java memory but we get performance gain eliminating GC overhead. The main
@@ -82,28 +80,6 @@ public interface ODirectMemory {
    * @param length
    */
   void set(long pointer, byte[] content, int arrayOffset, int length);
-
-  /**
-   * Returns converted data from given piece of memory. This operation is much faster than {@link #get(long, int)}.
-   * 
-   * 
-   * @param pointer
-   *          Memory pointer, returned by {@link #allocate(long)} method.
-   * @param serializer
-   *          Serializer which will be used to convert data from byte array.
-   * @return Data instance.
-   */
-  <T> T get(long pointer, OBinarySerializer<T> serializer);
-
-  /**
-   * Write data to given piece of memory. This operation is much faster than {@link #set(long, byte[], int, int)}.
-   * 
-   * @param pointer
-   *          Memory pointer, returned by {@link #allocate(long)} method.
-   * @param serializer
-   *          Serializer which will be used to convert data to byte array.
-   */
-  <T> void set(long pointer, T data, OBinarySerializer<T> serializer);
 
   /**
    * Return <code>int</code> value from given piece of memory.

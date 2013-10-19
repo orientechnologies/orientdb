@@ -23,8 +23,6 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
@@ -109,22 +107,15 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
     installProfilerHooks();
 
-    final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+    long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+    long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
+        * diskCacheSize);
+    long readCacheSize = diskCacheSize - writeCacheSize;
 
-    if (directMemory != null) {
-      long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
-      long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
-          * diskCacheSize);
-      long readCacheSize = diskCacheSize - writeCacheSize;
-
-      diskCache = new OReadWriteDiskCache(readCacheSize, writeCacheSize,
-          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-          OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
-          OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, null, false, true);
-    }
-
-    else
-      diskCache = null;
+    diskCache = new OReadWriteDiskCache(readCacheSize, writeCacheSize,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, null, false, true);
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {

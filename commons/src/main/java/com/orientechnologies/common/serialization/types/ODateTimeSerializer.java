@@ -19,7 +19,7 @@ package com.orientechnologies.common.serialization.types;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for {@link Date} type.
@@ -76,23 +76,23 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public void serializeInDirectMemory(Date object, ODirectMemory memory, long pointer) {
+  public void serializeInDirectMemory(Date object, ODirectMemoryPointer pointer, long offset) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
     OLongSerializer longSerializer = OLongSerializer.INSTANCE;
-    longSerializer.serializeInDirectMemory(calendar.getTimeInMillis(), memory, pointer);
+    longSerializer.serializeInDirectMemory(calendar.getTimeInMillis(), pointer, offset);
   }
 
   @Override
-  public Date deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+  public Date deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
     Calendar calendar = Calendar.getInstance();
     OLongSerializer longSerializer = OLongSerializer.INSTANCE;
-    calendar.setTimeInMillis(longSerializer.deserializeFromDirectMemory(memory, pointer));
+    calendar.setTimeInMillis(longSerializer.deserializeFromDirectMemory(pointer, offset));
     return calendar.getTime();
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return OLongSerializer.LONG_SIZE;
   }
 

@@ -19,29 +19,13 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -79,8 +63,6 @@ public class OWOWCache {
   private RandomAccessFile                                  nameIdMapHolder;
 
   private final Map<Long, OFileClassic>                     files;
-
-  private final ODirectMemory                               directMemory          = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
@@ -548,29 +530,29 @@ public class OWOWCache {
 
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length);
-      final long pointer = directMemory.allocate(content);
+      final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
-      final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(directMemory, pointer);
+      final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(pointer);
       dataPointer = new OCachePointer(pointer, storedLSN);
     } else {
       fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
 
-      final long pointer = directMemory.allocate(content);
+      final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
       dataPointer = new OCachePointer(pointer, new OLogSequenceNumber(0, -1));
     }
 
     return dataPointer;
   }
 
-  private void flushPage(long fileId, long pageIndex, long dataPointer) throws IOException {
+  private void flushPage(long fileId, long pageIndex, ODirectMemoryPointer dataPointer) throws IOException {
     if (writeAheadLog != null) {
-      OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(directMemory, dataPointer);
+      OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
       if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
     }
 
-    final byte[] content = directMemory.get(dataPointer, pageSize);
+    final byte[] content = dataPointer.get(0, pageSize);
     OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
 
     final int crc32 = calculatePageCrc(content);
@@ -853,8 +835,7 @@ public class OWOWCache {
                   flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                   flushedPages++;
 
-                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(directMemory,
-                      pagePointer.getDataPointer());
+                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
                   pagePointer.setLastFlushedLsn(flushedLSN);
                 } finally {
                   pagePointer.releaseExclusiveLock();

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -53,7 +54,7 @@ public class OClusterPage extends ODurablePage {
 
   public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OClusterPage(long pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
+  public OClusterPage(ODirectMemoryPointer pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
     super(pagePointer, trackMode);
 
     if (newPage) {

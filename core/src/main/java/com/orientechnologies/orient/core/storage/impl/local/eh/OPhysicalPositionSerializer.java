@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.eh;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -159,59 +159,59 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   }
 
   @Override
-  public void serializeInDirectMemory(OPhysicalPosition object, ODirectMemory memory, long pointer) {
-    long currentPointer = pointer;
+  public void serializeInDirectMemory(OPhysicalPosition object, ODirectMemoryPointer pointer, long offset) {
+    long currentOffset = offset;
 
-    OClusterPositionSerializer.INSTANCE.serializeInDirectMemory(object.clusterPosition, memory, currentPointer);
-    currentPointer += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    OClusterPositionSerializer.INSTANCE.serializeInDirectMemory(object.clusterPosition, pointer, currentOffset);
+    currentOffset += OClusterPositionSerializer.INSTANCE.getFixedLength();
 
     byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
     object.recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, object.recordVersion);
-    memory.set(currentPointer, serializedVersion, 0, serializedVersion.length);
-    currentPointer += OVersionFactory.instance().getVersionSize();
+    pointer.set(currentOffset, serializedVersion, 0, serializedVersion.length);
+    currentOffset += OVersionFactory.instance().getVersionSize();
 
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.dataSegmentId, memory, currentPointer);
-    currentPointer += OIntegerSerializer.INT_SIZE;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.dataSegmentId, pointer, currentOffset);
+    currentOffset += OIntegerSerializer.INT_SIZE;
 
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.recordSize, memory, currentPointer);
-    currentPointer += OIntegerSerializer.INT_SIZE;
+    OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.recordSize, pointer, currentOffset);
+    currentOffset += OIntegerSerializer.INT_SIZE;
 
-    OLongSerializer.INSTANCE.serializeInDirectMemory(object.dataSegmentPos, memory, currentPointer);
-    currentPointer += OLongSerializer.LONG_SIZE;
+    OLongSerializer.INSTANCE.serializeInDirectMemory(object.dataSegmentPos, pointer, currentOffset);
+    currentOffset += OLongSerializer.LONG_SIZE;
 
-    OByteSerializer.INSTANCE.serializeInDirectMemory(object.recordType, memory, currentPointer);
+    OByteSerializer.INSTANCE.serializeInDirectMemory(object.recordType, pointer, currentOffset);
   }
 
   @Override
-  public OPhysicalPosition deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
+  public OPhysicalPosition deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
     final OPhysicalPosition physicalPosition = new OPhysicalPosition();
 
-    long currentPointer = pointer;
-    physicalPosition.clusterPosition = OClusterPositionSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
+    long currentPointer = offset;
+    physicalPosition.clusterPosition = OClusterPositionSerializer.INSTANCE.deserializeFromDirectMemory(pointer, currentPointer);
     currentPointer += OClusterPositionSerializer.INSTANCE.getFixedLength();
 
     final ORecordVersion version = OVersionFactory.instance().createVersion();
-    byte[] serializedVersion = memory.get(currentPointer, OVersionFactory.instance().getVersionSize());
+    byte[] serializedVersion = pointer.get(currentPointer, OVersionFactory.instance().getVersionSize());
     version.getSerializer().fastReadFrom(serializedVersion, 0, version);
     physicalPosition.recordVersion = version;
     currentPointer += OVersionFactory.instance().getVersionSize();
 
-    physicalPosition.dataSegmentId = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
+    physicalPosition.dataSegmentId = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pointer, currentPointer);
     currentPointer += OIntegerSerializer.INT_SIZE;
 
-    OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
+    OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pointer, currentPointer);
     currentPointer += OIntegerSerializer.INT_SIZE;
 
-    physicalPosition.dataSegmentPos = OLongSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
+    physicalPosition.dataSegmentPos = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pointer, currentPointer);
     currentPointer += OLongSerializer.LONG_SIZE;
 
-    physicalPosition.recordType = OByteSerializer.INSTANCE.deserializeFromDirectMemory(memory, currentPointer);
+    physicalPosition.recordType = OByteSerializer.INSTANCE.deserializeFromDirectMemory(pointer, currentPointer);
 
     return physicalPosition;
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return getFixedLength();
   }
 }

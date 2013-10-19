@@ -16,7 +16,7 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -111,26 +111,26 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   }
 
   @Override
-  public void serializeInDirectMemory(T object, ODirectMemory memory, long pointer) {
+  public void serializeInDirectMemory(T object, ODirectMemoryPointer pointer, long offset) {
     init(object);
-    memory.setByte(pointer++, binarySerializer.getId());
-    binarySerializer.serializeInDirectMemory(object, memory, pointer);
+    pointer.setByte(offset++, binarySerializer.getId());
+    binarySerializer.serializeInDirectMemory(object, pointer, offset);
   }
 
   @Override
-  public T deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    final byte typeId = memory.getByte(pointer++);
+  public T deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    final byte typeId = pointer.getByte(offset++);
 
     init(typeId);
-    return (T) binarySerializer.deserializeFromDirectMemory(memory, pointer);
+    return (T) binarySerializer.deserializeFromDirectMemory(pointer, offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
-    final byte serializerId = memory.getByte(pointer);
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    final byte serializerId = pointer.getByte(offset);
     init(serializerId);
     return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
-        + binarySerializer.getObjectSizeInDirectMemory(memory, pointer + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
+        + binarySerializer.getObjectSizeInDirectMemory(pointer, OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + offset);
 
   }
 

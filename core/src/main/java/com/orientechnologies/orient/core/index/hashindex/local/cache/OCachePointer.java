@@ -18,8 +18,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
@@ -27,17 +26,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  * @since 05.08.13
  */
 public class OCachePointer extends OSharedResourceAdaptive {
-  private final ODirectMemory         directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
-
   private final AtomicInteger         referrersCount = new AtomicInteger();
 
   private final AtomicInteger         usagesCounter  = new AtomicInteger();
 
   private volatile OLogSequenceNumber lastFlushedLsn;
 
-  private final long                  dataPointer;
+  private final ODirectMemoryPointer  dataPointer;
 
-  public OCachePointer(long dataPointer, OLogSequenceNumber lastFlushedLsn) {
+  public OCachePointer(ODirectMemoryPointer dataPointer, OLogSequenceNumber lastFlushedLsn) {
     super(true, 300000, false);
     this.lastFlushedLsn = lastFlushedLsn;
     this.dataPointer = dataPointer;
@@ -46,7 +43,7 @@ public class OCachePointer extends OSharedResourceAdaptive {
   public OCachePointer(byte[] data, OLogSequenceNumber lastFlushedLsn) {
     super(true, 300000, false);
     this.lastFlushedLsn = lastFlushedLsn;
-    dataPointer = directMemory.allocate(data);
+    dataPointer = new ODirectMemoryPointer(data);
   }
 
   OLogSequenceNumber getLastFlushedLsn() {
@@ -63,11 +60,11 @@ public class OCachePointer extends OSharedResourceAdaptive {
 
   void decrementReferrer() {
     if (referrersCount.decrementAndGet() == 0) {
-      directMemory.free(dataPointer);
+      dataPointer.free();
     }
   }
 
-  public long getDataPointer() {
+  public ODirectMemoryPointer getDataPointer() {
     return dataPointer;
   }
 
@@ -91,7 +88,7 @@ public class OCachePointer extends OSharedResourceAdaptive {
     super.finalize();
 
     if (referrersCount.get() > 0)
-      directMemory.free(dataPointer);
+      dataPointer.free();
   }
 
   @Override
@@ -103,7 +100,7 @@ public class OCachePointer extends OSharedResourceAdaptive {
 
     OCachePointer that = (OCachePointer) o;
 
-    if (dataPointer != that.dataPointer)
+    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
       return false;
 
     return true;
@@ -111,7 +108,7 @@ public class OCachePointer extends OSharedResourceAdaptive {
 
   @Override
   public int hashCode() {
-    return (int) (dataPointer ^ (dataPointer >>> 32));
+    return dataPointer != null ? dataPointer.hashCode() : 0;
   }
 
   @Override
@@ -119,4 +116,5 @@ public class OCachePointer extends OSharedResourceAdaptive {
     return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + ", dataPointer="
         + dataPointer + '}';
   }
+
 }

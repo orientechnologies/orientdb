@@ -19,7 +19,7 @@ package com.orientechnologies.common.serialization.types;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -76,25 +76,25 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   }
 
   @Override
-  public void serializeInDirectMemory(byte[] object, ODirectMemory memory, long pointer) {
+  public void serializeInDirectMemory(byte[] object, ODirectMemoryPointer pointer, long offset) {
     int len = object.length;
-    memory.setInt(pointer, len);
-    pointer += OIntegerSerializer.INT_SIZE;
+    pointer.setInt(offset, len);
+    offset += OIntegerSerializer.INT_SIZE;
 
-    memory.set(pointer, object, 0, len);
+    pointer.set(offset, object, 0, len);
   }
 
   @Override
-  public byte[] deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    int len = memory.getInt(pointer);
-    pointer += OIntegerSerializer.INT_SIZE;
+  public byte[] deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    int len = pointer.getInt(offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
-    return memory.get(pointer, len);
+    return pointer.get(offset, len);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getInt(pointer) + OIntegerSerializer.INT_SIZE;
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getInt(offset) + OIntegerSerializer.INT_SIZE;
   }
 
   public byte getId() {

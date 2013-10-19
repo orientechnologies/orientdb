@@ -4,15 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 public class OPageChanges {
-  private final ODirectMemory directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
-  private List<ChangeUnit>    changeUnits    = new ArrayList<ChangeUnit>();
-  private int                 serializedSize = OIntegerSerializer.INT_SIZE;
+  private List<ChangeUnit> changeUnits    = new ArrayList<ChangeUnit>();
+  private int              serializedSize = OIntegerSerializer.INT_SIZE;
 
   public void addChanges(int pageOffset, byte[] newValues, byte[] oldValues) {
     assert newValues == null || newValues.length == oldValues.length;
@@ -27,17 +25,17 @@ public class OPageChanges {
     return changeUnits.isEmpty();
   }
 
-  public void applyChanges(long pointer) {
+  public void applyChanges(ODirectMemoryPointer pointer) {
     for (ChangeUnit changeUnit : changeUnits) {
-      directMemory.set(pointer + changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
+      pointer.set(changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
     }
   }
 
-  public void revertChanges(long pointer) {
+  public void revertChanges(ODirectMemoryPointer pointer) {
     ListIterator<ChangeUnit> iterator = changeUnits.listIterator(changeUnits.size());
     while (iterator.hasPrevious()) {
       ChangeUnit changeUnit = iterator.previous();
-      directMemory.set(pointer + changeUnit.pageOffset, changeUnit.oldValues, 0, changeUnit.oldValues.length);
+      pointer.set(changeUnit.pageOffset, changeUnit.oldValues, 0, changeUnit.oldValues.length);
     }
   }
 

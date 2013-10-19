@@ -21,8 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.zip.CRC32;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -569,8 +568,6 @@ public class OWriteAheadLog {
     private OWALPage                              currentPage;
     private final ConcurrentLinkedQueue<OWALPage> pagesCache     = new ConcurrentLinkedQueue<OWALPage>();
 
-    private ODirectMemory                         directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
-
     private long                                  nextPositionToFlush;
     private long                                  flushId;
 
@@ -642,7 +639,7 @@ public class OWriteAheadLog {
           byte[] content = new byte[OWALPage.PAGE_SIZE];
           rndFile.readFully(content);
 
-          long pointer = directMemory.allocate(content);
+          ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
           try {
             final OWALPage page = new OWALPage(pointer, false);
             int lastPosition = findLastRecord(page, true);
@@ -653,7 +650,7 @@ public class OWriteAheadLog {
 
             currentPage--;
           } finally {
-            directMemory.free(pointer);
+            pointer.free();
           }
         } while (currentPage >= 0);
       }
@@ -671,7 +668,7 @@ public class OWriteAheadLog {
 
         flushId = OLongSerializer.INSTANCE.deserializeNative(content, OWALPage.FLUSH_ID_OFFSET);
 
-        long pointer = directMemory.allocate(content);
+        ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
         currentPage = new OWALPage(pointer, false);
         filledUpTo = (pagesCount - 1) * OWALPage.PAGE_SIZE + currentPage.getFilledUpTo();
         nextPositionToFlush = (pagesCount - 1) * OWALPage.PAGE_SIZE;
@@ -763,7 +760,7 @@ public class OWriteAheadLog {
 
       while (pos < record.length) {
         if (currentPage == null) {
-          long pointer = directMemory.allocate(OWALPage.PAGE_SIZE);
+          ODirectMemoryPointer pointer = new ODirectMemoryPointer(OWALPage.PAGE_SIZE);
           currentPage = new OWALPage(pointer, true);
           pagesCache.add(currentPage);
           filledUpTo += OWALPage.RECORDS_OFFSET;
@@ -772,7 +769,7 @@ public class OWriteAheadLog {
         int freeSpace = currentPage.getFreeSpace();
         if (freeSpace < OWALPage.MIN_RECORD_SIZE) {
           filledUpTo += freeSpace + OWALPage.RECORDS_OFFSET;
-          long pointer = directMemory.allocate(OWALPage.PAGE_SIZE);
+          ODirectMemoryPointer pointer = new ODirectMemoryPointer(OWALPage.PAGE_SIZE);
           currentPage = new OWALPage(pointer, true);
           pagesCache.add(currentPage);
           pageIndex++;
@@ -842,7 +839,7 @@ public class OWriteAheadLog {
           rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
           rndFile.readFully(pageContent);
 
-          long pointer = directMemory.allocate(pageContent);
+          ODirectMemoryPointer pointer = new ODirectMemoryPointer(pageContent);
           try {
             OWALPage page = new OWALPage(pointer, false);
 
@@ -863,7 +860,7 @@ public class OWriteAheadLog {
             } else
               break;
           } finally {
-            directMemory.free(pointer);
+            pointer.free();
           }
         }
       }
@@ -917,7 +914,7 @@ public class OWriteAheadLog {
 
         if (!pagesCache.isEmpty()) {
           for (OWALPage page : pagesCache)
-            directMemory.free(page.getPagePointer());
+            page.getPagePointer().free();
         }
 
         currentPage = null;
@@ -1020,7 +1017,7 @@ public class OWriteAheadLog {
           rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
           rndFile.readFully(content);
 
-          long pointer = directMemory.allocate(content);
+          ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
           try {
             OWALPage page = new OWALPage(pointer, false);
             int pageOffset = findLastRecord(page, false);
@@ -1028,7 +1025,7 @@ public class OWriteAheadLog {
               if (page.mergeWithNextPage(pageOffset)) {
                 page.truncateTill(pageOffset);
                 rndFile.seek(currentPage * OWALPage.PAGE_SIZE);
-                content = directMemory.get(pointer, OWALPage.PAGE_SIZE);
+                content = pointer.get(0, OWALPage.PAGE_SIZE);
                 rndFile.write(content);
 
                 if (page.isEmpty()) {
@@ -1044,7 +1041,7 @@ public class OWriteAheadLog {
             } else
               break;
           } finally {
-            directMemory.free(pointer);
+            pointer.free();
           }
         }
 
@@ -1065,7 +1062,7 @@ public class OWriteAheadLog {
         byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
         rndFile.readFully(pageContent);
 
-        long pointer = directMemory.allocate(pageContent);
+        ODirectMemoryPointer pointer = new ODirectMemoryPointer(pageContent);
         try {
 
           OWALPage page = new OWALPage(pointer, false);
@@ -1081,7 +1078,7 @@ public class OWriteAheadLog {
 
           return new OLogSequenceNumber(order, pageIndex * OWALPage.PAGE_SIZE + pageOffset);
         } finally {
-          directMemory.free(pointer);
+          pointer.free();
         }
       }
     }
@@ -1126,7 +1123,7 @@ public class OWriteAheadLog {
 
         final int maxSize = pagesCache.size();
 
-        long[] pagesToFlush = new long[maxSize];
+        ODirectMemoryPointer[] pagesToFlush = new ODirectMemoryPointer[maxSize];
 
         long filePointer = nextPositionToFlush;
         int lastRecordOffset = -1;
@@ -1138,10 +1135,10 @@ public class OWriteAheadLog {
         while (flushedPages < maxSize) {
           final OWALPage page = pageIterator.next();
           synchronized (page) {
-            long dataPointer;
+            ODirectMemoryPointer dataPointer;
             if (flushedPages == maxSize - 1) {
-              dataPointer = directMemory.allocate(OWALPage.PAGE_SIZE);
-              directMemory.copyData(page.getPagePointer(), dataPointer, OWALPage.PAGE_SIZE);
+              dataPointer = new ODirectMemoryPointer(OWALPage.PAGE_SIZE);
+              page.getPagePointer().copyData(0, dataPointer, 0, OWALPage.PAGE_SIZE);
             } else {
               dataPointer = page.getPagePointer();
             }
@@ -1162,10 +1159,10 @@ public class OWriteAheadLog {
         synchronized (rndFile) {
           rndFile.seek(filePointer);
           for (int i = 0; i < pagesToFlush.length; i++) {
-            long dataPointer = pagesToFlush[i];
-            byte[] pageContent = directMemory.get(dataPointer, OWALPage.PAGE_SIZE);
+            ODirectMemoryPointer dataPointer = pagesToFlush[i];
+            byte[] pageContent = dataPointer.get(0, OWALPage.PAGE_SIZE);
             if (i == pagesToFlush.length - 1)
-              directMemory.free(dataPointer);
+              dataPointer.free();
 
             OLongSerializer.INSTANCE.serializeNative(flushId, pageContent, OWALPage.FLUSH_ID_OFFSET);
             OIntegerSerializer.INSTANCE.serializeNative(i, pageContent, OWALPage.FLUSH_INDEX_OFFSET);
@@ -1185,7 +1182,7 @@ public class OWriteAheadLog {
 
         for (int i = 0; i < flushedPages - 1; i++) {
           OWALPage page = pagesCache.poll();
-          directMemory.free(page.getPagePointer());
+          page.getPagePointer().free();
         }
 
         assert !pagesCache.isEmpty();

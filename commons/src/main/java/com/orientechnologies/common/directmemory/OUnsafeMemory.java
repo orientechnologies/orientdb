@@ -19,8 +19,6 @@ import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-
 import sun.misc.Unsafe;
 
 /**
@@ -106,16 +104,6 @@ public class OUnsafeMemory implements ODirectMemory {
   public void set(long pointer, byte[] content, int arrayOffset, int length) {
     for (int i = arrayOffset; i < length + arrayOffset; i++)
       unsafe.putByte(pointer++, content[i]);
-  }
-
-  @Override
-  public <T> T get(long pointer, OBinarySerializer<T> serializer) {
-    return serializer.deserializeFromDirectMemory(this, pointer);
-  }
-
-  @Override
-  public <T> void set(long pointer, T data, OBinarySerializer<T> serializer) {
-    serializer.serializeInDirectMemory(data, this, pointer);
   }
 
   @Override

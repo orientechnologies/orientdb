@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
@@ -16,7 +17,7 @@ public class OSysBucket extends OBonsaiBucketAbstract {
 
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  public OSysBucket(long pagePointer, TrackMode trackMode) {
+  public OSysBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
     super(pagePointer, trackMode);
   }
 

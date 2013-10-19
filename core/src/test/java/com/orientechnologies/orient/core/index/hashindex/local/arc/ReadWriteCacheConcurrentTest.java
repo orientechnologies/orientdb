@@ -2,22 +2,9 @@ package com.orientechnologies.orient.core.index.hashindex.local.arc;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -25,8 +12,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -49,7 +34,6 @@ public class ReadWriteCacheConcurrentTest {
   private static final int                           FILE_COUNT      = 8;
   private OReadWriteDiskCache                        buffer;
   private OLocalPaginatedStorage                     storageLocal;
-  private ODirectMemory                              directMemory;
 
   private String[]                                   fileNames;
   private byte                                       seed;
@@ -66,7 +50,6 @@ public class ReadWriteCacheConcurrentTest {
   public void beforeClass() throws IOException {
 
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
-    directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
@@ -229,8 +212,8 @@ public class ReadWriteCacheConcurrentTest {
       pointer.acquireExclusiveLock();
       cacheEntry.markDirty();
 
-      directMemory.set(pointer.getDataPointer() + systemOffset, new byte[] { version.byteValue(), 2, 3, seed, 5, 6,
-          (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
+      pointer.getDataPointer().set(systemOffset,
+          new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
       pointer.releaseExclusiveLock();
       buffer.release(cacheEntry);
     }
@@ -281,7 +264,7 @@ public class ReadWriteCacheConcurrentTest {
       OCacheEntry cacheEntry = buffer.load(fileIds.get(fileNumber), pageIndex, false);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
-      byte[] content = directMemory.get(pointer.getDataPointer() + systemOffset, 8);
+      byte[] content = pointer.getDataPointer().get(systemOffset, 8);
 
       buffer.release(cacheEntry);
 

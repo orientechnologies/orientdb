@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -38,7 +39,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public static final int   MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  public OClusterPositionMapBucket(long pagePointer, TrackMode trackMode) {
+  public OClusterPositionMapBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
     super(pagePointer, trackMode);
   }
 

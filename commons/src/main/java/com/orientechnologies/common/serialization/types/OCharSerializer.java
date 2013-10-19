@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -72,17 +72,17 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public void serializeInDirectMemory(Character object, ODirectMemory memory, long pointer) {
-    memory.setChar(pointer, object);
+  public void serializeInDirectMemory(Character object, ODirectMemoryPointer pointer, long offset) {
+    pointer.setChar(offset, object);
   }
 
   @Override
-  public Character deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getChar(pointer);
+  public Character deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getChar(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return CHAR_SIZE;
   }
 

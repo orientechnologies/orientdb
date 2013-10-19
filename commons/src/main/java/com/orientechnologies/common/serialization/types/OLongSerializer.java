@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -82,17 +82,17 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   @Override
-  public void serializeInDirectMemory(Long object, ODirectMemory memory, long pointer) {
-    memory.setLong(pointer, object);
+  public void serializeInDirectMemory(Long object, ODirectMemoryPointer pointer, long offset) {
+    pointer.setLong(offset, object);
   }
 
   @Override
-  public Long deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getLong(pointer);
+  public Long deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getLong(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return LONG_SIZE;
   }
 
