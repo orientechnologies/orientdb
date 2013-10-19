@@ -257,9 +257,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       writer.beginObject(2, true, null);
 
-      writer.writeAttribute(0, false, "name", clusterName != null ? clusterName : "");
+      writer.writeAttribute(0, false, "name", clusterName);
       writer.writeAttribute(0, false, "id", clusterId);
-      writer.writeAttribute(0, false, "type", clusterName != null ? database.getClusterType(clusterName) : "");
+      writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
       exportedClusters++;
       writer.endObject(2, false);
