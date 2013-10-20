@@ -166,11 +166,6 @@ configModule.controller("StructureController", ['$scope', '$routeParams', '$loca
     $scope.dataSegments = Database.getMetadata()['dataSegments'];
     $scope.txSegments = Database.getMetadata()['txSegment'];
 
-    $scope.setWiki = function(){
-        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Defragmentation");
-    }
-    $scope.setWiki();
-    Database.refreshMetadata();
 
 
 }]);
