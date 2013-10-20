@@ -26,6 +26,8 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.refreshWindow = function () {
         $window.location.reload();
     }
+    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Schema");
+
     $scope.$watch("countPage", function (data) {
         if ($scope.listClassesTotal) {
             $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
@@ -87,7 +89,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     }
 }]);
 schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi) {
-
+    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Class");
     var clazz = $routeParams.clazz;
     $scope.class2show = clazz;
     $scope.database = Database;

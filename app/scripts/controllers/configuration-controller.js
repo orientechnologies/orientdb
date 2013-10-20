@@ -23,6 +23,7 @@ configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$
 
 
     $scope.getTemplate = function (tab) {
+//        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/"+tab);
         return 'views/database/config/' + tab + '.html';
     }
     $scope.exportDatabase = function () {
@@ -68,6 +69,7 @@ configModule.controller("UMLController", ['$scope', '$routeParams', '$location',
         $scope.uml = $scope.displayUML();
     });
     $scope.displayUML = function () {
+        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Uml");
         var umlDisplayAttributes = $scope.displayAttribute;
         var umlDisplayOnlyConnected = $scope.displayConnected;
         var umlLimitClasses = $scope.classLimit;
@@ -154,6 +156,7 @@ configModule.controller("UMLController", ['$scope', '$routeParams', '$location',
     $scope.refreshUML = function () {
         $scope.uml = $scope.displayUML();
     }
+
 }]);
 
 configModule.controller("StructureController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
@@ -162,6 +165,8 @@ configModule.controller("StructureController", ['$scope', '$routeParams', '$loca
     $scope.clusters = Database.getMetadata()['clusters'];
     $scope.dataSegments = Database.getMetadata()['dataSegments'];
     $scope.txSegments = Database.getMetadata()['txSegment'];
+
+
 
 }]);
 configModule.controller("DbConfigController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {

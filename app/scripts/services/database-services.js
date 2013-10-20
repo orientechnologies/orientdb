@@ -23,7 +23,8 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
     var current = {
         name: null,
         username: null,
-        metadata: null
+        metadata: null,
+        wiki: "https://github.com/orientechnologies/orientdb-studio/wiki"
     }
     return {
 
@@ -43,6 +44,12 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
         },
         setMetadata: function (metadata) {
             current.metadata = metadata;
+        },
+        getWiki: function () {
+            return current.wiki;
+        },
+        setWiki: function (urlWiki) {
+            current.wiki = urlWiki;
         },
         getMappingFor: function (type) {
             return this.mapping[type];
@@ -429,10 +436,23 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
 database.factory('DatabaseApi', function ($http, $resource) {
 
+
+    var urlWiki = "https://github.com/orientechnologies/orientdb-studio/wiki/Functions";
+
+
     var resource = $resource(API + 'database/:database');
     resource.listDatabases = function (callback) {
         $http.get(API + 'listDatabases').success(callback);
     }
+
+    resource.setUrlWiki = function (urll) {
+        urlWiki = urll;
+    }
+    resource.getUrlWiki = function () {
+        return urlWiki;
+    }
+
+
     resource.connect = function (database, username, password, callback, error) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
         $http.get(API + 'connect/' + database).success(callback).error(error);
