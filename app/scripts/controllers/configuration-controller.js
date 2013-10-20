@@ -9,21 +9,26 @@
 var configModule = angular.module('configuration.controller', []);
 configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
 
-    $scope.active = $routeParams.tab || "uml";
+    $scope.active = $routeParams.tab || "structure";
     $scope.db = $routeParams.database;
-    $scope.tabs = ['uml', 'structure', 'allocation', 'configuration', 'import-export'];
+    $scope.tabs = ['structure', 'allocation', 'configuration', 'import-export', 'uml'];
 
     $scope.tabsI18n = new Array;
 
-    $scope.tabsI18n['uml'] = 'UML Class Diagram';
+    if ($scope.active == "allocation") {
+        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Defragmentation");
+    }
+    else {
+        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Uml");
+    }
     $scope.tabsI18n['structure'] = 'Structure';
     $scope.tabsI18n['allocation'] = 'Defragmentation';
     $scope.tabsI18n['configuration'] = 'Configuration';
     $scope.tabsI18n['import-export'] = 'Export';
+    $scope.tabsI18n['uml'] = 'UML Class Diagram';
 
 
     $scope.getTemplate = function (tab) {
-//        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/"+tab);
         return 'views/database/config/' + tab + '.html';
     }
     $scope.exportDatabase = function () {
@@ -68,8 +73,8 @@ configModule.controller("UMLController", ['$scope', '$routeParams', '$location',
     $scope.$watch("displayAttribute", function (data) {
         $scope.uml = $scope.displayUML();
     });
+
     $scope.displayUML = function () {
-        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Uml");
         var umlDisplayAttributes = $scope.displayAttribute;
         var umlDisplayOnlyConnected = $scope.displayConnected;
         var umlLimitClasses = $scope.classLimit;
@@ -161,11 +166,9 @@ configModule.controller("UMLController", ['$scope', '$routeParams', '$location',
 
 configModule.controller("StructureController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
 
-
     $scope.clusters = Database.getMetadata()['clusters'];
     $scope.dataSegments = Database.getMetadata()['dataSegments'];
     $scope.txSegments = Database.getMetadata()['txSegment'];
-
 
 
 }]);
@@ -178,7 +181,7 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 }]);
 configModule.controller("AllocationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
 
-
+    console.log(Database.getWiki());
     $scope.data = [
         {
             value: 30,
