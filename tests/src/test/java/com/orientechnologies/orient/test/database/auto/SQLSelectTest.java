@@ -1288,7 +1288,7 @@ public class SQLSelectTest {
 
   @Test
   public void testSquareBracketsOnWhere() {
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from V where out.in.label is not null"));
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from V where out_.in.label is not null"));
     Assert.assertFalse(result.isEmpty());
   }
 

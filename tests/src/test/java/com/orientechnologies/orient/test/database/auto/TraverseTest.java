@@ -106,17 +106,17 @@ public class TraverseTest {
   }
 
   public void traverseSQLOutFromOneActorNoWhere() {
-    database.command(new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity())).execute();
+    database.command(new OSQLSynchQuery<ODocument>("traverse out_ from " + tomCruise.getIdentity())).execute();
   }
 
   public void traverseAPIOutFromOneActorNoWhere() {
-    new OTraverse().field("out").target(tomCruise.getIdentity()).execute();
+    new OTraverse().field("out_").target(tomCruise.getIdentity()).execute();
   }
 
   @Test
   public void traverseSQLOutFromActor1Depth() {
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>("traverse out from " + tomCruise.getIdentity() + " while $depth <= 1")).execute();
+        new OSQLSynchQuery<ODocument>("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1")).execute();
 
     Assert.assertTrue(result1.size() != 0);
 
@@ -149,7 +149,7 @@ public class TraverseTest {
   @Test
   public void traverseSQLPerClassFields() {
     List<ODocument> result1 = database.command(
-        new OSQLSynchQuery<ODocument>("select from ( traverse V.out, E.in from " + tomCruise.getIdentity()
+        new OSQLSynchQuery<ODocument>("select from ( traverse V.out_, E.in from " + tomCruise.getIdentity()
             + ") where @class = 'Movie'")).execute();
     Assert.assertTrue(result1.size() > 0);
     for (ODocument d : result1) {
