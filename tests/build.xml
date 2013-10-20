@@ -116,7 +116,7 @@
         </exec>
 
         <echo>WAITING FOR SERVER STARTUP...</echo>
-        <sleep seconds="10"/>
+        <sleep seconds="6"/>
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
@@ -141,8 +141,6 @@
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>
-
-        <sleep seconds="10"/>
     </target>
 
     <target name="stress-test">
