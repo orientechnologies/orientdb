@@ -75,7 +75,8 @@ GrapgController.controller("VertexEditController",['$scope','$injector','$routeP
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
         $scope.incomings = Database.getEdge($scope.doc,'in_');
         $scope.outgoings = Database.getEdge($scope.doc,'out_');
-        $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc,$scope.outgoings)));
+        $scope.exclude = $scope.outgoings.concat($scope.incomings);
+        $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc,$scope.exclude)));
 
 
     }
