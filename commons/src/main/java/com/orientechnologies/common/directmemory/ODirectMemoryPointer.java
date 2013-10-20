@@ -13,11 +13,18 @@ public class ODirectMemoryPointer {
   private final long          dataPointer;
 
   public ODirectMemoryPointer(long pageSize) {
+    if (pageSize <= 0)
+      throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but " + pageSize
+          + " was provided.");
+
     this.dataPointer = directMemory.allocate(pageSize);
     this.pageSize = pageSize;
   }
 
   public ODirectMemoryPointer(byte[] data) {
+    if (data.length == 0)
+      throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but 0 was provided.");
+
     this.dataPointer = directMemory.allocate(data);
     this.pageSize = data.length;
   }
