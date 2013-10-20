@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -37,26 +38,25 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 public class OMetadataDefault implements OMetadata {
-  public static final String          CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String          CLUSTER_INDEX_NAME        = "index";
-  public static final String          CLUSTER_MANUAL_INDEX_NAME = "manindex";
-  public static final String          DATASEGMENT_INDEX_NAME    = "index";
+  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String            CLUSTER_INDEX_NAME        = "index";
+  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String            DATASEGMENT_INDEX_NAME    = "index";
 
-  protected int                       schemaClusterId;
+  protected int                         schemaClusterId;
 
-  protected OSchemaProxy              schema;
-  protected OSecurity                 security;
-  protected OIndexManagerProxy        indexManager;
-  protected OFunctionLibraryProxy     functionLibrary;
-  protected OSchedulerListenerProxy   scheduler;
-  protected static final OJVMProfiler PROFILER                  = Orient.instance().getProfiler();
+  protected OSchemaProxy                schema;
+  protected OSecurity                   security;
+  protected OIndexManagerProxy          indexManager;
+  protected OFunctionLibraryProxy       functionLibrary;
+  protected OSchedulerListenerProxy     scheduler;
+  protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
 
   public OMetadataDefault() {
   }

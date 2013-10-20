@@ -33,6 +33,8 @@ import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
@@ -44,7 +46,6 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OClusterFactory;
 import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
@@ -72,7 +73,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final AtomicInteger                   serialId               = new AtomicInteger();
 
   protected OMemoryWatchDog                       memoryWatchDog;
-  protected final OJVMProfiler                    profiler               = new OJVMProfiler();                                         ;
+  protected OProfilerMBean                        profiler               = new OProfiler();                                            ;
 
   protected ODatabaseThreadLocalFactory           databaseThreadFactory;
 
@@ -437,7 +438,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     this.clusterFactory = clusterFactory;
   }
 
-  public OJVMProfiler getProfiler() {
+  public OProfilerMBean getProfiler() {
     return profiler;
   }
 
@@ -468,5 +469,9 @@ public class Orient extends OListenerManger<OOrientListener> {
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
+  }
+
+  public void setProfiler(final OProfilerMBean iProfiler) {
+    profiler = iProfiler;
   }
 }

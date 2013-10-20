@@ -17,13 +17,13 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.List;
 
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
@@ -99,8 +99,8 @@ public abstract class OQueryOperator {
     expectsParameters = iExpectsParameters;
   }
 
-  public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext);
+  public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext);
 
   /**
    * Returns hint how index can be used to calculate result of operator execution.
@@ -211,7 +211,7 @@ public abstract class OQueryOperator {
     if (iContext.isRecordingMetrics())
       iContext.updateMetric("compositeIndexUsed", +1);
 
-    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
 

@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -46,7 +46,7 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
   public static final String                    INDEX_FILE_EXTENSION = ".irs";
   private OSBTreeBonsai<OIdentifiable, Boolean> tree;
 
-  protected static final OJVMProfiler           PROFILER             = Orient.instance().getProfiler();
+  protected static final OProfilerMBean         PROFILER             = Orient.instance().getProfiler();
 
   public OSBTreeIndexRIDContainer(String fileName) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);

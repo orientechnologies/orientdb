@@ -15,13 +15,20 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -34,7 +41,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -112,7 +118,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   private void installHooks(String indexName) {
-    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
     final String profilerPrefix = profiler.getDatabaseMetric(getDatabase().getName(), "index." + indexName + '.');
     final String profilerMetadataPrefix = "db.*.index.*.";
 

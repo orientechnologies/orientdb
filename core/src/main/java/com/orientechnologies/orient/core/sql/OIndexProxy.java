@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -25,7 +26,6 @@ import com.orientechnologies.orient.core.index.OIndexOneValue;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
@@ -364,7 +364,7 @@ public class OIndexProxy<T> implements OIndex<T> {
    */
   private void updateStatistic(OIndex<?> index) {
 
-    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       Orient.instance().getProfiler()
           .updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);

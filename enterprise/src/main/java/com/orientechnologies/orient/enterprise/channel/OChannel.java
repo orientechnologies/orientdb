@@ -25,35 +25,35 @@ import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
 public abstract class OChannel extends OListenerManger<OChannelListener> {
-  private static final OJVMProfiler PROFILER                     = Orient.instance().getProfiler();
+  private static final OProfilerMBean PROFILER                     = Orient.instance().getProfiler();
 
-  public Socket                     socket;
+  public Socket                       socket;
 
-  public InputStream                inStream;
-  public OutputStream               outStream;
+  public InputStream                  inStream;
+  public OutputStream                 outStream;
 
-  protected final OAdaptiveLock     lockRead                     = new OAdaptiveLock();
-  protected final OAdaptiveLock     lockWrite                    = new OAdaptiveLock();
-  protected long                    timeout;
+  protected final OAdaptiveLock       lockRead                     = new OAdaptiveLock();
+  protected final OAdaptiveLock       lockWrite                    = new OAdaptiveLock();
+  protected long                      timeout;
 
-  public int                        socketBufferSize;
+  public int                          socketBufferSize;
 
-  private long                      metricTransmittedBytes       = 0;
-  private long                      metricReceivedBytes          = 0;
-  private long                      metricFlushes                = 0;
+  private long                        metricTransmittedBytes       = 0;
+  private long                        metricReceivedBytes          = 0;
+  private long                        metricFlushes                = 0;
 
-  private static final AtomicLong   metricGlobalTransmittedBytes = new AtomicLong();
-  private static final AtomicLong   metricGlobalReceivedBytes    = new AtomicLong();
-  private static final AtomicLong   metricGlobalFlushes          = new AtomicLong();
+  private static final AtomicLong     metricGlobalTransmittedBytes = new AtomicLong();
+  private static final AtomicLong     metricGlobalReceivedBytes    = new AtomicLong();
+  private static final AtomicLong     metricGlobalFlushes          = new AtomicLong();
 
-  private String                    profilerMetric;
+  private String                      profilerMetric;
 
   static {
     final String profilerMetric = PROFILER.getProcessMetric("network.channel.binary");

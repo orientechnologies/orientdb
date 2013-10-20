@@ -44,7 +44,7 @@ import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfilerData.OProfilerEntry;
+import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
