@@ -121,7 +121,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
 
 dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor) {
 
-    var sql = "select * from Log";
+    var sql = "select * from Log fetchPlan *:1";
 
     $scope.level = undefined;
     $scope.description = undefined;
@@ -135,8 +135,8 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     $scope.countPageOptions = [100, 500, 1000];
 
     $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
-        $scope.eventsWhen = listClassesForSuperclass('EventWhen');
-        $scope.eventsWhen = listClassesForSuperclass('EventWhat');
+        //$scope.eventsWhen = listClassesForSuperclass('EventWhen');
+        //$scope.eventsWhen = listClassesForSuperclass('EventWhat');
     });
 
     $scope.getJavaLogs = function () {

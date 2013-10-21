@@ -89,6 +89,16 @@
                                 </div>
 
                             </div>
+                            <div class="control-group">
+                                <label class="control-label" for="inputName">{{ 'dashboard.metric.server' | i18n
+                                    }}</label>
+
+                                <div class="controls">
+                                    <select ui-select2 ng-model="selectedConfig.server" class="span3" ng-options="s.name for s in servers" data-placeholder="Pick a Server"></select>
+                                    </button>
+                                </div>
+
+                            </div>
                             <div class="control-group" ng-repeat="conf in selectedConfig.config">
                                 <label class="control-label">{{ 'dashboard.metrics' | i18n }}</label>
                                 <select ui-select2 ng-model="conf.name" class="span4" data-placeholder="Pick a Metric">

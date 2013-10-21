@@ -321,7 +321,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     border: 2px solid #CCCCCC;
     border-radius: 4px 4px 4px 4px;
     color: #444444;
-    display: none;
+    display: block;
     height: 30px;
     line-height: 30px;
     overflow: hidden;
@@ -481,4 +481,7 @@ table.align-left {
     background-repeat: repeat-x;
     color: #FFFFFF;
     text-decoration: none;
+}
+.gridStyle {
+    height: 300px;
 }

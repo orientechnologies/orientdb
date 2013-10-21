@@ -79,7 +79,6 @@ Widget.directive('metricchart', function ($http,$compile) {
         var chartScope = scope.$new(true);
         chartScope.metric = attrs['metricchart'];
         chartScope.metricScope = scope;
-        chartScope.rid = scope.rid;
         var el = angular.element($compile(html.data)(chartScope));
         element.empty();
         element.append(el);

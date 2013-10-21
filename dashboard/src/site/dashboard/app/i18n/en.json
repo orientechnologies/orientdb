@@ -43,6 +43,7 @@
     "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
+    "dashboard.settings": "Settings",
     "dashboard.metrics.title": "Metrics Builder",
     "dashboard.query": "Query Profiler",
     "dashboard.events": "Events",
