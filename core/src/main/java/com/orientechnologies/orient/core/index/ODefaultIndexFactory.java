@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -78,6 +80,17 @@ public class ODefaultIndexFactory implements OIndexFactory {
         valueContainerAlgorithm = MVRBTREE_VALUE_CONTAINER;
       else
         valueContainerAlgorithm = NONE_VALUE_CONTAINER;
+    }
+
+    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER)
+        && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
+      OLogManager
+          .instance()
+          .warn(
+              this,
+              "Index was created using %s as values container. "
+                  + "This container is deprecated and is not supported any more. To avoid this message please drop and recreate indexes or perform DB export/import.",
+              valueContainerAlgorithm);
     }
 
     if (SBTREE_ALGORITHM.equals(algorithm))

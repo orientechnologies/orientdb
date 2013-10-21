@@ -19,17 +19,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexDictionary;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
@@ -75,6 +69,17 @@ public class OHashIndexFactory implements OIndexFactory {
         valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
       else
         valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
+    }
+
+    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER)
+        && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
+      OLogManager
+          .instance()
+          .warn(
+              this,
+              "Index was created using %s as values container. "
+                  + "This container is deprecated and is not supported any more. To avoid this message please drop and recreate indexes or perform DB export/import.",
+              valueContainerAlgorithm);
     }
 
     OStorage storage = database.getStorage();

@@ -100,7 +100,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     final String valueContainerAlgorithm;
     if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(iType) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(iType)
         || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(iType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(iType)) {
-      if (storage.getType().equals(OEngineLocalPaginated.NAME)
+      if ((storage.getType().equals(OEngineLocalPaginated.NAME) || storage.getType().equals(OEngineLocal.NAME))
           && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
         valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
       } else {
