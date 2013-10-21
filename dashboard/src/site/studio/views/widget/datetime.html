@@ -1,0 +1,9 @@
+<!--<input type='text' class='input-xlarge-auto' ng-required = 'isRequired(header)' ng-model='doc[header]'  dtpicker/>-->
+
+<div class="input-append date input-xlarge-auto" ng-model="doc[header]" orientdatetime="" dtpicker="">
+    <input data-format="dd/MM/yyyy hh:mm:ss" class="input-xlarge-auto" ng-required="isRequired(header)" orientdatetime="" ng-model="doc[header]" type="text">
+    <span class="add-on">
+      <i data-time-icon="icon-time" data-date-icon="icon-calendar">
+      </i>
+    </span>
+</div>

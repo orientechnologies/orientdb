@@ -21,7 +21,13 @@
     <link rel="stylesheet" href="components/nvd3/src/nv.d3.css">
     <link rel="stylesheet" href="components/select2/select2.css">
     <link rel="stylesheet" href="components/bootstrap-daterangepicker/daterangepicker-bs2.css">
+    <link rel="stylesheet" href="components/bootstrap-datepicker/css/datepicker.css"/>
+    <link rel="stylesheet" href="components/bootstrap-timepicker/css/bootstrap-timepicker.css"/>
     <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="components/bootstrap-timepicker/css/bootstrap-timepicker.min.css">
+    <link rel="stylesheet" href="components/codemirror/lib/codemirror.css">
+
+
     <!-- endbuild -->
 </head>
 <body ng-app="MonitorApp">
@@ -40,11 +46,11 @@
 <div ng-controller="HeaderController">
     <div ng-include src="'views/header.html'"></div>
 </div>
-<div class="monitor-app row-fluid" >
-    <div class="span2" >
+<div class="monitor-app row-fluid">
+    <div class="span2">
         <div class="row-fluid" ng-include src="'views/sidenav.html'"></div>
     </div>
-    <div class="span10 mainSection" >
+    <div class="span10 mainSection">
         <div class="row-fluid" ng-view>
 
         </div>
@@ -52,9 +58,13 @@
             <footer id="footer">
                 <div>
                     <a class="brand" href="http://www.orientechnologies.com/enterprise.htm" target="_blank"></a>
-                    <p class="pull-right"><a target='_blank' href='http://www.orientechnologies.com/enterprise.htm'>&copy;
-                        Orient Technologies</a> - <a target='_blank' href='http://www.nuvolabase.com/site/terms.html'>Terms of
-                        Service</a> - <a target='_blank' href='http://www.nuvolabase.com/site/contacts.html'>Contacts</a></p>
+
+                    <p class="pull-right"><a target='_blank'
+                                             href='http://www.orientechnologies.com/enterprise.htm'>&copy;
+                        Orient Technologies</a> - <a target='_blank' href='http://www.nuvolabase.com/site/terms.html'>Terms
+                        of
+                        Service</a> - <a target='_blank'
+                                         href='http://www.nuvolabase.com/site/contacts.html'>Contacts</a></p>
                 </div>
             </footer>
         </div>
@@ -80,8 +90,13 @@
 <script src="components/jqvmap/jqvmap/maps/jquery.vmap.world.js"></script>
 <script src="components/jqvmap/jqvmap/data/jquery.vmap.sampledata.js"></script>
 <script src="components/bootstrap-daterangepicker/daterangepicker.js"></script>
+<script src="components/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script src="components/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
 <script src="components/stringjs/lib/string.js"></script>
 <script src="components/flot/jquery.flot.js"></script>
+<script src="components/angular-ui-codemirror/ui-codemirror.js"></script>
+<script src="components/codemirror/lib/codemirror.js"></script>
+<script src="components/codemirror/mode/xml/xml.js"></script>
 
 
 <!-- build:js scripts/scripts.js -->
@@ -95,10 +110,14 @@
 <script src="scripts/controllers/server.js"></script>
 <script src="scripts/controllers/settings.js"></script>
 <script src="scripts/controllers/header.js"></script>
+<script src="scripts/controllers/metrics.js"></script>
 <script src="scripts/service/monitor-service.js"></script>
 <script src="scripts/directive/angularjs.nvd3.js"></script>
 <script src="scripts/directive/custom.js"></script>
-
+<script src="scripts/service/workbench-service-logs.js"></script>
+<script src="scripts/controllers/logs.js"></script>
+<script src="scripts/controllers/events.js"></script>
+<script src="scripts/util/library.js"></script>
 
 
 <!-- endbuild -->

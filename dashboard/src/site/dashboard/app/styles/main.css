@@ -1,47 +1,44 @@
-/* Will be compiled down to a single stylesheet with your sass files */
 html {
     height: 100%;
-
 }
 
 body {
+    background: none repeat scroll 0 0 #35353A;
     height: 100%;
-    width: 100%;
-    padding: 0;
     margin: 0;
-    background: #35353a;
+    padding: 0;
+    width: 100%;
 }
 
 #full-screen-background-image {
-    z-index: -999;
+    height: auto;
+    left: 0;
     min-height: 100%;
     min-width: 1024px;
-    width: 100%;
-    height: auto;
     position: fixed;
     top: 0;
-    left: 0;
+    width: 100%;
+    z-index: -999;
 }
 
 .account-container {
     display: block;
-    margin: 90px auto 0 auto;
+    margin: 90px auto 0;
 }
 
-/** Text Under Box**/
 .login-extra {
     display: block;
-    width: 300px;
+    line-height: 19px;
     margin: 1.5em auto;
     text-align: center;
-    line-height: 19px;
-    text-shadow: 1px 1px 0px #fff;
+    text-shadow: 1px 1px 0 #FFFFFF;
+    width: 300px;
 }
 
-@media ( max-width : 480px) {
+@media (max-width: 480px) {
     .account-container {
-        width: 280px;
         margin-top: 35px;
+        width: 280px;
     }
 
     .login-fields input {
@@ -50,12 +47,12 @@ body {
 }
 
 .navbar .container-fluid .brand {
-    background: url("../img/orientdb-logo-full.png") no-repeat scroll 0 9px transparent;
+    background: url("../img/orientdb-logo-full.png") no-repeat scroll 0 9px rgba(0, 0, 0, 0);
     width: 233px;
 }
 
 .navbar .container-fluid .brand2 {
-    background: url("../img/orientdb-logo.png") no-repeat scroll 0 9px transparent;
+    background: url("../img/orientdb-logo.png") no-repeat scroll 0 9px rgba(0, 0, 0, 0);
     display: inline-block;
     height: 29px;
     margin: 0;
@@ -64,15 +61,16 @@ body {
 }
 
 .navbar.navbar-inverse .navbar-inner {
-    background: none repeat scroll 0 0 #262626;
-    border-bottom: 5px solid #FF6600;
+    background: none repeat scroll 0 0 #333333;
+    border-bottom: 5px solid #A5360F;
     box-shadow: none !important;
-    text-shadow: none !important;
+    text-shadow: 0 1px 0 #CE4213;
 }
 
 button.btn-primary, .btn.btn-primary {
-    background: none repeat scroll 0 0 #FF6600;
+    background: none repeat scroll 0 0 #A5360F;
     color: #FFFFFF;
+    border-radius: 5px !important;
 }
 
 .btn-block {
@@ -101,23 +99,23 @@ button.btn-primary, .btn.btn-primary {
 }
 
 #footer .brand {
-    background: url("../img/orientdb-logo-nano.png") no-repeat scroll left top transparent;
+    background: url("../img/orientdb-logo-nano.png") no-repeat scroll left top rgba(0, 0, 0, 0);
     display: inline-block;
     height: 19px;
     width: 148px;
 }
 
 .table th {
-    background: none repeat scroll 0 0 #DDDDDD;
-    border-color: #C4C4C4;
+    background: none repeat scroll 0 0 #4E4E4E;
+    color: #FFFFFF;
+    font-size: 13px;
     padding-bottom: 6px;
     padding-top: 6px;
     position: relative;
-    font-size: 13px;
 }
 
 .table-nocolor th {
-    background: none;
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
     border-color: #C4C4C4;
 }
 
@@ -130,10 +128,10 @@ button.btn-primary, .btn.btn-primary {
 }
 
 .btn {
-    background-color: #E5E5E5;
+    background-color: #D3D3D3;
     background-image: none;
     border: 0 none;
-    border-radius: 0 0 0 0 !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
     color: #333333;
     cursor: pointer;
@@ -142,73 +140,73 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+.btn-small {
+    padding: 4px 8px;
+}
+
+.btn-trasparent {
+    background-color: rgba(0, 0, 0, 0);
+}
 
 .nav-pills > li > a {
     border-radius: 0 0 0 0 !important;
 }
 
 button.btn-inverse, .btn.btn-inverse {
-    background: none repeat scroll 0 0 #FF6600;
+    background: none repeat scroll 0 0 #A5360F;
     color: #FFFFFF;
+    border-radius: 5px !important;
+    margin-right: 5px;
 }
 
 button.btn-inverse:hover, .btn.btn-inverse:hover {
-    background: none repeat scroll 0 0 #E65C00;
+    background: none repeat scroll 0 0 #A5860F;
 }
 
 .serverNav {
-    color: #ffffff;
+    color: #FFFFFF;
 }
 
 .icon-brand {
-    background: url("../img/orientdb-logo.png") no-repeat;
+    background: url("../img/orientdb-logo.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+    display: inline-block;
     height: 29px;
     width: 29px;
-    display: inline-block;
 }
 
 .mainSection {
-    background: #ffffff;
-    box-shadow: -10px 0px 10px 1px #262626;
+    background: none repeat scroll 0 0 #FFFFFF;
+    box-shadow: -10px 0 10px 1px #262626;
+    margin-left: 0 !important;
     padding-left: 10px;
-    margin-left: 0px !important;
     width: 85.1064% !important;
-
 }
 
 .navSection {
     padding-top: 20px;
-
 }
 
 .navMenu {
     margin-top: 40px;
 }
 
-.navMenu ul.nav-list > li > a {
-    color: #ffffff !important;
-    text-shadow: none;
-    padding: 10px 15px;
+.navMenu ul.nav-list > li > a:active {
     border-top: 1px solid #5C5C5C !important;
+    color: #FFFFFF;
+    /*padding: 10px 15px;*/
+    text-shadow: none;
 }
 
 .navMenu ul.nav-list > li > a:hover {
-    background-color: #0088CC;
+    background-color: #A5360F;
 }
 
 .navMenu ul.nav-list > li.active > a .selected {
-    /* background-image: url("../img/sidebar-menu-arrow.png");
-     display: block;
-     float: right;
-     height: 25px;
-     position: absolute;
-     right: 0;
-     top: 8px;
-     width: 8px;*/
 }
 
 .navMenu ul.nav-list > li {
-    line-height: 20px;
+    border: 1px solid;
+    line-height: 40px;
 }
 
 .menuTitle {
@@ -216,8 +214,8 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 }
 
 .serverBox {
-    margin-top: 20px;
     margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 .widget {
@@ -261,13 +259,13 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .widget > .widget-title > .widget-caption {
     display: inline-block;
     float: left;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 400;
     margin: 0 0 7px;
     padding: 0;
 }
 
-.widget > .widget-title >  .actions {
+.widget > .widget-title > .actions {
     display: inline-block;
     float: right;
     margin: 6px 0 0;
@@ -293,7 +291,6 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     color: #FFFFFF !important;
 }
 
-/* BLUE*/
 .widget.boxed.blue {
     -moz-border-bottom-colors: none;
     -moz-border-left-colors: none;
@@ -301,13 +298,12 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     -moz-border-top-colors: none;
     border-color: -moz-use-text-color #B4CEF8 #B4CEF8;
     border-image: none;
-    border-right: 1px solid #B4CEF8;
     border-style: none solid solid;
     border-width: 0 1px 1px;
 }
 
 .widget.boxed.blue > .widget-title {
-    background-color: #0088CC;
+    background-color: #333333;
 }
 
 .logDate {
@@ -325,7 +321,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     border: 2px solid #CCCCCC;
     border-radius: 4px 4px 4px 4px;
     color: #444444;
-    display: block;
+    display: none;
     height: 30px;
     line-height: 30px;
     overflow: hidden;
@@ -334,8 +330,8 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     white-space: nowrap;
 }
 
-.select2-container .select2-choice .select2-arrow  b:before {
-    content: "\f0dc";
+.select2-container .select2-choice .select2-arrow b:before {
+    content: "";
     display: inline-block;
     font-size: 14px;
     position: relative;
@@ -343,11 +339,11 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     top: 1px;
 }
 
-.select2-container .select2-choice .select2-arrow  b {
-    background: none;
+.select2-container .select2-choice .select2-arrow b {
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
 }
 
-.select2-container .select2-choice  b {
+.select2-container .select2-choice b {
     display: block;
     font-family: FontAwesome;
     font-style: normal;
@@ -358,8 +354,8 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 }
 
 .select2-container .select2-choice .select2-arrow {
-    background: none;
-    border-left: none;
+    background: none repeat scroll 0 0 rgba(0, 0, 0, 0);
+    border-left: medium none;
     border-radius: 0 4px 4px 0;
     display: inline-block;
     height: 100%;
@@ -384,7 +380,6 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     border-color: -moz-use-text-color #0D96E5 #0D96E5;
     border-image: none;
     border-radius: 0 0 4px 4px;
-    border-right: 2px solid #0D96E5;
     border-style: none solid solid;
     border-width: 0 2px 2px;
     box-shadow: 0 4px 5px rgba(0, 0, 0, 0.05);
@@ -399,23 +394,91 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 .select2-search input:focus {
     box-shadow: none;
 }
+
 .pointer {
     cursor: pointer;
 }
 
 .querySearch {
-    margin-top: 12px;
     margin-bottom: 12px;
+    margin-top: 12px;
 }
+
 .metric-range {
     background-color: #E02222;
-    color: #ffffff;
+    color: #FFFFFF;
     cursor: pointer;
     margin-right: 0;
     margin-top: -8px;
     padding: 8px 8px 7px;
 }
+
 .metric-range span {
 }
 
+table.form-search-width > tbody > tr > td select {
+    height: 34px;
+    width: 72%;
+}
 
+table.form-search-width > tbody > tr > td input {
+    height: 24px;
+    width: 65%;
+}
+
+table.align-left > tbody > tr > td {
+    text-align: left !important;
+}
+
+.btn-events {
+    height: 16px;
+    vertical-align: top;
+}
+
+table.align-left {
+    margin-top: 28px;
+}
+
+.navMenu ul.nav-list > li > a {
+    border-top: 1px solid #ffffff !important;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.dropdown-menu a {
+    color: #333333;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+
+}
+
+.navbar-inverse .nav li.dropdown.open > .dropdown-toggle, .navbar-inverse .nav li.dropdown.active > .dropdown-toggle, .navbar-inverse .nav li.dropdown.open.active > .dropdown-toggle {
+    background-color: #A5360F;
+    color: #FFFFFF;
+    line-height: 27px;
+}
+
+.navbar-inverse .brand, .navbar-inverse .nav > li > a {
+    color: #FFFFFF;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.nav-list > .active > a, .nav-list > .active > a:hover {
+    background-color: #A5360F;
+    color: #FFFFFF;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.nav-list > li > a {
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #FFFFFF;
+    padding: 3px 15px;
+}
+
+.dropdown-menu li > a:hover, .dropdown-menu li > a:focus, .dropdown-submenu:hover > a {
+    background-color: #A5360F;
+    background-image: linear-gradient(to bottom, #A5360F, #A5360F);
+    background-repeat: repeat-x;
+    color: #FFFFFF;
+    text-decoration: none;
+}

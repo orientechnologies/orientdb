@@ -13,7 +13,26 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
 
 
     $scope.rid = $routeParams.server;
-    $scope.db = $routeParams.db
+    $scope.db = $routeParams.db;
+
+    Monitor.getServers(function (data) {
+        $scope.servers = data.result;
+        if ($scope.rid) {
+            $scope.servers.forEach(function (elem, idx, arr) {
+                if ($scope.rid.replace("#", '') == elem['@rid'].replace("#", '')) {
+                    $scope.server = elem;
+                }
+            });
+        } else {
+            if ($scope.servers.length > 0) {
+                $scope.server = $scope.servers[0];
+            }
+        }
+        if ($scope.server) {
+            $scope.findDatabases($scope.server.name);
+        }
+    });
+
     $scope.refresh = function () {
 
         var metricName = 'db.' + $scope.db + '.command.';
@@ -24,11 +43,7 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
 
         });
     }
-    Monitor.getServer($scope.rid, function (data) {
-        $scope.server = data;
-        $scope.findDatabases(data.name);
 
-    });
     $scope.delete = function () {
         var metricName = 'db.' + $scope.db + '.command.';
         var params = {  server: $scope.sName, type: 'realtime', names: metricName };
@@ -57,14 +72,12 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             $scope.databases = data.result[0]['system.databases'].split(",");
             if ($scope.databases.length > 0 && !$scope.db) {
                 $scope.db = $scope.databases[0];
-                $scope.refresh();
             }
+            if ($scope.db)
+                $scope.refresh();
         });
     }
-    $scope.$watch("db", function (data) {
-        if (data)
-            $location.path("/dashboard/query/" + $scope.rid + "/" + data);
-    })
+
 
 });
 app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
@@ -72,6 +85,11 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
     $scope.rid = $routeParams.server;
 
+    $scope.editorOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        mode: 'xml'
+    };
     Monitor.getServer($scope.rid, function (data) {
         $scope.server = data;
         Server.findDatabases(data.name, function (data) {
@@ -79,8 +97,17 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             var db = $scope.databases[0];
             $scope.dbselected = db;
         });
+        Server.getConfiguration($scope.server, function (data) {
+            $scope.configuration = data.configuration;
+        });
+
 
     });
+    $scope.saveConfig = function () {
+        Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
+            console.log(data);
+        });
+    }
     $scope.getServerMetrics = function () {
 
         var names = new Array;
@@ -94,7 +121,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             names.push(del);
             names.push(read);
         });
-        Metric.getOperationMetrics({names: names, server: $scope.rid }, function (data) {
+        Metric.getMetrics({names: names, server: $scope.rid }, function (data) {
             $scope.serverLoad = new Array;
             var tmpArr = new Array;
 
@@ -128,7 +155,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         var update = 'db.' + db + DOT + UPDATE_LABEL;
         var del = 'db.' + db + DOT + DELETE_LABEL;
         var read = 'db.' + db + DOT + READ_LABEL;
-        Metric.getOperationMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
+        Metric.getMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
             $scope.operationData = new Array;
             var tmpArr = new Array;
 
@@ -165,9 +192,12 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
 
 });
-app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
+app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, $odialog, Monitor, Metric, Server, MetricConfig) {
 
     $scope.rid = $routeParams.server;
+    $scope.names = new Array;
+    $scope.render = 'area';
+    $scope.fields = ['value', 'entries', 'min', 'max', 'average', 'total'];
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
@@ -175,18 +205,49 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 
         }
     });
-    $scope.$watch("range", function (data) {
+    $scope.refreshMetricConfig = function () {
+        MetricConfig.getAll(function (data) {
+            $scope.savedMetrics = data.result;
+            if ($scope.savedMetrics.length > 0) {
+                $scope.selectedConfig = $scope.savedMetrics[0];
+            }
+        });
+    }
 
-        console.log(data);
-    });
 
-    $scope.$watch("metric", function (data) {
+    $scope.newMetricConfig = function () {
+        $scope.selectedConfig = MetricConfig.create();
+    }
+    $scope.saveMetricConfig = function () {
+        MetricConfig.saveConfig($scope.selectedConfig, function (data) {
+            $scope.refreshMetricConfig();
+        });
+    }
 
-        console.log(data);
-        if (data) {
-            Metric.getMetrics({ name: data, server: $scope.rid}, function (data) {
-                console.log(data);
-            })
+    $scope.selectConfig = function (config) {
+        $scope.selectedConfig = config;
+    }
+    $scope.deleteConfig = function (config) {
+        var msg = 'You are removing metric ' + config.name + '. Are you sure?';
+        $odialog.confirm({title: 'Warning', body: msg, success: function () {
+            MetricConfig.deleteConfig(config, function (data) {
+                $scope.refreshMetricConfig();
+            });
+        }});
+
+    }
+    $scope.addConfig = function () {
+        if (!$scope.selectedConfig['config']) {
+            $scope.selectedConfig['config'] = new Array;
         }
-    });
+        $scope.selectedConfig['config'].push({});
+    }
+
+    $scope.removeMetric = function (met) {
+        var idx = $scope.selectedConfig['config'].indexOf(met);
+        $scope.selectedConfig['config'].splice(idx, 1);
+    }
+    $scope.refreshMetricConfig();
+
+
 });

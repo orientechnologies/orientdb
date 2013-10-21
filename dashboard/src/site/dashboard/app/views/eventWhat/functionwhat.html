@@ -1,0 +1,19 @@
+<div class="row-fluid" ng-controller="FunctionWhatController">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>Event: {{eventWhat['@class']}}</h3>
+    </div>
+    <div>
+        <ul>
+            <li ng-repeat="header in properties">
+                <div>
+                    {{header['name']}}:
+                    <input type="text" placeholder="" ng-model="eventWhat[header['name']]  ">
+                </div>
+            </li>
+        </ul>
+        <div class="modal-footer">
+            <button type="button" class="btn" ng-click="hide()">Close</button>
+        </div>
+    </div>
+</div>

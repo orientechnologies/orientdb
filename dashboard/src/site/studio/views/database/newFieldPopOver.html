@@ -1,0 +1,10 @@
+<h3>New Field </h3>
+<form name="popoverForm">
+	<input type="text" class="input-large" ng-model="name" placeholder="Field name">
+	<select class="span2" ng-model="type" ng-options="c for c in types">
+	</select>
+	<div class="form-actions">
+		<button type="button" class="btn" ng-click="hide()">Close</button>
+		<button class="btn btn-primary" ng-click="modal.saved=true;hide();addField(name,type)">Add field</button>
+	</div>
+</form>

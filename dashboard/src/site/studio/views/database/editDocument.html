@@ -1,0 +1,37 @@
+<div class="row-fluid" ng-controller="DocumentEditController">	
+	<div class="span9 document">
+		<ng-include src="'views/database/record.html'" onload=""></ng-include>
+	</div>
+	<div class="span3">
+		<form>
+			<legend>Links <a href="javascript:void(0)" ng-controller="DocumentPopoverLinkController" data-placement="bottom" data-title="Add Link" bs-popover="'views/document/addLink.html'"><i class="icon-plus-sign"></i></a></legend>
+			<div class="accordion row-fluid" id="accordion1">
+				<div class="accordion-group" ng-repeat="i in outgoings">
+					<div class="accordion-heading">
+						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" data-target="#{{i}}" href="javascript:void(0)">
+                            {{getLabelFor(i)}}
+							<i class="icon-plus-sign" data-placement="left" ng-click="showModalConnection(i)"></i>
+						</a>
+					</div>
+					<div id="{{i}}" class="accordion-body collapse">
+						<div class="accordion-inner accordion-scroll">
+							<table>
+								<tbody>
+									<tr ng-repeat="out in filterArray(doc[i])">
+
+										<td>
+                                            <div class="tag-rid">
+                                                <a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>
+                                                <a href="javascript:void(0)"><i class="icon-remove" ng-click="deleteLink(i,out)"></i></a>
+                                            </div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>

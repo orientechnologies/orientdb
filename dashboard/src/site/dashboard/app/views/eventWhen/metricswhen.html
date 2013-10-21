@@ -1,0 +1,24 @@
+<div class="row-fluid" ng-controller="MetricsWhenController">
+
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>Event: {{eventWhen['@class']}}</h3>
+    </div>
+
+    <br>
+
+    <form class="form-horizontal">
+        <div class="control-group" ng-repeat="header in properties">
+            <label class="control-label">{{header['name']}}:</label>
+
+            <div class="controls">
+                <input type="text" placeholder="{{header['name']}}" ng-model="eventWhen[header['name']]">
+            </div>
+        </div>
+    </form>
+    <div class="modal-footer">
+
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+    </div>
+
+</div>

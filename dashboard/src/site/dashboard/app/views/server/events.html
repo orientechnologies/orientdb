@@ -1,0 +1,80 @@
+<div class="row-fluid" ng-controller="EventsController">
+    <div class="span12">
+        <div class="span12">
+            <div class="">
+                <a href="javascript:void(0)" class="btn" ng-click="newEvent()"> <i
+                        class="icon-plus"></i> New Event</a>
+
+                <input class="input input_functions" placeholder="Search" ng-model="queryy">
+            </div>
+
+
+        </div>
+        <br>
+        <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">
+            <thead>
+            <tr>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Event When
+                </th>
+                <th>
+                    Event What
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="result in results  | filter:queryy |filter:queryy.code">
+                <td>
+                    <input type="text" ng-model="result['name']">
+
+                </td>
+                <td>
+                    <div>
+                        <select ng-model="selectedWhen[result['name']]">
+                            <option ng-repeat="when in eventsWhen" ng-value="{{ when.name }}"
+                                    ng-selected="when.name == result['when']['@class'] ">{{when.name}}
+                            </option>
+                        </select>
+
+                        <a href="javascript:void(0)" class="btn btn-events"
+                           ng-click="onWhenChange(result,result['when'])"> <i
+                                class="icon-save"></i>
+                            Edit</a>
+
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        <select ng-model="selectedWhat[result['name']]">
+                            <option ng-repeat="what in eventsWhat" ng-value="{{ what.name }}"
+                                    ng-selected="what.name == result['what']['@class'] ">{{what.name}}
+                            </option>
+                        </select>
+
+                        <a href="javascript:void(0)" class="btn btn-events"
+                           ng-click="onWhatChange(result,result['what'])"> <i
+                                class="icon-save"></i>
+                            Edit</a>
+
+                    </div>
+                </td>
+                <td>
+                    <a href="javascript:void(0)" class="btn" ng-click="deleteEvent(result)"> <i class="icon-trash"></i>
+                        Drop</a>
+                    <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveEvent(result)"> <i
+                            class="icon-save"></i>
+                        Save</a>
+                </td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
