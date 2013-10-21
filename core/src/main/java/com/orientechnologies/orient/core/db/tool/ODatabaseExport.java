@@ -349,6 +349,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     int manualIndexes = 0;
     writer.beginCollection(1, true, "manualIndexes");
     for (OIndex<?> index : indexes) {
+      if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
+        continue;
+
       if (!index.isAutomatic()) {
         listener.onMessage("\n- Exporting index " + index.getName() + " ...");
 
