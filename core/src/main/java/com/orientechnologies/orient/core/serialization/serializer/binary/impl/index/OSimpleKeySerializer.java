@@ -44,13 +44,13 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
   }
 
-  public int getObjectSize(T key) {
-    init(key);
+  public int getObjectSize(T key, Object... hints) {
+    init(key, hints);
     return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer.getObjectSize(key);
   }
 
-  public void serialize(T key, byte[] stream, int startPosition) {
-    init(key);
+  public void serialize(T key, byte[] stream, int startPosition, Object... hints) {
+    init(key, hints);
     stream[startPosition] = binarySerializer.getId();
     startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
     binarySerializer.serialize(key, stream, startPosition);
@@ -76,9 +76,20 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     return ID;
   }
 
-  protected void init(T key) {
+  protected void init(T key, Object[] hints) {
     if (binarySerializer == null) {
-      type = OType.getTypeByClass(key.getClass());
+      final OType[] types;
+
+      if (hints != null && hints.length > 0)
+        types = (OType[]) hints;
+      else
+        types = new OType[0];
+
+      if (types.length > 0)
+        type = types[0];
+      else
+        type = OType.getTypeByClass(key.getClass());
+
       binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
     }
   }
@@ -95,8 +106,8 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
         + binarySerializer.getObjectSizeNative(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
   }
 
-  public void serializeNative(T key, byte[] stream, int startPosition) {
-    init(key);
+  public void serializeNative(T key, byte[] stream, int startPosition, Object... hints) {
+    init(key, hints);
     stream[startPosition] = binarySerializer.getId();
     startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
     binarySerializer.serializeNative(key, stream, startPosition);
@@ -111,8 +122,8 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   }
 
   @Override
-  public void serializeInDirectMemory(T object, ODirectMemoryPointer pointer, long offset) {
-    init(object);
+  public void serializeInDirectMemory(T object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    init(object, hints);
     pointer.setByte(offset++, binarySerializer.getId());
     binarySerializer.serializeInDirectMemory(object, pointer, offset);
   }

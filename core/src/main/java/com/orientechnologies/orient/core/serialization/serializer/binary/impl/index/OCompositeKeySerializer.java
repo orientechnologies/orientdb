@@ -44,14 +44,26 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   public static final byte                    ID       = 14;
 
   @SuppressWarnings("unchecked")
-  public int getObjectSize(OCompositeKey compositeKey) {
+  public int getObjectSize(OCompositeKey compositeKey, Object... hints) {
+    final OType[] types;
+    if (hints != null && hints.length > 0)
+      types = (OType[]) hints;
+    else
+      types = new OType[0];
+
     final List<Object> keys = compositeKey.getKeys();
 
     int size = 2 * OIntegerSerializer.INT_SIZE;
 
     final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
-    for (final Object key : keys) {
-      final OType type = OType.getTypeByClass(key.getClass());
+    for (int i = 0; i < keys.size(); i++) {
+      final Object key = keys.get(i);
+
+      final OType type;
+      if (types.length > i)
+        type = types[i];
+      else
+        type = OType.getTypeByClass(key.getClass());
 
       size += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
           + ((OBinarySerializer<Object>) factory.getObjectSerializer(type)).getObjectSize(key);
@@ -60,7 +72,13 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return size;
   }
 
-  public void serialize(OCompositeKey compositeKey, byte[] stream, int startPosition) {
+  public void serialize(OCompositeKey compositeKey, byte[] stream, int startPosition, Object... hints) {
+    final OType[] types;
+    if (hints != null && hints.length > 0)
+      types = (OType[]) hints;
+    else
+      types = new OType[0];
+
     final List<Object> keys = compositeKey.getKeys();
     final int keysSize = keys.size();
 
@@ -74,8 +92,15 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
     final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
 
-    for (final Object key : keys) {
-      final OType type = OType.getTypeByClass(key.getClass());
+    for (int i = 0; i < keys.size(); i++) {
+      final Object key = keys.get(i);
+
+      final OType type;
+      if (types.length > i)
+        type = types[i];
+      else
+        type = OType.getTypeByClass(key.getClass());
+
       @SuppressWarnings("unchecked")
       OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(type);
 
@@ -148,7 +173,13 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
     return OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
   }
 
-  public void serializeNative(OCompositeKey compositeKey, byte[] stream, int startPosition) {
+  public void serializeNative(OCompositeKey compositeKey, byte[] stream, int startPosition, Object... hints) {
+    final OType[] types;
+    if (hints != null && hints.length > 0)
+      types = (OType[]) hints;
+    else
+      types = new OType[0];
+
     final List<Object> keys = compositeKey.getKeys();
     final int keysSize = keys.size();
 
@@ -162,8 +193,15 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
     final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
 
-    for (final Object key : keys) {
-      final OType type = OType.getTypeByClass(key.getClass());
+    for (int i = 0; i < keys.size(); i++) {
+      final Object key = keys.get(i);
+
+      final OType type;
+      if (types.length > i)
+        type = types[i];
+      else
+        type = OType.getTypeByClass(key.getClass());
+
       @SuppressWarnings("unchecked")
       OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(type);
 
@@ -201,7 +239,14 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   }
 
   @Override
-  public void serializeInDirectMemory(OCompositeKey compositeKey, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OCompositeKey compositeKey, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    final OType[] types;
+
+    if (hints != null && hints.length > 0)
+      types = (OType[]) hints;
+    else
+      types = new OType[0];
+
     final List<Object> keys = compositeKey.getKeys();
     final int keysSize = keys.size();
 
@@ -215,8 +260,15 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
     final OBinarySerializerFactory factory = OBinarySerializerFactory.INSTANCE;
 
-    for (final Object key : keys) {
-      final OType type = OType.getTypeByClass(key.getClass());
+    for (int i = 0; i < keys.size(); i++) {
+      final Object key = keys.get(i);
+
+      final OType type;
+      if (types.length > i)
+        type = types[i];
+      else
+        type = OType.getTypeByClass(key.getClass());
+
       @SuppressWarnings("unchecked")
       OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(type);
 

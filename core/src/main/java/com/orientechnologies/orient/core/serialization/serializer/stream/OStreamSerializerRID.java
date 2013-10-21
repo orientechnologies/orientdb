@@ -47,11 +47,11 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
     return ((OIdentifiable) iObject).getIdentity().toStream();
   }
 
-  public int getObjectSize(OIdentifiable object) {
+  public int getObjectSize(OIdentifiable object, Object... hints) {
     return OLinkSerializer.INSTANCE.getObjectSize(object.getIdentity());
   }
 
-  public void serialize(OIdentifiable object, byte[] stream, int startPosition) {
+  public void serialize(OIdentifiable object, byte[] stream, int startPosition, Object... hints) {
     OLinkSerializer.INSTANCE.serialize(object.getIdentity(), stream, startPosition);
   }
 
@@ -71,7 +71,7 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
     return OLinkSerializer.INSTANCE.getObjectSizeNative(stream, startPosition);
   }
 
-  public void serializeNative(OIdentifiable object, byte[] stream, int startPosition) {
+  public void serializeNative(OIdentifiable object, byte[] stream, int startPosition, Object... hints) {
     OLinkSerializer.INSTANCE.serializeNative(object.getIdentity(), stream, startPosition);
   }
 
@@ -80,7 +80,7 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   }
 
   @Override
-  public void serializeInDirectMemory(OIdentifiable object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OIdentifiable object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     OLinkSerializer.INSTANCE.serializeInDirectMemory(object, pointer, offset);
   }
 

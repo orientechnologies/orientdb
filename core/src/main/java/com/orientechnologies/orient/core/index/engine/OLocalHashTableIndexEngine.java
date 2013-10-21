@@ -85,7 +85,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
     identity = identityRecord.getIdentity();
 
     hashFunction.setValueSerializer(keySerializer);
-    hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer, storageLocalAbstract);
+    hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
+        indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
   }
 
   @Override
@@ -101,7 +102,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OStorageLocalAbstract) getDatabase()
+        .getStorage().getUnderlying());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 

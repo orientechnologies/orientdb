@@ -28,11 +28,11 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   public static ONullSerializer INSTANCE = new ONullSerializer();
   public static final byte      ID       = 11;
 
-  public int getObjectSize(final Object object) {
+  public int getObjectSize(final Object object, Object... hints) {
     return 0;
   }
 
-  public void serialize(final Object object, final byte[] stream, final int startPosition) {
+  public void serialize(final Object object, final byte[] stream, final int startPosition, Object... hints) {
     // nothing to serialize
   }
 
@@ -53,7 +53,7 @@ public class ONullSerializer implements OBinarySerializer<Object> {
     return 0;
   }
 
-  public void serializeNative(Object object, byte[] stream, int startPosition) {
+  public void serializeNative(Object object, byte[] stream, int startPosition, Object... hints) {
   }
 
   public Object deserializeNative(byte[] stream, int startPosition) {
@@ -61,7 +61,7 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   }
 
   @Override
-  public void serializeInDirectMemory(Object object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Object object, ODirectMemoryPointer pointer, long offset, Object... hints) {
   }
 
   @Override

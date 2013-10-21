@@ -33,11 +33,11 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   public static OBooleanSerializer INSTANCE     = new OBooleanSerializer();
   public static final byte         ID           = 1;
 
-  public int getObjectSize(Boolean object) {
+  public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
   }
 
-  public void serialize(Boolean object, byte[] stream, int startPosition) {
+  public void serialize(Boolean object, byte[] stream, int startPosition, Object... hints) {
     if (object)
       stream[startPosition] = (byte) 1;
     else
@@ -60,7 +60,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return BOOLEAN_SIZE;
   }
 
-  public void serializeNative(Boolean object, byte[] stream, int startPosition) {
+  public void serializeNative(Boolean object, byte[] stream, int startPosition, Object... hints) {
     serialize(object, stream, startPosition);
   }
 
@@ -69,7 +69,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setByte(offset, object ? (byte) 1 : 0);
   }
 

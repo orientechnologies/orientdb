@@ -31,7 +31,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   public static final ODecimalSerializer INSTANCE = new ODecimalSerializer();
   public static final byte               ID       = 18;
 
-  public int getObjectSize(BigDecimal object) {
+  public int getObjectSize(BigDecimal object, Object... hints) {
     return OIntegerSerializer.INT_SIZE + OBinaryTypeSerializer.INSTANCE.getObjectSize(object.unscaledValue().toByteArray());
   }
 
@@ -41,7 +41,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
     return size;
   }
 
-  public void serialize(BigDecimal object, byte[] stream, int startPosition) {
+  public void serialize(BigDecimal object, byte[] stream, int startPosition, Object... hints) {
     OIntegerSerializer.INSTANCE.serialize(object.scale(), stream, startPosition);
     startPosition += OIntegerSerializer.INT_SIZE;
     OBinaryTypeSerializer.INSTANCE.serialize(object.unscaledValue().toByteArray(), stream, startPosition);
@@ -67,7 +67,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
     return size;
   }
 
-  public void serializeNative(BigDecimal object, byte[] stream, int startPosition) {
+  public void serializeNative(BigDecimal object, byte[] stream, int startPosition, Object... hints) {
     OIntegerSerializer.INSTANCE.serializeNative(object.scale(), stream, startPosition);
     startPosition += OIntegerSerializer.INT_SIZE;
     OBinaryTypeSerializer.INSTANCE.serializeNative(object.unscaledValue().toByteArray(), stream, startPosition);
@@ -83,7 +83,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   @Override
-  public void serializeInDirectMemory(BigDecimal object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(BigDecimal object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(object.scale(), pointer, offset);
     offset += OIntegerSerializer.INT_SIZE;
 

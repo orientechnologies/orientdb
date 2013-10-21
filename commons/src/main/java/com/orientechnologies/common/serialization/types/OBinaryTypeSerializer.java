@@ -39,11 +39,11 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return length + OIntegerSerializer.INT_SIZE;
   }
 
-  public int getObjectSize(byte[] object) {
+  public int getObjectSize(byte[] object, Object... hints) {
     return object.length + OIntegerSerializer.INT_SIZE;
   }
 
-  public void serialize(byte[] object, byte[] stream, int startPosition) {
+  public void serialize(byte[] object, byte[] stream, int startPosition, Object... hints) {
     int len = object.length;
     OIntegerSerializer.INSTANCE.serialize(len, stream, startPosition);
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
@@ -63,7 +63,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()) + OIntegerSerializer.INT_SIZE;
   }
 
-  public void serializeNative(byte[] object, byte[] stream, int startPosition) {
+  public void serializeNative(byte[] object, byte[] stream, int startPosition, Object... hints) {
     int len = object.length;
     CONVERTER.putInt(stream, startPosition, len, ByteOrder.nativeOrder());
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
@@ -76,7 +76,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   }
 
   @Override
-  public void serializeInDirectMemory(byte[] object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(byte[] object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     int len = object.length;
     pointer.setInt(offset, len);
     offset += OIntegerSerializer.INT_SIZE;

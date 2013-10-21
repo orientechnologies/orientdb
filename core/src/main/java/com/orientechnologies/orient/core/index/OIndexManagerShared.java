@@ -16,13 +16,7 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -444,7 +438,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
             OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed.");
+            OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed.", e);
           }
         }
       };

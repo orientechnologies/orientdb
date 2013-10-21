@@ -29,7 +29,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   public static final byte                       ID       = 51;
 
   @Override
-  public int getObjectSize(OClusterPosition object) {
+  public int getObjectSize(OClusterPosition object, Object... hints) {
     return OClusterPositionFactory.INSTANCE.getSerializedSize();
   }
 
@@ -39,7 +39,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serialize(OClusterPosition object, byte[] stream, int startPosition) {
+  public void serialize(OClusterPosition object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     System.arraycopy(serializedPosition, 0, stream, startPosition, serializedPosition.length);
   }
@@ -65,7 +65,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serializeNative(OClusterPosition object, byte[] stream, int startPosition) {
+  public void serializeNative(OClusterPosition object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     System.arraycopy(serializedPosition, 0, stream, startPosition, serializedPosition.length);
   }
@@ -81,7 +81,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serializeInDirectMemory(OClusterPosition object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OClusterPosition object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     pointer.set(offset, serializedPosition, 0, serializedPosition.length);
   }

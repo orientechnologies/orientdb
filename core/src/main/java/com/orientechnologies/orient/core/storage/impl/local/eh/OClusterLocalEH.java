@@ -98,7 +98,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void create(int iStartSize) throws IOException {
     acquireExclusiveLock();
     try {
-      localHashTable.create(name, OClusterPositionSerializer.INSTANCE, OPhysicalPositionSerializer.INSTANCE, storage);
+      localHashTable.create(name, OClusterPositionSerializer.INSTANCE, OPhysicalPositionSerializer.INSTANCE, null, storage);
       clusterStateHolder.create(-1);
 
       if (config.root.clusters.size() <= config.id)
@@ -114,7 +114,7 @@ public class OClusterLocalEH extends OSharedResourceAdaptive implements OCluster
   public void open() throws IOException {
     acquireExclusiveLock();
     try {
-      localHashTable.load(name, storage);
+      localHashTable.load(name, null, storage);
       clusterStateHolder.open();
 
       tombstonesCount = clusterStateHolder.getFile().readLong(0);

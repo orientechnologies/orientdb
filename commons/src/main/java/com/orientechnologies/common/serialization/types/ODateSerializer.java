@@ -32,11 +32,11 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   public static ODateSerializer INSTANCE = new ODateSerializer();
   public static final byte      ID       = 4;
 
-  public int getObjectSize(Date object) {
+  public int getObjectSize(Date object, Object... hints) {
     return OLongSerializer.LONG_SIZE;
   }
 
-  public void serialize(Date object, byte[] stream, int startPosition) {
+  public void serialize(Date object, byte[] stream, int startPosition, Object... hints) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -64,7 +64,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
     return OLongSerializer.LONG_SIZE;
   }
 
-  public void serializeNative(Date object, byte[] stream, int startPosition) {
+  public void serializeNative(Date object, byte[] stream, int startPosition, Object... hints) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -81,7 +81,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public void serializeInDirectMemory(Date object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Date object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(object);
     calendar.set(Calendar.HOUR_OF_DAY, 0);

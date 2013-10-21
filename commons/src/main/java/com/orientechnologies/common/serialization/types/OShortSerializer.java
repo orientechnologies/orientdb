@@ -39,11 +39,11 @@ public class OShortSerializer implements OBinarySerializer<Short> {
    */
   public static final int               SHORT_SIZE = 2;
 
-  public int getObjectSize(Short object) {
+  public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;
   }
 
-  public void serialize(Short object, byte[] stream, int startPosition) {
+  public void serialize(Short object, byte[] stream, int startPosition, Object... hints) {
     final short value = object;
     stream[startPosition] = (byte) ((value >>> 8) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 0) & 0xFF);
@@ -65,7 +65,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return SHORT_SIZE;
   }
 
-  public void serializeNative(Short object, byte[] stream, int startPosition) {
+  public void serializeNative(Short object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -74,7 +74,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   }
 
   @Override
-  public void serializeInDirectMemory(Short object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Short object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setShort(offset, object);
   }
 

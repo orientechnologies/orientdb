@@ -57,7 +57,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public int getObjectSize(OSBTreeIndexRIDContainer object) {
+  public int getObjectSize(OSBTreeIndexRIDContainer object, Object... hints) {
     final byte[] serializedSet = object.toStream();
     return OBinaryTypeSerializer.INSTANCE.getObjectSize(serializedSet);
   }
@@ -68,7 +68,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public void serialize(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition) {
+  public void serialize(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedSet = object.toStream();
     OBinaryTypeSerializer.INSTANCE.serialize(serializedSet, stream, startPosition);
   }
@@ -103,7 +103,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public void serializeNative(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition) {
+  public void serializeNative(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedSet = object.toStream();
     OBinaryTypeSerializer.INSTANCE.serializeNative(serializedSet, stream, startPosition);
 
@@ -129,7 +129,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public void serializeInDirectMemory(OSBTreeIndexRIDContainer object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OSBTreeIndexRIDContainer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedSet = object.toStream();
     OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
   }

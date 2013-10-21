@@ -33,11 +33,11 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   public static OByteSerializer INSTANCE  = new OByteSerializer();
   public static final byte      ID        = 2;
 
-  public int getObjectSize(Byte object) {
+  public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;
   }
 
-  public void serialize(Byte object, byte[] stream, int startPosition) {
+  public void serialize(Byte object, byte[] stream, int startPosition, Object... hints) {
     stream[startPosition] = object;
   }
 
@@ -57,7 +57,7 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return getObjectSize(stream, startPosition);
   }
 
-  public void serializeNative(Byte object, byte[] stream, int startPosition) {
+  public void serializeNative(Byte object, byte[] stream, int startPosition, Object... hints) {
     serialize(object, stream, startPosition);
   }
 
@@ -66,7 +66,7 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   }
 
   @Override
-  public void serializeInDirectMemory(Byte object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setByte(offset, object);
   }
 

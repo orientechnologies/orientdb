@@ -16,11 +16,7 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -107,7 +103,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
-      sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer, storageLocalAbstract);
+      sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
     }
@@ -139,7 +136,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
 
-      sbTree.load(indexName, storageLocalAbstract);
+      sbTree.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
     }

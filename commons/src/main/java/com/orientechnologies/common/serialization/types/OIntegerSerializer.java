@@ -39,11 +39,11 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
    */
   public static final int               INT_SIZE  = 4;
 
-  public int getObjectSize(Integer object) {
+  public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
   }
 
-  public void serialize(Integer object, byte[] stream, int startPosition) {
+  public void serialize(Integer object, byte[] stream, int startPosition, Object... hints) {
     final int value = object;
     stream[startPosition] = (byte) ((value >>> 24) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 16) & 0xFF);
@@ -69,7 +69,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return INT_SIZE;
   }
 
-  public void serializeNative(Integer object, byte[] stream, int startPosition) {
+  public void serializeNative(Integer object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -78,7 +78,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   @Override
-  public void serializeInDirectMemory(Integer object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Integer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setInt(offset, object);
   }
 

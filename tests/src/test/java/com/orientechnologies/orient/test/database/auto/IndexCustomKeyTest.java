@@ -82,11 +82,11 @@ public class IndexCustomKeyTest {
       return length;
     }
 
-    public int getObjectSize(final ComparableBinary object) {
+    public int getObjectSize(final ComparableBinary object, Object... hints) {
       return object.toByteArray().length;
     }
 
-    public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition) {
+    public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition, Object... hints) {
       final byte[] buffer = object.toByteArray();
       System.arraycopy(buffer, 0, stream, startPosition, buffer.length);
     }
@@ -108,7 +108,7 @@ public class IndexCustomKeyTest {
       return LENGTH;
     }
 
-    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition) {
+    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
       serialize(object, stream, startPosition);
     }
 
@@ -117,7 +117,7 @@ public class IndexCustomKeyTest {
     }
 
     @Override
-    public void serializeInDirectMemory(ComparableBinary object, ODirectMemoryPointer pointer, long offset) {
+    public void serializeInDirectMemory(ComparableBinary object, ODirectMemoryPointer pointer, long offset, Object... hints) {
       final byte[] buffer = object.toByteArray();
       pointer.set(offset, buffer, 0, buffer.length);
     }

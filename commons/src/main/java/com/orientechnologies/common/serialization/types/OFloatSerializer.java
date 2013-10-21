@@ -39,11 +39,11 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
    */
   public static final int               FLOAT_SIZE = 4;
 
-  public int getObjectSize(Float object) {
+  public int getObjectSize(Float object, Object... hints) {
     return FLOAT_SIZE;
   }
 
-  public void serialize(Float object, byte[] stream, int startPosition) {
+  public void serialize(Float object, byte[] stream, int startPosition, Object... hints) {
     OIntegerSerializer.INSTANCE.serialize(Float.floatToIntBits(object), stream, startPosition);
   }
 
@@ -63,7 +63,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return FLOAT_SIZE;
   }
 
-  public void serializeNative(Float object, byte[] stream, int startPosition) {
+  public void serializeNative(Float object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
 
@@ -72,7 +72,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public void serializeInDirectMemory(Float object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Float object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setInt(offset, Float.floatToIntBits(object));
   }
 

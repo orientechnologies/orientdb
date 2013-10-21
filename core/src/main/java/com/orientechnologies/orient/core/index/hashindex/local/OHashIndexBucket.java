@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * @author Andrey Lomakin
@@ -53,22 +54,25 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
 
   private final OBinarySerializer<K>  keySerializer;
   private final OBinarySerializer<V>  valueSerializer;
+  private final OType[]               keyTypes;
 
   public OHashIndexBucket(int depth, ODirectMemoryPointer bufferPointer, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer) {
+      OBinarySerializer<V> valueSerializer, OType[] keyTypes) {
     this.bufferPointer = bufferPointer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
+    this.keyTypes = keyTypes;
 
     bufferPointer.setByte(DEPTH_OFFSET, (byte) depth);
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(MAX_BUCKET_SIZE_BYTES, bufferPointer, FREE_POINTER_OFFSET);
   }
 
   public OHashIndexBucket(ODirectMemoryPointer bufferPointer, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer) {
+      OBinarySerializer<V> valueSerializer, OType[] keyTypes) {
     this.bufferPointer = bufferPointer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
+    this.keyTypes = keyTypes;
   }
 
   public Entry<K, V> find(final K key) {
@@ -183,7 +187,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   public boolean addEntry(K key, V value) {
-    int entreeSize = keySerializer.getObjectSize(key) + valueSerializer.getObjectSize(value);
+    int entreeSize = keySerializer.getObjectSize(key, keyTypes) + valueSerializer.getObjectSize(value);
     int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(bufferPointer, FREE_POINTER_OFFSET);
 
     int size = size();
@@ -201,7 +205,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   private void insertEntry(K key, V value, int insertionPoint) {
-    int entreeSize = keySerializer.getObjectSize(key) + valueSerializer.getObjectSize(value);
+    int entreeSize = keySerializer.getObjectSize(key, keyTypes) + valueSerializer.getObjectSize(value);
     int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(bufferPointer, FREE_POINTER_OFFSET);
     int size = size();
     final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
@@ -220,7 +224,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
 
   public void appendEntry(K key, V value) {
     final int positionsOffset = size() * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
-    final int entreeSize = keySerializer.getObjectSize(key) + valueSerializer.getObjectSize(value);
+    final int entreeSize = keySerializer.getObjectSize(key, keyTypes) + valueSerializer.getObjectSize(value);
 
     final int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(bufferPointer, FREE_POINTER_OFFSET);
     final int entreePosition = freePointer - entreeSize;
@@ -234,8 +238,8 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   private void serializeEntry(K key, V value, int entryOffset) {
-    keySerializer.serializeInDirectMemory(key, bufferPointer, entryOffset);
-    entryOffset += keySerializer.getObjectSize(key);
+    keySerializer.serializeInDirectMemory(key, bufferPointer, entryOffset, keyTypes);
+    entryOffset += keySerializer.getObjectSize(key, keyTypes);
 
     valueSerializer.serializeInDirectMemory(value, bufferPointer, entryOffset);
   }

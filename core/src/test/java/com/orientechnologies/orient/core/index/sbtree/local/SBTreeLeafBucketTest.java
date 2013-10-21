@@ -23,11 +23,11 @@ public class SBTreeLeafBucketTest {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE,
         ODurablePage.TrackMode.FULL);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
@@ -50,7 +50,7 @@ public class SBTreeLeafBucketTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
@@ -85,7 +85,7 @@ public class SBTreeLeafBucketTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     int index = 0;
@@ -131,7 +131,7 @@ public class SBTreeLeafBucketTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
     for (Long key : keys) {
@@ -203,7 +203,7 @@ public class SBTreeLeafBucketTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
     for (Long key : keys) {
@@ -269,7 +269,7 @@ public class SBTreeLeafBucketTest {
   public void testSetLeftSibling() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
     treeBucket.setLeftSibling(123);
     Assert.assertEquals(treeBucket.getLeftSibling(), 123);
 
@@ -279,7 +279,7 @@ public class SBTreeLeafBucketTest {
   public void testSetRightSibling() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, true, OLongSerializer.INSTANCE,
-        OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
+        null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
     treeBucket.setRightSibling(123);
     Assert.assertEquals(treeBucket.getRightSibling(), 123);
 

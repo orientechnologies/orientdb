@@ -39,11 +39,11 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
    */
   public static final int               DOUBLE_SIZE = 8;
 
-  public int getObjectSize(Double object) {
+  public int getObjectSize(Double object, Object... hints) {
     return DOUBLE_SIZE;
   }
 
-  public void serialize(Double object, byte[] stream, int startPosition) {
+  public void serialize(Double object, byte[] stream, int startPosition, Object... hints) {
     OLongSerializer.INSTANCE.serialize(Double.doubleToLongBits(object), stream, startPosition);
   }
 
@@ -63,7 +63,7 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return DOUBLE_SIZE;
   }
 
-  public void serializeNative(Double object, byte[] stream, int startPosition) {
+  public void serializeNative(Double object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object), ByteOrder.nativeOrder());
   }
 
@@ -72,7 +72,7 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   }
 
   @Override
-  public void serializeInDirectMemory(Double object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Double object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setLong(offset, Double.doubleToLongBits(object));
   }
 

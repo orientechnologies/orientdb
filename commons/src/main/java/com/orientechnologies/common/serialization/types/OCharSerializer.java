@@ -38,11 +38,11 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   public static OCharSerializer         INSTANCE         = new OCharSerializer();
   public static final byte              ID               = 3;
 
-  public int getObjectSize(final Character object) {
+  public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
   }
 
-  public void serialize(final Character object, final byte[] stream, final int startPosition) {
+  public void serialize(final Character object, final byte[] stream, final int startPosition, Object... hints) {
     stream[startPosition] = (byte) (object >>> 8);
     stream[startPosition + 1] = (byte) (object.charValue());
   }
@@ -63,7 +63,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return CHAR_SIZE;
   }
 
-  public void serializeNative(Character object, byte[] stream, int startPosition) {
+  public void serializeNative(Character object, byte[] stream, int startPosition, Object... hints) {
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -72,7 +72,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public void serializeInDirectMemory(Character object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(Character object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setChar(offset, object);
   }
 

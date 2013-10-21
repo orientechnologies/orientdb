@@ -33,7 +33,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   public static final byte                        ID       = 50;
 
   @Override
-  public int getObjectSize(OPhysicalPosition object) {
+  public int getObjectSize(OPhysicalPosition object, Object... hints) {
     return getFixedLength();
   }
 
@@ -43,7 +43,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   }
 
   @Override
-  public void serialize(OPhysicalPosition object, byte[] stream, int startPosition) {
+  public void serialize(OPhysicalPosition object, byte[] stream, int startPosition, Object... hints) {
     int position = startPosition;
     OClusterPositionSerializer.INSTANCE.serialize(object.clusterPosition, stream, position);
     position += OClusterPositionSerializer.INSTANCE.getFixedLength();
@@ -108,7 +108,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   }
 
   @Override
-  public void serializeNative(OPhysicalPosition object, byte[] stream, int startPosition) {
+  public void serializeNative(OPhysicalPosition object, byte[] stream, int startPosition, Object... hints) {
     int position = startPosition;
     OClusterPositionSerializer.INSTANCE.serializeNative(object.clusterPosition, stream, position);
     position += OClusterPositionSerializer.INSTANCE.getFixedLength();
@@ -159,7 +159,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   }
 
   @Override
-  public void serializeInDirectMemory(OPhysicalPosition object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OPhysicalPosition object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     long currentOffset = offset;
 
     OClusterPositionSerializer.INSTANCE.serializeInDirectMemory(object.clusterPosition, pointer, currentOffset);

@@ -41,11 +41,11 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   public static final byte      ID               = 9;
   public static final int       RID_SIZE         = OShortSerializer.SHORT_SIZE + CLUSTER_POS_SIZE;
 
-  public int getObjectSize(final OIdentifiable rid) {
+  public int getObjectSize(final OIdentifiable rid, Object... hints) {
     return RID_SIZE;
   }
 
-  public void serialize(final OIdentifiable rid, final byte[] stream, final int startPosition) {
+  public void serialize(final OIdentifiable rid, final byte[] stream, final int startPosition, Object... hints) {
     ORID r = rid.getIdentity();
     short2bytes((short) r.getClusterId(), stream, startPosition);
 
@@ -69,7 +69,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     return RID_SIZE;
   }
 
-  public void serializeNative(OIdentifiable rid, byte[] stream, int startPosition) {
+  public void serializeNative(OIdentifiable rid, byte[] stream, int startPosition, Object... hints) {
     ORID r = rid.getIdentity();
 
     OShortSerializer.INSTANCE.serializeNative((short) r.getClusterId(), stream, startPosition);
@@ -86,7 +86,7 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   }
 
   @Override
-  public void serializeInDirectMemory(OIdentifiable rid, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OIdentifiable rid, ODirectMemoryPointer pointer, long offset, Object... hints) {
     ORID r = rid.getIdentity();
 
     OShortSerializer.INSTANCE.serializeInDirectMemory((short) r.getClusterId(), pointer, offset);

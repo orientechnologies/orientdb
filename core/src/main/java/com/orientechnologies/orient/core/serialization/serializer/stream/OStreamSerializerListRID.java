@@ -55,7 +55,7 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public int getObjectSize(OMVRBTreeRIDSet object) {
+  public int getObjectSize(OMVRBTreeRIDSet object, Object... hints) {
     final byte[] serializedSet = object.toStream();
     return OBinaryTypeSerializer.INSTANCE.getObjectSize(serializedSet);
   }
@@ -66,7 +66,7 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serialize(OMVRBTreeRIDSet object, byte[] stream, int startPosition) {
+  public void serialize(OMVRBTreeRIDSet object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedSet = object.toStream();
     OBinaryTypeSerializer.INSTANCE.serialize(serializedSet, stream, startPosition);
   }
@@ -96,7 +96,7 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serializeNative(OMVRBTreeRIDSet object, byte[] stream, int startPosition) {
+  public void serializeNative(OMVRBTreeRIDSet object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedSet = object.toStream();
     OBinaryTypeSerializer.INSTANCE.serializeNative(serializedSet, stream, startPosition);
 
@@ -117,7 +117,7 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serializeInDirectMemory(OMVRBTreeRIDSet object, ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemory(OMVRBTreeRIDSet object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedSet = object.toStream();
     OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
   }

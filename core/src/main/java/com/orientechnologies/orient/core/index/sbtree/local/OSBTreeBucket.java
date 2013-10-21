@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 
 /**
@@ -53,14 +54,17 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   private final OBinarySerializer<K>  keySerializer;
   private final OBinarySerializer<V>  valueSerializer;
 
+  private final OType[]               keyTypes;
+
   private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
 
-  public OSBTreeBucket(ODirectMemoryPointer cachePointer, boolean isLeaf, OBinarySerializer<K> keySerializer,
+  public OSBTreeBucket(ODirectMemoryPointer cachePointer, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) throws IOException {
     super(cachePointer, trackMode);
 
     this.isLeaf = isLeaf;
     this.keySerializer = keySerializer;
+    this.keyTypes = keyTypes;
     this.valueSerializer = valueSerializer;
 
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
@@ -77,9 +81,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setByteValue(VALUE_SERIALIZER_OFFSET, (byte) -1);
   }
 
-  public OSBTreeBucket(ODirectMemoryPointer cachePointer, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      TrackMode trackMode) {
+  public OSBTreeBucket(ODirectMemoryPointer cachePointer, OBinarySerializer<K> keySerializer, OType[] keyTypes,
+      OBinarySerializer<V> valueSerializer, TrackMode trackMode) {
     super(cachePointer, trackMode);
+    this.keyTypes = keyTypes;
 
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;
     this.keySerializer = keySerializer;
@@ -265,7 +270,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public boolean addEntry(int index, SBTreeEntry<K, V> treeEntry, boolean updateNeighbors) throws IOException {
-    final int keySize = keySerializer.getObjectSize(treeEntry.key);
+    final int keySize = keySerializer.getObjectSize(treeEntry.key, keyTypes);
     int valueSize = 0;
     int entrySize = keySize;
 
@@ -301,7 +306,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     if (isLeaf) {
       byte[] serializedKey = new byte[keySize];
-      keySerializer.serializeNative(treeEntry.key, serializedKey, 0);
+      keySerializer.serializeNative(treeEntry.key, serializedKey, 0, keyTypes);
 
       setBinaryValue(freePointer, serializedKey);
       freePointer += keySize;
@@ -324,7 +329,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       freePointer += OLongSerializer.LONG_SIZE;
 
       byte[] serializedKey = new byte[keySize];
-      keySerializer.serializeNative(treeEntry.key, serializedKey, 0);
+      keySerializer.serializeNative(treeEntry.key, serializedKey, 0, keyTypes);
       setBinaryValue(freePointer, serializedKey);
 
       size++;
