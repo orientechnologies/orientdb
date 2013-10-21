@@ -21,6 +21,9 @@ import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
 import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
 import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
+import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -45,12 +48,14 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
 
   @Override
   public void startup() {
+    installProfiler();
     installCommands();
   }
 
   @Override
   public void shutdown() {
     uninstallCommands();
+    uninstallProfiler();
   }
 
   private void installCommands() {
@@ -59,7 +64,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandGetDistributed());
     listener.registerStatelessCommand(new OServerCommandGetLog());
     listener.registerStatelessCommand(new OServerCommandConfiguration());
-
   }
 
   private void uninstallCommands() {
@@ -68,5 +72,17 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
+  }
+
+  private void installProfiler() {
+    Orient.instance().getProfiler().shutdown();
+    Orient.instance().setProfiler(new OEnterpriseProfiler());
+    Orient.instance().getProfiler().startup();
+  }
+
+  private void uninstallProfiler() {
+    Orient.instance().getProfiler().shutdown();
+    Orient.instance().setProfiler(new OProfiler());
+    Orient.instance().getProfiler().startup();
   }
 }
