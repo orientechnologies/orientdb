@@ -1491,6 +1491,33 @@ public class SQLSelectTest {
   }
 
   @Test
+  public void testSelectRidInList() {
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
+    database.getMetadata().getSchema().createClass("FamousPlace", placeClass);
+
+    ODocument firstPlace = new ODocument("Place");
+    database.save(firstPlace);
+    ODocument secondPlace = new ODocument("Place");
+    database.save(secondPlace);
+    ODocument famousPlace = new ODocument("FamousPlace");
+    database.save(famousPlace);
+
+    ORID secondPlaceId = secondPlace.getIdentity();
+    ORID famousPlaceId = famousPlace.getIdentity();
+    //if one of these two asserts fails, the test will be meaningless.
+    Assert.assertTrue(secondPlaceId.getClusterId() < famousPlaceId.getClusterId());
+    Assert.assertTrue(secondPlaceId.getClusterPosition().longValue() > famousPlaceId.getClusterPosition().longValue());
+
+    List<ODocument> result = new OSQLSynchQuery<ODocument>("select from Place where @rid in ["
+        + secondPlaceId + "," + famousPlaceId +
+        "]").execute();
+    Assert.assertEquals(2, result.size());
+
+    database.getMetadata().getSchema().dropClass("FamousPlace");
+    database.getMetadata().getSchema().dropClass("Place");
+  }
+
+  @Test
   public void testMapKeys() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("id", 4);
