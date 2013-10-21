@@ -23,6 +23,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
@@ -82,7 +84,9 @@ public class ODefaultIndexFactory implements OIndexFactory {
         valueContainerAlgorithm = NONE_VALUE_CONTAINER;
     }
 
-    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER)
+    if ((database.getStorage().getType().equals(OEngineLocalPaginated.NAME) || database.getStorage().getType()
+        .equals(OEngineLocal.NAME))
+        && valueContainerAlgorithm.equals(ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER)
         && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
       OLogManager
           .instance()
