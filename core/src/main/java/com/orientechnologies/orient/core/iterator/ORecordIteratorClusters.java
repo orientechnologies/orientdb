@@ -57,7 +57,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
     beginRange = iBegin;
     endRange = iEnd;
-    if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity().getClusterPosition())) {
+    if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity())) {
       currentRecord = null;
     }
     return this;
@@ -132,8 +132,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
       while (nextPosition()) {
-        final OClusterPosition currentPosition = currentPosition();
-        if (outsideOfTheRange(currentPosition))
+        if (outsideOfTheRange(current))
           continue;
 
         currentRecord = readCurrentRecord(record, 0);
@@ -160,11 +159,11 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     return false;
   }
 
-  private boolean outsideOfTheRange(OClusterPosition currentPosition) {
-    if (beginRange != null && currentPosition.compareTo(beginRange.getClusterPosition()) < 0)
+  private boolean outsideOfTheRange(ORID orid) {
+    if (beginRange != null && orid.compareTo(beginRange) < 0)
       return true;
 
-    if (endRange != null && currentPosition.compareTo(endRange.getClusterPosition()) > 0)
+    if (endRange != null && orid.compareTo(endRange) > 0)
       return true;
 
     return false;

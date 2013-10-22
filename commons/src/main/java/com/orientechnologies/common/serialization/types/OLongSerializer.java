@@ -103,4 +103,9 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   public int getFixedLength() {
     return LONG_SIZE;
   }
+
+  @Override
+  public Long prepocess(Long value, Object... hints) {
+    return value;
+  }
 }

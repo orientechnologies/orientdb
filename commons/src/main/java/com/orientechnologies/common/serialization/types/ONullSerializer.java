@@ -81,4 +81,9 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   public int getFixedLength() {
     return 0;
   }
+
+  @Override
+  public Object prepocess(Object value, Object... hints) {
+    return null;
+  }
 }

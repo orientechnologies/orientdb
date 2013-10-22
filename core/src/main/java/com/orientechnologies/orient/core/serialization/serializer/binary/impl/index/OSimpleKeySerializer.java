@@ -152,4 +152,11 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   public int getFixedLength() {
     return binarySerializer.getFixedLength() + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
   }
+
+  @Override
+  public T prepocess(T value, Object... hints) {
+    init(value, hints);
+
+    return (T) binarySerializer.prepocess(value);
+  }
 }

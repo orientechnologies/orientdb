@@ -152,4 +152,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
   }
+
+  @Override
+  public OSBTreeIndexRIDContainer prepocess(OSBTreeIndexRIDContainer value, Object... hints) {
+    return value;
+  }
 }

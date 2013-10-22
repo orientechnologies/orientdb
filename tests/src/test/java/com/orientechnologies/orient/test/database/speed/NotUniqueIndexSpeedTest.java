@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.test.database.speed;
 
-import java.text.DateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import org.testng.annotations.Test;
 
@@ -24,7 +22,7 @@ public class NotUniqueIndexSpeedTest extends OrientMonoThreadTest {
 
   public NotUniqueIndexSpeedTest() throws Exception {
     super(50000);
-    date = DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse("01/01/2013");
+    date = new Date();
   }
 
   @Override

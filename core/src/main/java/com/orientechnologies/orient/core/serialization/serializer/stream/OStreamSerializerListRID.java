@@ -135,4 +135,9 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
   }
+
+  @Override
+  public OMVRBTreeRIDSet prepocess(OMVRBTreeRIDSet value, Object... hints) {
+    return value;
+  }
 }

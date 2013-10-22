@@ -93,4 +93,9 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   public int getFixedLength() {
     return FLOAT_SIZE;
   }
+
+  @Override
+  public Float prepocess(Float value, Object... hints) {
+    return value;
+  }
 }

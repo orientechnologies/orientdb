@@ -103,4 +103,9 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   public int getFixedLength() {
     return OLongSerializer.LONG_SIZE;
   }
+
+  @Override
+  public Date prepocess(Date value, Object... hints) {
+    return value;
+  }
 }

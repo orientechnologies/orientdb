@@ -139,6 +139,11 @@ public class IndexCustomKeyTest {
     public int getFixedLength() {
       return LENGTH;
     }
+
+    @Override
+    public ComparableBinary prepocess(ComparableBinary value, Object... hints) {
+      return value;
+    }
   }
 
   protected OIndex<?> getIndex() {

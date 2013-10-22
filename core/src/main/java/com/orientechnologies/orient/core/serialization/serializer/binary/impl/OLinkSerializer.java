@@ -115,4 +115,9 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
   public int getFixedLength() {
     return RID_SIZE;
   }
+
+  @Override
+  public OIdentifiable prepocess(OIdentifiable value, Object... hints) {
+    return value.getIdentity();
+  }
 }

@@ -95,4 +95,9 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   public int getFixedLength() {
     return SHORT_SIZE;
   }
+
+  @Override
+  public Short prepocess(Short value, Object... hints) {
+    return value;
+  }
 }

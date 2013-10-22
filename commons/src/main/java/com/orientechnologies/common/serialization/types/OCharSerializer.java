@@ -93,4 +93,9 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   public int getFixedLength() {
     return CHAR_SIZE;
   }
+
+  @Override
+  public Character prepocess(Character value, Object... hints) {
+    return value;
+  }
 }

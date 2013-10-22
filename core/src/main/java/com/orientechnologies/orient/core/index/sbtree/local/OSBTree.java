@@ -149,6 +149,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public V get(K key) {
     acquireSharedLock();
     try {
+      key = keySerializer.prepocess(key, keyTypes);
+
       BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
       if (bucketSearchResult.itemIndex < 0)
         return null;
@@ -175,18 +177,19 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   public void put(K key, V value) {
     acquireExclusiveLock();
-
-    final int keySize = keySerializer.getObjectSize(key, keyTypes);
-
-    final int valueSize = valueSerializer.getObjectSize(value);
-    if (keySize > MAX_KEY_SIZE)
-      throw new OSBTreeException("Key size is more than allowed, operation was canceled. Current key size " + keySize
-          + ", allowed  " + MAX_KEY_SIZE);
-
-    final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
     final OStorageTransaction transaction = storage.getStorageTransaction();
-
     try {
+      final int keySize = keySerializer.getObjectSize(key, keyTypes);
+
+      final int valueSize = valueSerializer.getObjectSize(value);
+      if (keySize > MAX_KEY_SIZE)
+        throw new OSBTreeException("Key size is more than allowed, operation was canceled. Current key size " + keySize
+            + ", allowed  " + MAX_KEY_SIZE);
+
+      final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
+
+      key = keySerializer.prepocess(key, keyTypes);
+
       startDurableOperation(transaction);
 
       long valueLink = -1;
@@ -597,6 +600,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     acquireExclusiveLock();
     OStorageTransaction transaction = storage.getStorageTransaction();
     try {
+      key = keySerializer.prepocess(key, keyTypes);
+
       startDurableOperation(transaction);
 
       BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
@@ -697,6 +702,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
+      key = keySerializer.prepocess(key, keyTypes);
+
       final PartialSearchMode partialSearchMode;
       if (inclusive)
         partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
@@ -768,6 +775,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
+      key = keySerializer.prepocess(key, keyTypes);
+
       final PartialSearchMode partialSearchMode;
       if (inclusive)
         partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
@@ -964,6 +973,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       OTreeInternal.RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
+      keyFrom = keySerializer.prepocess(keyFrom, keyTypes);
+      keyTo = keySerializer.prepocess(keyTo, keyTypes);
+
       PartialSearchMode partialSearchModeFrom;
       if (fromInclusive)
         partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;

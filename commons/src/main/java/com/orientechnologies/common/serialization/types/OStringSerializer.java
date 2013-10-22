@@ -132,4 +132,9 @@ public class OStringSerializer implements OBinarySerializer<String> {
   public int getFixedLength() {
     return 0;
   }
+
+  @Override
+  public String prepocess(String value, Object... hints) {
+    return value;
+  }
 }

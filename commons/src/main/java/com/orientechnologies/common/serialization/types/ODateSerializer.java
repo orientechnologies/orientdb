@@ -110,4 +110,16 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   public int getFixedLength() {
     return OLongSerializer.LONG_SIZE;
   }
+
+  @Override
+  public Date prepocess(Date value, Object... hints) {
+    final Calendar calendar = Calendar.getInstance();
+    calendar.setTime(value);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+
+    return calendar.getTime();
+  }
 }
