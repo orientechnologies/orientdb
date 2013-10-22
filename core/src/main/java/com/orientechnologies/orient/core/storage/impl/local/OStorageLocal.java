@@ -18,7 +18,13 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -29,12 +35,17 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -51,7 +62,13 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -214,7 +231,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".open", "Open a local database", timer, "db.*.open");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".open", "Open a database", timer, "db.*.open");
     }
   }
 
@@ -303,7 +320,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".create", "Create a local database", timer, "db.*.create");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".create", "Create a database", timer, "db.*.create");
     }
   }
 
@@ -369,7 +386,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a local database", timer, "db.*.close");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");
     }
   }
 
@@ -452,7 +469,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".drop", "Drop a local database", timer, "db.*.drop");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".drop", "Drop a database", timer, "db.*.drop");
     }
   }
 
@@ -1374,7 +1391,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a local database", timer, "db.*.synch");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a database", timer, "db.*.synch");
     }
   }
 
@@ -1400,7 +1417,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       lock.releaseExclusiveLock();
 
       Orient.instance().getProfiler()
-          .stopChrono("db." + name + "record.synch", "Synch a record to local database", timer, "db.*.record.synch");
+          .stopChrono("db." + name + "record.synch", "Synch a record to database", timer, "db.*.record.synch");
     }
   }
 
@@ -1760,7 +1777,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       return null;
     } finally {
       Orient.instance().getProfiler()
-          .stopChrono(PROFILER_CREATE_RECORD, "Create a record in local database", timer, "db.*.createRecord");
+          .stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
     }
   }
 
@@ -1812,7 +1829,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
         lock.releaseSharedLock();
 
       Orient.instance().getProfiler()
-          .stopChrono(PROFILER_READ_RECORD, "Read a record from local database", timer, "db.*.readRecord");
+          .stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
 
@@ -1895,7 +1912,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
     } finally {
       Orient.instance().getProfiler()
-          .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to local database", timer, "db.*.updateRecord");
+          .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
 
     return null;
@@ -1945,7 +1962,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       OLogManager.instance().error(this, "Error on deleting record " + iRid + "( cluster: " + iClusterSegment + ")", e);
     } finally {
       Orient.instance().getProfiler()
-          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from local database", timer, "db.*.deleteRecord");
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
     }
 
     return null;
@@ -1979,7 +1996,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("db." + name + ".data.holes", "Number of the holes in local database", METRIC_TYPE.COUNTER,
+        .registerHookValue("db." + name + ".data.holes", "Number of the holes in database", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
                 return getHoles();
@@ -1988,7 +2005,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("db." + name + ".data.holeSize", "Size of the holes in local database", METRIC_TYPE.SIZE,
+        .registerHookValue("db." + name + ".data.holeSize", "Size of the holes in database", METRIC_TYPE.SIZE,
             new OProfilerHookValue() {
               public Object getValue() {
                 return getHoleSize();

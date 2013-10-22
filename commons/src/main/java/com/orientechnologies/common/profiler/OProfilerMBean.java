@@ -18,12 +18,15 @@ package com.orientechnologies.common.profiler;
 import java.util.Date;
 import java.util.Map;
 
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
 
 public interface OProfilerMBean extends OService {
+
+  public enum METRIC_TYPE {
+    CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
+  }
 
   public void updateCounter(String iStatName, String iDescription, long iPlus);
 
@@ -53,9 +56,9 @@ public interface OProfilerMBean extends OService {
 
   public boolean isRecording();
 
-  public void startRecording();
+  public boolean startRecording();
 
-  public void stopRecording();
+  public boolean stopRecording();
 
   public void unregisterHookValue(String string);
 
