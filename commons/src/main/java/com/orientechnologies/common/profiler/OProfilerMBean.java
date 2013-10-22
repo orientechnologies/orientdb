@@ -77,5 +77,5 @@ public interface OProfilerMBean extends OService {
 
   public String getDatabaseMetric(String databaseName, String iName);
 
-  public String toJSON(String command, String par1, String par2);
+  public String toJSON(String command, final String iPar1);
 }
