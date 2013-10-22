@@ -5,27 +5,27 @@
     <ignored path="studioee.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
-    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382108436032" ignored="false" />
-    <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381581415224" ignored="false" />
+    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382455186380" ignored="false" />
+    <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382181710688" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986941211" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382095296218" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986935836" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382177997093" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382275265412" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816329630" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985831148" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/styles/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380985444598" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378997926230" ignored="false" />
-    <file path="/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379024712981" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/header-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379070375206" ignored="false" />
-    <file path="/header-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378996333011" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382182348780" ignored="false" />
+    <file path="/header.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382182343437" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/header-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382175847922" ignored="false" />
+    <file path="/header-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382175806814" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/notification.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378799466648" ignored="false" />
     <file path="/notification.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378730866722" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381322480105" ignored="false" />
-    <file path="/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381322183186" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382176704474" ignored="false" />
+    <file path="/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382175389546" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/util/orientdb-hint.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379341688299" ignored="false" />
     <file path="/browse.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380361992786" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/browse.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380362062916" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/widget/embeddedmap.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378734347882" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/widgets/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381590412308" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/widgets/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382180871175" ignored="false" />
     <file path="/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379072588436" ignored="false" />
     <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381440518204" ignored="false" />
     <file path="/login.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378744447308" ignored="false" />
@@ -46,8 +46,8 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/widget/form.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379072541930" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/widget/date.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378807522059" ignored="false" />
     <file path="/date.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378807403511" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/services/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381225263899" ignored="false" />
-    <file path="/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380296352367" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/services/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382180871175" ignored="false" />
+    <file path="/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382175465278" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/ace-builds/kitchen-sink/docs/xml.xml" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379952861709" ignored="false" />
     <file path="/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379261093460" ignored="false" />
@@ -58,11 +58,11 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/angularjs-bower/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378821449721" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/bootstrap-datepicker/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378821449721" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/bootstrap-timepicker/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378821449721" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/document-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379261816771" ignored="false" />
-    <file path="/document-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378920348585" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/graph-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994520947" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/document-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382180871175" ignored="false" />
+    <file path="/document-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382177167954" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/graph-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382180871175" ignored="false" />
     <file path="/graph-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994514594" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/schema-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381417163707" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/schema-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382177876126" ignored="false" />
     <file path="/schema-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381415918219" ignored="false" />
     <file path="/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380277062375" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/util/library.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994586833" ignored="false" />
@@ -75,10 +75,10 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378901054338" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/allocation.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378905514164" ignored="false" />
     <file path="/allocation.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378905513537" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/configuration-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378917483048" ignored="false" />
-    <file path="/configuration-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378901975713" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/configuration-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382273832500" ignored="false" />
+    <file path="/configuration-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382273811602" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/filters/filter.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378903894806" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/structure.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378906572984" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/structure.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382268328230" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/configuration.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378906608232" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/vertex/addLabel.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987232370" ignored="false" />
     <file path="/addLabel.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987226812" ignored="false" />
@@ -87,7 +87,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381329683487" ignored="false" />
     <file path="/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380898300407" ignored="false" />
     <file path="/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378915596273" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378979906760" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382268492703" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/angular-ui-codemirror/ui-codemirror.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378978890702" ignored="false" />
     <file path="/ui-codemirror.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378918446855" ignored="false" />
     <file path="/editDocument.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378919723269" ignored="false" />
@@ -99,7 +99,7 @@
     <file path="/newModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379193137627" ignored="false" />
     <file path="/editModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379183402502" ignored="false" />
     <file path="/angularjs.nvd3.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379532281018" ignored="false" />
-    <file path="/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378979835798" ignored="false" />
+    <file path="/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382268491679" ignored="false" />
     <file path="/newDatabase.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986010895" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/newDatabase.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378986011297" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/newClass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380446907182" ignored="false" />
@@ -111,8 +111,8 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/document/modalConnection.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987469650" ignored="false" />
     <file path="/modalConnection.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987545245" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/vertex/modalConnection.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987545904" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994833638" ignored="false" />
-    <file path="/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994830534" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382175276321" ignored="false" />
+    <file path="/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382174604009" ignored="false" />
     <file path="/configuration.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378996140884" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/configuration.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378996140884" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/scripts/scripts.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379005394347" ignored="false" />
@@ -147,7 +147,7 @@
     <file path="/dialog.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186712384" ignored="false" />
     <file path="/baseEditModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379197825195" ignored="false" />
     <file path="/custom.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381779149134" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416889561" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382273906570" ignored="false" />
     <file path="/multiBar.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379449691980" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/studio/www/scripts/scripts.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380448807915" ignored="false" />
     <file path="/fragment.js2" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380889485567" ignored="false" />
@@ -193,7 +193,7 @@
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/codemirror/mode/javascript/javascript.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="/datepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210153179" ignored="false" />
     <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382112156177" ignored="false" />
-    <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382112023882" ignored="false" />
+    <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382452561189" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416802554" ignored="false" />
     <file path="/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380364362509" ignored="false" />
     <file path="/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416727337" ignored="false" />
@@ -202,13 +202,13 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/bower.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380815845714" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.htm" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816364393" ignored="false" />
     <file path="/index.htm" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816361856" ignored="false" />
-    <file path="/events.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381420410343" ignored="false" />
-    <file path="/events.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381418056809" ignored="false" />
+    <file path="/events.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382457413062" ignored="false" />
+    <file path="/events.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382464024905" ignored="false" />
     <file path="/logWhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381399859439" ignored="false" />
-    <file path="/logwhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381412980384" ignored="false" />
+    <file path="/logwhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382463309468" ignored="false" />
     <file path="/httpwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381418711174" ignored="false" />
-    <file path="/mailwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381417707438" ignored="false" />
-    <file path="/metricswhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381492418071" ignored="false" />
+    <file path="/mailwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382457489671" ignored="false" />
+    <file path="/metricswhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382464755524" ignored="false" />
     <file path="/singleMetric.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381778773792" ignored="false" />
     <file path="/metrics.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381779897164" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -230,10 +230,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="sidenav.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
+      <file leaf-file-name="metrics.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="16" column="64" selection-start="875" selection-end="875" vertical-scroll-proportion="-3.443038">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
               <folding />
             </state>
           </provider>
@@ -242,7 +242,16 @@
       <file leaf-file-name="log.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="105.84615">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="metrics.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="2" column="48" selection-start="54" selection-end="54" vertical-scroll-proportion="-0.6415094">
               <folding />
             </state>
           </provider>
@@ -251,20 +260,8 @@
       <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="99" column="8" selection-start="3370" selection-end="3370" vertical-scroll-proportion="0.0">
+            <state line="137" column="42" selection-start="4984" selection-end="4984" vertical-scroll-proportion="-5.3773584">
               <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dashboard.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="25" column="0" selection-start="902" selection-end="902" vertical-scroll-proportion="-16.346153">
-              <folding>
-                <marker date="1382106495000" expanded="true" signature="40:277" placeholder="..." />
-                <marker date="1382106495000" expanded="true" signature="109:143" placeholder="..." />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -272,52 +269,52 @@
       <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="47" column="35" selection-start="1800" selection-end="1800" vertical-scroll-proportion="0.0">
+            <state line="76" column="13" selection-start="2781" selection-end="2781" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nav.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="8" column="54" selection-start="293" selection-end="310" vertical-scroll-proportion="0.0">
+            <state line="149" column="8" selection-start="5941" selection-end="5941" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="general.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+      <file leaf-file-name="server.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="3" column="19" selection-start="131" selection-end="138" vertical-scroll-proportion="-1.9615384">
+            <state line="193" column="15" selection-start="6477" selection-end="6673" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+      <file leaf-file-name="logwhen.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="115" column="43" selection-start="3928" selection-end="3928" vertical-scroll-proportion="0.30018082">
+            <state line="29" column="20" selection-start="259" selection-end="1111" vertical-scroll-proportion="-18.961538">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="en.json" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+      <file leaf-file-name="metricswhen.html" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="40" column="32" selection-start="1700" selection-end="1700" vertical-scroll-proportion="-3.721519">
+            <state line="13" column="27" selection-start="408" selection-end="408" vertical-scroll-proportion="0.36052203">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/styles/main.css">
+      <file leaf-file-name="logjava.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="159" column="46" selection-start="3157" selection-end="3157" vertical-scroll-proportion="-1.2830188">
+            <state line="56" column="24" selection-start="2219" selection-end="2364" vertical-scroll-proportion="-3.063291">
               <folding />
             </state>
           </provider>
@@ -333,29 +330,30 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/scripts/app.js" />
-        <option value="$PROJECT_DIR$/app/views/server/general.html" />
-        <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
-        <option value="$PROJECT_DIR$/app/index.html" />
-        <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
         <option value="$PROJECT_DIR$/app/scripts/directive/custom.js" />
         <option value="$PROJECT_DIR$/app/views/server/metrics.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
-        <option value="$PROJECT_DIR$/app/styles/main.css" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
         <option value="$PROJECT_DIR$/app/views/sidenav.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
+        <option value="$PROJECT_DIR$/app/styles/main.css" />
+        <option value="$PROJECT_DIR$/app/views/server/events.html" />
+        <option value="$PROJECT_DIR$/app/views/eventWhat/mailwhat.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
+        <option value="$PROJECT_DIR$/app/views/eventWhen/logwhen.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
+        <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="y" value="-771" />
-    <option name="width" value="1365" />
-    <option name="height" value="772" />
+    <option name="x" value="-3" />
+    <option name="y" value="770" />
+    <option name="width" value="1372" />
+    <option name="height" value="769" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -383,6 +381,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -651,7 +650,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -730,13 +728,13 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="-771" width="1365" height="772" extended-state="0" />
+    <frame x="-3" y="770" width="1372" height="769" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2492515" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24795234" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -820,117 +818,123 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="112" column="43" selection-start="5364" selection-end="5364" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="69" column="23" selection-start="2345" selection-end="2352" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/odirective.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="0" selection-start="75" selection-end="1063" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="81" column="35" selection-start="2785" selection-end="2785" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="14" column="66" selection-start="534" selection-end="534" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="75" selection-start="383" selection-end="383" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="0" selection-start="902" selection-end="902" vertical-scroll-proportion="-16.346153">
+        <state line="25" column="0" selection-start="902" selection-end="902" vertical-scroll-proportion="-0.65384614">
           <folding>
-            <marker date="1382106495000" expanded="true" signature="40:277" placeholder="..." />
-            <marker date="1382106495000" expanded="true" signature="109:143" placeholder="..." />
+            <marker date="1382113020000" expanded="true" signature="-1:-1" placeholder="..." />
+            <marker date="1382113020000" expanded="true" signature="-1:-1" placeholder="..." />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="19" selection-start="131" selection-end="138" vertical-scroll-proportion="-1.9615384">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="47" column="35" selection-start="1800" selection-end="1800" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="8" column="54" selection-start="293" selection-end="310" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="40" column="32" selection-start="1700" selection-end="1700" vertical-scroll-proportion="-3.721519">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="64" selection-start="875" selection-end="875" vertical-scroll-proportion="-3.443038">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="105.84615">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="99" column="8" selection-start="3370" selection-end="3370" vertical-scroll-proportion="0.0">
+        <state line="159" column="40" selection-start="5823" selection-end="5830" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="159" column="46" selection-start="3157" selection-end="3157" vertical-scroll-proportion="-1.2830188">
+        <state line="520" column="1" selection-start="10449" selection-end="10449" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="115" column="43" selection-start="3928" selection-end="3928" vertical-scroll-proportion="0.30018082">
+        <state line="8" column="49" selection-start="255" selection-end="306" vertical-scroll-proportion="-5.230769">
+          <folding>
+            <element signature="n#style#0;n#input#0;n#div#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#input#1;n#div#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#textarea#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="7" column="112" selection-start="404" selection-end="404" vertical-scroll-proportion="-1.506329">
+          <folding>
+            <element signature="n#style#0;n#input#0;n#div#0;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="44" column="47" selection-start="1859" selection-end="1877" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="137" column="42" selection-start="4984" selection-end="4984" vertical-scroll-proportion="-5.3773584">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="56" column="24" selection-start="2219" selection-end="2364" vertical-scroll-proportion="-3.063291">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="193" column="15" selection-start="6477" selection-end="6673" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="76" column="13" selection-start="2781" selection-end="2781" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="149" column="8" selection-start="5941" selection-end="5941" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="2" column="48" selection-start="54" selection-end="54" vertical-scroll-proportion="-0.6415094">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="29" column="20" selection-start="259" selection-end="1111" vertical-scroll-proportion="-18.961538">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="27" selection-start="408" selection-end="408" vertical-scroll-proportion="0.36052203">
           <folding />
         </state>
       </provider>

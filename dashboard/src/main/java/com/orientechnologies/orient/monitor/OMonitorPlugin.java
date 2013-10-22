@@ -249,6 +249,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		logEvent.setSuperClass(eventWhen);
 		logEvent.createProperty("type", OType.STRING);
 		logEvent.createProperty("info", OType.STRING);
+		logEvent.createProperty("alertValue", OType.STRING);
+		
 
 		final OClass metrics = schema.createClass(CLASS_METRICS_WHEN);
 		metrics.setSuperClass(eventWhen);

@@ -7,15 +7,28 @@
 
     <br>
 
-    <form class="form-horizontal">
-        <div class="control-group" ng-repeat="header in properties">
-            <label class="control-label">{{header['name']}}:</label>
+    <div>
+        <form>
+            <fieldset class="form_mailwhat">
+                <div class="controls controls-row">
+                    Metric :
+                    <select class="span3" ng-model="eventWhen['alertValue']"
+                            ng-options="t.name for t in metrics">
+                        <option value=""></option>
+                    </select>
+                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels">
+                        <option value=""></option>
+                    </select>
+                </div>
+                Text (contains):
+                <textarea type="text" id="textcontains" class="input-block-level" placeholder="insert text here.."
+                          ng-model="eventWhen['info']"></textarea>
 
-            <div class="controls">
-                <input type="text" placeholder="{{header['name']}}" ng-model="eventWhen[header['name']]">
-            </div>
-        </div>
-    </form>
+            </fieldset>
+        </form>
+
+    </div>
+
     <div class="modal-footer">
 
         <button type="button" class="btn" ng-click="hide()">Close</button>

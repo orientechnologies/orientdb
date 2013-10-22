@@ -135,8 +135,6 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     $scope.countPageOptions = [100, 500, 1000];
 
     $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
-        $scope.eventsWhen = listClassesForSuperclass('EventWhen');
-        $scope.eventsWhen = listClassesForSuperclass('EventWhat');
     });
 
     $scope.getJavaLogs = function () {
