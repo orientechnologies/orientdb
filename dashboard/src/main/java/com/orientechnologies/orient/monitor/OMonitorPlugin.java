@@ -12,7 +12,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -29,9 +29,9 @@ import com.orientechnologies.orient.monitor.hooks.OEventHook;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OMonitorPlugin extends OServerHandlerAbstract {
+public class OMonitorPlugin extends OServerPluginAbstract {
   public enum LOG_LEVEL {
     DEBUG, INFO, CONFIG, WARN, ERROR
   }

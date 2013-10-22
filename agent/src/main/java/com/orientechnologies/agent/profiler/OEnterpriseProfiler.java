@@ -26,12 +26,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.util.OPair;
@@ -45,28 +42,25 @@ import com.orientechnologies.common.util.OPair;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OSharedResourceAbstract implements OProfilerMBean {
-  protected long                                   recordingFrom           = -1;
-  protected Map<String, OProfilerHookValue>        hooks                   = new ConcurrentHashMap<String, OProfilerHookValue>();
-  protected Date                                   lastReset               = new Date();
+public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
+  protected Date                      lastReset               = new Date();
 
-  protected ConcurrentHashMap<String, String>      dictionary              = new ConcurrentHashMap<String, String>();
-  protected ConcurrentHashMap<String, METRIC_TYPE> types                   = new ConcurrentHashMap<String, METRIC_TYPE>();
-  protected OProfilerData                          realTime                = new OProfilerData();
-  protected OProfilerData                          lastSnapshot;
-  protected List<OProfilerData>                    snapshots               = new ArrayList<OProfilerData>();
+  protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
+  protected OProfilerData             realTime                = new OProfilerData();
+  protected OProfilerData             lastSnapshot;
 
-  protected int                                    elapsedToCreateSnapshot = 0;
-  protected int                                    maxSnapshots            = 0;
-  protected final static Timer                     timer                   = new Timer(true);
-  protected TimerTask                              archiverTask;
-  protected final int                              metricProcessors        = Runtime.getRuntime().availableProcessors();
+  protected int                       elapsedToCreateSnapshot = 0;
+  protected int                       maxSnapshots            = 0;
+  protected final static Timer        timer                   = new Timer(true);
+  protected TimerTask                 archiverTask;
+  protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
 
   public OEnterpriseProfiler() {
     init();
   }
 
-  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot) {
+  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot, final OAbstractProfiler iParentProfiler) {
+    super(iParentProfiler);
     elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
     maxSnapshots = iMaxSnapshot;
     init();
@@ -95,17 +89,8 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     }
   }
 
-  @Override
-  public String getName() {
-    return "profiler";
-  }
-
-  public void startup() {
-    startRecording();
-  }
-
   public void shutdown() {
-    stopRecording();
+    super.shutdown();
     hooks.clear();
 
     synchronized (snapshots) {
@@ -113,9 +98,9 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     }
   }
 
-  public void startRecording() {
-    if (recordingFrom > -1)
-      return;
+  public boolean startRecording() {
+    if (!super.startRecording())
+      return false;
 
     acquireExclusiveLock();
     try {
@@ -137,16 +122,16 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
         timer.schedule(archiverTask, elapsedToCreateSnapshot * 1000, elapsedToCreateSnapshot * 1000);
       }
 
-      recordingFrom = System.currentTimeMillis();
-
     } finally {
       releaseExclusiveLock();
     }
+
+    return true;
   }
 
-  public void stopRecording() {
-    if (recordingFrom == -1)
-      return;
+  public boolean stopRecording() {
+    if (!super.stopRecording())
+      return false;
 
     acquireExclusiveLock();
     try {
@@ -160,15 +145,11 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
       if (archiverTask != null)
         archiverTask.cancel();
 
-      recordingFrom = -1;
-
     } finally {
       releaseExclusiveLock();
     }
-  }
 
-  public boolean isRecording() {
-    return recordingFrom > -1;
+    return true;
   }
 
   public void createSnapshot() {
@@ -553,25 +534,6 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     }
   }
 
-  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
-      final OProfilerHookValue iHookValue) {
-    registerHookValue(iName, iDescription, iType, iHookValue, iName);
-  }
-
-  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
-      final OProfilerHookValue iHookValue, final String iMetadataName) {
-    if (iName != null) {
-      unregisterHookValue(iName);
-      updateMetadata(iMetadataName, iDescription, iType);
-      hooks.put(iName, iHookValue);
-    }
-  }
-
-  public void unregisterHookValue(final String iName) {
-    if (iName != null)
-      hooks.remove(iName);
-  }
-
   public void setAutoDump(final int iSeconds) {
     if (iSeconds > 0) {
       final int ms = iSeconds * 1000;
@@ -599,37 +561,6 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
       result.put(v.getKey(), v.getValue().getValue());
 
     return result;
-  }
-
-  /**
-   * Updates the metric metadata.
-   */
-  protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
-    if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
-      types.put(iName, iType);
-  }
-
-  public String getSystemMetric(final String iMetricName) {
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("system.");
-    buffer.append(iMetricName);
-    return buffer.toString();
-  }
-
-  public String getProcessMetric(final String iMetricName) {
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("process.");
-    buffer.append(iMetricName);
-    return buffer.toString();
-  }
-
-  public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append("db.");
-    buffer.append(iDatabaseName);
-    buffer.append('.');
-    buffer.append(iMetricName);
-    return buffer.toString();
   }
 
   protected void init() {
