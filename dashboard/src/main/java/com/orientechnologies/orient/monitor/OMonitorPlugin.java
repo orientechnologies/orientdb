@@ -286,11 +286,17 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass function = schema.createClass(CLASS_FUNCTION_WHAT);
 		function.setSuperClass(eventWhat);
-		function.createProperty("text", OType.STRING);
+		function.createProperty("code", OType.STRING);
+		function.createProperty("idempotent", OType.BOOLEAN);
+		function.createProperty("language", OType.STRING);
+		function.createProperty("name", OType.STRING);
+		function.createProperty("parameters", OType.EMBEDDED, OType.STRING);
 
 final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
 		userConfig.createProperty("user", OType.LINK, ouser);
+	}
+
 	}
 
 	@Override
