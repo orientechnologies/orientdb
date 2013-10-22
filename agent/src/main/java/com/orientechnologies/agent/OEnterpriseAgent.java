@@ -22,7 +22,9 @@ import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
 import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
@@ -82,14 +84,20 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   }
 
   private void installProfiler() {
-    Orient.instance().getProfiler().shutdown();
-    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 60));
+    final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
+
+    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 60, currentProfiler));
     Orient.instance().getProfiler().startup();
+
+    currentProfiler.shutdown();
   }
 
   private void uninstallProfiler() {
-    Orient.instance().getProfiler().shutdown();
-    Orient.instance().setProfiler(new OProfiler());
+    final OProfilerMBean currentProfiler = Orient.instance().getProfiler();
+
+    Orient.instance().setProfiler(new OProfiler((OProfiler) currentProfiler));
     Orient.instance().getProfiler().startup();
+
+    currentProfiler.shutdown();
   }
 }
