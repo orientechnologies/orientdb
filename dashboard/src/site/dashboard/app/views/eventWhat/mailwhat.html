@@ -1,19 +1,47 @@
 <div class="row-fluid" ng-controller="MailWhatController">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3>Event: {{eventWhat['@class']}}</h3>
+        <h3>Mail Alert</h3>
     </div>
-    <div>
-        <ul>
-            <li ng-repeat="header in properties">
-                <div>
-                    {{header['name']}}:
-                    <input type="text" placeholder="" ng-model="eventWhat[header['name']]  ">
+    <div class="row">
+
+        <form>
+            <fieldset class="form_mailwhat">
+                From:
+                <input type="text" id="fromAddress" name="name" class="input-block-level" placeholder="from"
+                       ng-model="eventWhat['fromAddress']">
+                To:
+                <input type="text" id="toAddress" name="name" class="input-block-level" placeholder="to"
+                       ng-model="eventWhat['toAddress']">
+
+                <div>Cc:
+                    <input type="text" id="cc" name="name" placeholder="cc"
+                           ng-model="eventWhat['cc']" style="width: 210px">
+
+                    Bcc:
+                    <input type="text" id="bcc" name="name" placeholder="bcc"
+                           ng-model="eventWhat['bcc']" style="width: 220px">
                 </div>
-            </li>
-        </ul>
-        <div class="modal-footer">
-            <button type="button" class="btn" ng-click="hide()">Close</button>
-        </div>
+                Subject:
+                <input type="text" id="subject" name="name" class="input-block-level" placeholder="subject"
+                       ng-model="eventWhat['subject']">
+                Body:
+                <textarea rows="3" id="description" name="body" class="input-block-level"
+                          style="height: 200px" placeholder="body" ng-model="eventWhat['body']"></textarea>
+            </fieldset>
+        </form>
+
+        <!--<ul>-->
+        <!--<li ng-repeat="header in properties">-->
+        <!--<div>-->
+        <!--{{header['name']}}:-->
+        <!--<input type="text" placeholder="write text here" ng-model="eventWhat[header['name']]  ">-->
+        <!--</div>-->
+        <!--</li>-->
+        <!--</ul>-->
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" ng-click="hide()">Submit</button>
     </div>
 </div>

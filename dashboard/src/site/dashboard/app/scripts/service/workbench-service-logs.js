@@ -161,6 +161,8 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
             if (clazz.toUpperCase() == classes[entry].name.toUpperCase()) {
                 var props = classes[entry]['properties'];
                 for (var f in props) {
+                    console.log(props[f]['name']);
+//                    var ff = { props[f]['name'] : props[f] }
                     fields.push(props[f]);
                 }
                 ;

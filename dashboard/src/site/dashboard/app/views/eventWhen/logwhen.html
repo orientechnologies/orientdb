@@ -6,20 +6,26 @@
     </div>
 
     <br>
+
     <div>
-        <ul>
-            <li ng-repeat="header in properties">
-                <div>
-                    {{header['name']}}:
-                    <input type="text" placeholder="" ng-model="eventWhen[header['name']]  ">
-
-
+        <form>
+            <fieldset class="form_mailwhat">
+                <div class="controls controls-row">
+                    Alert Type Value:
+                    <select class="span3" ng-model="eventWhen['alertValue']"
+                            ng-options="t for t in alertValue">
+                        <option value=""></option>
+                    </select>
+                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels">
+                        <option value=""></option>
+                    </select>
                 </div>
+                Text (contains):
+                <textarea type="text" id="textcontains" class="input-block-level" placeholder="insert text here.."
+                          ng-model="eventWhen['info']"></textarea>
 
-            </li>
-
-
-        </ul>
+            </fieldset>
+        </form>
 
     </div>
     <div class="modal-footer">

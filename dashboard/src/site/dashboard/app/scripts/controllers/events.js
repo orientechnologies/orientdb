@@ -9,8 +9,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     $scope.selectedWhen = new Array;
     $scope.selectedWhat = new Array;
 
-    //query degli event when
-
 
     $scope.refresh = function () {
         $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
@@ -22,10 +20,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
 
     $scope.refresh();
-
-    $scope.prova = function (lll) {
-        console.log(lll)
-    }
 
     $scope.getEvents = function () {
         CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql, shallow: 'shallow' }, function (data) {
@@ -46,11 +40,13 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         modalScope.eventParent = event;
         if (event['when'] == undefined || event['when']['@class'] != $scope.selectedWhen[event.name] && $scope.selectedWhen[event.name] != undefined) {
             event['when'] = {};
-            event['when']['@class'] = $scope.selectedWhen[event.name];
+            event['when']['@class'] = $scope.selectedWhen[event.name].trim();
             event['when']['@type'] = 'd';
+            console.log(event['when']['@class'])
         }
         else {
             event['when']['@class'] = eventWhen['@class'];
+            console.log(event['when']['@class'])
         }
         modalScope.eventWhen = event['when'];
         modalScope.parentScope = $scope;
@@ -68,7 +64,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         console.log(event['when']['@class'])
         if (event['what'] == undefined || (event['what']['@class'] != $scope.selectedWhat[event.name] && $scope.selectedWhat[event.name] != undefined)) {
             event['what'] = {};
-            event['what']['@class'] = $scope.selectedWhat[event.name];
+            event['what']['@class'] = $scope.selectedWhat[event.name].trim();
             event['what']['@type'] = 'd';
         }
         else {
@@ -76,7 +72,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         }
         modalScope.eventWhat = event['what'];
         modalScope.parentScope = $scope;
-        var modalPromise = $modal({template: 'views/eventWhat/' + event['what']['@class'].toLowerCase() + '.html', scope: modalScope});
+        var modalPromise = $modal({template: 'views/eventWhat/' + event['what']['@class'].toLowerCase().trim() + '.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });
@@ -133,18 +129,29 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
     }
 }
-])
-;
+]);
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
+    $scope.levels = ['1', '2', '3', '4', '5', '6', '7'];
+    $scope.alertValue = ["Greater then", "Less then"];
 
 }]);
-
-dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
+dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'Metric', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, Metric) {
 
     $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
+
+    Metric.getMetricTypes(null, function (data) {
+        $scope.metrics = data.result;
+        if ($scope.metrics.length > 0) {
+            $scope.metric = $scope.metrics[0].name;
+
+        }
+
+    });
+
+
+
 }]);
 
 dbModule.controller("SchedulerWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
@@ -154,11 +161,9 @@ dbModule.controller("SchedulerWhenController", ['$scope', '$http', '$location', 
 dbModule.controller("HttpWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
     $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class'].trim());
 }]);
-
-
 dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class'].trim());
+    $scope.properties = $scope.eventWhat;
 }]);
 
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
