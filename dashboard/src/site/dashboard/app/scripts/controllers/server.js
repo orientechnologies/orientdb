@@ -9,89 +9,42 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
 
 });
-app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric) {
 
-
-    $scope.rid = $routeParams.server;
-    $scope.db = $routeParams.db
-    $scope.refresh = function () {
-
-        var metricName = 'db.' + $scope.db + '.command.';
-        var params = {  server: $scope.server.name, type: 'realtime', kind: 'chrono', names: metricName };
-        Metric.get(params, function (data) {
-            $scope.commands = $scope.flatten(data.result, metricName);
-
-
-        });
-    }
-    Monitor.getServer($scope.rid, function (data) {
-        $scope.server = data;
-        $scope.findDatabases(data.name);
-
-    });
-    $scope.delete = function () {
-        var metricName = 'db.' + $scope.db + '.command.';
-        var params = {  server: $scope.sName, type: 'realtime', names: metricName };
-        Metric.delete(params, function (data) {
-            console.log(data);
-        });
-    }
-    $scope.flatten = function (result, metricName) {
-        var commands = new Array;
-        result.forEach(function (elem, idx, array) {
-            Object.keys(elem).forEach(function (e, i, a) {
-                var obj = {};
-                obj.name = e.substring(metricName.length, e.length);
-                Object.keys(elem[e]).forEach(function (ele, ide, arr) {
-                    obj[ele] = elem[e][ele];
-                });
-
-                commands.push(obj);
-            });
-        });
-        return commands;
-    }
-    $scope.findDatabases = function (server) {
-        var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
-        Metric.get(params, function (data) {
-            $scope.databases = data.result[0]['system.databases'].split(",");
-            if ($scope.databases.length > 0 && !$scope.db) {
-                $scope.db = $scope.databases[0];
-                $scope.refresh();
-            }
-        });
-    }
-    $scope.$watch("db", function (data) {
-        if (data)
-            $location.path("/dashboard/query/" + $scope.rid + "/" + data);
-    })
-
-});
 app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
 
 
     $scope.rid = $routeParams.server;
 
+
+    $scope.currentTab = 'overview';
+    Monitor.getServers(function (data) {
+        $scope.servers = data.result;
+
+        if (!$scope.rid && $scope.servers.length > 0) {
+            $scope.rid = $scope.servers[0]['@rid'];
+        }
+        if ($scope.rid) {
+            Monitor.getServer($scope.rid, function (data) {
+                $scope.server = data;
+                Server.findDatabases(data.name, function (data) {
+                    $scope.databases = data;
+                    var db = $scope.databases[0];
+                    $scope.dbselected = db;
+                });
+                Server.getConfiguration($scope.server, function (data) {
+                    $scope.configuration = data.configuration;
+                });
+            });
+        }
+    });
     $scope.editorOptions = {
-        lineWrapping : true,
+        lineWrapping: true,
         lineNumbers: true,
         mode: 'xml'
     };
-    Monitor.getServer($scope.rid, function (data) {
-        $scope.server = data;
-        Server.findDatabases(data.name, function (data) {
-            $scope.databases = data;
-            var db = $scope.databases[0];
-            $scope.dbselected = db;
-        });
-        Server.getConfiguration($scope.server, function (data) {
-            $scope.configuration = data.configuration;
-        });
 
-
-    });
-    $scope.saveConfig = function(){
-        Server.saveConfiguration($scope.server,$scope.configuration, function (data) {
+    $scope.saveConfig = function () {
+        Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
             console.log(data);
         });
     }
@@ -176,61 +129,6 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         if (data)
             $scope.getServerMetrics();
     });
-
-
-});
-app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig) {
-
-    $scope.rid = $routeParams.server;
-    $scope.names = new Array;
-    $scope.render = 'area';
-    $scope.fields = ['value', 'entries', 'min', 'max', 'average', 'total'];
-    Metric.getMetricTypes(null, function (data) {
-        $scope.metrics = data.result;
-        if ($scope.metrics.length > 0) {
-            $scope.metric = $scope.metrics[0].name;
-
-        }
-    });
-    $scope.refreshMetricConfig = function () {
-        MetricConfig.getAll(function (data) {
-            $scope.savedMetrics = data.result;
-            if ($scope.savedMetrics.length > 0) {
-                $scope.selectedConfig = $scope.savedMetrics[0];
-            }
-        });
-    }
-
-
-    $scope.newMetricConfig = function () {
-        $scope.selectedConfig = MetricConfig.create();
-    }
-    $scope.saveMetricConfig = function () {
-        MetricConfig.saveConfig($scope.selectedConfig, function (data) {
-            $scope.refreshMetricConfig();
-        });
-    }
-
-    $scope.selectConfig = function (config) {
-        $scope.selectedConfig = config;
-    }
-    $scope.deleteConfig = function (config) {
-        MetricConfig.deleteConfig(config, function (data) {
-            $scope.refreshMetricConfig();
-        })
-    }
-    $scope.addConfig = function () {
-        if (!$scope.selectedConfig['config']) {
-            $scope.selectedConfig['config'] = new Array;
-        }
-        $scope.selectedConfig['config'].push({});
-    }
-
-    $scope.removeMetric = function (met) {
-        var idx = $scope.selectedConfig['config'].indexOf(met);
-        $scope.selectedConfig['config'].splice(idx, 1);
-    }
-    $scope.refreshMetricConfig();
 
 
 });

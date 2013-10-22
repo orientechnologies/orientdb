@@ -140,6 +140,9 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+.btn-small {
+    padding: 4px 8px;
+}
 
 .btn-trasparent {
     background-color: rgba(0, 0, 0, 0);
@@ -318,7 +321,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     border: 2px solid #CCCCCC;
     border-radius: 4px 4px 4px 4px;
     color: #444444;
-    display: none;
+    display: block;
     height: 30px;
     line-height: 30px;
     overflow: hidden;
@@ -518,4 +521,7 @@ fieldset.form_mailwhat{
     top: 50%;
     width: 560px;
     z-index: 1050;
+}
+.gridStyle {
+    height: 300px;
 }

@@ -35,7 +35,7 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: profiler/<command>/[<config>]|[<from>/<to>]");
+    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: profiler/<command>/[<config>]|[<from>]");
 
     iRequest.data.commandInfo = "Profiler information";
 
@@ -59,17 +59,19 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
         final String status = Orient.instance().getProfiler().isRecording() ? "on" : "off";
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, status, null);
 
+      } else if (command.equalsIgnoreCase("restart")) {
+        Orient.instance().getProfiler().stopRecording();
+        Orient.instance().getProfiler().startRecording();
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "profiler restarted", null);
+
       } else if (command.equalsIgnoreCase("metadata")) {
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, Orient.instance().getProfiler().metadataToJSON(),
             null);
-
       } else {
-        final String par1 = parts.length > 2 ? parts[2] : null;
-        final String par2 = parts.length > 3 ? parts[3] : null;
-
-        StringWriter jsonBuffer = new StringWriter();
-        OJSONWriter json = new OJSONWriter(jsonBuffer);
-        json.append(Orient.instance().getProfiler().toJSON(command, par1, par2));
+        final StringWriter jsonBuffer = new StringWriter();
+        final OJSONWriter json = new OJSONWriter(jsonBuffer);
+        final String arg = parts.length > 2 ? parts[2] : null;
+        json.append(Orient.instance().getProfiler().toJSON(command, arg));
 
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
       }

@@ -121,7 +121,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
 
 dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor) {
 
-    var sql = "select * from Log";
+    var sql = "select * from Log fetchPlan *:1";
 
     $scope.level = undefined;
     $scope.description = undefined;

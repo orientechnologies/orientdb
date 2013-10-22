@@ -51,7 +51,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String CLASS_EVENT_WHEN = "EventWhen";
 	public static final String CLASS_EVENT_WHAT = "EventWhat";
 
-//	public static final String CLASS_SCHEDULER_WHEN = "SchedulerWhen";
+	// public static final String CLASS_SCHEDULER_WHEN = "SchedulerWhen";
 	public static final String CLASS_LOG_WHEN = "LogWhen";
 	private static final String CLASS_METRICS_WHEN = "MetricsWhen";
 
@@ -250,7 +250,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		logEvent.createProperty("type", OType.STRING);
 		logEvent.createProperty("info", OType.STRING);
 		logEvent.createProperty("alertValue", OType.STRING);
-		
 
 		final OClass metrics = schema.createClass(CLASS_METRICS_WHEN);
 		metrics.setSuperClass(eventWhen);
@@ -271,7 +270,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		mail.createProperty("toAddress", OType.STRING);
 		mail.createProperty("cc", OType.STRING);
 		mail.createProperty("bcc", OType.STRING);
-		
 
 		final OClass function = schema.createClass(CLASS_FUNCTION_WHAT);
 		function.setSuperClass(eventWhat);
