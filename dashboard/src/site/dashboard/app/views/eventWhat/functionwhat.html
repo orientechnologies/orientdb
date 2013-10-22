@@ -1,47 +1,60 @@
 <div class="row-fluid" ng-controller="FunctionWhatController">
 
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3> Function Event</h3>
+    </div>
 
-    <div class="container">
+    <br>
+
+    <div>
 
         <form>
             <fieldset class="form_mailwhat">
 
-                Name : <input id="name" name="name" type="text" class="input-block-level" placeholder="Name">
-                Language: <select class="input-block-level" ng-options="lang for lang in languages">
+                Name : <input id="name" ng-model="eventWhat['name']" type="text" class="input-block-level"
+                              placeholder="Name">
+                Language: <select ng-model="eventWhat['language']" class="input-block-level"
+                                  ng-options="lang for lang in languages">
             </select>
-                Idempotent: <input type="checkbox">
+                Idempotent: <input type="checkbox" ng-model="eventWhat['idempotent']">
 
+                <br>
+                <br>
+                <b>
+                    Parameters:
+
+                </b>
+                <a href="javascript:void(0)" class="btn  btn-small" ng-click="addParam()"> <i
+                        class=" icon-plus"></i> Parameter</a>
+
+                <p>
+                <ul class="horizontallist">
+
+                    <li ng-repeat="param in eventWhat['parameters']">
+                        <div class="input-append" style="margin-right: 10px">
+                            <input style="width: 45px" type="text" ng-model="eventWhat['parameters'][$index]">
+                            <a href="javascript:void(0)" class="btn" ng-click="removeParam($index)" style="height: 16px; width: 10px;"> <i
+                                    class=" icon-trash" ></i> </a>
+                        </div>
+
+                    </li>
+                </ul>
+                </p>
+
+                Code:
                 <div class="row-fluid">
-                    <form ng-submit="query()" class="form-inline">
-                        <!--<textarea ui-codemirror="editorOptions" ng-model="functionToExecute['code']"></textarea>-->
-                        <textarea ui-codemirror="editorOptions" ng-model="eventWhat['text']"></textarea>
-                    </form>
+                    <textarea class="input-block-level" style="height: 150px;" ng-model="eventWhat['code']"></textarea>
                 </div>
-
             </fieldset>
         </form>
 
-        <b>
-            Parameters:
 
-        </b>
-        <a href="javascript:void(0)" class="btn  btn-small" ng-click="addParam()"> <i
-                class=" icon-plus"></i> Parameter</a>
+    </div>
 
-        <p>
-        <ul class="horizontallist">
+    <div class="modal-footer">
 
-            <!--<li ng-repeat="param in functionToExecute.parameters  track by $index">-->
-                <!--<div class="input-append">-->
-                    <!--<input type="text" ng-model="functionToExecute['parameters'][$index]">-->
-                    <!--<a href="javascript:void(0)" class="btn" ng-click="removeParam($index)"> <i-->
-                            <!--class=" icon-trash"></i> </a>-->
-                <!--</div>-->
-
-            <!--</li>-->
-        </ul>
-        </p>
-
+        <button type="button" class="btn" ng-click="hide()">Close</button>
     </div>
 
 </div>
