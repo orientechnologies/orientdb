@@ -200,10 +200,6 @@
             </fileset>
         </copy>
 
-        <copy todir="${graph.release}/www/">
-            <fileset dir="graphdb/src/site"/>
-        </copy>
-
         <copy todir="${graph.release}/bin/" flatten="true" overwrite="true">
             <fileset dir="graphdb/script" includes="*.sh *.bat"/>
             <filterset>

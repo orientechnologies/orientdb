@@ -151,10 +151,6 @@
             <directory>${basedir}/../../server/src/site</directory>
             <outputDirectory>www</outputDirectory>
         </fileSet>
-        <fileSet>
-            <directory>${basedir}/../../graphdb/src/site</directory>
-            <outputDirectory>www</outputDirectory>
-        </fileSet>
 
         <!--
          | creates an empty log directory
