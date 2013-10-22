@@ -56,10 +56,13 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
     final ORecordInternal<?> record = database.load(rid);
 
-    if (record != null)
+    final OBuffer buffer;
+    if (record != null) {
+      buffer = new OBuffer(record.toStream());
       record.delete();
-
-    return new OBuffer(record.toStream());
+    } else
+      buffer = new OBuffer();
+    return buffer;
   }
 
   @Override
@@ -68,7 +71,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OFixDeleteRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, final ODistributedResponse iGoodResponse) {
+  public OFixDeleteRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
+      final ODistributedResponse iGoodResponse) {
     return new OFixDeleteRecordTask(rid, version);
   }
 
