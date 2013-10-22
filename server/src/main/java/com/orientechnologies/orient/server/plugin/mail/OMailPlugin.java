@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -79,7 +79,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
         }
 
         if (profileParam.startsWith(CONFIG_MAIL_PREFIX)) {
-          profile.properties.setProperty("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
+          profile.put("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
         }
       }
     }
@@ -100,20 +100,19 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
     final String profileName = (String) iMessage.get("profile");
 
-    OMailProfile profile = profiles.get(profileName);
+    final OMailProfile profile = profiles.get(profileName);
     if (profile == null)
       throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
 
-    final Properties prop = profile.properties;
-
     // creates a new session with an authenticator
-    Authenticator auth = new OSMTPAuthenticator((String) prop.get("mail.smtp.user"), (String) prop.get("mail.smtp.password"));
-    Session session = Session.getInstance(prop, auth);
+    Authenticator auth = new OSMTPAuthenticator((String) profile.getProperty("mail.smtp.user"),
+        (String) profile.getProperty("mail.smtp.password"));
+    Session session = Session.getInstance(profile, auth);
 
     // creates a new e-mail message
     MimeMessage msg = new MimeMessage(session);
 
-    msg.setFrom(new InternetAddress((String) prop.get("mail.smtp.user")));
+    msg.setFrom(new InternetAddress((String) profile.getProperty("mail.smtp.user")));
     InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
     msg.setRecipients(Message.RecipientType.TO, toAddresses);
     InternetAddress[] ccAddresses = { new InternetAddress((String) iMessage.get("cc")) };
@@ -133,7 +132,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
       sendDate = (Date) date;
     else {
       // FORMAT IT
-      String dateFormat = (String) prop.get("mail.date.format");
+      String dateFormat = (String) profile.getProperty("mail.date.format");
       if (dateFormat == null)
         dateFormat = "yyyy-MM-dd HH:mm:ss";
       sendDate = new SimpleDateFormat(dateFormat).parse(date.toString());
@@ -191,5 +190,18 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   @Override
   public String getName() {
     return "mail";
+  }
+
+  public Set<String> getProfileNames() {
+    return profiles.keySet();
+  }
+
+  public OMailProfile getProfile(final String iName) {
+    return profiles.get(iName);
+  }
+
+  public OMailPlugin registerProfile(final String iName, final OMailProfile iProfile) {
+    profiles.put(iName, iProfile);
+    return this;
   }
 }
