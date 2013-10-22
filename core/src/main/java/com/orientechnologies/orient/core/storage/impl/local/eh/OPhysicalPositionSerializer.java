@@ -214,4 +214,9 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return getFixedLength();
   }
+
+  @Override
+  public OPhysicalPosition prepocess(OPhysicalPosition value, Object... hints) {
+    return value;
+  }
 }

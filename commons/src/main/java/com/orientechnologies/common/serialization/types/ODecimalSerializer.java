@@ -114,4 +114,9 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   public int getFixedLength() {
     return 0;
   }
+
+  @Override
+  public BigDecimal prepocess(BigDecimal value, Object... hints) {
+    return value;
+  }
 }

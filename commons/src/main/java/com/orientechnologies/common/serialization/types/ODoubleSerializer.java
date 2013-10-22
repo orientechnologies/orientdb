@@ -93,4 +93,9 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   public int getFixedLength() {
     return DOUBLE_SIZE;
   }
+
+  @Override
+  public Double prepocess(Double value, Object... hints) {
+    return value;
+  }
 }

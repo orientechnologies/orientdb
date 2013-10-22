@@ -100,4 +100,8 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return INT_SIZE;
   }
 
+  @Override
+  public Integer prepocess(Integer value, Object... hints) {
+    return value;
+  }
 }

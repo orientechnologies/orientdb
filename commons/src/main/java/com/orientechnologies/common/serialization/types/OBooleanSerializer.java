@@ -90,4 +90,9 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   public int getFixedLength() {
     return BOOLEAN_SIZE;
   }
+
+  @Override
+  public Boolean prepocess(Boolean value, Object... hints) {
+    return value;
+  }
 }

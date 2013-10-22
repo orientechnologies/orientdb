@@ -108,4 +108,9 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   public int getFixedLength() {
     return 0;
   }
+
+  @Override
+  public byte[] prepocess(byte[] value, Object... hints) {
+    return value;
+  }
 }

@@ -134,4 +134,6 @@ public interface OBinarySerializer<T> {
   T deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset);
 
   int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset);
+
+  T prepocess(T value, Object... hints);
 }

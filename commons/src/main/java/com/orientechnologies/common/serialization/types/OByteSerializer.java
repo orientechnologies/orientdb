@@ -87,4 +87,9 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   public int getFixedLength() {
     return BYTE_SIZE;
   }
+
+  @Override
+  public Byte prepocess(Byte value, Object... hints) {
+    return value;
+  }
 }

@@ -96,4 +96,9 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return OClusterPositionFactory.INSTANCE.getSerializedSize();
   }
+
+  @Override
+  public OClusterPosition prepocess(OClusterPosition value, Object... hints) {
+    return value;
+  }
 }

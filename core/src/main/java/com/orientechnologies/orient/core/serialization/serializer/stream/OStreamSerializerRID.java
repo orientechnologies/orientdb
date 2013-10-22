@@ -101,4 +101,9 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   public int getFixedLength() {
     return OLinkSerializer.RID_SIZE;
   }
+
+  @Override
+  public OIdentifiable prepocess(OIdentifiable value, Object... hints) {
+    return value;
+  }
 }
