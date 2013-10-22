@@ -181,8 +181,10 @@ monitor.factory('MetricConfig', function ($http, $resource) {
     var resource = $resource(API + 'database/:database');
 
 
-    resource.getAll = function (callback) {
-        var query = 'select * from MetricConfig fetchPlan *:1'
+    resource.getAll = function (callback,plan) {
+
+        plan = plan || "";
+        var query = 'select * from MetricConfig fetchPlan' + plan
         $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
             callback(data);
         });

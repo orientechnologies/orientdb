@@ -59,7 +59,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
         throw new IllegalArgumentException("Invalid server '" + serverName + "'");
 
       final Map<String, Object> result = new HashMap<String, Object>();
-
+      
       if ("realtime".equalsIgnoreCase(type))
         sendRealtimeMetrics(iResponse, metricKind, metricNames, server, result);
       else if ("snapshot".equalsIgnoreCase(type))

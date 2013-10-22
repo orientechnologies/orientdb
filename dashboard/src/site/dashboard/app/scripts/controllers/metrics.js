@@ -23,7 +23,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             names.push(elem.name);
             configs[elem.name] = elem.field;
         });
-        Metric.getMetrics({ names: names, server: metrics.server['@rid'], dateFrom: dataFrom, dateTo: dataTo}, function (data) {
+        Metric.getMetrics({ names: names, server: metrics.server, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
             $scope.metricsData = new Array;
             var tmpArr = new Array;
 

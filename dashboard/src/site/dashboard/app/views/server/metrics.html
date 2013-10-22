@@ -94,7 +94,10 @@
                                     }}</label>
 
                                 <div class="controls">
-                                    <select ui-select2 ng-model="selectedConfig.server" class="span3" ng-options="s.name for s in servers" data-placeholder="Pick a Server"></select>
+                                    <select ui-select2 ng-model="selectedConfig.server" class="span3"  data-placeholder="Pick a Server">
+                                        <option ng-repeat="s in servers" ng-value="s['@rid']">{{s.name}}</option>
+                                    </select>
+
                                     </button>
                                 </div>
 
