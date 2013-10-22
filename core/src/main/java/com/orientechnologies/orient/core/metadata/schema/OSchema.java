@@ -57,24 +57,28 @@ public interface OSchema {
   public OClass getClass(final Class<?> iClass);
 
   /**
-   * Returns the OClass instance by class name. If the class is not configured and the database has an entity manager with the
-   * requested class as registered, then creates a schema class for it at the fly.
+   * Returns the OClass instance by class name.
+   * 
+   * If the class is not configured and the database has an entity manager with the requested class as registered, then creates a
+   * schema class for it at the fly.
+   * 
+   * If the database nor the entity manager have not registered class with specified name, returns null.
    * 
    * @param iClassName
    *          Name of the class to retrieve
-   * @return
+   * @return class instance or null if class with given name is not configured.
    */
   public OClass getClass(final String iClassName);
 
   public OClass getOrCreateClass(final String iClassName);
-  
+
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass);
 
   public Collection<OClass> getClasses();
 
   public void create();
 
-	@Deprecated
+  @Deprecated
   public int getVersion();
 
   public ORID getIdentity();
