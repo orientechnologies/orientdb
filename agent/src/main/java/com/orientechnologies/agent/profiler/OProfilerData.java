@@ -26,7 +26,6 @@ import java.util.Map.Entry;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 
 /**
@@ -108,57 +107,6 @@ public class OProfilerData {
   public long endRecording() {
     recordingTo = System.currentTimeMillis();
     return recordingTo;
-  }
-
-  public void mergeWith(final OProfilerData iToMerge) {
-    if (iToMerge.recordingFrom < recordingFrom)
-      recordingFrom = iToMerge.recordingFrom;
-    if (iToMerge.recordingTo > recordingTo)
-      recordingTo = iToMerge.recordingTo;
-
-    // COUNTERS
-    for (Entry<String, Long> entry : iToMerge.counters.entrySet()) {
-      Long currentValue = counters.get(entry.getKey());
-      if (currentValue == null)
-        currentValue = 0l;
-      counters.put(entry.getKey(), currentValue + entry.getValue());
-    }
-
-    // HOOKS
-    for (Entry<String, Object> entry : iToMerge.hooks.entrySet()) {
-      Object currentValue = hooks.get(entry.getKey());
-      if (currentValue == null)
-        currentValue = entry.getValue();
-      else {
-        // MERGE IT
-        final Object otherValue = entry.getValue();
-        if (currentValue instanceof Long)
-          currentValue = ((Long) currentValue).longValue() + ((Long) otherValue).longValue();
-        else if (currentValue instanceof Integer)
-          currentValue = ((Integer) currentValue).intValue() + ((Integer) otherValue).intValue();
-        else if (currentValue instanceof Short)
-          currentValue = ((Short) currentValue).shortValue() + ((Short) otherValue).shortValue();
-        else if (currentValue instanceof Float)
-          currentValue = ((Float) currentValue).floatValue() + ((Float) otherValue).floatValue();
-        else if (currentValue instanceof Double)
-          currentValue = ((Double) currentValue).doubleValue() + ((Double) otherValue).doubleValue();
-        else if (currentValue instanceof Boolean)
-          currentValue = otherValue;
-        else if (currentValue instanceof String)
-          currentValue = otherValue;
-        else
-          OLogManager.instance().warn(this, "Type of value '%s' not support on profiler hook '%s' to merge with value: %s",
-              currentValue, entry.getKey(), entry.getValue());
-      }
-
-      hooks.put(entry.getKey(), currentValue);
-    }
-
-    // CHRONOS
-    mergeEntries(chronos, iToMerge.chronos);
-
-    // STATS
-    mergeEntries(stats, iToMerge.stats);
   }
 
   public void toJSON(final StringBuilder buffer, final String iFilter) {
@@ -454,6 +402,10 @@ public class OProfilerData {
       return chronos.get(iChronoName);
     }
   }
+  
+  public long getRecordingFrom(){
+    return recordingFrom;
+  }
 
   protected synchronized long updateEntry(final Map<String, OProfilerEntry> iValues, final String iName, final long iValue,
       final String iPayload) {
@@ -507,27 +459,5 @@ public class OProfilerData {
       iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
       return iBuffer.toString();
     }
-  }
-
-  protected void mergeEntries(final Map<String, OProfilerEntry> iMyEntries, final Map<String, OProfilerEntry> iOthersEntries) {
-    for (Entry<String, OProfilerEntry> entry : iOthersEntries.entrySet()) {
-      OProfilerEntry currentValue = iMyEntries.get(entry.getKey());
-      if (currentValue == null) {
-        currentValue = entry.getValue();
-        iMyEntries.put(entry.getKey(), currentValue);
-      } else {
-        // MERGE IT
-        currentValue.entries += entry.getValue().entries;
-        currentValue.last = entry.getValue().last;
-        currentValue.min = Math.min(currentValue.min, entry.getValue().min);
-        currentValue.max = Math.max(currentValue.max, entry.getValue().max);
-        currentValue.average = (currentValue.total + entry.getValue().total) / currentValue.entries;
-        currentValue.total += entry.getValue().total;
-      }
-    }
-  }
-
-  public boolean isInRange(final long from, final long to) {
-    return recordingFrom >= from && recordingTo <= to;
   }
 }

@@ -55,11 +55,9 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
   protected OProfilerData                          realTime                = new OProfilerData();
   protected OProfilerData                          lastSnapshot;
   protected List<OProfilerData>                    snapshots               = new ArrayList<OProfilerData>();
-  protected List<OProfilerData>                    summaries               = new ArrayList<OProfilerData>();
 
   protected int                                    elapsedToCreateSnapshot = 0;
   protected int                                    maxSnapshots            = 0;
-  protected int                                    maxSummaries            = 0;
   protected final static Timer                     timer                   = new Timer(true);
   protected TimerTask                              archiverTask;
   protected final int                              metricProcessors        = Runtime.getRuntime().availableProcessors();
@@ -68,10 +66,9 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     init();
   }
 
-  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot, final int iMaxSumaries) {
+  public OEnterpriseProfiler(final int iElapsedToCreateSnapshot, final int iMaxSnapshot) {
     elapsedToCreateSnapshot = iElapsedToCreateSnapshot;
     maxSnapshots = iMaxSnapshot;
-    maxSummaries = iMaxSumaries;
     init();
   }
 
@@ -82,7 +79,6 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     final String[] parts = iConfiguration.split(",");
     elapsedToCreateSnapshot = Integer.parseInt(parts[0].trim());
     maxSnapshots = Integer.parseInt(parts[1].trim());
-    maxSummaries = Integer.parseInt(parts[2].trim());
 
     if (isRecording())
       stopRecording();
@@ -97,9 +93,6 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     synchronized (snapshots) {
       snapshots.clear();
     }
-    synchronized (summaries) {
-      summaries.clear();
-    }
   }
 
   @Override
@@ -108,6 +101,7 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
   }
 
   public void startup() {
+    startRecording();
   }
 
   public void shutdown() {
@@ -117,9 +111,6 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     synchronized (snapshots) {
       snapshots.clear();
     }
-    synchronized (summaries) {
-      summaries.clear();
-    }
   }
 
   public void startRecording() {
@@ -128,8 +119,8 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
 
     acquireExclusiveLock();
     try {
-      OLogManager.instance().info(this, "Profiler is recording metrics with configuration: %d,%d,%d", elapsedToCreateSnapshot,
-          maxSnapshots, maxSummaries);
+      OLogManager.instance().info(this, "Profiler is recording metrics with configuration: %d,%d", elapsedToCreateSnapshot,
+          maxSnapshots);
 
       if (elapsedToCreateSnapshot > 0) {
         lastSnapshot = new OProfilerData();
@@ -197,23 +188,9 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
 
         lastSnapshot = new OProfilerData();
 
-        if (snapshots.size() >= maxSnapshots && maxSnapshots > 0) {
-          // COPY ALL THE ARCHIVE AND RESET IT
-
-          // MERGE RESULTS IN A SUMMARY AND COLLECT IT
-          synchronized (summaries) {
-            final OProfilerData summary = new OProfilerData();
-            for (OProfilerData a : snapshots) {
-              summary.mergeWith(a);
-            }
-            summaries.add(summary);
-
-            if (summaries.size() > maxSummaries)
-              // REMOVE THE FIRST OLDEST
-              summaries.remove(0);
-
-          }
-          snapshots.clear();
+        while (snapshots.size() >= maxSnapshots && maxSnapshots > 0) {
+          // REMOVE THE OLDEST SNAPSHOT
+          snapshots.remove(0);
         }
       }
 
@@ -254,25 +231,16 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
     }
   }
 
-  public String toJSON(final String iQuery, final String iPar1, final String iPar2) {
+  public void resetRealtime(final String iText) {
+    realTime.clear(iText);
+  }
+
+  public String toJSON(final String iQuery, final String iPar1) {
     final StringBuilder buffer = new StringBuilder();
 
     Map<String, Object> hookValuesSnapshots = null;
 
-    if (iQuery.equalsIgnoreCase("reset")) {
-      if (iPar1 == null) {
-        stopRecording();
-        startRecording();
-        return "Profiler restarted";
-      } else {
-        if (iPar1.equals("realtime")) {
-          realTime.clear(iPar2);
-          return "Profiler realtime reset";
-        }
-      }
-    }
-
-    if (iQuery.equals("realtime"))
+    if (iQuery.equals("realtime") || iQuery.equals("last"))
       // GET LATETS HOOK VALUES
       hookValuesSnapshots = archiveHooks();
 
@@ -285,16 +253,17 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
         realTime.toJSON(buffer, iPar1);
 
       } else if (iQuery.equals("last")) {
-        if (lastSnapshot != null)
+        if (lastSnapshot != null) {
+          lastSnapshot.setHookValues(hookValuesSnapshots);
           lastSnapshot.toJSON(buffer, iPar1);
+        }
 
       } else {
         // GET THE RANGES
-        if (iPar1 == null || iPar2 == null)
-          throw new IllegalArgumentException("Invalid range format. Use: <from> <to>, where * means any");
+        if (iPar1 == null)
+          throw new IllegalArgumentException("Invalid range format. Use: <from>, where * means any");
 
         final long from = iPar1.equals("*") ? 0 : Long.parseLong(iPar1);
-        final long to = iPar2.equals("*") ? Long.MAX_VALUE : Long.parseLong(iPar2);
 
         boolean firstItem = true;
         buffer.append("[");
@@ -302,30 +271,24 @@ public class OEnterpriseProfiler extends OSharedResourceAbstract implements OPro
           // ARCHIVE
           for (int i = 0; i < snapshots.size(); ++i) {
             final OProfilerData a = snapshots.get(i);
-            if (a.isInRange(from, to)) {
-              if (firstItem)
-                firstItem = false;
-              else
-                buffer.append(',');
 
-              a.toJSON(buffer, null);
+            if (a.getRecordingFrom() < from) {
+              // ALREADY READ, REMOVE IT
+              snapshots.remove(i);
+              i--;
+              continue;
             }
-          }
-        } else if (iQuery.equals("summary")) {
-          // SUMMARY
-          for (int i = 0; i < summaries.size(); ++i) {
-            final OProfilerData a = summaries.get(i);
-            if (a.isInRange(from, to)) {
-              if (firstItem)
-                firstItem = false;
-              else
-                buffer.append(',');
 
-              a.toJSON(buffer, iPar1);
-            }
+            if (firstItem)
+              firstItem = false;
+            else
+              buffer.append(',');
+
+            a.toJSON(buffer, null);
           }
+
         } else
-          throw new IllegalArgumentException("Invalid archive query: use realtime|last|archive|summary");
+          throw new IllegalArgumentException("Invalid archive query: use realtime|last|archive");
 
         buffer.append("]");
       }
