@@ -12,7 +12,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -273,7 +273,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass function = schema.createClass(CLASS_FUNCTION_WHAT);
 		function.setSuperClass(eventWhat);
-		function.createProperty("text", OType.STRING);
+		function.createProperty("code", OType.STRING);
+		function.createProperty("idempotent", OType.BOOLEAN);
+		function.createProperty("language", OType.STRING);
+		function.createProperty("name", OType.STRING);
+		function.createProperty("parameters", OType.EMBEDDED, OType.STRING);
 
 	}
 

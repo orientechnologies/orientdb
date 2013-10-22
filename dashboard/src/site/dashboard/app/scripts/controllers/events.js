@@ -61,7 +61,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
-        console.log(event['when']['@class'])
         if (event['what'] == undefined || (event['what']['@class'] != $scope.selectedWhat[event.name] && $scope.selectedWhat[event.name] != undefined)) {
             event['what'] = {};
             event['what']['@class'] = $scope.selectedWhat[event.name].trim();

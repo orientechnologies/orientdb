@@ -9,7 +9,6 @@ import javax.mail.internet.AddressException;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.monitor.event.metric.OEventLogExecutor;
-import com.orientechnologies.orient.monitor.event.metric.OEventMetricExecutor;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.plugin.mail.OMailPlugin;
 import com.orientechnologies.orient.server.plugin.mail.OMailProfile;

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('NavController', function ($scope,$routeParams, $location, Monitor) {
+    .controller('NavController', function ($scope, $routeParams, $location, Monitor) {
 
 
         $scope.menus = [
@@ -12,12 +12,10 @@ angular.module('MonitorApp')
             {name: 'metrics', i18n: 'dashboard.metrics', link: '#/dashboard/metrics/' + $scope.rid, icon: 'icon-bar-chart' },
             {name: 'log', i18n: 'dashboard.log', link: '#/dashboard/log/', icon: 'icon-bug' },
             {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-bug' },
-            {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/', icon: 'icon-warning-sign' },
+            {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/', icon: 'icon-warning-sign' }
 
 
         ]
-
-
 
         $scope.setSelected = function () {
 
@@ -31,7 +29,7 @@ angular.module('MonitorApp')
         }
         $scope.navigate = function (menu) {
             var menuEntry = menu.name != 'dashboard' ? (menu.name) : "";
-            $location.path('/dashboard/' + menuEntry );
+            $location.path('/dashboard/' + menuEntry);
         }
         $scope.$on('$routeChangeSuccess', function (scope, next, current) {
             $scope.setSelected();

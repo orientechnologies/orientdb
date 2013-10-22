@@ -211,6 +211,7 @@
     <file path="/metricswhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381492418071" ignored="false" />
     <file path="/singleMetric.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381778773792" ignored="false" />
     <file path="/metrics.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381779897164" ignored="false" />
+    <file path="/functionwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382470071437" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -233,7 +234,7 @@
       <file leaf-file-name="server.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="79" column="0" selection-start="2647" selection-end="2647" vertical-scroll-proportion="-8.235294">
+            <state line="79" column="0" selection-start="2708" selection-end="2708" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -257,43 +258,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="angularjs.nvd3.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="161" column="99" selection-start="4737" selection-end="4737" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="dashboard.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="73" column="26" selection-start="2908" selection-end="3412" vertical-scroll-proportion="-18.333334">
-              <folding>
-                <marker date="1382113472922" expanded="true" signature="40:277" placeholder="..." />
-                <marker date="1382113472922" expanded="true" signature="109:143" placeholder="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/index.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="112" column="43" selection-start="5364" selection-end="5364" vertical-scroll-proportion="-46.208332">
-              <folding>
-                <marker date="1381581418206" expanded="true" signature="1558:1795" placeholder="..." />
-                <marker date="1381581418206" expanded="true" signature="1627:1661" placeholder="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sidenav.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="2" column="7" selection-start="91" selection-end="91" vertical-scroll-proportion="-1.25">
+            <state line="73" column="26" selection-start="2908" selection-end="3412" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -302,25 +270,54 @@
       <file leaf-file-name="query.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="13" column="147" selection-start="757" selection-end="757" vertical-scroll-proportion="-8.125">
+            <state line="13" column="147" selection-start="757" selection-end="757" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nav.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="nav.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="30" column="65" selection-start="1359" selection-end="1359" vertical-scroll-proportion="0.6626298">
+            <state line="14" column="111" selection-start="1018" selection-end="1018" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/styles/main.css">
+      <file leaf-file-name="function-args-test.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/node_modules/grunt-karma/node_modules/karma/node_modules/http-proxy/node_modules/utile/test/function-args-test.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="143" column="21" selection-start="2800" selection-end="2800" vertical-scroll-proportion="0.0">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="functionwhat.html" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/functionwhat.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="16" column="89" selection-start="757" selection-end="757" vertical-scroll-proportion="0.4174573">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="mailwhat.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="63" column="31" selection-start="2782" selection-end="2782" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -336,8 +333,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/views/server/general.html" />
-        <option value="$PROJECT_DIR$/app/i18n/en.json" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
@@ -352,12 +347,14 @@
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
         <option value="$PROJECT_DIR$/app/views/server/query.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
+        <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="-1" />
-    <option name="y" value="-771" />
+    <option name="y" value="-1" />
     <option name="width" value="1368" />
     <option name="height" value="772" />
   </component>
@@ -387,7 +384,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -440,6 +436,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -448,13 +445,7 @@
     <property name="DefaultHtmlFileTemplate" value="Html5" />
     <property name="GoToClass.includeJavaFiles" value="false" />
   </component>
-  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
-    <servers>
-      <server id="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
-        <serverdata />
-      </server>
-    </servers>
-  </component>
+  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app/scripts/directive" />
@@ -524,13 +515,13 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1367" y="-771" width="1368" height="772" extended-state="6" />
+    <frame x="-1" y="-1" width="1368" height="772" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24869695" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24869305" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -614,39 +605,9 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="81" column="35" selection-start="2785" selection-end="2785" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="21" selection-start="952" selection-end="952" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="109" column="0" selection-start="5406" selection-end="5406" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/odirective.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="34" selection-start="461" selection-end="464" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="62" selection-start="325" selection-end="325" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="6" column="62" selection-start="325" selection-end="325" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
@@ -672,17 +633,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/index.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="112" column="43" selection-start="5364" selection-end="5364" vertical-scroll-proportion="-46.208332">
-          <folding>
-            <marker date="1381581418206" expanded="true" signature="1558:1795" placeholder="..." />
-            <marker date="1381581418206" expanded="true" signature="1627:1661" placeholder="..." />
-          </folding>
+        <state line="112" column="43" selection-start="5386" selection-end="5386" vertical-scroll-proportion="0.0">
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/sidenav.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="2" column="7" selection-start="91" selection-end="91" vertical-scroll-proportion="-1.25">
+        <state line="2" column="7" selection-start="91" selection-end="91" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -703,31 +661,58 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="73" column="26" selection-start="2908" selection-end="3412" vertical-scroll-proportion="-18.333334">
-          <folding>
-            <marker date="1382113472922" expanded="true" signature="40:277" placeholder="..." />
-            <marker date="1382113472922" expanded="true" signature="109:143" placeholder="..." />
-          </folding>
+        <state line="73" column="26" selection-start="2908" selection-end="3412" vertical-scroll-proportion="0.0">
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="79" column="0" selection-start="2647" selection-end="2647" vertical-scroll-proportion="-8.235294">
+        <state line="79" column="0" selection-start="2708" selection-end="2708" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="147" selection-start="757" selection-end="757" vertical-scroll-proportion="-8.125">
+        <state line="13" column="147" selection-start="757" selection-end="757" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="30" column="65" selection-start="1359" selection-end="1359" vertical-scroll-proportion="0.6626298">
+        <state line="14" column="111" selection-start="1018" selection-end="1018" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/node_modules/grunt-karma/node_modules/karma/node_modules/http-proxy/node_modules/utile/test/function-args-test.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="63" column="31" selection-start="2782" selection-end="2782" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/functionwhat.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="16" column="89" selection-start="757" selection-end="757" vertical-scroll-proportion="0.4174573">
           <folding />
         </state>
       </provider>
