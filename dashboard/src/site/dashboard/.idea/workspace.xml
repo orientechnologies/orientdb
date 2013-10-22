@@ -30,7 +30,7 @@
     <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382371920235" ignored="false" />
     <file path="/login.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378744447308" ignored="false" />
     <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381590383604" ignored="false" />
-    <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382467661892" ignored="false" />
+    <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382470758707" ignored="false" />
     <file path="/monitor.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186623070" ignored="false" />
     <file path="/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985701222" ignored="false" />
     <file path="/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382373104518" ignored="false" />
@@ -38,7 +38,7 @@
     <file path="/filter.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379185430924" ignored="false" />
     <file path="/server.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382290568221" ignored="false" />
     <file path="/main.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379099539164" ignored="false" />
-    <file path="/settings.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382374210354" ignored="false" />
+    <file path="/settings.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382470776693" ignored="false" />
     <file path="/servers.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378763564214" ignored="false" />
     <file path="/new.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378763293455" ignored="false" />
     <file path="/edit.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378763792878" ignored="false" />
@@ -230,10 +230,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="monitor-service.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="87" column="13" selection-start="3200" selection-end="3200" vertical-scroll-proportion="0.0">
+            <state line="235" column="66" selection-start="8266" selection-end="8266" vertical-scroll-proportion="0.7345133">
               <folding />
             </state>
           </provider>
@@ -242,7 +242,7 @@
       <file leaf-file-name="settings.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="20" column="19" selection-start="872" selection-end="872" vertical-scroll-proportion="0.0">
+            <state line="19" column="7" selection-start="762" selection-end="762" vertical-scroll-proportion="-11.875">
               <folding />
             </state>
           </provider>
@@ -251,7 +251,7 @@
       <file leaf-file-name="settings.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="47" column="39" selection-start="1525" selection-end="1525" vertical-scroll-proportion="0.0">
+            <state line="80" column="36" selection-start="2427" selection-end="2427" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -275,10 +275,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="metrics.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="metrics.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="25" column="64" selection-start="994" selection-end="994" vertical-scroll-proportion="0.62477875">
+            <state line="25" column="64" selection-start="994" selection-end="994" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -296,7 +296,7 @@
       <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="484" column="12" selection-start="9667" selection-end="9667" vertical-scroll-proportion="0.0">
+            <state line="524" column="12" selection-start="10500" selection-end="10500" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -340,18 +340,18 @@
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
-        <option value="$PROJECT_DIR$/app/views/server/settings.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
         <option value="$PROJECT_DIR$/app/scripts/directive/custom.js" />
         <option value="$PROJECT_DIR$/app/views/server/metrics.html" />
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
+        <option value="$PROJECT_DIR$/app/views/server/settings.html" />
+        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-1367" />
-    <option name="y" value="-3" />
+    <option name="x" value="1365" />
+    <option name="y" value="-771" />
     <option name="width" value="1368" />
     <option name="height" value="772" />
   </component>
@@ -558,7 +558,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1367" y="-3" width="1368" height="772" extended-state="6" />
+    <frame x="1365" y="-771" width="1368" height="772" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -685,21 +685,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="484" column="12" selection-start="9667" selection-end="9667" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="20" column="19" selection-start="872" selection-end="872" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="47" column="39" selection-start="1525" selection-end="1525" vertical-scroll-proportion="0.0">
+        <state line="524" column="12" selection-start="10500" selection-end="10500" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -739,16 +725,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="87" column="13" selection-start="3200" selection-end="3200" vertical-scroll-proportion="0.0">
+        <state line="25" column="64" selection-start="994" selection-end="994" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
+    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="64" selection-start="994" selection-end="994" vertical-scroll-proportion="0.62477875">
+        <state line="19" column="7" selection-start="762" selection-end="762" vertical-scroll-proportion="-11.875">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="80" column="36" selection-start="2427" selection-end="2427" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="235" column="66" selection-start="8266" selection-end="8266" vertical-scroll-proportion="0.7345133">
           <folding />
         </state>
       </provider>

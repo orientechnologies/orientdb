@@ -482,6 +482,46 @@ table.align-left {
     color: #FFFFFF;
     text-decoration: none;
 }
+
+fieldset.form_mailwhat{
+    border: 0 none;
+    margin: 11px 0 0 29px;
+    padding: 0;
+    width: 90%;
+}
+
+.modal-header {
+    background-color: #8F8F8F;
+    border-bottom: 2px solid #A5360F;
+    padding: 9px 15px;
+}
+.modal-footer {
+    background-color: #8F8F8F;
+    border-radius: 0 0 6px 6px;
+    border-top: 2px solid #A5360F;
+    box-shadow: none;
+    margin-bottom: 0;
+    padding: 14px 15px 15px;
+    text-align: right;
+}
+.modal-header .close {
+    color: #FFFFFF;
+    margin-top: 2px;
+}
+.modal {
+    background-clip: padding-box;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 6px 6px 6px 6px;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    left: 50%;
+    margin: -280px 0 0 -280px;
+    overflow: auto;
+    position: fixed;
+    top: 50%;
+    width: 560px;
+    z-index: 1050;
+}
 .gridStyle {
     height: 300px;
 }

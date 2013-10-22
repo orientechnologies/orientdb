@@ -43,10 +43,19 @@ module.controller('ServerEditController', function ($scope, $location, $injector
     });
 
 });
-module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric) {
+module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric,Settings) {
 
     $scope.currentTab = 'dashboard';
 
+    Settings.get(function(data){
+        if(data.result.length == 0){
+            $scope.config = Settings.new();
+        }   else {
+            $scope.config = data.result[0];
+        }
+
+        console.log(data);
+    });
     $scope.pagingOptions = {
         pageSizes: [10, 20, 50],
         pageSize: 10,
@@ -68,4 +77,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
     });
 
+    $scope.saveSettings = function(){
+        Settings.put($scope.config);
+    }
 });

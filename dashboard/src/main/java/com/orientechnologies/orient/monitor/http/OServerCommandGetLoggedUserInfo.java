@@ -15,37 +15,60 @@
  */
 package com.orientechnologies.orient.monitor.http;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
-import com.orientechnologies.orient.server.network.protocol.http.*;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
-public class OServerCommandGetLoggedUserInfo extends OServerCommandAbstract {
-    private static final String[] NAMES = {"GET|loggedUserInfo/*"};
+public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticatedDbAbstract {
+	private static final String[]	NAMES	= { "GET|loggedUserInfo/*" };
 
+	public OServerCommandGetLoggedUserInfo(final OServerCommandConfiguration iConfiguration) {
+	}
 
-    public OServerCommandGetLoggedUserInfo(final OServerCommandConfiguration iConfiguration) {
-    }
+	@Override
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+		OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: loggedUserInfo/<db>/<type>");
 
-    @Override
-    public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-        OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
-        try {
-            ODocument document = new ODocument();
-                              document.field("user", session.getUserName());
-                              document.field("database", session.getDatabaseName());
-                              document.field("host", session.getParameter("host"));
-                              document.field("port", session.getParameter("port"));
-            iResponse.writeResult(document, "indent:6");
-        } catch (Exception e) {
-            iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-        }
-        return false;
-    }
+		String command = urlParts[2];
+		if ("configuration".equals(command)) {
+			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+			Map<String, Object> params = new HashMap<String, Object>();
+			params.put("user", session.getUserName());
+			final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
+					"select from UserConfig where user.name = :user"), params);
+			iResponse.writeRecords(response);
+			return false;
+		} else {
+			try {
+				ODocument document = new ODocument();
+				document.field("user", session.getUserName());
+				document.field("database", session.getDatabaseName());
+				document.field("host", session.getParameter("host"));
+				document.field("port", session.getParameter("port"));
+				iResponse.writeResult(document, "indent:6");
+			} catch (Exception e) {
+				iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+			}
+			return false;
+		}
+	}
 
-
-    @Override
-    public String[] getNames() {
-        return NAMES;
-    }
+	@Override
+	public String[] getNames() {
+		return NAMES;
+	}
 }

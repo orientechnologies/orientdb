@@ -94,7 +94,7 @@ monitor.factory('Metric', function ($http, $resource) {
             params.names.forEach(function (elem, idx, array) {
                 params.name += "'" + elem + "',";
                 like += "name like '%" + elem + "%' ";
-                if (idx < array.length -1) {
+                if (idx < array.length - 1) {
                     like += " OR ";
                 }
             });
@@ -181,7 +181,7 @@ monitor.factory('MetricConfig', function ($http, $resource) {
     var resource = $resource(API + 'database/:database');
 
 
-    resource.getAll = function (callback,plan) {
+    resource.getAll = function (callback, plan) {
 
         plan = plan || "";
         var query = 'select * from MetricConfig fetchPlan' + plan
@@ -217,6 +217,30 @@ monitor.factory('MetricConfig', function ($http, $resource) {
             callback(data);
         });
 
+    }
+    return resource;
+});
+
+monitor.factory('Settings', function ($http, $resource) {
+    var resource = $resource(API + 'database/:database');
+
+    resource.get = function (callback) {
+        var url = API + 'loggedUserInfo/monitor/configuration';
+        $http.get(url).success(function (data) {
+            callback(data);
+        });
+    }
+    resource.new = function () {
+        var conf = {};
+        conf['@class'] = 'UserConfiguration';
+
+        return conf;
+    }
+    resource.put = function (config) {
+        var url = API + 'loggedUserInfo/monitor/configuration';
+        $http.post(url,config).success(function (data) {
+            callback(data);
+        });
     }
     return resource;
 });
