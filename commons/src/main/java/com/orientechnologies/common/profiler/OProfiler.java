@@ -20,8 +20,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.common.util.OPair;
-
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
  * any instances you want for separate profiling contexts.
@@ -148,11 +146,6 @@ public class OProfiler extends OAbstractProfiler {
 
   @Override
   public String metadataToJSON() {
-    return null;
-  }
-
-  @Override
-  public Map<String, OPair<String, METRIC_TYPE>> getMetadata() {
     return null;
   }
 

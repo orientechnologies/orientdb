@@ -17,7 +17,9 @@
 package com.orientechnologies.common.profiler;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
@@ -151,7 +153,10 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public Map<String, OPair<String, METRIC_TYPE>> getMetadata() {
-    return null;
+    final Map<String, OPair<String, METRIC_TYPE>> metadata = new HashMap<String, OPair<String, METRIC_TYPE>>();
+    for (Entry<String, String> entry : dictionary.entrySet())
+      metadata.put(entry.getKey(), new OPair<String, METRIC_TYPE>(entry.getValue(), types.get(entry.getKey())));
+    return metadata;
   }
 
   public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
