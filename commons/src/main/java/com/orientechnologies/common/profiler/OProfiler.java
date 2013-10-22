@@ -219,7 +219,7 @@ public class OProfiler implements OProfilerMBean {
   }
 
   @Override
-  public String toJSON(String command, String par1, String par2) {
+  public String toJSON(String command, final String iPar1) {
     return null;
   }
 }
