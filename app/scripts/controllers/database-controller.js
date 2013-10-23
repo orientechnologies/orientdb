@@ -64,10 +64,13 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.currentPage = 1;
 
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
-                if ($scope.queries.indexOf($scope.queryText) == -1) {
-                    $scope.queries.push($scope.queryText);
-                    localStorageService.add("Queries",  $scope.queries);
+                if ($scope.queries.indexOf($scope.queryText) != -1) {
+                    var idx = $scope.queries.indexOf($scope.queryText);
+                    $scope.queries.splice(idx,1);
+
                 }
+                $scope.queries.unshift($scope.queryText);
+                localStorageService.add("Queries",  $scope.queries);
             }
 
             Spinner.loading = false;
