@@ -16,7 +16,11 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 
     $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'records'];
 
-
+    $scope.refreshPage = function () {
+        $scope.database.refreshMetadata($routeParams.database);
+        $route.reload();
+    }
+    $scope.refreshPage();
     $scope.setClass = function (clazz) {
         $scope.classClicked = clazz;
     }
@@ -105,6 +109,34 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     for (inn in $scope.property) {
         $scope.propertyNames.push($scope.property[inn]['name'])
     }
+
+    $scope.queryAll = function (className) {
+        $location.path("/database/" + $scope.database.getName() + "/browse/select * from " + className);
+    }
+
+    $scope.dropClass = function (nameClass) {
+
+        Utilities.confirm($scope, $modal, $q, {
+
+            title: 'Warning!',
+            body: 'You are dropping class ' + nameClass + '. Are you sure?',
+            success: function () {
+                var sql = 'DROP CLASS ' + nameClass;
+
+                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                    $location.path("/database/" + $scope.database.getName() + "/schema");
+
+                });
+
+            }
+
+        });
+
+    }
+    $scope.refreshPage = function () {
+        $scope.database.refreshMetadata($routeParams.database);
+    }
+
     $scope.listClasses = $scope.database.listNameOfClasses();
 
 

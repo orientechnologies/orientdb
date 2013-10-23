@@ -1,123 +1,168 @@
-<div class="row-fluid properties" >
-	<h3>Class: {{class2show}}</h3>
-	<a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i class="icon-refresh"></i> Refresh</a>
-	<div class = "bs-docs-example">
-		<div>
-			<a href="javascript:void(0)" class="btn btn-primary" ng-click="saveProperty(property)"> <i class="icon-white icon-ok"></i> Save</a>
-			<a href="javascript:void(0)" class="btn" ng-click="newProperty()"> <i class="icon-plus"></i> New Property</a>
-		</div>
+<div class="row-fluid properties">
+    <div class="row">
 
-		<div class= "scroll-editclass">
-			<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
-				<thead>
-					<tr>
+        <table class="editClass_panel">
+            <tr>
+                <td>
+                    <label class="input-block-level"><h3>{{class2show}}</h3></label>
 
-						<th ng-repeat="header in classClickedHeaders">
-							{{header}}
-						</th>
-					</tr>
+                </td>
+                <td>
+                    <a href="javascript:void(0)" class="btn" ng-click="queryAll(class2show)"> <i class="icon-question-sign"></i>
+                        Query All</a>
+                </td>
+                <td>
+                    <a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i class="icon-refresh"></i>
+                        Refresh</a>
+                </td>
+                <td>
+                    <a href="javascript:void(0)" class="btn btn-danger" ng-click="dropClass(class2show)"> <i class="icon-trash icon-white"></i>
+                        Drop</a>
+                </td>
 
-				</thead>
 
-				<tbody>
-					<tr ng-repeat="result in property |  orderBy:'name'">
-						<td>
-							{{result['name']}} 
-						</td>
-						<td>
-							<select ng-model="result['type']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'type')" >
+            </tr>
 
-							</select>
-							<!-- <input type="text" ng-model="result['type']" ng-change="modificato(result,'type')"> -->
-						</td>
-						<td>
-							<select ng-model="result['linkedType']" ng-options="p.toString() for p in listTypes" ng-change="modificato(result,'linkedType')" ng-disabled="checkTypeEdit(result)">
-								<option value=""></option>
-							</select>
+        </table>
+    </div>
 
-						</td>
+    <div class="bs-docs-example">
+        <div>
+            <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveProperty(property)"> <i
+                    class="icon-white icon-ok"></i> Save</a>
+            <a href="javascript:void(0)" class="btn" ng-click="newProperty()"> <i class="icon-plus"></i> New
+                Property</a>
+        </div>
 
-						<td>
-							<select ng-model="result['linkedClass']" ng-options="p.toString() for p in listClasses" ng-change="modificato(result,'linkedClass')" ng-disabled="checkClassEdit(result)">
-								<option value=""></option>
-							</select>
+        <div class="scroll-editclass">
+            <table class="table table-striped table-bordered table-hover table-condensed pointer"
+                   ng-show="classClickedHeaders">
+                <thead>
+                <tr>
 
-							<td>
-								<input type="checkbox"  ng-model="result['mandatory']" ng-change="modificato(result,'mandatory')">
-							</td>
-							<td>
-								<input type="checkbox" ng-model="result['readonly']" ng-change="modificato(result,'readonly')">
-							</td>
-							<td>
-								<input type="checkbox" ng-model="result['notNull']" ng-change="modificato(result,'notNull')" >
-							</td>
-							<td>
-								<input type="text"    ng-model="result['min']"  ng-change="modificato(result,'min')" ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
-								<input type="text"   bs-datepicker ng-model="result['min']"  ng-change="modificato(result,'min')" ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
+                    <th ng-repeat="header in classClickedHeaders">
+                        {{header}}
+                    </th>
+                </tr>
 
-							</td>
-							<td>
-								<input type="text" ng-model="result['max']" ng-change="modificato(result,'max')" ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
-								<input type="text"   bs-datepicker ng-model="result['max']"  ng-change="modificato(result,'max')" ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
-							</td>
-							<td>
-								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropProperty(result,result['name'])"> <i class="icon-white icon-trash" ></i> Drop</a>
-							</td>
-						</tr>
-					</tbody>
+                </thead>
 
-				</table>
-			</div>
-		</div>
-	</div>
-	
-	<div class="row-fluid indexes" >
-		
-		<div class = "bs-docs-example">
-			<a href="javascript:void(0)" class="btn" ng-click="newIndex()"> <i class="icon-plus"></i> New Index</a>
-			
+                <tbody>
+                <tr ng-repeat="result in property |  orderBy:'name'">
+                    <td>
+                        {{result['name']}}
+                    </td>
+                    <td>
+                        <select ng-model="result['type']" ng-options="p.toString() for p in listTypes"
+                                ng-change="modificato(result,'type')">
 
-			<div class= "scroll-indexes">
-				<table class="table table-striped table-bordered table-hover table-condensed pointer" ng-show="classClickedHeaders">
-					<thead>
-						<tr>
+                        </select>
+                        <!-- <input type="text" ng-model="result['type']" ng-change="modificato(result,'type')"> -->
+                    </td>
+                    <td>
+                        <select ng-model="result['linkedType']" ng-options="p.toString() for p in listTypes"
+                                ng-change="modificato(result,'linkedType')" ng-disabled="checkTypeEdit(result)">
+                            <option value=""></option>
+                        </select>
 
-							<th >
-								Name
-							</th>
-							<th >
-								Type
-							</th>
+                    </td>
 
-							<th >
-								Properties
-							</th>
-							<th >
-								Actions
-							</th>
+                    <td>
+                        <select ng-model="result['linkedClass']" ng-options="p.toString() for p in listClasses"
+                                ng-change="modificato(result,'linkedClass')" ng-disabled="checkClassEdit(result)">
+                            <option value=""></option>
+                        </select>
 
-						</tr>
+                    <td>
+                        <input type="checkbox" ng-model="result['mandatory']"
+                               ng-change="modificato(result,'mandatory')">
+                    </td>
+                    <td>
+                        <input type="checkbox" ng-model="result['readonly']"
+                               ng-change="modificato(result,'readonly')">
+                    </td>
+                    <td>
+                        <input type="checkbox" ng-model="result['notNull']"
+                               ng-change="modificato(result,'notNull')">
+                    </td>
+                    <td>
+                        <input type="text" ng-model="result['min']" ng-change="modificato(result,'min')"
+                               ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
+                        <input type="text" bs-datepicker ng-model="result['min']"
+                               ng-change="modificato(result,'min')"
+                               ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
 
-					</thead>
-					<tbody>
-						<tr ng-repeat="index in indexes track by $index|  orderBy:'name'">
-							<td>
-								{{index.name}} 
-							</td>
-							<td>
-								{{index.type}} 
-							</td>
-							<td>
-								{{index.fields}} 
-							</td>
-							<td>
-								<a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)" > <i class="icon-refresh" ></i> Rebuild</a>
-								<a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index)" > <i class="icon-white icon-trash" ></i> Drop</a>
+                    </td>
+                    <td>
+                        <input type="text" ng-model="result['max']" ng-change="modificato(result,'max')"
+                               ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
+                        <input type="text" bs-datepicker ng-model="result['max']"
+                               ng-change="modificato(result,'max')"
+                               ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
+                    </td>
+                    <td>
+                        <a href="javascript:void(0)" class="btn btn-danger btn-small"
+                           ng-click="dropProperty(result,result['name'])"> <i class="icon-white icon-trash"></i>
+                            Drop</a>
+                    </td>
+                </tr>
+                </tbody>
 
-							</td>
-						</tr>
-					</tbody>
-				</div>
+            </table>
+        </div>
+    </div>
+</div>
 
-			</div>
-		</div>
+<div class="row-fluid indexes">
+
+    <div class="bs-docs-example">
+        <a href="javascript:void(0)" class="btn" ng-click="newIndex()"> <i class="icon-plus"></i> New Index</a>
+
+
+        <div class="scroll-indexes">
+            <table class="table table-striped table-bordered table-hover table-condensed pointer"
+                   ng-show="classClickedHeaders">
+                <thead>
+                <tr>
+
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Type
+                    </th>
+
+                    <th>
+                        Properties
+                    </th>
+                    <th>
+                        Actions
+                    </th>
+
+                </tr>
+
+                </thead>
+                <tbody>
+                <tr ng-repeat="index in indexes track by $index|  orderBy:'name'">
+                    <td>
+                        {{index.name}}
+                    </td>
+                    <td>
+                        {{index.type}}
+                    </td>
+                    <td>
+                        {{index.fields}}
+                    </td>
+                    <td>
+                        <a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)"> <i
+                                class="icon-refresh"></i> Rebuild</a>
+                        <a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropIndex(index)">
+                            <i class="icon-white icon-trash"></i> Drop</a>
+
+                    </td>
+                </tr>
+                </tbody>
+        </div>
+
+    </div>
+</div>

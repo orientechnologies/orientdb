@@ -403,3 +403,10 @@ ul.horizontallist, ol.horizontallist {
 .pagination_select {
     margin-top: 22px;
 }
+
+table.editClass_panel {
+    margin-left: 20px;
+}
+table.editClass_panel>tbody>tr>td a {
+    margin-left: 5px;
+}
