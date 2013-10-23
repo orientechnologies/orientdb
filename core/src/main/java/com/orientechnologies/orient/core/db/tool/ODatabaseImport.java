@@ -77,7 +77,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private OIndex<OIdentifiable>      exportImportHashTable;
 
-  private boolean                    preserveClusterIDs     = false;
+  private boolean                    preserveClusterIDs     = true;
 
   private Set<String>                indexesToRebuild       = new HashSet<String>();
 
@@ -145,6 +145,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           indexesToRebuild.add(index.getName().toLowerCase());
       }
 
+      removeDefaultNonSecurityClasses();
+
       String tag;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
         tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
@@ -189,6 +191,40 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     return this;
+  }
+
+  private void removeDefaultNonSecurityClasses() {
+    listener.onMessage("\nRemoving all default non security classes");
+
+    OSchema schema = database.getMetadata().getSchema();
+    Collection<OClass> classes = schema.getClasses();
+
+    final AbstractList<String> classesSortedByInheritance = new ArrayList<String>();
+    for (OClass dbClass : classes) {
+      classesSortedByInheritance.add(dbClass.getName());
+    }
+
+    for (OClass dbClass : classes) {
+      OClass parentClass = dbClass.getSuperClass();
+      if (parentClass != null) {
+        classesSortedByInheritance.remove(dbClass.getName());
+        final int parentIndex = classesSortedByInheritance.indexOf(parentClass.getName());
+        classesSortedByInheritance.add(parentIndex, dbClass.getName());
+      }
+    }
+
+    for (String className : classesSortedByInheritance) {
+      if (!className.equalsIgnoreCase(ORole.CLASS_NAME) && !className.equalsIgnoreCase(OUser.CLASS_NAME)
+          && !className.equalsIgnoreCase(OSecurityShared.IDENTITY_CLASSNAME)) {
+        schema.dropClass(className);
+        listener.onMessage("\nClass " + className + " was removed.");
+      }
+    }
+
+    schema.save();
+    schema.reload();
+
+    listener.onMessage("\nRemoving all default non security classes ... DONE.");
   }
 
   private void importInfo() throws IOException, ParseException {
