@@ -36,10 +36,6 @@ angular.module('MonitorApp', ['ngI18n', 'workbench-logs.controller', 'workbench-
                 templateUrl: 'views/server/main.html',
                 controller: 'ServerMonitorController'
             })
-            .when('/dashboard/log/:rid', {
-                templateUrl: 'views/server/log.html',
-                controller: 'LogsController'
-            })
             .when('/dashboard/logjava/:rid', {
                 templateUrl: 'views/server/logjava.html',
                 controller: 'LogsJavaController'
