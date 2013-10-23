@@ -236,7 +236,7 @@ monitor.factory('Settings', function ($http, $resource) {
 
         return conf;
     }
-    resource.put = function (config) {
+    resource.put = function (config,callback) {
         var url = API + 'loggedUserInfo/monitor/configuration';
         $http.post(url,config).success(function (data) {
             callback(data);

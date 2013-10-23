@@ -17,6 +17,10 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+<<<<<<< HEAD
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+=======
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -32,6 +36,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+<<<<<<< HEAD
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+=======
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14
 
 public class OMonitorPlugin extends OServerHandlerAbstract {
 	public enum LOG_LEVEL {
@@ -42,32 +51,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		OFFLINE, ONLINE, UNAUTHORIZED, PROFILEROFF
 	}
 
-<<<<<<< HEAD
-	public static final String								VERSION										= OConstants.ORIENT_VERSION;
-	static final String												SYSTEM_CONFIG							= "system.config";
-
-	public static final String								CLASS_SERVER							= "Server";
-	public static final String								CLASS_LOG									= "Log";
-	public static final String								CLASS_EVENT								= "Event";
-	public static final String								CLASS_SNAPSHOT						= "Snapshot";
-	public static final String								CLASS_METRIC							= "Metric";
-	public static final String								CLASS_COUNTER							= "Counter";
-	public static final String								CLASS_CHRONO							= "Chrono";
-	public static final String								CLASS_STATISTIC						= "Statistic";
-	public static final String								CLASS_INFORMATION					= "Information";
-	public static final String								CLASS_DICTIONARY					= "Dictionary";
-	public static final String								CLASS_USER_CONFIGURATION	= "UserConfig";
-
-	private OServer														serverInstance;
-	private long															updateTimer;
-	private String														dbName										= "monitor";
-	private String														dbUser										= "admin";
-	private String														dbPassword								= "admin";
-	ODatabaseDocumentTx												db;
-	Map<String, OMonitoredServer>							servers										= new HashMap<String, OMonitoredServer>();
-	Map<String, OPair<String, METRIC_TYPE>>		dictionary;
-	private Set<OServerConfigurationListener>	listeners									= new HashSet<OServerConfigurationListener>();
-=======
 	public static final String VERSION = OConstants.ORIENT_VERSION;
 	static final String SYSTEM_CONFIG = "system.config";
 
@@ -93,6 +76,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String CLASS_STATISTIC = "Statistic";
 	public static final String CLASS_INFORMATION = "Information";
 	public static final String CLASS_DICTIONARY = "Dictionary";
+<<<<<<< HEAD
+
+	public static final String								CLASS_USER_CONFIGURATION	= "UserConfig";
+=======
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14
 
 	private OServer serverInstance;
 	private long updateTimer;
@@ -103,29 +91,20 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	Map<String, OMonitoredServer> servers = new HashMap<String, OMonitoredServer>();
 	Map<String, OPair<String, METRIC_TYPE>> dictionary;
 	private Set<OServerConfigurationListener> listeners = new HashSet<OServerConfigurationListener>();
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 
 	@Override
 	public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
 		serverInstance = iServer;
-<<<<<<< HEAD
-		OLogManager.instance().info(this, "Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
-=======
 		OLogManager.instance().info(this,
 				"Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 
 		for (OServerParameterConfiguration param : iParams) {
 			if (param.name.equalsIgnoreCase("updateTimer"))
 				updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
 			else if (param.name.equalsIgnoreCase("dbName")) {
 				dbName = param.value;
-<<<<<<< HEAD
-				dbName = "local:" + OServerMain.server().getDatabaseDirectory() + dbName;
-=======
 				dbName = "local:" + OServerMain.server().getDatabaseDirectory()
 						+ dbName;
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 			} else if (param.name.equalsIgnoreCase("dbUser"))
 				dbUser = param.value;
 			else if (param.name.equalsIgnoreCase("dbPassword"))
@@ -149,11 +128,12 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		updateDictionary();
 
 		db.registerHook(new OEventHook());
-<<<<<<< HEAD
-		Orient.instance().getTimer().schedule(new OMonitorTask(this), updateTimer, updateTimer);
-=======
 
 		registerExecutors();
+<<<<<<< HEAD
+		registerCommand();
+=======
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14
 		Orient.instance().getTimer()
 				.schedule(new OMonitorTask(this), updateTimer, updateTimer);
 	}
@@ -161,9 +141,17 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	private void registerExecutors() {
 		OEventController.getInstance().register(new OEventMetricMailExecutor());
 
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 	}
 
+<<<<<<< HEAD
+	private void registerCommand(){
+		 final OServerNetworkListener listener = serverInstance.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+	    if (listener == null)
+	      throw new OConfigurationException("HTTP listener not found");
+
+	}
+=======
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14
 	public OMonitoredServer getMonitoredServer(final String iServer) {
 		return servers.get(iServer);
 	}
@@ -173,18 +161,10 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	}
 
 	public void updateActiveServerList() {
-<<<<<<< HEAD
-		db.getLevel1Cache().clear();
-		db.getLevel2Cache().clear();
-
-		Map<String, OMonitoredServer> tmpServers = new HashMap<String, OMonitoredServer>();
-		final List<ODocument> enabledServers = db.query(new OSQLSynchQuery<Object>("select from Server where enabled = true"));
-=======
 		Map<String, OMonitoredServer> tmpServers = new HashMap<String, OMonitoredServer>();
 		final List<ODocument> enabledServers = db
 				.query(new OSQLSynchQuery<Object>(
 						"select from Server where enabled = true"));
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 		for (ODocument s : enabledServers) {
 			final String serverName = s.field("name");
 
@@ -201,12 +181,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		return Collections.unmodifiableCollection(listeners);
 	}
 
-<<<<<<< HEAD
-	public OMonitorPlugin addListeners(final OServerConfigurationListener iListener) {
-=======
 	public OMonitorPlugin addListeners(
 			final OServerConfigurationListener iListener) {
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 		listeners.add(iListener);
 		return this;
 	}
@@ -218,14 +194,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		updateActiveServerList();
 
 		// UPDATE LAST CONNECTION FOR EACH SERVERS
-<<<<<<< HEAD
-		final List<ODocument> snapshotDates = db.query(new OSQLSynchQuery<Object>(
-				"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
-=======
 		final List<ODocument> snapshotDates = db
 				.query(new OSQLSynchQuery<Object>(
 						"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 
 		for (ODocument snapshot : snapshotDates) {
 			final String serverName = snapshot.field("serverName");
@@ -235,29 +206,19 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 				serverCfg.setLastConnection((Date) snapshot.field("date"));
 		}
 
-<<<<<<< HEAD
-		OLogManager.instance().info(this, "MONITOR loading server configuration (%d)...", servers.size());
-		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
-			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(),
-=======
 		OLogManager.instance().info(this,
 				"MONITOR loading server configuration (%d)...", servers.size());
 		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
 			OLogManager.instance().info(this,
 					"MONITOR * server [%s] updated to: %s",
 					serverEntry.getKey(),
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 					serverEntry.getValue().getLastConnection());
 		}
 	}
 
 	protected void createConfiguration() {
-<<<<<<< HEAD
-		OLogManager.instance().info(this, "MONITOR creating %s database...", dbName);
-=======
 		OLogManager.instance().info(this, "MONITOR creating %s database...",
 				dbName);
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 		db.create();
 
 		final OSchema schema = db.getMetadata().getSchema();
@@ -283,12 +244,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		log.createProperty("server", OType.LINK, server);
 		log.createProperty("message", OType.STRING);
 
-<<<<<<< HEAD
-		final OClass chrono = schema.createClass(CLASS_CHRONO).setSuperClass(metric);
-=======
 		final OClass chrono = schema.createClass(CLASS_CHRONO).setSuperClass(
 				metric);
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 		chrono.createProperty("entries", OType.LONG);
 		chrono.createProperty("last", OType.LONG);
 		chrono.createProperty("min", OType.LONG);
@@ -296,27 +253,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		chrono.createProperty("average", OType.LONG);
 		chrono.createProperty("total", OType.LONG);
 
-<<<<<<< HEAD
-		final OClass counter = schema.createClass(CLASS_COUNTER).setSuperClass(metric);
-		counter.createProperty("value", OType.LONG);
-
-		final OClass statistics = schema.createClass(CLASS_STATISTIC).setSuperClass(metric);
-		statistics.createProperty("value", OType.STRING);
-
-		final OClass information = schema.createClass(CLASS_INFORMATION).setSuperClass(metric);
-		information.createProperty("value", OType.STRING);
-
-		final OClass events = schema.createClass(CLASS_EVENT);
-		events.createProperty("name", OType.STRING);
-		events.createProperty("enabled", OType.BOOLEAN);
-		events.createProperty("clazz", OType.STRING);
-		events.createProperty("condition", OType.LINK, schema.getClass(OFunction.class));
-		events.createProperty("action", OType.LINK, schema.getClass(OFunction.class));
-
-		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
-		final OClass ouser = schema.getClass(OUser.class);
-		userConfig.createProperty("user", OType.LINK, ouser);
-=======
 		final OClass counter = schema.createClass(CLASS_COUNTER).setSuperClass(
 				metric);
 		counter.createProperty("value", OType.LONG);
@@ -365,9 +301,20 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass function = schema.createClass(CLASS_FUNCTION_WHAT);
 		function.setSuperClass(eventWhat);
+<<<<<<< HEAD
 		function.createProperty("text", OType.STRING);
 
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
+final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
+		final OClass ouser = schema.getClass(OUser.class);
+		userConfig.createProperty("user", OType.LINK, ouser);
+=======
+		function.createProperty("code", OType.STRING);
+		function.createProperty("idempotent", OType.BOOLEAN);
+		function.createProperty("language", OType.STRING);
+		function.createProperty("name", OType.STRING);
+		function.createProperty("parameters", OType.EMBEDDED, OType.STRING);
+
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14
 	}
 
 	@Override
@@ -379,36 +326,14 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		if (!schema.existsClass(CLASS_DICTIONARY)) {
 			final OClass dictionary = schema.createClass(CLASS_DICTIONARY);
-<<<<<<< HEAD
-			final OProperty name = dictionary.createProperty("name", OType.STRING);
-=======
 			final OProperty name = dictionary.createProperty("name",
 					OType.STRING);
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 			name.createIndex(INDEX_TYPE.UNIQUE);
 		}
 
 		if (dictionary == null)
 			dictionary = Orient.instance().getProfiler().getMetadata();
 
-<<<<<<< HEAD
-		if (dictionary != null) {
-			for (Entry<String, OPair<String, METRIC_TYPE>> entry : dictionary.entrySet()) {
-				try {
-					final String key = entry.getKey();
-					final OPair<String, METRIC_TYPE> value = entry.getValue();
-
-					final ODocument doc = new ODocument(CLASS_DICTIONARY);
-					doc.field("name", key);
-					doc.field("description", value.getKey());
-					doc.field("type", value.getValue());
-					doc.field("enabled", Boolean.TRUE);
-					doc.save();
-
-				} catch (Exception e) {
-					// IGNORE DUPLICATES
-				}
-=======
 		for (Entry<String, OPair<String, METRIC_TYPE>> entry : dictionary
 				.entrySet()) {
 			try {
@@ -424,7 +349,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 			} catch (Exception e) {
 				// IGNORE DUPLICATES
->>>>>>> 8231fe334fb3ce8956e49b6f39082b4433d53195
 			}
 		}
 	}
@@ -432,4 +356,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public Map<String, OPair<String, METRIC_TYPE>> getDictionary() {
 		return dictionary;
 	}
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 9c2f13277e06f2d495a520a1d75ecb5d82fc6e14

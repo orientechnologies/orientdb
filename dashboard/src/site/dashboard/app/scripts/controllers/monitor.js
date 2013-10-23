@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification) {
+    .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification,Settings) {
 
 
         (function poll() {
@@ -69,6 +69,11 @@ angular.module('MonitorApp')
             $scope.notifications = data.result;
         });
 
+        Settings.get(function (data) {
+            if (data.result.length == 0) {
+                $scope.config = Settings.new();
+            }
+        });
         $scope.login = function () {
             Monitor.connect($scope.username, $scope.password, function (data) {
                 $location.path("/home");
