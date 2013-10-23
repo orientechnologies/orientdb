@@ -64,7 +64,7 @@ public enum OGlobalConfiguration {
       "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
-      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, 300000),
+      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),

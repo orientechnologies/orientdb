@@ -16,8 +16,9 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
@@ -25,9 +26,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  * @author Andrey Lomakin
  * @since 05.08.13
  */
-public class OCachePointer extends OSharedResourceAdaptive {
-  private final AtomicInteger         referrersCount = new AtomicInteger();
+public class OCachePointer {
+  private final ReadWriteLock         readWriteLock  = new ReentrantReadWriteLock();
 
+  private final AtomicInteger         referrersCount = new AtomicInteger();
   private final AtomicInteger         usagesCounter  = new AtomicInteger();
 
   private volatile OLogSequenceNumber lastFlushedLsn;
@@ -35,13 +37,11 @@ public class OCachePointer extends OSharedResourceAdaptive {
   private final ODirectMemoryPointer  dataPointer;
 
   public OCachePointer(ODirectMemoryPointer dataPointer, OLogSequenceNumber lastFlushedLsn) {
-    super(true, 300000, false);
     this.lastFlushedLsn = lastFlushedLsn;
     this.dataPointer = dataPointer;
   }
 
   public OCachePointer(byte[] data, OLogSequenceNumber lastFlushedLsn) {
-    super(true, 300000, false);
     this.lastFlushedLsn = lastFlushedLsn;
     dataPointer = new ODirectMemoryPointer(data);
   }
@@ -68,19 +68,16 @@ public class OCachePointer extends OSharedResourceAdaptive {
     return dataPointer;
   }
 
-  @Override
   public void acquireExclusiveLock() {
-    super.acquireExclusiveLock();
+    readWriteLock.writeLock().lock();
   }
 
-  @Override
   public boolean tryAcquireExclusiveLock() {
-    return super.tryAcquireExclusiveLock();
+    return readWriteLock.writeLock().tryLock();
   }
 
-  @Override
   public void releaseExclusiveLock() {
-    super.releaseExclusiveLock();
+    readWriteLock.writeLock().unlock();
   }
 
   @Override
