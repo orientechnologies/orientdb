@@ -73,7 +73,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             console.log($scope.functionToExecute);
             var newFunc = JSON.parse(JSON.stringify($scope.functionToExecute));
             console.log(newFunc);
-            newFunc['name'] = $scope.functionToExecute['name'] + "_copy";
+            newFunc['name'] = $scope.functionToExecute['name'] + "_clone";
             newFunc['code'] = newFunc['code'] + ' '
             newFunc['$$hashKey'] = '';
 
