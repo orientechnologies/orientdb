@@ -67,6 +67,21 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         }
         return result;
     }
+    $scope.copyFunction = function () {
+        if ($scope.functionToExecute != undefined) {
+
+            console.log($scope.functionToExecute);
+            var newFunc = JSON.parse(JSON.stringify($scope.functionToExecute));
+            console.log(newFunc);
+            newFunc['name'] = $scope.functionToExecute['name'] + "_copy";
+            newFunc['code'] = newFunc['code'] + ' '
+            newFunc['$$hashKey'] = '';
+
+            $scope.functions.push(newFunc);
+            $scope.showInConsole(newFunc);
+            $scope.isNewFunction = true;
+        }
+    }
     $scope.addParam = function () {
         if ($scope.functionToExecute['parameters'] == undefined) {
             $scope.functionToExecute['parameters'] = new Array;
@@ -157,7 +172,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
     $scope.saveFunction = function () {
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
-
+            console.log($scope.isNewFunction)
             if ($scope.isNewFunction == true) {
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
@@ -165,6 +180,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
                     }
                 );
+
             }
             else {
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
@@ -203,5 +219,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         });
 
     }
-}]);
+}])
+;
 
