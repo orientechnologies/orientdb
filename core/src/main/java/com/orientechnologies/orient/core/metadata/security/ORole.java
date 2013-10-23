@@ -76,7 +76,7 @@ public class ORole extends ODocumentWrapper {
     super(CLASS_NAME);
     document.field("name", iName);
     parentRole = iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
+    document.field("inheritedRole", iParent != null ? iParent.getDocument() : null);
     setMode(iAllowMode);
     document.field("rules", new HashMap<String, Number>());
   }
@@ -208,7 +208,7 @@ public class ORole extends ODocumentWrapper {
 
   public ORole setParentRole(final ORole iParent) {
     this.parentRole = iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
+    document.field("inheritedRole", parentRole != null ? parentRole.getDocument() : null);
     return this;
   }
 
