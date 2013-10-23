@@ -61,13 +61,16 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
-        if (event['what'] == undefined || (event['what']['@class'] != $scope.selectedWhat[event.name] && $scope.selectedWhat[event.name] != undefined)) {
+        console.log(event['what'])
+        if (event['what'] == undefined || $scope.selectedWhat[event.name]!=null && (event['what']['@class'] != $scope.selectedWhat[event.name].trim() && $scope.selectedWhat[event.name] != undefined)) {
             event['what'] = {};
             event['what']['@class'] = $scope.selectedWhat[event.name].trim();
             event['what']['@type'] = 'd';
+        console.log('if')
         }
         else {
             event['what']['@class'] = eventWhat['@class'];
+            console.log('else')
         }
         modalScope.eventWhat = event['what'];
         modalScope.parentScope = $scope;
@@ -166,6 +169,25 @@ dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$rou
 }]);
 
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
+    $scope.languages = ['SQL', 'Javascript'];
+    $scope.addParam = function () {
+        if ($scope.eventWhat['parameters'] == undefined) {
+            $scope.eventWhat['parameters'] = new Array;
+        }
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class']);
+        $scope.eventWhat['parameters'].push('');
+
+
+    }
+    $scope.removeParam = function (index) {
+        if ($scope.eventWhat != undefined) {
+            var numPar = parseInt($scope.eventWhat['parameters']);
+
+            var result = numPar - 1;
+
+            $scope.eventWhat['parameters'].splice(index, 1);
+
+        }
+        return result;
+    }
 }]);

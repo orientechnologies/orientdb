@@ -515,7 +515,7 @@ fieldset.form_mailwhat{
     border-radius: 6px 6px 6px 6px;
     box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
     left: 50%;
-    margin: -280px 0 0 -280px;
+    margin: -300px 0 0 -280px;
     overflow: auto;
     position: fixed;
     top: 50%;
@@ -524,4 +524,13 @@ fieldset.form_mailwhat{
 }
 .gridStyle {
     height: 300px;
+}
+
+.horizontallist li {
+    display: inline-block;
+}
+
+ul.horizontallist, ol.horizontallist {
+    margin: 0px !important;
+    padding: 0px;
 }
