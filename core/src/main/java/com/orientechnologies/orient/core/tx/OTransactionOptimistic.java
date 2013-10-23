@@ -311,8 +311,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         switch (iStatus) {
         case ORecordOperation.CREATED:
         case ORecordOperation.UPDATED:
+          final ORID oldRid = iRecord.getIdentity().copy();
           database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iRecord.getRecordType(), false,
               OPERATION_MODE.SYNCHRONOUS, false, null, null);
+          updateIdentityAfterCommit(oldRid, iRecord.getIdentity());
           break;
         case ORecordOperation.DELETED:
           database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), false, false, OPERATION_MODE.SYNCHRONOUS, false);

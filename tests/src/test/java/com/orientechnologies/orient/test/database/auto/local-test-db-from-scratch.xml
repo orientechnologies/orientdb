@@ -100,6 +100,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
         </classes>
     </test>
     <test name="Dictionary">
