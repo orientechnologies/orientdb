@@ -674,7 +674,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a local database", timer, "db.*.close");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");
     }
   }
 
@@ -754,7 +754,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".drop", "Drop a local database", timer, "db.*.drop");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".drop", "Drop a database", timer, "db.*.drop");
     }
   }
 
@@ -1053,6 +1053,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       final ORecordCallback<OClusterPosition> callback) {
     checkOpeness();
 
+    final long timer = Orient.instance().getProfiler().startChrono();
+
     final OCluster cluster = getClusterById(rid.clusterId);
     cluster.getExternalModificationLock().requestModificationLock();
     try {
@@ -1098,6 +1100,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       }
     } finally {
       cluster.getExternalModificationLock().releaseModificationLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
     }
   }
 
@@ -1149,6 +1152,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (!rid.isPersistent())
       throw new IllegalArgumentException("Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
+    final long timer = Orient.instance().getProfiler().startChrono();
+
     clusterSegment.getExternalModificationLock().requestModificationLock();
     try {
       if (atomicLock)
@@ -1171,12 +1176,16 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       }
     } finally {
       clusterSegment.getExternalModificationLock().releaseModificationLock();
+
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, final byte[] content,
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
+
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(rid.clusterId);
 
@@ -1248,6 +1257,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       }
     } finally {
       cluster.getExternalModificationLock().releaseModificationLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
   }
 
@@ -1255,6 +1265,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final ORecordVersion version, final int mode,
       ORecordCallback<Boolean> callback) {
     checkOpeness();
+
+    final long timer = Orient.instance().getProfiler().startChrono();
 
     final OCluster cluster = getClusterById(rid.clusterId);
 
@@ -1295,6 +1307,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       }
     } finally {
       cluster.getExternalModificationLock().releaseModificationLock();
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
     }
 
     return new OStorageOperationResult<Boolean>(false);
@@ -1610,7 +1624,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
 
-      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a local database", timer, "db.*.synch");
+      Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a database", timer, "db.*.synch");
     }
   }
 

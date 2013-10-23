@@ -22,6 +22,5 @@ import java.util.Properties;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OMailProfile {
-  public Properties properties = new Properties();
+public class OMailProfile extends Properties {
 }

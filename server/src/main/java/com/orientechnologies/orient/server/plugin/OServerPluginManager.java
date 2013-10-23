@@ -146,9 +146,9 @@ public class OServerPluginManager implements OService {
     if (pluginName != null) {
       OLogManager.instance().info(this, "Uninstalling dynamic plugin '%s'...", iFileName);
 
-      final OServerPluginInfo removePlugin = activePlugins.remove(pluginName);
-      if (removePlugin != null)
-        removePlugin.shutdown();
+      final OServerPluginInfo removedPlugin = activePlugins.remove(pluginName);
+      if (removedPlugin != null)
+        removedPlugin.shutdown();
     }
   }
 
@@ -191,7 +191,9 @@ public class OServerPluginManager implements OService {
 
     URLClassLoader pluginClassLoader = null;
     try {
-      pluginClassLoader = new URLClassLoader(new URL[] { pluginFile.toURI().toURL() });
+      final URL url = pluginFile.toURI().toURL();
+
+      pluginClassLoader = new URLClassLoader(new URL[] { url });
 
       // LOAD PLUGIN.JSON FILE
       final URL r = pluginClassLoader.getResource("plugin.json");
@@ -246,19 +248,6 @@ public class OServerPluginManager implements OService {
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on installing dynamic plugin '%s'", e, pluginName);
-    } finally {
-      if (pluginClassLoader != null) {
-        // JAVA7 ONLY
-        Method m;
-        try {
-          m = pluginClassLoader.getClass().getMethod("close");
-          if (m != null)
-            m.invoke(pluginClassLoader);
-        } catch (NoSuchMethodException e) {
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on closing plugin classloader", e);
-        }
-      }
     }
   }
 

@@ -58,6 +58,10 @@ public class OHttpRequest {
     configuration = iConfiguration;
   }
 
+  public String getUser() {
+    return authorization != null ? authorization.substring(0, authorization.indexOf(":")) : null;
+  }
+
   public InputStream getInputStream() {
     return in;
   }
