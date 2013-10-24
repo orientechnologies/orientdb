@@ -26,8 +26,10 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
 
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
-        if ($scope.outgoings != undefined)
-            $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
+        if ($scope.outgoings == undefined) {
+            $scope.outgoings = new Array;
+        }
+        $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
     }
 
     $scope.filterArray = function (arr) {
