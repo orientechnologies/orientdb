@@ -42,6 +42,8 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
     try {
 
       final String command = parts[1];
+      final String arg = parts.length > 2 ? parts[2] : null;
+
       if (command.equalsIgnoreCase("start")) {
         Orient.instance().getProfiler().startRecording();
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Recording started", null);
@@ -59,6 +61,9 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
         final String status = Orient.instance().getProfiler().isRecording() ? "on" : "off";
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, status, null);
 
+      } else if (command.equalsIgnoreCase("reset")) {
+        Orient.instance().getProfiler().resetRealtime(arg);
+
       } else if (command.equalsIgnoreCase("restart")) {
         Orient.instance().getProfiler().stopRecording();
         Orient.instance().getProfiler().startRecording();
@@ -70,7 +75,6 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       } else {
         final StringWriter jsonBuffer = new StringWriter();
         final OJSONWriter json = new OJSONWriter(jsonBuffer);
-        final String arg = parts.length > 2 ? parts[2] : null;
         json.append(Orient.instance().getProfiler().toJSON(command, arg));
 
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
