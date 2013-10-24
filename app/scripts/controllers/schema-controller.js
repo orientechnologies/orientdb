@@ -109,7 +109,9 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     for (inn in $scope.property) {
         $scope.propertyNames.push($scope.property[inn]['name'])
     }
-
+    $scope.createNewRecord = function (className) {
+        $location.path("/database/" + $scope.database.getName() + "/browse/create/" + className);
+    }
     $scope.queryAll = function (className) {
         $location.path("/database/" + $scope.database.getName() + "/browse/select * from " + className);
     }

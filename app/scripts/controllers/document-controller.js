@@ -26,7 +26,8 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
 
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
-        $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
+        if ($scope.outgoings != undefined)
+            $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
     }
 
     $scope.filterArray = function (arr) {
@@ -100,7 +101,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
                 types = name + '=' + Database.getMappingFor(type);
             }
             $scope.doc['@fieldTypes'] = types;
-            $scope.$broadcast('fieldAdded',name);
+            $scope.$broadcast('fieldAdded', name);
             $scope.headers.push(name);
         }
     }
@@ -231,10 +232,10 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
 
         $scope.doc = DocumentApi.get({ database: $scope.database, document: $scope.rid}, function () {
             /*$scope.headers = Database.getPropertyFromDoc($scope.doc);
-            $scope.isGraph = Database.isGraph($scope.doc['@class']);
-            $scope.incomings = Database.getEdge($scope.doc, 'in_');
-            $scope.outgoings = Database.getEdge($scope.doc, 'out_');
-            $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));*/
+             $scope.isGraph = Database.isGraph($scope.doc['@class']);
+             $scope.incomings = Database.getEdge($scope.doc, 'in_');
+             $scope.outgoings = Database.getEdge($scope.doc, 'out_');
+             $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));*/
         }, function (error) {
             Notification.push({content: JSON.stringify(error)});
             $location.path('404');
@@ -295,7 +296,7 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
                 $scope.doc['@fieldTypes'] = types;
             }
 
-            $scope.$broadcast('fieldAdded',name);
+            $scope.$broadcast('fieldAdded', name);
             $scope.headers.push(name);
         } else {
             var modalScope = $scope.$new(true);
