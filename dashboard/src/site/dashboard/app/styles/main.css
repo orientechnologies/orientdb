@@ -127,6 +127,22 @@ button.btn-primary, .btn.btn-primary {
     text-shadow: none !important;
 }
 
+.box {
+    background: none repeat scroll 0 0 #c95b5b;
+    border: 0 none;
+    box-shadow: none !important;
+    padding: 5px;
+    text-shadow: none !important;
+    color: #ffffff;
+}
+
+.box .nav > li {
+    font-size: 12px;
+}
+.box  a {
+    color: #ffffff;
+}
+
 .btn {
     background-color: #D3D3D3;
     background-image: none;
@@ -140,10 +156,21 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+
 .btn-small {
+    background-color: #D3D3D3;
+    background-image: none;
+    border: 0 none;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    color: #333333;
+    cursor: pointer;
+    filter: none;
+    outline: medium none;
+    padding: 7px 14px;
+    text-shadow: none;
     padding: 4px 8px;
 }
-
 .btn-trasparent {
     background-color: rgba(0, 0, 0, 0);
 }
@@ -296,7 +323,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     -moz-border-left-colors: none;
     -moz-border-right-colors: none;
     -moz-border-top-colors: none;
-    border-color: -moz-use-text-color #B4CEF8 #B4CEF8;
+    border-color:  #DDDDDD ;
     border-image: none;
     border-style: none solid solid;
     border-width: 0 1px 1px;
@@ -483,7 +510,7 @@ table.align-left {
     text-decoration: none;
 }
 
-fieldset.form_mailwhat{
+fieldset.form_mailwhat {
     border: 0 none;
     margin: 11px 0 0 29px;
     padding: 0;
@@ -495,6 +522,7 @@ fieldset.form_mailwhat{
     border-bottom: 2px solid #A5360F;
     padding: 9px 15px;
 }
+
 .modal-footer {
     background-color: #8F8F8F;
     border-radius: 0 0 6px 6px;
@@ -504,10 +532,12 @@ fieldset.form_mailwhat{
     padding: 14px 15px 15px;
     text-align: right;
 }
+
 .modal-header .close {
     color: #FFFFFF;
     margin-top: 2px;
 }
+
 .modal {
     background-clip: padding-box;
     background-color: #FFFFFF;
@@ -522,6 +552,7 @@ fieldset.form_mailwhat{
     width: 560px;
     z-index: 1050;
 }
+
 .gridStyle {
     height: 300px;
 }

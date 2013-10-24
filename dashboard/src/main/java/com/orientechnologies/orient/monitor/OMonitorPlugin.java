@@ -72,6 +72,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String								CLASS_DICTIONARY					= "Dictionary";
 
 	public static final String								CLASS_USER_CONFIGURATION	= "UserConfiguration";
+	public static final String								CLASS_METRIC_CONFIG				= "MetricConfig";
 
 	private OServer														serverInstance;
 	private long															updateTimer;
@@ -281,6 +282,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
 		userConfig.createProperty("user", OType.LINK, ouser);
+		
+		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
+		metricConfig.createProperty("name", OType.STRING);
 	}
 
 	@Override

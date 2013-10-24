@@ -43,6 +43,8 @@
     "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
+    "dashboard.preview": "Dashboard Preview",
+    "dashboard.config.available": "Available Configuration",
     "dashboard.settings": "Settings",
     "dashboard.metrics.title": "Metrics Builder",
     "dashboard.query": "Query Profiler",
@@ -63,7 +65,8 @@
     "dashboard.metric.detail": "Configuration detail",
     "dashboard.metric.create": "New",
     "dashboard.metric.save": "Save",
-    "dashboard.metric.name" : "Name",
-    "dashboard.metric.preview" : "Preview"
+    "dashboard.metric.name": "Name",
+    "dashboard.metric.preview": "Preview",
+    "dashboard.metric.server": "Server"
 
 }

@@ -9,9 +9,11 @@
 
     <div class="row-fluid">
         <ul class="nav nav-tabs">
-            <li ng-class="{ active : 'dashboard' == currentTab }"><a href="#home" ng-click="currentTab = 'dashboard'" data-toggle="tab">{{ 'dashboard' |
+            <li ng-class="{ active : 'dashboard' == currentTab }"><a href="#home" ng-click="currentTab = 'dashboard'"
+                                                                     data-toggle="tab">{{ 'dashboard' |
                 i18n }}</a></li>
-            <li ng-class="{ active : 'metrics' == currentTab }"><a href="#messages" ng-click="currentTab = 'metrics'" data-toggle="tab">{{
+            <li ng-class="{ active : 'metrics' == currentTab }"><a href="#messages" ng-click="currentTab = 'metrics'"
+                                                                   data-toggle="tab">{{
                 'dashboard.metrics' | i18n }}</a></li>
         </ul>
     </div>
@@ -29,7 +31,7 @@
                 <div class="widget-title">
                     <div class="widget-caption">
                         <i class="icon-reorder"></i>
-                        {{ 'dashboard.metric.saved' | i18n }}
+                        {{ 'dashboard.config.available' | i18n }}
                     </div>
                 </div>
                 <div class="widget-body">
@@ -44,7 +46,7 @@
                         <tr ng-repeat="metr in savedMetrics">
                             <td>{{metr.name}}</td>
                             <td>
-                                <a href="javascript:void(0)" ng-click="selectConfig(metr)"><i
+                                <a href="javascript:void(0)" class="btn-small" ng-click="selectConfig(metr)"><i
                                         class="icon-plus-sign"></i></a>
                             </td>
                         </tr>
@@ -61,27 +63,28 @@
                 <div class="widget-title">
                     <div class="widget-caption">
                         <i class="icon-reorder"></i>
-                        {{ 'dashboard.metrics' | i18n }}
+                        {{ 'dashboard.preview' | i18n }}
                     </div>
                 </div>
                 <div class="widget-body">
-                    <table class="table table-striped  table-hover table-condensed table-nocolor">
-                        <thead>
-                        <tr>
-                            <th>{{ 'dashboard.metric.name' | i18n }}</th>
-                            <th></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="metr in config.metrics">
-                            <td>{{metr.name}}</td>
-                            <td>
-                                <a href="javascript:void(0)" ng-click="deleteConfig(metr)"><i
-                                        class="icon-trash"></i></a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+
+                    <div class="row-fluid">
+                        <div class="span4 box" ng-repeat="metr in config.metrics">
+                            <div class="span12">
+                                <div class="span10">
+                                    <h4>{{ metr.name }}</h4>
+                                </div>
+                                <div class="span2">
+                                    <a href="javascript:void(0)" ng-click="deleteConfig(metr);"><i class="icon-remove pull-right"></i></a>
+                                </div>
+                            </div>
+                            <div class="span12">
+                                <ul class="nav nav-pills nav-stacked">
+                                    <li ng-repeat="c in metr.config">{{ c.name }} ( {{ c.field }} )</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>

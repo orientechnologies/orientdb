@@ -1,52 +1,127 @@
 'use strict';
 
 var app = angular.module('MonitorApp');
-app.controller('SingleMetricController', function ($scope, $location, $routeParams, Monitor, Metric) {
+app.controller('SingleMetricController', function ($scope, $location, $routeParams, $timeout, Monitor, Metric) {
 
-    $scope.render = "bar";
+        $scope.render = "bar";
 
 
-    $scope.metricScope.$watch($scope.metric, function (data) {
-        $scope.config = data;
-        if ($scope.range)
-            $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
+        $scope.metricScope.$watch($scope.metric, function (data) {
+            $scope.config = data;
+            if ($scope.range)
+                $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
 
-    });
-    $scope.$watch('range', function (data) {
-        //$scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
-    });
-    $scope.refreshData = function (metrics, dataFrom, dataTo) {
-
-        var names = new Array;
-        var configs = new Array;
-        metrics.config.forEach(function (elem, idx, array) {
-            names.push(elem.name);
-            configs[elem.name] = elem.field;
         });
-        Metric.getMetrics({ names: names, server: metrics.server, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
-            $scope.metricsData = new Array;
-            var tmpArr = new Array;
-
-
-            data.result.forEach(function (elem, idx, array) {
-                if (!tmpArr[elem.name]) {
-                    tmpArr[elem.name] = new Array;
-                }
-                var el = undefined;
-
-                if (configs[elem.name]) {
-                    el = elem[configs[elem.name]];
-                } else if (elem['class'] == 'Information') {
-                    el = elem.value
+        $scope.$watch('range', function (data) {
+            //$scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
+        });
+        $scope.$watch('realtime', function (data) {
+            if (data != undefined) {
+                if (data) {
+                    var poll = function () {
+                        $timeout(function () {
+                            $scope.refreshRealtime($scope.config);
+                            poll();
+                        }, 5000);
+                    }
+                    poll();
                 } else {
-                    el = elem.entries;
+                    if ($scope.range)
+                        $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
                 }
-                tmpArr[elem.name][elem.dateTo] = el; //([elem.dateTo, el]);
+            }
+        });
+        $scope.refreshRealtime = function (metrics) {
+
+            var names = "";
+            metrics.config.forEach(function (elem, idx) {
+                if (idx == 0) {
+                    names = elem.name;
+                } else {
+                    names = names + "," + elem.name;
+                }
+
             });
-            $scope.metricsData = tmpArr;
-        })
+            if (!metrics.server.name) {
+                Monitor.getServer(metrics.server, function (data) {
+                    var params = {  server: data.name, type: 'realtime', kind: 'chrono', names: names };
+                    Metric.get(params, function (data) {
+                        $scope.renderRealTimeData(data, metrics);
+                    });
+                });
+            } else {
+                var params = {  server: metrics.server.name, type: 'realtime', kind: 'chrono', names: names };
+                Metric.get(params, function (data) {
+                    $scope.renderRealTimeData(data, metrics);
+                });
+            }
+        }
+        $scope.renderRealTimeData = function (data, metrics) {
+            var tmpArr = new Array;
+            var names = new Array;
+            var configs = new Array;
+            if (!$scope.metricsData)$scope.metricsData = new Array;
+            metrics.config.forEach(function (elem, idx, array) {
+                names.push(elem.name);
+                configs[elem.name] = elem.field;
+            });
+            data.result.forEach(function (elem, idx, array) {
+                var date = new Date();
+                Object.keys(elem).forEach(function (elemKey) {
+                    if (!tmpArr[elemKey]) {
+                        tmpArr[elemKey] = new Array;
+                    }
+
+                    var el = undefined;
+
+                    if (configs[elemKey]) {
+                        el = elem[elemKey][configs[elemKey]];
+                    } else if (elem['class'] == 'Information') {
+                        el = elem.value
+                    } else {
+                        el = elem.entries;
+                    }
+                    tmpArr[elemKey][moment(data).format("YYYY-MM-DD HH:mm:ss")] = el;
+                });
+            });
+            $scope.metricsData = $scope.metricsData.concat(tmpArr);
+        }
+        $scope.refreshData = function (metrics, dataFrom, dataTo) {
+
+            var names = new Array;
+            var configs = new Array;
+            if (metrics.config) {
+                metrics.config.forEach(function (elem, idx, array) {
+                    names.push(elem.name);
+                    configs[elem.name] = elem.field;
+                });
+                Metric.getMetrics({ names: names, server: metrics.server, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
+                    $scope.metricsData = new Array;
+                    var tmpArr = new Array;
+
+
+                    data.result.forEach(function (elem, idx, array) {
+                        if (!tmpArr[elem.name]) {
+                            tmpArr[elem.name] = new Array;
+                        }
+                        var el = undefined;
+
+                        if (configs[elem.name]) {
+                            el = elem[configs[elem.name]];
+                        } else if (elem['class'] == 'Information') {
+                            el = elem.value
+                        } else {
+                            el = elem.entries;
+                        }
+                        tmpArr[elem.name][elem.dateTo] = el;
+                    });
+                    $scope.metricsData = tmpArr;
+                })
+            }
+        }
     }
-});
+)
+;
 
 app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, $odialog, Monitor, Metric, Server, MetricConfig) {
 
@@ -70,6 +145,8 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             $scope.savedMetrics = data.result;
             if ($scope.savedMetrics.length > 0) {
                 $scope.selectedConfig = $scope.savedMetrics[0];
+            } else {
+                $scope.selectedConfig = MetricConfig.create();
             }
         });
     }
