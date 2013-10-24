@@ -161,4 +161,8 @@ public class OProfiler extends OAbstractProfiler {
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }
+
+  @Override
+  public void resetRealtime(String iText) {
+  }
 }
