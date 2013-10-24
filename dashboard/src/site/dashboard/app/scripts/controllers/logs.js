@@ -6,18 +6,20 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
     $scope.files = ['ALL_FILES', 'LAST'];
     $scope.selectedType = undefined;
     $scope.selectedFile = undefined;
-    $scope.server = undefined;
-    Monitor.getServer($routeParams.server, function (data) {
-        $scope.server = data;
-        CommandLogApi.getListFiles({server: $scope.server.name }, function (data) {
-            if (data) {
-                for (entry in data['files']) {
-                    $scope.files.push(data['files'][entry]['name']);
-                }
-            }
-        });
-    });
 
+
+    $scope.$watch("server", function (data) {
+
+        if (data) {
+            CommandLogApi.getListFiles({server: $scope.server.name }, function (data) {
+                if (data) {
+                    for (entry in data['files']) {
+                        $scope.files.push(data['files'][entry]['name']);
+                    }
+                }
+            });
+        }
+    });
 
     $scope.results = undefined;
     $scope.selectedSearch = '';
@@ -50,7 +52,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
             );
         }
     }
-    $scope.getListFiles();
+
     $scope.checkDateFrom = function () {
         if ($scope.selectedDateFrom == undefined || $scope.selectedDateFrom == '') {
             return true;
@@ -97,7 +99,6 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
             typeofS = 'file';
             filess = $scope.selectedFile
         }
-
         CommandLogApi.getLastLogs({server: $scope.server.name, file: filess, typeofSearch: typeofS, searchvalue: $scope.selectedSearch, logtype: $scope.selectedType, dateFrom: $scope.selectedDateFrom, hourFrom: $scope.selectedHourFrom, dateTo: $scope.selectedDateTo, hourTo: $scope.selectedHourTo}, function (data) {
             if (data) {
                 $scope.resultTotal = data;

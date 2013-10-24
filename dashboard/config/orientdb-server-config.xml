@@ -48,6 +48,8 @@
 					</command>
 					<command implementation="com.orientechnologies.orient.monitor.http.OServerCommandGetServerLog">
 					</command>
+					<command implementation="com.orientechnologies.orient.monitor.http.OServerCommandGetServerConfiguration">
+					</command>
 				</commands>
 				<parameters>
 					<parameter value="utf-8" name="network.http.charset" />

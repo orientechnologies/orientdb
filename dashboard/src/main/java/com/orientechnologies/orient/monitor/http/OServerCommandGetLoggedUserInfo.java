@@ -19,8 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -33,7 +35,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|loggedUserInfo/*" };
+	private static final String[]	NAMES	= { "GET|loggedUserInfo/*", "POST|loggedUserInfo/*" };
 
 	public OServerCommandGetLoggedUserInfo(final OServerCommandConfiguration iConfiguration) {
 	}
@@ -45,12 +47,25 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
 
 		String command = urlParts[2];
 		if ("configuration".equals(command)) {
-			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-			Map<String, Object> params = new HashMap<String, Object>();
-			params.put("user", session.getUserName());
-			final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
-					"select from UserConfig where user.name = :user"), params);
-			iResponse.writeRecords(response);
+			if (iRequest.httpMethod.equals("GET")) {
+				ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("user", session.getUserName());
+				final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
+						"select from UserConfiguration where user.name = :user"), params);
+				iResponse.writeRecords(response);
+			} else {
+				ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+				ODatabaseRecordThreadLocal.INSTANCE.set(db);
+				ODocument doc = new ODocument().fromJSON(iRequest.content);
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("name", session.getUserName());
+				List<ODocument> users = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from OUser where name = :name"), params);
+				ODocument user = users.iterator().next();
+				doc.field("user", user);
+				doc.save();
+				iResponse.writeResult(doc, "indent:6");
+			}
 			return false;
 		} else {
 			try {

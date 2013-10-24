@@ -71,7 +71,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String								CLASS_INFORMATION					= "Information";
 	public static final String								CLASS_DICTIONARY					= "Dictionary";
 
-	public static final String								CLASS_USER_CONFIGURATION	= "UserConfig";
+	public static final String								CLASS_USER_CONFIGURATION	= "UserConfiguration";
 
 	private OServer														serverInstance;
 	private long															updateTimer;

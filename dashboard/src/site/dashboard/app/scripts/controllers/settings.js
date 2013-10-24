@@ -43,18 +43,18 @@ module.controller('ServerEditController', function ($scope, $location, $injector
     });
 
 });
-module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric,Settings) {
+module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric, MetricConfig, Settings) {
 
     $scope.currentTab = 'dashboard';
 
-    Settings.get(function(data){
-        if(data.result.length == 0){
+    Settings.get(function (data) {
+        if (data.result.length == 0) {
             $scope.config = Settings.new();
-        }   else {
+        } else {
             $scope.config = data.result[0];
         }
 
-        console.log(data);
+
     });
     $scope.pagingOptions = {
         pageSizes: [10, 20, 50],
@@ -66,10 +66,10 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         pagingOptions: $scope.pagingOptions,
         totalServerItems: 'total',
         columnDefs: [
-        {field: 'name', displayName: 'Name'},
-        {field: 'description', displayName: 'Age'},
-        {field: 'enabled', displayName: 'Enabled'}
-    ]
+            {field: 'name', displayName: 'Name'},
+            {field: 'description', displayName: 'Age'},
+            {field: 'enabled', displayName: 'Enabled'}
+        ]
     };
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
@@ -77,7 +77,33 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
     });
 
-    $scope.saveSettings = function(){
-        Settings.put($scope.config);
+    $scope.refreshMetricConfig = function () {
+        MetricConfig.getAll(function (data) {
+            $scope.savedMetrics = data.result;
+            if ($scope.savedMetrics.length > 0) {
+                $scope.selectedConfig = $scope.savedMetrics[0];
+            }
+        });
     }
+    $scope.saveSettings = function () {
+        Settings.put($scope.config,function(data){
+            $scope.config = data.result[0];
+        });
+    }
+    $scope.selectConfig = function (config) {
+        if (!$scope.config['metrics']) {
+            $scope.config['metrics'] = new Array;
+        }
+        $scope.config['metrics'].push(config);
+    }
+    $scope.deleteConfig = function (config) {
+        if (!$scope.config['metrics']) {
+
+        }
+        var idx =$scope.config['metrics'].indexOf(config);
+        $scope.config['metrics'].splice(idx,1);
+
+    }
+
+    $scope.refreshMetricConfig();
 });
