@@ -46,7 +46,7 @@ public class CLibrary {
 
     memmove = memmoveFc;
     bcopy = bcopyFc;
-    OLogManager.instance().info(CLibrary.class, "Following c library functions were found memmove : %s , bcopy : %s.",
+    OLogManager.instance().debug(CLibrary.class, "Following c library functions were found memmove : %s , bcopy : %s.",
         memmoveFc != null ? "yes" : "no", bcopyFc != null ? "yes" : "no");
   }
 
