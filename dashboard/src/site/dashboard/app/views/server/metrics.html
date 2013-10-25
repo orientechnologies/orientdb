@@ -45,9 +45,9 @@
                             <tr ng-repeat="metr in savedMetrics">
                                 <td>{{metr.name}}</td>
                                 <td>
-                                    <a href="javascript:void(0)"  ng-click="selectConfig(metr)"><i
+                                    <a href="javascript:void(0)" ng-click="selectConfig(metr)"><i
                                             class="icon-edit"></i></a>
-                                    <a href="javascript:void(0)"  ng-click="deleteConfig(metr)"><i
+                                    <a href="javascript:void(0)" ng-click="deleteConfig(metr)"><i
                                             class="icon-trash"></i></a>
                                 </td>
                             </tr>
@@ -84,7 +84,8 @@
 
                                 <div class="controls">
                                     <input type="text" id="inputName" placeholder="Name" ng-model="selectedConfig.name">
-                                    <button class="btn pull-right" ng-click="addConfig()"><span class="icon-plus"></span>
+                                    <button class="btn pull-right" ng-click="addConfig()"><span
+                                            class="icon-plus"></span>
                                     </button>
                                 </div>
 
@@ -94,8 +95,10 @@
                                     }}</label>
 
                                 <div class="controls">
-                                    <select ui-select2 ng-model="selectedConfig.server" class="span3"  data-placeholder="Pick a Server">
-                                        <option ng-repeat="s in servers" ng-value="s['@rid']">{{s.name}}</option>
+                                    <select ng-model="selectedConfig.server" class="span3"
+                                            ng-options="s['@rid'] as s.name for s in servers"
+                                            data-placeholder="Pick a Server">
+
                                     </select>
 
                                     </button>
@@ -122,6 +125,6 @@
         </div>
 
 
-        <div metricchart="selectedConfig" ></div>
+        <div metricchart="selectedConfig"></div>
     </div>
 </div>

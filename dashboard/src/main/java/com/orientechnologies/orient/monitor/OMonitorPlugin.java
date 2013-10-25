@@ -282,9 +282,10 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
 		userConfig.createProperty("user", OType.LINK, ouser);
-		
+
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
+		metricConfig.createProperty("server", OType.LINK, server);
 	}
 
 	@Override

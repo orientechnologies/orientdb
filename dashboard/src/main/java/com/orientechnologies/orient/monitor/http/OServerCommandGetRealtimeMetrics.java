@@ -40,7 +40,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    if (monitor == null)
+     if (monitor == null)
       monitor = OServerMain.server().getPluginByClass(OMonitorPlugin.class);
 
     final String[] parts = checkSyntax(iRequest.url, 6, "Syntax error: metrics/monitor/<server>/<type>/<kind>/<names>");

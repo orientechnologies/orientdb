@@ -18,6 +18,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.$watch('realtime', function (data) {
             if (data != undefined) {
                 if (data) {
+                    $scope.metricsData = null;
                     var poll = function () {
                         $timeout(function () {
                             $scope.refreshRealtime($scope.config);
@@ -44,23 +45,28 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             });
             if (!metrics.server.name) {
                 Monitor.getServer(metrics.server, function (data) {
-                    var params = {  server: data.name, type: 'realtime', kind: 'chrono', names: names };
+                    var params = {  server: data.name, type: 'realtime', kind: 'information', names: names };
                     Metric.get(params, function (data) {
                         $scope.renderRealTimeData(data, metrics);
                     });
                 });
             } else {
-                var params = {  server: metrics.server.name, type: 'realtime', kind: 'chrono', names: names };
+                var params = {  server: metrics.server.name, type: 'realtime', kind: 'information', names: names };
                 Metric.get(params, function (data) {
                     $scope.renderRealTimeData(data, metrics);
                 });
             }
         }
+        var getFirstKey = function (data) {
+            for (var elem in data)
+                return elem;
+        };
         $scope.renderRealTimeData = function (data, metrics) {
             var tmpArr = new Array;
             var names = new Array;
             var configs = new Array;
             if (!$scope.metricsData)$scope.metricsData = new Array;
+
             metrics.config.forEach(function (elem, idx, array) {
                 names.push(elem.name);
                 configs[elem.name] = elem.field;
@@ -71,9 +77,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     if (!tmpArr[elemKey]) {
                         tmpArr[elemKey] = new Array;
                     }
-
                     var el = undefined;
-
                     if (configs[elemKey]) {
                         el = elem[elemKey][configs[elemKey]];
                     } else if (elem['class'] == 'Information') {
@@ -81,10 +85,44 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     } else {
                         el = elem.entries;
                     }
-                    tmpArr[elemKey][moment(data).format("YYYY-MM-DD HH:mm:ss")] = el;
+                    tmpArr[elemKey][moment(date).format("YYYY-MM-DD HH:mm:ss")] = el;
                 });
             });
-            $scope.metricsData = $scope.metricsData.concat(tmpArr);
+
+            var clone = new Array;
+            Object.keys($scope.metricsData).forEach(function (k) {
+                if (!clone[k]) {
+                    clone[k] = new Array;
+                }
+                Object.keys($scope.metricsData[k]).forEach(function (sK, idx) {
+
+                    if (!clone[k][sK]) {
+                        clone[k][sK] = new Array;
+                    }
+                    clone[k][sK] = $scope.metricsData[k][sK];
+                });
+
+            });
+            Object.keys(tmpArr).forEach(function (k) {
+                if (!clone[k]) {
+                    clone[k] = new Array;
+                }
+                Object.keys(tmpArr[k]).forEach(function (sK, idx, array) {
+                    if (!clone[k][sK]) {
+                        clone[k][sK] = new Array;
+                    }
+                    var lastDiff = tmpArr[k][sK];
+                    if ($scope.lastArr) {
+                        lastDiff = $scope.lastArr[k][getFirstKey($scope.lastArr[k])];
+                    }
+                    clone[k][sK] = tmpArr[k][sK] - lastDiff;
+
+
+                });
+
+            });
+            $scope.metricsData = clone;
+            $scope.lastArr = tmpArr;
         }
         $scope.refreshData = function (metrics, dataFrom, dataTo) {
 
@@ -95,7 +133,8 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     names.push(elem.name);
                     configs[elem.name] = elem.field;
                 });
-                Metric.getMetrics({ names: names, server: metrics.server, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
+                var rid = metrics.server.name ? metrics.server['@rid'] : metrics.server;
+                Metric.getMetrics({ names: names, server: rid, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
                     $scope.metricsData = new Array;
                     var tmpArr = new Array;
 
@@ -115,6 +154,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                         }
                         tmpArr[elem.name][elem.dateTo] = el;
                     });
+
                     $scope.metricsData = tmpArr;
                 })
             }

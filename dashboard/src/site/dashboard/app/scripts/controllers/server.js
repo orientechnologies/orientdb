@@ -24,14 +24,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             $scope.rid = $scope.servers[0]['@rid'];
             $scope.server =  $scope.servers[0];
         }
-        Server.findDatabases($scope.server.name, function (data) {
-            $scope.databases = data;
-            var db = $scope.databases[0];
-            $scope.dbselected = db;
-        });
-        Server.getConfiguration($scope.server, function (data) {
-            $scope.configuration = data.configuration;
-        });
+
     });
     $scope.editorOptions = {
         lineWrapping: true,
@@ -57,7 +50,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             names.push(del);
             names.push(read);
         });
-        Metric.getMetrics({names: names, server: $scope.rid , limit : 20 }, function (data) {
+        Metric.getMetrics({names: names, server: $scope.server['@rid'] , limit : 20 }, function (data) {
             $scope.serverLoad = new Array;
             var tmpArr = new Array;
 
@@ -81,6 +74,18 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             $scope.serverLoad = tmpArr;
         });
     }
+    $scope.$watch("server",function(server){
+        if(server){
+            Server.findDatabases(server.name, function (data) {
+                $scope.databases = data;
+                var db = $scope.databases[0];
+                $scope.dbselected = db;
+            });
+            Server.getConfiguration(server, function (data) {
+                $scope.configuration = data.configuration;
+            });
+        }
+    });
     $scope.getDbMetrics = function (db) {
         var DOT = '.';
         var CREATE_LABEL = 'createRecord';

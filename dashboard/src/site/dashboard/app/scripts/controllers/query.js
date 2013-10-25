@@ -39,10 +39,7 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
                 $scope.server = $scope.servers[0];
             }
         }
-        if ($scope.server) {
 
-            $scope.findDatabases($scope.server.name);
-        }
     });
 
     $scope.refresh = function () {
@@ -76,11 +73,16 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
         });
         return commands;
     }
+    $scope.$watch("server", function (server) {
+        if (server) {
+            $scope.findDatabases(server.name);
+        }
+    });
     $scope.findDatabases = function (server) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
         Metric.get(params, function (data) {
             $scope.databases = data.result[0]['system.databases'].split(",");
-            if ($scope.databases.length > 0 && !$scope.db) {
+            if ($scope.databases.length > 0) {
                 $scope.db = $scope.databases[0];
             }
             if ($scope.db) {
