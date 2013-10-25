@@ -698,9 +698,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           OLogManager
               .instance()
               .error(
-											this,
-											"Error on using index %s in query '%s'. Probably you need to rebuild indexes. Now executing query using cluster scan",
-											e, index, request != null && request.getText() != null ? request.getText() : "");
+                  this,
+                  "Error on using index %s in query '%s'. Probably you need to rebuild indexes. Now executing query using cluster scan",
+                  e, index, request != null && request.getText() != null ? request.getText() : "");
           return false;
         }
       }
@@ -1393,8 +1393,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
             for (OIndex<?> idx : involvedIndexes) {
               if (idx.getKeyTypes().length == 1 && idx.supportsOrderedIterations()) {
-                if (idx.getKeySize() < MIN_THRESHOLD_USE_INDEX_AS_TARGET || compiledFilter == null) {
-
+                if (idx.getType().startsWith("UNIQUE") && idx.getKeySize() < MIN_THRESHOLD_USE_INDEX_AS_TARGET
+                    || compiledFilter == null) {
                   if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
                     target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
                   else
