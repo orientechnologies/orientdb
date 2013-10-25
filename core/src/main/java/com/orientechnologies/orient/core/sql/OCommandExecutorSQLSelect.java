@@ -462,37 +462,44 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
     ORuntimeResult group = null;
 
-    Object key = null;
-    if (groupedResult == null)
-      groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
+    final long projectionElapsed = (Long) context.getVariable("projectionElapsed", 0l);
+    final long begin = System.currentTimeMillis();
+    try {
 
-    if (fieldValue != null) {
-      if (fieldValue.getClass().isArray()) {
-        // LOOK IT BY HASH (FASTER THAN COMPARE EACH SINGLE VALUE)
-        final Object[] array = (Object[]) fieldValue;
+      Object key = null;
+      if (groupedResult == null)
+        groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
 
-        final StringBuilder keyArray = new StringBuilder();
-        for (Object o : array) {
-          if (keyArray.length() > 0)
-            keyArray.append(",");
-          if (o != null)
-            keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
-          else
-            keyArray.append("null");
-        }
+      if (fieldValue != null) {
+        if (fieldValue.getClass().isArray()) {
+          // LOOK IT BY HASH (FASTER THAN COMPARE EACH SINGLE VALUE)
+          final Object[] array = (Object[]) fieldValue;
 
-        key = keyArray.toString();
-      } else
-        // LOKUP FOR THE FIELD
-        key = fieldValue;
+          final StringBuilder keyArray = new StringBuilder();
+          for (Object o : array) {
+            if (keyArray.length() > 0)
+              keyArray.append(",");
+            if (o != null)
+              keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
+            else
+              keyArray.append("null");
+          }
+
+          key = keyArray.toString();
+        } else
+          // LOKUP FOR THE FIELD
+          key = fieldValue;
+      }
+
+      group = groupedResult.get(key);
+      if (group == null) {
+        group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
+        groupedResult.put(key, group);
+      }
+      return group;
+    } finally {
+      context.setVariable("projectionElapsed", projectionElapsed + (System.currentTimeMillis() - begin));
     }
-
-    group = groupedResult.get(key);
-    if (group == null) {
-      group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
-      groupedResult.put(key, group);
-    }
-    return group;
   }
 
   private int getQueryFetchLimit() {

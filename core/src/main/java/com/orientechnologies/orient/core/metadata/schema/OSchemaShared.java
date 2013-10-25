@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
@@ -434,7 +438,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
     }, false);
 
-    if (cls == null) {
+    if (cls == null && getDatabase().getDatabaseOwner() instanceof ODatabaseObject) {
       cls = getDatabase().getStorage().callInLock(new Callable<OClass>() {
         @Override
         public OClass call() throws Exception {

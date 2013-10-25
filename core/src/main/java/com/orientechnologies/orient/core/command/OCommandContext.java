@@ -28,7 +28,9 @@ public interface OCommandContext {
     RETURN, EXCEPTION
   }
 
-  public Object getVariable(final String iName);
+  public Object getVariable(String iName);
+
+  public Object getVariable(String iName, Object iDefaultValue);
 
   public OCommandContext setVariable(final String iName, final Object iValue);
 
