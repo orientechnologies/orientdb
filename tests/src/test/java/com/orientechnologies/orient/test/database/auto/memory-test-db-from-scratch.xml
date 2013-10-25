@@ -159,9 +159,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentUpdatesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.TombstonesIterationTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.ReplicaPlacementTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.TestCleanOut"/>
         </classes>
     </test>
     <test name="DbTools">

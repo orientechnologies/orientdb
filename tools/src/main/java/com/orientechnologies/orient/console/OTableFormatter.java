@@ -16,18 +16,8 @@
 package com.orientechnologies.orient.console;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
@@ -227,6 +217,7 @@ public class OTableFormatter {
         columns.put(c, getColumnSize(fetched, rec, c, columns.get(c)));
 
       if (rec instanceof ODocument) {
+        ((ODocument) rec).setLazyLoad(false);
         // PARSE ALL THE DOCUMENT'S FIELDS
         ODocument doc = (ODocument) rec;
         for (String fieldName : doc.fieldNames()) {

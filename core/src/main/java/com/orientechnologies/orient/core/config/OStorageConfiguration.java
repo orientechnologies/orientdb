@@ -216,9 +216,7 @@ public class OStorageConfiguration implements OSerializableStream {
       } else if (clusterType.equals("m"))
         // MEMORY CLUSTER
         currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
-      else if (clusterType.equals("h")) {
-        currentCluster = new OStorageEHClusterConfiguration(this, clusterId, clusterName, null, targetDataSegmentId);
-      } else if (clusterType.equals("d")) {
+      else if (clusterType.equals("d")) {
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null,
             Boolean.valueOf(read(values[index++])), Float.valueOf(read(values[index++])), Float.valueOf(read(values[index++])),
             read(values[index++]));

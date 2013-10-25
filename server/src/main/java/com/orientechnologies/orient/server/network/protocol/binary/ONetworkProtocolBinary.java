@@ -243,10 +243,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       rangeCluster();
       break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED:
-      isLHClustersAreUsed();
-      break;
-
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
       addCluster();
       break;
@@ -627,23 +623,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
       channel.writeClusterPosition(pos[0]);
       channel.writeClusterPosition(pos[1]);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void isLHClustersAreUsed() throws IOException {
-    setDataCommandInfo("Determinate whether clusters are presented as persistent list or hash map ");
-
-    if (!isConnectionAlive())
-      return;
-
-    final boolean isLHClustersAreUsed = connection.database.getStorage().isHashClustersAreUsed();
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeByte(isLHClustersAreUsed ? (byte) 1 : 0);
     } finally {
       endResponse();
     }

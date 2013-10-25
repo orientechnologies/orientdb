@@ -370,6 +370,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();
+          exportEntry.setLazyLoad(false);
+
           if (indexDefinition instanceof ORuntimeKeyIndexDefinition
               && ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer() != null) {
             final OBinarySerializer binarySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();

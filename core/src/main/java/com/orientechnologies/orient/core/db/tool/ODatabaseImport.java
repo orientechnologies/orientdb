@@ -283,7 +283,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       do {
         final String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
 
-        if (!value.isEmpty()) {
+        if (!value.isEmpty() && !indexName.equalsIgnoreCase(EXPORT_IMPORT_MAP_NAME)) {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
           doc.setLazyLoad(false);
 

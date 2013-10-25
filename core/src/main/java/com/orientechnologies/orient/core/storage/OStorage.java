@@ -257,11 +257,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public STATUS getStatus();
 
   /**
-   * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
-   */
-  public boolean isHashClustersAreUsed();
-
-  /**
    * Returns the storage's type.
    * 
    * @return

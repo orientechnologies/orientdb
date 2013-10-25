@@ -306,6 +306,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   private final class EntriesIterator implements Iterator<Map.Entry<Object, V>> {
+    private int                                 size = 0;
     private int                                 nextEntriesIndex;
     private OHashIndexBucket.Entry<Object, V>[] entries;
 
@@ -315,6 +316,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
         entries = new OHashIndexBucket.Entry[0];
       else
         entries = hashTable.ceilingEntries(firstEntry.key);
+
+      size += entries.length;
     }
 
     @Override
@@ -332,6 +335,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       if (nextEntriesIndex >= entries.length) {
         entries = hashTable.higherEntries(entries[entries.length - 1].key);
+        size += entries.length;
+
         nextEntriesIndex = 0;
       }
 

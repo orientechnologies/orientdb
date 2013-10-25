@@ -893,35 +893,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
-  @Override
-  public boolean isHashClustersAreUsed() {
-    checkConnection();
-
-    OChannelBinaryClient network = null;
-    do {
-      try {
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED);
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-
-          final boolean isLHClustersAreUsed = network.readByte() > 0;
-          return isLHClustersAreUsed;
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (Exception e) {
-        handleException(network, "Error during requesting of cluster persistence mode", e);
-      }
-    } while (true);
-
-  }
-
   /**
    * Execute the command remotely and get the results back.
    */

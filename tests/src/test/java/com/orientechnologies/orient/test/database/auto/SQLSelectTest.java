@@ -15,16 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -938,9 +929,6 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationAndRidInWhere() {
-    if (database.getStorage().isHashClustersAreUsed())
-      return;
-
     int clusterId = database.getClusterIdByName("profile");
 
     OClusterPosition[] range = database.getStorage().getClusterDataRange(clusterId);
@@ -1504,13 +1492,12 @@ public class SQLSelectTest {
 
     ORID secondPlaceId = secondPlace.getIdentity();
     ORID famousPlaceId = famousPlace.getIdentity();
-    //if one of these two asserts fails, the test will be meaningless.
+    // if one of these two asserts fails, the test will be meaningless.
     Assert.assertTrue(secondPlaceId.getClusterId() < famousPlaceId.getClusterId());
     Assert.assertTrue(secondPlaceId.getClusterPosition().longValue() > famousPlaceId.getClusterPosition().longValue());
 
-    List<ODocument> result = new OSQLSynchQuery<ODocument>("select from Place where @rid in ["
-        + secondPlaceId + "," + famousPlaceId +
-        "]").execute();
+    List<ODocument> result = new OSQLSynchQuery<ODocument>("select from Place where @rid in [" + secondPlaceId + ","
+        + famousPlaceId + "]").execute();
     Assert.assertEquals(2, result.size());
 
     database.getMetadata().getSchema().dropClass("FamousPlace");

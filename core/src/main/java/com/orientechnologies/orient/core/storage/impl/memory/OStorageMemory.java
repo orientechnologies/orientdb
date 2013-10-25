@@ -191,8 +191,7 @@ public class OStorageMemory extends OStorageEmbedded {
         }
       }
 
-      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory()
-          .createCluster(OClusterMemory.TYPE, forceListBased);
+      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory().createCluster(OClusterMemory.TYPE);
       cluster.configure(this, clusterId, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
 
       if (clusterId == clusters.size())
@@ -976,11 +975,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public void setDefaultClusterId(int defaultClusterId) {
     this.defaultClusterId = defaultClusterId;
-  }
-
-  @Override
-  public boolean isHashClustersAreUsed() {
-    return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean();
   }
 
   @Override

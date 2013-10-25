@@ -50,29 +50,35 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
 
   private final ODirectMemoryPointer  bufferPointer;
 
-  private final Comparator<? super K> comparator                 = ODefaultComparator.INSTANCE;
-
   private final OBinarySerializer<K>  keySerializer;
   private final OBinarySerializer<V>  valueSerializer;
   private final OType[]               keyTypes;
+  private final OHashFunction<K>      keyHashFunction;
+  private final KeyHashCodeComparator comparator;
 
   public OHashIndexBucket(int depth, ODirectMemoryPointer bufferPointer, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OType[] keyTypes) {
+      OBinarySerializer<V> valueSerializer, OType[] keyTypes, OHashFunction<K> keyHashFunction) {
     this.bufferPointer = bufferPointer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.keyTypes = keyTypes;
+    this.keyHashFunction = keyHashFunction;
+
+    this.comparator = new KeyHashCodeComparator<K>(keyHashFunction);
 
     bufferPointer.setByte(DEPTH_OFFSET, (byte) depth);
     OIntegerSerializer.INSTANCE.serializeInDirectMemory(MAX_BUCKET_SIZE_BYTES, bufferPointer, FREE_POINTER_OFFSET);
   }
 
   public OHashIndexBucket(ODirectMemoryPointer bufferPointer, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OType[] keyTypes) {
+      OBinarySerializer<V> valueSerializer, OType[] keyTypes, OHashFunction<K> keyHashFunction) {
     this.bufferPointer = bufferPointer;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.keyTypes = keyTypes;
+    this.keyHashFunction = keyHashFunction;
+
+    this.comparator = new KeyHashCodeComparator<K>(keyHashFunction);
   }
 
   public Entry<K, V> find(final K key) {
@@ -303,6 +309,29 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     @Override
     public void remove() {
       throw new UnsupportedOperationException("Remove operation is not supported");
+    }
+  }
+
+  protected static final class KeyHashCodeComparator<K> implements Comparator<K> {
+    private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
+
+    private final OHashFunction<K>      keyHashFunction;
+
+    public KeyHashCodeComparator(OHashFunction<K> keyHashFunction) {
+      this.keyHashFunction = keyHashFunction;
+    }
+
+    @Override
+    public int compare(K keyOne, K keyTwo) {
+      final long hashCodeOne = keyHashFunction.hashCode(keyOne);
+      final long hashCodeTwo = keyHashFunction.hashCode(keyTwo);
+
+      if (hashCodeOne > hashCodeTwo)
+        return 1;
+      if (hashCodeOne < hashCodeTwo)
+        return -1;
+
+      return comparator.compare(keyOne, keyTwo);
     }
   }
 }

@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
-import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -141,10 +140,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       pos = registerDataSegment(new OStorageDataConfiguration(configuration, OStorage.DATA_DEFAULT_NAME, 0, getStoragePath()));
       dataSegments[pos].open();
 
-      if (OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean())
-        addEHDefaultClusters();
-      else
-        addDefaultClusters();
+      addDefaultClusters();
 
       // REGISTER DATA SEGMENT
       for (int i = 0; i < configuration.dataSegments.size(); ++i) {
@@ -177,8 +173,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
               if (clusters[i] != null && clusters[i] instanceof OClusterLocal)
                 clusters[i].close();
 
-              clusters[i] = Orient.instance().getClusterFactory()
-                  .createCluster(OClusterLocal.TYPE, clusters[i] instanceof OClusterLocal);
+              clusters[i] = Orient.instance().getClusterFactory().createCluster(OClusterLocal.TYPE);
               clusters[i].configure(this, clusterConfig);
               clusterMap.put(clusters[i].getName(), clusters[i]);
               clusters[i].open();
@@ -235,21 +230,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
     defaultClusterId = createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         CLUSTER_DEFAULT_NAME));
-  }
-
-  private void addEHDefaultClusters() throws IOException {
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadataDefault.CLUSTER_INTERNAL_NAME));
-    configuration.load();
-
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadataDefault.CLUSTER_INDEX_NAME));
-
-    createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
-        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME));
-
-    defaultClusterId = createClusterFromConfig(new OStorageEHClusterConfiguration(configuration, clusters.length,
-        CLUSTER_DEFAULT_NAME, null, 0));
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -820,7 +800,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
             break;
           }
 
-        cluster = Orient.instance().getClusterFactory().createCluster(iClusterType, forceListBased);
+        cluster = Orient.instance().getClusterFactory().createCluster(iClusterType);
         cluster.configure(this, clusterPos, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
       } else
         cluster = null;
@@ -1656,7 +1636,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
     if (cluster instanceof OClusterLocal && iConfig instanceof OStorageEHClusterConfiguration)
       clusterMap.remove(iConfig.getName());
     else if (cluster != null) {
-      if (cluster instanceof OClusterLocal || cluster instanceof OClusterLocalEH) {
+      if (cluster instanceof OClusterLocal) {
         // ALREADY CONFIGURED, JUST OVERWRITE CONFIG
         cluster.configure(this, iConfig);
       }
@@ -1762,11 +1742,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
     }
-  }
-
-  @Override
-  public boolean isHashClustersAreUsed() {
-    return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean();
   }
 
   @Override
