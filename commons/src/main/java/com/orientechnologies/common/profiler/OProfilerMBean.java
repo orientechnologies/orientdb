@@ -81,4 +81,6 @@ public interface OProfilerMBean extends OService {
   public String getDatabaseMetric(String databaseName, String iName);
 
   public String toJSON(String command, final String iPar1);
+
+  public void resetRealtime(final String iText);
 }

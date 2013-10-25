@@ -48,8 +48,12 @@ public class OBasicCommandContext implements OCommandContext {
   }
 
   public Object getVariable(String iName) {
+    return getVariable(iName, null);
+  }
+
+  public Object getVariable(String iName, final Object iDefault) {
     if (iName == null)
-      return null;
+      return iDefault;
 
     if (iName.startsWith("$"))
       iName = iName.substring(1);
@@ -83,7 +87,7 @@ public class OBasicCommandContext implements OCommandContext {
       lastPart = null;
     }
 
-    Object result = null;
+    Object result = iDefault;
     if (firstPart.equalsIgnoreCase("CONTEXT"))
       result = getVariables();
     else if (firstPart.equalsIgnoreCase("PARENT"))

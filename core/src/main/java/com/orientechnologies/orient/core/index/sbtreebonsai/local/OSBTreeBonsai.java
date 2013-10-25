@@ -17,13 +17,7 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -747,7 +741,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
               return bucket.getKey(0);
             }
           } else {
-            if (bucket.isEmpty() || itemIndex >= bucket.size()) {
+            if (bucket.isEmpty() || itemIndex > bucket.size()) {
               if (path.isEmpty()) {
                 return null;
               } else {
@@ -757,11 +751,16 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
                 itemIndex = pagePathItemUnit.itemIndex + 1;
               }
             } else {
-              OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-
               path.add(new PagePathItemUnit(bucketPointer, itemIndex));
 
-              bucketPointer = entry.leftChild;
+              if (itemIndex < bucket.size()) {
+                OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+                bucketPointer = entry.leftChild;
+              } else {
+                OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex - 1);
+                bucketPointer = entry.rightChild;
+              }
+
               itemIndex = 0;
             }
           }
@@ -812,7 +811,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
               return bucket.getKey(bucket.size() - 1);
             }
           } else {
-            if (itemIndex < 0) {
+            if (itemIndex < -1) {
               if (!path.isEmpty()) {
                 PagePathItemUnit pagePathItemUnit = path.removeLast();
 
@@ -821,11 +820,16 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
               } else
                 return null;
             } else {
-              OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-
               path.add(new PagePathItemUnit(bucketPointer, itemIndex));
 
-              bucketPointer = entry.rightChild;
+              if (itemIndex > -1) {
+                OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+                bucketPointer = entry.rightChild;
+              } else {
+                OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry = bucket.getEntry(0);
+                bucketPointer = entry.leftChild;
+              }
+
               itemIndex = OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES + 1;
             }
           }

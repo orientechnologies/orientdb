@@ -857,7 +857,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       try {
         while (true) {
           if (!bucket.isLeaf()) {
-            if (bucket.isEmpty() || itemIndex >= bucket.size()) {
+            if (bucket.isEmpty() || itemIndex > bucket.size()) {
               if (!path.isEmpty()) {
                 PagePathItemUnit pagePathItemUnit = path.removeLast();
 
@@ -866,11 +866,16 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
               } else
                 return null;
             } else {
-              OSBTreeBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-
               path.add(new PagePathItemUnit(bucketIndex, itemIndex));
 
-              bucketIndex = entry.leftChild;
+              if (itemIndex < bucket.size()) {
+                OSBTreeBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+                bucketIndex = entry.leftChild;
+              } else {
+                OSBTreeBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex - 1);
+                bucketIndex = entry.rightChild;
+              }
+
               itemIndex = 0;
             }
           } else {
@@ -920,7 +925,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       try {
         while (true) {
           if (!bucket.isLeaf()) {
-            if (itemIndex < 0) {
+            if (itemIndex < -1) {
               if (!path.isEmpty()) {
                 PagePathItemUnit pagePathItemUnit = path.removeLast();
 
@@ -929,11 +934,16 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
               } else
                 return null;
             } else {
-              OSBTreeBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
-
               path.add(new PagePathItemUnit(bucketIndex, itemIndex));
 
-              bucketIndex = entry.rightChild;
+              if (itemIndex > -1) {
+                OSBTreeBucket.SBTreeEntry<K, V> entry = bucket.getEntry(itemIndex);
+                bucketIndex = entry.rightChild;
+              } else {
+                OSBTreeBucket.SBTreeEntry<K, V> entry = bucket.getEntry(0);
+                bucketIndex = entry.leftChild;
+              }
+
               itemIndex = OSBTreeBucket.MAX_PAGE_SIZE_BYTES + 1;
             }
           } else {

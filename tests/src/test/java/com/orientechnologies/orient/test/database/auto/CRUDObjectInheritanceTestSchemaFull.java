@@ -45,11 +45,7 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
-import com.orientechnologies.orient.test.domain.business.Account;
-import com.orientechnologies.orient.test.domain.business.Address;
-import com.orientechnologies.orient.test.domain.business.City;
-import com.orientechnologies.orient.test.domain.business.Company;
-import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.business.*;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestAbstractClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
@@ -93,6 +89,9 @@ public class CRUDObjectInheritanceTestSchemaFull {
       ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
       importDatabase.open("admin", "admin");
       ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
+
+      if (url.startsWith("local:") || url.startsWith("memory:"))
+        impor.setPreserveClusterIDs(false);
 
       // UNREGISTER ALL THE HOOKS
       for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks())) {

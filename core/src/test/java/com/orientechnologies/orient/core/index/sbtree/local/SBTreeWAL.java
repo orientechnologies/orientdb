@@ -220,6 +220,27 @@ public class SBTreeWAL extends SBTreeTest {
     assertFileRestoreFromWAL();
   }
 
+  @Override
+  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
+    super.testAddKeyValuesInTwoBucketsAndMakeFirstEmpty();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
+    super.testAddKeyValuesInTwoBucketsAndMakeLastEmpty();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
+    super.testAddKeyValuesAndRemoveFirstMiddleAndLastPages();
+
+    assertFileRestoreFromWAL();
+  }
+
   @Test(enabled = false)
   @Override
   public void testValuesMajor() {
