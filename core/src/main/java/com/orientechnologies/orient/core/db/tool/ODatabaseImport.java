@@ -902,22 +902,26 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 
-      listener.onMessage("\n- Index '" + indexName + "'...");
       // drop automatically created indexes
-      indexManager.dropIndex(indexName);
-      indexesToRebuild.remove(indexName.toLowerCase());
+      if (!indexName.equalsIgnoreCase(EXPORT_IMPORT_MAP_NAME)) {
+        listener.onMessage("\n- Index '" + indexName + "'...");
 
-      int[] clusterIdsToIndex = new int[clustersToIndex.size()];
+        indexManager.dropIndex(indexName);
+        indexesToRebuild.remove(indexName.toLowerCase());
 
-      int i = 0;
-      for (final String clusterName : clustersToIndex) {
-        clusterIdsToIndex[i] = database.getClusterIdByName(clusterName);
-        i++;
+        int[] clusterIdsToIndex = new int[clustersToIndex.size()];
+
+        int i = 0;
+        for (final String clusterName : clustersToIndex) {
+          clusterIdsToIndex[i] = database.getClusterIdByName(clusterName);
+          i++;
+        }
+
+        indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null);
+        n++;
+        listener.onMessage("OK");
+
       }
-
-      indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null);
-      n++;
-      listener.onMessage("OK");
     }
 
     listener.onMessage("\nDone. Created " + n + " indexes.");
