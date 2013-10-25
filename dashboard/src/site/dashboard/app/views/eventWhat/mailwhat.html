@@ -3,37 +3,38 @@
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
         <h3>Mail Alert</h3>
     </div>
-    <div class="row">
+    <div class="row mailwhatform">
 
-        <form>
+        <form name="mailwhatform">
             <fieldset class="form_mailwhat">
                 From:
-                <input type="text" id="fromAddress" name="name" placeholder="from"
-                       ng-model="eventWhat['fromAddress']">
+                <input type="email" id="fromAddress" class="input-block-level" name="name" placeholder="from"
+                       ng-model="eventWhat['fromAddress']" required>
                 To:
-                <input type="text" id="toAddress" name="name" class="input-block-level" placeholder="to"
-                       ng-model="eventWhat['toAddress']">
+                <input type="email" id="toAddress" name="name" class="input-block-level" placeholder="to"
+                       ng-model="eventWhat['toAddress']" required>
 
                 <div>Cc:
-                    <input type="text" id="cc" name="name" placeholder="cc"
-                           ng-model="eventWhat['cc']" style="width: 210px">
+                    <input type="email" id="cc" name="name" placeholder="cc"
+                           ng-model="eventWhat['cc']" style="width: 210px" required>
 
                     Bcc:
-                    <input type="text" id="bcc" name="name" placeholder="bcc"
-                           ng-model="eventWhat['bcc']" style="width: 220px">
+                    <input type="email" id="bcc" name="name" placeholder="bcc"
+                           ng-model="eventWhat['bcc']" style="width: 220px" required>
                 </div>
                 Subject:
                 <input type="text" id="subject" name="name" class="input-block-level" placeholder="subject"
-                       ng-model="eventWhat['subject']">
+                       ng-model="eventWhat['subject']" required>
                 Body:
                 <textarea rows="3" id="description" name="body" class="input-block-level"
-                          style="height: 200px" placeholder="body" ng-model="eventWhat['body']"></textarea>
+                          style="height: 200px" placeholder="body" ng-model="eventWhat['body']" required></textarea>
             </fieldset>
         </form>
 
     </div>
 
+
     <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" ng-click="hide()">Submit</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="mailwhatform.$invalid" ng-click="hide()">Submit</button>
     </div>
 </div>

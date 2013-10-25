@@ -12,8 +12,8 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
 
     });
+    //$scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
     $scope.$watch('range', function (data) {
-        //$scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
     });
     $scope.refreshData = function (metrics, dataFrom, dataTo) {
 

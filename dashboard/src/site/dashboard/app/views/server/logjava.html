@@ -1,5 +1,11 @@
-<div class="row-fluid" ng-controller="LogsJavaController">
-    <div class="span12">
+<div class="container-fluid">
+    <h3>
+        <i class="icon-bug"></i>
+        {{ 'dashboard.notifications.title' | i18n }}
+    </h3>
+
+    <hr>
+    <div class="row-fluid" ng-controller="LogsJavaController">
 
         <table class="form-search-width">
             <tr>
@@ -84,6 +90,7 @@
             </tr>
         </table>
         <br>
+
         <div class="row-fluid">
             <div class="pagination span10">
                 <ul>

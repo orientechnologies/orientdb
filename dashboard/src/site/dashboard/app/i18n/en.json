@@ -63,7 +63,14 @@
     "dashboard.metric.detail": "Configuration detail",
     "dashboard.metric.create": "New",
     "dashboard.metric.save": "Save",
-    "dashboard.metric.name" : "Name",
-    "dashboard.metric.preview" : "Preview"
+    "dashboard.metric.name": "Name",
+    "dashboard.metric.preview": "Preview",
+    "dashboard.events.title": "Events",
+    "dashboard.notifications.title": "Notifications",
+    "MetricsWhen" : "Metrics"  ,
+    "LogWhen" : "Log"  ,
+    "FunctionWhat" : "Function"  ,
+    "HttpWhat" : "Http"  ,
+    "MailWhat" : "Mail"
 
 }

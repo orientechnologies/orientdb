@@ -7,15 +7,15 @@
 
     <br>
 
-    <div>
+    <div class="functionwhatform">
 
-        <form>
+        <form name="functionwhatform">
             <fieldset class="form_mailwhat">
 
                 Name : <input id="name" ng-model="eventWhat['name']" type="text" class="input-block-level"
-                              placeholder="Name">
+                              placeholder="Name" required>
                 Language: <select ng-model="eventWhat['language']" class="input-block-level"
-                                  ng-options="lang for lang in languages">
+                                  ng-options="lang for lang in languages" required>
             </select>
                 Idempotent: <input type="checkbox" ng-model="eventWhat['idempotent']">
 
@@ -31,11 +31,12 @@
                 <p>
                 <ul class="horizontallist">
 
-                    <li ng-repeat="param in eventWhat['parameters']">
+                    <li ng-repeat="param in eventWhat['parameters'] track by $index">
                         <div class="input-append" style="margin-right: 10px">
                             <input style="width: 45px" type="text" ng-model="eventWhat['parameters'][$index]">
-                            <a href="javascript:void(0)" class="btn" ng-click="removeParam($index)" style="height: 16px; width: 10px;"> <i
-                                    class=" icon-trash" ></i> </a>
+                            <a href="javascript:void(0)" class="btn" ng-click="removeParam($index)"
+                               style="height: 16px; width: 10px;"> <i
+                                    class=" icon-trash"></i> </a>
                         </div>
 
                     </li>
@@ -44,7 +45,8 @@
 
                 Code:
                 <div class="row-fluid">
-                    <textarea class="input-block-level" style="height: 150px;" ng-model="eventWhat['code']"></textarea>
+                    <textarea class="input-block-level" style="height: 150px;" ng-model="eventWhat['code']"
+                              required></textarea>
                 </div>
             </fieldset>
         </form>
@@ -53,8 +55,8 @@
     </div>
 
     <div class="modal-footer">
-
-        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="button" class="btn btn-primary" ng-disabled="functionwhatform.$invalid" ng-click="hide()">Submit
+        </button>
     </div>
 
 </div>

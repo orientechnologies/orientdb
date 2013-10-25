@@ -107,7 +107,7 @@ button.btn-primary, .btn.btn-primary {
 
 .table th {
     background: none repeat scroll 0 0 #4E4E4E;
-    color: #FFFFFF;
+    /*color: #FFFFFF;*/
     font-size: 13px;
     padding-bottom: 6px;
     padding-top: 6px;
@@ -140,6 +140,7 @@ button.btn-primary, .btn.btn-primary {
     padding: 7px 14px;
     text-shadow: none;
 }
+
 .btn-small {
     padding: 4px 8px;
 }
@@ -483,7 +484,7 @@ table.align-left {
     text-decoration: none;
 }
 
-fieldset.form_mailwhat{
+fieldset.form_mailwhat {
     border: 0 none;
     margin: 11px 0 0 29px;
     padding: 0;
@@ -495,6 +496,7 @@ fieldset.form_mailwhat{
     border-bottom: 2px solid #A5360F;
     padding: 9px 15px;
 }
+
 .modal-footer {
     background-color: #8F8F8F;
     border-radius: 0 0 6px 6px;
@@ -504,10 +506,12 @@ fieldset.form_mailwhat{
     padding: 14px 15px 15px;
     text-align: right;
 }
+
 .modal-header .close {
     color: #FFFFFF;
     margin-top: 2px;
 }
+
 .modal {
     background-clip: padding-box;
     background-color: #FFFFFF;
@@ -522,6 +526,7 @@ fieldset.form_mailwhat{
     width: 560px;
     z-index: 1050;
 }
+
 .gridStyle {
     height: 300px;
 }
@@ -534,3 +539,12 @@ ul.horizontallist, ol.horizontallist {
     margin: 0px !important;
     padding: 0px;
 }
+
+div.functionwhatform select.ng-invalid.ng-dirty, div.functionwhatform input.ng-invalid.ng-dirty , div.mailwhatform input.ng-invalid.ng-dirty {
+    border: 2px solid #FA787E;
+}
+
+div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-valid.ng-dirty,div.mailwhatform input.ng-valid.ng-dirty {
+    border: 2px solid #78FA89;
+}
+
