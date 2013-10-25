@@ -127,6 +127,22 @@ button.btn-primary, .btn.btn-primary {
     text-shadow: none !important;
 }
 
+.box {
+    background: none repeat scroll 0 0 #c95b5b;
+    border: 0 none;
+    box-shadow: none !important;
+    padding: 5px;
+    text-shadow: none !important;
+    color: #ffffff;
+}
+
+.box .nav > li {
+    font-size: 12px;
+}
+.box  a {
+    color: #ffffff;
+}
+
 .btn {
     background-color: #D3D3D3;
     background-image: none;
@@ -142,9 +158,19 @@ button.btn-primary, .btn.btn-primary {
 }
 
 .btn-small {
+    background-color: #D3D3D3;
+    background-image: none;
+    border: 0 none;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    color: #333333;
+    cursor: pointer;
+    filter: none;
+    outline: medium none;
+    padding: 7px 14px;
+    text-shadow: none;
     padding: 4px 8px;
 }
-
 .btn-trasparent {
     background-color: rgba(0, 0, 0, 0);
 }
@@ -297,7 +323,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     -moz-border-left-colors: none;
     -moz-border-right-colors: none;
     -moz-border-top-colors: none;
-    border-color: -moz-use-text-color #B4CEF8 #B4CEF8;
+    border-color:  #DDDDDD ;
     border-image: none;
     border-style: none solid solid;
     border-width: 0 1px 1px;

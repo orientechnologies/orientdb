@@ -114,8 +114,8 @@
 
     </div>
     <div class="row-fluid">
-        <div ng-class="span6" ng-repeat="metr in config.metrics">
-            {{ metr.name }}
+        <div class="span6" ng-repeat="metr in config.metrics">
+            <div metricchart="config.metrics[$index]" ></div>
         </div>
     </div>
 

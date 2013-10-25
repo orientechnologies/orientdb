@@ -8,14 +8,13 @@
                 </div>
                 <div class="actions span8">
                     <div class="row-fluid">
-                        <div class="span3">
-                        </div>
                         <div class="metric-range span6" ng-model="range" rangepicker="range">
                             <i class="icon-calendar"></i>
                             <span></span>
                             <i class="icon-angle-down"></i>
                         </div>
-                        <div class="span3">
+                        <div class="span6">
+
                             <a class="btn btn-trasparent pull-right"
                                ng-class="{ 'btn-inverse' : 'area' == render }"
                                href="javascript:void(0)" ng-click="render = 'area'">
@@ -26,7 +25,9 @@
                                href="javascript:void(0)" ng-click="render = 'bar'">
                                 <i class="icon-bar-chart"></i>
                             </a>
-
+                            <label class="checkbox pull-right">
+                                <input type="checkbox" ng-model="realtime"> Realtime
+                            </label>
                         </div>
 
                     </div>

@@ -43,6 +43,8 @@
     "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
+    "dashboard.preview": "Dashboard Preview",
+    "dashboard.config.available": "Available Configuration",
     "dashboard.settings": "Settings",
     "dashboard.metrics.title": "Metrics Builder",
     "dashboard.query": "Query Profiler",
@@ -71,6 +73,7 @@
     "LogWhen" : "Log"  ,
     "FunctionWhat" : "Function"  ,
     "HttpWhat" : "Http"  ,
-    "MailWhat" : "Mail"
+    "MailWhat" : "Mail",
+"dashboard.metric.server": "Server"
 
 }

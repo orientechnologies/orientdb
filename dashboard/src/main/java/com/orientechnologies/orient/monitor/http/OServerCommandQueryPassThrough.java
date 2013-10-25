@@ -31,9 +31,10 @@ public class OServerCommandQueryPassThrough extends OServerCommandAuthenticatedD
 			final URL remoteUrl = new java.net.URL("http://" + server.field("url") + "/server");
 			String response =  OMonitorUtils.fetchFromRemoteServer(server, remoteUrl);
 			iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, response, null);
+		}else {
+			iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);	
 		}
-		iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
-		return true;
+		return false;
 	}
 
 	@Override

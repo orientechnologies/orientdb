@@ -79,14 +79,26 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
     $scope.refreshMetricConfig = function () {
         MetricConfig.getAll(function (data) {
-            $scope.savedMetrics = data.result;
-            if ($scope.savedMetrics.length > 0) {
-                $scope.selectedConfig = $scope.savedMetrics[0];
+            var tmp = data.result;
+            if (tmp.length > 0) {
+                $scope.selectedConfig = tmp[0];
+                if ($scope.config['metrics']) {
+                    $scope.savedMetrics = tmp.filter(function (elem) {
+                        var found = true;
+                        $scope.config['metrics'].forEach(function (el, idx, arr) {
+                            if (el['name'] == elem['name']) {
+                                found = false;
+                            }
+                        });
+                        return found;
+                    });
+                    console.log($scope.savedMetrics);
+                }
             }
         });
     }
     $scope.saveSettings = function () {
-        Settings.put($scope.config,function(data){
+        Settings.put($scope.config, function (data) {
             $scope.config = data.result[0];
         });
     }
@@ -95,15 +107,19 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.config['metrics'] = new Array;
         }
         $scope.config['metrics'].push(config);
+        var idx = $scope.savedMetrics.indexOf(config);
+        $scope.savedMetrics.splice(idx, 1);
     }
     $scope.deleteConfig = function (config) {
-        if (!$scope.config['metrics']) {
-
-        }
-        var idx =$scope.config['metrics'].indexOf(config);
-        $scope.config['metrics'].splice(idx,1);
+        var idx = $scope.config['metrics'].indexOf(config);
+        $scope.config['metrics'].splice(idx, 1);
+        $scope.savedMetrics.push(config);
 
     }
 
-    $scope.refreshMetricConfig();
+
+    $scope.$watch("config", function (data) {
+        if (data)
+            $scope.refreshMetricConfig();
+    });
 });

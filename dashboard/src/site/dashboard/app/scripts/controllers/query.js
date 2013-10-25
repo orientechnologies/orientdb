@@ -2,12 +2,30 @@
 
 var app = angular.module('MonitorApp');
 
-app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric) {
+app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n) {
 
 
     $scope.rid = $routeParams.server;
     $scope.db = $routeParams.db;
 
+    $scope.filterOptions = {filterText: '' };
+
+    $scope.gridOptions = { data: 'commands',
+        enablePaging: true,
+        pagingOptions: $scope.pagingOptions,
+        totalServerItems: 'total',
+        filterOptions: $scope.filterOptions,
+        columnDefs: [
+            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype'},
+            {field: 'name', displayName: $i18n.get('queryprofiler.command'), cellFilter: 'cname'},
+            {field: 'entries', displayName: $i18n.get('queryprofiler.entries')},
+            {field: 'average', displayName: $i18n.get('queryprofiler.average')},
+            {field: 'total', displayName: $i18n.get('queryprofiler.total')},
+            {field: 'max', displayName: $i18n.get('queryprofiler.max')},
+            {field: 'min', displayName: $i18n.get('queryprofiler.min')},
+            {field: 'last', displayName: $i18n.get('queryprofiler.last')}
+        ]
+    };
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
         if ($scope.rid) {
@@ -22,6 +40,7 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             }
         }
         if ($scope.server) {
+
             $scope.findDatabases($scope.server.name);
         }
     });
@@ -32,16 +51,14 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
         var params = {  server: $scope.server.name, type: 'realtime', kind: 'chrono', names: metricName };
         Metric.get(params, function (data) {
             $scope.commands = $scope.flatten(data.result, metricName);
-
-
         });
     }
 
     $scope.delete = function () {
         var metricName = 'db.' + $scope.db + '.command.';
-        var params = {  server: $scope.sName, type: 'realtime', names: metricName };
+        var params = {  server: $scope.server.name, type: 'realtime', names: metricName };
         Metric.delete(params, function (data) {
-            console.log(data);
+            $scope.refresh();
         });
     }
     $scope.flatten = function (result, metricName) {
@@ -66,8 +83,9 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             if ($scope.databases.length > 0 && !$scope.db) {
                 $scope.db = $scope.databases[0];
             }
-            if ($scope.db)
+            if ($scope.db) {
                 $scope.refresh();
+            }
         });
     }
 

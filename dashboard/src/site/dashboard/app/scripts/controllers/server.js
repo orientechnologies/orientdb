@@ -22,20 +22,16 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
         if (!$scope.rid && $scope.servers.length > 0) {
             $scope.rid = $scope.servers[0]['@rid'];
+            $scope.server =  $scope.servers[0];
         }
-        if ($scope.rid) {
-            Monitor.getServer($scope.rid, function (data) {
-                $scope.server = data;
-                Server.findDatabases(data.name, function (data) {
-                    $scope.databases = data;
-                    var db = $scope.databases[0];
-                    $scope.dbselected = db;
-                });
-                Server.getConfiguration($scope.server, function (data) {
-                    $scope.configuration = data.configuration;
-                });
-            });
-        }
+        Server.findDatabases($scope.server.name, function (data) {
+            $scope.databases = data;
+            var db = $scope.databases[0];
+            $scope.dbselected = db;
+        });
+        Server.getConfiguration($scope.server, function (data) {
+            $scope.configuration = data.configuration;
+        });
     });
     $scope.editorOptions = {
         lineWrapping: true,
@@ -61,7 +57,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
             names.push(del);
             names.push(read);
         });
-        Metric.getMetrics({names: names, server: $scope.rid }, function (data) {
+        Metric.getMetrics({names: names, server: $scope.rid , limit : 20 }, function (data) {
             $scope.serverLoad = new Array;
             var tmpArr = new Array;
 
@@ -95,7 +91,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         var update = 'db.' + db + DOT + UPDATE_LABEL;
         var del = 'db.' + db + DOT + DELETE_LABEL;
         var read = 'db.' + db + DOT + READ_LABEL;
-        Metric.getMetrics({names: [create, update, read, del], server: $scope.rid }, function (data) {
+        Metric.getMetrics({names: [create, update, read, del], server: $scope.rid,limit : 20 }, function (data) {
             $scope.operationData = new Array;
             var tmpArr = new Array;
 
