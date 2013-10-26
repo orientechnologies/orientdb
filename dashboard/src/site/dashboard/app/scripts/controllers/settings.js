@@ -92,7 +92,6 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
                         });
                         return found;
                     });
-                    console.log($scope.savedMetrics);
                 }
             }
         });

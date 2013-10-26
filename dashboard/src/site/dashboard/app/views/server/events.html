@@ -1,9 +1,11 @@
 <div class="container-fluid">
-    <h3>
-        <i class="icon-bell"></i>
-        {{ 'dashboard.events.title' | i18n }}
-    </h3>
-    <hr>
+    <div class="row-fluid title">
+        <h3>
+            <i class="icon-bell"></i>
+            {{ 'dashboard.events.title' | i18n }}
+        </h3>
+        <hr>
+    </div>
     <div class="row-fluid" ng-controller="EventsController">
         <a href="javascript:void(0)" class="btn" ng-click="newEvent()"> <i
                 class="icon-plus"></i> New Event</a>

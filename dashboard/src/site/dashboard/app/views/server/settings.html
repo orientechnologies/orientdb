@@ -1,12 +1,13 @@
 <div class="container-fluid" ng-controller="SettingsController">
-    <h3>
-        <i class=" icon-gear"></i>
-        {{ 'dashboard.settings' | i18n }}
+    <div class="row-fluid title">
+        <h3>
+            <i class=" icon-gear"></i>
+            {{ 'dashboard.settings' | i18n }}
 
-        <button class="btn pull-right" ng-click="saveSettings()">Save</button>
-    </h3>
-    <hr>
-
+            <button class="btn pull-right" ng-click="saveSettings()">Save</button>
+        </h3>
+        <hr>
+    </div>
     <div class="row-fluid">
         <ul class="nav nav-tabs">
             <li ng-class="{ active : 'dashboard' == currentTab }"><a href="#home" ng-click="currentTab = 'dashboard'"
@@ -75,7 +76,8 @@
                                     <h4>{{ metr.name }}</h4>
                                 </div>
                                 <div class="span2">
-                                    <a href="javascript:void(0)" ng-click="deleteConfig(metr);"><i class="icon-remove pull-right"></i></a>
+                                    <a href="javascript:void(0)" ng-click="deleteConfig(metr);"><i
+                                            class="icon-remove pull-right"></i></a>
                                 </div>
                             </div>
                             <div class="span12">

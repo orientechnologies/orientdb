@@ -1,9 +1,11 @@
 <div class="container-fluid">
-    <h3>
-        <i class="icon-bar-chart"></i>
-        {{ 'dashboard.metrics.title' | i18n }}
-    </h3>
-    <hr>
+    <div class="row-fluid title">
+        <h3>
+            <i class="icon-bar-chart"></i>
+            {{ 'dashboard.metrics.title' | i18n }}
+        </h3>
+        <hr>
+    </div>
     <div ng-controller="MetricsMonitorController">
         <!--<div class="row-fluid">
             <div class="well">

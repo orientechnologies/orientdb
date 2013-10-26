@@ -45,13 +45,13 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             });
             if (!metrics.server.name) {
                 Monitor.getServer(metrics.server, function (data) {
-                    var params = {  server: data.name, type: 'realtime', kind: 'information', names: names };
+                    var params = {  server: data.name, type: 'realtime', kind: 'chrono', names: names };
                     Metric.get(params, function (data) {
                         $scope.renderRealTimeData(data, metrics);
                     });
                 });
             } else {
-                var params = {  server: metrics.server.name, type: 'realtime', kind: 'information', names: names };
+                var params = {  server: metrics.server.name, type: 'realtime', kind: 'chrono', names: names };
                 Metric.get(params, function (data) {
                     $scope.renderRealTimeData(data, metrics);
                 });
@@ -134,10 +134,8 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     configs[elem.name] = elem.field;
                 });
                 var rid = metrics.server.name ? metrics.server['@rid'] : metrics.server;
-                Metric.getMetrics({ names: names, server: rid, dateFrom: dataFrom, dateTo: dataTo}, function (data) {
-                    $scope.metricsData = new Array;
+                var calculateArray = function (data) {
                     var tmpArr = new Array;
-
 
                     data.result.forEach(function (elem, idx, array) {
                         if (!tmpArr[elem.name]) {
@@ -155,8 +153,22 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                         tmpArr[elem.name][elem.dateTo] = el;
                     });
 
-                    $scope.metricsData = tmpArr;
-                })
+                    $scope.metricsData = tmpArr
+                }
+                var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names , compress : 'none' , from : dataFrom , to : dataTo };
+                if (!metrics.server.name) {
+                    Monitor.getServer(metrics.server, function (data) {
+                        var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names , compress : 'none' , from : dataFrom , to : dataTo };
+                        Metric.get(params, function (data) {
+                            calculateArray(data);
+                        });
+                    });
+                } else {
+                    var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names , compress : 'none' , from : dataFrom , to : dataTo };
+                    Metric.get(params, function (data) {
+                        calculateArray(data);
+                    });
+                }
             }
         }
     }

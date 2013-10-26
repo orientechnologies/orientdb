@@ -1,10 +1,14 @@
 <div class="container-fluid">
-    <h3>
-        <i class="icon-bug"></i>
-        {{ 'dashboard.notifications.title' | i18n }}
-    </h3>
+    <div class="row-fluid title">
 
-    <hr>
+        <h3>
+            <i class="icon-bug"></i>
+            {{ 'dashboard.notifications.title' | i18n }}
+        </h3>
+
+
+        <hr>
+    </div>
     <div class="row-fluid" ng-controller="LogsJavaController">
 
         <table class="form-search-width">

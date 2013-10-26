@@ -1,9 +1,11 @@
 <div class="container-fluid">
-    <h3>
-        <i class=" icon-eye-open"></i>
-        {{ 'profiler.title' | i18n }}
-    </h3>
-
+    <div class="row-fluid title">
+        <h3>
+            <i class=" icon-eye-open"></i>
+            {{ 'profiler.title' | i18n }}
+        </h3>
+        <hr/>
+    </div>
     <div ng-controller="QueryMonitorController">
         <div class="row-fluid">
             <form class="form-inline well">
