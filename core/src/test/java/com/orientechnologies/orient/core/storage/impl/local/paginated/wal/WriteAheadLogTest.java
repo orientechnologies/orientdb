@@ -1494,6 +1494,7 @@ public class WriteAheadLogTest {
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(3 * OWALPage.PAGE_SIZE);
     int bt = rndFile.read();
+    rndFile.seek(3 * OWALPage.PAGE_SIZE);
     rndFile.write(bt + 1);
     rndFile.close();
 
