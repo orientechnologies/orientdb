@@ -92,6 +92,13 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable) throws IOException {
     freeze(false);
     try {
+      if (callable != null)
+        try {
+          callable.call();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on callback invocation during backup", e);
+        }
+
       OZIPCompressionUtil.compressDirectory(getStoragePath(), out);
     } finally {
       release();
