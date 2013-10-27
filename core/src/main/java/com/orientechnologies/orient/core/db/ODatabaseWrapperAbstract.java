@@ -70,13 +70,13 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    underlying.backup(out, options);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    underlying.backup(out, options, callable);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    underlying.restore(in, options);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    underlying.restore(in, options, callable);
   }
 
   public void close() {

@@ -128,7 +128,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
 
               final long begin = System.currentTimeMillis();
 
-              db.backup(new FileOutputStream(exportFilePath), null);
+              db.backup(new FileOutputStream(exportFilePath), null, null);
 
               OLogManager.instance().info(
                   this,

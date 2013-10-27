@@ -61,7 +61,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
               databaseName);
 
           final ByteArrayOutputStream out = new ByteArrayOutputStream();
-          database.backup(out, null);
+          database.backup(out, null, null);
 
           final byte[] buffer = out.toByteArray();
 
