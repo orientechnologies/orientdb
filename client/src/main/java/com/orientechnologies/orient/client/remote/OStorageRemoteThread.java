@@ -199,12 +199,12 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable) throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 

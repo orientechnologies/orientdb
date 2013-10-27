@@ -1552,7 +1552,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long startTime = System.currentTimeMillis();
     try {
-      currentDatabase.backup(new FileOutputStream(fileName), null);
+      currentDatabase.backup(new FileOutputStream(fileName), null, null);
 
       message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
 
@@ -1575,7 +1575,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long startTime = System.currentTimeMillis();
     try {
-      currentDatabase.restore(new FileInputStream(fileName), null);
+      currentDatabase.restore(new FileInputStream(fileName), null, null);
 
       message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
 

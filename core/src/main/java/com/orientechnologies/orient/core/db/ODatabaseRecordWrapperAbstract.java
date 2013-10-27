@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -374,16 +376,28 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    underlying.backup(out, options);
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable) throws IOException {
+    underlying.backup(out, options, new Callable<Object>() {
+
+      @Override
+      public Object call() throws Exception {
+        // FLUSHES ALL THE INDEX BEFORE
+        for (OIndex<?> index : getMetadata().getIndexManager().getIndexes()) {
+          index.flush();
+        }
+        if (callable != null)
+          return callable.call();
+        return null;
+      }
+    });
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    underlying.restore(in, options);
+  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable) throws IOException {
+    underlying.restore(in, options, callable);
   }
 
-  protected void checkClusterBoundedToClass(int iClusterId) {
+  protected void checkClusterBoundedToClass(final int iClusterId) {
     if (iClusterId == -1)
       return;
 

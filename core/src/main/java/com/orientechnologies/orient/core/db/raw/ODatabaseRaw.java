@@ -178,16 +178,16 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    getStorage().backup(out, options);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    getStorage().backup(out, options, callable);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
 
-    getStorage().restore(in, options);
+    getStorage().restore(in, options, callable);
   }
 
   public void reload() {

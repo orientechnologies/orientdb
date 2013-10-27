@@ -608,13 +608,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    wrapped.backup(out, options);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    wrapped.backup(out, options, callable);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    wrapped.restore(in, options);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    wrapped.restore(in, options, callable);
   }
 
   private OFreezableStorage getFreezableStorage() {
