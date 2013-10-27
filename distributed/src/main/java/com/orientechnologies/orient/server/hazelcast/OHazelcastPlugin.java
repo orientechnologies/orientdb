@@ -663,7 +663,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             final ByteArrayInputStream in = new ByteArrayInputStream(result.getBuffer());
             try {
-              db.restore(in, null);
+              db.restore(in, null, null);
               in.close();
 
               db.close();
@@ -674,7 +674,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
               distrDatabase.setOnline();
 
-              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database %s in online", databaseName);
+              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database %s is online", databaseName);
 
             } catch (IOException e) {
               ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
