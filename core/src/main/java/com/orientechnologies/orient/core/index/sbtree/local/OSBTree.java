@@ -554,6 +554,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       } finally {
         diskCache.release(rootCacheEntry);
       }
+
+      initDurableComponent(storageLocal);
     } catch (IOException e) {
       throw new OSBTreeException("Exception during loading of sbtree " + name, e);
     } finally {
@@ -607,8 +609,6 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     try {
       key = keySerializer.prepocess(key, keyTypes);
 
-      startDurableOperation(transaction);
-
       BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
       if (bucketSearchResult.itemIndex < 0)
         return null;
@@ -618,6 +618,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       keyBucketPointer.acquireExclusiveLock();
       try {
+        startDurableOperation(transaction);
+
         OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<K, V>(keyBucketPointer.getDataPointer(), keySerializer, keyTypes,
             valueSerializer, getTrackMode());
 
