@@ -19,8 +19,23 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -254,6 +269,7 @@ public class OWOWCache {
   }
 
   public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+    Future future = null;
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
@@ -286,15 +302,17 @@ public class OWOWCache {
       }
 
       if (cacheSize.get() > cacheMaxSize) {
-        Future future = commitExecutor.submit(new PeriodicFlushTask());
-        try {
-          future.get();
-        } catch (InterruptedException e) {
-          Thread.interrupted();
-          throw new OException("File flush was interrupted", e);
-        } catch (Exception e) {
-          throw new OException("File flush was abnormally terminated", e);
-        }
+        future = commitExecutor.submit(new PeriodicFlushTask());
+      }
+    }
+    if (future != null) {
+      try {
+        future.get();
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        throw new OException("File flush was interrupted", e);
+      } catch (Exception e) {
+        throw new OException("File flush was abnormally terminated", e);
       }
     }
   }
@@ -329,16 +347,18 @@ public class OWOWCache {
   }
 
   public void flush(long fileId) {
+    Future<Void> future;
     synchronized (syncObject) {
-      Future<Void> future = commitExecutor.submit(new FileFlushTask(fileId));
-      try {
-        future.get();
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-        throw new OException("File flush was interrupted", e);
-      } catch (Exception e) {
-        throw new OException("File flush was abnormally terminated", e);
-      }
+      future = commitExecutor.submit(new FileFlushTask(fileId));
+    }
+
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new OException("File flush was interrupted", e);
+    } catch (Exception e) {
+      throw new OException("File flush was abnormally terminated", e);
     }
   }
 

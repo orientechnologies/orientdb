@@ -17,7 +17,12 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -253,11 +258,11 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem(), false);
 
-      setSize(size() + sizeDiff);
-
       keyBucketCacheEntry.markDirty();
       keyBucketPointer.releaseExclusiveLock();
       diskCache.release(keyBucketCacheEntry);
+
+      setSize(size() + sizeDiff);
 
       endDurableOperation(transaction, false);
     } catch (IOException e) {
