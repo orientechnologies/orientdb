@@ -442,6 +442,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       } finally {
         diskCache.release(rootCacheEntry);
       }
+
+      initDurableComponent(storageLocal);
     } catch (IOException e) {
       throw new OSBTreeException("Exception during loading of sbtree " + name, e);
     } finally {

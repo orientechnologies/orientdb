@@ -549,6 +549,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       } finally {
         diskCache.release(rootCacheEntry);
       }
+
+      initDurableComponent(storageLocal);
     } catch (IOException e) {
       throw new OSBTreeException("Exception during loading of sbtree " + name, e);
     } finally {
