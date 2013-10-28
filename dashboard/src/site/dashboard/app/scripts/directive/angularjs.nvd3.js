@@ -108,12 +108,12 @@ Widget.directive('stackedchart', function () {
 });
 Widget.directive('stackedarea', function () {
 
-    var createStackedArea = function (data, element,render) {
+    var createStackedArea = function (data, element, render) {
 
         nv.addGraph(function () {
-            if(render == 'bar'){
+            if (render == 'bar') {
                 var chart = nv.models.multiBarChart();
-            }else {
+            } else {
                 var chart = nv.models.stackedAreaChart();
             }
 
@@ -141,7 +141,7 @@ Widget.directive('stackedarea', function () {
             $(element[0]).empty();
             d3.select(element[0])
                 .datum(data)
-                .transition().duration(1200)
+                .transition().duration(0)
                 .call(chart);
 
             nv.utils.windowResize(chart.update);
@@ -155,7 +155,7 @@ Widget.directive('stackedarea', function () {
             var data = attr.stackedarea;
             var render = attr.stackedrender;
 
-            var manipulateData = function(data){
+            var manipulateData = function (data) {
                 var keys = new Array;
                 Object.keys(data).forEach(function (elem, idx, array) {
                     Object.keys(data[elem]).forEach(function (el, i, a) {
@@ -179,15 +179,15 @@ Widget.directive('stackedarea', function () {
                     }
 
                 });
-                createStackedArea(formatted, element,scope[render]);
+                createStackedArea(formatted, element, scope[render]);
             }
             scope.$watch(data, function (data) {
                 if (data) {
-                   manipulateData(data);
+                    manipulateData(data);
                 }
-            }) ;
-            scope.$watch(render,function(ren){
-                if(scope[data]){
+            });
+            scope.$watch(render, function (ren) {
+                if (scope[data]) {
                     manipulateData(scope[data]);
                 }
             })

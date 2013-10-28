@@ -253,7 +253,7 @@
       <file leaf-file-name="log.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="137" column="44" selection-start="4826" selection-end="4846" vertical-scroll-proportion="-8.538462">
+            <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-6.576923">
               <folding />
             </state>
           </provider>
@@ -262,7 +262,7 @@
       <file leaf-file-name="logjava.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="101" column="80" selection-start="4023" selection-end="4023" vertical-scroll-proportion="-13.076923">
+            <state line="105" column="80" selection-start="4090" selection-end="4090" vertical-scroll-proportion="-13.076923">
               <folding />
             </state>
           </provider>
@@ -280,7 +280,7 @@
       <file leaf-file-name="main.css" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="583" column="12" selection-start="11646" selection-end="11646" vertical-scroll-proportion="0.5477308">
+            <state line="702" column="44" selection-start="13796" selection-end="13796" vertical-scroll-proportion="0.39182281">
               <folding />
             </state>
           </provider>
@@ -318,7 +318,7 @@
       <file leaf-file-name="events.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="78" column="8" selection-start="3093" selection-end="3821" vertical-scroll-proportion="-4.936709">
+            <state line="89" column="16" selection-start="3088" selection-end="3821" vertical-scroll-proportion="-4.936709">
               <folding>
                 <element signature="n#style#0;n#select#0;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
               </folding>
@@ -336,7 +336,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/component.json" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/httpwhat.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/mailwhat.html" />
@@ -349,9 +348,10 @@
         <option value="$PROJECT_DIR$/app/views/server/eventsnotify.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
-        <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
+        <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
+        <option value="$PROJECT_DIR$/app/views/server/log.html" />
       </list>
     </option>
   </component>
@@ -798,13 +798,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/log.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="68" column="5" selection-start="2794" selection-end="2794" vertical-scroll-proportion="0.0">
@@ -812,32 +805,39 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="105" column="80" selection-start="4090" selection-end="4090" vertical-scroll-proportion="-13.076923">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="78" column="8" selection-start="3093" selection-end="3821" vertical-scroll-proportion="-4.936709">
+        <state line="89" column="16" selection-start="3088" selection-end="3821" vertical-scroll-proportion="-4.936709">
           <folding>
             <element signature="n#style#0;n#select#0;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
+    <entry file="file://$PROJECT_DIR$/app/views/server/general/log.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="137" column="44" selection-start="4826" selection-end="4846" vertical-scroll-proportion="-8.538462">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
+    <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="101" column="80" selection-start="4023" selection-end="4023" vertical-scroll-proportion="-13.076923">
+        <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-6.576923">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="583" column="12" selection-start="11646" selection-end="11646" vertical-scroll-proportion="0.5477308">
+        <state line="702" column="44" selection-start="13796" selection-end="13796" vertical-scroll-proportion="0.39182281">
           <folding />
         </state>
       </provider>

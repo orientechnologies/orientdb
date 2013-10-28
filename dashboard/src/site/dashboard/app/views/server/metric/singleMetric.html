@@ -8,10 +8,12 @@
                 </div>
                 <div class="actions span8">
                     <div class="row-fluid">
-                        <div class="metric-range span6" ng-model="range" rangepicker="range">
-                            <i class="icon-calendar"></i>
-                            <span></span>
-                            <i class="icon-angle-down"></i>
+                        <div class="span6">
+                            <div class="metric-range" ng-hide="realtime" ng-model="range" rangepicker="range">
+                                <i class="icon-calendar"></i>
+                                <span></span>
+                                <i class="icon-angle-down"></i>
+                            </div>
                         </div>
                         <div class="span6">
 
@@ -25,9 +27,13 @@
                                href="javascript:void(0)" ng-click="render = 'bar'">
                                 <i class="icon-bar-chart"></i>
                             </a>
-                            <label class="checkbox pull-right">
-                                <input type="checkbox" ng-model="realtime"> Realtime
-                            </label>
+                            <div class="onoffswitch">
+                                <input type="checkbox" name="onoffswitch"  ng-model="realtime" class="onoffswitch-checkbox" id="myonoffswitch" >
+                                <label class="onoffswitch-label" for="myonoffswitch">
+                                    <div class="onoffswitch-inner"></div>
+                                    <div class="onoffswitch-switch"></div>
+                                </label>
+                            </div>
                         </div>
 
                     </div>

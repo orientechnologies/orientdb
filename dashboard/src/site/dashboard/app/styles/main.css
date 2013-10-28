@@ -211,6 +211,18 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     width: 85.1064% !important;
 }
 
+section {
+    padding-top: 5px;
+}
+
+.title > hr {
+    margin-top: 0px;
+}
+
+.title > h3 {
+    margin-bottom: 0px;
+}
+
 .navSection {
     padding-top: 20px;
 }
@@ -235,7 +247,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 
 .navMenu ul.nav-list > li {
     border: 1px solid;
-    line-height: 40px;
+    line-height: 35px;
 }
 
 .menuTitle {
@@ -471,7 +483,7 @@ table.align-left {
 .navMenu ul.nav-list > li > a {
     border-top: 1px solid #ffffff !important;
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
 }
 
@@ -583,38 +595,124 @@ div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-val
     vertical-align: top;
     width: 70px;
 }
+
 div.pagination {
     padding: 3px;
     margin: 3px;
-    text-align:left;
+    text-align: left;
 }
 
 div.pagination a {
     border: 1px solid #dedfde;
-    margin-right:3px;
-    padding:0px 5px ;
+    margin-right: 3px;
+    padding: 0px 5px;
 
-    background-position:bottom;
+    background-position: bottom;
     text-decoration: none;
 
     color: #99210B;
 }
+
 div.pagination a:hover, div.pagination a:active {
     border: 1px solid #000;
-    background-image:none;
-    background-color:#777777;
+    background-image: none;
+    background-color: #777777;
     color: #fff;
 }
+
 div.pagination span.current {
-    margin-right:3px;
-    padding:2px 6px;
+    margin-right: 3px;
+    padding: 2px 6px;
 
     font-weight: bold;
     color: #99210B;
 }
-div.pagination span.disabled {
-    margin-right:3px;
-    padding:2px 6px;
 
+div.pagination span.disabled {
+    margin-right: 3px;
+    padding: 2px 6px;
     color: #adaaad;
+}
+
+.onoffswitch {
+    position: relative;
+    width: 135px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.onoffswitch-checkbox {
+    display: none;
+}
+
+.onoffswitch-label {
+    display: block;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #999999;
+    border-radius: 20px;
+}
+
+.onoffswitch-inner {
+    width: 200%;
+    margin-left: -100%;
+    -moz-transition: margin 0.3s ease-in 0s;
+    -webkit-transition: margin 0.3s ease-in 0s;
+    -o-transition: margin 0.3s ease-in 0s;
+    transition: margin 0.3s ease-in 0s;
+}
+
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    float: left;
+    width: 50%;
+    height: 30px;
+    padding: 0;
+    line-height: 30px;
+    font-size: 14px;
+    color: white;
+    font-family: Trebuchet, Arial, sans-serif;
+    font-weight: bold;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.onoffswitch-inner:before {
+    content: "Realtime ON";
+    padding-left: 10px;
+    background-color: #A5360F;
+    color: #FFFFFF;
+}
+
+.onoffswitch-inner:after {
+    content: "Realtime OFF";
+    padding-right: 10px;
+    background-color: #EEEEEE;
+    color: #999999;
+    text-align: right;
+}
+
+.onoffswitch-switch {
+    width: 18px;
+    margin: 6px;
+    background: #FFFFFF;
+    border: 2px solid #999999;
+    border-radius: 20px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 101px;
+    -moz-transition: all 0.3s ease-in 0s;
+    -webkit-transition: all 0.3s ease-in 0s;
+    -o-transition: all 0.3s ease-in 0s;
+    transition: all 0.3s ease-in 0s;
+}
+
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px;
 }

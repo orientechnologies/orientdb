@@ -3,6 +3,8 @@ package com.orientechnologies.orient.monitor.http;
 import java.io.StringWriter;
 import java.net.URL;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.monitor.OMonitorUtils;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -25,7 +27,8 @@ public class OServerCommandQueryPassThrough extends OServerCommandAuthenticatedD
 		
 		StringWriter jsonBuffer = new StringWriter();
 		if(parts[3].equals("alive")){
-			
+			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+			ODatabaseRecordThreadLocal.INSTANCE.set(db);
 			ODocument server = new ODocument();
 			server.fromJSON(iRequest.content);
 			final URL remoteUrl = new java.net.URL("http://" + server.field("url") + "/server");

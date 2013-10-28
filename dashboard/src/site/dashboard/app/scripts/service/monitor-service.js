@@ -66,7 +66,7 @@ monitor.factory('Notification', function ($http, $resource) {
     return resource;
 });
 monitor.factory('Metric', function ($http, $resource) {
-    var resource = $resource(API + 'metrics/monitor/:server/:type/:kind/:names');
+    var resource = $resource(API + 'metrics/monitor/:server/:type/:kind/:names/:compress/:from/:to');
 
     resource.delete = function (params, callback) {
         var url = API + 'metrics/monitor/' + params.server + '/' + params.type + '/' + params.names;
