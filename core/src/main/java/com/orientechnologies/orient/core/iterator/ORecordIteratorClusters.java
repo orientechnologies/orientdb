@@ -282,8 +282,13 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     nextPosition();
 
-    ORecordInternal<?> record = getRecord();
+    final ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
+
+    if (currentRecord != null && !include(currentRecord)) {
+      currentRecord = null;
+      hasNext();
+    }
 
     return this;
   }
@@ -304,8 +309,13 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     prevPosition();
 
-    ORecordInternal<?> record = getRecord();
+    final ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
+
+    if (currentRecord != null && !include(currentRecord)) {
+      currentRecord = null;
+      hasPrevious();
+    }
 
     return this;
   }
