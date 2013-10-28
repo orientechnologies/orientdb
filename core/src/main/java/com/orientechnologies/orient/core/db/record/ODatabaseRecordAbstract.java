@@ -245,8 +245,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           indexManager.waitTillIndexRestore();
       }
 
-      metadata.close();
-      metadata = null;
+      if (metadata != null) {
+        metadata.close();
+        metadata = null;
+      }
     }
 
     super.close();
