@@ -16,7 +16,13 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -448,6 +454,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     } finally {
       releaseExclusiveLock();
     }
+
+    if (OGlobalConfiguration.INDEX_SYNCHRONOUS_AUTO_REBUILD.getValueAsBoolean())
+      waitTillIndexRestore();
   }
 
   @Override
@@ -475,7 +484,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
       return false;
 
-    OStorage storage = database.getStorage();
+    OStorage storage = database.getStorage().getUnderlying();
 
     if (storage instanceof OStorageLocal)
       return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadataDefault.CLUSTER_INDEX_NAME);
