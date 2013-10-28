@@ -15,16 +15,45 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -777,21 +806,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iOther
    *          Other ODocument instance to merge
-   * @param iAddOnlyMode
-   *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
-   *          will be removed by original too
+   * @param iUpdateOnlyMode
+   *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
+   *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
    * 
    * @return
    */
-  public ODocument merge(final ODocument iOther, boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
+  public ODocument merge(final ODocument iOther, boolean iUpdateOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
     iOther.checkForLoading();
     iOther.checkForFields();
 
     if (_clazz == null && iOther.getSchemaClass() != null)
       _clazz = iOther.getSchemaClass();
 
-    return merge(iOther._fieldValues, iAddOnlyMode, iMergeSingleItemsOfMultiValueFields);
+    return merge(iOther._fieldValues, iUpdateOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
 
   /**
@@ -800,14 +829,15 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iOther
    *          Other ODocument instance to merge
-   * @param iAddOnlyMode
-   *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
-   *          will be removed by original too
+   * @param iUpdateOnlyMode
+   *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
+   *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
    * 
    * @return
    */
-  public ODocument merge(final Map<String, Object> iOther, final boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
+  public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
+      boolean iMergeSingleItemsOfMultiValueFields) {
     checkForLoading();
     checkForFields();
 
@@ -847,7 +877,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       field(f, iOther.get(f));
     }
 
-    if (!iAddOnlyMode) {
+    if (!iUpdateOnlyMode) {
       // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
       for (String f : fieldNames())
         if (!iOther.containsKey(f))

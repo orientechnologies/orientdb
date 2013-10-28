@@ -375,6 +375,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             sendTextContent(100, null, null, null, null);
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_ENCODING))
             iRequest.contentEncoding = line.substring(OHttpUtils.HEADER_CONTENT_ENCODING.length());
+
+          // SAVE THE HEADER
+          iRequest.addHeader(line);
         }
 
         // CONSUME /r or /n
