@@ -136,6 +136,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   }
 
   public void connected() {
+    final String dictProfilerMetric = PROFILER.getProcessMetric("network.channel.binary.*");
+
     profilerMetric = PROFILER.getProcessMetric("network.channel.binary." + socket.getRemoteSocketAddress().toString()
         + socket.getLocalPort() + "".replace('.', '_'));
 
@@ -144,19 +146,19 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
           public Object getValue() {
             return metricTransmittedBytes;
           }
-        });
+        }, dictProfilerMetric + ".transmittedBytes");
     PROFILER.registerHookValue(profilerMetric + ".receivedBytes", "Bytes received from a network channel", METRIC_TYPE.SIZE,
         new OProfilerHookValue() {
           public Object getValue() {
             return metricReceivedBytes;
           }
-        });
+        }, dictProfilerMetric + ".receivedBytes");
     PROFILER.registerHookValue(profilerMetric + ".flushes", "Number of times the network channel has been flushed",
         METRIC_TYPE.COUNTER, new OProfilerHookValue() {
           public Object getValue() {
             return metricFlushes;
           }
-        });
+        }, dictProfilerMetric + ".flushes");
   }
 
   @Override

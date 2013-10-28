@@ -565,17 +565,20 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   }
 
   protected void connectionClosed() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".closed", "Close HTTP connection", +1);
+    Orient.instance().getProfiler()
+        .updateCounter("server.http." + listeningAddress + ".closed", "Close HTTP connection", +1, "server.http.*.closed");
     sendShutdown();
   }
 
   protected void timeout() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".timeout", "Timeout of HTTP connection", +1);
+    Orient.instance().getProfiler()
+        .updateCounter("server.http." + listeningAddress + ".timeout", "Timeout of HTTP connection", +1, "server.http.*.timeout");
     sendShutdown();
   }
 
   protected void connectionError() {
-    Orient.instance().getProfiler().updateCounter("server.http." + listeningAddress + ".error", "Error on HTTP connection", +1);
+    Orient.instance().getProfiler()
+        .updateCounter("server.http." + listeningAddress + ".errors", "Error on HTTP connection", +1, "server.http.*.errors");
     sendShutdown();
   }
 
