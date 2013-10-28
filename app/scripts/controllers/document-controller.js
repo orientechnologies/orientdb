@@ -26,6 +26,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
 
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.isGraph = Database.isGraph($scope.doc['@class']);
+        $scope.outgoings = new Array;
         $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));
     }
 
@@ -230,11 +231,6 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
     $scope.reload = function () {
 
         $scope.doc = DocumentApi.get({ database: $scope.database, document: $scope.rid}, function () {
-            /*$scope.headers = Database.getPropertyFromDoc($scope.doc);
-            $scope.isGraph = Database.isGraph($scope.doc['@class']);
-            $scope.incomings = Database.getEdge($scope.doc, 'in_');
-            $scope.outgoings = Database.getEdge($scope.doc, 'out_');
-            $scope.outgoings = $scope.outgoings.concat((Database.getLink($scope.doc)));*/
         }, function (error) {
             Notification.push({content: JSON.stringify(error)});
             $location.path('404');
