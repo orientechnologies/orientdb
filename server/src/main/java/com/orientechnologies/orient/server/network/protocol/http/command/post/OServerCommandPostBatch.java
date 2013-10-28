@@ -18,6 +18,9 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import java.util.Collection;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -102,26 +105,37 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       // BROWSE ALL THE OPERATIONS
       for (Map<Object, Object> operation : operations) {
         final String type = (String) operation.get("type");
-        Object record = operation.get("record");
-
-        ODocument doc;
-        if (record instanceof Map<?, ?>)
-          // CONVERT MAP IN DOCUMENT
-          doc = new ODocument((Map<String, Object>) record);
-        else
-          doc = (ODocument) record;
 
         if (type.equals("c")) {
           // CREATE
+          final ODocument doc = getRecord(operation);
           doc.save();
           executed++;
         } else if (type.equals("u")) {
           // UPDATE
+          final ODocument doc = getRecord(operation);
           doc.save();
           executed++;
         } else if (type.equals("d")) {
           // DELETE
+          final ODocument doc = getRecord(operation);
           db.delete(doc.getIdentity());
+          executed++;
+        } else if (type.equals("cmd")) {
+          // COMMAND
+          final String language = (String) operation.get("language");
+          final String command = (String) operation.get("command");
+
+          final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
+          cmd.setText(command);
+          db.command(cmd).execute();
+          executed++;
+        } else if (type.equals("script")) {
+          // COMMAND
+          final String language = (String) operation.get("language");
+          final String script = (String) operation.get("script");
+
+          db.command(new OCommandScript(language, script)).execute();
           executed++;
         }
       }
@@ -137,6 +151,18 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
     iResponse
         .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, executed, null, true);
     return false;
+  }
+
+  public ODocument getRecord(Map<Object, Object> operation) {
+    Object record = operation.get("record");
+
+    ODocument doc;
+    if (record instanceof Map<?, ?>)
+      // CONVERT MAP IN DOCUMENT
+      doc = new ODocument((Map<String, Object>) record);
+    else
+      doc = (ODocument) record;
+    return doc;
   }
 
   @Override
