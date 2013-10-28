@@ -204,10 +204,10 @@
     <file path="/events.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382960416907" ignored="false" />
     <file path="/events.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382956979737" ignored="false" />
     <file path="/logWhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381399859439" ignored="false" />
-    <file path="/logwhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382801076547" ignored="false" />
+    <file path="/logwhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382969316476" ignored="false" />
     <file path="/httpwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382707537964" ignored="false" />
     <file path="/mailwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382708234215" ignored="false" />
-    <file path="/metricswhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382816624064" ignored="false" />
+    <file path="/metricswhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382969443730" ignored="false" />
     <file path="/singleMetric.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381778773792" ignored="false" />
     <file path="/metrics.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382462540800" ignored="false" />
     <file path="/settings.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382473633938" ignored="false" />
@@ -232,19 +232,19 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="mailwhat.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
+      <file leaf-file-name="monitor-service.js" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="29" column="85" selection-start="1282" selection-end="1307" vertical-scroll-proportion="-8.961538">
+            <state line="159" column="30" selection-start="5820" selection-end="5820" vertical-scroll-proportion="0.3258786">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <file leaf-file-name="mailwhat.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="68" column="5" selection-start="2794" selection-end="2794" vertical-scroll-proportion="0.0">
+            <state line="29" column="85" selection-start="1282" selection-end="1307" vertical-scroll-proportion="-9.846154">
               <folding />
             </state>
           </provider>
@@ -253,7 +253,7 @@
       <file leaf-file-name="log.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-6.576923">
+            <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-10.5">
               <folding />
             </state>
           </provider>
@@ -277,22 +277,20 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.css" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="702" column="44" selection-start="13796" selection-end="13796" vertical-scroll-proportion="0.39182281">
+            <state line="526" column="18" selection-start="10296" selection-end="10300" vertical-scroll-proportion="-3.6792452">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="eventsnotify.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/eventsnotify.html">
+      <file leaf-file-name="logwhen.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="23" column="57" selection-start="462" selection-end="462" vertical-scroll-proportion="-15.038462">
-              <folding>
-                <element signature="n#style#0;n#button#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-              </folding>
+            <state line="14" column="42" selection-start="373" selection-end="373" vertical-scroll-proportion="-5.6153846">
+              <folding />
             </state>
           </provider>
         </entry>
@@ -300,7 +298,7 @@
       <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="73" column="4" selection-start="2535" selection-end="2842" vertical-scroll-proportion="0.0">
+            <state line="101" column="56" selection-start="3378" selection-end="3384" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -309,7 +307,7 @@
       <file leaf-file-name="metricswhen.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="26" column="30" selection-start="974" selection-end="974" vertical-scroll-proportion="-10.269231">
+            <state line="14" column="42" selection-start="386" selection-end="399" vertical-scroll-proportion="-9.153846">
               <folding />
             </state>
           </provider>
@@ -343,15 +341,15 @@
         <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
-        <option value="$PROJECT_DIR$/app/views/eventWhen/logwhen.html" />
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/views/server/eventsnotify.html" />
-        <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
         <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
         <option value="$PROJECT_DIR$/app/views/server/log.html" />
+        <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
+        <option value="$PROJECT_DIR$/app/views/eventWhen/logwhen.html" />
+        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
       </list>
     </option>
   </component>
@@ -740,23 +738,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="35" column="66" selection-start="1246" selection-end="1246" vertical-scroll-proportion="-16.807692">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="41" column="11" selection-start="1174" selection-end="1174" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="217" column="8" selection-start="7721" selection-end="7721" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -777,27 +761,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="29" column="85" selection-start="1282" selection-end="1307" vertical-scroll-proportion="-8.961538">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="73" column="4" selection-start="2535" selection-end="2842" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="26" column="30" selection-start="974" selection-end="974" vertical-scroll-proportion="-10.269231">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="68" column="5" selection-start="2794" selection-end="2794" vertical-scroll-proportion="0.0">
@@ -812,6 +775,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/general/log.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="89" column="16" selection-start="3088" selection-end="3821" vertical-scroll-proportion="-4.936709">
@@ -821,23 +791,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/log.html">
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/mailwhat.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+        <state line="29" column="85" selection-start="1282" selection-end="1307" vertical-scroll-proportion="-9.846154">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-6.576923">
+        <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-10.5">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="702" column="44" selection-start="13796" selection-end="13796" vertical-scroll-proportion="0.39182281">
+        <state line="526" column="18" selection-start="10296" selection-end="10300" vertical-scroll-proportion="-3.6792452">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="42" selection-start="386" selection-end="399" vertical-scroll-proportion="-9.153846">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="42" selection-start="373" selection-end="373" vertical-scroll-proportion="-5.6153846">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="101" column="56" selection-start="3378" selection-end="3384" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="159" column="30" selection-start="5820" selection-end="5820" vertical-scroll-proportion="0.3258786">
           <folding />
         </state>
       </provider>
