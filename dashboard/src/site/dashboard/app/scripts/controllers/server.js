@@ -41,7 +41,6 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
     $scope.saveConfig = function () {
         Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
-            console.log(data);
         });
     }
     $scope.getServerMetrics = function () {

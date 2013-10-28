@@ -2,7 +2,10 @@
 
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3>Event: {{eventWhen['@class']}}</h3>
+        <h3>
+            <i class="icon-bar-chart"></i>
+            Metrics Event
+        </h3>
     </div>
 
     <br>
@@ -11,18 +14,26 @@
         <form>
             <fieldset class="form_mailwhat">
                 <div class="controls controls-row">
-                    Metric :
-                    <select class="span3" ng-model="eventWhen['alertValue']"
-                            ng-options="t.name for t in metrics">
+                    Metric:
+                    <select class="input-block-level" ng-model="eventWhen['name']"
+                            ng-options="t for t in metric">
                         <option value=""></option>
                     </select>
-                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels">
+                    Operator:
+                    <select class="input-block-level" ng-model="eventWhen['operator']"
+                            ng-options="f for f in alertValues">
                         <option value=""></option>
                     </select>
+                    Parameter:
+                    <select class="input-block-level" ng-model="eventWhen['parameter']"
+                            ng-options="p for p in parameters">
+                        <option value=""></option>
+                    </select>
+                    Value:
+                    <input type="text" class="input-block-level" ng-model="eventWhen['value']">
+
+
                 </div>
-                Text (contains):
-                <textarea type="text" id="textcontains" class="input-block-level" placeholder="insert text here.."
-                          ng-model="eventWhen['info']"></textarea>
 
             </fieldset>
         </form>
@@ -30,8 +41,7 @@
     </div>
 
     <div class="modal-footer">
-
-        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button type="button" class="btn btn-primary" ng-click="hide()">Submit</button>
     </div>
 
 </div>

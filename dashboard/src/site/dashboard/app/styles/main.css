@@ -139,6 +139,7 @@ button.btn-primary, .btn.btn-primary {
 .box .nav > li {
     font-size: 12px;
 }
+
 .box  a {
     color: #ffffff;
 }
@@ -171,6 +172,7 @@ button.btn-primary, .btn.btn-primary {
     text-shadow: none;
     padding: 4px 8px;
 }
+
 .btn-trasparent {
     background-color: rgba(0, 0, 0, 0);
 }
@@ -323,7 +325,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
     -moz-border-left-colors: none;
     -moz-border-right-colors: none;
     -moz-border-top-colors: none;
-    border-color:  #DDDDDD ;
+    border-color: #DDDDDD;
     border-image: none;
     border-style: none solid solid;
     border-width: 0 1px 1px;
@@ -566,11 +568,53 @@ ul.horizontallist, ol.horizontallist {
     padding: 0px;
 }
 
-div.functionwhatform select.ng-invalid.ng-dirty, div.functionwhatform input.ng-invalid.ng-dirty , div.mailwhatform input.ng-invalid.ng-dirty {
+div.functionwhatform select.ng-invalid.ng-dirty, div.functionwhatform input.ng-invalid.ng-dirty, div.mailwhatform input.ng-invalid.ng-dirty {
     border: 2px solid #FA787E;
 }
 
-div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-valid.ng-dirty,div.mailwhatform input.ng-valid.ng-dirty {
+div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-valid.ng-dirty, div.mailwhatform input.ng-valid.ng-dirty {
     border: 2px solid #78FA89;
 }
 
+.pagination_limit {
+    height: 40px;
+    padding-top: 8px;
+    text-align: center;
+    vertical-align: top;
+    width: 70px;
+}
+div.pagination {
+    padding: 3px;
+    margin: 3px;
+    text-align:left;
+}
+
+div.pagination a {
+    border: 1px solid #dedfde;
+    margin-right:3px;
+    padding:0px 5px ;
+
+    background-position:bottom;
+    text-decoration: none;
+
+    color: #99210B;
+}
+div.pagination a:hover, div.pagination a:active {
+    border: 1px solid #000;
+    background-image:none;
+    background-color:#777777;
+    color: #fff;
+}
+div.pagination span.current {
+    margin-right:3px;
+    padding:2px 6px;
+
+    font-weight: bold;
+    color: #99210B;
+}
+div.pagination span.disabled {
+    margin-right:3px;
+    padding:2px 6px;
+
+    color: #adaaad;
+}
