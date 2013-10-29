@@ -22,6 +22,19 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
 	public boolean canExecute(ODocument source, ODocument when) {
 
+		String metricName = when.field("name");
+		String operator = when.field("operator");
+		String parameter = when.field("parameter");
+		String value = when.field("value"); //Integer
+
+		
+		
+		
+//		source
+		
+
+		
 		return false;
+		
 	}
 }

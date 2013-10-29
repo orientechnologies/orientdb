@@ -26,6 +26,34 @@ public abstract class OEventLogExecutor implements OEventExecutor {
 		String levelType = when.field("type");
 		String info = when.field("info");
 
-		return true;
+		Integer sourcelevel = (Integer) source.field("level");
+		String message = (String) source.field("message");
+
+		if (operator == null && levelType == null && info == null) {
+			return false;
+		}
+
+		if (info != null && !info.isEmpty()) {
+
+			if (message == null || !message.contains(info)) {
+				return false;
+			}
+		}
+		if (operator != null && !operator.isEmpty() && levelType != null
+				&& !levelType.isEmpty()) {
+			Integer level = new Integer(levelType);
+			Integer logLevel = new Integer(sourcelevel);
+
+			if (operator.equalsIgnoreCase("greater then")
+					&& sourcelevel >= level) {
+				return true;
+			} else if (operator.equalsIgnoreCase("less then")
+					&& sourcelevel <= level) {
+				return true;
+			}
+			return false;
+		}
+		return false;
+
 	}
 }

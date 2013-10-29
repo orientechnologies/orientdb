@@ -188,6 +188,27 @@ dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$rout
     $scope.levels = ['1', '2', '3', '4', '5', '6', '7'];
     $scope.alertValues = ["Greater then", "Less then"];
 
+
+    $scope.checkAlertValue = function () {
+        if ($scope.eventWhen['alertValue'] == undefined) {
+            $scope.eventWhen['type'] = null;
+            return true;
+        }
+        return false;
+    }
+
+    $scope.checkValidForm = function(){
+
+        if($scope.eventWhen['info']== undefined && $scope.eventWhen['alertValue'] == undefined && $scope.eventWhen['type'] == undefined)        {
+            console.log('false1')
+            return true;
+        }
+        if($scope.eventWhen['alertValue'] != null && $scope.eventWhen['type'] == null){
+            console.log('false2')
+            return true;
+        }
+        return false;
+    }
 }]);
 
 dbModule.controller("EventsNotifyController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {

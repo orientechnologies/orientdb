@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.mail.MessagingException;
 import javax.mail.internet.AddressException;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.monitor.event.metric.OEventMetricExecutor;
 import com.orientechnologies.orient.server.OServerMain;
@@ -32,7 +33,10 @@ import com.orientechnologies.orient.server.plugin.mail.OMailProfile;
 @EventConfig(when = "MetricsWhen", what = "MailWhat")
 public class OEventMetricMailExecutor extends OEventMetricExecutor {
 
-  @Override
+  public OEventMetricMailExecutor(ODatabaseDocumentTx database) {
+	}
+
+@Override
   public void execute(ODocument source, ODocument when, ODocument what) {
 
     if (canExecute(source, when)) {

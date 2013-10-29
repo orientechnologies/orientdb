@@ -14,6 +14,18 @@
 				<parameter name="enableProfiler" value="true" />
 			</parameters>
 		</handler>
+		 <handler class="com.orientechnologies.orient.server.plugin.mail.OMailPlugin">
+            <parameters>
+                <parameter value="true" name="enabled"/>
+                <parameter value="192.168.0.50" name="profile.default.mail.smtp.host"/>
+                <parameter value="25" name="profile.default.mail.smtp.port"/>
+                <parameter value="true" name="profile.default.mail.smtp.auth"/>
+                <parameter value="true" name="profile.default.mail.smtp.starttls.enable"/>
+                <parameter value="" name="profile.default.mail.smtp.user"/>
+                <parameter value="" name="profile.default.mail.smtp.password"/>
+                <parameter value="yyyy-MM-dd HH:mm:ss" name="profile.default.mail.date.format"/>
+            </parameters>
+        </handler>
 	</handlers>
 	<network>
 	
