@@ -133,6 +133,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final ODistributedPartition partition = strategy.getPartition(manager, databaseName, clusterName);
     final Set<String> nodes = partition.getNodes();
 
+    if (nodes.isEmpty()) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
+          "No nodes configured for partition '%s.%s' request: %s", databaseName, clusterName, iRequest);
+      throw new ODistributedException("No nodes configured for partition '" + databaseName + "." + clusterName + "' request: "
+          + iRequest);
+    }
+
     final IQueue<ODistributedRequest>[] reqQueues = getRequestQueues(databaseName, nodes);
 
     int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes);
@@ -272,7 +279,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return currentResponseMgr.getResponse(iRequest.getTask().getResultStrategy());
   }
 
-  public OHazelcastDistributedDatabase configureDatabase(final ODatabaseDocumentTx iDatabase, final boolean iRestoreMessages, final boolean iUnqueuePendingMessages) {
+  public OHazelcastDistributedDatabase configureDatabase(final ODatabaseDocumentTx iDatabase, final boolean iRestoreMessages,
+      final boolean iUnqueuePendingMessages) {
     // CREATE A QUEUE PER DATABASE
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
     final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
