@@ -112,14 +112,22 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     // creates a new e-mail message
     MimeMessage msg = new MimeMessage(session);
 
-    msg.setFrom(new InternetAddress((String) profile.getProperty("mail.smtp.user")));
-    InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
-    msg.setRecipients(Message.RecipientType.TO, toAddresses);
-    InternetAddress[] ccAddresses = { new InternetAddress((String) iMessage.get("cc")) };
-    msg.setRecipients(Message.RecipientType.CC, ccAddresses);
-    InternetAddress[] bccAddresses = { new InternetAddress((String) iMessage.get("bcc")) };
-    msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
-    msg.setSubject((String) iMessage.get("subject"));
+    msg.setFrom(new InternetAddress((String) iMessage.get("from")));
+
+	InternetAddress[] toAddresses = { new InternetAddress(
+			(String) iMessage.get("to")) };
+	msg.setRecipients(Message.RecipientType.TO, toAddresses);
+	String cc = (String) iMessage.get("cc");
+	if (cc != null && !cc.isEmpty()) {
+		InternetAddress[] ccAddresses = { new InternetAddress(cc) };
+		msg.setRecipients(Message.RecipientType.CC, ccAddresses);
+	}
+	String bcc = (String) iMessage.get("bcc");
+	if (bcc != null && !bcc.isEmpty()) {
+		InternetAddress[] bccAddresses = { new InternetAddress(bcc) };
+		msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
+	}
+	msg.setSubject((String) iMessage.get("subject"));
 
     // DATE
     Object date = iMessage.get("date");
