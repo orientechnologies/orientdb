@@ -188,7 +188,7 @@ public enum OGlobalConfiguration {
 
   TX_AUTO_RETRY("tx.autoRetry",
       "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
-      Integer.class, 10),
+      Integer.class, 1),
 
   TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
