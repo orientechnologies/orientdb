@@ -10,7 +10,7 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
 });
 
-app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server) {
+app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig, $i18n) {
 
 
     $scope.rid = $routeParams.server;
@@ -19,11 +19,18 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
     $scope.currentTab = 'overview';
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
-
         if (!$scope.rid && $scope.servers.length > 0) {
             $scope.rid = $scope.servers[0]['@rid'];
-            $scope.server =  $scope.servers[0];
+            $scope.server = $scope.servers[0];
+        } else if ($scope.servers.length > 0) {
+            $scope.servers.forEach(function (server) {
+                if ($scope.rid.replace('#', '') == server['@rid'].replace('#', '')) {
+                    $scope.server = server;
+                    return;
+                }
+            });
         }
+
 
     });
     $scope.editorOptions = {
@@ -38,43 +45,22 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
     }
     $scope.getServerMetrics = function () {
 
-        var names = new Array;
-        $scope.databases.forEach(function (db, idx, array) {
-            var create = 'db.' + db + '.createRecord';
-            var update = 'db.' + db + '.updateRecord';
-            var del = 'db.' + db + '.deleteRecord';
-            var read = 'db.' + db + '.readRecord';
-            names.push(create);
-            names.push(update);
-            names.push(del);
-            names.push(read);
-        });
-        Metric.getMetrics({names: names, server: $scope.server['@rid'] , limit : 20 }, function (data) {
-            $scope.serverLoad = new Array;
-            var tmpArr = new Array;
 
-            data.result.forEach(function (elem, idx, array) {
-                var last = elem.name.lastIndexOf(".");
-                var length = elem.name.length;
-                elem.name = elem.name.substring(last + 1, length);
-            });
-            data.result.forEach(function (elem, idx, array) {
-                if (!tmpArr[elem.name]) {
-                    tmpArr[elem.name] = new Array;
-                }
-                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
-            });
-            data.result.forEach(function (elem, idx, array) {
-                if (!tmpArr[elem.name]) {
-                    tmpArr[elem.name] = new Array;
-                }
-                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
-            });
-            $scope.serverLoad = tmpArr;
-        });
+        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"] ;
+
+        var cfg = MetricConfig.create();
+        cfg.name = $i18n.get('server.operations');
+        cfg.server = $scope.server['@rid'];
+        cfg.config = new Array;
+
+        names.forEach(function (name) {
+            cfg.config.push({name: name, field: 'entries'});
+        })
+        $scope.config = cfg;
+
     }
-    $scope.$watch("server",function(server){
-        if(server){
+    $scope.$watch("server", function (server) {
+        if (server) {
             Server.findDatabases(server.name, function (data) {
                 $scope.databases = data;
                 var db = $scope.databases[0];
@@ -86,34 +72,18 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         }
     });
     $scope.getDbMetrics = function (db) {
-        var DOT = '.';
-        var CREATE_LABEL = 'createRecord';
-        var UPDATE_LABEL = 'updateRecord';
-        var DELETE_LABEL = 'deleteRecord';
-        var READ_LABEL = 'readRecord';
-        var create = 'db.' + db + DOT + CREATE_LABEL;
-        var update = 'db.' + db + DOT + UPDATE_LABEL;
-        var del = 'db.' + db + DOT + DELETE_LABEL;
-        var read = 'db.' + db + DOT + READ_LABEL;
-        Metric.getMetrics({names: [create, update, read, del], server: $scope.rid,limit : 20 }, function (data) {
-            $scope.operationData = new Array;
-            var tmpArr = new Array;
+        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"] ;
+        var cfg = MetricConfig.create();
+        cfg.name = $i18n.get('db.operations');
+        cfg.server = $scope.server['@rid'];
 
-            data.result.forEach(function (elem, idx, array) {
-                if (!tmpArr[elem.name]) {
-                    tmpArr[elem.name] = new Array;
-                }
-                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
-            });
-            data.result.forEach(function (elem, idx, array) {
-                if (!tmpArr[elem.name]) {
-                    tmpArr[elem.name] = new Array;
-                }
-                tmpArr[elem.name].push([elem.dateTo, elem.entries]);
-            });
+        cfg.databases = db;
+        cfg.config = new Array;
 
-            $scope.operationData = tmpArr;
-        });
+        names.forEach(function (name) {
+            cfg.config.push({name: name, field: 'entries'});
+        })
+        $scope.configDb = cfg;
     }
     $scope.selectDb = function (db) {
         $scope.dbselected = db;

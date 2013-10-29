@@ -66,7 +66,18 @@ monitor.factory('Notification', function ($http, $resource) {
     return resource;
 });
 monitor.factory('Metric', function ($http, $resource) {
-    var resource = $resource(API + 'metrics/monitor/:server/:type/:kind/:names/:compress/:from/:to');
+    var resource = $resource(API + 'metrics/monitor/:server/:databases/:type/:kind/:names/:limit/:compress/:from/:to',{ },
+        {
+            get: {
+                method : 'GET',
+                isArray : false,
+                params: {
+                    databases: "all"
+                }
+            }
+        }
+    );
+
 
     resource.delete = function (params, callback) {
         var url = API + 'metrics/monitor/' + params.server + '/' + params.type + '/' + params.names;
@@ -256,9 +267,9 @@ monitor.factory('Settings', function ($http, $resource) {
 
         return conf;
     }
-    resource.put = function (config,callback) {
+    resource.put = function (config, callback) {
         var url = API + 'loggedUserInfo/monitor/configuration';
-        $http.post(url,config).success(function (data) {
+        $http.post(url, config).success(function (data) {
             callback(data);
         });
     }

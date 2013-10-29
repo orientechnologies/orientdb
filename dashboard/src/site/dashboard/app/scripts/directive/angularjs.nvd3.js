@@ -108,7 +108,7 @@ Widget.directive('stackedchart', function () {
 });
 Widget.directive('stackedarea', function () {
 
-    var createStackedArea = function (data, element, render) {
+    var createStackedArea = function (scope,data, element, render) {
 
         nv.addGraph(function () {
             if (render == 'bar') {
@@ -132,13 +132,14 @@ Widget.directive('stackedarea', function () {
 
             chart.xAxis
                 .tickFormat(function (d) {
-                    return  moment("" + d, "X").format("HH:mm");
+                    return  moment("" + d, "X").format("YYYY-MM-DD HH:mm");
                 });
-
             chart.yAxis
                 .tickFormat(d3.format(',.2f'));
 
             $(element[0]).empty();
+            var height =  scope.charHeight || '500';
+            $(element[0]).attr('height',height);
             d3.select(element[0])
                 .datum(data)
                 .transition().duration(0)
@@ -179,7 +180,7 @@ Widget.directive('stackedarea', function () {
                     }
 
                 });
-                createStackedArea(formatted, element, scope[render]);
+                createStackedArea(scope,formatted, element, scope[render]);
             }
             scope.$watch(data, function (data) {
                 if (data) {

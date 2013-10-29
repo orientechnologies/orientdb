@@ -3,7 +3,7 @@ html {
 }
 
 body {
-    background: none repeat scroll 0 0 #35353A;
+    background: none repeat scroll 0 0 #ffffff;
     height: 100%;
     margin: 0;
     padding: 0;
@@ -46,6 +46,31 @@ body {
     }
 }
 
+.side-nav > li > a {
+    width: 225px;
+}
+.side-nav > li > a:hover{
+    background-color: #A5360F !important;
+    color: #FFFFFF;
+}
+.side-nav > li.active > a {
+    background-color: #A5360F !important;
+    color: #FFFFFF;
+}
+.side-nav {
+    background-color: #222222;
+    border: medium none;
+    border-radius: 0 0 0 0;
+    height: 100%;
+    left: 225px;
+    margin-left: -225px;
+    overflow-y: auto;
+    position: fixed !important;
+    top: 50px;
+    margin-top: 5px !important;
+    width: 225px;
+
+}
 .navbar .container-fluid .brand {
     background: url("../img/orientdb-logo-full.png") no-repeat scroll 0 9px rgba(0, 0, 0, 0);
     width: 233px;
@@ -204,11 +229,9 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 }
 
 .mainSection {
-    background: none repeat scroll 0 0 #FFFFFF;
-    box-shadow: -10px 0 10px 1px #262626;
+    /*box-shadow: -10px 0 10px 1px #262626;*/
     margin-left: 0 !important;
     padding-left: 10px;
-    width: 85.1064% !important;
 }
 
 section {
@@ -715,4 +738,88 @@ div.pagination span.disabled {
 
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
     right: 0px;
+}
+
+
+.navbar-collapse:before, .navbar-collapse:after {
+    content: " ";
+    display: table;
+}
+.navbar-collapse:before, .navbar-collapse:after {
+    content: " ";
+    display: table;
+}
+
+.navbar-collapse:after {
+    clear: both;
+}
+.navbar-collapse:before, .navbar-collapse:after {
+    content: " ";
+    display: table;
+}
+.navbar-collapse:after {
+    clear: both;
+}
+.navbar-collapse:before, .navbar-collapse:after {
+    content: " ";
+    display: table;
+}
+
+.navbar-inverse .navbar-collapse, .navbar-inverse .navbar-form {
+    border-color: #101010;
+}
+.navbar-collapse.collapse {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 0;
+}
+.collapse {
+    display: none;
+}
+.navbar-collapse {
+    border-top: 0 none;
+    box-shadow: none;
+    width: auto;
+}
+.navbar-collapse {
+    border-top: 1px solid rgba(0, 0, 0, 0);
+
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    max-height: 340px;
+    overflow-x: visible;
+}
+#wrapper {
+    padding-left: 225px;
+}
+.navbar-inverse .navbar-brand {
+    color: #999999;
+}
+.navbar-brand {
+    float: left;
+    font-size: 18px;
+    line-height: 20px;
+    padding: 15px;
+}
+.navbar-toggle {
+    display: none;
+}
+.navbar-toggle {
+    background-color: rgba(0, 0, 0, 0);
+    border: 1px solid rgba(0, 0, 0, 0);
+    border-radius: 4px 4px 4px 4px;
+    float: right;
+    margin-bottom: 8px;
+    margin-right: 15px;
+    margin-top: 8px;
+    padding: 9px 10px;
+    position: relative;
+}
+.navbar-inverse {
+    background-color: #222222;
+    border-color: #080808;
+    border-bottom: 5px solid #FF6600;
+}
+.navbar-right {
+    float: right !important;
 }

@@ -4,6 +4,8 @@ angular.module('MonitorApp')
     .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification, Settings) {
 
 
+        $scope.chartHeight = 300;
+
         (function poll() {
 
             Monitor.getServers(function (data) {
