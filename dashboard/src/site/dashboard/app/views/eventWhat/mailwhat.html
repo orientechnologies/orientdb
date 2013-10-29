@@ -1,7 +1,11 @@
 <div class="row-fluid" ng-controller="MailWhatController">
     <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3>Mail Alert</h3>
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3>
+            <i class="icon-envelope"></i>
+            Mail Alert
+        </h3>
+
     </div>
     <div class="row mailwhatform">
 
@@ -35,6 +39,7 @@
 
 
     <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" ng-disabled="mailwhatform.$invalid" ng-click="hide()">Submit</button>
+        <button type="submit" class="btn btn-primary" ng-disabled="mailwhatform.$invalid" ng-click="hide()">Submit
+        </button>
     </div>
 </div>

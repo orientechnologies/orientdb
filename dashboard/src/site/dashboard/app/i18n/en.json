@@ -67,13 +67,12 @@
     "dashboard.metric.save": "Save",
     "dashboard.metric.name": "Name",
     "dashboard.metric.preview": "Preview",
+    "dashboard.metric.server": "Server",
     "dashboard.events.title": "Events",
     "dashboard.notifications.title": "Notifications",
-    "MetricsWhen" : "Metrics"  ,
-    "LogWhen" : "Log"  ,
-    "FunctionWhat" : "Function"  ,
-    "HttpWhat" : "Http"  ,
-    "MailWhat" : "Mail",
-"dashboard.metric.server": "Server"
-
+    "MetricsWhen": "Metrics",
+    "LogWhen": "Log",
+    "FunctionWhat": "Function",
+    "HttpWhat": "Http",
+    "MailWhat": "Mail"
 }

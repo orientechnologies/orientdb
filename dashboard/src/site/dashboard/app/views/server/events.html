@@ -1,19 +1,20 @@
 <div class="container-fluid">
-    <div class="row-fluid title">
-        <h3>
-            <i class="icon-bell"></i>
-            {{ 'dashboard.events.title' | i18n }}
-        </h3>
-        <hr>
-    </div>
+    <h3>
+        <i class="icon-bell"></i>
+        Metric Alert
+    </h3>
+    <hr>
     <div class="row-fluid" ng-controller="EventsController">
+        <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveEvents()"> <i
+                class="icon-save"></i> Save</a>
+        <a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i
+                class="icon-refresh"></i> Refresh</a>
         <a href="javascript:void(0)" class="btn" ng-click="newEvent()"> <i
                 class="icon-plus"></i> New Event</a>
-
         <input class="input input_functions" placeholder="Search" ng-model="queryy" style="height: 26px;">
 
-
         <br>
+
         <table class="table table-striped table-bordered table-hover table-condensed table-width align-left">
             <thead>
             <tr>
@@ -39,12 +40,13 @@
                 </td>
                 <td>
                     <div>
-                        <select ng-model="selectedWhen[result['name']]">
-                            <option ng-repeat="when in eventsWhen" ng-value="{{ when.name}}"
-                                    ng-selected="when.name == result['when']['@class'] ">{{when.name | i18n}}
-                            </option>
-                        </select>
-
+                        <!--<select ng-model="selectedWhen[result['name']]">-->
+                        <!--<option ng-repeat="when in eventsWhen" ng-value="{{ when.name}}"-->
+                        <!--ng-selected="when.name == result['when']['@class'] ">{{when.name | i18n}}-->
+                        <!--</option>-->
+                        <!--</select>-->
+                        <select ng-model="selectedWhen[result['name']]"
+                                ng-options="when.name as when.name | i18n for when in eventsWhen"> </select>
                         <a href="javascript:void(0)" class="btn btn-events"
                            ng-click="onWhenChange(result,result['when'])"> <i
                                 class="icon-save"></i>
@@ -54,11 +56,9 @@
                 </td>
                 <td>
                     <div>
-                        <select ng-model="selectedWhat[result['name']]">
-                            <option ng-repeat="what in eventsWhat" ng-value="{{ what.name }}"
-                                    ng-selected="what.name == result['what']['@class'] ">{{what.name | i18n}}
-                            </option>
-                        </select>
+
+                        <select ng-model="selectedWhat[result['name']]"
+                                ng-options="what.name as what.name | i18n for what in eventsWhat"> </select>
 
                         <a href="javascript:void(0)" class="btn btn-events"
                            ng-click="onWhatChange(result,result['what'])"> <i
@@ -68,16 +68,27 @@
                     </div>
                 </td>
                 <td>
-                    <a href="javascript:void(0)" class="btn" ng-click="deleteEvent(result)"> <i class="icon-trash"></i>
+                    <a href="javascript:void(0)" class="btn btn-danger" ng-click="deleteEvent(result)"> <i
+                            class="icon-trash"></i>
                         Drop</a>
-                    <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveEvent(result)"> <i
-                            class="icon-save"></i>
-                        Save</a>
                 </td>
             </tr>
 
             </tbody>
         </table>
+        <div class="pagination">
+            <ul>
+                <li><a href="javascript:void(0)" ng-click="previous()">«</a></li>
+                <li ng-class="{ 'active' : $index+1 == currentPage}" ng-repeat="c in numberOfPage track by $index">
+                    <a
+                            href="javascript:void(0)" ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
+                <li><a href="javascript:void(0)" ng-click="next()">»</a></li>
+            </ul>
+            <select class="input-small pagination_limit" ng-model="countPage" style="vertical-align: top;height: 40px; width: 50px; ">
+                <option ng-repeat="options in countPageOptions"> {{ options }}</option>
+            </select>
+        </div>
+
     </div>
 </div>
 </div>

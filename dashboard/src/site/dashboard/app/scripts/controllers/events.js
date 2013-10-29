@@ -1,14 +1,13 @@
 var dbModule = angular.module('workbench-events.controller', ['workbench-logs.services']);
 
-dbModule.controller("EventsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'MetricConfig', '$route', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, MetricConfig, $route) {
+dbModule.controller("EventsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'MetricConfig', '$route', '$window', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, MetricConfig, $route, $window) {
 
     var sql = "select * from Event";
 
-    $scope.countPage = 1000;
-    $scope.countPageOptions = [100, 500, 1000];
+    $scope.countPage = 5;
+    $scope.countPageOptions = [5, 10, 20];
     $scope.selectedWhen = new Array;
     $scope.selectedWhat = new Array;
-
 
     $scope.refresh = function () {
         $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
@@ -25,14 +24,50 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql, shallow: 'shallow' }, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
-                $scope.resultTotal = data;
+                $scope.resultTotal = data.result;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
+                console.log(new Array(Math.ceil(data.result.length / $scope.countPage)));
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
+
+                $scope.selectedWhen = new Array;
+                $scope.selectedWhat = new Array;
+                $scope.resultTotal.forEach(function (elem, idx, array) {
+
+                    if (elem.when != undefined) {
+                        $scope.selectedWhen[elem.name] = elem.when['@class'];
+                    }
+                    if (elem.what != undefined) {
+                        $scope.selectedWhat[elem.name] = elem.what['@class'];
+                    }
+                })
+
             }
         });
     }
     $scope.getEvents();
+    $scope.switchPage = function (index) {
+        if (index != $scope.currentPage) {
+            $scope.currentPage = index;
+            $scope.results = $scope.resultTotal.slice(
+                (index - 1) * $scope.countPage,
+                index * $scope.countPage
+            );
+        }
+    }
+
+    $scope.previous = function () {
+        if ($scope.currentPage > 1) {
+            $scope.switchPage($scope.currentPage - 1);
+        }
+    }
+    $scope.next = function () {
+
+        if ($scope.currentPage < $scope.numberOfPage.length) {
+            $scope.switchPage($scope.currentPage + 1);
+        }
+    }
+
 
     $scope.onWhenChange = function (event, eventWhen) {
         modalScope = $scope.$new(true);
@@ -42,16 +77,13 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
             event['when'] = {};
             event['when']['@class'] = $scope.selectedWhen[event.name].trim();
             event['when']['@type'] = 'd';
-            console.log(event['when']['@class'])
         }
         else {
             event['when']['@class'] = eventWhen['@class'];
-            console.log(event['when']['@class'])
         }
         modalScope.eventWhen = event['when'];
         modalScope.parentScope = $scope;
 
-        console.log(event['when']['@class'].toLowerCase());
         var modalPromise = $modal({template: 'views/eventWhen/' + event['when']['@class'].toLowerCase().trim() + '.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
@@ -61,16 +93,13 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
-        console.log(event['what'])
-        if (event['what'] == undefined || $scope.selectedWhat[event.name]!=null && (event['what']['@class'] != $scope.selectedWhat[event.name].trim() && $scope.selectedWhat[event.name] != undefined)) {
+        if (event['what'] == undefined || $scope.selectedWhat[event.name] != null && (event['what']['@class'] != $scope.selectedWhat[event.name].trim() && $scope.selectedWhat[event.name] != undefined)) {
             event['what'] = {};
             event['what']['@class'] = $scope.selectedWhat[event.name].trim();
             event['what']['@type'] = 'd';
-        console.log('if')
         }
         else {
             event['what']['@class'] = eventWhat['@class'];
-            console.log('else')
         }
         modalScope.eventWhat = event['what'];
         modalScope.parentScope = $scope;
@@ -83,9 +112,8 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         Utilities.confirm($scope, $modal, $q, {
 
             title: 'Warning!',
-            body: 'You are dropping class ' + event['name'] + '. Are you sure?',
+            body: 'You are dropping event ' + event['name'] + '. Are you sure?',
             success: function () {
-                console.log(event['name']);
                 var sql = 'DELETE FROM Event WHERE name = ' + "'" + event['name'] + "'";
 
                 CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
@@ -100,59 +128,98 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
     }
     $scope.refreshPage = function () {
-        console.log('refresh');
         $scope.refresh();
         $route.reload();
     }
-    $scope.saveEvent = function (result) {
-        MetricConfig.saveConfig(result, function (data) {
-            Utilities.message($scope, $modal, $q, {
-                title: 'Message',
-                body: data,
-                success: function () {
-                    $scope.refreshPage();
+    $scope.saveEvents = function () {
+        var logs = new Array;
+        var resultsApp = JSON.parse(JSON.stringify($scope.results));
+
+        resultsApp.forEach(function (elem, idx, array) {
+
+            MetricConfig.saveConfig(elem, function (data) {
+                    var index = array.indexOf(elem);
+//                    logs.push('Event ' + elem['name'] + ':  ' + data);
+                    logs.push(data);
+                    array.splice(index, 1);
+                    if (array.length == 0) {
+                        modalScope = $scope.$new(true);
+                        modalScope.logs = logs;
+                        modalScope.parentScope = $scope;
+                        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
+                        $q.when(modalPromise).then(function (modalEl) {
+                            modalEl.modal('show');
+                        });
+
+
+                    }
                 }
+            );
 
-            });
 
-
-        }, function (error) {
-            Utilities.message($scope, $modal, $q, {
-                title: 'Error',
-                body: error
-
-            });
         })
     };
+//        MetricConfig.saveConfig(result, function (data) {
+//            Utilities.message($scope, $modal, $q, {
+//                title: 'Message',
+//                body: data,
+//                success: function () {
+//                    $scope.refreshPage();
+//                }
+//            });
+//        }, function (error) {
+//            Utilities.message($scope, $modal, $q, {
+//                title: 'Error',
+//                body: error
+//
+//            });
+//        })
 
     $scope.newEvent = function () {
         var object = {"name": "", '@rid': "#-1:-1", "@class": "Event"};
         $scope.results.push(object);
-
     }
 }
-]);
+])
+;
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
     $scope.levels = ['1', '2', '3', '4', '5', '6', '7'];
-    $scope.alertValue = ["Greater then", "Less then"];
+    $scope.alertValues = ["Greater then", "Less then"];
+
+}]);
+
+dbModule.controller("EventsNotifyController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
+    $scope.close = function () {
+        $scope.parentScope.refreshPage();
+
+        $scope.hide();
+    }
 
 }]);
 dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'Metric', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, Metric) {
 
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
-
+    $scope.alertValues = ["Greater then", "Less then"];
+    $scope.parameters = ["value", "entries", "min", "max", "average", "total" ];
     Metric.getMetricTypes(null, function (data) {
+        $scope.metric = new Array;
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
-            $scope.metric = $scope.metrics[0].name;
+            for (m in $scope.metrics) {
+                $scope.metric.push($scope.metrics[m].name);
+
+            }
 
         }
 
     });
+    $scope.submit = function () {
+//          console.log($scope.eventWhen['operator'])
+//          $scope.eventWhen['operator'] = $scope.eventWhen['operator']['name'];
+//          $scope.hide();
 
-
+    }
 
 }]);
 
@@ -161,7 +228,9 @@ dbModule.controller("SchedulerWhenController", ['$scope', '$http', '$location', 
     $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
 }]);
 dbModule.controller("HttpWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
-    $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhat['@class'].trim());
+    $scope.methods = ["GET", "POST", "PUT"];
+
+
 }]);
 dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 

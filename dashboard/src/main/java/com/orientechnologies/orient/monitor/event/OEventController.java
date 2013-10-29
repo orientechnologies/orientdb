@@ -20,8 +20,8 @@ import java.util.Map;
 
 public class OEventController {
 
-	private static OEventController										instance;
-	private Map<String, Map<String, OEventExecutor>>	executors = new HashMap<String, Map<String,OEventExecutor>>();
+	private static OEventController instance;
+	private Map<String, Map<String, OEventExecutor>> executors = new HashMap<String, Map<String, OEventExecutor>>();
 
 	public static OEventController getInstance() {
 		if (instance == null) {

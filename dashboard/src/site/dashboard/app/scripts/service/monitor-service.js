@@ -223,6 +223,25 @@ monitor.factory('MetricConfig', function ($http, $resource) {
                 });
         }
     }
+
+    resource.saveConfigs = function (configs, callback) {
+
+        if (config['@rid'].replace("#", '') == '-1:-1') {
+            $http.post(API + 'document/monitor/-1:-1', config).success(function (data) {
+                callback(data);
+            }).error(function (error) {
+                    callback(error);
+                });
+
+        } else {
+            $http.put(API + 'document/monitor/' + config['@rid'].replace("#", ''), config).success(function (data) {
+                callback(data);
+            }).error(function (error) {
+                    callback(error);
+                });
+        }
+    }
+
     resource.deleteConfig = function (config, callback) {
 
         $http.delete(API + 'document/monitor/' + config['@rid'].replace("#", '')).success(function (data) {
