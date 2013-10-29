@@ -4,29 +4,33 @@ var app = angular.module('MonitorApp');
 app.controller('SingleMetricController', function ($scope, $location, $routeParams, $timeout, Monitor, Metric) {
 
         $scope.render = "bar";
-
-
         $scope.metricScope.$watch($scope.metric, function (data) {
             $scope.config = data;
-            if ($scope.range)
+            if (data && $scope.range)
                 $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
 
         });
         $scope.$watch('range', function (data) {
             //$scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
         });
+        var real;
+        $scope.startRealtime = function () {
+            real = $timeout(function () {
+                $scope.refreshRealtime($scope.config);
+                $scope.startRealtime();
+            }, 5000);
+        }
+        $scope.stopRealtime = function () {
+            $timeout.cancel(real);
+        }
         $scope.$watch('realtime', function (data) {
             if (data != undefined) {
                 if (data) {
                     $scope.metricsData = null;
-                    var poll = function () {
-                        $timeout(function () {
-                            $scope.refreshRealtime($scope.config);
-                            poll();
-                        }, 5000);
-                    }
-                    poll();
+                    $scope.startRealtime();
                 } else {
+                    $scope.stopRealtime();
+                    $scope.metricsData = null;
                     if ($scope.range)
                         $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
                 }
@@ -43,14 +47,31 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                 }
 
             });
+            var databases = undefined;
+            if (metrics.databases) {
+                databases = metrics.databases;
+
+            }
             if (!metrics.server.name) {
                 Monitor.getServer(metrics.server, function (data) {
-                    var params = {  server: data.name, type: 'realtime', kind: 'chrono', names: names };
+                    if (databases) {
+                        var params = {  server: data.name, databases: databases, type: 'realtime', kind: 'chrono', names: names };
+                    } else {
+                        var params = {  server: data.name, type: 'realtime', kind: 'chrono', names: names };
+                    }
+
                     Metric.get(params, function (data) {
                         $scope.renderRealTimeData(data, metrics);
                     });
                 });
             } else {
+                if (databases) {
+
+                    var params = {  server: metrics.server.name, databases: databases, type: 'realtime', kind: 'chrono', names: names };
+                } else {
+
+                    var params = {  server: metrics.server.name, type: 'realtime', kind: 'chrono', names: names };
+                }
                 var params = {  server: metrics.server.name, type: 'realtime', kind: 'chrono', names: names };
                 Metric.get(params, function (data) {
                     $scope.renderRealTimeData(data, metrics);
@@ -88,7 +109,6 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     tmpArr[elemKey][moment(date).format("YYYY-MM-DD HH:mm:ss")] = el;
                 });
             });
-
             var clone = new Array;
             Object.keys($scope.metricsData).forEach(function (k) {
                 if (!clone[k]) {
@@ -115,6 +135,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     if ($scope.lastArr) {
                         lastDiff = $scope.lastArr[k][getFirstKey($scope.lastArr[k])];
                     }
+
                     clone[k][sK] = tmpArr[k][sK] - lastDiff;
 
 
@@ -128,6 +149,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
 
             var names = new Array;
             var configs = new Array;
+
             if (metrics.config) {
                 metrics.config.forEach(function (elem, idx, array) {
                     names.push(elem.name);
@@ -155,16 +177,30 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
 
                     $scope.metricsData = tmpArr
                 }
-                var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names , compress : 'none' , from : dataFrom , to : dataTo };
+                var databases = undefined;
+                if (metrics.databases) {
+                    databases = metrics.databases;
+
+                }
                 if (!metrics.server.name) {
                     Monitor.getServer(metrics.server, function (data) {
-                        var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names , compress : 'none' , from : dataFrom , to : dataTo };
+                        if (databases) {
+                            var params = {  server: data.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: 'none', from: dataFrom, to: dataTo };
+                        } else {
+                            var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: 'none', from: dataFrom, to: dataTo };
+                        }
+
                         Metric.get(params, function (data) {
                             calculateArray(data);
                         });
                     });
                 } else {
-                    var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names , compress : 'none' , from : dataFrom , to : dataTo };
+                    if (databases) {
+                        var params = {  server: metrics.server.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, compress: 'none', from: dataFrom, to: dataTo };
+                    } else {
+                        var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names, compress: 'none', from: dataFrom, to: dataTo };
+                    }
+
                     Metric.get(params, function (data) {
                         calculateArray(data);
                     });

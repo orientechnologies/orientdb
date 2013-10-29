@@ -50,8 +50,8 @@ public final class ORealtimeMetric {
 
   protected boolean fetch(final String iName) throws MalformedURLException, IOException {
     final long now = System.currentTimeMillis();
-    if (now - lastReceived < maxTTL)
-      return false;
+//    if (now - lastReceived < maxTTL)
+//      return false;
 
     final String url = server.field("url");
     final String serverName = server.field("name");

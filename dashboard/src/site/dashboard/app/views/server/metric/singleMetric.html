@@ -1,10 +1,10 @@
 <div class="row-fluid" ng-controller="SingleMetricController">
     <div class="span12">
-        <div class="widget">
+        <div class="widget" ng-show="config">
             <div class="widget-title row-fluid">
                 <div class="widget-caption span4">
                     <i class="icon-bolt"></i>
-                    {{ 'dashboard.metric.preview' | i18n }} - {{ config.name }}
+                    {{ config.name }}
                 </div>
                 <div class="actions span8">
                     <div class="row-fluid">
@@ -28,8 +28,8 @@
                                 <i class="icon-bar-chart"></i>
                             </a>
                             <div class="onoffswitch">
-                                <input type="checkbox" name="onoffswitch"  ng-model="realtime" class="onoffswitch-checkbox" id="myonoffswitch" >
-                                <label class="onoffswitch-label" for="myonoffswitch">
+                                <input type="checkbox" name="onoffswitch"  ng-model="realtime" class="onoffswitch-checkbox" id="myonoffswitch-{{ config.name }}" >
+                                <label class="onoffswitch-label" for="myonoffswitch-{{ config.name }}">
                                     <div class="onoffswitch-inner"></div>
                                     <div class="onoffswitch-switch"></div>
                                 </label>
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="widget-body">
-                <svg class="span12" height='500' preserveAspectRatio="none" stackedarea="metricsData"
+                <svg class="span12"  preserveAspectRatio="none" stackedarea="metricsData"
                      stackedrender="render"></svg>
             </div>
 

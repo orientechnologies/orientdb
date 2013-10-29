@@ -17,9 +17,7 @@ package com.orientechnologies.orient.monitor.http;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,29 +48,33 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 		if (monitor == null)
 			monitor = OServerMain.server().getPluginByClass(OMonitorPlugin.class);
 
-		final String[] parts = checkSyntax(iRequest.url, 6,
-				"Syntax error: metrics/monitor/<server>/<type>/<kind>/<names>/<compress>/<from>/<to>");
+		final String[] parts = checkSyntax(iRequest.url, 7,
+				"Syntax error: metrics/monitor/<server>/<databases>/<type>/<kind>/<names>/<limit>/<compress>/<from>/<to>");
 
 		iRequest.data.commandInfo = "Retrieve metrics";
 
 		try {
 
 			final String serverName = parts[2];
-			final String type = parts[3];
-			final String metricKind = parts[4];
-			final String[] metricNames = parts[5].split(",");
+			final String[] databases = parts[3].split(",");
+			final String type = parts[4];
+			final String metricKind = parts[5];
+			final String[] metricNames = parts[6].split(",");
 			String from = null;
 			String to = null;
 			String compress = null;
-
-			if (parts.length > 6) {
-				compress = parts[6];
-			}
+			String limit = null;
 			if (parts.length > 7) {
-				from = parts[7];
+				limit = parts[7];
 			}
 			if (parts.length > 8) {
-				to = parts[8];
+				compress = parts[8];
+			}
+			if (parts.length > 9) {
+				from = parts[9];
+			}
+			if (parts.length > 10) {
+				to = parts[10];
 			}
 			final OMonitoredServer server = monitor.getMonitoredServer(serverName);
 			if (server == null)
@@ -81,9 +83,9 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 			final Map<String, Object> result = new HashMap<String, Object>();
 
 			if ("realtime".equalsIgnoreCase(type))
-				sendRealtimeMetrics(iResponse, metricKind, metricNames, server, result);
+				sendRealtimeMetrics(iResponse, metricKind, metricNames, server, databases, result);
 			else if ("snapshot".equalsIgnoreCase(type)) {
-				sendSnapshotMetrics(iRequest, iResponse, metricKind, metricNames, server, compress, from, to, result);
+				sendSnapshotMetrics(iRequest, iResponse, metricKind, metricNames, server, databases, limit, compress, from, to, result);
 			}
 
 		} catch (Exception e) {
@@ -93,9 +95,23 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 	}
 
 	protected void sendRealtimeMetrics(OHttpResponse iResponse, final String iMetricKind, final String[] metricNames,
-			final OMonitoredServer server, final Map<String, Object> result) throws MalformedURLException, IOException,
-			InterruptedException {
-		for (String metricName : metricNames) {
+			final OMonitoredServer server, String[] databases, final Map<String, Object> result) throws MalformedURLException,
+			IOException, InterruptedException {
+		String[] dbs = databases;
+		if (databases.length == 1 && databases[0].equals("all")) {
+			try {
+				final Map<String, Object> mapDb = server.getRealtime().getInformation("system.databases");
+				String dbInfo = (String) mapDb.get("system.databases");
+				dbs = dbInfo.split(",");
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+
+			}
+
+		}
+		Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
+		for (String metricName : expandMetric(server, metricNames, dbs)) {
 			final Map<String, Object> metrics;
 
 			if (iMetricKind.equals("chrono"))
@@ -111,7 +127,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 
 			if (metrics != null)
 				for (Entry<String, Object> metric : metrics.entrySet()) {
-					result.put(metric.getKey(), metric.getValue());
+					result.put(new String(aggregation.get(metric.getKey())), metric.getValue());
 				}
 		}
 
@@ -119,12 +135,24 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 	}
 
 	protected void sendSnapshotMetrics(OHttpRequest iRequest, OHttpResponse iResponse, final String iMetricKind,
-			final String[] metricNames, final OMonitoredServer server, String compress, String from, String to,
-			final Map<String, Object> result) throws MalformedURLException, IOException, InterruptedException {
+			final String[] metricNames, final OMonitoredServer server, String[] databases, String limit, String compress, String from,
+			String to, final Map<String, Object> result) throws MalformedURLException, IOException, InterruptedException {
 		String query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where name in :names and snapshot.server.name = :sname ";
+		String[] dbs = databases;
+		if (databases.length == 1 && databases[0].equals("all")) {
+			try {
+				final Map<String, Object> mapDb = server.getRealtime().getInformation("system.databases");
+				String dbInfo = (String) mapDb.get("system.databases");
+				dbs = dbInfo.split(",");
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
 
+			}
+
+		}
 		final Map<String, Object> params = new HashMap<String, Object>();
-		params.put("names", metricNames);
+		params.put("names", expandMetric(server, metricNames, dbs));
 		params.put("sname", server.getConfiguration().field("name"));
 
 		if (from != null) {
@@ -136,8 +164,56 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 			params.put("dateTo", to);
 		}
 		query += " order by dateFrom desc, name desc ";
+		if (limit != null) {
+			query += " LIMIT " + limit;
+		}
+
 		List<ODocument> docs = getProfiledDatabaseInstance(iRequest).query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
+
+		Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
+
+		for (ODocument oDocument : docs) {
+			oDocument.field("name", aggregation.get(oDocument.field("name")));
+		}
 		iResponse.writeResult(docs, "indent:6");
+	}
+
+	protected Map<String, String> buildAssociation(OMonitoredServer server, String[] metrics, String[] databases) {
+		Map<String, String> ass = new HashMap<String, String>();
+		String[] dbFormatted;
+		dbFormatted = databases;
+		for (String m : metrics) {
+			if (m.startsWith("db")) {
+				for (String db : dbFormatted) {
+					String replace = m.replace("*", db);
+					ass.put(replace, m);
+				}
+			} else {
+				ass.put(m, m);
+			}
+		}
+		return ass;
+	}
+
+	protected String[] expandMetric(OMonitoredServer server, String[] metrics, String[] databases) {
+		String[] dbFormatted;
+		List<String> finalMetrics = new ArrayList<String>();
+		if (databases.length == 0)
+			return metrics;
+
+		dbFormatted = databases;
+
+		for (String m : metrics) {
+			if (m.startsWith("db")) {
+				for (String db : dbFormatted) {
+					finalMetrics.add(m.replace("*", db));
+				}
+			} else {
+				finalMetrics.add(m);
+			}
+		}
+
+		return (String[]) finalMetrics.toArray(new String[finalMetrics.size()]);
 	}
 
 	@Override

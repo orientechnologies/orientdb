@@ -44,30 +44,34 @@
 <![endif]-->
 
 <!-- Add your site or application content here -->
-<div ng-controller="HeaderController">
+<!--<div ng-controller="HeaderController">
     <div ng-include src="'views/header.html'"></div>
-</div>
-<div class="monitor-app row-fluid">
-    <div class="span2">
-        <div class="row-fluid" ng-include src="'views/sidenav.html'"></div>
-    </div>
-    <div class="span10 mainSection">
-        <div class="row-fluid" ng-view>
+</div>-->
+<div id="wrapper">
+    <nav class="navbar navbar-inverse navbar-fixed-top" ng-include src="'views/nav.html'" role="navigation"
+         ng-controller="NavController">
 
-        </div>
-        <div class="container-fluid">
-            <footer id="footer">
-                <div>
-                    <a class="brand" href="http://www.orientechnologies.com/enterprise.htm" target="_blank"></a>
+    </nav>
+    <div class="monitor-app row-fluid">
+        <div class="span12 mainSection">
+            <div class="row-fluid" ng-view>
 
-                    <p class="pull-right"><a target='_blank'
-                                             href='http://www.orientechnologies.com/enterprise.htm'>&copy;
-                        Orient Technologies</a> - <a target='_blank' href='http://www.nuvolabase.com/site/terms.html'>Terms
-                        of
-                        Service</a> - <a target='_blank'
-                                         href='http://www.nuvolabase.com/site/contacts.html'>Contacts</a></p>
-                </div>
-            </footer>
+            </div>
+           <!-- <div class="container-fluid">
+                <footer id="footer">
+                    <div>
+                        <a class="brand" href="http://www.orientechnologies.com/enterprise.htm" target="_blank"></a>
+
+                        <p class="pull-right"><a target='_blank'
+                                                 href='http://www.orientechnologies.com/enterprise.htm'>&copy;
+                            Orient Technologies</a> - <a target='_blank'
+                                                         href='http://www.nuvolabase.com/site/terms.html'>Terms
+                            of
+                            Service</a> - <a target='_blank'
+                                             href='http://www.nuvolabase.com/site/contacts.html'>Contacts</a></p>
+                    </div>
+                </footer>
+            </div>-->
         </div>
     </div>
 </div>
