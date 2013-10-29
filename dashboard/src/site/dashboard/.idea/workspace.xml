@@ -30,7 +30,7 @@
     <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382690376657" ignored="false" />
     <file path="/login.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378744447308" ignored="false" />
     <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381590383604" ignored="false" />
-    <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382809031985" ignored="false" />
+    <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382981194305" ignored="false" />
     <file path="/monitor.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382474076361" ignored="false" />
     <file path="/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985701222" ignored="false" />
     <file path="/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382373104518" ignored="false" />
@@ -49,8 +49,8 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/services/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381225263899" ignored="false" />
     <file path="/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380296352367" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/ace-builds/kitchen-sink/docs/xml.xml" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379952861709" ignored="false" />
-    <file path="/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379261093460" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383062689194" ignored="false" />
+    <file path="/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383062689194" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/angular-strap/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editDocument.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379000573044" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/jquery/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378821449721" ignored="false" />
@@ -111,7 +111,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/document/modalConnection.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987469650" ignored="false" />
     <file path="/modalConnection.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987545245" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/vertex/modalConnection.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987545904" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994833638" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382978435799" ignored="false" />
     <file path="/login-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378994830534" ignored="false" />
     <file path="/configuration.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378996140884" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/configuration.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378996140884" ignored="false" />
@@ -191,7 +191,7 @@
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/font-awesome/src/assets/js/backbone.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/codemirror/mode/javascript/javascript.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="/datepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210153179" ignored="false" />
-    <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382539890849" ignored="false" />
+    <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383063278411" ignored="false" />
     <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381407578985" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416802554" ignored="false" />
     <file path="/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380364362509" ignored="false" />
@@ -232,10 +232,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="monitor-service.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="159" column="30" selection-start="5820" selection-end="5820" vertical-scroll-proportion="0.3258786">
+            <state line="129" column="74" selection-start="4749" selection-end="4749" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -254,15 +254,6 @@
         <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
           <provider selected="true" editor-type-id="text-editor">
             <state line="134" column="77" selection-start="4754" selection-end="4754" vertical-scroll-proportion="-10.5">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="logjava.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="105" column="80" selection-start="4090" selection-end="4090" vertical-scroll-proportion="-13.076923">
               <folding />
             </state>
           </provider>
@@ -295,10 +286,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="logs.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="101" column="56" selection-start="3378" selection-end="3384" vertical-scroll-proportion="0.0">
+            <state line="186" column="44" selection-start="6746" selection-end="6746" vertical-scroll-proportion="0.3258786">
               <folding />
             </state>
           </provider>
@@ -308,6 +299,15 @@
         <entry file="file://$PROJECT_DIR$/app/views/eventWhen/metricswhen.html">
           <provider selected="true" editor-type-id="text-editor">
             <state line="14" column="42" selection-start="386" selection-end="399" vertical-scroll-proportion="-9.153846">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="134" column="82" selection-start="4794" selection-end="4794" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -334,8 +334,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/index.html" />
-        <option value="$PROJECT_DIR$/app/views/eventWhat/httpwhat.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/mailwhat.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
@@ -350,6 +348,8 @@
         <option value="$PROJECT_DIR$/app/views/eventWhen/metricswhen.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhen/logwhen.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
+        <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
       </list>
     </option>
   </component>
@@ -724,13 +724,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="72" column="25" selection-start="3041" selection-end="3041" vertical-scroll-proportion="-15.461538">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="12" column="102" selection-start="807" selection-end="807" vertical-scroll-proportion="0.0">
@@ -756,7 +749,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state line="23" column="57" selection-start="462" selection-end="462" vertical-scroll-proportion="-15.038462">
           <folding>
-            <element signature="n#style#0;n#button#0;n#div#0;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#button#0;n#div#0;n#div#0;n#!!top" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -826,16 +819,23 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="101" column="56" selection-start="3378" selection-end="3384" vertical-scroll-proportion="0.0">
+        <state line="129" column="74" selection-start="4749" selection-end="4749" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="159" column="30" selection-start="5820" selection-end="5820" vertical-scroll-proportion="0.3258786">
+        <state line="134" column="82" selection-start="4794" selection-end="4794" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="186" column="44" selection-start="6746" selection-end="6746" vertical-scroll-proportion="0.3258786">
           <folding />
         </state>
       </provider>
