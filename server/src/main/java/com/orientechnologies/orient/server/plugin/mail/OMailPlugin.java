@@ -152,7 +152,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     messageBodyPart.setContent(iMessage.get("message"), "text/html");
 
     // creates multi-part
-    Multipart multipart = new MimeMultipart();
+    Multipart multipart = new MimeMultipart();  
     multipart.addBodyPart(messageBodyPart);
 
     final String[] attachments = (String[]) iMessage.get("attachments");
