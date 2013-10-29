@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.monitor.event.OEventController;
+import com.orientechnologies.orient.monitor.event.OEventLogMailExecutor;
 import com.orientechnologies.orient.monitor.event.OEventMetricMailExecutor;
 import com.orientechnologies.orient.monitor.hooks.OEventHook;
 import com.orientechnologies.orient.server.OServer;
@@ -145,6 +146,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	private void registerExecutors() {
 		OEventController.getInstance().register(new OEventMetricMailExecutor());
+		OEventController.getInstance().register(new OEventLogMailExecutor());
+		
 
 	}
 
