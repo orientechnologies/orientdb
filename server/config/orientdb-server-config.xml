@@ -22,7 +22,7 @@
 				<parameter name="profile.default.mail.smtp.password"
 					value="" />
 				<parameter name="from"
-					value="ORIENTDB ENTERPRISE <orientDB@mydomain.com>" />
+					value="orientDB@mydomain.com" />
 				<parameter name="profile.default.mail.date.format" value="yyyy-MM-dd HH:mm:ss" />
 			</parameters>
 		</handler>
