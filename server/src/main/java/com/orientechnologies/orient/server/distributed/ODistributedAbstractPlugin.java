@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -54,7 +53,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected static final String                           FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                       serverInstance;
-  protected Map<String, ODocument>                        loadedDatabaseConfiguration = new ConcurrentHashMap<String, ODocument>();
   protected Map<String, ODocument>                        cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
   protected boolean                                       enabled                     = true;
@@ -200,7 +198,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
       updateCachedDatabaseConfiguration(iDatabaseName, doc);
-      loadedDatabaseConfiguration.put(iDatabaseName, doc);
       return doc;
 
     } catch (Exception e) {
@@ -240,7 +237,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   protected void saveDatabaseConfiguration(final String iDatabaseName, final ODocument cfg) {
     synchronized (cachedDatabaseConfiguration) {
-      final ODocument oldCfg = loadedDatabaseConfiguration.get(iDatabaseName);
+      final ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
       if (oldCfg != null && Arrays.equals(oldCfg.toStream(), cfg.toStream()))
         // NO CHANGE, SKIP IT
         return;
@@ -253,7 +250,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     cfg.field("version", oldVersion.intValue() + 1);
 
     updateCachedDatabaseConfiguration(iDatabaseName, cfg);
-    loadedDatabaseConfiguration.put(iDatabaseName, cfg);
 
     FileOutputStream f = null;
     try {
