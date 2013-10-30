@@ -831,3 +831,6 @@ div.pagination span.disabled {
 .no-margin{
     margin:0px !important;
 }
+.dashboard-metric .widget-caption {
+    vertical-align: text-bottom;
+}

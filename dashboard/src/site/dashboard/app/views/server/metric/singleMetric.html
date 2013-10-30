@@ -23,37 +23,20 @@
                             </select>
                         </div>
                         <div class="span8">
-                            <div class="span4">
+                            <div class="span3">
 
                             </div>
 
-                            <div class="span8 dropdown">
-                                <div class="pull-right">
-                                    <a class="btn btn-trasparent dropdown-toggle " data-toggle="dropdown"
-                                       href="javascript:void(0)">
-                                        <i class="icon-gears"></i>
-                                        <b class="caret"></b>
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li>
-                                            <div class="onoffswitch">
-                                                <input type="checkbox" name="onoffswitch" ng-model="realtime"
-                                                       class="onoffswitch-checkbox"
-                                                       id="myonoffswitch-{{ config.name }}">
-                                                <label class="onoffswitch-label" for="myonoffswitch-{{ config.name }}">
-                                                    <div class="onoffswitch-inner"></div>
-                                                    <div class="onoffswitch-switch"></div>
-                                                </label>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="pull-right">
+                            <div class="span9 dropdown">
+
+                                <div class="span3">
                                     <a class="btn btn-trasparent" ng-class="{ 'btn-inverse' : 'bar' == render
                                     }"
                                        href="javascript:void(0)" ng-click="render = 'bar'">
                                         <i class="icon-bar-chart"></i>
                                     </a>
+                                </div>
+                                <div class="span3">
                                     <a class="btn btn-trasparent "
                                        ng-class="{ 'btn-inverse' : 'area' == render }"
                                        href="javascript:void(0)" ng-click="render = 'area'">
@@ -61,6 +44,29 @@
                                     </a>
                                 </div>
 
+                                <div class="span6">
+                                    <div class="pull-right">
+                                        <a class="btn btn-trasparent dropdown-toggle " data-toggle="dropdown"
+                                           href="javascript:void(0)">
+                                            <i class="icon-gears"></i>
+                                            <b class="caret"></b>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <div class="onoffswitch">
+                                                    <input type="checkbox" name="onoffswitch" ng-model="realtime"
+                                                           class="onoffswitch-checkbox"
+                                                           id="myonoffswitch-{{ config.name }}">
+                                                    <label class="onoffswitch-label"
+                                                           for="myonoffswitch-{{ config.name }}">
+                                                        <div class="onoffswitch-inner"></div>
+                                                        <div class="onoffswitch-switch"></div>
+                                                    </label>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
