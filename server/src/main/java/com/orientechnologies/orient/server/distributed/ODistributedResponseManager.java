@@ -185,17 +185,17 @@ public class ODistributedResponseManager {
   }
 
   /**
-   * Returns all the servers in conflict.
+   * Returns all the responses in conflict.
    * 
    * @return
    */
-  public List<String> getConflictServers() {
-    final List<String> servers = new ArrayList<String>();
+  public List<ODistributedResponse> getConflictResponses() {
+    final List<ODistributedResponse> servers = new ArrayList<ODistributedResponse>();
     int bestGroupSoFar = getBestResponsesGroup();
     for (int i = 0; i < responseGroups.size(); ++i) {
       if (i != bestGroupSoFar) {
         for (ODistributedResponse r : responseGroups.get(i))
-          servers.add(r.getExecutorNodeName());
+          servers.add(r);
       }
     }
     return servers;
@@ -399,8 +399,21 @@ public class ODistributedResponseManager {
       // TODO: UNDO
       request.undo();
 
-      throw new ODistributedException("Quorum " + getQuorum() + " not reached for request=" + request
-          + ". Servers in conflicts are: " + getConflictServers());
+      final StringBuilder msg = new StringBuilder();
+
+      msg.append("Quorum " + getQuorum() + " not reached for request=" + request + ". Servers in conflicts are:");
+      final List<ODistributedResponse> res = getConflictResponses();
+      if (res.isEmpty())
+        msg.append(" no server in conflict");
+      else
+        for (ODistributedResponse r : res) {
+          msg.append("\n- ");
+          msg.append(r.getExecutorNodeName());
+          msg.append(": ");
+          msg.append(r.getPayload());
+        }
+
+      throw new ODistributedException(msg.toString());
     }
 
     switch (resultStrategy) {
