@@ -18,6 +18,7 @@ package com.orientechnologies.orient.monitor.http;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -127,7 +128,11 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 
 			if (metrics != null)
 				for (Entry<String, Object> metric : metrics.entrySet()) {
-					result.put(new String(aggregation.get(metric.getKey())), metric.getValue());
+					String key = aggregation.get(metric.getKey());
+					if (key == null) {
+						key = metric.getKey();
+					}
+					result.put(key, metric.getValue());
 				}
 		}
 
@@ -155,7 +160,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 		params.put("names", expandMetric(server, metricNames, dbs));
 		params.put("sname", server.getConfiguration().field("name"));
 
-		if (from != null) {
+		 if (from != null) {
 			query += "and snapshot.dateFrom >= :dateFrom ";
 			params.put("dateFrom", from);
 		}
@@ -175,7 +180,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 		for (ODocument oDocument : docs) {
 			oDocument.field("name", aggregation.get(oDocument.field("name")));
 		}
-		iResponse.writeResult(docs, "indent:6");
+		iResponse.writeResult(docs);
 	}
 
 	protected Map<String, String> buildAssociation(OMonitoredServer server, String[] metrics, String[] databases) {
@@ -195,11 +200,11 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 		return ass;
 	}
 
-	protected String[] expandMetric(OMonitoredServer server, String[] metrics, String[] databases) {
+	protected List<String> expandMetric(OMonitoredServer server, String[] metrics, String[] databases) {
 		String[] dbFormatted;
 		List<String> finalMetrics = new ArrayList<String>();
 		if (databases.length == 0)
-			return metrics;
+			return Arrays.asList(metrics);
 
 		dbFormatted = databases;
 
@@ -213,7 +218,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 			}
 		}
 
-		return (String[]) finalMetrics.toArray(new String[finalMetrics.size()]);
+		return finalMetrics;
 	}
 
 	@Override

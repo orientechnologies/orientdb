@@ -689,9 +689,9 @@ div.pagination span.disabled {
 .onoffswitch-inner:before, .onoffswitch-inner:after {
     float: left;
     width: 50%;
-    height: 30px;
+    height: 20px;
     padding: 0;
-    line-height: 30px;
+    line-height: 20px;
     font-size: 14px;
     color: white;
     font-family: Trebuchet, Arial, sans-serif;
@@ -822,4 +822,12 @@ div.pagination span.disabled {
 }
 .navbar-right {
     float: right !important;
+}
+.chart-loader {
+    margin: 0 auto;
+    display: block;
+}
+
+.no-margin{
+    margin:0px !important;
 }

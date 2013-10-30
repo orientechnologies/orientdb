@@ -304,11 +304,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
-<<<<<<< HEAD
-		
-=======
 		metricConfig.createProperty("server", OType.LINK, server);
->>>>>>> 299692dd41b75a632bcef994048dc7d30bad81da
 	}
 
 	@Override

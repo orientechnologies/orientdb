@@ -6,33 +6,61 @@
                     <i class="icon-bolt"></i>
                     {{ config.name }}
                 </div>
+
                 <div class="actions span8">
                     <div class="row-fluid">
-                        <div class="span6">
-                            <div class="metric-range" ng-hide="realtime" ng-model="range" rangepicker="range">
+                        <div class="span4">
+                            <div class="metric-range" ng-hide="true" ng-model="range" rangepicker="range">
                                 <i class="icon-calendar"></i>
                                 <span></span>
                                 <i class="icon-angle-down"></i>
                             </div>
+                            <select class="input-small" ng-show="realtime" ng-model="pollTime">
+                                <option value="5000">5s</option>
+                                <option value="10000">10s</option>
+                                <option value="20000">20s</option>
+                                <option value="30000">30s</option>
+                            </select>
                         </div>
-                        <div class="span6">
+                        <div class="span8">
+                            <div class="span4">
 
-                            <a class="btn btn-trasparent pull-right"
-                               ng-class="{ 'btn-inverse' : 'area' == render }"
-                               href="javascript:void(0)" ng-click="render = 'area'">
-                                <i class="icon-signal"></i>
-                            </a>
-                            <a class="btn btn-trasparent pull-right" ng-class="{ 'btn-inverse' : 'bar' == render
+                            </div>
+
+                            <div class="span8 dropdown">
+                                <div class="pull-right">
+                                    <a class="btn btn-trasparent dropdown-toggle " data-toggle="dropdown"
+                                       href="javascript:void(0)">
+                                        <i class="icon-gears"></i>
+                                        <b class="caret"></b>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <div class="onoffswitch">
+                                                <input type="checkbox" name="onoffswitch" ng-model="realtime"
+                                                       class="onoffswitch-checkbox"
+                                                       id="myonoffswitch-{{ config.name }}">
+                                                <label class="onoffswitch-label" for="myonoffswitch-{{ config.name }}">
+                                                    <div class="onoffswitch-inner"></div>
+                                                    <div class="onoffswitch-switch"></div>
+                                                </label>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="pull-right">
+                                    <a class="btn btn-trasparent" ng-class="{ 'btn-inverse' : 'bar' == render
                                     }"
-                               href="javascript:void(0)" ng-click="render = 'bar'">
-                                <i class="icon-bar-chart"></i>
-                            </a>
-                            <div class="onoffswitch">
-                                <input type="checkbox" name="onoffswitch"  ng-model="realtime" class="onoffswitch-checkbox" id="myonoffswitch-{{ config.name }}" >
-                                <label class="onoffswitch-label" for="myonoffswitch-{{ config.name }}">
-                                    <div class="onoffswitch-inner"></div>
-                                    <div class="onoffswitch-switch"></div>
-                                </label>
+                                       href="javascript:void(0)" ng-click="render = 'bar'">
+                                        <i class="icon-bar-chart"></i>
+                                    </a>
+                                    <a class="btn btn-trasparent "
+                                       ng-class="{ 'btn-inverse' : 'area' == render }"
+                                       href="javascript:void(0)" ng-click="render = 'area'">
+                                        <i class="icon-signal"></i>
+                                    </a>
+                                </div>
+
                             </div>
                         </div>
 
@@ -40,8 +68,11 @@
                 </div>
             </div>
             <div class="widget-body">
-                <svg class="span12"  preserveAspectRatio="none" stackedarea="metricsData"
-                     stackedrender="render"></svg>
+                <div id="loader" ng-show="loading" ng-animate="'fade'">
+                    <img src="img/orient_sun_logo.gif" class="chart-loader"/>
+                </div>
+                <svg class="span12 no-margin" preserveAspectRatio="none" stackedarea="metricsData"
+                     stackedrender="render" realtime="realtime"></svg>
             </div>
 
         </div>

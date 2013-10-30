@@ -39,7 +39,7 @@ Widget.directive('rangepicker', function () {
     return {
         require: '?ngModel',
         restrict: 'A',
-        link: function (scope, element, attr,ngModel) {
+        link: function (scope, element, attr, ngModel) {
 
 
             element.daterangepicker(
@@ -57,23 +57,22 @@ Widget.directive('rangepicker', function () {
                 },
                 function (start, end) {
                     var child = element.children('span')[0];
-                    scope.$apply(function(){
-                        ngModel.$setViewValue({ start : start , end : end});
+                    scope.$apply(function () {
+                        ngModel.$setViewValue({ start: start, end: end});
                     });
                     $(child).html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
                 });
             // scope[range] = { start : moment().subtract('days', 6) , end : moment()};
-            ngModel.$setViewValue({ start : moment().subtract('days', 6) , end : moment()});
+            ngModel.$setViewValue({ start: moment().subtract('days', 6), end: moment()});
             var child = element.children('span')[0]
             $(child).html(moment().subtract('days', 6).format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
         }
     };
 });
 
-Widget.directive('metricchart', function ($http,$compile) {
+Widget.directive('metricchart', function ($http, $compile) {
 
-    var compileChart = function (html,scope,element,attrs){
-
+    var compileChart = function (html, scope, element, attrs) {
 
 
         var chartScope = scope.$new(true);
@@ -87,10 +86,106 @@ Widget.directive('metricchart', function ($http,$compile) {
 
     return {
         restrict: 'A',
-        link: function (scope,element, attrs) {
+        link: function (scope, element, attrs) {
             $http.get('views/server/metric/singleMetric.html').then(function (response) {
                 compileChart(response, scope, element, attrs);
             });
+        }
+    };
+});
+Widget.directive('rickchart', function ($http, $compile) {
+
+    var compileChart = function (html, scope, element, attrs) {
+
+
+        var chartScope = scope.$new(true);
+        chartScope.metric = attrs['rickchart'];
+        chartScope.chartHeight = attrs['chartheight'];
+        chartScope.metricScope = scope;
+        var el = angular.element($compile(html.data)(chartScope));
+        element.empty();
+        element.append(el);
+    }
+
+    return {
+        restrict: 'A',
+        link: function (scope, element, attrs) {
+            $http.get('views/server/metric/rickSingleMetric.html').then(function (response) {
+                compileChart(response, scope, element, attrs);
+            });
+        }
+    };
+});
+
+Widget.directive('rickarea', function () {
+
+    var createStackedArea = function (scope, data, element, render) {
+
+        var graph = new Rickshaw.Graph({
+            height : "500",
+            series: [
+                {   color : 'steelblue',
+                    data: [
+                    { x: 0, y: 2 },
+                    { x: 1, y: 4 },
+                    { x: 2, y: 4 },
+                    { x: 3, y: 4 }
+                ] }
+            ],
+            renderer: 'area',
+            element: element[0]
+        });
+        var legend = new Rickshaw.Graph.Legend({
+            graph: graph,
+            element: element[0]
+        });
+        graph.render();
+
+    }
+
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr) {
+            var data = attr.rickarea;
+            var render = attr.rickrender;
+
+            var manipulateData = function (data) {
+                var keys = new Array;
+                Object.keys(data).forEach(function (elem, idx, array) {
+                    Object.keys(data[elem]).forEach(function (el, i, a) {
+                        if (keys.indexOf(el) == -1)
+                            keys.push(el);
+                    });
+                });
+                var formatted = new Array;
+                Object.keys(data).forEach(function (elem, idx, array) {
+                    if (elem != "hidden") {
+                        var values = new Array;
+                        keys.forEach(function (e, i, a) {
+                            var v = data[elem][e];
+                            if (!v) {
+                                v = 0;
+                            }
+                            values.unshift([e, v]);
+                        });
+                        var obj = { "key": elem, "values": values };
+                        formatted.push(obj)
+                    }
+
+                });
+                createStackedArea(scope, formatted, element, scope[render]);
+            }
+            scope.$watch(data, function (data) {
+                if (data) {
+                    manipulateData(data);
+                }
+            });
+            scope.$watch(render, function (ren) {
+                if (scope[data]) {
+                    manipulateData(scope[data]);
+                }
+            })
+
         }
     };
 });
