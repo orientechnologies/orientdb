@@ -1,3 +1,19 @@
+/*
+ * Copyright 2010-2013 Orient Technologies LTD
+ * All Rights Reserved. Commercial License.
+ *
+ * NOTICE:  All information contained herein is, and remains the property of
+ * Orient Technologies LTD and its suppliers, if any.  The intellectual and
+ * technical concepts contained herein are proprietary to
+ * Orient Technologies LTD and its suppliers and may be covered by United
+ * Kingdom and Foreign Patents, patents in process, and are protected by trade
+ * secret or copyright law.
+ * 
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Orient Technologies LTD.
+ */
+
 package com.orientechnologies.orient.monitor;
 
 import java.util.Collection;
@@ -27,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.monitor.event.OEventController;
+import com.orientechnologies.orient.monitor.event.OEventLogMailExecutor;
 import com.orientechnologies.orient.monitor.event.OEventMetricMailExecutor;
 import com.orientechnologies.orient.monitor.hooks.OEventHook;
 import com.orientechnologies.orient.server.OServer;
@@ -129,6 +146,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	private void registerExecutors() {
 		OEventController.getInstance().register(new OEventMetricMailExecutor());
+		OEventController.getInstance().register(new OEventLogMailExecutor());
+		
 
 	}
 

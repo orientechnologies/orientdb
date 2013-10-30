@@ -167,7 +167,7 @@ monitor.factory('Server', function ($http, $resource, Metric) {
         $http.get(url).success(function (data) {
             callback(data);
         }).error(function (data) {
-                error(data);
+//                error(data);
             });
     }
     resource.saveConfiguration = function (server, config, callback, error) {
@@ -176,7 +176,7 @@ monitor.factory('Server', function ($http, $resource, Metric) {
         $http.put(url, config).success(function (data) {
             callback(data);
         }).error(function (data) {
-                error(data);
+//                error(data);
             });
     }
     resource.findDatabases = function (server, callback) {

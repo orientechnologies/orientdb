@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.monitor.hooks;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
@@ -21,9 +22,21 @@ public class OEventHook extends ORecordHookAbstract {
 	public void onRecordAfterCreate(ORecord<?> iiRecord) {
 
 		ODocument doc = (ODocument) iiRecord;
-
-		final List<ODocument> triggers = doc.getDatabase().query(
-				new OSQLSynchQuery<Object>("select from Event where when.name = '" + doc.field("name") + "'"));
+		List<ODocument> triggers = new ArrayList<ODocument>();
+		
+		if(doc.getClassName().equalsIgnoreCase("Log")){
+			triggers = doc.getDatabase().query(
+					new OSQLSynchQuery<Object>("select from Event where when.type = " + doc.field("level") + ""));
+	
+			
+		}
+		else{
+			
+			triggers = doc.getDatabase().query(
+					new OSQLSynchQuery<Object>(
+							"select from Event where when.name = '"
+									+ doc.field("name") + "'"));
+		}
 
 		for (ODocument oDocument : triggers) {
 
@@ -41,20 +54,25 @@ public class OEventHook extends ORecordHookAbstract {
 		}
 
 	}
-
 	/*
-	 * public void mailEvent(ODocument what) { OMailPlugin mail = OServerMain.server().getPluginByClass( OMailPlugin.class);
+	 * public void mailEvent(ODocument what) { OMailPlugin mail =
+	 * OServerMain.server().getPluginByClass( OMailPlugin.class);
 	 * 
-	 * Map<String, Object> configuration = new HashMap<String, Object>(); OMailProfile prof = new OMailProfile();
-	 * prof.properties.put("mail.smtp.user", ""); prof.properties.put("mail.smtp.password", ""); String subject =
+	 * Map<String, Object> configuration = new HashMap<String, Object>();
+	 * OMailProfile prof = new OMailProfile();
+	 * prof.properties.put("mail.smtp.user", "");
+	 * prof.properties.put("mail.smtp.password", ""); String subject =
 	 * what.field("subject"); String address = what.field("toAddress");
 	 * 
-	 * String body = what.field("body"); configuration.put("to", address); configuration.put("profile", "default");
-	 * configuration.put("message", subject); configuration.put("cc", address); configuration.put("bcc", address);
-	 * configuration.put("subject", body);
+	 * String body = what.field("body"); configuration.put("to", address);
+	 * configuration.put("profile", "default"); configuration.put("message",
+	 * subject); configuration.put("cc", address); configuration.put("bcc",
+	 * address); configuration.put("subject", body);
 	 * 
-	 * // try { // mail.send(configuration); // } catch (AddressException e) { // e.printStackTrace(); // } catch (MessagingException
-	 * e) { // e.printStackTrace(); // } catch (ParseException e) { // e.printStackTrace(); // }
+	 * // try { // mail.send(configuration); // } catch (AddressException e) {
+	 * // e.printStackTrace(); // } catch (MessagingException e) { //
+	 * e.printStackTrace(); // } catch (ParseException e) { //
+	 * e.printStackTrace(); // }
 	 * 
 	 * }
 	 */

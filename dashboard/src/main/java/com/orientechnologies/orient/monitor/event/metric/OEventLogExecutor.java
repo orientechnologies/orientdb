@@ -22,6 +22,10 @@ public abstract class OEventLogExecutor implements OEventExecutor {
 
 	public boolean canExecute(ODocument source, ODocument when) {
 
+		String operator = when.field("alertValue");
+		String levelType = when.field("type");
+		String info = when.field("info");
+
 		return true;
 	}
 }
