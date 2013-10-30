@@ -737,6 +737,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private long importRecords() throws Exception {
     long total = 0;
 
+    database.getMetadata().getIndexManager().dropIndex(EXPORT_IMPORT_MAP_NAME);
     exportImportHashTable = (OIndex<OIdentifiable>) database
         .getMetadata()
         .getIndexManager()

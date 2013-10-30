@@ -19,23 +19,8 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -395,8 +380,15 @@ public class OWOWCache {
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
     synchronized (syncObject) {
       OFileClassic fileClassic = files.get(fileId);
-      if (fileClassic != null)
+      if (fileClassic != null && fileClassic.isOpen())
         fileClassic.setSoftlyClosed(softlyClosed);
+    }
+  }
+
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    synchronized (syncObject) {
+      for (long fileId : files.keySet())
+        setSoftlyClosed(fileId, softlyClosed);
     }
   }
 

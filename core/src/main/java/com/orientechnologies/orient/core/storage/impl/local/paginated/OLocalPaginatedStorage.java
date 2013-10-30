@@ -1568,9 +1568,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         return;
       }
 
-      for (OCluster cluster : clusters)
-        if (cluster != null)
-          cluster.synch();
+      diskCache.flushBuffer();
 
       if (configuration != null)
         configuration.synch();
@@ -1750,29 +1748,25 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     synch();
 
     try {
-      for (OCluster cluster : clusters)
-        if (cluster != null)
-          cluster.setSoftlyClosed(true);
+      diskCache.setSoftlyClosed(true);
 
       if (configuration != null)
         configuration.setSoftlyClosed(true);
 
     } catch (IOException e) {
-      throw new OStorageException("Error on freeze storage '" + name + "'", e);
+      throw new OStorageException("Error on freeze of storage '" + name + "'", e);
     }
   }
 
   public void release() {
     try {
-      for (OCluster cluster : clusters)
-        if (cluster != null)
-          cluster.setSoftlyClosed(false);
+      diskCache.setSoftlyClosed(false);
 
       if (configuration != null)
         configuration.setSoftlyClosed(false);
 
     } catch (IOException e) {
-      throw new OStorageException("Error on release storage '" + name + "'", e);
+      throw new OStorageException("Error on release of storage '" + name + "'", e);
     }
 
     modificationLock.allowModifications();
@@ -1827,9 +1821,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       writeAheadLog.logFullCheckpointStart();
 
-      for (OCluster cluster : clusters)
-        if (cluster != null)
-          cluster.synch();
+      diskCache.flushBuffer();
 
       writeAheadLog.logFullCheckpointEnd();
       writeAheadLog.flush();

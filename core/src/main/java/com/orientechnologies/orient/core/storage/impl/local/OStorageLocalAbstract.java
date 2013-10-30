@@ -36,15 +36,7 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -53,9 +45,10 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @since 28.03.13
  */
 public abstract class OStorageLocalAbstract extends OStorageEmbedded implements OFreezableStorage {
-  protected OWriteAheadLog      writeAheadLog;
-  protected OStorageTransaction transaction = null;
-  protected ODiskCache          diskCache;
+  protected volatile OWriteAheadLog writeAheadLog;
+  protected volatile ODiskCache     diskCache;
+
+  protected OStorageTransaction     transaction = null;
 
   public OStorageLocalAbstract(String name, String filePath, String mode) {
     super(name, filePath, mode);
@@ -251,12 +244,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   }
 
   public OWriteAheadLog getWALInstance() {
-    lock.acquireSharedLock();
-    try {
-      return writeAheadLog;
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return writeAheadLog;
   }
 
 }

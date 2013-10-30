@@ -43,6 +43,8 @@ public interface ODiskCache {
 
   void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException;
 
+  void setSoftlyClosed(boolean softlyClosed) throws IOException;
+
   void flushBuffer() throws IOException;
 
   void clear() throws IOException;

@@ -335,6 +335,13 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    synchronized (syncObject) {
+      writeCache.setSoftlyClosed(softlyClosed);
+    }
+  }
+
+  @Override
   public boolean isOpen(long fileId) {
     synchronized (syncObject) {
       return writeCache.isOpen(fileId);

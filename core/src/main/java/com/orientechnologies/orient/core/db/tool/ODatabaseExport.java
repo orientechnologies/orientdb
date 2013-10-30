@@ -310,6 +310,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
 
     for (OIndex<?> index : indexes) {
+      if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
+        continue;
+
       listener.onMessage("\n- Index " + index.getName() + "...");
       writer.beginObject(2, true, null);
       writer.writeAttribute(3, true, "name", index.getName());
