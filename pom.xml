@@ -108,8 +108,7 @@
         <module>tests</module>
         <module>distributed</module>
         <module>graphdb</module>
-        <module>distribution/default</module>
-        <module>distribution/graphed</module>
+        <module>distribution</module>
     </modules>
 
     <scm>
