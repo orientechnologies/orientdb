@@ -1620,7 +1620,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Export the current record in the requested format")
   public void exportRecord(@ConsoleParameter(name = "format", description = "Format, such as 'json'") final String iFormat,
-      @ConsoleParameter(name = "options", description = "Options", optional = true) final String iOptions) throws IOException {
+      @ConsoleParameter(name = "options", description = "Options", optional = true) String iOptions) throws IOException {
     checkForDatabase();
     checkCurrentObject();
 
@@ -1634,6 +1634,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nERROR: Format '" + iFormat + "' does not export as text.");
       printSupportedSerializerFormat();
       return;
+    }
+    
+    if (iOptions == null || iOptions.length() <= 0) {
+    	iOptions = "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
     }
 
     try {
