@@ -26,6 +26,11 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.stopRealtime = function () {
             $timeout.cancel(real);
         }
+        $scope.$watch('compress', function (data) {
+            if (data) {
+                $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
+            }
+        });
         $scope.$watch('realtime', function (data) {
             if (data != undefined) {
                 if (data) {
@@ -149,6 +154,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
 
             $scope.lastArr = tmpArr;
         }
+
         $scope.refreshData = function (metrics, dataFrom, dataTo) {
 
 
@@ -189,12 +195,13 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     databases = metrics.databases;
 
                 }
+                var compress = $scope.compress || 'none';
                 if (!metrics.server.name) {
                     Monitor.getServer(metrics.server, function (data) {
                         if (databases) {
-                            var params = {  server: data.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: 'none', from: dataFrom, to: dataTo };
+                            var params = {  server: data.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: compress, from: dataFrom, to: dataTo };
                         } else {
-                            var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: 'none', from: dataFrom, to: dataTo };
+                            var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: compress, from: dataFrom, to: dataTo };
                         }
 
                         Metric.get(params, function (data) {
@@ -203,9 +210,9 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     });
                 } else {
                     if (databases) {
-                        var params = {  server: metrics.server.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, compress: 'none', from: dataFrom, to: dataTo };
+                        var params = {  server: metrics.server.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, compress: compress, from: dataFrom, to: dataTo };
                     } else {
-                        var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names, compress: 'none', from: dataFrom, to: dataTo };
+                        var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names, compress: compress, from: dataFrom, to: dataTo };
                     }
 
                     Metric.get(params, function (data) {

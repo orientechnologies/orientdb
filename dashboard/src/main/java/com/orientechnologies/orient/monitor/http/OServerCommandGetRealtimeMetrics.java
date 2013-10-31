@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,9 +40,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "GET|metrics/*" };
+	private static final String[]	NAMES		= { "GET|metrics/*" };
 
 	private OMonitorPlugin				monitor;
+	public final String[]					fields	= { "min", "max", "value", "entries", "total", "last" };
 
 	public OServerCommandGetRealtimeMetrics(final OServerCommandConfiguration iConfiguration) {
 	}
@@ -160,7 +164,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 		params.put("names", expandMetric(server, metricNames, dbs));
 		params.put("sname", server.getConfiguration().field("name"));
 
-		 if (from != null) {
+		if (from != null) {
 			query += "and snapshot.dateFrom >= :dateFrom ";
 			params.put("dateFrom", from);
 		}
@@ -177,10 +181,80 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 
 		Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
 
-		for (ODocument oDocument : docs) {
-			oDocument.field("name", aggregation.get(oDocument.field("name")));
+		if (compress.equals("none")) {
+			for (ODocument oDocument : docs) {
+				oDocument.field("name", aggregation.get(oDocument.field("name")));
+			}
+		} else {
+			docs = groupByTime(docs, aggregation, compress);
 		}
 		iResponse.writeResult(docs);
+	}
+
+	protected List<ODocument> groupByTime(List<ODocument> documents, Map<String, String> aggregation, String time) {
+		List<ODocument> docs = new ArrayList<ODocument>();
+
+		Map<Date, Map<String, List<ODocument>>> mapDocs = new LinkedHashMap<Date, Map<String, List<ODocument>>>();
+		Date last = null;
+		Calendar cal = Calendar.getInstance();
+
+		for (ODocument oDocument : documents) {
+			Date from = oDocument.field("dateFrom");
+			if (last == null) {
+				last = from;
+			} else {
+				cal.setTime(last);
+				cal.add(Calendar.MINUTE, -new Integer(time));
+				Date calculate = cal.getTime();
+				if (calculate.before(from)) {
+
+				} else {
+					last = from;
+				}
+			}
+			Map<String, List<ODocument>> firstDoc = mapDocs.get(last);
+			if (firstDoc == null) {
+				firstDoc = new LinkedHashMap<String, List<ODocument>>();
+			}
+			String field = oDocument.field("name");
+			List<ODocument> dc = firstDoc.get(aggregation.get(field));
+			if (dc == null) {
+				dc = new ArrayList<ODocument>();
+			}
+			dc.add(oDocument);
+			firstDoc.put(aggregation.get(field), dc);
+			mapDocs.put(last, firstDoc);
+		}
+
+		for (Date d : mapDocs.keySet()) {
+
+			for (String k : mapDocs.get(d).keySet()) {
+				List<ODocument> doc = mapDocs.get(d).get(k);
+				System.out.println(doc.size());
+				ODocument retDoc = new ODocument();
+				for (ODocument oDocument : doc) {
+					retDoc.field("class", oDocument.field("class"));
+					retDoc.field("name", aggregation.get(oDocument.field("name")));
+					retDoc.field("dateFrom", d);
+					retDoc.field("dateTo", d);
+					for (String entry : fields) {
+						Long f = oDocument.field(entry);
+						f = f != null ? f : 0l;
+						Long sum = retDoc.field(entry);
+						sum = sum != null ? sum : 0l;
+						sum = sum + f;
+						retDoc.field(entry, sum);
+					}
+				}
+				for (String entry : fields) {
+					Long sum = retDoc.field(entry);
+					retDoc.field(entry, sum / doc.size());
+				}
+				docs.add(retDoc);
+			}
+
+		}
+		return docs;
 	}
 
 	protected Map<String, String> buildAssociation(OMonitoredServer server, String[] metrics, String[] databases) {

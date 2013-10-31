@@ -10,7 +10,15 @@
                 <div class="actions span8">
                     <div class="row-fluid">
                         <div class="span4">
-                            <div class="metric-range" ng-hide="true" ng-model="range" rangepicker="range">
+
+                            <select class="input-small" ng-hide="realtime" ng-model="compress">
+                                <option value="1">1m</option>
+                                <option value="5">5m</option>
+                                <option value="30">30m</option>
+                                <option value="60">1h</option>
+                            </select>
+
+                            <div class="metric-range" ng-hide="false" ng-model="range" rangepicker="range">
                                 <i class="icon-calendar"></i>
                                 <span></span>
                                 <i class="icon-angle-down"></i>
