@@ -883,6 +883,8 @@ public class OWOWCache {
 
         lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
         try {
+          int flushedPages = 0;
+
           for (int i = 0; i < 16; i++) {
             OCachePointer pagePointer = writeGroup.pages[i];
 
@@ -892,14 +894,18 @@ public class OWOWCache {
 
               try {
                 flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
-                pagePointer.decrementReferrer();
-
-                cacheSize.decrementAndGet();
+                flushedPages++;
               } finally {
                 pagePointer.releaseExclusiveLock();
               }
             }
           }
+
+          for (OCachePointer pagePointer : writeGroup.pages)
+            if (pagePointer != null)
+              pagePointer.decrementReferrer();
+
+          cacheSize.addAndGet(-flushedPages);
           entryIterator.remove();
         } finally {
           lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
