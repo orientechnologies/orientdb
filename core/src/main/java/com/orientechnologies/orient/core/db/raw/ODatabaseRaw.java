@@ -130,17 +130,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         storage = Orient.instance().loadStorage(url);
       storage.create(properties);
 
-      // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onCreate(getDatabaseOwner());
-
-      // WAKE UP LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onCreate(this);
-        } catch (Throwable t) {
-        }
-
       status = STATUS.OPEN;
     } catch (Exception e) {
       throw new ODatabaseException("Cannot create database", e);

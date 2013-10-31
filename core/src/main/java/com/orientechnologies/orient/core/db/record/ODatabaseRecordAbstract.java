@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
@@ -207,6 +209,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+      // WAKE UP DB LIFECYCLE LISTENER
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+        it.next().onCreate(getDatabaseOwner());
+
+      // WAKE UP LISTENERS
+      for (ODatabaseListener listener : underlying.browseListeners())
+        try {
+          listener.onCreate(underlying);
+        } catch (Throwable t) {
+        }
 
     } catch (Exception e) {
       throw new ODatabaseException("Cannot create database", e);
