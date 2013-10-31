@@ -19,9 +19,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.text.ParseException;
@@ -131,8 +132,12 @@ public class OIOUtils {
   }
 
   public static String readFileAsString(final File iFile) throws java.io.IOException {
+    return readStreamAsString(new FileInputStream(iFile));
+  }
+
+  public static String readStreamAsString(final InputStream iStream) throws java.io.IOException {
     final StringBuffer fileData = new StringBuffer(1000);
-    final BufferedReader reader = new BufferedReader(new FileReader(iFile));
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream));
     try {
       final char[] buf = new char[1024];
       int numRead = 0;
