@@ -15,7 +15,7 @@
          | copy benchmarks scripts
         -->
         <fileSet>
-            <directory>${basedir}/../../server/benchmarks</directory>
+            <directory>${basedir}/../server/benchmarks</directory>
             <outputDirectory>benchmark</outputDirectory>
             <excludes>
                 <exclude>*.sh</exclude>
@@ -23,7 +23,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../server/benchmarks</directory>
+            <directory>${basedir}/../server/benchmarks</directory>
             <outputDirectory>benchmark</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -36,7 +36,7 @@
          | copy server scripts
         -->
         <fileSet>
-            <directory>${basedir}/../../server/script</directory>
+            <directory>${basedir}/../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -44,7 +44,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../server/script</directory>
+            <directory>${basedir}/../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -57,7 +57,7 @@
          | copy tools scripts
         -->
         <fileSet>
-            <directory>${basedir}/../../tools/script</directory>
+            <directory>${basedir}/../tools/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -65,7 +65,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../tools/script</directory>
+            <directory>${basedir}/../tools/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -78,7 +78,7 @@
          | copy distributed scripts
         -->
         <fileSet>
-            <directory>${basedir}/../../distributed/script</directory>
+            <directory>${basedir}/../distributed/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -86,7 +86,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../distributed/script</directory>
+            <directory>${basedir}/../distributed/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -99,7 +99,7 @@
          | copy graphdb scripts
         -->
         <fileSet>
-            <directory>${basedir}/../../graphdb/script</directory>
+            <directory>${basedir}/../graphdb/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -107,7 +107,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../graphdb/script</directory>
+            <directory>${basedir}/../graphdb/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -120,19 +120,19 @@
          | configurations
         -->
         <fileSet>
-            <directory>${basedir}/../../server/config</directory>
+            <directory>${basedir}/../server/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../tools/config</directory>
+            <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../distributed/config</directory>
+            <directory>${basedir}/../distributed/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../../graphdb/config</directory>
+            <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
 
@@ -140,7 +140,7 @@
          | Plugins
         -->
         <fileSet>
-            <directory>${basedir}/../../server/plugins</directory>
+            <directory>${basedir}/../server/plugins</directory>
             <outputDirectory>plugins</outputDirectory>
         </fileSet>
 
@@ -148,7 +148,7 @@
          | Web part
         -->
         <fileSet>
-            <directory>${basedir}/../../server/src/site</directory>
+            <directory>${basedir}/../server/src/site</directory>
             <outputDirectory>www</outputDirectory>
         </fileSet>
 
@@ -156,7 +156,7 @@
          | creates an empty log directory
         -->
         <fileSet>
-            <directory>${basedir}/../../server/config</directory>
+            <directory>${basedir}/../server/config</directory>
             <outputDirectory>log</outputDirectory>
             <excludes>
                 <exclude>*</exclude>
@@ -167,7 +167,7 @@
          | creates an empty databases directory
         -->
         <fileSet>
-            <directory>${basedir}/../../server/config</directory>
+            <directory>${basedir}/../server/config</directory>
             <outputDirectory>databases</outputDirectory>
             <excludes>
                 <exclude>*</exclude>
@@ -180,15 +180,15 @@
     -->
     <files>
         <file>
-            <source>${basedir}/../../license.txt</source>
+            <source>${basedir}/../license.txt</source>
             <fileMode>644</fileMode>
         </file>
         <file>
-            <source>${basedir}/../../history.txt</source>
+            <source>${basedir}/../history.txt</source>
             <fileMode>644</fileMode>
         </file>
         <file>
-            <source>${basedir}/../../readme.txt</source>
+            <source>${basedir}/../readme.txt</source>
             <fileMode>644</fileMode>
         </file>
     </files>
