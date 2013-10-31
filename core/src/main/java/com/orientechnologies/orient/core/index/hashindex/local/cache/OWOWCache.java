@@ -253,8 +253,9 @@ public class OWOWCache {
       nameIdMapHolder.getFD().sync();
   }
 
-  public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  public Future store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     Future future = null;
+
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
@@ -289,16 +290,8 @@ public class OWOWCache {
       if (cacheSize.get() > cacheMaxSize) {
         future = commitExecutor.submit(new PeriodicFlushTask());
       }
-    }
-    if (future != null) {
-      try {
-        future.get();
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-        throw new OException("File flush was interrupted", e);
-      } catch (Exception e) {
-        throw new OException("File flush was abnormally terminated", e);
-      }
+
+      return future;
     }
   }
 
@@ -332,11 +325,7 @@ public class OWOWCache {
   }
 
   public void flush(long fileId) {
-    Future<Void> future;
-    synchronized (syncObject) {
-      future = commitExecutor.submit(new FileFlushTask(fileId));
-    }
-
+    final Future<Void> future = commitExecutor.submit(new FileFlushTask(fileId));
     try {
       future.get();
     } catch (InterruptedException e) {
@@ -348,10 +337,8 @@ public class OWOWCache {
   }
 
   public void flush() {
-    synchronized (syncObject) {
-      for (long fileId : files.keySet())
-        flush(fileId);
-    }
+    for (long fileId : files.keySet())
+      flush(fileId);
   }
 
   public long getFilledUpTo(long fileId) throws IOException {
@@ -462,22 +449,22 @@ public class OWOWCache {
   }
 
   public void close() throws IOException {
-    synchronized (syncObject) {
-      flush();
+    flush();
 
-      if (!commitExecutor.isShutdown()) {
-        commitExecutor.shutdown();
-        try {
-          if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-            throw new OException("Background data flush task can not be stopped.");
-        } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Data flush thread was interrupted");
+    if (!commitExecutor.isShutdown()) {
+      commitExecutor.shutdown();
+      try {
+        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
+          throw new OException("Background data flush task can not be stopped.");
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "Data flush thread was interrupted");
 
-          Thread.interrupted();
-          throw new OException("Data flush thread was interrupted", e);
-        }
+        Thread.interrupted();
+        throw new OException("Data flush thread was interrupted", e);
       }
+    }
 
+    synchronized (syncObject) {
       for (OFileClassic fileClassic : files.values()) {
         if (fileClassic.isOpen())
           fileClassic.close();
