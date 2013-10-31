@@ -46,7 +46,7 @@ done
 
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
-cd PRGDIR
+cd $PRGDIR
 
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
