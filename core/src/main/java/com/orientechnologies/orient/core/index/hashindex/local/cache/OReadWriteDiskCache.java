@@ -2,7 +2,9 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Future;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -136,6 +138,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void release(OCacheEntry cacheEntry) {
+    Future flushFuture = null;
     synchronized (syncObject) {
       if (cacheEntry != null)
         cacheEntry.usagesCount--;
@@ -143,8 +146,19 @@ public class OReadWriteDiskCache implements ODiskCache {
         throw new IllegalStateException("record should be released is already free!");
 
       if (cacheEntry.usagesCount == 0 && cacheEntry.isDirty) {
-        writeCache.store(cacheEntry.fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
+        flushFuture = writeCache.store(cacheEntry.fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
         cacheEntry.isDirty = false;
+      }
+    }
+
+    if (flushFuture != null) {
+      try {
+        flushFuture.get();
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        throw new OException("File flush was interrupted", e);
+      } catch (Exception e) {
+        throw new OException("File flush was abnormally terminated", e);
       }
     }
   }
@@ -158,9 +172,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void flushFile(long fileId) throws IOException {
-    synchronized (syncObject) {
-      writeCache.flush(fileId);
-    }
+    writeCache.flush(fileId);
   }
 
   @Override
@@ -254,16 +266,14 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void flushBuffer() throws IOException {
-    synchronized (syncObject) {
-      writeCache.flush();
-    }
+    writeCache.flush();
   }
 
   @Override
   public void clear() throws IOException {
-    synchronized (syncObject) {
-      writeCache.flush();
+    writeCache.flush();
 
+    synchronized (syncObject) {
       clearCacheContent();
     }
   }
