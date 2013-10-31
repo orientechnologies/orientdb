@@ -621,10 +621,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       diskCache.close();
 
-      if (writeAheadLog != null) {
-        writeAheadLog.shrinkTill(writeAheadLog.end());
-        writeAheadLog.close();
-      }
+      if (writeAheadLog != null)
+        writeAheadLog.delete();
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;

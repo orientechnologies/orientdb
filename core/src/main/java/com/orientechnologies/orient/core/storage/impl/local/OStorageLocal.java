@@ -336,10 +336,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
       if (diskCache != null)
         diskCache.close();
 
-      if (writeAheadLog != null) {
-        writeAheadLog.shrinkTill(writeAheadLog.end());
-        writeAheadLog.close();
-      }
+      if (writeAheadLog != null)
+        writeAheadLog.delete();
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
