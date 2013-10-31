@@ -272,6 +272,10 @@
         <delete file="../releases/orientdb-community-${version}.zip"/>
         <zip destfile="../releases/orientdb-community-${version}.zip" basedir="../releases" level="9" update="false"
              includes="orientdb-community-*/" excludes="**/*.log.*"/>
+<!--
+        <tar destfile="../releases/orientdb-community-${version}.tar.gz" basedir="../releases" compression="gzip" 
+             includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
+-->
     </target>
 
 </project>
