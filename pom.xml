@@ -23,7 +23,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.6</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -108,8 +108,7 @@
         <module>tests</module>
         <module>distributed</module>
         <module>graphdb</module>
-        <module>distribution/default</module>
-        <module>distribution/graphed</module>
+        <module>distribution</module>
     </modules>
 
     <scm>

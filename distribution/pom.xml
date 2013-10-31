@@ -24,14 +24,14 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
-        <relativePath>../../</relativePath>
+        <version>1.6</version>
+        <relativePath>../</relativePath>
     </parent>
 
-    <artifactId>orientdb-graphed</artifactId>
+    <artifactId>orientdb-community</artifactId>
     <packaging>pom</packaging>
 
-    <name>OrientDB GraphEd Distribution</name>
+    <name>OrientDB Community Distribution</name>
 
     <properties>
         <VERSION>${project.version}</VERSION>

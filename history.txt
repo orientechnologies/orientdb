@@ -18,12 +18,32 @@
            ,::::,,,. `:   ,,   :::::    :     :   .:  DB
            ,,:` `,,.                                  
           ,,,    .,`                                  
-         ,,.     `,                 DOCUMENT-GRAPH DBMS
+         ,,.     `,                      GRAPH DB
        ``        `.                   ORIENT DATABASE
                  ``           http://www.orientechnologies.com
 
 ***************************************************************************************************
 This document contains the last changes to the OrientDB project.
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.6 - (October, 31nd 2013)
+---------------------------------------------------------------------------------------------------
+
+- SBTree: new index engine with the support for transactions and range queries
+- Distributed: new Architecture based on Hazelcast, new Distributed Transaction support across
+  nodes, new Database Sharding feature
+- Studio: total rewriting in a new tool hosted on separate project
+- HTTP: execute commands in batch mode, partial document updates, JSON as return of create and
+        update documents, management of multi databases in the same connection
+- Scripts: new Orient variable to get database instances, new switchUser() API to change current
+           user
+- Plugins: new hot deployment plugin as folders, zip and jar files
+- SQL: new target "metadata" to retrieve schema and indexes
+- Console: new silent mode
+- Many features and performance improvements on plocal and hash indexes
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=8&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.5.0 - (July, 30th 2013)

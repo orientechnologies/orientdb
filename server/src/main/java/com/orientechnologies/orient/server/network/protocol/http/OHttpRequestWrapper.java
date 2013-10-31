@@ -168,4 +168,8 @@ public class OHttpRequestWrapper {
   public String getURL() {
     return request.url;
   }
+
+  public String getRemoteAddress() {
+    return request.getRemoteAddress();
+  }
 }

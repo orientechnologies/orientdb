@@ -136,7 +136,7 @@ public class OFunction {
         // final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
         final Object argValue = iArgs[i];
 
-        if (i < params.size())
+        if (params != null && i < params.size())
           args.put(params.get(i), argValue);
         else
           args.put("param" + i, argValue);

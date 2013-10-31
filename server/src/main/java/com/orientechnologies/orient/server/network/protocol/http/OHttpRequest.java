@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -90,5 +91,11 @@ public class OHttpRequest {
 
   public Set<Entry<String, String>> getHeaders() {
     return headers.entrySet();
+  }
+
+  public String getRemoteAddress() {
+    if (data.caller != null)
+      return data.caller;
+    return ((InetSocketAddress) executor.channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
   }
 }
