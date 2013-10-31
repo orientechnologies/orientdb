@@ -820,15 +820,14 @@ public class OWOWCache {
             group.recencyBit = false;
           else {
             group.recencyBit = false;
+
             int flushedPages = 0;
+
             for (int i = 0; i < 16; i++) {
               final OCachePointer pagePointer = group.pages[i];
               if (pagePointer != null) {
-                if (weakLockMode) {
-                  if (!pagePointer.tryAcquireExclusiveLock())
-                    continue groupsLoop;
-                } else
-                  pagePointer.acquireExclusiveLock();
+                if (!pagePointer.tryAcquireExclusiveLock())
+                  continue groupsLoop;
 
                 try {
                   flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
@@ -839,7 +838,6 @@ public class OWOWCache {
                 } finally {
                   pagePointer.releaseExclusiveLock();
                 }
-
               }
             }
 
@@ -878,28 +876,36 @@ public class OWOWCache {
       NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.subMap(firstKey, true, lastKey, true);
       Iterator<Map.Entry<GroupKey, WriteGroup>> entryIterator = subMap.entrySet().iterator();
 
-      while (entryIterator.hasNext()) {
+      groupsLoop: while (entryIterator.hasNext()) {
         Map.Entry<GroupKey, WriteGroup> entry = entryIterator.next();
         final WriteGroup writeGroup = entry.getValue();
         final GroupKey groupKey = entry.getKey();
 
         lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
         try {
+          int flushedPages = 0;
+
           for (int i = 0; i < 16; i++) {
             OCachePointer pagePointer = writeGroup.pages[i];
 
             if (pagePointer != null) {
-              pagePointer.acquireExclusiveLock();
+              if (!pagePointer.tryAcquireExclusiveLock())
+                continue groupsLoop;
+
               try {
                 flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
-                pagePointer.decrementReferrer();
-
-                cacheSize.decrementAndGet();
+                flushedPages++;
               } finally {
                 pagePointer.releaseExclusiveLock();
               }
             }
           }
+
+          for (OCachePointer pagePointer : writeGroup.pages)
+            if (pagePointer != null)
+              pagePointer.decrementReferrer();
+
+          cacheSize.addAndGet(-flushedPages);
           entryIterator.remove();
         } finally {
           lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
@@ -955,7 +961,7 @@ public class OWOWCache {
     }
   }
 
-  private class NameFileIdEntry {
+  private static final class NameFileIdEntry {
     private final String name;
     private final long   fileId;
 
