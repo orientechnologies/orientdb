@@ -13,7 +13,7 @@ import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
   private static final String INPUT_FILE = "target/test-classes/graph-example-2.xml";
-  private static final String DBURL      = "local:target/databases/tinkerpop";
+  private static final String DBURL      = "plocal:target/databases/tinkerpop";
   private String              inputFile  = INPUT_FILE;
   private String              dbURL      = DBURL;
 

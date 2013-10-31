@@ -38,7 +38,7 @@ public class LocalGremlinTest {
 //
 //  @Test
 //  public void function() {
-//    OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+//    OGraphDatabase db = new OGraphDatabase("plocal:target/databases/tinkerpop");
 //    db.open("admin", "admin");
 //
 //    ODocument vertex1 = (ODocument) db.createVertex().field("label", "car").save();
@@ -68,7 +68,7 @@ public class LocalGremlinTest {
 //
 //  @Test
 //  public void command() {
-//    OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+//    OGraphDatabase db = new OGraphDatabase("plocal:target/databases/tinkerpop");
 //    db.open("admin", "admin");
 //
 //    List<OIdentifiable> result = db.command(new OCommandGremlin("g.V[0..10]")).execute();
@@ -89,7 +89,7 @@ public class LocalGremlinTest {
 //
 //  @Test
 //  public void testMultipleExpressions() {
-//    OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+//    OGraphDatabase db = new OGraphDatabase("plocal:target/databases/tinkerpop");
 //    db.open("admin", "admin");
 //
 //    int clusterId = db.getVertexBaseClass().getDefaultClusterId();
@@ -105,7 +105,7 @@ public class LocalGremlinTest {
 //
 //  @Test
 //  public void testMultipleExpressionsSideEffects() {
-//    OGraphDatabase db = new OGraphDatabase("local:target/databases/tinkerpop");
+//    OGraphDatabase db = new OGraphDatabase("plocal:target/databases/tinkerpop");
 //    db.open("admin", "admin");
 //
 //    int clusterId = db.getVertexBaseClass().getDefaultClusterId();
@@ -125,7 +125,7 @@ public class LocalGremlinTest {
 //  public void testGremlinAgainstBlueprints() {
 //    OGremlinHelper.global().create();
 //
-//    OrientGraph graph = new OrientGraph("local:target/databases/tinkerpop");
+//    OrientGraph graph = new OrientGraph("plocal:target/databases/tinkerpop");
 //
 //    final int NUM_ITERS = 1000;
 //
