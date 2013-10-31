@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  * 
  */
 public class OHttpResponse {
-  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes";
+  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final char[] URL_SEPARATOR = { '/' };
 
   private final OutputStream out;
@@ -285,8 +285,18 @@ public class OHttpResponse {
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
       throws IOException {
+    sendStream(iCode, iReason, iContentType, iContent, iSize, null);
+  }
+
+  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
+      final String iFileName) throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
+    writeLine("Content-Transfer-Encoding: binary");
+
+    if (iFileName != null)
+      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
+
     if (iSize < 0) {
       // SIZE UNKNOWN: USE A MEMORY BUFFER
       final ByteArrayOutputStream o = new ByteArrayOutputStream();

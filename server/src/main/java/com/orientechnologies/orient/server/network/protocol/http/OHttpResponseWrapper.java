@@ -302,6 +302,29 @@ public class OHttpResponseWrapper {
   }
 
   /**
+   * Sends the complete HTTP response in one call specifying a stream as content.
+   * 
+   * @param iCode
+   *          HTTP response's Code
+   * @param iReason
+   *          Response's reason
+   * @param iContentType
+   *          Response's content type
+   * @param iContent
+   *          java.io.InputStream object
+   * @param iSize
+   *          Content size in bytes
+   * @param iFileName
+   *          Optional file name
+   * @return The object itself for fluent chained calls
+   */
+  public OHttpResponseWrapper sendStream(final int iCode, final String iReason, final String iContentType,
+      final InputStream iContent, final long iSize, final String iFileName) throws IOException {
+    response.sendStream(iCode, iReason, iContentType, iContent, iSize, iFileName);
+    return this;
+  }
+
+  /**
    * Flushes the content to the TCP/IP socket.
    * 
    * @return The object itself for fluent chained calls
