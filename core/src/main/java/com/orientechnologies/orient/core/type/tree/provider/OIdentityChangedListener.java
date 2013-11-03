@@ -21,5 +21,5 @@ import com.orientechnologies.orient.core.id.ORID;
  * Listener that is called when identity of the {@link OMVRBTreeEntryDataProvider} was changed.
  */
 public interface OIdentityChangedListener {
-	public void onIdentityChanged(ORID rid);
+  public void onIdentityChanged(ORID rid);
 }

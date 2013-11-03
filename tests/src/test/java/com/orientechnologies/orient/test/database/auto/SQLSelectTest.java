@@ -15,16 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -37,7 +28,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -142,8 +132,8 @@ public class SQLSelectTest {
 
   @Test
   public void querySchemaAndLike() {
-    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'Gi%'"))
-        .execute();
+    List<ODocument> result1 = database
+        .command(new OSQLSynchQuery<ODocument>("select * from cluster:profile where name like 'Gi%'")).execute();
 
     for (int i = 0; i < result1.size(); ++i) {
       record = result1.get(i);
@@ -939,18 +929,18 @@ public class SQLSelectTest {
 
   @Test
   public void queryWithAutomaticPaginationAndRidInWhere() {
-    if (database.getStorage().isHashClustersAreUsed())
-      return;
-
     int clusterId = database.getClusterIdByName("profile");
 
+    OClusterPosition[] range = database.getStorage().getClusterDataRange(clusterId);
+
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where @rid between #" + clusterId
-        + ":2 and #" + clusterId + ":30 LIMIT 3");
+        + ":" + range[0] + " and #" + clusterId + ":" + range[1] + " LIMIT 3");
+
     ORID last = new ORecordId();
 
     List<ODocument> resultset = database.query(query);
 
-    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    Assert.assertEquals(resultset.get(0).getIdentity(), new ORecordId(clusterId, range[0]));
 
     int iterationCount = 0;
     while (!resultset.isEmpty()) {
@@ -967,7 +957,7 @@ public class SQLSelectTest {
       resultset = database.query(query);
     }
 
-    Assert.assertEquals(last, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(30)));
+    Assert.assertEquals(last, new ORecordId(clusterId, range[1]));
     Assert.assertTrue(iterationCount > 1);
   }
 
@@ -1286,7 +1276,7 @@ public class SQLSelectTest {
 
   @Test
   public void testSquareBracketsOnWhere() {
-    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from V where out.in.label is not null"));
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from V where out_.in.label is not null"));
     Assert.assertFalse(result.isEmpty());
   }
 
@@ -1485,6 +1475,32 @@ public class SQLSelectTest {
     List<ODocument> result = new OSQLSynchQuery<ODocument>("select from place where @rid in :place").execute(params);
     Assert.assertEquals(2, result.size());
 
+    database.getMetadata().getSchema().dropClass("Place");
+  }
+
+  @Test
+  public void testSelectRidInList() {
+    OClass placeClass = database.getMetadata().getSchema().createClass("Place");
+    database.getMetadata().getSchema().createClass("FamousPlace", placeClass);
+
+    ODocument firstPlace = new ODocument("Place");
+    database.save(firstPlace);
+    ODocument secondPlace = new ODocument("Place");
+    database.save(secondPlace);
+    ODocument famousPlace = new ODocument("FamousPlace");
+    database.save(famousPlace);
+
+    ORID secondPlaceId = secondPlace.getIdentity();
+    ORID famousPlaceId = famousPlace.getIdentity();
+    // if one of these two asserts fails, the test will be meaningless.
+    Assert.assertTrue(secondPlaceId.getClusterId() < famousPlaceId.getClusterId());
+    Assert.assertTrue(secondPlaceId.getClusterPosition().longValue() > famousPlaceId.getClusterPosition().longValue());
+
+    List<ODocument> result = new OSQLSynchQuery<ODocument>("select from Place where @rid in [" + secondPlaceId + ","
+        + famousPlaceId + "]").execute();
+    Assert.assertEquals(2, result.size());
+
+    database.getMetadata().getSchema().dropClass("FamousPlace");
     database.getMetadata().getSchema().dropClass("Place");
   }
 

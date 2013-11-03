@@ -27,14 +27,11 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.OStorageSynchronizer;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed create record task used for synchronization.
@@ -42,7 +39,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPosition> {
+public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   protected byte[]          content;
@@ -51,71 +48,50 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
   public OCreateRecordTask() {
   }
 
-  public OCreateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType) {
-    super(iRunId, iOperationId, iRid, iVersion);
+  public OCreateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+    super(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
-  }
-
-  public OCreateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String iDbName,
-      final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
-    content = iContent;
-    recordType = iRecordType;
-  }
-
-  public Object getDistributedKey() {
-    return rid;
   }
 
   @Override
-  public OPhysicalPosition executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "creating record %s/%s v.%s oper=%d.%d...", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%s...",
+        database.getName(), rid.toString(), version.toString());
 
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
 
-    final ODatabaseDocumentTx database = openDatabase();
-    try {
-      record.fill(rid, version, content, true);
-      if (rid.getClusterId() != -1)
-        record.save(database.getClusterNameById(rid.getClusterId()), true);
-      else
-        record.save();
+    record.fill(rid, version, content, true);
+    if (rid.getClusterId() != -1)
+      record.save(database.getClusterNameById(rid.getClusterId()), true);
+    else
+      record.save();
 
-      rid = (ORecordId) record.getIdentity();
+    rid = (ORecordId) record.getIdentity();
 
-      ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-          "assigned new rid %s/%s v.%d oper=%d.%d", databaseName, rid.toString(), record.getVersion(), runId, operationSerial);
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
 
-      return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
-    } finally {
-      closeDatabase(database);
-    }
+    return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
   }
 
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   */
   @Override
-  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
-    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
 
-    final OPhysicalPosition remote = (OPhysicalPosition) remoteResult;
-
-    resolver.handleCreateConflict(iRemoteNodeId, rid, version.getCounter(), new ORecordId(rid.getClusterId(),
-        remote.clusterPosition), remote.recordVersion.getCounter());
+  @Override
+  public OFixCreateRecordTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
+      final ODistributedResponse iGoodResponse) {
+    OPhysicalPosition badResult = (OPhysicalPosition) iBadResponse.getPayload();
+    OPhysicalPosition goodResult = (OPhysicalPosition) iGoodResponse.getPayload();
+    return new OFixCreateRecordTask(new ORecordId(rid.getClusterId(), badResult.clusterPosition), content, version, recordType,
+        new ORecordId(rid.getClusterId(), goodResult.clusterPosition));
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(rid.toString());
     if (content == null)
       out.writeInt(0);
@@ -131,7 +107,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     rid = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     if (contentSize == 0)
@@ -149,18 +124,5 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask<OPhysicalPo
   @Override
   public String getName() {
     return "record_create";
-  }
-
-  /**
-   * Write the status with the new RID too.
-   */
-  @Override
-  public void setAsCommitted(final OStorageSynchronizer dbSynchronizer, long operationLogOffset) throws IOException {
-    dbSynchronizer.getLog().setOperationStatus(operationLogOffset, rid, ODatabaseJournal.OPERATION_STATUS.COMMITTED);
-  }
-
-  @Override
-  public OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.RECORD_CREATE;
   }
 }

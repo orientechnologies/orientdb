@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -92,7 +92,8 @@ public class OClientConnectionManager {
   /**
    * Create a connection.
    * 
-   * @param iProtocol protocol which will be used by connection
+   * @param iProtocol
+   *          protocol which will be used by connection
    * @return new connection
    * @throws IOException
    */
@@ -111,8 +112,9 @@ public class OClientConnectionManager {
 
   /**
    * Retrieves the connection by id.
-   *
-   * @param iChannelId id of connection
+   * 
+   * @param iChannelId
+   *          id of connection
    * @return The connection if any, otherwise null
    */
   public OClientConnection getConnection(final int iChannelId) {
@@ -127,7 +129,7 @@ public class OClientConnectionManager {
 
   /**
    * Retrieves the connection by address/port.
-   *
+   * 
    * @param iAddress
    *          The address as string in the format address as format <ip>:<port>
    * @return The connection if any, otherwise null
@@ -143,14 +145,23 @@ public class OClientConnectionManager {
   /**
    * Disconnects and kill the associated network manager.
    * 
-   * @param iChannelId id of connection
+   * @param iChannelId
+   *          id of connection
    */
   public void kill(final int iChannelId) {
-    final OClientConnection connection = connections.get(iChannelId);
+    kill(connections.get(iChannelId));
+  }
+
+  /**
+   * Disconnects and kill the associated network manager.
+   * 
+   * @param connection
+   *          connection to kill
+   */
+  public void kill(final OClientConnection connection) {
     if (connection != null) {
       final ONetworkProtocol protocol = connection.protocol;
-
-      disconnect(iChannelId);
+      disconnect(connection);
 
       // KILL THE NEWTORK MANAGER TOO
       protocol.sendShutdown();
@@ -160,7 +171,8 @@ public class OClientConnectionManager {
   /**
    * Interrupt the associated network manager.
    * 
-   * @param iChannelId id of connection
+   * @param iChannelId
+   *          id of connection
    */
   public void interrupt(final int iChannelId) {
     final OClientConnection connection = connections.get(iChannelId);
@@ -175,10 +187,13 @@ public class OClientConnectionManager {
   /**
    * Disconnects a client connections
    * 
-   * @param iChannelId id of connection
+   * @param iChannelId
+   *          id of connection
    * @return true if was last one, otherwise false
    */
   public boolean disconnect(final int iChannelId) {
+    OLogManager.instance().debug(this, "Disconnecting connection with id=%d", iChannelId);
+
     final OClientConnection connection = connections.remove(iChannelId);
 
     if (connection != null) {
@@ -186,22 +201,36 @@ public class OClientConnectionManager {
 
       // CHECK IF THERE ARE OTHER CONNECTIONS
       for (Entry<Integer, OClientConnection> entry : connections.entrySet()) {
-        if (entry.getValue().getProtocol().equals(connection.getProtocol()))
+        if (entry.getValue().getProtocol().equals(connection.getProtocol())) {
+          OLogManager.instance()
+              .debug(this, "Disconnected connection with id=%d but are present other active channels", iChannelId);
           return false;
+        }
       }
+
+      OLogManager.instance().debug(this, "Disconnected connection with id=%d, no other active channels found", iChannelId);
       return true;
     }
 
+    OLogManager.instance().debug(this, "Cannot find connection with id=%d", iChannelId);
     return false;
   }
 
-  public void disconnect(final OClientConnection connection) {
-    connection.close();
+  public void disconnect(final OClientConnection iConnection) {
+    OLogManager.instance().debug(this, "Disconnecting connection %s...", iConnection);
 
+    iConnection.close();
+
+    int totalRemoved = 0;
     for (Entry<Integer, OClientConnection> entry : new HashMap<Integer, OClientConnection>(connections).entrySet()) {
-      if (entry.getValue().equals(connection))
+      final OClientConnection conn = entry.getValue();
+      if (conn != null && conn.equals(iConnection)) {
         connections.remove(entry.getKey());
+        totalRemoved++;
+      }
     }
+
+    OLogManager.instance().debug(this, "Disconnected connection %s found %d channels", iConnection, totalRemoved);
 
   }
 

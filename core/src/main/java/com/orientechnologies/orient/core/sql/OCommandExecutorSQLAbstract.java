@@ -39,6 +39,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String CLASS_PREFIX      = "CLASS:";
   public static final String INDEX_PREFIX      = "INDEX:";
   public static final String DICTIONARY_PREFIX = "DICTIONARY:";
+  public static final String METADATA_PREFIX   = "METADATA:";
+  public static final String METADATA_SCHEMA   = "SCHEMA";
+  public static final String METADATA_INDEXMGR = "INDEXMANAGER";
 
   protected long             timeoutMs         = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy   = TIMEOUT_STRATEGY.EXCEPTION;
@@ -49,6 +52,15 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected void throwParsingException(final String iText) {
     throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
+  }
+
+  /**
+   * The command is replicated
+   * 
+   * @return
+   */
+  public boolean isReplicated() {
+    return true;
   }
 
   public boolean isIdempotent() {

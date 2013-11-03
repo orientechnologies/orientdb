@@ -17,13 +17,17 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -250,6 +254,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
     json.writeAttribute("alias", cls.getShortName());
     json.writeAttribute("abstract", cls.isAbstract());
+    json.writeAttribute("strictmode", cls.isStrictMode());
     json.writeAttribute("clusters", cls.getClusterIds());
     json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
     if (cls instanceof OClassImpl) {

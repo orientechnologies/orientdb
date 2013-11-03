@@ -15,7 +15,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 
 public class LocalGraphDbTest {
-  private static String DB_URL = "local:target/databases/tinkerpop";
+  private static String DB_URL = "plocal:target/databases/tinkerpop";
 
   public static void main(String[] args) throws IOException {
     new LocalGraphDbTest().multipleDatabasesSameThread();

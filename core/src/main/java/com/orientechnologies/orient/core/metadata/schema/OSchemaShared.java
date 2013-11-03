@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
@@ -33,7 +37,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -434,7 +438,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
     }, false);
 
-    if (cls == null) {
+    if (cls == null && getDatabase().getDatabaseOwner() instanceof ODatabaseObject) {
       cls = getDatabase().getStorage().callInLock(new Callable<OClass>() {
         @Override
         public OClass call() throws Exception {
@@ -607,7 +611,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public void create() {
     final ODatabaseRecord db = getDatabase();
-    super.save(OMetadata.CLUSTER_INTERNAL_NAME);
+    super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
     db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
     db.getStorage().getConfiguration().update();
   }
@@ -626,7 +630,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     db.getStorage().callInLock(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
-        saveInternal(OMetadata.CLUSTER_INTERNAL_NAME);
+        saveInternal(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         return null;
       }
     }, true);
@@ -690,12 +694,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     document.setDirty();
     for (int retry = 0; retry < 10; retry++)
       try {
-        super.save(OMetadata.CLUSTER_INTERNAL_NAME);
+        super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         break;
       } catch (OConcurrentModificationException e) {
         reload(null, true);
       }
 
-    super.save(OMetadata.CLUSTER_INTERNAL_NAME);
+    super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
   }
 }

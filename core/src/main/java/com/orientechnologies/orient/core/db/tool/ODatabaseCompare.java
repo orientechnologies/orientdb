@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.db.tool;
 
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -34,32 +33,28 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
-import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper.ODbRelatedCall;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
-  private OStorage                                      storage1;
-  private OStorage                                      storage2;
+  private OStorage              storage1;
+  private OStorage              storage2;
 
-  private ODatabaseDocumentTx                           databaseDocumentTxOne;
-  private ODatabaseDocumentTx                           databaseDocumentTxTwo;
+  private ODatabaseDocumentTx   databaseDocumentTxOne;
+  private ODatabaseDocumentTx   databaseDocumentTxTwo;
 
-  private boolean                                       compareEntriesForAutomaticIndexes = false;
-  private boolean                                       autoDetectExportImportMap         = true;
+  private boolean               compareEntriesForAutomaticIndexes = false;
+  private boolean               autoDetectExportImportMap         = true;
 
-  private OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable;
-  private int                                           differences                       = 0;
+  private OIndex<OIdentifiable> exportImportHashTable             = null;
+  private int                   differences                       = 0;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -91,8 +86,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     // exclude automatically generated clusters
     excludeClusters.add("orids");
-    excludeClusters.add(OMetadata.CLUSTER_INDEX_NAME);
-    excludeClusters.add(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+    excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
+    excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -125,18 +120,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       if (autoDetectExportImportMap) {
         listener
             .onMessage("\nAuto discovery of mapping between RIDs of exported and imported records is switched on, try to discover mapping data on disk.");
-        File file = new File(databaseDocumentTxTwo.getStorage().getConfiguration().getDirectory() + File.separator
-            + ODatabaseImport.EXPORT_IMPORT_MAP_NAME + ODatabaseImport.EXPORT_IMPORT_MAP_TREE_STATE_EXT);
-        if (file.exists()) {
+        exportImportHashTable = (OIndex<OIdentifiable>) databaseDocumentTxTwo.getMetadata().getIndexManager()
+            .getIndex(ODatabaseImport.EXPORT_IMPORT_MAP_NAME);
+        if (exportImportHashTable != null) {
           listener.onMessage("\nMapping data were found and will be loaded.");
-          OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<OIdentifiable>();
-          keyHashFunction.setValueSerializer(OLinkSerializer.INSTANCE);
-
-          exportImportHashTable = new OLocalHashTable<OIdentifiable, OIdentifiable>(ODatabaseImport.EXPORT_IMPORT_MAP_METADATA_EXT,
-              ODatabaseImport.EXPORT_IMPORT_MAP_TREE_STATE_EXT, ODatabaseImport.EXPORT_IMPORT_MAP_BF_EXT, keyHashFunction);
-          exportImportHashTable.load(ODatabaseImport.EXPORT_IMPORT_MAP_NAME,
-              (OStorageLocalAbstract) databaseDocumentTxTwo.getStorage());
-
           ridMapper = new ODocumentHelper.RIDMapper() {
             @Override
             public ORID map(ORID rid) {
@@ -162,9 +149,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       if (isDocumentDatabases())
         compareIndexes(ridMapper);
-
-      if (exportImportHashTable != null)
-        exportImportHashTable.close();
 
       if (differences == 0) {
         listener.onMessage("\n\nDatabases match.");
@@ -208,17 +192,20 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           }
         });
 
-    final int indexesSizeOne = makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Integer>() {
+    int indexesSizeOne = makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Integer>() {
       public Integer call() {
         return indexesOne.size();
       }
     });
 
-    final int indexesSizeTwo = makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Integer>() {
+    int indexesSizeTwo = makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Integer>() {
       public Integer call() {
         return indexManagerTwo.getIndexes().size();
       }
     });
+
+    if (exportImportHashTable != null)
+      indexesSizeTwo--;
 
     if (indexesSizeOne != indexesSizeTwo) {
       ok = false;
@@ -378,7 +365,6 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           } else if (indexOneValue instanceof ORID && indexTwoValue instanceof ORID) {
             if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
               OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
-              assert identifiable != null;
 
               if (identifiable != null)
                 indexOneValue = identifiable.getIdentity();

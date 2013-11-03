@@ -30,7 +30,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OLazyObjectCustomSerializer<Set<TYPE>>, Serializable {
+public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OObjectLazyCustomSerializer<Set<TYPE>>, Serializable {
   private static final long serialVersionUID = -7698875159671927472L;
 
   private final ORecord<?>  sourceRecord;

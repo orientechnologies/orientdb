@@ -24,14 +24,14 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
- * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only be one instance of
- * this object created, since the usage threshold can only be set to one number.
+ * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
+ * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
   private final Map<ListenerWrapper, Object> listeners    = new WeakHashMap<ListenerWrapper, Object>(128);
@@ -96,18 +96,21 @@ public class OMemoryWatchDog extends Thread {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.memory.alerts", "Number of alerts received by JVM to free memory resources", METRIC_TYPE.COUNTER,
-            new OProfilerHookValue() {
+        .registerHookValue("system.memory.alerts", "Number of alerts received by JVM to free memory resources",
+            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
               public Object getValue() {
                 return alertTimes;
               }
             });
-    Orient.instance().getProfiler()
-        .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation", METRIC_TYPE.STAT, new OProfilerHookValue() {
-          public Object getValue() {
-            return lastGC;
-          }
-        });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation", METRIC_TYPE.STAT,
+            new OProfilerHookValue() {
+              public Object getValue() {
+                return lastGC;
+              }
+            });
 
     while (true) {
       try {

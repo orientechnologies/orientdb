@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -39,11 +39,11 @@ public class OShortSerializer implements OBinarySerializer<Short> {
    */
   public static final int               SHORT_SIZE = 2;
 
-  public int getObjectSize(Short object) {
+  public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;
   }
 
-  public void serialize(Short object, byte[] stream, int startPosition) {
+  public void serialize(Short object, byte[] stream, int startPosition, Object... hints) {
     final short value = object;
     stream[startPosition] = (byte) ((value >>> 8) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 0) & 0xFF);
@@ -65,7 +65,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return SHORT_SIZE;
   }
 
-  public void serializeNative(Short object, byte[] stream, int startPosition) {
+  public void serializeNative(Short object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -74,17 +74,17 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   }
 
   @Override
-  public void serializeInDirectMemory(Short object, ODirectMemory memory, long pointer) {
-    memory.setShort(pointer, object);
+  public void serializeInDirectMemory(Short object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setShort(offset, object);
   }
 
   @Override
-  public Short deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getShort(pointer);
+  public Short deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getShort(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return SHORT_SIZE;
   }
 
@@ -94,5 +94,10 @@ public class OShortSerializer implements OBinarySerializer<Short> {
 
   public int getFixedLength() {
     return SHORT_SIZE;
+  }
+
+  @Override
+  public Short prepocess(Short value, Object... hints) {
+    return value;
   }
 }

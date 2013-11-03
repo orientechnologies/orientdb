@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.text.ParseException;
 import java.util.*;
 
-import com.orientechnologies.common.util.OCaseIncentiveComparator;
+import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -144,7 +144,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
       final OIndexDefinition definition = index.getDefinition();
 
-      if (OCollections.indexOf(definition.getFields(), name, new OCaseIncentiveComparator()) > -1) {
+      if (OCollections.indexOf(definition.getFields(), name, new OCaseInsentiveComparator()) > -1) {
         if (definition instanceof OPropertyIndexDefinition) {
           relatedIndexes.add(index);
         } else {

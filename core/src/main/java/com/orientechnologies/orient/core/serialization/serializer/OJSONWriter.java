@@ -51,6 +51,8 @@ public class OJSONWriter {
   public OJSONWriter(final Writer out, final String iJsonFormat) {
     this.out = out;
     this.format = iJsonFormat;
+    if (iJsonFormat.contains("prettyPrint"))
+      prettyPrint = true;
   }
 
   public OJSONWriter beginObject() throws IOException {

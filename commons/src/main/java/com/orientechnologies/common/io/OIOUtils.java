@@ -19,9 +19,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.text.ParseException;
@@ -131,8 +132,12 @@ public class OIOUtils {
   }
 
   public static String readFileAsString(final File iFile) throws java.io.IOException {
+    return readStreamAsString(new FileInputStream(iFile));
+  }
+
+  public static String readStreamAsString(final InputStream iStream) throws java.io.IOException {
     final StringBuffer fileData = new StringBuffer(1000);
-    final BufferedReader reader = new BufferedReader(new FileReader(iFile));
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(iStream));
     try {
       final char[] buf = new char[1024];
       int numRead = 0;
@@ -149,8 +154,8 @@ public class OIOUtils {
   public static int copyStream(final InputStream in, final OutputStream out, int iMax) throws java.io.IOException {
     if (iMax < 0)
       iMax = Integer.MAX_VALUE;
-    
-    final byte[] buf = new byte[1024];
+
+    final byte[] buf = new byte[8192];
     int byteRead = 0;
     int byteTotal = 0;
     while ((byteRead = in.read(buf, 0, Math.min(buf.length, iMax - byteTotal))) > 0) {
@@ -261,5 +266,16 @@ public class OIOUtils {
       return s.substring(1, s.length() - 1);
 
     return s;
+  }
+
+  public static boolean equals(final byte[] buffer, final byte[] buffer2) {
+    if (buffer == null || buffer2 == null || buffer.length != buffer2.length)
+      return false;
+
+    for (int i = 0; i < buffer.length; ++i)
+      if (buffer[i] != buffer2[i])
+        return false;
+
+    return true;
   }
 }

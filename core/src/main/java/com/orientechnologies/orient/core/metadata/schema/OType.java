@@ -18,12 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
@@ -87,7 +82,7 @@ public enum OType {
   DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }) {
   };
 
-  protected static final OType[] TYPES = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATE, DATETIME,
+  protected static final OType[] TYPES = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATETIME, DATE,
       BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL };
 
   protected String               name;
@@ -326,6 +321,8 @@ public enum OType {
           return iValue;
         else if (iValue instanceof String)
           return Long.parseLong((String) iValue);
+        else if (iValue instanceof Date)
+          return ((Date) iValue).getTime();
         else
           return ((Number) iValue).longValue();
 
@@ -368,9 +365,14 @@ public enum OType {
         } else if (iValue instanceof Number)
           return ((Number) iValue).intValue() != 0;
 
-      } else if (iValue instanceof Collection<?> && Set.class.isAssignableFrom(iTargetClass)) {
+      } else if (iValue instanceof Collection<?> && !(iValue instanceof Set<?>) && Set.class.isAssignableFrom(iTargetClass)) {
         final Set<Object> set = new HashSet<Object>();
         set.addAll((Collection<? extends Object>) iValue);
+        return set;
+
+      } else if (!(iValue instanceof Collection<?>) && Collection.class.isAssignableFrom(iTargetClass)) {
+        final Set<Object> set = new HashSet<Object>();
+        set.add(iValue);
         return set;
 
       } else if (iTargetClass.equals(Date.class)) {

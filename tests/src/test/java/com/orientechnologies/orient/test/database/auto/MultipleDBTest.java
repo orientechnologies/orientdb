@@ -20,15 +20,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -37,10 +36,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 /**
  * @author Michael Hiess
@@ -93,8 +88,7 @@ public class MultipleDBTest {
 
               dummy = tx.save(dummy);
 
-              if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean()
-                  && !OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean() && !dbUrl.startsWith("plocal:"))
+              if (!dbUrl.startsWith("plocal:"))
                 // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
                 Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
                     "RID was " + dummy.getId());
@@ -190,8 +184,7 @@ public class MultipleDBTest {
 
               dummy = tx.save(dummy);
 
-              if (!OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean()
-                  && !OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean() && !dbUrl.startsWith("plocal:"))
+              if (!dbUrl.startsWith("plocal:"))
                 // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
                 Assert.assertEquals(dummy.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
                     "RID was " + dummy.getIdentity());

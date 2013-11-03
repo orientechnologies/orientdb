@@ -827,7 +827,7 @@ public class CRUDDocumentPhysicalTest {
       }
       db.close();
 
-      while (database.countClusterElements("Account") > 0)
+      if (database.countClusterElements("Account") > 0)
         for (ODocument d : database.browseClass("Account")) {
           if (d.field("name").equals("Asynch insertion test"))
             d.delete();

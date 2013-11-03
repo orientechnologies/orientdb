@@ -71,13 +71,20 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
   public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final OCommandContext iContext) {
     // RESOLVE VALUES USING THE CURRENT RECORD
     for (int i = 0; i < configuredParameters.length; ++i) {
-      if (configuredParameters[i] instanceof OSQLFilterItemField)
+      if (configuredParameters[i] instanceof OSQLFilterItemField) {
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iContext);
-      else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
+        if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
+          // LOOK INTO THE CURRENT RESULT
+          runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult, iContext);
+      } else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
         runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iCurrentRecord, iCurrentResult, iContext);
-      else if (configuredParameters[i] instanceof OSQLFilterItemVariable)
+      else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iContext);
-      else if (configuredParameters[i] instanceof OCommandSQL) {
+        if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
+          // LOOK INTO THE CURRENT RESULT
+          runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
+              iContext);
+      } else if (configuredParameters[i] instanceof OCommandSQL) {
         try {
           runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
         } catch (OCommandExecutorNotFoundException e) {

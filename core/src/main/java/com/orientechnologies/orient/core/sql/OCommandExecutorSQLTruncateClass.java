@@ -24,8 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL TRUNCATE CLASS command: Truncates an entire class deleting all configured clusters where the class relies on.
@@ -41,10 +39,8 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateClass parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 

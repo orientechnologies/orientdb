@@ -44,11 +44,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
   private String               value;
 
   public OCommandExecutorSQLAlterDatabase parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 

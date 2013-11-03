@@ -21,7 +21,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.orient.core.command.OCommandDistributedConditionalReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -31,8 +31,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -46,8 +44,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements
-    OCommandDistributedConditionalReplicateRequest, OCommandResultListener {
+public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
   public static final String   NAME            = "DELETE FROM";
   public static final String   KEYWORD_DELETE  = "DELETE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";
@@ -64,7 +62,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelete parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 

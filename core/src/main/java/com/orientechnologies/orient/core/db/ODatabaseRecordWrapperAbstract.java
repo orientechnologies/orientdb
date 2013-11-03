@@ -15,8 +15,13 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -28,6 +33,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -56,15 +62,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public <THISDB extends ODatabase> THISDB create() {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
     return (THISDB) super.create();
-  }
-
-  /**
-   * Uses drop() instead.
-   */
-  @Deprecated
-  @Override
-  public void delete() {
-    drop();
   }
 
   @Override
@@ -154,7 +151,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public void setUser(OUser user) {
     underlying.setUser(user);
   }
-  
+
   public OMetadata getMetadata() {
     return underlying.getMetadata();
   }
@@ -273,12 +270,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (RET) underlying.save(iRecord, iClusterName);
   }
 
-	@Override
-	public boolean updatedReplica(ORecordInternal<?> iObject) {
-		return underlying.updatedReplica(iObject);
-	}
+  @Override
+  public boolean updatedReplica(ORecordInternal<?> iObject) {
+    return underlying.updatedReplica(iObject);
+  }
 
-	public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
+  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) underlying.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
@@ -378,7 +375,29 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     underlying.setDataSegmentStrategy(dataSegmentStrategy);
   }
 
-  protected void checkClusterBoundedToClass(int iClusterId) {
+  @Override
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable) throws IOException {
+    underlying.backup(out, options, new Callable<Object>() {
+
+      @Override
+      public Object call() throws Exception {
+        // FLUSHES ALL THE INDEX BEFORE
+        for (OIndex<?> index : getMetadata().getIndexManager().getIndexes()) {
+          index.flush();
+        }
+        if (callable != null)
+          return callable.call();
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable) throws IOException {
+    underlying.restore(in, options, callable);
+  }
+
+  protected void checkClusterBoundedToClass(final int iClusterId) {
     if (iClusterId == -1)
       return;
 

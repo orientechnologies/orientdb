@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
+   version="1.0">
+
+  <persistence-unit name="alpha"/>
+  
+  <persistence-unit name="bravo" transaction-type="JTA">
+    <description>Persistence unit example2 for the unittest</description>
+    <provider>bravo.persistence.provider</provider>
+    <jta-data-source>bravo/jtaDS</jta-data-source>
+    <non-jta-data-source>bravo/nonJtaDS</non-jta-data-source>
+    <mapping-file>bravoMappingFile1.xml</mapping-file>
+    <mapping-file>bravoMappingFile2.xml</mapping-file>
+    <jar-file>bravoJarFile1.jar</jar-file>
+    <jar-file>bravoJarFile2.jar</jar-file>
+    <class>bravoClass1</class>
+    <class>bravoClass2</class>
+    <exclude-unlisted-classes/>
+    <properties>
+      <property name="some.prop" value="prop.value"/>
+      <property name="some.other.prop" value="another.prop.value"/>
+    </properties>
+  </persistence-unit>
+  
+  <persistence-unit name="charlie" transaction-type="RESOURCE_LOCAL">
+    <description>Persistence unit example3 for the unittest</description>
+    <provider>charlie.persistence.provider</provider>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+  </persistence-unit>
+  
+  <persistence-unit name="delta" transaction-type="RESOURCE_LOCAL">
+    <description>Persistence unit example3 for the unittest</description>
+    <provider>delta.persistence.provider</provider>
+    <exclude-unlisted-classes>false</exclude-unlisted-classes>
+  </persistence-unit>
+  
+  
+</persistence>

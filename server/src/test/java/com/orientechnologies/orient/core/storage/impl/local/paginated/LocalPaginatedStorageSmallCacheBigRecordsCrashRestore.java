@@ -10,6 +10,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -24,12 +30,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -200,7 +200,6 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
       OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
       OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
       OGlobalConfiguration.DISK_CACHE_SIZE.setValue(512);
-      OGlobalConfiguration.DISK_CACHE_WRITE_QUEUE_LENGTH.setValue(100);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class

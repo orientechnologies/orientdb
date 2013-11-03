@@ -16,7 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for boolean type .
@@ -33,11 +33,11 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   public static OBooleanSerializer INSTANCE     = new OBooleanSerializer();
   public static final byte         ID           = 1;
 
-  public int getObjectSize(Boolean object) {
+  public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
   }
 
-  public void serialize(Boolean object, byte[] stream, int startPosition) {
+  public void serialize(Boolean object, byte[] stream, int startPosition, Object... hints) {
     if (object)
       stream[startPosition] = (byte) 1;
     else
@@ -60,7 +60,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return BOOLEAN_SIZE;
   }
 
-  public void serializeNative(Boolean object, byte[] stream, int startPosition) {
+  public void serializeNative(Boolean object, byte[] stream, int startPosition, Object... hints) {
     serialize(object, stream, startPosition);
   }
 
@@ -69,17 +69,17 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public void serializeInDirectMemory(Boolean object, ODirectMemory memory, long pointer) {
-    memory.setByte(pointer, object ? (byte) 1 : 0);
+  public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setByte(offset, object ? (byte) 1 : 0);
   }
 
   @Override
-  public Boolean deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getByte(pointer) > 0;
+  public Boolean deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getByte(offset) > 0;
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return BOOLEAN_SIZE;
   }
 
@@ -89,5 +89,10 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
 
   public int getFixedLength() {
     return BOOLEAN_SIZE;
+  }
+
+  @Override
+  public Boolean prepocess(Boolean value, Object... hints) {
+    return value;
   }
 }

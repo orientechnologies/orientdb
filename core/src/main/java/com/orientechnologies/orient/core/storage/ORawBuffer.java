@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-public class ORawBuffer implements Externalizable {
-  public byte[]         buffer;
+public class ORawBuffer extends OBuffer {
   public ORecordVersion version;
   public byte           recordType;
 
@@ -54,29 +53,14 @@ public class ORawBuffer implements Externalizable {
   }
 
   public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {
-    final int bufferLenght = iInput.readInt();
-    if (bufferLenght > 0) {
-      buffer = new byte[bufferLenght];
-      for (int pos = 0, bytesReaded = 0; pos < bufferLenght; pos += bytesReaded) {
-        bytesReaded = iInput.read(buffer, pos, buffer.length - pos);
-      }
-    } else
-      buffer = null;
+    super.readExternal(iInput);
     version.getSerializer().readFrom(iInput, version);
     recordType = iInput.readByte();
   }
 
   public void writeExternal(final ObjectOutput iOutput) throws IOException {
-    final int bufferLenght = buffer != null ? buffer.length : 0;
-    iOutput.writeInt(bufferLenght);
-    if (bufferLenght > 0)
-      iOutput.write(buffer);
+    super.writeExternal(iOutput);
     version.getSerializer().writeTo(iOutput, version);
     iOutput.write(recordType);
-  }
-
-  @Override
-  public String toString() {
-    return "size:" + (buffer != null ? buffer.length : "empty");
   }
 }

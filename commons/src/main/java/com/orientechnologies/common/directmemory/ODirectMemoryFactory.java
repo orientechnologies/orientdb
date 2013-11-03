@@ -21,7 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
  * @author Andrey Lomakin
  * @since 2/11/13
  */
-public class ODirectMemoryFactory {
+class ODirectMemoryFactory {
   public static final ODirectMemoryFactory INSTANCE = new ODirectMemoryFactory();
 
   private static final ODirectMemory       directMemory;

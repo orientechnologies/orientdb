@@ -73,6 +73,12 @@ public class OScriptDocumentDatabaseWrapper {
     this.database = new ODatabaseDocumentTx(iURL);
   }
 
+  public void switchUser(final String iUserName, final String iUserPassword) {
+    if (!database.isClosed())
+      database.close();
+    database.open(iUserName, iUserPassword);
+  }
+
   public OIdentifiable[] query(final String iText) {
     return query(iText, (Object[]) null);
   }
@@ -203,7 +209,7 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(final String iString) {
-    //return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
+    // return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
     return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString, true));
   }
 
@@ -294,7 +300,7 @@ public class OScriptDocumentDatabaseWrapper {
   public OUser getUser() {
     return database.getUser();
   }
-  
+
   public void setUser(OUser user) {
     database.setUser(user);
   }

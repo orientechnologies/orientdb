@@ -39,10 +39,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -50,7 +52,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -65,12 +69,15 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected static final String     CONFIG_MAP_RID   = "mapRid";
   protected static final String     CONFIG_CLUSTERS  = "clusters";
 
-  protected String                  name;
+  private String                    name;
   protected String                  type;
+  private String                    algorithm;
+  protected String                  valueContainerAlgorithm;
+
   protected final OIndexEngine<T>   indexEngine;
-  protected Set<String>             clustersToIndex  = new HashSet<String>();
-  protected OIndexDefinition        indexDefinition;
-  protected final String            databaseName;
+  private Set<String>               clustersToIndex  = new HashSet<String>();
+  private OIndexDefinition          indexDefinition;
+  private final String              databaseName;
 
   @ODocumentInstance
   protected ODocument               configuration;
@@ -79,7 +86,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   private Thread                    rebuildThread    = null;
 
-  public OIndexAbstract(final String type, final OIndexEngine<T> indexEngine) {
+  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     acquireExclusiveLock();
@@ -87,6 +94,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
       this.type = type;
       this.indexEngine = indexEngine;
+      this.algorithm = algorithm;
+      this.valueContainerAlgorithm = valueContainerAlgorithm;
 
       indexEngine.init();
     } finally {
@@ -122,7 +131,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * @param rebuild
    * @param progressListener
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   public OIndexInternal<?> create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
       final OStreamSerializer valueSerializer) {
@@ -169,11 +177,13 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       name = indexMetadata.getName();
       indexDefinition = indexMetadata.getIndexDefinition();
       clustersToIndex.addAll(indexMetadata.getClustersToIndex());
+      algorithm = indexMetadata.getAlgorithm();
+      valueContainerAlgorithm = indexMetadata.getValueContainerAlgorithm();
 
       final ORID rid = config.field(CONFIG_MAP_RID, ORID.class);
 
       try {
-        indexEngine.load(rid, name, isAutomatic());
+        indexEngine.load(rid, name, indexDefinition, isAutomatic());
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
           if (isAutomatic() && getDatabase().getStorage() instanceof OStorageEmbedded)
@@ -253,7 +263,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS));
 
-    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type);
+    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
   public boolean contains(final Object key) {
@@ -574,6 +584,23 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
       try {
         indexEngine.delete();
+
+        if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
+          final OStorage storage = getDatabase().getStorage();
+          if (storage instanceof OStorageLocal) {
+            final ODiskCache diskCache = ((OStorageLocal) storage).getDiskCache();
+            try {
+              final String fileName = getName() + OSBTreeIndexRIDContainer.INDEX_FILE_EXTENSION;
+              if (diskCache.exists(fileName)) {
+                final long fileId = diskCache.openFile(fileName);
+                diskCache.deleteFile(fileId);
+              }
+            } catch (IOException e) {
+              OLogManager.instance().error(this, "Can't delete file for value containers", e);
+            }
+          }
+        }
+
         return this;
 
       } finally {
@@ -595,7 +622,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Iterator<Entry<Object, T>> inverseIterator() {
     checkForRebuild();
 
@@ -624,6 +650,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   public String getType() {
     return type;
+  }
+
+  @Override
+  public String getAlgorithm() {
+    return algorithm;
   }
 
   @Override
@@ -702,6 +733,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
         configuration.field(CONFIG_CLUSTERS, clustersToIndex, OType.EMBEDDEDSET);
         configuration.field(CONFIG_MAP_RID, indexEngine.getIdentity());
+        configuration.field(ALGORITHM, algorithm);
+        configuration.field(VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
 
       } finally {
         configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -767,8 +800,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
                 remove(value);
               else if (value == null)
                 remove(key);
-              else
+              else {
                 remove(key, value);
+              }
+
             }
           }
         }

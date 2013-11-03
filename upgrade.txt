@@ -91,7 +91,7 @@ References:
 
 4) now always in the console import the old database in the new one:
 
-   orientdb> import database /temp/db.json.gzip
+   orientdb> import database /temp/db.json.gzip -preserveClusterIDs=true
    orientdb> quit
 
 

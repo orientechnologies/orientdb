@@ -29,10 +29,13 @@ import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
@@ -42,8 +45,9 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * 
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
-  public OIndexMultiValues(final String type, OIndexEngine<Set<OIdentifiable>> indexEngine) {
-    super(type, indexEngine);
+  public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
+      String valueContainerAlgorithm) {
+    super(type, algorithm, indexEngine, valueContainerAlgorithm);
   }
 
   public Set<OIdentifiable> get(final Object key) {
@@ -52,7 +56,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     acquireSharedLock();
     try {
 
-      final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) indexEngine.get(key);
+      final Set<OIdentifiable> values = indexEngine.get(key);
 
       if (values == null)
         return Collections.emptySet();
@@ -70,7 +74,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     acquireSharedLock();
     try {
 
-      final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) indexEngine.get(key);
+      final Set<OIdentifiable> values = indexEngine.get(key);
 
       if (values == null)
         return 0;
@@ -93,8 +97,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null) {
-          values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-          ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
+          if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+            values = new OSBTreeIndexRIDContainer(getName());
+          } else {
+            values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
+            ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
+          }
         }
 
         if (!iSingleValue.getIdentity().isValid())
@@ -158,8 +166,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
+    final OStreamSerializer serializer;
+    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
+      serializer = OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
+    else
+      serializer = OStreamSerializerListRID.INSTANCE;
+
     return (OIndexMultiValues) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        OStreamSerializerListRID.INSTANCE);
+        serializer);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object rangeFrom, final boolean fromInclusive, final Object rangeTo,
@@ -205,7 +219,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
       for (final Object key : sortedKeys) {
-        final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) indexEngine.get(key);
+        final Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null)
           continue;
@@ -298,7 +312,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       final Set<ODocument> result = new ODocumentFieldsHashSet();
 
       for (final Object key : sortedKeys) {
-        final OMVRBTreeRIDSet values = (OMVRBTreeRIDSet) indexEngine.get(key);
+        final Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null)
           continue;

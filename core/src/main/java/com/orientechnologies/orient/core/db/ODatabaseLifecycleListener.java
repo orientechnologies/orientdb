@@ -23,6 +23,8 @@ package com.orientechnologies.orient.core.db;
  */
 public interface ODatabaseLifecycleListener {
 
+  public void onCreate(ODatabase iDatabase);
+
 	public void onOpen(ODatabase iDatabase);
 
 	public void onClose(ODatabase iDatabase);

@@ -92,10 +92,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Compile the filter conditions only the first time.
    */
   public OCommandExecutorSQLResultsetAbstract parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-    OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     init(textRequest);
 
@@ -110,6 +107,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         request.setResultListener(textRequest.getResultListener());
     }
     return this;
+  }
+
+  @Override
+  public boolean isReplicated() {
+    return true;
   }
 
   @Override
@@ -326,7 +328,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           final OSQLSynchQuery<Object> subQuery = (OSQLSynchQuery<Object>) letValue;
           subQuery.reset();
           subQuery.resetPagination();
-          subQuery.setContext(context);
+          subQuery.getContext().setParent(context);
           subQuery.getContext().setVariable("current", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
         } else if (letValue instanceof OSQLFunctionRuntime) {
@@ -431,26 +433,26 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * @return optimized function, same function if no change
    */
   protected Object optimizeFunction(OSQLFunctionRuntime function) {
-//    boolean precalculate = true;
-//    for (int i = 0; i < function.configuredParameters.length; ++i) {
-//      if (function.configuredParameters[i] instanceof OSQLFilterItemField) {
-//        precalculate = false;
-//      } else if (function.configuredParameters[i] instanceof OSQLFunctionRuntime) {
-//        final Object res = optimizeFunction((OSQLFunctionRuntime) function.configuredParameters[i]);
-//        function.configuredParameters[i] = res;
-//        if (res instanceof OSQLFunctionRuntime || res instanceof OSQLFilterItemField) {
-//          // function might have been optimized but result is still not static
-//          precalculate = false;
-//        }
-//      }
-//    }
-//
-//    if (precalculate) {
-//      // all fields are static, we can calculate it only once.
-//      return function.execute(null, null, null); // we can pass nulls here, they wont be used
-//    } else {
-      return function;
-//    }
+    // boolean precalculate = true;
+    // for (int i = 0; i < function.configuredParameters.length; ++i) {
+    // if (function.configuredParameters[i] instanceof OSQLFilterItemField) {
+    // precalculate = false;
+    // } else if (function.configuredParameters[i] instanceof OSQLFunctionRuntime) {
+    // final Object res = optimizeFunction((OSQLFunctionRuntime) function.configuredParameters[i]);
+    // function.configuredParameters[i] = res;
+    // if (res instanceof OSQLFunctionRuntime || res instanceof OSQLFilterItemField) {
+    // // function might have been optimized but result is still not static
+    // precalculate = false;
+    // }
+    // }
+    // }
+    //
+    // if (precalculate) {
+    // // all fields are static, we can calculate it only once.
+    // return function.execute(null, null, null); // we can pass nulls here, they wont be used
+    // } else {
+    return function;
+    // }
   }
 
   protected void optimizeBranch(final OSQLFilterCondition iParentCondition, OSQLFilterCondition iCondition) {

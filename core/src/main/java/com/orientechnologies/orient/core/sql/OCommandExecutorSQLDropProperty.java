@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.common.util.OCaseIncentiveComparator;
+import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -28,8 +28,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -38,7 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract  implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_DROP     = "DROP";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
@@ -47,10 +45,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
   private boolean            force            = false;
 
   public OCommandExecutorSQLDropProperty parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 
@@ -142,7 +137,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 
     final ODatabaseRecord database = getDatabase();
     for (final OIndex<?> oIndex : database.getMetadata().getIndexManager().getClassIndexes(className)) {
-      if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseIncentiveComparator()) > -1) {
+      if (OCollections.indexOf(oIndex.getDefinition().getFields(), fieldName, new OCaseInsentiveComparator()) > -1) {
         result.add(oIndex);
       }
     }

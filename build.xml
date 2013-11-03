@@ -5,20 +5,13 @@
     <property environment="env"/>
     <property name="vendor" value="NuvolaBase Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="1.5.1"/>
-    <condition property="global.release" value="${releaseHome}/orientdb-${version}"
-               else="../releases/orientdb-${version}">
-        <isset property="releaseHome"/>
-    </condition>
-    <condition property="db.release" value="${releaseHome}/orientdb-${version}" else="../releases/orientdb-${version}">
-        <isset property="releaseHome"/>
-    </condition>
-    <condition property="graph.release" value="${releaseHome}/orientdb-graphed-${version}"
-               else="../releases/orientdb-graphed-${version}">
+    <property name="version" value="1.6"/>
+    <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
+               else="../releases/orientdb-community-${version}">
         <isset property="releaseHome"/>
     </condition>
 
-    <property name="env.ORIENTDB_HOME" value="${db.release}"/>
+    <property name="env.ORIENTDB_HOME" value="${community.release}"/>
 
     <buildnumber file="build.number"/>
 
@@ -26,7 +19,7 @@
         <attribute name="target"/>
         <sequential>
             <subant target="@{target}">
-                <property name="global.lib" value="../${db.release}/lib"/>
+                <property name="global.lib" value="../${community.release}/lib"/>
                 <property name="version" value="${version}"/>
 
                 <fileset dir="commons" includes="build.xml"/>
@@ -77,16 +70,14 @@
 <echo>                 ``                                   </echo>
 <echo>                 `                                    </echo>
 
-        <mkdir dir="${global.release}"/>
-        <mkdir dir="${db.release}"/>
-        <mkdir dir="${db.release}/log"/>
-        <mkdir dir="${graph.release}/log"/>
-        <mkdir dir="${db.release}/databases"/>
+        <mkdir dir="${community.release}"/>
+        <mkdir dir="${community.release}/log"/>
+        <mkdir dir="${community.release}/databases"/>
     </target>
 
     <target name="clean" depends="init">
         <delegate target="clean"/>
-        <delete dir="${db.release}"/>
+        <delete dir="${community.release}"/>
     </target>
 
     <target name="compile" depends="init">
@@ -96,8 +87,8 @@
 
     <target name="javadoc" depends="init">
         <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
-        <copy todir="${global.release}/javadoc" file="_base/images/orient_db.png"/>
-        <javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${global.release}/javadoc" public="true"
+        <copy todir="${community.release}/javadoc" file="_base/images/orient_db.png"/>
+        <javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${community.release}/javadoc" public="true"
                  useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
                  windowtitle="OrientDB v. ${version} Javadocs"
                  header="&lt;a target='_parent' href='http://www.orientdb.org/orient-db.htm' &gt;&lt;img src='http://www.orientdb.org/images/orientdb_small.png' border='0' /&gt;&lt;/a&gt;"
@@ -141,12 +132,12 @@
     <target name="install" depends="init">
         <delegate target="install"/>
 
-        <copy todir="${db.release}" file="license.txt"/>
-        <copy tofile="${db.release}/readme.txt" file="readme.txt"/>
-        <copy tofile="${db.release}/history.txt" file="history.txt"/>
-        <copy tofile="${db.release}/upgrade.txt" file="upgrade.txt"/>
+        <copy todir="${community.release}" file="license.txt"/>
+        <copy tofile="${community.release}/readme.txt" file="readme.txt"/>
+        <copy tofile="${community.release}/history.txt" file="history.txt"/>
+        <copy tofile="${community.release}/upgrade.txt" file="upgrade.txt"/>
 
-        <copy todir="${db.release}/bin/" flatten="true">
+        <copy todir="${community.release}/bin/" flatten="true">
             <fileset dir="."
                      includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat distributed/script/*.sh distributed/script/*.bat"/>
             <filterset>
@@ -155,81 +146,85 @@
             </filterset>
         </copy>
 
-        <copy todir="${db.release}/www/">
+        <copy todir="${community.release}/www/">
             <fileset dir="server/src/site"/>
         </copy>
 
-        <copy todir="${db.release}/config/" flatten="true">
+        <copy todir="${community.release}/plugins/">
+            <fileset dir="server/plugins"/>
+        </copy>
+
+        <copy todir="${community.release}/config/" flatten="true">
             <fileset dir="." includes="tools/config/*"/>
         </copy>
-        <copy todir="${db.release}/config/" flatten="true">
+        <copy todir="${community.release}/config/" flatten="true">
             <fileset dir="." includes="server/config/*"/>
         </copy>
-        <copy todir="${db.release}/config/" flatten="true">
+        <copy todir="${community.release}/config/" flatten="true">
             <fileset dir="." includes="distributed/config/*"/>
         </copy>
 
-        <copy todir="${db.release}/lib" flatten="true">
+        <copy todir="${community.release}/lib" flatten="true">
             <fileset dir="distributed/lib" includes="*.jar"/>
         </copy>
 
-        <copy todir="${db.release}/benchmarks" flatten="true">
+        <copy todir="${community.release}/benchmarks" flatten="true">
             <fileset dir="." includes="server/benchmarks/*"/>
         </copy>
 
         <delete includeEmptyDirs="true">
-            <fileset dir="${db.release}/log/" includes="**/*"/>
+            <fileset dir="${community.release}/log/" includes="**/*"/>
         </delete>
     </target>
 
     <target name="installg" depends="install">
         <subant target="install">
-            <property name="global.lib" value="../${graph.release}/lib"/>
+            <property name="global.lib" value="../${community.release}/lib"/>
             <property name="version" value="${version}"/>
 
             <fileset dir="graphdb" includes="build.xml"/>
         </subant>
 
-        <copy todir="${graph.release}">
-            <fileset dir="${db.release}">
+        <copy todir="${community.release}">
+            <fileset dir="${community.release}">
                 <exclude name="**/*.log.*"/>
             </fileset>
         </copy>
 
-        <copy todir="${graph.release}/www/">
-            <fileset dir="graphdb/src/site"/>
-        </copy>
-
-        <copy todir="${graph.release}/bin/" flatten="true" overwrite="true">
+        <copy todir="${community.release}/bin/" flatten="true" overwrite="true">
             <fileset dir="graphdb/script" includes="*.sh *.bat"/>
             <filterset>
                 <filter token="VERSION" value="${version}"/>
             </filterset>
         </copy>
 
-        <copy todir="${graph.release}/config" flatten="true" overwrite="true">
+        <copy todir="${community.release}/config" flatten="true" overwrite="true">
             <fileset dir="graphdb/config" includes="*.xml"/>
         </copy>
 
-        <copy todir="${graph.release}/lib" flatten="true">
+        <copy todir="${community.release}/databases"> 
+            <fileset dir="graphdb/target/databases" includes="*"/>
+        </copy>
+
+        <copy todir="${community.release}/lib" flatten="true">
             <fileset dir="graphdb/lib" includes="*.jar"/>
         </copy>
 
         <delete includeEmptyDirs="true">
-            <fileset dir="${graph.release}/log" includes="**/*"/>
+            <fileset dir="${community.release}/log" includes="**/*"/>
         </delete>
-        <delete dir="${graph.release}/databases/demo" />
+        <delete dir="${community.release}/databases/demo" />
     </target>
 
     <target name="md5" depends="init">
         <checksum algorithm="MD5" fileext=".md5">
-            <fileset dir="${db.release}/lib">
+            <fileset dir="${community.release}/lib">
                 <include name="*.jar"/>
             </fileset>
         </checksum>
 
         <checksum algorithm="SHA" fileext=".sha1">
-            <fileset dir="${db.release}/lib">
+            <fileset dir="${community.release}/lib">
                 <include name="*.jar"/>
             </fileset>
         </checksum>
@@ -237,24 +232,24 @@
 
     <target name="test" depends="install">
         <subant target="test">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="orient.path" value="${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
 
     <target name="test-local" depends="install">
         <subant target="test-local">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="orient.path" value="${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
 
     <target name="test-plocal" depends="install">
         <subant target="test-plocal">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="orient.path" value="${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
@@ -262,30 +257,27 @@
 
     <target name="test-remote" depends="install">
         <subant target="test-remote">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="orient.path" value="${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
 
     <target name="stress-test">
         <subant target="stress-test">
-            <property name="global.lib" value="../${db.release}/lib"/>
-            <property name="orient.path" value="${db.release}"/>
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="orient.path" value="${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
 
     <target name="release" depends="install">
-        <mkdir dir="${global.release}"/>
-        <delete file="../releases/orientdb-${version}.zip"/>
-        <zip destfile="../releases/orientdb-${version}.zip" basedir="../releases" level="9" update="false"
-             includes="orientdb-1*/" excludes="**/*.log.*"/>
-
-        <mkdir dir="${graph.release}"/>
-        <delete file="../releases/orientdb-graphed-${version}.zip"/>
-        <zip destfile="../releases/orientdb-graphed-${version}.zip" basedir="../releases" level="9" update="false"
-             includes="orientdb-graphed-*/" excludes="**/*.log.*"/>
+        <mkdir dir="${community.release}"/>
+        <delete file="../releases/orientdb-community-${version}.zip"/>
+        <zip destfile="../releases/orientdb-community-${version}.zip" basedir="../releases" level="9" update="false"
+             includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
+        <tar destfile="../releases/orientdb-community-${version}.tar.gz" basedir="../releases" compression="gzip" 
+             includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
     </target>
 
 </project>

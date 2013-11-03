@@ -23,13 +23,13 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -43,10 +43,10 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
-  protected static final OJVMProfiler PROFILER              = Orient.instance().getProfiler();
-  private static final char           DECIMAL_SEPARATOR     = '.';
-  private static final String         MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
-  private static final int            MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
+  protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();
+  private static final char             DECIMAL_SEPARATOR     = '.';
+  private static final String           MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
+  private static final int              MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,

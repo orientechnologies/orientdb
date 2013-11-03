@@ -15,29 +15,19 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 /**
  * @author Andrey Lomakin
  * @since 25.02.13
  */
 class LRUEntry {
-  long               fileId;
-  long               pageIndex;
+  OCacheEntry cacheEntry;
 
-  OLogSequenceNumber loadedLSN;
+  long        hashCode;
 
-  long               dataPointer;
-  boolean            isDirty;
+  LRUEntry    next;
 
-  long               hashCode;
-
-  int                usageCounter = 0;
-
-  LRUEntry           next;
-
-  LRUEntry           after;
-  LRUEntry           before;
+  LRUEntry    after;
+  LRUEntry    before;
 
   @Override
   public boolean equals(Object o) {
@@ -48,15 +38,7 @@ class LRUEntry {
 
     LRUEntry lruEntry = (LRUEntry) o;
 
-    if (dataPointer != lruEntry.dataPointer)
-      return false;
-    if (fileId != lruEntry.fileId)
-      return false;
-    if (isDirty != lruEntry.isDirty)
-      return false;
-    if (pageIndex != lruEntry.pageIndex)
-      return false;
-    if (loadedLSN != null ? !loadedLSN.equals(lruEntry.loadedLSN) : lruEntry.loadedLSN != null)
+    if (!cacheEntry.equals(lruEntry.cacheEntry))
       return false;
 
     return true;
@@ -64,17 +46,11 @@ class LRUEntry {
 
   @Override
   public int hashCode() {
-    int result = (int) (fileId ^ (fileId >>> 32));
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    result = 31 * result + (loadedLSN != null ? loadedLSN.hashCode() : 0);
-    result = 31 * result + (int) (dataPointer ^ (dataPointer >>> 32));
-    result = 31 * result + (isDirty ? 1 : 0);
-    return result;
+    return cacheEntry.hashCode();
   }
 
   @Override
   public String toString() {
-    return "LRUEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", loadedLSN=" + loadedLSN + ", dataPointer="
-        + dataPointer + ", isDirty=" + isDirty + ", hashCode=" + hashCode + ", usageCounter=" + usageCounter + '}';
+    return "LRUEntry{" + "cacheEntry=" + cacheEntry + ", hashCode=" + hashCode + '}';
   }
 }

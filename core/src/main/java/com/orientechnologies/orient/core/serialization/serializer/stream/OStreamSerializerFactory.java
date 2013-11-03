@@ -19,39 +19,42 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 
 public class OStreamSerializerFactory {
-	public static OStreamSerializer get(final String iName) {
-		try {
-			if (iName.equals(OStreamSerializerRecord.NAME))
-				return OStreamSerializerRecord.INSTANCE;
+  public static OStreamSerializer get(final String iName) {
+    try {
+      if (iName.equals(OStreamSerializerRecord.NAME))
+        return OStreamSerializerRecord.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerString.NAME))
-				return OStreamSerializerString.INSTANCE;
+      else if (iName.equals(OStreamSerializerString.NAME))
+        return OStreamSerializerString.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerLong.NAME))
-				return OStreamSerializerLong.INSTANCE;
+      else if (iName.equals(OStreamSerializerLong.NAME))
+        return OStreamSerializerLong.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerLiteral.NAME))
-				return OStreamSerializerLiteral.INSTANCE;
+      else if (iName.equals(OStreamSerializerLiteral.NAME))
+        return OStreamSerializerLiteral.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerAnyRecord.NAME))
-				return OStreamSerializerAnyRecord.INSTANCE;
+      else if (iName.equals(OStreamSerializerAnyRecord.NAME))
+        return OStreamSerializerAnyRecord.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerAnyStreamable.NAME))
-				return OStreamSerializerAnyStreamable.INSTANCE;
+      else if (iName.equals(OStreamSerializerAnyStreamable.NAME))
+        return OStreamSerializerAnyStreamable.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerRID.NAME))
-				return OStreamSerializerRID.INSTANCE;
+      else if (iName.equals(OStreamSerializerRID.NAME))
+        return OStreamSerializerRID.INSTANCE;
 
-			else if (iName.equals(OStreamSerializerListRID.NAME))
-				return OStreamSerializerListRID.INSTANCE;
+      else if (iName.equals(OStreamSerializerListRID.NAME))
+        return OStreamSerializerListRID.INSTANCE;
 
-			else if(iName.equals(OCompositeKeySerializer.NAME))
-				return OCompositeKeySerializer.INSTANCE;
+      else if (iName.equals(OStreamSerializerSBTreeIndexRIDContainer.NAME))
+        return OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
 
-			throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
+      else if (iName.equals(OCompositeKeySerializer.NAME))
+        return OCompositeKeySerializer.INSTANCE;
 
-		} catch (Exception e) {
-			throw new OConfigurationException("Error on retrieving of Stream Serializer '" + iName + "'", e);
-		}
-	}
+      throw new OConfigurationException("Stream Serializer '" + iName + "' not registered");
+
+    } catch (Exception e) {
+      throw new OConfigurationException("Error on retrieving of Stream Serializer '" + iName + "'", e);
+    }
+  }
 }

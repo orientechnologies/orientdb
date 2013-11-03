@@ -36,7 +36,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   protected static class CountableLock extends ReentrantReadWriteLock {
     protected int countLocks = 0;
 
-    public CountableLock(final boolean iFair) {
+    public CountableLock() {
       super(false);
     }
   }
@@ -80,7 +80,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     synchronized (internalLock) {
       lock = map.get(iResourceId);
       if (lock == null) {
-        final CountableLock newLock = new CountableLock(iTimeout > 0);
+        final CountableLock newLock = new CountableLock();
         lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
         if (lock == null)
           lock = newLock;
@@ -117,6 +117,49 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       throw e;
     }
 
+  }
+
+  public boolean tryAcquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
+    if (!enabled)
+      return true;
+
+    CountableLock lock;
+    final Object internalLock = internalLock(iResourceId);
+    synchronized (internalLock) {
+      lock = map.get(iResourceId);
+      if (lock == null) {
+        final CountableLock newLock = new CountableLock();
+        lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
+        if (lock == null)
+          lock = newLock;
+      }
+      lock.countLocks++;
+    }
+
+    boolean result;
+    try {
+      if (iLockType == LOCK.SHARED)
+        result = lock.readLock().tryLock();
+      else
+        result = lock.writeLock().tryLock();
+    } catch (RuntimeException e) {
+      synchronized (internalLock) {
+        lock.countLocks--;
+        if (lock.countLocks == 0)
+          map.remove(iResourceId);
+      }
+      throw e;
+    }
+
+    if (!result) {
+      synchronized (internalLock) {
+        lock.countLocks--;
+        if (lock.countLocks == 0)
+          map.remove(iResourceId);
+      }
+    }
+
+    return result;
   }
 
   public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)

@@ -16,10 +16,21 @@
 package com.orientechnologies.common.profiler;
 
 import java.util.Date;
+import java.util.Map;
 
-public interface OProfilerMBean {
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OService;
+
+public interface OProfilerMBean extends OService {
+
+  public enum METRIC_TYPE {
+    CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
+  }
 
   public void updateCounter(String iStatName, String iDescription, long iPlus);
+
+  public void updateCounter(String iStatName, String iDescription, long iPlus, String iDictionary);
 
   public long getCounter(String iStatName);
 
@@ -27,9 +38,13 @@ public interface OProfilerMBean {
 
   public String dumpCounters();
 
+  public OProfilerEntry getChrono(String string);
+
   public long startChrono();
 
   public long stopChrono(String iName, String iDescription, long iStartTime);
+
+  public long stopChrono(String iName, String iDescription, long iStartTime, String iDictionary);
 
   public String dumpChronos();
 
@@ -41,7 +56,31 @@ public interface OProfilerMBean {
 
   public boolean isRecording();
 
-  public void startRecording();
+  public boolean startRecording();
 
-  public void stopRecording();
+  public boolean stopRecording();
+
+  public void unregisterHookValue(String string);
+
+  public void configure(String string);
+
+  public void setAutoDump(int iNewValue);
+
+  public String metadataToJSON();
+
+  public Map<String, OPair<String, METRIC_TYPE>> getMetadata();
+
+  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
+      final OProfilerHookValue iHookValue);
+
+  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
+      final OProfilerHookValue iHookValue, final String iMetadataName);
+
+  public String getProcessMetric(String iName);
+
+  public String getDatabaseMetric(String databaseName, String iName);
+
+  public String toJSON(String command, final String iPar1);
+
+  public void resetRealtime(final String iText);
 }

@@ -130,24 +130,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Deprecated: use {@link #ODocument()} instead. ODocument instances always refer to the thread-local database and not anymore to
-   * the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase) {
-    this();
-  }
-
-  /**
-   * Deprecated: use {@link #ODocument(ORID)} instead. ODocument instances always refer to the thread-local database and not anymore
-   * to the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase, final ORID iRID) {
-    this(iRID);
-  }
-
-  /**
    * Creates a new instance in memory linked by the Record Id to the persistent one. New instances are not persistent until
    * {@link #save()} is called.
    * 
@@ -159,15 +141,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _recordId = (ORecordId) iRID;
     _status = STATUS.NOT_LOADED;
     _dirty = false;
-  }
-
-  /**
-   * Deprecated: use {@link #ODocument(String, ORID)} instead. ODocument instances always refer to the thread-local database and not
-   * anymore to the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase, final String iClassName, final ORID iRID) {
-    this(iClassName, iRID);
   }
 
   /**
@@ -184,15 +157,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _recordId = (ORecordId) iRID;
     _dirty = false;
     _status = STATUS.NOT_LOADED;
-  }
-
-  /**
-   * Deprecated: use {@link #ODocument(String)} instead. ODocument instances always refer to the thread-local database and not
-   * anymore to the passed database as parameter.
-   */
-  @Deprecated
-  public ODocument(final ODatabaseRecord iDatabase, final String iClassName) {
-    this(iClassName);
   }
 
   /**
@@ -842,21 +806,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iOther
    *          Other ODocument instance to merge
-   * @param iAddOnlyMode
-   *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
-   *          will be removed by original too
+   * @param iUpdateOnlyMode
+   *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
+   *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
    * 
    * @return
    */
-  public ODocument merge(final ODocument iOther, boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
+  public ODocument merge(final ODocument iOther, boolean iUpdateOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
     iOther.checkForLoading();
     iOther.checkForFields();
 
     if (_clazz == null && iOther.getSchemaClass() != null)
       _clazz = iOther.getSchemaClass();
 
-    return merge(iOther._fieldValues, iAddOnlyMode, iMergeSingleItemsOfMultiValueFields);
+    return merge(iOther._fieldValues, iUpdateOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
 
   /**
@@ -865,14 +829,15 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iOther
    *          Other ODocument instance to merge
-   * @param iAddOnlyMode
-   *          if true, the other document properties will be always added. If false, the missed properties in the "other" document
-   *          will be removed by original too
+   * @param iUpdateOnlyMode
+   *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
+   *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
    * 
    * @return
    */
-  public ODocument merge(final Map<String, Object> iOther, final boolean iAddOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
+  public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
+      boolean iMergeSingleItemsOfMultiValueFields) {
     checkForLoading();
     checkForFields();
 
@@ -912,7 +877,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       field(f, iOther.get(f));
     }
 
-    if (!iAddOnlyMode) {
+    if (!iUpdateOnlyMode) {
       // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
       for (String f : fieldNames())
         if (!iOther.containsKey(f))

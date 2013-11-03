@@ -20,8 +20,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
@@ -59,22 +58,21 @@ public class BooleanSerializerTest {
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
     booleanSerializer.serializeNative(OBJECT_TRUE, stream, 0);
-    long pointer = directMemory.allocate(stream);
+
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT_TRUE);
+      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT_TRUE);
     } finally {
-      directMemory.free(pointer);
+      pointer.free();
     }
 
     booleanSerializer.serializeNative(OBJECT_FALSE, stream, 0);
-    pointer = directMemory.allocate(stream);
+    pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT_FALSE);
+      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT_FALSE);
     } finally {
-      directMemory.free(pointer);
+      pointer.free();
     }
   }
 }

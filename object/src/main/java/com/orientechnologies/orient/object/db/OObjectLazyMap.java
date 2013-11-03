@@ -26,14 +26,14 @@ import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
 public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Serializable,
-    OLazyObjectMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
+    OObjectLazyMultivalueElement<Map<Object, TYPE>>, OLazyObjectMapInterface<TYPE> {
   private static final long                serialVersionUID = -7071023580831419958L;
 
   private final ProxyObject                sourceRecord;

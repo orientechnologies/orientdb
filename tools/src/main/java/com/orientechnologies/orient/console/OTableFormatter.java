@@ -15,23 +15,12 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.InputStream;
-import java.io.PrintStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -43,20 +32,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class OTableFormatter {
-  protected final static String      MORE            = "...";
-  protected InputStream              in              = System.in;
-  protected PrintStream              out             = System.out;
-  protected PrintStream              err             = System.err;
-  protected int                      minColumnSize   = 4;
-  protected int                      maxWidthSize    = 132;
-  protected final static Set<String> prefixedColumns = new HashSet<String>(Arrays.asList(new String[] { "#", "@RID" }));
-  protected final SimpleDateFormat   DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  protected final static String       MORE            = "...";
+  protected final OConsoleApplication out;
+  protected int                       minColumnSize   = 4;
+  protected int                       maxWidthSize    = 132;
+  protected final static Set<String>  prefixedColumns = new HashSet<String>(Arrays.asList(new String[] { "#", "@RID" }));
+  protected final SimpleDateFormat    DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-  public OTableFormatter() {
-  }
-
-  public OTableFormatter(final PrintStream out) {
-    this.out = out;
+  public OTableFormatter(final OConsoleApplication iConsole) {
+    this.out = iConsole;
   }
 
   public OTableFormatter hideRID(final boolean iValue) {
@@ -83,7 +67,7 @@ public class OTableFormatter {
 
       if (limit > -1 && fetched >= limit) {
         printHeaderLine(columns);
-        out.println("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ")");
+        out.message("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ")");
         return;
       }
     }
@@ -130,10 +114,10 @@ public class OTableFormatter {
         vargs.add(value);
       }
 
-      out.println(String.format(format.toString(), vargs.toArray()));
+      out.message(format.toString() + "\n", vargs.toArray());
 
     } catch (Throwable t) {
-      out.printf("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
+      out.message("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
     }
   }
 
@@ -175,33 +159,41 @@ public class OTableFormatter {
   }
 
   private void printHeader(final Map<String, Integer> iColumns) {
-    out.printf("\n");
+    final StringBuilder buffer = new StringBuilder();
+
     printHeaderLine(iColumns);
     int i = 0;
     for (Entry<String, Integer> column : iColumns.entrySet()) {
       if (i++ > 0)
-        out.print('|');
+        buffer.append('|');
       String colName = column.getKey();
       if (colName.length() > column.getValue())
         colName = colName.substring(0, column.getValue());
-      out.printf("%-" + column.getValue() + "s", colName);
+      buffer.append(String.format("%-" + column.getValue() + "s", colName));
     }
-    out.printf("\n");
+    buffer.append("\n");
+
+    out.message(buffer.toString());
+
     printHeaderLine(iColumns);
   }
 
   private void printHeaderLine(final Map<String, Integer> iColumns) {
+    final StringBuilder buffer = new StringBuilder();
+
     if (iColumns.size() > 0) {
       int i = 0;
       for (Entry<String, Integer> col : iColumns.entrySet()) {
         if (i++ > 0)
-          out.print("+");
+          buffer.append("+");
 
         for (int k = 0; k < col.getValue(); ++k)
-          out.print("-");
+          buffer.append("-");
       }
     }
-    out.print("\n");
+    buffer.append("\n");
+
+    out.message(buffer.toString());
   }
 
   /**
@@ -225,6 +217,7 @@ public class OTableFormatter {
         columns.put(c, getColumnSize(fetched, rec, c, columns.get(c)));
 
       if (rec instanceof ODocument) {
+        ((ODocument) rec).setLazyLoad(false);
         // PARSE ALL THE DOCUMENT'S FIELDS
         ODocument doc = (ODocument) rec;
         for (String fieldName : doc.fieldNames()) {

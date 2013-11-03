@@ -345,7 +345,8 @@ public class OFetchHelper {
         // EMBEDDED, GO DEEPER
         fetch = true;
 
-      if (iFormat.contains("shallow") || fieldValue == null
+      if (iFormat.contains("shallow")
+          || fieldValue == null
           || (!fetch && fieldValue instanceof OIdentifiable)
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
@@ -437,6 +438,9 @@ public class OFetchHelper {
             iListener.parseLinked(iRootRecord, d, iUserObject, key.toString(), iContext);
           }
         }
+      } else if (o instanceof Map) {
+        fetchMap(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot, iFieldDepthLevel,
+            parsedRecords, iFieldPathFromRoot, iListener, iContext);
       } else if (OMultiValue.isMultiValue(o)) {
         fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot,
             iFieldDepthLevel, parsedRecords, iFieldPathFromRoot, iListener, iContext);

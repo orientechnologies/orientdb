@@ -19,15 +19,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed task used for synchronization.
@@ -35,7 +35,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
+public class OSQLCommandTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   protected String          text;
@@ -43,58 +43,39 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
   public OSQLCommandTask() {
   }
 
-  public OSQLCommandTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr, final String databaseName,
-      final EXECUTION_MODE iMode, final String iCommand) {
-    super(iServer, iDistributedSrvMgr, databaseName, iMode);
+  public OSQLCommandTask(final String iCommand) {
     text = iCommand;
   }
 
-  public OSQLCommandTask(final long iRunId, final long iOperationId, final String iCommand) {
-    text = iCommand;
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
+        text.toString(), database.getName());
+
+    return database.command(new OCommandSQL(text)).execute();
   }
 
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   */
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.NONE;
+  }
+
   @Override
-  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
-    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleCommandConflict(iRemoteNodeId, text, localResult, remoteResult);
+  public long getTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
-  public Object executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "execute command=%s db=%s", text.toString(), databaseName);
-
-    final ODatabaseDocumentTx db = openDatabase();
-    try {
-      Object result = openDatabase().command(new OCommandSQL(text)).execute();
-
-      if (mode != EXECUTION_MODE.FIRE_AND_FORGET)
-        return result;
-
-      // FIRE AND FORGET MODE: AVOID THE PAYLOAD AS RESULT
-      return null;
-
-    } finally {
-      closeDatabase(db);
-    }
+  @Override
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, ODistributedResponse iGoodResponse) {
+    return null;
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(text);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     text = in.readUTF();
   }
 
@@ -105,12 +86,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask<Object> {
 
   @Override
   public String toString() {
-    return getName() + "(" + text + ")";
-  }
-
-  @Override
-  public OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.SQL_COMMAND;
+    return super.toString() + "(" + text + ")";
   }
 
   @Override

@@ -18,25 +18,19 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.File;
 import java.io.IOException;
 
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
-import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test(groups = "db")
 public class DbDeleteTest {
@@ -75,8 +69,6 @@ public class DbDeleteTest {
     if (db.exists()) {
       if (db.isClosed())
         db.open("admin", "admin");
-
-      removeExportImportMapping(db);
     }
 
     ODatabaseHelper.dropDatabase(db, "plocal");
@@ -97,7 +89,6 @@ public class DbDeleteTest {
       if (db.isClosed())
         db.open("admin", "admin");
 
-      removeExportImportMapping(db);
       db.drop();
       db.create();
     }
@@ -111,20 +102,5 @@ public class DbDeleteTest {
     document.save();
 
     db.drop();
-  }
-
-  private void removeExportImportMapping(ODatabaseDocument databaseDocument) {
-    File file = new File(databaseDocument.getStorage().getConfiguration().getDirectory() + File.separator
-        + ODatabaseImport.EXPORT_IMPORT_MAP_NAME + ODatabaseImport.EXPORT_IMPORT_MAP_TREE_STATE_EXT);
-    if (file.exists()) {
-      OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<OIdentifiable>();
-      keyHashFunction.setValueSerializer(OLinkSerializer.INSTANCE);
-
-      OLocalHashTable<OIdentifiable, OIdentifiable> exportImportHashTable = new OLocalHashTable<OIdentifiable, OIdentifiable>(
-          ODatabaseImport.EXPORT_IMPORT_MAP_METADATA_EXT, ODatabaseImport.EXPORT_IMPORT_MAP_TREE_STATE_EXT,
-          ODatabaseImport.EXPORT_IMPORT_MAP_BF_EXT, keyHashFunction);
-      exportImportHashTable.load(ODatabaseImport.EXPORT_IMPORT_MAP_NAME, (OStorageLocalAbstract) databaseDocument.getStorage());
-      exportImportHashTable.delete();
-    }
   }
 }

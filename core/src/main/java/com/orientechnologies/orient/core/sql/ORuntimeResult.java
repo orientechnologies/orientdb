@@ -33,11 +33,14 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
  * @author Luca Garulli
  */
 public class ORuntimeResult {
+  private final Object              fieldValue;
   private final Map<String, Object> projections;
   private final ODocument           value;
   private OCommandContext           context;
 
-  public ORuntimeResult(final Map<String, Object> iProjections, final int iProgressive, final OCommandContext iContext) {
+  public ORuntimeResult(final Object iFieldValue, final Map<String, Object> iProjections, final int iProgressive,
+      final OCommandContext iContext) {
+    fieldValue = iFieldValue;
     projections = iProjections;
     context = iContext;
     value = createProjectionDocument(iProgressive);
@@ -146,5 +149,9 @@ public class ORuntimeResult {
       final OCommandContext iContext, final OIdentifiable iRecord) {
     return ORuntimeResult.getResult(
         ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord), iProjections);
+  }
+
+  public Object getFieldValue() {
+    return fieldValue;
   }
 }

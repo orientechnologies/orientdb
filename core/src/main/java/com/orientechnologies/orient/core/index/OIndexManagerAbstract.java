@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -59,8 +59,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected Map<String, OIndex<?>>                            indexes            = new ConcurrentHashMap<String, OIndex<?>>();
   protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
 
-  protected String                                            defaultClusterName = OMetadata.CLUSTER_INDEX_NAME;
-  protected String                                            manualClusterName  = OMetadata.CLUSTER_MANUAL_INDEX_NAME;
+  protected String                                            defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String                                            manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
   protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
 
@@ -145,12 +145,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     acquireExclusiveLock();
     try {
       try {
-        save(OMetadata.CLUSTER_INTERNAL_NAME);
+        save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       } catch (Exception e) {
         // RESET RID TO ALLOCATE A NEW ONE
         if (document.getIdentity().getClusterPosition().isPersistent()) {
           document.getIdentity().reset();
-          save(OMetadata.CLUSTER_INTERNAL_NAME);
+          save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
       }
       getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();

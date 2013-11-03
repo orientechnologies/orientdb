@@ -16,7 +16,13 @@
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -28,8 +34,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -48,10 +57,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  * 
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
-  private static final long serialVersionUID      = 1L;
+  private static final boolean useSBTree             = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
 
-  protected volatile Thread recreateIndexesThread = null;
-  private volatile boolean  rebuildCompleted      = false;
+  private static final long    serialVersionUID      = 1L;
+
+  protected volatile Thread    recreateIndexesThread = null;
+  private volatile boolean     rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
     super(iDatabase);
@@ -84,9 +95,30 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
+    ODatabase database = getDatabase();
+    OStorage storage = database.getStorage();
+    final String alghorithm;
+    if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
+      alghorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+    else
+      alghorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
+
+    final String valueContainerAlgorithm;
+    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(iType) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(iType)
+        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(iType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(iType)) {
+      if ((storage.getType().equals(OEngineLocalPaginated.NAME) || storage.getType().equals(OEngineLocal.NAME))
+          && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
+        valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
+      } else {
+        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
+      }
+    } else {
+      valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
+    }
+
     acquireExclusiveLock();
     try {
-      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType);
+      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType, alghorithm, valueContainerAlgorithm);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
@@ -97,7 +129,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         iProgressListener = new OIndexRebuildOutputListener(index);
 
       Set<String> clustersToIndex = new HashSet<String>();
-      ODatabase database = getDatabase();
       if (clusterIdsToIndex != null) {
         for (int clusterId : clusterIdsToIndex) {
           final String clusterNameToIndex = database.getClusterNameById(clusterId);
@@ -186,7 +217,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         while (indexConfigurationIterator.hasNext()) {
           final ODocument d = indexConfigurationIterator.next();
           try {
-            index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE));
+            index = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
+                (String) d.field(OIndexInternal.ALGORITHM), d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
             OIndexInternal.IndexMetadata newIndexMetadata = index.loadMetadata(d);
             final String normalizedName = newIndexMetadata.getName().toLowerCase();
@@ -295,27 +327,27 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
             ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
             try {
               // DROP AND RE-CREATE 'INDEX' DATA-SEGMENT AND CLUSTER IF ANY
-              final int dataId = newDb.getStorage().getDataSegmentIdByName(OMetadata.DATASEGMENT_INDEX_NAME);
+              final int dataId = newDb.getStorage().getDataSegmentIdByName(OMetadataDefault.DATASEGMENT_INDEX_NAME);
               if (dataId > -1)
-                newDb.getStorage().dropDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
+                newDb.getStorage().dropDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
-              final int clusterId = newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME);
+              final int clusterId = newDb.getStorage().getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
               if (clusterId > -1)
                 newDb.dropCluster(clusterId, false);
 
-              newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
-              newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadata.CLUSTER_INDEX_NAME, null,
-                  OMetadata.DATASEGMENT_INDEX_NAME, true);
+              newDb.addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME, null);
+              newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadataDefault.CLUSTER_INDEX_NAME, null,
+                  OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
             } catch (IllegalArgumentException ex) {
               // OLD DATABASE: CREATE SEPARATE DATASEGMENT AND LET THE INDEX CLUSTER TO POINT TO IT
               OLogManager.instance().info(this, "Creating 'index' data-segment to store all the index content...");
 
-              newDb.addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME, null);
+              newDb.addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME, null);
               final OCluster indexCluster = newDb.getStorage().getClusterById(
-                  newDb.getStorage().getClusterIdByName(OMetadata.CLUSTER_INDEX_NAME));
+                  newDb.getStorage().getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME));
               try {
-                indexCluster.set(ATTRIBUTES.DATASEGMENT, OMetadata.DATASEGMENT_INDEX_NAME);
+                indexCluster.set(ATTRIBUTES.DATASEGMENT, OMetadataDefault.DATASEGMENT_INDEX_NAME);
                 OLogManager.instance().info(this,
                     "Data-segment 'index' create correctly. Indexes will store content into this data-segment");
               } catch (IOException e) {
@@ -334,13 +366,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
             for (ODocument idx : idxs) {
               try {
                 String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
+                String algorithm = idx.field(OIndexInternal.ALGORITHM);
+                String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
+
                 if (indexType == null) {
                   OLogManager.instance().error(this, "Index type is null, will process other record.");
                   errors++;
                   continue;
                 }
 
-                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType);
+                final OIndexInternal<?> index = OIndexes.createIndex(newDb, indexType, algorithm, valueContainerAlgorithm);
                 OIndexInternal.IndexMetadata indexMetadata = index.loadMetadata(idx);
                 OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 
@@ -409,7 +444,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
             OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed.");
+            OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed.", e);
           }
         }
       };
@@ -419,6 +454,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     } finally {
       releaseExclusiveLock();
     }
+
+    if (OGlobalConfiguration.INDEX_SYNCHRONOUS_AUTO_REBUILD.getValueAsBoolean())
+      waitTillIndexRestore();
   }
 
   @Override
@@ -446,10 +484,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
       return false;
 
-    OStorage storage = database.getStorage();
+    OStorage storage = database.getStorage().getUnderlying();
 
     if (storage instanceof OStorageLocal)
-      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadata.CLUSTER_INDEX_NAME);
+      return !((OStorageLocal) storage).wasClusterSoftlyClosed(OMetadataDefault.CLUSTER_INDEX_NAME);
     else if (storage instanceof OLocalPaginatedStorage) {
       return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
     }

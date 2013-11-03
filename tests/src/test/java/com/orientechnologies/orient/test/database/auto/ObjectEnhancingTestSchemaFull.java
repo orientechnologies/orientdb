@@ -23,6 +23,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,7 +33,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntityEnhancer;
 import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
 
-@Test(groups = { "object", "enhancingSchemaFull" })
+@Test(groups = { "object", "enhancingSchemaFull" }, dependsOnGroups = "detachingSchemaFull")
 public class ObjectEnhancingTestSchemaFull {
   private String url;
 
@@ -109,6 +110,7 @@ public class ObjectEnhancingTestSchemaFull {
   @AfterClass
   public void end() throws IOException {
     String prefix = url.substring(0, url.indexOf(':') + 1);
+    OLogManager.instance().info(this, "deleting database " + url);
     ODatabaseHelper.dropDatabase(OObjectDatabasePool.global().acquire(url, "admin", "admin"), prefix);
   }
 

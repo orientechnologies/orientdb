@@ -23,6 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -37,12 +43,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
 @Test
 public class GraphDatabaseTest {
@@ -143,14 +143,14 @@ public class GraphDatabaseTest {
     Assert.assertFalse(database.getOutEdges(tom, "drives").isEmpty());
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select out[in.@class = 'GraphCar'].in from V where name = 'Tom'"));
+        "select out_[in.@class = 'GraphCar'].in_ from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
 
     result = database.query(new OSQLSynchQuery<ODocument>(
-        "select out[label='drives'][in.brand = 'Ferrari'].in from V where name = 'Tom'"));
+        "select out_[label='drives'][in.brand = 'Ferrari'].in_ from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
 
-    result = database.query(new OSQLSynchQuery<ODocument>("select out[in.brand = 'Ferrari'].in from V where name = 'Tom'"));
+    result = database.query(new OSQLSynchQuery<ODocument>("select out_[in.brand = 'Ferrari'].in_ from V where name = 'Tom'"));
     Assert.assertEquals(result.size(), 1);
   }
 
@@ -341,7 +341,7 @@ public class GraphDatabaseTest {
     for (int i = 0; i < source1.size(); i++)
       database.createEdge(source1.get(i), office1Doc).field("label", "office", OType.STRING).save();
 
-    String query11 = "select out[label='office'].size() from V where name = 'MyTest'";
+    String query11 = "select out_[label='office'].size() from V where name = 'MyTest'";
     List<ODocument> officesDoc11 = database.query(new OSQLSynchQuery<ODocument>(query11));
     System.out.println(officesDoc11);
 
@@ -354,7 +354,7 @@ public class GraphDatabaseTest {
     for (int i = 0; i < source2.size(); i++)
       database.createEdge(source2.get(i), office2Doc).field("label", "office", OType.STRING).save();
 
-    String query21 = "select out[label='office'].size() from V where name = 'MyTest'";
+    String query21 = "select out_[label='office'].size() from V where name = 'MyTest'";
     List<ODocument> officesDoc21 = database.query(new OSQLSynchQuery<ODocument>(query21));
     System.out.println(officesDoc21);
   }
@@ -375,17 +375,17 @@ public class GraphDatabaseTest {
       Assert.assertTrue(identities.add(i));
       if (i % 100 == 0) {
         final long now = System.currentTimeMillis();
-        System.out.printf("\nInserted %d edges, elapsed %d ms. v.out=%d", i, now - begin, ((Set<?>) v.field("out")).size());
+        System.out.printf("\nInserted %d edges, elapsed %d ms. v.out=%d", i, now - begin, ((Set<?>) v.field("out_")).size());
         begin = System.currentTimeMillis();
       }
     }
     Assert.assertEquals(identities.size(), 1000);
 
-    int originalEdges = ((Set<?>) v.field("out")).size();
+    int originalEdges = ((Set<?>) v.field("out_")).size();
     System.out.println("Edge count (Original instance): " + originalEdges);
 
     ODocument x = database.load(v.getIdentity());
-    int loadedEdges = ((Set<?>) x.field("out")).size();
+    int loadedEdges = ((Set<?>) x.field("out_")).size();
     System.out.println("Edge count (Loaded instance): " + loadedEdges);
 
     Assert.assertEquals(originalEdges, loadedEdges);
@@ -421,9 +421,9 @@ public class GraphDatabaseTest {
     final int v1Edges = database.getOutEdges(v1).size();
     final int v2Edges = database.getInEdges(v2).size();
 
-    ODocument e = database.command(new OCommandSQL("insert into E SET out = ?, in = ?")).execute(v1, v2);
-    database.command(new OCommandSQL("update " + v1.getIdentity() + " ADD out = " + e.getIdentity())).execute();
-    database.command(new OCommandSQL("update " + v2.getIdentity() + " ADD in = " + e.getIdentity())).execute();
+    ODocument e = database.command(new OCommandSQL("insert into E SET out_ = ?, in_ = ?")).execute(v1, v2);
+    database.command(new OCommandSQL("update " + v1.getIdentity() + " ADD out_ = " + e.getIdentity())).execute();
+    database.command(new OCommandSQL("update " + v2.getIdentity() + " ADD in_ = " + e.getIdentity())).execute();
 
     ODocument doc1 = ((ODocument) v1.getRecord().reload());
     ODocument doc2 = ((ODocument) v2.getRecord().reload());
@@ -440,19 +440,19 @@ public class GraphDatabaseTest {
     database.createEdge(sourceDoc1, targetDoc1).field("color", "red", OType.STRING).field("action", "owns", OType.STRING).save();
     database.createEdge(sourceDoc1, targetDoc2).field("color", "red", OType.STRING).field("action", "wants", OType.STRING).save();
 
-    String query1 = "select driver from V where out.in.car in 'ford'";
+    String query1 = "select driver from V where out_.in.car in 'ford'";
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query1));
     Assert.assertEquals(result.size(), 1);
 
-    String query2 = "select driver from V where out[color='red'].in.car in 'ford'";
+    String query2 = "select driver from V where out_[color='red'].in.car in 'ford'";
     result = database.query(new OSQLSynchQuery<ODocument>(query2));
     Assert.assertEquals(result.size(), 1);
 
-    String query3 = "select driver from V where out[action='owns'].in.car in 'ford'";
+    String query3 = "select driver from V where out_[action='owns'].in.car in 'ford'";
     result = database.query(new OSQLSynchQuery<ODocument>(query3));
     Assert.assertEquals(result.size(), 1);
 
-    String query4 = "select driver from V where out[color='red'][action='owns'].in.car in 'ford'";
+    String query4 = "select driver from V where out_[color='red'][action='owns'].in.car in 'ford'";
     result = database.query(new OSQLSynchQuery<ODocument>(query4));
     Assert.assertEquals(result.size(), 1);
 
@@ -473,13 +473,13 @@ public class GraphDatabaseTest {
     database.createEdge(countryDoc1, cityDoc1).field("label", "owns").save();
     database.createEdge(countryDoc1, cityDoc2).field("label", "owns").save();
 
-    String subquery = "select out[label='owns'].in from V where name = 'UK'";
+    String subquery = "select out_[label='owns'].in from V where name = 'UK'";
     List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(((Collection<ODocument>) ((ODocument) result.get(0)).field("out")).size(), 2);
+    Assert.assertEquals(((Collection<ODocument>) ((ODocument) result.get(0)).field("out_")).size(), 2);
 
-    subquery = "select expand(out[label='owns'].in) from V where name = 'UK'";
+    subquery = "select expand(out_[label='owns'].in) from V where name = 'UK'";
     result = database.query(new OSQLSynchQuery<ODocument>(subquery));
 
     Assert.assertEquals(result.size(), 2);
@@ -488,7 +488,7 @@ public class GraphDatabaseTest {
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("lat"));
     }
 
-    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out[label='owns'].in) from V where name = 'UK') order by distance";
+    String query = "select name, lat, long, distance(lat,long,51.5,0.08) as distance from (select expand(out_[label='owns'].in) from V where name = 'UK') order by distance";
     result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
@@ -520,7 +520,7 @@ public class GraphDatabaseTest {
     ODocument teamDoc = database.createVertex().field("team", "Chelsea").save();
     database.createEdge(playerDoc, teamDoc).field("label", "player").save();
 
-    String query = "select expand(out[label='player'].in) from V where surname = 'Torres'";
+    String query = "select expand(out_[label='player'].in) from V where surname = 'Torres'";
     List<OIdentifiable> result = database.query(new OSQLSynchQuery<ODocument>(query));
     for (int i = 0; i < result.size(); i++) {
       Assert.assertTrue(((ODocument) result.get(i).getRecord()).containsField("team"));

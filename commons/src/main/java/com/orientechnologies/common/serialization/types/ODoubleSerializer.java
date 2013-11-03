@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -39,11 +39,11 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
    */
   public static final int               DOUBLE_SIZE = 8;
 
-  public int getObjectSize(Double object) {
+  public int getObjectSize(Double object, Object... hints) {
     return DOUBLE_SIZE;
   }
 
-  public void serialize(Double object, byte[] stream, int startPosition) {
+  public void serialize(Double object, byte[] stream, int startPosition, Object... hints) {
     OLongSerializer.INSTANCE.serialize(Double.doubleToLongBits(object), stream, startPosition);
   }
 
@@ -63,7 +63,7 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
     return DOUBLE_SIZE;
   }
 
-  public void serializeNative(Double object, byte[] stream, int startPosition) {
+  public void serializeNative(Double object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putLong(stream, startPosition, Double.doubleToLongBits(object), ByteOrder.nativeOrder());
   }
 
@@ -72,17 +72,17 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
   }
 
   @Override
-  public void serializeInDirectMemory(Double object, ODirectMemory memory, long pointer) {
-    memory.setLong(pointer, Double.doubleToLongBits(object));
+  public void serializeInDirectMemory(Double object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setLong(offset, Double.doubleToLongBits(object));
   }
 
   @Override
-  public Double deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return Double.longBitsToDouble(memory.getLong(pointer));
+  public Double deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return Double.longBitsToDouble(pointer.getLong(offset));
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return DOUBLE_SIZE;
   }
 
@@ -92,5 +92,10 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
 
   public int getFixedLength() {
     return DOUBLE_SIZE;
+  }
+
+  @Override
+  public Double prepocess(Double value, Object... hints) {
+    return value;
   }
 }

@@ -16,7 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * This interface is used for serializing OrientDB datatypes in binary format. Serialized content is written into buffer that will
@@ -31,11 +31,14 @@ public interface OBinarySerializer<T> {
    * Obtain size of the serialized object Size is the amount of bites that required for storing object (for example: for storing
    * integer we need 4 bytes)
    * 
+   * 
    * @param object
    *          is the object to measure its size
+   * @param hints
+   *          List of parameters which may be used to choose appropriate serialization approach.
    * @return size of the serialized object
    */
-  int getObjectSize(T object);
+  int getObjectSize(T object, Object... hints);
 
   /**
    * Return size serialized presentation of given object.
@@ -56,9 +59,10 @@ public interface OBinarySerializer<T> {
    * @param stream
    *          is the stream where object will be written
    * @param startPosition
-   *          is the position to start writing from
+   * @param hints
+   *          List of parameters which may be used to choose appropriate serialization approach.
    */
-  void serialize(T object, byte[] stream, int startPosition);
+  void serialize(T object, byte[] stream, int startPosition, Object... hints);
 
   /**
    * Reads object from the stream starting from the startPosition
@@ -96,13 +100,14 @@ public interface OBinarySerializer<T> {
    * @param stream
    *          is the stream where object will be written
    * @param startPosition
-   *          is the position to start writing from
+   * @param hints
+   *          List of parameters which may be used to choose appropriate serialization approach.
    */
-  void serializeNative(T object, byte[] stream, int startPosition);
+  void serializeNative(T object, byte[] stream, int startPosition, Object... hints);
 
   /**
    * Reads object from the stream starting from the startPosition, in case there were serialized using
-   * {@link #serializeNative(Object, byte[], int)} method.
+   * {@link #serializeNative(T, byte[], int, Object...)} method.
    * 
    * @param stream
    *          is the stream from object will be read
@@ -113,8 +118,8 @@ public interface OBinarySerializer<T> {
   T deserializeNative(byte[] stream, int startPosition);
 
   /**
-   * Return size serialized presentation of given object, if it was serialized using {@link #serializeNative(Object, byte[], int)}
-   * method.
+   * Return size serialized presentation of given object, if it was serialized using
+   * {@link #serializeNative(T, byte[], int, Object...)} method.
    * 
    * @param stream
    *          Serialized content.
@@ -124,9 +129,11 @@ public interface OBinarySerializer<T> {
    */
   int getObjectSizeNative(byte[] stream, int startPosition);
 
-  void serializeInDirectMemory(T object, ODirectMemory memory, long pointer);
+  void serializeInDirectMemory(T object, ODirectMemoryPointer pointer, long offset, Object... hints);
 
-  T deserializeFromDirectMemory(ODirectMemory memory, long pointer);
+  T deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset);
 
-  int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer);
+  int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset);
+
+  T prepocess(T value, Object... hints);
 }

@@ -16,12 +16,7 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,6 +24,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -471,5 +467,10 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
   public String getType() {
     return TYPE;
+  }
+
+  @Override
+  public OSBTreeCollectionManager getSbTreeCollectionManager() {
+    return underlying.getSbTreeCollectionManager();
   }
 }

@@ -6,18 +6,10 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -1385,6 +1377,7 @@ public class WriteAheadLogTest {
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(2 * OWALPage.PAGE_SIZE);
     int bt = rndFile.read();
+    rndFile.seek(2 * OWALPage.PAGE_SIZE);
     rndFile.write(bt + 1);
     rndFile.close();
 
@@ -1501,6 +1494,7 @@ public class WriteAheadLogTest {
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(3 * OWALPage.PAGE_SIZE);
     int bt = rndFile.read();
+    rndFile.seek(3 * OWALPage.PAGE_SIZE);
     rndFile.write(bt + 1);
     rndFile.close();
 

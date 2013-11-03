@@ -15,8 +15,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
@@ -65,6 +69,16 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     underlying.reload();
   }
 
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    underlying.backup(out, options, callable);
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    underlying.restore(in, options, callable);
+  }
+
   public void close() {
     underlying.close();
     Orient.instance().getDatabaseFactory().unregister(databaseOwner);
@@ -72,14 +86,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
   public void replaceStorage(OStorage iNewStorage) {
     underlying.replaceStorage(iNewStorage);
-  }
-
-  /**
-   * Uses drop() instead.
-   */
-  @Deprecated
-  public void delete() {
-    drop();
   }
 
   public void drop() {
@@ -204,30 +210,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       Object... iParameters) {
     return underlying.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, iParameters);
-  }
-
-  /**
-   * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
-   * @param iClusterName
-   * @param iSize
-   * @return
-   */
-  @Deprecated
-  public int addPhysicalCluster(final String iClusterName, final String iLocation, final int iSize) {
-    checkOpeness();
-    return underlying.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClusterName, iLocation, null);
-  }
-
-  /**
-   * @deprecated Use {@link #addCluster(String, String, String, String, Object...)} instead
-   * @param iClusterName
-   * @param iSize
-   * @return
-   */
-  @Deprecated
-  public int addPhysicalCluster(final String iClusterName) {
-    checkOpeness();
-    return underlying.addPhysicalCluster(iClusterName, null, -1);
   }
 
   public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {

@@ -17,22 +17,40 @@
 package com.orientechnologies.orient.object.fetch;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.object.db.OLazyObjectList;
-import com.orientechnologies.orient.object.db.OLazyObjectMap;
-import com.orientechnologies.orient.object.db.OLazyObjectSet;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.object.db.OObjectLazyList;
+import com.orientechnologies.orient.object.db.OObjectLazyMap;
+import com.orientechnologies.orient.object.db.OObjectLazySet;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import com.orientechnologies.orient.object.enumerations.OObjectEnumLazyList;
+import com.orientechnologies.orient.object.enumerations.OObjectEnumLazyMap;
+import com.orientechnologies.orient.object.enumerations.OObjectEnumLazySet;
+import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerList;
+import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
+import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
@@ -41,113 +59,144 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
  */
 public class OObjectFetchContext implements OFetchContext {
 
-	protected final String										fetchPlan;
-	protected final boolean										lazyLoading;
-	protected final OEntityManager						entityManager;
-	protected final OUserObject2RecordHandler	obj2RecHandler;
+  protected final String                    fetchPlan;
+  protected final boolean                   lazyLoading;
+  protected final OEntityManager            entityManager;
+  protected final OUserObject2RecordHandler obj2RecHandler;
 
-	public OObjectFetchContext(final String iFetchPlan, final boolean iLazyLoading, final OEntityManager iEntityManager,
-			final OUserObject2RecordHandler iObj2RecHandler) {
-		fetchPlan = iFetchPlan;
-		lazyLoading = iLazyLoading;
-		obj2RecHandler = iObj2RecHandler;
-		entityManager = iEntityManager;
-	}
+  public OObjectFetchContext(final String iFetchPlan, final boolean iLazyLoading, final OEntityManager iEntityManager,
+      final OUserObject2RecordHandler iObj2RecHandler) {
+    fetchPlan = iFetchPlan;
+    lazyLoading = iLazyLoading;
+    obj2RecHandler = iObj2RecHandler;
+    entityManager = iEntityManager;
+  }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-		final Map<Object, Object> map = (Map<Object, Object>) iRootRecord.field(iFieldName);
-		final Map<Object, Object> target;
-		if (lazyLoading)
-			target = new OLazyObjectMap<Object>(iRootRecord, map).setFetchPlan(fetchPlan);
-		else {
-			target = new HashMap();
-		}
-		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
-	}
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+    final Map map = (Map) iRootRecord.field(iFieldName);
+    Map target = null;
+    final Field f = OObjectEntitySerializer.getField(iFieldName, iUserObject.getClass());
+    final boolean customSerialization = OObjectEntitySerializer.isSerializedType(f);
+    final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
+    if (map instanceof ORecordLazyMap
+        || (map instanceof OTrackedMap<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+            .isEnum())) {
+      target = new OObjectLazyMap(iUserObject, (OTrackedMap<?>) map, OObjectEntitySerializer.isCascadeDeleteField(
+          iUserObject.getClass(), f.getName()));
+    } else if (customSerialization) {
+      target = new OObjectCustomSerializerMap<TYPE>(OObjectEntitySerializer.getSerializedType(f), iRootRecord,
+          (Map<Object, Object>) map);
+    } else if (genericType.isEnum()) {
+      target = new OObjectEnumLazyMap(genericType, iRootRecord, (Map<Object, Object>) map);
+    } else {
+      target = new HashMap();
+    }
+    OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
+  }
 
-	public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
-			throws OFetchException {
-		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName,
-				Array.newInstance(iRootRecord.getSchemaClass().getProperty(iFieldName).getLinkedClass().getJavaClass(), iArray.length));
-	}
+  public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+      throws OFetchException {
+    OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName,
+        Array.newInstance(iRootRecord.getSchemaClass().getProperty(iFieldName).getLinkedClass().getJavaClass(), iArray.length));
+  }
 
-	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, ORecordSchemaAware<?> iDocument, String iFieldName,
-			Object iUserObject) throws OFetchException {
-	}
+  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, ORecordSchemaAware<?> iDocument, String iFieldName,
+      Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, ORecordSchemaAware<?> iDocument, String iFieldName, Object iUserObject)
-			throws OFetchException {
-	}
+  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, ORecordSchemaAware<?> iDocument, String iFieldName, Object iUserObject)
+      throws OFetchException {
+  }
 
-	public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
-	}
+  public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
+  }
 
-	public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-	}
+  public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-	}
+  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
 
-	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-			throws OFetchException {
-	}
+  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {
+  }
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
-			final Collection<?> iCollection) throws OFetchException {
-		final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
-		final Collection target;
-		if (type != null && Set.class.isAssignableFrom(type)) {
-			if (lazyLoading)
-				target = new OLazyObjectSet<Object>(iRootRecord, (Collection<Object>) iCollection).setFetchPlan(fetchPlan);
-			else {
-				target = new HashSet();
-			}
-		} else {
-			final Collection<Object> list = (Collection<Object>) iCollection;
-			if (lazyLoading)
-				target = new OLazyObjectList<Object>(iRootRecord, list).setFetchPlan(fetchPlan);
-			else {
-				target = new ArrayList();
-			}
-		}
-		OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
-	}
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
+      final Collection<?> iCollection) throws OFetchException {
+    final Field f = OObjectEntitySerializer.getField(iFieldName, iUserObject.getClass());
+    final boolean customSerialization = OObjectEntitySerializer.isSerializedType(f);
+    final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
+    Collection target;
+    if (iCollection instanceof ORecordLazyList
+        || (iCollection instanceof OTrackedList<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+            .isEnum())) {
+      target = new OObjectLazyList(iUserObject, (List<OIdentifiable>) iCollection, OObjectEntitySerializer.isCascadeDeleteField(
+          iUserObject.getClass(), f.getName()));
+    } else if (iCollection instanceof ORecordLazySet
+        || iCollection instanceof OMVRBTreeRIDSet
+        || (iCollection instanceof OTrackedSet<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+            .isEnum())) {
+      target = new OObjectLazySet(iUserObject, (Set) iCollection, OObjectEntitySerializer.isCascadeDeleteField(
+          iUserObject.getClass(), f.getName()));
+    } else if (customSerialization) {
+      if (iCollection instanceof List<?>) {
+        target = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), iRootRecord,
+            (List<Object>) iCollection);
+      } else {
+        target = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), iRootRecord,
+            (Set<Object>) iCollection);
+      }
+    } else if (genericType.isEnum()) {
+      if (iCollection instanceof List<?>) {
+        target = new OObjectEnumLazyList(genericType, iRootRecord, (List<Object>) iCollection);
+      } else {
+        target = new OObjectEnumLazySet(genericType, iRootRecord, (Set<Object>) iCollection);
+      }
+    } else {
+      if (iCollection instanceof List<?>) {
+        target = new ArrayList();
+      } else {
+        target = new HashSet();
+      }
+    }
+    OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
+  }
 
-	public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-			throws OFetchException {
-	}
+  public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {
+  }
 
-	public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
-	}
+  public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  }
 
-	public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
-	}
+  public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  }
 
-	public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
-	}
+  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  }
 
-	public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
-	}
+  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  }
 
-	public OUserObject2RecordHandler getObj2RecHandler() {
-		return obj2RecHandler;
-	}
+  public OUserObject2RecordHandler getObj2RecHandler() {
+    return obj2RecHandler;
+  }
 
-	public OEntityManager getEntityManager() {
-		return entityManager;
-	}
+  public OEntityManager getEntityManager() {
+    return entityManager;
+  }
 
-	public boolean isLazyLoading() {
-		return lazyLoading;
-	}
+  public boolean isLazyLoading() {
+    return lazyLoading;
+  }
 
-	public String getFetchPlan() {
-		return fetchPlan;
-	}
+  public String getFetchPlan() {
+    return fetchPlan;
+  }
 
-	public boolean fetchEmbeddedDocuments() {
-		return true;
-	}
+  public boolean fetchEmbeddedDocuments() {
+    return true;
+  }
 }

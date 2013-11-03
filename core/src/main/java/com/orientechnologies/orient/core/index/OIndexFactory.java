@@ -29,13 +29,20 @@ public interface OIndexFactory {
 
   /**
    * 
-   * @param iDatabase
-   * @param iIndexType
+   * 
+   * 
+   * 
+   * 
+   * @param database
+   * @param indexType
    *          index type
+   * @param algorithm
+   * @param valueContainerAlgorithm
    * @return OIndexInternal
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(ODatabaseRecord iDatabase, String iIndexType) throws OConfigurationException;
+  OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm)
+      throws OConfigurationException;
 
 }

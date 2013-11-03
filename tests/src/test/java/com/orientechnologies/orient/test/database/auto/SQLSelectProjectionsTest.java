@@ -261,7 +261,7 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out ) FROM V WHERE out TRAVERSE(1,1) (@class = 'E')"))
+        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ) FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')"))
         .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -281,7 +281,7 @@ public class SQLSelectProjectionsTest {
     try {
       database.command(
           new OSQLSynchQuery<ODocument>(
-              "SELECT FLATTEN( out ), in FROM V WHERE out TRAVERSE(1,1) (@class = 'E')")).execute();
+              "SELECT FLATTEN( out_ ), in_ FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')")).execute();
 
     } finally {
       database.close();
@@ -346,7 +346,7 @@ public class SQLSelectProjectionsTest {
 
     try {
       List<ODocument> result = database.command(
-          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = out where out.size() > 0")).execute();
+          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = out_ where out_.size() > 0")).execute();
       Assert.assertFalse(result.isEmpty());
 
       for (ODocument d : result) {

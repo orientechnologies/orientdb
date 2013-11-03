@@ -28,7 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
@@ -47,9 +47,7 @@ public enum OGlobalConfiguration {
       Boolean.class, Boolean.TRUE),
 
   // MEMORY
-  @Deprecated
-  MEMORY_OPTIMIZE_THRESHOLD("memory.optimizeThreshold", "Threshold for heap memory at which optimization of memory usage starts. ",
-      Float.class, 0.70),
+  MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
@@ -57,7 +55,18 @@ public enum OGlobalConfiguration {
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
   // STORAGE
-  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 2 * 1024),
+  DISK_CACHE_SIZE("storage.diskCache.bufferSize", "Size of disk buffer in megabytes", Integer.class, 4 * 1024),
+
+  DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percent of disk cache which is use as write cache", Integer.class, 30),
+
+  DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
+      "Max time till page will be flushed from write cache in seconds", Long.class, 24 * 60 * 60),
+
+  DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
+      "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
+
+  DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
+      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
@@ -68,7 +77,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 50 * 1024),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 64),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 150 * 1024),
 
@@ -97,13 +106,6 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
 
-  DISK_CACHE_WRITE_QUEUE_LENGTH("storage.diskCache.writeQueueLength", "Length of write queue (in pages), "
-      + "this queue is used to accumulate all pages that "
-      + "should be written to the disk and then flush them in batch mode to minimize random IO overhead.", Integer.class, 15000),
-
-  DISK_PAGE_CACHE_LOCK_TIMEOUT("storage.diskPageCache.lockTimeOut",
-      "Timeout till page lock will wait in case of multi threading operations", Integer.class, 1000),
-
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
@@ -123,14 +125,20 @@ public enum OGlobalConfiguration {
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
 
+  // RECORDS
+  RECORD_DOWNSIZING_ENABLED(
+      "record.downsizing.enabled",
+      "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
+      Boolean.class, true),
+
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
   CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
 
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
+  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, false),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 10000),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 0),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -154,6 +162,7 @@ public enum OGlobalConfiguration {
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
 
+  @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
   DB_MVCC_THROWFAST(
@@ -173,7 +182,7 @@ public enum OGlobalConfiguration {
 
   NON_TX_CLUSTERS_SYNC_IMMEDIATELY("nonTX.clusters.sync.immediately",
       "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
-      OMetadata.CLUSTER_MANUAL_INDEX_NAME),
+      OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
@@ -181,7 +190,7 @@ public enum OGlobalConfiguration {
 
   TX_AUTO_RETRY("tx.autoRetry",
       "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
-      Integer.class, 10),
+      Integer.class, 1),
 
   TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
@@ -192,11 +201,6 @@ public enum OGlobalConfiguration {
 
   TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
-  // GRAPH
-  @Deprecated
-  BLUEPRINTS_TX_MODE("blueprints.graph.txMode",
-      "Transaction mode used in TinkerPop Blueprints implementation. 0 = Automatic (default), 1 = Manual", Integer.class, 0),
-
   // INDEX
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
@@ -204,6 +208,9 @@ public enum OGlobalConfiguration {
 
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
+
+  INDEX_SYNCHRONOUS_AUTO_REBUILD("index.auto.synchronousAutoRebuild",
+      "Synchronous execution of auto rebuilding of indexes in case of db crash.", Boolean.class, Boolean.TRUE),
 
   INDEX_AUTO_LAZY_UPDATES(
       "index.auto.lazyUpdates",
@@ -213,6 +220,20 @@ public enum OGlobalConfiguration {
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
+
+  INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
+      "Indicates whether index implementation for plocal storage will be durable in non-Tx mode, false by default", Boolean.class,
+      false),
+
+  INDEX_TX_MODE("index.txMode",
+      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
+      "ROLLBACK_ONLY"),
+
+  INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
+      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
+
+  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
+      "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -250,8 +271,22 @@ public enum OGlobalConfiguration {
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
 
+  // SBTREE
+  SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
+      Integer.class, 10240),
+
+  SBTREE_MAX_EMBEDDED_VALUE_SIZE("sbtree.maxEmbeddedValueSize",
+      "Maximum size of value which can be put in SBTree without creation link to standalone page in bytes (40960 by default)",
+      Integer.class, 40960),
+
+  SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
+      "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0.",
+      Integer.class, 2),
+
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
+
+  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
   FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
@@ -319,13 +354,6 @@ public enum OGlobalConfiguration {
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
 
-  USE_LHPEPS_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
-      + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
-
-  USE_LHPEPS_MEMORY_CLUSTER("file.cluster.useMemoryLHCluster",
-      "Indicates whether cluster file should be saved as simple persistent"
-          + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
-
   // NETWORK
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000),
 
@@ -389,9 +417,6 @@ public enum OGlobalConfiguration {
         }
       }),
 
-  @Deprecated
-  PROFILER_AUTODUMP_RESET("profiler.autoDump.reset", "Resets the profiler at every auto dump", Boolean.class, true),
-
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -425,9 +450,9 @@ public enum OGlobalConfiguration {
 
   SERVER_CACHE_FILE_STATIC("server.cache.staticFile", "Cache static resources loading", Boolean.class, false),
 
-  SERVER_CACHE_2Q_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
+  SERVER_CACHE_INCREASE_ON_DEMAND("server.cache.2q.increaseOnDemand", "Increase 2q cache on demand", Boolean.class, true),
 
-  SERVER_CACHE_2Q_INCREASE_STEP("server.cache.2q.increaseStep",
+  SERVER_CACHE_INCREASE_STEP("server.cache.2q.increaseStep",
       "Increase 2q cache step in percent. Will only work if server.cache.2q.increaseOnDemand is true", Float.class, 0.1f),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
@@ -436,7 +461,26 @@ public enum OGlobalConfiguration {
       Level.class, Level.FINE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
-      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE);
+      "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
+
+  // DISTRIBUTED
+  DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
+      10000),
+
+  DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
+      "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
+
+  DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+
+  DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
+      Integer.class, 5000l),
+
+  DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT("distributed.asynchResponsesTimeout",
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+
+  DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l);
 
   private final String                 key;
   private final Object                 defValue;

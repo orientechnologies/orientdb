@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * Executes a GREMLIN command.
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
  * @author Luca Garulli
  */
 public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
-  private OGraphDatabase db;
+  private ODatabaseDocumentTx db;
 
   @SuppressWarnings("unchecked")
   @Override
@@ -48,7 +48,8 @@ public class OCommandGremlinExecutor extends OCommandExecutorAbstract {
   public Object execute(final Map<Object, Object> iArgs) {
     parameters = iArgs;
     final List<Object> result = new ArrayList<Object>();
-    final Object scriptResult = OGremlinHelper.execute(db, parserText, parameters, new HashMap<Object, Object>(), result, null, null);
+    final Object scriptResult = OGremlinHelper.execute(db, parserText, parameters, new HashMap<Object, Object>(), result, null,
+        null);
     return scriptResult != null ? scriptResult : result;
   }
 

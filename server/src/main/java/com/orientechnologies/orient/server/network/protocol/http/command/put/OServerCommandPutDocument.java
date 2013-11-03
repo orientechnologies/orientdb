@@ -28,7 +28,8 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>[/<record-id>]");
+    final String[] urlParts = checkSyntax(iRequest.url, 2,
+        "Syntax error: document/<database>[/<record-id>][?updateMode=full|partial]");
 
     iRequest.data.commandInfo = "Edit Document";
 
@@ -70,18 +71,27 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
         return false;
       }
 
-      currentDocument.merge(doc, false, false);
+      boolean partialUpdateMode = false;
+      String mode = iRequest.getParameter("updateMode");
+      if (mode != null && mode.equalsIgnoreCase("partial"))
+        partialUpdateMode = true;
+
+      mode = iRequest.getHeader("updateMode");
+      if (mode != null && mode.equalsIgnoreCase("partial"))
+        partialUpdateMode = true;
+
+      currentDocument.merge(doc, partialUpdateMode, false);
       currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
 
       currentDocument.save();
+
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(),
+          null, true);
 
     } finally {
       if (db != null)
         db.close();
     }
-
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " updated successfully.",
-        null);
     return false;
   }
 

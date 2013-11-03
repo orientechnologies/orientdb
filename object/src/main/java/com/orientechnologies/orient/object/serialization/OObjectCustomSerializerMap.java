@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 
 public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> implements Serializable,
-    OLazyObjectCustomSerializer<Map<Object, TYPE>> {
+    OObjectLazyCustomSerializer<Map<Object, TYPE>> {
   private static final long         serialVersionUID = -8606432090996808181L;
 
   private final ORecord<?>          sourceRecord;

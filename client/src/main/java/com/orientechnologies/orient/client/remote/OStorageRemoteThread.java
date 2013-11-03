@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -31,14 +33,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -53,259 +48,454 @@ public class OStorageRemoteThread implements OStorageProxy {
   private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
 
   private final OStorageRemote delegate;
+  private String               serverURL;
   private int                  sessionId;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
+    serverURL = null;
     sessionId = sessionSerialId.decrementAndGet();
   }
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage, final int iSessionId) {
     delegate = iSharedStorage;
+    serverURL = null;
     sessionId = iSessionId;
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
-    delegate.setSessionId(sessionId);
-    delegate.open(iUserName, iUserPassword, iOptions);
-    sessionId = delegate.getSessionId();
+    pushSession();
+    try {
+      delegate.open(iUserName, iUserPassword, iOptions);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public boolean isDistributed() {
+    return delegate.isDistributed();
   }
 
   public void create(final Map<String, Object> iOptions) {
-    delegate.setSessionId(sessionId);
-    delegate.create(iOptions);
-    sessionId = delegate.getSessionId();
+    pushSession();
+    try {
+      delegate.create(iOptions);
+    } finally {
+      popSession();
+    }
   }
 
   public void close(boolean iForce) {
-    delegate.setSessionId(sessionId);
-    delegate.close(iForce);
-    Orient.instance().unregisterStorage(this);
+    pushSession();
+    try {
+      delegate.close(iForce);
+      Orient.instance().unregisterStorage(this);
+    } finally {
+      popSession();
+    }
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
-    delegate.setSessionId(sessionId);
-    return delegate.dropCluster(iClusterName, iTruncate);
+    pushSession();
+    try {
+      return delegate.dropCluster(iClusterName, iTruncate);
+    } finally {
+      popSession();
+    }
   }
 
   public int getUsers() {
-    delegate.setSessionId(sessionId);
-    return delegate.getUsers();
+    pushSession();
+    try {
+      return delegate.getUsers();
+    } finally {
+      popSession();
+    }
   }
 
   public int addUser() {
-    delegate.setSessionId(sessionId);
-    return delegate.addUser();
+    pushSession();
+    try {
+      return delegate.addUser();
+    } finally {
+      popSession();
+    }
   }
 
   public OSharedResourceAdaptiveExternal getLock() {
-    delegate.setSessionId(sessionId);
-    return delegate.getLock();
+    pushSession();
+    try {
+      return delegate.getLock();
+    } finally {
+      popSession();
+    }
   }
 
-  public void setSessionId(final int iSessionId) {
+  public void setSessionId(final String iServerURL, final int iSessionId) {
+    serverURL = iServerURL;
     sessionId = iSessionId;
-    delegate.setSessionId(iSessionId);
+    delegate.setSessionId(serverURL, iSessionId);
   }
 
   public void reload() {
-    delegate.setSessionId(sessionId);
-    delegate.reload();
+    pushSession();
+    try {
+      delegate.reload();
+    } finally {
+      popSession();
+    }
   }
 
   public boolean exists() {
-    delegate.setSessionId(sessionId);
-    return delegate.exists();
+    pushSession();
+    try {
+      return delegate.exists();
+    } finally {
+      popSession();
+    }
   }
 
   public int removeUser() {
-    delegate.setSessionId(sessionId);
-    return delegate.removeUser();
+    pushSession();
+    try {
+      return delegate.removeUser();
+    } finally {
+      popSession();
+    }
   }
 
   public void close() {
-    delegate.setSessionId(sessionId);
-    delegate.close();
+    pushSession();
+    try {
+      delegate.close();
+    } finally {
+      popSession();
+    }
   }
 
   public void delete() {
-    delegate.setSessionId(sessionId);
-    delegate.delete();
-    Orient.instance().unregisterStorage(this);
+    pushSession();
+    try {
+      delegate.delete();
+      Orient.instance().unregisterStorage(this);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public OStorage getUnderlying() {
+    return delegate;
   }
 
   public Set<String> getClusterNames() {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterNames();
+    pushSession();
+    try {
+      return delegate.getClusterNames();
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable) throws IOException {
+    throw new UnsupportedOperationException("backup");
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable) throws IOException {
+    throw new UnsupportedOperationException("restore");
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
       final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
       ORecordCallback<OClusterPosition> iCallback) {
-    delegate.setSessionId(sessionId);
-    return delegate.createRecord(iDataSegmentId, iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
-        iCallback);
+    pushSession();
+    try {
+      return delegate.createRecord(iDataSegmentId, iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
+          iCallback);
+    } finally {
+      popSession();
+    }
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
       ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
-    delegate.setSessionId(sessionId);
-    return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+    pushSession();
+    try {
+      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+    } finally {
+      popSession();
+    }
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
-    delegate.setSessionId(sessionId);
-    return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iCallback);
+    pushSession();
+    try {
+      return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iCallback);
+    } finally {
+      popSession();
+    }
   }
 
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, final int iMode,
       ORecordCallback<Boolean> iCallback) {
-    delegate.setSessionId(sessionId);
-    return delegate.deleteRecord(iRid, iVersion, iMode, iCallback);
+    pushSession();
+    try {
+      return delegate.deleteRecord(iRid, iVersion, iMode, iCallback);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
-    delegate.setSessionId(sessionId);
-    return delegate.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+    pushSession();
+    try {
+      return delegate.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
-    delegate.setSessionId(sessionId);
-    return delegate.getRecordMetadata(rid);
+    pushSession();
+    try {
+      return delegate.getRecordMetadata(rid);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    delegate.setSessionId(sessionId);
-    return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
+    pushSession();
+    try {
+      return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
-    delegate.setSessionId(sessionId);
-    return delegate.cleanOutRecord(recordId, recordVersion, iMode, callback);
+    pushSession();
+    try {
+      return delegate.cleanOutRecord(recordId, recordVersion, iMode, callback);
+    } finally {
+      popSession();
+    }
   }
 
   public long count(final int iClusterId) {
-    delegate.setSessionId(sessionId);
-    return delegate.count(iClusterId);
+    pushSession();
+    try {
+      return delegate.count(iClusterId);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public long count(int iClusterId, boolean countTombstones) {
-    delegate.setSessionId(sessionId);
-    return delegate.count(iClusterId, countTombstones);
+    pushSession();
+    try {
+      return delegate.count(iClusterId, countTombstones);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public long count(int[] iClusterIds, boolean countTombstones) {
-    delegate.setSessionId(sessionId);
-    return delegate.count(iClusterIds, countTombstones);
+    pushSession();
+    try {
+      return delegate.count(iClusterIds, countTombstones);
+    } finally {
+      popSession();
+    }
   }
 
   public String toString() {
-    delegate.setSessionId(sessionId);
-    return delegate.toString();
+    pushSession();
+    try {
+      return delegate.toString();
+    } finally {
+      popSession();
+    }
   }
 
   public OClusterPosition[] getClusterDataRange(final int iClusterId) {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterDataRange(iClusterId);
+    pushSession();
+    try {
+      return delegate.getClusterDataRange(iClusterId);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
-    delegate.setSessionId(sessionId);
-    return delegate.higherPhysicalPositions(currentClusterId, physicalPosition);
+    pushSession();
+    try {
+      return delegate.higherPhysicalPositions(currentClusterId, physicalPosition);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
-    delegate.setSessionId(sessionId);
-    return delegate.lowerPhysicalPositions(currentClusterId, physicalPosition);
+    pushSession();
+    try {
+      return delegate.lowerPhysicalPositions(currentClusterId, physicalPosition);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
-    delegate.setSessionId(sessionId);
-    return delegate.ceilingPhysicalPositions(clusterId, physicalPosition);
+    pushSession();
+    try {
+      return delegate.ceilingPhysicalPositions(clusterId, physicalPosition);
+    } finally {
+      popSession();
+    }
   }
 
   @Override
   public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
-    delegate.setSessionId(sessionId);
-    return delegate.floorPhysicalPositions(clusterId, physicalPosition);
+    pushSession();
+    try {
+      return delegate.floorPhysicalPositions(clusterId, physicalPosition);
+    } finally {
+      popSession();
+    }
   }
 
   public long getSize() {
-    delegate.setSessionId(sessionId);
-    return delegate.getSize();
+    pushSession();
+    try {
+      return delegate.getSize();
+    } finally {
+      popSession();
+    }
   }
 
   public long countRecords() {
-    delegate.setSessionId(sessionId);
-    return delegate.countRecords();
+    pushSession();
+    try {
+      return delegate.countRecords();
+    } finally {
+      popSession();
+    }
   }
 
   public long count(final int[] iClusterIds) {
-    delegate.setSessionId(sessionId);
-    return delegate.count(iClusterIds);
+    pushSession();
+    try {
+      return delegate.count(iClusterIds);
+    } finally {
+      popSession();
+    }
   }
 
   public Object command(final OCommandRequestText iCommand) {
-    delegate.setSessionId(sessionId);
-    return delegate.command(iCommand);
+    pushSession();
+    try {
+      return delegate.command(iCommand);
+    } finally {
+      popSession();
+    }
   }
 
-  public void commit(final OTransaction iTx) {
-    delegate.setSessionId(sessionId);
-    delegate.commit(iTx);
+  public void commit(final OTransaction iTx, Runnable callback) {
+    pushSession();
+    try {
+      delegate.commit(iTx, null);
+    } finally {
+      popSession();
+    }
   }
 
   public void rollback(OTransaction iTx) {
-    delegate.setSessionId(sessionId);
-    delegate.rollback(iTx);
+    pushSession();
+    try {
+      delegate.rollback(iTx);
+    } finally {
+      popSession();
+    }
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterIdByName(iClusterName);
+    pushSession();
+    try {
+      return delegate.getClusterIdByName(iClusterName);
+    } finally {
+      popSession();
+    }
   }
 
   public String getClusterTypeByName(final String iClusterName) {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterTypeByName(iClusterName);
+    pushSession();
+    try {
+      return delegate.getClusterTypeByName(iClusterName);
+    } finally {
+      popSession();
+    }
   }
 
   public int getDefaultClusterId() {
-    delegate.setSessionId(sessionId);
-    return delegate.getDefaultClusterId();
+    pushSession();
+    try {
+      return delegate.getDefaultClusterId();
+    } finally {
+      popSession();
+    }
   }
 
   public void setDefaultClusterId(final int defaultClusterId) {
-    delegate.setSessionId(sessionId);
-    delegate.setDefaultClusterId(defaultClusterId);
+    pushSession();
+    try {
+      delegate.setDefaultClusterId(defaultClusterId);
+    } finally {
+      popSession();
+    }
   }
 
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
       final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
-    delegate.setSessionId(sessionId);
-    return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
+    pushSession();
+    try {
+      return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
+    } finally {
+      popSession();
+    }
   }
 
   public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       boolean forceListBased, Object... iParameters) {
-    delegate.setSessionId(sessionId);
-    return delegate.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+    pushSession();
+    try {
+      return delegate
+          .addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+    } finally {
+      popSession();
+    }
   }
 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
-    delegate.setSessionId(sessionId);
-    return delegate.dropCluster(iClusterId, iTruncate);
+    pushSession();
+    try {
+      return delegate.dropCluster(iClusterId, iTruncate);
+    } finally {
+      popSession();
+    }
   }
 
   public ODataSegment getDataSegmentById(final int iDataSegmentId) {
@@ -317,63 +507,111 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public int addDataSegment(final String iDataSegmentName) {
-    delegate.setSessionId(sessionId);
-    return delegate.addDataSegment(iDataSegmentName);
+    pushSession();
+    try {
+      return delegate.addDataSegment(iDataSegmentName);
+    } finally {
+      popSession();
+    }
   }
 
   public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
-    delegate.setSessionId(sessionId);
-    return delegate.addDataSegment(iSegmentName, iSegmentFileName);
+    pushSession();
+    try {
+      return delegate.addDataSegment(iSegmentName, iSegmentFileName);
+    } finally {
+      popSession();
+    }
   }
 
   public boolean dropDataSegment(final String iSegmentName) {
-    delegate.setSessionId(sessionId);
-    return delegate.dropDataSegment(iSegmentName);
+    pushSession();
+    try {
+      return delegate.dropDataSegment(iSegmentName);
+    } finally {
+      popSession();
+    }
   }
 
   public void synch() {
-    delegate.setSessionId(sessionId);
-    delegate.synch();
+    pushSession();
+    try {
+      delegate.synch();
+    } finally {
+      popSession();
+    }
   }
 
   public String getPhysicalClusterNameById(final int iClusterId) {
-    delegate.setSessionId(sessionId);
-    return delegate.getPhysicalClusterNameById(iClusterId);
+    pushSession();
+    try {
+      return delegate.getPhysicalClusterNameById(iClusterId);
+    } finally {
+      popSession();
+    }
   }
 
   public int getClusters() {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterMap();
+    pushSession();
+    try {
+      return delegate.getClusterMap();
+    } finally {
+      popSession();
+    }
   }
 
   public Collection<OCluster> getClusterInstances() {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterInstances();
+    pushSession();
+    try {
+      return delegate.getClusterInstances();
+    } finally {
+      popSession();
+    }
   }
 
   public OCluster getClusterById(final int iId) {
-    delegate.setSessionId(sessionId);
-    return delegate.getClusterById(iId);
+    pushSession();
+    try {
+      return delegate.getClusterById(iId);
+    } finally {
+      popSession();
+    }
   }
 
   public long getVersion() {
-    delegate.setSessionId(sessionId);
-    return delegate.getVersion();
+    pushSession();
+    try {
+      return delegate.getVersion();
+    } finally {
+      popSession();
+    }
   }
 
   public boolean isPermanentRequester() {
-    delegate.setSessionId(sessionId);
-    return delegate.isPermanentRequester();
+    pushSession();
+    try {
+      return delegate.isPermanentRequester();
+    } finally {
+      popSession();
+    }
   }
 
   public void updateClusterConfiguration(final byte[] iContent) {
-    delegate.setSessionId(sessionId);
-    delegate.updateClusterConfiguration(iContent);
+    pushSession();
+    try {
+      delegate.updateClusterConfiguration(iContent);
+    } finally {
+      popSession();
+    }
   }
 
   public OStorageConfiguration getConfiguration() {
-    delegate.setSessionId(sessionId);
-    return delegate.getConfiguration();
+    pushSession();
+    try {
+      return delegate.getConfiguration();
+    } finally {
+      popSession();
+    }
   }
 
   public boolean isClosed() {
@@ -381,19 +619,21 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-    delegate.setSessionId(sessionId);
-    return delegate.checkForRecordValidity(ppos);
+    pushSession();
+    try {
+      return delegate.checkForRecordValidity(ppos);
+    } finally {
+      popSession();
+    }
   }
 
   public String getName() {
-    delegate.setSessionId(sessionId);
-    return delegate.getName();
-  }
-
-	@Override
-  public boolean isHashClustersAreUsed() {
-    delegate.setSessionId(sessionId);
-    return delegate.isHashClustersAreUsed();
+    pushSession();
+    try {
+      return delegate.getName();
+    } finally {
+      popSession();
+    }
   }
 
   public String getURL() {
@@ -401,8 +641,12 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
-    delegate.setSessionId(sessionId);
-    delegate.beginResponse(iNetwork);
+    pushSession();
+    try {
+      delegate.beginResponse(iNetwork);
+    } finally {
+      popSession();
+    }
   }
 
   public OLevel2RecordCache getLevel2Cache() {
@@ -425,12 +669,8 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getClusterConfiguration();
   }
 
-  public void closeChannel(final OChannelBinaryClient network) {
-    delegate.closeChannel(network);
-  }
-
-  protected void handleException(final String iMessage, final Exception iException) {
-    delegate.handleException(iMessage, iException);
+  protected void handleException(final OChannelBinaryClient iNetwork, final String iMessage, final Exception iException) {
+    delegate.handleException(iNetwork, iMessage, iException);
   }
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
@@ -467,4 +707,17 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getType();
   }
 
+  @Override
+  public boolean equals(final Object iOther) {
+    return iOther == this || iOther == delegate;
+  }
+
+  protected void pushSession() {
+    delegate.setSessionId(serverURL, sessionId);
+  }
+
+  protected void popSession() {
+    serverURL = delegate.getServerURL();
+    sessionId = delegate.getSessionId();
+  }
 }

@@ -78,7 +78,7 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
     storage.createConnectionPool();
-    storage.setSessionId(-1);
+    storage.setSessionId(null, -1);
 
     try {
       final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
@@ -95,7 +95,7 @@ public class OServerAdmin {
       try {
         storage.beginResponse(network);
         sessionId = network.readInt();
-        storage.setSessionId(sessionId);
+        storage.setSessionId(network.getServerURL(), sessionId);
       } finally {
         storage.endResponse(network);
       }
@@ -412,7 +412,20 @@ public class OServerAdmin {
     final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_CLUSTER, new ODocument().field("operation", "status"),
         "Cluster status");
 
-    OLogManager.instance().debug(this, "Cluster status %s", response.toJSON());
+    OLogManager.instance().debug(this, "Cluster status %s", response.toJSON("prettyPrint"));
+    return response;
+  }
+
+  /**
+   * Gets the cluster status.
+   * 
+   * @return the JSON containing the current cluster structure
+   */
+  public ODocument replicationConfig(final String iDatabaseName) {
+    final ODocument response = sendRequest(OChannelBinaryProtocol.REQUEST_REPLICATION, new ODocument().field("operation", "config")
+        .field("db", iDatabaseName), "Cluster config");
+
+    OLogManager.instance().debug(this, "Distributed database configuration %s", response.toJSON("prettyPrint"));
     return response;
   }
 
@@ -696,5 +709,9 @@ public class OServerAdmin {
         OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);
       }
     return null;
+  }
+
+  public boolean isConnected() {
+    return storage != null && !storage.isClosed();
   }
 }

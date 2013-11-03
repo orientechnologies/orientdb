@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +43,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
  * 
  */
 public class OHttpResponse {
-  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class";
+  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final char[] URL_SEPARATOR = { '/' };
 
   private final OutputStream out;
@@ -221,6 +222,8 @@ public class OHttpResponse {
 
     if (iFormat == null)
       iFormat = JSON_FORMAT;
+    else
+      iFormat = JSON_FORMAT + "," + iFormat;
 
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -280,10 +283,35 @@ public class OHttpResponse {
       send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
   }
 
-  public void sendStream(final int iCode, final String iReason, final String iContentType, final InputStream iContent,
-      final long iSize) throws IOException {
+  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
+      throws IOException {
+    sendStream(iCode, iReason, iContentType, iContent, iSize, null);
+  }
+
+  public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize,
+      final String iFileName) throws IOException {
     writeStatus(iCode, iReason);
     writeHeaders(iContentType);
+    writeLine("Content-Transfer-Encoding: binary");
+
+    if (iFileName != null)
+      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
+
+    if (iSize < 0) {
+      // SIZE UNKNOWN: USE A MEMORY BUFFER
+      final ByteArrayOutputStream o = new ByteArrayOutputStream();
+      if (iContent != null) {
+        int b;
+        while ((b = iContent.read()) > -1)
+          o.write(b);
+      }
+
+      byte[] content = o.toByteArray();
+
+      iContent = new ByteArrayInputStream(content);
+      iSize = content.length;
+    }
+
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (iSize));
     writeLine(null);
 

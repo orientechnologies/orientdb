@@ -28,9 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-
-import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -55,7 +52,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.object.db.ODatabaseObjectTx;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
@@ -64,14 +60,12 @@ import com.orientechnologies.orient.test.domain.base.Agenda;
 import com.orientechnologies.orient.test.domain.base.EmbeddedChild;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.Event;
-import com.orientechnologies.orient.test.domain.base.IdObject;
-import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
 import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
-import com.orientechnologies.orient.test.domain.base.Musician;
+import com.orientechnologies.orient.test.domain.base.Media;
 import com.orientechnologies.orient.test.domain.base.Parent;
 import com.orientechnologies.orient.test.domain.base.PersonTest;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -2002,7 +1996,7 @@ public class CRUDObjectPhysicalTest {
   @Test(dependsOnMethods = "testNoGenericCollections")
   public void testNoGenericCollectionsWrongAdding() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    OLogManager.instance().log(this, Level.INFO, "Serialization error test, this will log errors.", null);
+    OLogManager.instance().setErrorEnabled(false);
     try {
       JavaNoGenericCollectionsTestClass p = database.newInstance(JavaNoGenericCollectionsTestClass.class);
       // OBJECT ADDING
@@ -2080,7 +2074,7 @@ public class CRUDObjectPhysicalTest {
           throwedEx = true;
       }
       Assert.assertTrue(throwedEx);
-      OLogManager.instance().log(this, Level.INFO, "Serialization error test ended.", null);
+      OLogManager.instance().setErrorEnabled(true);
     } finally {
       database.close();
     }
@@ -2255,6 +2249,70 @@ public class CRUDObjectPhysicalTest {
       }
     } catch (IllegalArgumentException iae) {
       Assert.fail("ORecordBytes field getter should not throw this exception", iae);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "oRecordBytesFieldsTest")
+  public void testAddingORecordBytesAfterParentCreation() throws IOException {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    ORID rid;
+    try {
+      Media media = new Media();
+      media.setName("TestMedia");
+      media = database.save(media);
+
+      // Add ORecordBytes after
+      database.begin();
+      media.setContent("This is a test".getBytes());
+      media = database.save(media);
+      database.commit();
+      rid = database.getIdentity(media);
+    } finally {
+      database.close();
+    }
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      Media media = database.load(rid);
+      Assert.assertTrue(media.getContent() == null);
+      database.delete(media);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "testAddingORecordBytesAfterParentCreation")
+  public void testObjectDelete() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      Media media = new Media();
+      ORecordBytes testRecord = new ORecordBytes("This is a test".getBytes());
+      media.setContent(testRecord);
+      media = database.save(media);
+
+      Assert.assertEquals(new String(media.getContent().toStream()), "This is a test");
+
+      // try to delete
+      database.delete(media);
+    } finally {
+      database.close();
+    }
+  }
+
+  @Test(dependsOnMethods = "testObjectDelete")
+  public void testOrphanDelete() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      Media media = new Media();
+      ORecordBytes testRecord = new ORecordBytes("This is a test".getBytes());
+      media.setContent(testRecord);
+      media = database.save(media);
+
+      Assert.assertEquals(new String(media.getContent().toStream()), "This is a test");
+
+      // try to delete
+      database.delete(media);
     } finally {
       database.close();
     }
@@ -2715,55 +2773,6 @@ public class CRUDObjectPhysicalTest {
 
     } finally {
       database.close();
-    }
-  }
-
-  @SuppressWarnings("deprecation")
-  public void testOldObjectImplementation() {
-    ODatabaseObjectTx db = new ODatabaseObjectTx(url).open("admin", "admin");
-    try {
-      db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
-      db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
-      db.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
-      // insert some instruments
-      Instrument instr = new Instrument("Fender Stratocaster");
-      db.save(instr);
-      Instrument instr2 = new Instrument("Music Man");
-      db.save(instr2);
-      // Insert some musicians
-      Musician man = new Musician();
-      man.setName("Jack");
-      OObjectIteratorClass<Object> list = db.browseClass("Instrument");
-      for (Object anInstrument : list) {
-        man.getInstruments().add((Instrument) anInstrument);
-      }
-      db.save(man);
-      Musician man2 = new Musician();
-      man2.setName("Roger");
-      String query = "select from Instrument where name like 'Fender%'";
-      List<IdObject> list2 = db.query(new OSQLSynchQuery<ODocument>(query));
-      Assert.assertTrue(!(list2.get(0) instanceof Proxy));
-      man2.getInstruments().add((Instrument) list2.get(0));
-      db.save(man2);
-      //
-      db.close();
-      db = new ODatabaseObjectTx(url).open("admin", "admin");
-      db.getEntityManager().registerEntityClasses("com.e_soa.dbobjects");
-      query = "select from Musician limit 1";
-      List<IdObject> list3 = db.query(new OSQLSynchQuery<ODocument>(query));
-      man = (Musician) list3.get(0);
-      Assert.assertTrue(!(man instanceof Proxy));
-      for (Object aObject : man.getInstruments()) {
-        Assert.assertTrue(!(aObject instanceof Proxy));
-      }
-      db.close();
-      db = new ODatabaseObjectTx(url).open("admin", "admin");
-      list3 = db.query(new OSQLSynchQuery<ODocument>(query));
-      man = (Musician) list3.get(0);
-      man.setName("Big Jack");
-      db.save(man); // here is the exception
-    } finally {
-      db.close();
     }
   }
 

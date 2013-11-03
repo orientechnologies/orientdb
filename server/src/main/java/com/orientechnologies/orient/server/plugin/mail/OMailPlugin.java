@@ -21,13 +21,22 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
-import javax.mail.*;
-import javax.mail.internet.*;
+import javax.mail.Authenticator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import javax.script.Bindings;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -35,9 +44,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OMailPlugin extends OServerHandlerAbstract implements OScriptInjection {
+public class OMailPlugin extends OServerPluginAbstract implements OScriptInjection {
   private static final String       CONFIG_PROFILE_PREFIX = "profile.";
   private static final String       CONFIG_MAIL_PREFIX    = "mail.";
 
@@ -70,7 +79,7 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
         }
 
         if (profileParam.startsWith(CONFIG_MAIL_PREFIX)) {
-          profile.properties.setProperty("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
+          profile.put("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
         }
       }
     }
@@ -91,27 +100,34 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
   public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
     final String profileName = (String) iMessage.get("profile");
 
-    OMailProfile profile = profiles.get(profileName);
+    final OMailProfile profile = profiles.get(profileName);
     if (profile == null)
       throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
 
-    final Properties prop = profile.properties;
-
     // creates a new session with an authenticator
-    Authenticator auth = new OSMTPAuthenticator((String) prop.get("mail.smtp.user"), (String) prop.get("mail.smtp.password"));
-    Session session = Session.getInstance(prop, auth);
+    Authenticator auth = new OSMTPAuthenticator((String) profile.getProperty("mail.smtp.user"),
+        (String) profile.getProperty("mail.smtp.password"));
+    Session session = Session.getInstance(profile, auth);
 
     // creates a new e-mail message
     MimeMessage msg = new MimeMessage(session);
 
-    msg.setFrom(new InternetAddress((String) prop.get("mail.smtp.user")));
-    InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
-    msg.setRecipients(Message.RecipientType.TO, toAddresses);
-    InternetAddress[] ccAddresses = { new InternetAddress((String) iMessage.get("cc")) };
-    msg.setRecipients(Message.RecipientType.CC, ccAddresses);
-    InternetAddress[] bccAddresses = { new InternetAddress((String) iMessage.get("bcc")) };
-    msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
-    msg.setSubject((String) iMessage.get("subject"));
+    msg.setFrom(new InternetAddress((String) iMessage.get("from")));
+
+	InternetAddress[] toAddresses = { new InternetAddress(
+			(String) iMessage.get("to")) };
+	msg.setRecipients(Message.RecipientType.TO, toAddresses);
+	String cc = (String) iMessage.get("cc");
+	if (cc != null && !cc.isEmpty()) {
+		InternetAddress[] ccAddresses = { new InternetAddress(cc) };
+		msg.setRecipients(Message.RecipientType.CC, ccAddresses);
+	}
+	String bcc = (String) iMessage.get("bcc");
+	if (bcc != null && !bcc.isEmpty()) {
+		InternetAddress[] bccAddresses = { new InternetAddress(bcc) };
+		msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
+	}
+	msg.setSubject((String) iMessage.get("subject"));
 
     // DATE
     Object date = iMessage.get("date");
@@ -124,7 +140,7 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
       sendDate = (Date) date;
     else {
       // FORMAT IT
-      String dateFormat = (String) prop.get("mail.date.format");
+      String dateFormat = (String) profile.getProperty("mail.date.format");
       if (dateFormat == null)
         dateFormat = "yyyy-MM-dd HH:mm:ss";
       sendDate = new SimpleDateFormat(dateFormat).parse(date.toString());
@@ -136,7 +152,7 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
     messageBodyPart.setContent(iMessage.get("message"), "text/html");
 
     // creates multi-part
-    Multipart multipart = new MimeMultipart();
+    Multipart multipart = new MimeMultipart();  
     multipart.addBodyPart(messageBodyPart);
 
     final String[] attachments = (String[]) iMessage.get("attachments");
@@ -182,5 +198,18 @@ public class OMailPlugin extends OServerHandlerAbstract implements OScriptInject
   @Override
   public String getName() {
     return "mail";
+  }
+
+  public Set<String> getProfileNames() {
+    return profiles.keySet();
+  }
+
+  public OMailProfile getProfile(final String iName) {
+    return profiles.get(iName);
+  }
+
+  public OMailPlugin registerProfile(final String iName, final OMailProfile iProfile) {
+    profiles.put(iName, iProfile);
+    return this;
   }
 }

@@ -1,10 +1,15 @@
 package com.orientechnologies.orient.server.handler;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -12,15 +17,14 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OAutomaticBackup extends OServerHandlerAbstract {
+public class OAutomaticBackup extends OServerPluginAbstract {
   public enum VARIABLES {
     DBNAME, DATE
   }
@@ -124,12 +128,7 @@ public class OAutomaticBackup extends OServerHandlerAbstract {
 
               final long begin = System.currentTimeMillis();
 
-              new ODatabaseExport(db, exportFilePath, new OCommandOutputListener() {
-                @Override
-                public void onMessage(final String iText) {
-
-                }
-              }).exportDatabase();
+              db.backup(new FileOutputStream(exportFilePath), null, null);
 
               OLogManager.instance().info(
                   this,

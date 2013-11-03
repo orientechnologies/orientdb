@@ -29,7 +29,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,7 +40,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
 
 @SuppressWarnings({ "unchecked" })
 public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjectListInterface<TYPE>,
-    OLazyObjectMultivalueElement<List<TYPE>>, Serializable {
+    OObjectLazyMultivalueElement<List<TYPE>>, Serializable {
   private static final long         serialVersionUID = -1665952780303555865L;
   private ProxyObject               sourceRecord;
   private final List<OIdentifiable> recordList;

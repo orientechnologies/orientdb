@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+import com.orientechnologies.orient.core.util.OBackupable;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
@@ -44,7 +45,7 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
  * @author Luca Garulli
  * 
  */
-public interface ODatabase extends Closeable {
+public interface ODatabase extends OBackupable, Closeable {
   public static enum OPTIONS {
     SECURITY
   }
@@ -85,14 +86,6 @@ public interface ODatabase extends Closeable {
    * 
    */
   public void drop();
-
-  /**
-   * Deletes a database.
-   * 
-   * @see #drop()
-   */
-  @Deprecated
-  public void delete();
 
   /**
    * Declares an intent to the database. Intents aim to optimize common use cases.
@@ -326,40 +319,24 @@ public interface ODatabase extends Closeable {
    */
   public int addCluster(String iType, String iClusterName, String iLocation, final String iDataSegmentName, Object... iParameters);
 
-    /**
-     * Adds a new cluster.
-     *
-     * @param iType
-     *          Cluster type between the defined ones
-     * @param iClusterName
-     *          Cluster name
-     * @param iRequestedId
-     *          requested id of the cluster
-     * @param iDataSegmentName
-     *          Data segment where to store record of this cluster. null means 'default'
-     * @param iParameters
-     *          Additional parameters to pass to the factories
-     *
-     * @return Cluster id
-     */
-    public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, final String iDataSegmentName, Object... iParameters);
-
   /**
-   * Adds a physical cluster. Physical clusters need separate files. Access is faster than the logical cluster but the database size
-   * is higher and more files are requires. This matters in some OS where a single process has limitation for the number of files
-   * can open. Most accessed entities should be stored inside a physical cluster.
+   * Adds a new cluster.
    * 
+   * @param iType
+   *          Cluster type between the defined ones
    * @param iClusterName
    *          Cluster name
-   * @param iLocation
-   *          Location where to put the cluster
-   * @param iStartSize
-   *          This is not used anymore
+   * @param iRequestedId
+   *          requested id of the cluster
+   * @param iDataSegmentName
+   *          Data segment where to store record of this cluster. null means 'default'
+   * @param iParameters
+   *          Additional parameters to pass to the factories
+   * 
    * @return Cluster id
-   * @deprecated use the more generic addCluster that uses the cluster factory
    */
-  @Deprecated
-  public int addPhysicalCluster(String iClusterName, String iLocation, int iStartSize);
+  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, final String iDataSegmentName,
+      Object... iParameters);
 
   /**
    * 

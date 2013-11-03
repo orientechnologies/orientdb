@@ -84,7 +84,6 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onBeforeCollection(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject,
       final Collection<?> iCollection) {
-    settings.indentLevel++;
     try {
       manageTypes(iFieldName, iCollection);
       jsonWriter.beginCollection(settings.indentLevel, true, iFieldName);
@@ -101,7 +100,6 @@ public class OJSONFetchContext implements OFetchContext {
     } catch (IOException e) {
       throw new OFetchException("Error writing collection field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
-    settings.indentLevel--;
   }
 
   public void onBeforeMap(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
@@ -177,9 +175,6 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void writeSignature(final OJSONWriter json, final ORecordInternal<?> record) throws IOException {
     boolean firstAttribute = true;
-
-    if (settings.indentLevel > -1)
-      settings.indentLevel++;
 
     if (settings.includeType) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, ""

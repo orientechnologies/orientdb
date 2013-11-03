@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.entity;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +92,65 @@ public class OEntityManager {
     classHandler.deregisterEntityClass(iClass);
   }
 
+  public synchronized void deregisterEntityClasses(final String iPackageName) {
+    deregisterEntityClasses(iPackageName, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+   * 
+   * @param iPackageName
+   *          The base package
+   */
+  public synchronized void deregisterEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
+    OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
+
+    List<Class<?>> classes = null;
+    try {
+      classes = OReflectionHelper.getClassesFor(iPackageName, iClassLoader);
+    } catch (ClassNotFoundException e) {
+      throw new OException(e);
+    }
+    for (Class<?> c : classes) {
+      deregisterEntityClass(c);
+    }
+
+    if (OLogManager.instance().isDebugEnabled()) {
+      for (Entry<String, Class<?>> entry : classHandler.getClassesEntrySet()) {
+        OLogManager.instance().debug(this, "Unloaded entity class '%s' from: %s", entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
   public synchronized void registerEntityClass(final Class<?> iClass) {
     classHandler.registerEntityClass(iClass);
+  }
+
+  /**
+   * Registers provided classes
+   * 
+   * @param iClassNames
+   *          to be registered
+   */
+  public synchronized void registerEntityClasses(final Collection<String> iClassNames) {
+    registerEntityClasses(iClassNames, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Registers provided classes
+   * 
+   * @param iClassNames
+   *          to be registered
+   * @param iClassLoader
+   */
+  public synchronized void registerEntityClasses(final Collection<String> iClassNames, final ClassLoader iClassLoader) {
+    OLogManager.instance().debug(this, "Discovering entity classes for class names: %s", iClassNames);
+    
+    try {
+      registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
+    } catch (ClassNotFoundException e) {
+      throw new OException(e);
+    }
   }
 
   /**
@@ -110,16 +168,19 @@ public class OEntityManager {
    * 
    * @param iPackageName
    *          The base package
+   * @param iClassLoader
    */
   public synchronized void registerEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
     OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
-
-    List<Class<?>> classes = null;
+    
     try {
-      classes = OReflectionHelper.getClassesForPackage(iPackageName, iClassLoader);
+      registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
     } catch (ClassNotFoundException e) {
       throw new OException(e);
     }
+  }
+  
+  protected synchronized void registerEntityClasses(final List<Class<?>> classes) {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {
@@ -147,6 +208,10 @@ public class OEntityManager {
       iClassHandler.registerEntityClass(entry.getValue());
     }
     this.classHandler = iClassHandler;
+  }
+
+  public synchronized Collection<Class<?>> getRegisteredEntities() {
+    return classHandler.getRegisteredEntities();
   }
 
   protected Object createInstance(final Class<?> iClass) throws InstantiationException, IllegalAccessException,

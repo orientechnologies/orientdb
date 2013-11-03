@@ -66,11 +66,11 @@ public class OConcurrentModificationException extends ONeedRetryException {
     // EXTRACT MY VERSION
     beginPos = message.indexOf(MESSAGE_RECORD_VERSION, endPos) + MESSAGE_RECORD_VERSION.length();
     endPos = message.indexOf(')', beginPos);
-    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), databaseVersion);
+    recordVersion.getSerializer().fromString(message.substring(beginPos, endPos), recordVersion);
   }
 
-  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion, final ORecordVersion iRecordVersion,
-      final int iRecordOperation) {
+  public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
+      final ORecordVersion iRecordVersion, final int iRecordOperation) {
     if (OFastConcurrentModificationException.enabled())
       throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
 
@@ -78,16 +78,6 @@ public class OConcurrentModificationException extends ONeedRetryException {
     databaseVersion.copyFrom(iDatabaseVersion);
     recordVersion.copyFrom(iRecordVersion);
     recordOperation = iRecordOperation;
-  }
-
-  @Deprecated
-  public int getDatabaseVersion() {
-    return databaseVersion.getCounter();
-  }
-
-  @Deprecated
-  public int getRecordVersion() {
-    return recordVersion.getCounter();
   }
 
   public ORecordVersion getEnhancedDatabaseVersion() {

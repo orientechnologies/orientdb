@@ -49,7 +49,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
   }
 
   @Override

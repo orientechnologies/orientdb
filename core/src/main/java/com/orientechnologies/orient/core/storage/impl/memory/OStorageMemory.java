@@ -16,7 +16,16 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import java.io.IOException;
-import java.util.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
@@ -34,8 +43,15 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -72,16 +88,17 @@ public class OStorageMemory extends OStorageEmbedded {
     try {
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
-      addDataSegment(OMetadata.DATASEGMENT_INDEX_NAME);
+      addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INTERNAL_NAME, null, null, true);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_INDEX_NAME, null, OMetadata.DATASEGMENT_INDEX_NAME, true);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
+          OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
-      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadata.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
+      addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
@@ -162,6 +179,16 @@ public class OStorageMemory extends OStorageEmbedded {
     close(true);
   }
 
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    throw new UnsupportedOperationException("backup");
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+    throw new UnsupportedOperationException("restore");
+  }
+
   public void reload() {
   }
 
@@ -178,8 +205,7 @@ public class OStorageMemory extends OStorageEmbedded {
         }
       }
 
-      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory()
-          .createCluster(OClusterMemory.TYPE, forceListBased);
+      final OClusterMemory cluster = (OClusterMemory) Orient.instance().getClusterFactory().createCluster(OClusterMemory.TYPE);
       cluster.configure(this, clusterId, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
 
       if (clusterId == clusters.size())
@@ -199,7 +225,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       boolean forceListBased, Object... iParameters) {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("This operation is unsupported for " + getType()
+        + " storage. If you are doing import please use parameter -preserveClusterIDs=false .");
   }
 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
@@ -320,6 +347,12 @@ public class OStorageMemory extends OStorageEmbedded {
       if (iCallback != null)
         iCallback.call(iRid, iRid.clusterPosition);
 
+      if (iRecordVersion.getCounter() > 0 && iRecordVersion.compareTo(ppos.recordVersion) != 0) {
+        // OVERWRITE THE VERSION
+        cluster.updateVersion(iRid.clusterPosition, iRecordVersion);
+        ppos.recordVersion = iRecordVersion;
+      }
+
       return new OStorageOperationResult<OPhysicalPosition>(ppos);
     } catch (IOException e) {
       throw new OStorageException("Error on create record in cluster: " + iRid.clusterId, e);
@@ -327,7 +360,7 @@ public class OStorageMemory extends OStorageEmbedded {
     } finally {
       lock.releaseSharedLock();
       Orient.instance().getProfiler()
-          .stopChrono(PROFILER_CREATE_RECORD, "Create a record in memory database", timer, "db.*.data.updateHole");
+          .stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.data.updateHole");
     }
   }
 
@@ -372,8 +405,7 @@ public class OStorageMemory extends OStorageEmbedded {
     } finally {
       lock.releaseSharedLock();
 
-      Orient.instance().getProfiler()
-          .stopChrono(PROFILER_READ_RECORD, "Read a record from memory database", timer, "db.*.readRecord");
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
 
@@ -397,37 +429,34 @@ public class OStorageMemory extends OStorageEmbedded {
           return new OStorageOperationResult<ORecordVersion>(v);
         }
 
-        if (!iVersion.isUntracked()) {
-          // VERSION CONTROL CHECK
-          switch (iVersion.getCounter()) {
-          // DOCUMENT UPDATE, NO VERSION CONTROL
-          case -1:
+        // VERSION CONTROL CHECK
+        switch (iVersion.getCounter()) {
+        // DOCUMENT UPDATE, NO VERSION CONTROL
+        case -1:
+          ppos.recordVersion.increment();
+          cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
+          break;
+
+        // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+        case -2:
+          break;
+
+        default:
+          // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+          if (iVersion.getCounter() > -1) {
+            // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+            if (!iVersion.equals(ppos.recordVersion))
+              if (OFastConcurrentModificationException.enabled())
+                throw OFastConcurrentModificationException.instance();
+              else
+                throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
             ppos.recordVersion.increment();
             cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
-            break;
-
-          // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
-          case -2:
-            break;
-
-          default:
-            // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-            if (iVersion.getCounter() > -1) {
-              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-              if (!iVersion.equals(ppos.recordVersion))
-                if (OFastConcurrentModificationException.enabled())
-                  throw OFastConcurrentModificationException.instance();
-                else
-                  throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.UPDATED);
-              ppos.recordVersion.increment();
-              cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
-            } else {
-              // DOCUMENT ROLLBACKED
-              iVersion.clearRollbackMode();
-              ppos.recordVersion.copyFrom(iVersion);
-              cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
-            }
+          } else {
+            // DOCUMENT ROLLBACKED
+            iVersion.clearRollbackMode();
+            ppos.recordVersion.copyFrom(iVersion);
+            cluster.updateVersion(iRid.clusterPosition, ppos.recordVersion);
           }
         }
 
@@ -451,8 +480,7 @@ public class OStorageMemory extends OStorageEmbedded {
     } finally {
       lock.releaseSharedLock();
 
-      Orient.instance().getProfiler()
-          .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to memory database", timer, "db.*.updateRecord");
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
   }
 
@@ -601,7 +629,7 @@ public class OStorageMemory extends OStorageEmbedded {
       lock.releaseSharedLock();
 
       Orient.instance().getProfiler()
-          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from memory database", timer, "db.*.deleteRecord");
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
     }
   }
 
@@ -717,7 +745,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public void commit(final OTransaction iTx) {
+  public void commit(final OTransaction iTx, Runnable callback) {
     lock.acquireExclusiveLock();
     try {
 
@@ -853,7 +881,7 @@ public class OStorageMemory extends OStorageEmbedded {
     return size;
   }
 
-	@Override
+  @Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     if (ppos.dataSegmentId > 0)
       return false;
@@ -897,16 +925,12 @@ public class OStorageMemory extends OStorageEmbedded {
         if (rid.isNew()) {
           final ORecordId oldRID = rid.copy();
 
-          txEntry.getRecord().onBeforeIdentityChanged(rid);
           final OPhysicalPosition ppos = createRecord(txEntry.dataSegmentId, rid, stream,
               OVersionFactory.instance().createVersion(), txEntry.getRecord().getRecordType(), 0, null).getResult();
 
           txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
 
           iTx.updateIdentityAfterCommit(oldRID, rid);
-
-          txEntry.getRecord().onAfterIdentityChanged(txEntry.getRecord());
-
         } else {
           txEntry
               .getRecord()
@@ -965,11 +989,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
   public void setDefaultClusterId(int defaultClusterId) {
     this.defaultClusterId = defaultClusterId;
-  }
-
-  @Override
-  public boolean isHashClustersAreUsed() {
-    return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean();
   }
 
   @Override

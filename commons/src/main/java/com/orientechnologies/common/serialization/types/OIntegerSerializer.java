@@ -18,7 +18,7 @@ package com.orientechnologies.common.serialization.types;
 
 import java.nio.ByteOrder;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
@@ -39,11 +39,11 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
    */
   public static final int               INT_SIZE  = 4;
 
-  public int getObjectSize(Integer object) {
+  public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
   }
 
-  public void serialize(Integer object, byte[] stream, int startPosition) {
+  public void serialize(Integer object, byte[] stream, int startPosition, Object... hints) {
     final int value = object;
     stream[startPosition] = (byte) ((value >>> 24) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 16) & 0xFF);
@@ -69,7 +69,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return INT_SIZE;
   }
 
-  public void serializeNative(Integer object, byte[] stream, int startPosition) {
+  public void serializeNative(Integer object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -78,17 +78,17 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   @Override
-  public void serializeInDirectMemory(Integer object, ODirectMemory memory, long pointer) {
-    memory.setInt(pointer, object);
+  public void serializeInDirectMemory(Integer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setInt(offset, object);
   }
 
   @Override
-  public Integer deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getInt(pointer);
+  public Integer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getInt(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return INT_SIZE;
   }
 
@@ -100,4 +100,8 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return INT_SIZE;
   }
 
+  @Override
+  public Integer prepocess(Integer value, Object... hints) {
+    return value;
+  }
 }

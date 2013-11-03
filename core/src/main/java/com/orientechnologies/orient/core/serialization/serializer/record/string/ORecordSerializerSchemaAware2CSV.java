@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -212,13 +214,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   else {
                     linkedType = OType.getTypeByClass(firstValue.getClass());
 
-                    if (linkedType != OType.LINK) {
-                      // EMBEDDED FOR SURE SINCE IT CONTAINS JAVA TYPES
-                      if (linkedType == null) {
-                        linkedType = OType.EMBEDDED;
-                        // linkedClass = new OClass(firstValue.getClass());
-                      }
-                    }
+                    if (linkedType != OType.LINK)
+                      // EMBEDDED FOR SURE DON'T USE THE LINKED TYPE
+                      linkedType = null;
                   }
 
                   if (type == null)
@@ -308,7 +306,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     else if (record.getSize() == iOutput.length())
       // IDENTICAL! DO NOTHING
       newSize = record.getSize();
-    else if (record.getSize() > iOutput.length()) {
+    else if (record.getSize() > iOutput.length() && !OGlobalConfiguration.RECORD_DOWNSIZING_ENABLED.getValueAsBoolean()) {
       // APPEND EXTRA SPACES TO FILL ALL THE AVAILABLE SPACE AND AVOID FRAGMENTATION
       newSize = record.getSize();
     } else if (overSize > 0) {
@@ -377,17 +375,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true);
 
-    String field;
     String fieldName = null;
     String fieldValue;
-    OType type = null;
+    OType type;
     OClass linkedClass;
     OType linkedType;
     OProperty prop;
+    final List<String> fieldList = (iFields != null && iFields.length > 0) ? Arrays.asList(iFields) : null;
 
     // UNMARSHALL ALL THE FIELDS
-    for (int i = 0; i < fields.size(); ++i) {
-      field = fields.get(i).trim();
+    for (String field : fields) {
+      field = field.trim();
       boolean uncertainType = false;
 
       try {
@@ -400,19 +398,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             // ALREADY UNMARSHALLED: DON'T OVERWRITE IT
             continue;
 
-          if (iFields != null && iFields.length > 0) {
-            // CHECK IF THE FIELS IS REQUESTED TO BEING UNMARSHALLED
-            boolean found = false;
-            for (String f : iFields)
-              if (f.equals(fieldName)) {
-                found = true;
-                break;
-              }
-
-            if (!found)
-              // SKIP IT
-              continue;
-          }
+          // CHECK IF THE FIELS IS REQUESTED TO BEING UNMARSHALLED
+          if (fieldList != null && !fieldList.contains(fieldName))
+            continue;
 
           // GET THE FIELD VALUE
           fieldValue = field.length() > pos + 1 ? field.substring(pos + 1) : null;
@@ -439,6 +427,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             if (fieldValue != null && type == null) {
               if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
                 type = OType.STRING;
+              } else if (fieldValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX)) {
+                type = OType.LINKSET;
               } else if (fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
                   && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.LIST_END
                   || fieldValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
@@ -450,6 +440,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
                 if (!value.isEmpty()) {
                   if (value.charAt(0) == OStringSerializerHelper.LINK) {
+                    // TODO replace with regex
                     // ASSURE ALL THE ITEMS ARE RID
                     final List<String> items = OStringSerializerHelper.smartSplit(value, ',');
                     boolean allLinks = true;
@@ -462,15 +453,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                     if (allLinks) {
                       type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
                       linkedType = OType.LINK;
-
-                      // GET THE CLASS NAME IF ANY
-                      // TODO: CAN WE REMOVE THIS?
-                      int classSeparatorPos = value.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-                      if (classSeparatorPos > -1) {
-                        String className = value.substring(1, classSeparatorPos);
-                        if (className != null)
-                          linkedClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(className);
-                      }
                     }
                   } else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
                     linkedType = OType.EMBEDDED;

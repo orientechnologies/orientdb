@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.eh;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -29,7 +29,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   public static final byte                       ID       = 51;
 
   @Override
-  public int getObjectSize(OClusterPosition object) {
+  public int getObjectSize(OClusterPosition object, Object... hints) {
     return OClusterPositionFactory.INSTANCE.getSerializedSize();
   }
 
@@ -39,7 +39,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serialize(OClusterPosition object, byte[] stream, int startPosition) {
+  public void serialize(OClusterPosition object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     System.arraycopy(serializedPosition, 0, stream, startPosition, serializedPosition.length);
   }
@@ -65,7 +65,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serializeNative(OClusterPosition object, byte[] stream, int startPosition) {
+  public void serializeNative(OClusterPosition object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     System.arraycopy(serializedPosition, 0, stream, startPosition, serializedPosition.length);
   }
@@ -81,19 +81,24 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serializeInDirectMemory(OClusterPosition object, ODirectMemory memory, long pointer) {
+  public void serializeInDirectMemory(OClusterPosition object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedPosition = object.toStream();
-    memory.set(pointer, serializedPosition, 0, serializedPosition.length);
+    pointer.set(offset, serializedPosition, 0, serializedPosition.length);
   }
 
   @Override
-  public OClusterPosition deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    final byte[] serializedPosition = memory.get(pointer, OClusterPositionFactory.INSTANCE.getSerializedSize());
+  public OClusterPosition deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    final byte[] serializedPosition = pointer.get(offset, OClusterPositionFactory.INSTANCE.getSerializedSize());
     return OClusterPositionFactory.INSTANCE.fromStream(serializedPosition);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return OClusterPositionFactory.INSTANCE.getSerializedSize();
+  }
+
+  @Override
+  public OClusterPosition prepocess(OClusterPosition value, Object... hints) {
+    return value;
   }
 }

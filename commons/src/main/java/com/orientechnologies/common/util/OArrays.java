@@ -79,4 +79,14 @@ public class OArrays {
 
     return false;
   }
+
+  public static int hash(final Object[] iArray) {
+    int hash = 0;
+    for (Object o : iArray) {
+      if (o != null)
+        hash += o.hashCode();
+    }
+    return hash;
+  }
+
 }

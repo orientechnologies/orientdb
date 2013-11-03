@@ -27,8 +27,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -47,10 +45,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   private String             linked;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 

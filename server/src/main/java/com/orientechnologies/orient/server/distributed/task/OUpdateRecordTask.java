@@ -21,17 +21,18 @@ import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TYPES;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.server.journal.ODatabaseJournal.OPERATION_TY
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVersion> {
+public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
 
   protected byte[]          content;
@@ -48,58 +49,50 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
   public OUpdateRecordTask() {
   }
 
-  public OUpdateRecordTask(final OServer iServer, final ODistributedServerManager iDistributedSrvMgr,
-      final String iDbName, final EXECUTION_MODE iMode, final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion,
-      final byte iRecordType) {
-    super(iServer, iDistributedSrvMgr, iDbName, iMode, iRid, iVersion);
-    content = iContent;
-    recordType = iRecordType;
-  }
-
-  public OUpdateRecordTask(final long iRunId, final long iOperationId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType) {
-    super(iRunId, iOperationId, iRid, iVersion);
+  public OUpdateRecordTask(final ORecordId iRid, final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
+    super(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
   }
 
   @Override
-  public ORecordVersion executeOnLocalNode() {
-    ODistributedServerLog.debug(this, getDistributedServerManager().getLocalNodeId(), getNodeSource(), DIRECTION.IN,
-        "update record %s/%s v.%s oper=%d.%d", databaseName, rid.toString(), version.toString(), runId, operationSerial);
+  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+      throws Exception {
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%s",
+        database.getName(), rid.toString(), version.toString());
+
+    final ORecordInternal<?> loadedRecord = rid.getRecord();
+    if (loadedRecord == null)
+      throw new ORecordNotFoundException("Record " + rid + " was not found on update");
+
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    record.fill(rid, version, content, true);
 
-    final ODatabaseDocumentTx database = openDatabase();
-    try {
-      if (version.getCounter() > -1)
-        version.setRollbackMode();
-      record.fill(rid, version, content, true);
-      record.save();
+    if (loadedRecord instanceof ODocument) {
+      ((ODocument) loadedRecord).merge((ODocument) record, false, false);
+      database.save(loadedRecord);
+    } else
+      database.save(record);
 
-      return record.getRecordVersion();
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
+        database.getName(), rid.toString(), record.getRecordVersion().toString());
 
-    } finally {
-      closeDatabase(database);
-    }
+    return record.getRecordVersion();
   }
 
-  /**
-   * Handles conflict between local and remote execution results.
-   * 
-   * @param localResult
-   *          The result on local node
-   * @param remoteResult
-   *          the result on remote node
-   */
   @Override
-  public void handleConflict(final String iRemoteNodeId, final Object localResult, final Object remoteResult) {
-    final OReplicationConflictResolver resolver = getDatabaseSynchronizer().getConflictResolver();
-    resolver.handleUpdateConflict(iRemoteNodeId, rid, version, (ORecordVersion) remoteResult);
+  public QUORUM_TYPE getQuorumType() {
+    return QUORUM_TYPE.WRITE;
+  }
+
+  @Override
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
+      final ODistributedResponse iGoodResponse) {
+    return new OFixUpdateRecordTask(rid, ((OUpdateRecordTask) iRequest.getTask()).content, version);
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
     out.writeUTF(rid.toString());
     out.writeInt(content.length);
     out.write(content);
@@ -111,7 +104,6 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
     rid = new ORecordId(in.readUTF());
     final int contentSize = in.readInt();
     content = new byte[contentSize];
@@ -128,7 +120,11 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask<ORecordVers
   }
 
   @Override
-  public OPERATION_TYPES getOperationType() {
-    return OPERATION_TYPES.RECORD_UPDATE;
+  public String toString() {
+    if (version.isTemporary())
+      return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
+    else
+      return super.toString();
   }
+
 }

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal
  * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
  */
-public interface OStorage extends OSharedContainer {
+public interface OStorage extends OBackupable, OSharedContainer {
   public static final String DATA_DEFAULT_NAME    = "default";
   public static final String CLUSTER_DEFAULT_NAME = "default";
 
@@ -101,7 +102,7 @@ public interface OStorage extends OSharedContainer {
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  public void commit(OTransaction iTx);
+  public void commit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   public void rollback(OTransaction iTx);
@@ -255,11 +256,6 @@ public interface OStorage extends OSharedContainer {
    */
   public STATUS getStatus();
 
-	/**
-   * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
-   */
-  public boolean isHashClustersAreUsed();
-
   /**
    * Returns the storage's type.
    * 
@@ -268,4 +264,8 @@ public interface OStorage extends OSharedContainer {
   public String getType();
 
   public void checkForClusterPermissions(final String iClusterName);
+
+  public OStorage getUnderlying();
+
+  public boolean isDistributed();
 }

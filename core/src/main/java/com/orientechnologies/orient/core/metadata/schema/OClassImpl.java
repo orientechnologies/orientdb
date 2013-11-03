@@ -16,7 +16,18 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -30,7 +41,11 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -237,7 +252,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return shortName;
   }
 
-  public OClass setShortName(final String iShortName) {
+  public OClass setShortName(String iShortName) {
+    if (iShortName != null) {
+      iShortName = iShortName.trim();
+      if (iShortName.isEmpty())
+        iShortName = null;
+    }
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     final String cmd = String.format("alter class %s shortname %s", name, iShortName);
     getDatabase().command(new OCommandSQL(cmd)).execute();
@@ -254,7 +274,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     this.shortName = iShortName;
 
     // REGISTER IT
-    owner.classes.put(iShortName.toLowerCase(), this);
+    if (null != iShortName)
+      owner.classes.put(iShortName.toLowerCase(), this);
   }
 
   public String getStreamableName() {
@@ -768,6 +789,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public boolean equals(final Object obj) {
     if (this == obj)
       return true;
+    if (obj == null)
+      return false;
     if (getClass() != obj.getClass())
       return false;
     final OClassImpl other = (OClassImpl) obj;

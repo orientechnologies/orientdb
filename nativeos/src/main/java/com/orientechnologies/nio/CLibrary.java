@@ -15,7 +15,8 @@
  */
 package com.orientechnologies.nio;
 
-import com.sun.jna.Native;
+import com.orientechnologies.common.log.OLogManager;
+import com.sun.jna.Function;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
@@ -25,9 +26,45 @@ import com.sun.jna.Pointer;
  * @since 5/6/13
  */
 public class CLibrary {
-  public static native Pointer memmove(Pointer dest, Pointer src, NativeLong len);
+  private static final Function memmove;
+  private static final Function bcopy;
 
   static {
-    Native.register(Platform.C_LIBRARY_NAME);
+    Function memmoveFc;
+    try {
+      memmoveFc = Function.getFunction(Platform.C_LIBRARY_NAME, "memmove");
+    } catch (UnsatisfiedLinkError linkError) {
+      memmoveFc = null;
+    }
+
+    Function bcopyFc;
+    try {
+      bcopyFc = Function.getFunction(Platform.C_LIBRARY_NAME, "bcopy");
+    } catch (UnsatisfiedLinkError linkError) {
+      bcopyFc = null;
+    }
+
+    memmove = memmoveFc;
+    bcopy = bcopyFc;
+    OLogManager.instance().debug(CLibrary.class, "Following c library functions were found memmove : %s , bcopy : %s.",
+        memmoveFc != null ? "yes" : "no", bcopyFc != null ? "yes" : "no");
+  }
+
+  public static void memoryMove(long src, long dest, long len) {
+    final Pointer srcPointer = new Pointer(src);
+    final Pointer destPointer = new Pointer(dest);
+
+    if (memmove != null)
+      memmove.invoke(Pointer.class, new Object[] { destPointer, srcPointer, new NativeLong(len) });
+    else if (bcopy != null)
+      bcopy.invokeVoid(new Object[] { srcPointer, destPointer, new NativeLong(len) });
+    else {
+      if (src > dest)
+        for (long n = 0; n < len; n++)
+          destPointer.setByte(n, srcPointer.getByte(n));
+      else
+        for (long n = len - 1; n >= 0; n--)
+          destPointer.setByte(n, srcPointer.getByte(n));
+    }
   }
 }

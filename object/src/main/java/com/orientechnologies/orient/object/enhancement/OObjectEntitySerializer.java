@@ -76,6 +76,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
+import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
@@ -86,7 +87,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 public class OObjectEntitySerializer {
 
   private static final Set<Class<?>>                           classes             = new HashSet<Class<?>>();
-  static final HashMap<Class<?>, List<String>>                 allFields           = new HashMap<Class<?>, List<String>>();
+  private static final HashMap<Class<?>, List<String>>         allFields           = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         embeddedFields      = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, List<String>>         directAccessFields  = new HashMap<Class<?>, List<String>>();
   private static final HashMap<Class<?>, Field>                boundDocumentFields = new HashMap<Class<?>, Field>();
@@ -548,8 +549,9 @@ public class OObjectEntitySerializer {
 
       }
 
-      if (automaticSchemaGeneration && !iClass.equals(Object.class) && !iClass.equals(ODocument.class)) {
-        OObjectSchemaGenerator.generateSchema(iClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+      if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
+        ((OSchemaProxyObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner().getMetadata().getSchema())
+            .generateSchema(currentClass, ODatabaseRecordThreadLocal.INSTANCE.get());
       }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
@@ -716,6 +718,10 @@ public class OObjectEntitySerializer {
       }
     }
     return iFieldValue;
+  }
+
+  public static List<String> getClassFields(final Class<?> iClass) {
+    return allFields.get(iClass);
   }
 
   public static boolean hasBoundedDocumentField(final Class<?> iClass) {
@@ -885,7 +891,7 @@ public class OObjectEntitySerializer {
     return getTypeByClass(iClass, fieldName, f);
   }
 
-  protected static OType getTypeByClass(final Class<?> iClass, final String fieldName, Field f) {
+  public static OType getTypeByClass(final Class<?> iClass, final String fieldName, Field f) {
     if (f == null)
       return null;
     if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
@@ -937,6 +943,24 @@ public class OObjectEntitySerializer {
     if (iClass.getSuperclass().equals(Object.class))
       return null;
     return getField(fieldName, iClass.getSuperclass());
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T getNonProxiedInstance(T iObject) {
+    try {
+      return (T) iObject.getClass().getSuperclass().newInstance();
+    } catch (InstantiationException ie) {
+      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+    } catch (IllegalAccessException ie) {
+      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
+    }
+    return null;
+  }
+
+  public static void synchronizeSchema() {
+    for (Class<?> clazz : classes) {
+      registerClass(clazz);
+    }
   }
 
   /**
@@ -1251,18 +1275,6 @@ public class OObjectEntitySerializer {
     }
 
     return result;
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> T getNonProxiedInstance(T iObject) {
-    try {
-      return (T) iObject.getClass().getSuperclass().newInstance();
-    } catch (InstantiationException ie) {
-      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
-    } catch (IllegalAccessException ie) {
-      OLogManager.instance().error(iObject, "Error creating instance for class " + iObject.getClass().getSuperclass(), ie);
-    }
-    return null;
   }
 
   private static boolean isEmbeddedObject(Field f) {

@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class OClusterMemoryArrayList extends OClusterMemory implements OCluster {
@@ -50,6 +52,37 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
     return false;
   }
 
+  @Override
+  public OModificationLock getExternalModificationLock() {
+    throw new UnsupportedOperationException("getExternalModificationLock");
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+    throw new UnsupportedOperationException("createRecord");
+  }
+
+  @Override
+  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("deleteRecord");
+  }
+
+  @Override
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    throw new UnsupportedOperationException("updateRecord");
+  }
+
+  @Override
+  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("readRecord");
+  }
+
+  @Override
+  public boolean exists() {
+    throw new UnsupportedOperationException("exists");
+  }
+
   public long getRecordsSize() {
     acquireSharedLock();
     try {
@@ -69,9 +102,14 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   public OClusterPosition getFirstPosition() {
     acquireSharedLock();
     try {
+      if (entries.isEmpty())
+        return OClusterPositionFactory.INSTANCE.valueOf(-1);
 
-      return OClusterPositionFactory.INSTANCE.valueOf(entries.size() == 0 ? -1 : 0);
+      int index = 0;
+      while (index < entries.size() && entries.get(index) == null)
+        index++;
 
+      return OClusterPositionFactory.INSTANCE.valueOf(index);
     } finally {
       releaseSharedLock();
     }
@@ -81,7 +119,11 @@ public class OClusterMemoryArrayList extends OClusterMemory implements OCluster 
   public OClusterPosition getLastPosition() {
     acquireSharedLock();
     try {
-      return OClusterPositionFactory.INSTANCE.valueOf(entries.size() - 1);
+      int index = entries.size() - 1;
+      while (index >= 0 && entries.get(index) == null)
+        index--;
+
+      return OClusterPositionFactory.INSTANCE.valueOf(index);
     } finally {
       releaseSharedLock();
     }

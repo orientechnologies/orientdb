@@ -415,6 +415,10 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
               + " with linked class '" + embeddedClass + "' but the record was not a document");
 
         final ODocument doc = (ODocument) rec;
+        if (doc.getSchemaClass() == null)
+          throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+              + " with linked class '" + embeddedClass + "' but the record has no class");
+
         if (!(doc.getSchemaClass().isSubClassOf(embeddedClass)))
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getSchemaClass().getName()

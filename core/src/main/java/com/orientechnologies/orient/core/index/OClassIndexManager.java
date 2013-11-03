@@ -33,9 +33,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
@@ -46,12 +43,8 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -61,7 +54,10 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
   public OClassIndexManager() {
-    // rebuild indexes if index cluster wasn't closed properly
+  }
+
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }
 
   @Override
@@ -284,8 +280,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   public void onRecordReplicaDeleteFailed(ODocument iDocument) {
     releaseModificationLock(iDocument);
   }
-
-
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();

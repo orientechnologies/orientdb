@@ -18,13 +18,9 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -39,7 +35,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 @Test(groups = { "index" })
 public class IndexCustomKeyTest {
   private ODatabaseDocumentTx database;
-  private OIndex<?>           index;
 
   public static class ComparableBinary implements Comparable<ComparableBinary>, OSerializableStream {
     private byte[] value;
@@ -87,11 +82,11 @@ public class IndexCustomKeyTest {
       return length;
     }
 
-    public int getObjectSize(final ComparableBinary object) {
+    public int getObjectSize(final ComparableBinary object, Object... hints) {
       return object.toByteArray().length;
     }
 
-    public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition) {
+    public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition, Object... hints) {
       final byte[] buffer = object.toByteArray();
       System.arraycopy(buffer, 0, stream, startPosition, buffer.length);
     }
@@ -113,7 +108,7 @@ public class IndexCustomKeyTest {
       return LENGTH;
     }
 
-    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition) {
+    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
       serialize(object, stream, startPosition);
     }
 
@@ -122,18 +117,18 @@ public class IndexCustomKeyTest {
     }
 
     @Override
-    public void serializeInDirectMemory(ComparableBinary object, ODirectMemory memory, long pointer) {
+    public void serializeInDirectMemory(ComparableBinary object, ODirectMemoryPointer pointer, long offset, Object... hints) {
       final byte[] buffer = object.toByteArray();
-      memory.set(pointer, buffer, 0, buffer.length);
+      pointer.set(offset, buffer, 0, buffer.length);
     }
 
     @Override
-    public ComparableBinary deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-      return new ComparableBinary(memory.get(pointer, LENGTH));
+    public ComparableBinary deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+      return new ComparableBinary(pointer.get(offset, LENGTH));
     }
 
     @Override
-    public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
       return LENGTH;
     }
 
@@ -143,6 +138,11 @@ public class IndexCustomKeyTest {
 
     public int getFixedLength() {
       return LENGTH;
+    }
+
+    @Override
+    public ComparableBinary prepocess(ComparableBinary value, Object... hints) {
+      return value;
     }
   }
 
@@ -158,12 +158,8 @@ public class IndexCustomKeyTest {
     if (index == null) {
       OBinarySerializerFactory.INSTANCE.registerSerializer(new OHash256Serializer(), null);
 
-      index = database.getMetadata().getIndexManager()
+      database.getMetadata().getIndexManager()
           .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null);
-      this.index = index;
-    } else {
-      index = database.getMetadata().getIndexManager().getIndex("custom-hash");
-      this.index = index;
     }
   }
 
@@ -205,6 +201,8 @@ public class IndexCustomKeyTest {
     ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
         3, 4, 5, 6, 7, 8, 9, 0, 3 });
     ODocument doc1 = new ODocument().field("k", "key3");
+
+    final OIndex index = getIndex();
     index.put(key3, doc1);
 
     ComparableBinary key4 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,

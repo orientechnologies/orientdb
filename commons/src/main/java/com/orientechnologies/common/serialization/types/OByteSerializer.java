@@ -16,7 +16,7 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for byte type .
@@ -33,11 +33,11 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   public static OByteSerializer INSTANCE  = new OByteSerializer();
   public static final byte      ID        = 2;
 
-  public int getObjectSize(Byte object) {
+  public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;
   }
 
-  public void serialize(Byte object, byte[] stream, int startPosition) {
+  public void serialize(Byte object, byte[] stream, int startPosition, Object... hints) {
     stream[startPosition] = object;
   }
 
@@ -57,7 +57,7 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return getObjectSize(stream, startPosition);
   }
 
-  public void serializeNative(Byte object, byte[] stream, int startPosition) {
+  public void serializeNative(Byte object, byte[] stream, int startPosition, Object... hints) {
     serialize(object, stream, startPosition);
   }
 
@@ -66,17 +66,17 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   }
 
   @Override
-  public void serializeInDirectMemory(Byte object, ODirectMemory memory, long pointer) {
-    memory.setByte(pointer, object);
+  public void serializeInDirectMemory(Byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setByte(offset, object);
   }
 
   @Override
-  public Byte deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getByte(pointer);
+  public Byte deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getByte(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return BYTE_SIZE;
   }
 
@@ -86,5 +86,10 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
 
   public int getFixedLength() {
     return BYTE_SIZE;
+  }
+
+  @Override
+  public Byte prepocess(Byte value, Object... hints) {
+    return value;
   }
 }

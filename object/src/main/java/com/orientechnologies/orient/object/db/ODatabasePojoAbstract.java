@@ -16,17 +16,8 @@
 package com.orientechnologies.orient.object.db;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -35,7 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.object.OLazyObjectMultivalueElement;
+import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -413,8 +404,8 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
     for (Field field : iPojo.getClass().getDeclaredFields()) {
       final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
-      if (value instanceof OLazyObjectMultivalueElement)
-        ((OLazyObjectMultivalueElement<?>) value).detach(false);
+      if (value instanceof OObjectLazyMultivalueElement)
+        ((OObjectLazyMultivalueElement<?>) value).detach(false);
     }
 
     return (RET) iPojo;

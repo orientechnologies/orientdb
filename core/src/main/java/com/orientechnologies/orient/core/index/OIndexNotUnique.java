@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public class OIndexNotUnique extends OIndexMultiValues {
 
-  public OIndexNotUnique(String typeId, OIndexEngine<Set<OIdentifiable>> engine) {
-    super(typeId, engine);
+  public OIndexNotUnique(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> engine, String valueContainerAlgorithm) {
+    super(typeId, algorithm, engine, valueContainerAlgorithm);
   }
 
   public boolean canBeUsedInEqualityOperators() {

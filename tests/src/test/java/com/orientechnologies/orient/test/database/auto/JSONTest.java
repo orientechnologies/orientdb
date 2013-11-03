@@ -15,7 +15,12 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -36,6 +41,11 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 @Test
 public class JSONTest {
   private String url;
+
+//  public static final void  main(String[] args) throws Exception {
+//    JSONTest test = new JSONTest("memory:test");
+//    test.testList();
+//  }
 
   @Parameters(value = "url")
   public JSONTest(final String iURL) {
@@ -686,5 +696,18 @@ public class JSONTest {
     System.out.println("--------------------");
 
     db.close();
+  }
+
+  @Test
+  public void testList() throws Exception {
+    ODocument documentSource = new ODocument();
+    documentSource.fromJSON("{\"list\" : [\"string\", 42]}");
+
+    ODocument documentTarget = new ODocument();
+    documentTarget.fromStream(documentSource.toStream());
+
+    OTrackedList<Object> list = documentTarget.field("list", OType.EMBEDDEDLIST);
+    Assert.assertEquals(list.get(0), "string");
+    Assert.assertEquals(list.get(1), 42);
   }
 }
