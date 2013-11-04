@@ -16,9 +16,11 @@
                 <div class="controls controls-row">
                     Alert Level Log Value:
                     <select class="span3" ng-model="eventWhen['alertValue']"
-                            ng-options="t for t in alertValues" required>
+                            ng-options="t for t in alertValues">
+                        <option value=""></option>
                     </select>
-                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels" required>
+                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels" ng-disabled="checkAlertValue()">
+                        <option value=""></option>
                     </select>
                 </div>
                 Text (contains):
@@ -31,7 +33,7 @@
     </div>
     <div class="modal-footer">
 
-        <button type="button" class="btn btn-primary" ng-disabled="form_log_when.$invalid" ng-click="hide()">Submit
+        <button type="button" class="btn btn-primary" ng-disabled="checkValidForm()" ng-click="hide()">Submit
         </button>
     </div>
 

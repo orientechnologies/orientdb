@@ -89,6 +89,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String CLASS_DICTIONARY = "Dictionary";
 
 	public static final String CLASS_USER_CONFIGURATION = "UserConfiguration";
+	public static final String CLASS_MAIL_PROFILE = "OMailProfile";
+
 	public static final String CLASS_METRIC_CONFIG = "MetricConfig";
 
 	private OServer serverInstance;
@@ -138,16 +140,17 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		db.registerHook(new OEventHook());
 
-		registerExecutors();
+		registerExecutors(db);
 		registerCommand();
 		Orient.instance().getTimer()
 				.schedule(new OMonitorTask(this), updateTimer, updateTimer);
 	}
 
-	private void registerExecutors() {
-		OEventController.getInstance().register(new OEventMetricMailExecutor());
-		OEventController.getInstance().register(new OEventLogMailExecutor());
-		
+	private void registerExecutors(ODatabaseDocumentTx database) {
+		OEventController.getInstance().register(
+				new OEventMetricMailExecutor(database));
+		OEventController.getInstance().register(
+				new OEventLogMailExecutor(database));
 
 	}
 
@@ -291,9 +294,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass metrics = schema.createClass(CLASS_METRICS_WHEN);
 		metrics.setSuperClass(eventWhen);
 		metrics.createProperty("name", OType.STRING);
-		metrics.createProperty("operator", OType.STRING);//Greater, Less 
+		metrics.createProperty("operator", OType.STRING);// Greater, Less
 		metrics.createProperty("parameter", OType.STRING);
-		metrics.createProperty("value", OType.STRING);
+		metrics.createProperty("value", OType.DOUBLE);
 
 		final OClass http = schema.createClass(CLASS_HTTP_WHAT);
 		http.setSuperClass(eventWhat);
@@ -321,7 +324,19 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
+		final OClass profile = schema.createClass("OMailProfile");
+
+		profile.createProperty("user", OType.STRING);
+		profile.createProperty("password", OType.STRING);
+		profile.createProperty("port", OType.INTEGER);
+		profile.createProperty("enabled", OType.BOOLEAN);
+		profile.createProperty("auth", OType.BOOLEAN);
+		profile.createProperty("starttlsEnable", OType.BOOLEAN);
+		profile.createProperty("dateFormat", OType.STRING);
+		profile.createProperty("host", OType.STRING);
+
 		userConfig.createProperty("user", OType.LINK, ouser);
+		userConfig.createProperty("mailProfile", OType.LINK, profile);
 
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
