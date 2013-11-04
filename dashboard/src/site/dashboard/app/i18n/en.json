@@ -74,5 +74,11 @@
     "LogWhen": "Log",
     "FunctionWhat": "Function",
     "HttpWhat": "Http",
-    "MailWhat": "Mail"
+    "MailWhat": "Mail",
+    "metric.realtime": "Realtime",
+    "metric.resolution": "Resolution",
+    "metric.range": "Range",
+    "metric.polling": "Polling",
+    "metric.chart": "Metric Chart"
+
 }

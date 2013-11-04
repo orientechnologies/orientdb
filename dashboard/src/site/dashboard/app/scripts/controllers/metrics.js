@@ -8,7 +8,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.pollTime = 10000;
         $scope.render = "bar";
         $scope.compress = "1"
-        $scope.range = { start: moment(), end: moment() };
+        $scope.range = { start: moment().subtract('days', 6), end: moment()};
         $scope.popover = { compress: $scope.compress, pollTime: $scope.pollTime, range: $scope.range};
 
         $scope['fs'] = $scope.metricScope['fullScreen'];
@@ -18,11 +18,6 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                 $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
 
         });
-        /*$scope.$watch('range', function (data) {
-            if (data && $scope.config) {
-                $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
-            }
-        });*/
         var real;
         $scope.startRealtime = function () {
             real = $timeout(function () {
@@ -33,11 +28,6 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.stopRealtime = function () {
             $timeout.cancel(real);
         }
-        /*$scope.$watch('compress', function (data) {
-            if (data && $scope.config && $scope.range) {
-                $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
-            }
-        });*/
         $scope.$watch('realtime', function (data) {
             if (data != undefined) {
                 if (data) {
@@ -323,6 +313,12 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
         $scope.selectedConfig['config'].splice(idx, 1);
     }
     $scope.refreshMetricConfig();
+
+
+});
+
+app.controller('ConfigChartController', function ($scope, $location, $routeParams) {
+
 
 
 });
