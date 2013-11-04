@@ -46,13 +46,23 @@ public class OEventHook extends ORecordHookAbstract {
 							"select from Event where when.type = "
 									+ doc.field("level") + ""));
 		} else {
-			
-			
-//			doc.field("name");
+
+			String metricName = doc.field("name");
+			ODocument snapshot = doc.field("snapshot");
+			ODocument server = (ODocument) (snapshot != null ? snapshot
+					.field("server") : null);
+			if (server != null) {
+				String urlServer = server.field("url");
+				if (metricName != null)
+					urlServer = urlServer.split(":")[0];
+					metricName = metricName.replaceAll(urlServer+":"+"[0-9]*.", "*.");
+					
+
+			}
 			triggers = doc.getDatabase().query(
 					new OSQLSynchQuery<Object>(
 							"select from Event where when.name = '"
-									+ doc.field("name") + "'"));
+									+ metricName + "'"));
 		}
 		for (ODocument oDocument : triggers) {
 

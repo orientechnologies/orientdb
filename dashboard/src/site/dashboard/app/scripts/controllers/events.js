@@ -18,7 +18,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
     }
 
-    $scope.translate = function(){
+    $scope.translate = function () {
         var prova = "c'iao";
         console.log(replace(/'/))
     }
@@ -260,6 +260,9 @@ dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$rou
     $scope.properties = $scope.eventWhat;
 }]);
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
+
+
+    console.log($scope.eventWhat);
     $scope.languages = ['SQL', 'Javascript'];
     $scope.addParam = function () {
         if ($scope.eventWhat['parameters'] == undefined) {
@@ -269,13 +272,11 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
         $scope.eventWhat['parameters'].push('');
     }
     $scope.removeParam = function (index) {
-        if ($scope.eventWhat != undefined) {
-            var numPar = parseInt($scope.eventWhat['parameters']);
-            var result = numPar - 1;
+        if ($scope.eventWhat != undefined && $scope.eventWhat['parameters'] != undefined) {
+            console.log($scope.eventWhat);
             $scope.eventWhat['parameters'].splice(index, 1);
 
         }
-        return result;
     }
 }]);
 

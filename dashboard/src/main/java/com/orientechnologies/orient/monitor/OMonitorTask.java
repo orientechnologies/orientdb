@@ -15,8 +15,6 @@ import java.util.TimerTask;
 
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.monitor.OMonitorPlugin.LOG_LEVEL;
