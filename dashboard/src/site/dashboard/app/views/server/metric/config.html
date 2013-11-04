@@ -1,0 +1,55 @@
+<div class="row-fluid">
+    <div class="span12" ng-hide="popover.realtime">
+        <label>{{ 'metric.resolution' | i18n }}</label>
+        <select class="input-small" ng-model="popover.compress">
+            <option value="1">1m</option>
+            <option value="5">5m</option>
+            <option value="30">30m</option>
+            <option value="60">1h</option>
+        </select>
+    </div>
+</div>
+
+<div class="row-fluid">
+    <div class="span12" ng-hide="popover.realtime">
+        <label>{{ 'metric.range' | i18n }}</label>
+        <div class="metric-range" ng-model="popover.range" rangepicker="popover.range">
+            <i class="icon-calendar"></i>
+            <span></span>
+            <i class="icon-angle-down"></i>
+        </div>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span12" ng-show="popover.realtime">
+        <label>{{ 'metric.polling' | i18n }}</label>
+        <select class="input-small" ng-model="popover.pollTime">
+            <option value="5000">5s</option>
+            <option value="10000">10s</option>
+            <option value="20000">20s</option>
+            <option value="30000">30s</option>
+        </select>
+    </div>
+</div>
+<div class="row-fluid">
+    <div class="span12">
+        <label>{{ 'metric.realtime' | i18n }}</label>
+
+        <div class="onoffswitch">
+            <input type="checkbox" name="onoffswitch" ng-model="popover.realtime"
+                   class="onoffswitch-checkbox"
+                   id="myonoffswitch-{{ config.name }}">
+            <label class="onoffswitch-label"
+                   for="myonoffswitch-{{ config.name }}">
+                <div class="onoffswitch-inner"></div>
+                <div class="onoffswitch-switch"></div>
+            </label>
+        </div>
+    </div>
+</div>
+<form>
+    <div class="btn-group">
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button class="btn btn-primary" ng-click="hide();applyChanges()">Apply changes</button>
+    </div>
+</form>

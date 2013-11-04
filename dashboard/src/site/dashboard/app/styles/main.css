@@ -49,14 +49,17 @@ body {
 .side-nav > li > a {
     width: 225px;
 }
-.side-nav > li > a:hover{
+
+.side-nav > li > a:hover {
     background-color: #A5360F !important;
     color: #FFFFFF;
 }
+
 .side-nav > li.active > a {
     background-color: #A5360F !important;
     color: #FFFFFF;
 }
+
 .side-nav {
     background-color: #222222;
     border: medium none;
@@ -71,6 +74,7 @@ body {
     width: 225px;
 
 }
+
 .navbar .container-fluid .brand {
     background: url("../img/orientdb-logo-full.png") no-repeat scroll 0 9px rgba(0, 0, 0, 0);
     width: 233px;
@@ -160,6 +164,7 @@ button.btn-primary, .btn.btn-primary {
 
     text-shadow: none !important;
 }
+
 .box {
     background: none repeat scroll 0 0 #c95b5b;
     border: 0 none;
@@ -362,7 +367,7 @@ section {
     color: #FFFFFF !important;
 }
 
-.widget.boxed.blue {
+.widget.boxed.black {
     -moz-border-bottom-colors: none;
     -moz-border-left-colors: none;
     -moz-border-right-colors: none;
@@ -373,8 +378,52 @@ section {
     border-width: 0 1px 1px;
 }
 
-.widget.boxed.blue > .widget-title {
+.widget.boxed.black > .widget-title {
     background-color: #333333;
+}
+
+.widget.boxed.grey {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: #d3d3d3;
+    border-image: none;
+    border-style: none solid solid;
+    border-width: 0 1px 1px;
+}
+
+.widget.boxed.grey > .widget-title {
+    background-color: #d3d3d3;
+    color: #000000 !important;
+    padding: 0px 0px 0px;
+
+}
+
+.widget.boxed.grey > .widget-title > .actions {
+    padding: 0px 0px 0px;
+    margin: 0px;
+}
+
+.widget.boxed.grey > .widget-title > .widget-caption {
+
+    padding-top: 15px;
+    padding-left: 10px;
+}
+
+.widget.boxed.blue {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    border-color: #428bca;
+    border-image: none;
+    border-style: none solid solid;
+    border-width: 0 1px 1px;
+}
+
+.widget.boxed.blue > .widget-title {
+    background-color: #428bca;
 }
 
 .logDate {
@@ -481,6 +530,7 @@ section {
     cursor: pointer;
     margin-right: 0;
     padding: 8px 8px 7px;
+    font-size: 13px;
 }
 
 .metric-range span {
@@ -746,11 +796,11 @@ div.pagination span.disabled {
     right: 0px;
 }
 
-
 .navbar-collapse:before, .navbar-collapse:after {
     content: " ";
     display: table;
 }
+
 .navbar-collapse:before, .navbar-collapse:after {
     content: " ";
     display: table;
@@ -759,13 +809,16 @@ div.pagination span.disabled {
 .navbar-collapse:after {
     clear: both;
 }
+
 .navbar-collapse:before, .navbar-collapse:after {
     content: " ";
     display: table;
 }
+
 .navbar-collapse:after {
     clear: both;
 }
+
 .navbar-collapse:before, .navbar-collapse:after {
     content: " ";
     display: table;
@@ -774,20 +827,24 @@ div.pagination span.disabled {
 .navbar-inverse .navbar-collapse, .navbar-inverse .navbar-form {
     border-color: #101010;
 }
+
 .navbar-collapse.collapse {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
     padding-bottom: 0;
 }
+
 .collapse {
     display: none;
 }
+
 .navbar-collapse {
     border-top: 0 none;
     box-shadow: none;
     width: auto;
 }
+
 .navbar-collapse {
     border-top: 1px solid rgba(0, 0, 0, 0);
 
@@ -795,21 +852,26 @@ div.pagination span.disabled {
     max-height: 340px;
     overflow-x: visible;
 }
+
 #wrapper {
     padding-left: 225px;
 }
+
 .navbar-inverse .navbar-brand {
     color: #999999;
 }
+
 .navbar-brand {
     float: left;
     font-size: 18px;
     line-height: 20px;
     padding: 15px;
 }
+
 .navbar-toggle {
     display: none;
 }
+
 .navbar-toggle {
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid rgba(0, 0, 0, 0);
@@ -821,22 +883,26 @@ div.pagination span.disabled {
     padding: 9px 10px;
     position: relative;
 }
+
 .navbar-inverse {
     background-color: #222222;
     border-color: #080808;
     border-bottom: 5px solid #FF6600;
 }
+
 .navbar-right {
     float: right !important;
 }
+
 .chart-loader {
     margin: 0 auto;
     display: block;
 }
 
-.no-margin{
-    margin:0px !important;
+.no-margin {
+    margin: 0px !important;
 }
+
 .dashboard-metric .widget-caption {
     vertical-align: text-bottom;
 }
@@ -844,10 +910,22 @@ div.pagination span.disabled {
 .text-right {
     text-align: right;
 }
+
 .viewChart {
     width: 80%; /* desired relative width */
     left: 10%; /* (100%-width)/2 */
     /* place center */
     margin-left: auto;
     margin-right: auto;
+}
+
+.config .popover {
+    top: 28px !important;
+    left: -190px !important;
+}
+
+.config .popover.bottom .arrow {
+    left: 90%;
+    margin-left: -10px;
+    top: -10px;
 }
