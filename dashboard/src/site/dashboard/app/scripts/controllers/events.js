@@ -18,6 +18,10 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
     }
 
+    $scope.translate = function(){
+        var prova = "c'iao";
+        console.log(replace(/'/))
+    }
     $scope.refresh();
 
     $scope.getEvents = function () {
@@ -159,21 +163,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         })
     };
-//        MetricConfig.saveConfig(result, function (data) {
-//            Utilities.message($scope, $modal, $q, {
-//                title: 'Message',
-//                body: data,
-//                success: function () {
-//                    $scope.refreshPage();
-//                }
-//            });
-//        }, function (error) {
-//            Utilities.message($scope, $modal, $q, {
-//                title: 'Error',
-//                body: error
-//
-//            });
-//        })
 
     $scope.newEvent = function () {
         var object = {"name": "", '@rid': "#-1:-1", "@class": "Event"};
@@ -197,13 +186,13 @@ dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$rout
         return false;
     }
 
-    $scope.checkValidForm = function(){
+    $scope.checkValidForm = function () {
 
-        if($scope.eventWhen['info']== undefined && $scope.eventWhen['alertValue'] == undefined && $scope.eventWhen['type'] == undefined)        {
+        if ($scope.eventWhen['info'] == undefined && $scope.eventWhen['alertValue'] == undefined && $scope.eventWhen['type'] == undefined) {
             console.log('false1')
             return true;
         }
-        if($scope.eventWhen['alertValue'] != null && $scope.eventWhen['type'] == null){
+        if ($scope.eventWhen['alertValue'] != null && $scope.eventWhen['type'] == null) {
             console.log('false2')
             return true;
         }
@@ -228,21 +217,34 @@ dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
             for (m in $scope.metrics) {
-                $scope.metric.push($scope.metrics[m].name);
-
+                $scope.metric.push($scope.metrics[m]['name']);
             }
-
         }
 
+
     });
-    $scope.submit = function () {
-//          console.log($scope.eventWhen['operator'])
-//          $scope.eventWhen['operator'] = $scope.eventWhen['operator']['name'];
-//          $scope.hide();
+    $scope.changeMetric = function () {
+
+
+        for (m in $scope.metrics) {
+            if ($scope.metrics[m]['name'] == $scope.eventWhen['name']) {
+                if ($scope.metrics[m]['type'] == 'CHRONO') {
+                    $scope.parameters = ["entries", "min", "max", "average", "total" ];
+                }
+                else {
+                    $scope.parameters = ["value"];
+                }
+            }
+        }
 
     }
 
-}]);
+    $scope.submit = function () {
+        console.log($scope.eventWhen['name']);
+    }
+
+}
+]);
 
 dbModule.controller("SchedulerWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
@@ -257,7 +259,6 @@ dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$rou
 
     $scope.properties = $scope.eventWhat;
 }]);
-
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
     $scope.languages = ['SQL', 'Javascript'];
     $scope.addParam = function () {
@@ -266,18 +267,19 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
         }
 
         $scope.eventWhat['parameters'].push('');
-
-
     }
     $scope.removeParam = function (index) {
         if ($scope.eventWhat != undefined) {
             var numPar = parseInt($scope.eventWhat['parameters']);
-
             var result = numPar - 1;
-
             $scope.eventWhat['parameters'].splice(index, 1);
 
         }
         return result;
     }
 }]);
+
+
+
+
+

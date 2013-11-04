@@ -52,7 +52,6 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OServerHandlerAbstract;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.mail.OMailProfile;
 
 public class OMonitorPlugin extends OServerHandlerAbstract {
 	public enum LOG_LEVEL {
@@ -91,7 +90,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public static final String CLASS_USER_CONFIGURATION = "UserConfiguration";
 	public static final String CLASS_MAIL_PROFILE = "OMailProfile";
-	
+
 	public static final String CLASS_METRIC_CONFIG = "MetricConfig";
 
 	private OServer serverInstance;
@@ -295,7 +294,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		metrics.createProperty("name", OType.STRING);
 		metrics.createProperty("operator", OType.STRING);// Greater, Less
 		metrics.createProperty("parameter", OType.STRING);
-		metrics.createProperty("value", OType.STRING);
+		metrics.createProperty("value", OType.DOUBLE);
 
 		final OClass http = schema.createClass(CLASS_HTTP_WHAT);
 		http.setSuperClass(eventWhat);
@@ -333,7 +332,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		profile.createProperty("starttlsEnable", OType.BOOLEAN);
 		profile.createProperty("dateFormat", OType.STRING);
 		profile.createProperty("host", OType.STRING);
-		
+
 		userConfig.createProperty("user", OType.LINK, ouser);
 		userConfig.createProperty("mailProfile", OType.LINK, profile);
 

@@ -604,11 +604,11 @@ ul.horizontallist, ol.horizontallist {
 }
 
 div.functionwhatform select.ng-invalid.ng-dirty, div.functionwhatform input.ng-invalid.ng-dirty, div.mailwhatform input.ng-invalid.ng-dirty {
-    border: 2px solid #FA787E;
+    border: 1px solid #FA787E;
 }
 
 div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-valid.ng-dirty, div.mailwhatform input.ng-valid.ng-dirty {
-    border: 2px solid #78FA89;
+    border: 1px solid #78FA89;
 }
 
 .pagination_limit {
