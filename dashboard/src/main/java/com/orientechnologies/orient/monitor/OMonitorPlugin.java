@@ -354,7 +354,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 			final OClass dictionary = schema.createClass(CLASS_DICTIONARY);
 			final OProperty name = dictionary.createProperty("name",
 					OType.STRING);
-			name.createIndex(INDEX_TYPE.UNIQUE);
+			name.createIndex(INDEX_TYPE.UNIQUE_HASH_INDEX);
 		}
 
 		if (dictionary == null)
