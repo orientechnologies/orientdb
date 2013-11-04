@@ -82,6 +82,9 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             var tmp = data.result;
             if (tmp.length > 0) {
                 $scope.selectedConfig = tmp[0];
+                if (!$scope.config['metrics']) {
+                    $scope.config['metrics'] = new Array;
+                }
                 if ($scope.config['metrics']) {
                     $scope.savedMetrics = tmp.filter(function (elem) {
                         var found = true;

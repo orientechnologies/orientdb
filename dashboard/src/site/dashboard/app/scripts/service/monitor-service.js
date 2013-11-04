@@ -264,7 +264,7 @@ monitor.factory('Settings', function ($http, $resource) {
     resource.new = function () {
         var conf = {};
         conf['@class'] = 'UserConfiguration';
-
+        conf['metrics'] = new Array;
         return conf;
     }
     resource.put = function (config, callback) {
