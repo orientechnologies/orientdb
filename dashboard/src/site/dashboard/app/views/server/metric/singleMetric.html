@@ -9,51 +9,56 @@
 
                 <div class="actions span8">
                     <div class="row-fluid">
-                        <div class="span4">
-
-                            <select class="input-small" ng-hide="realtime" ng-model="compress">
-                                <option value="1">1m</option>
-                                <option value="5">5m</option>
-                                <option value="30">30m</option>
-                                <option value="60">1h</option>
-                            </select>
-
-                            <div class="metric-range" ng-hide="false" ng-model="range" rangepicker="range">
-                                <i class="icon-calendar"></i>
-                                <span></span>
-                                <i class="icon-angle-down"></i>
-                            </div>
-                            <select class="input-small" ng-show="realtime" ng-model="pollTime">
-                                <option value="5000">5s</option>
-                                <option value="10000">10s</option>
-                                <option value="20000">20s</option>
-                                <option value="30000">30s</option>
-                            </select>
-                        </div>
                         <div class="span8">
-                            <div class="span3">
+                            <div class="span6" ng-hide="realtime">
+                                <select class="input-small" ng-model="compress">
+                                    <option value="1">1m</option>
+                                    <option value="5">5m</option>
+                                    <option value="30">30m</option>
+                                    <option value="60">1h</option>
+                                </select>
 
                             </div>
-
-                            <div class="span9 dropdown">
-
-                                <div class="span3">
-                                    <a class="btn btn-trasparent" ng-class="{ 'btn-inverse' : 'bar' == render
-                                    }"
-                                       href="javascript:void(0)" ng-click="render = 'bar'">
-                                        <i class="icon-bar-chart"></i>
-                                    </a>
+                            <div class="span6" ng-hide="realtime">
+                                <div class="metric-range" ng-model="range" rangepicker="range">
+                                    <i class="icon-calendar"></i>
+                                    <span></span>
+                                    <i class="icon-angle-down"></i>
                                 </div>
-                                <div class="span3">
-                                    <a class="btn btn-trasparent "
-                                       ng-class="{ 'btn-inverse' : 'area' == render }"
-                                       href="javascript:void(0)" ng-click="render = 'area'">
-                                        <i class="icon-signal"></i>
-                                    </a>
-                                </div>
-
-                                <div class="span6">
-                                    <div class="pull-right">
+                            </div>
+                            <div class="span6" ng-show="realtime">
+                                <select class="input-small" ng-model="pollTime">
+                                    <option value="5000">5s</option>
+                                    <option value="10000">10s</option>
+                                    <option value="20000">20s</option>
+                                    <option value="30000">30s</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="span4">
+                            <div class="span12 dropdown">
+                                <div class="btn-toolbar">
+                                    <div class="btn-group">
+                                        <a class="btn btn-trasparent" ng-class="{ 'btn-inverse' : 'bar' == render
+                                        }"
+                                           href="javascript:void(0)" ng-hide="realtime" ng-click="render = 'bar'">
+                                            <i class="icon-bar-chart"></i>
+                                        </a>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a class="btn btn-trasparent "
+                                           ng-class="{ 'btn-inverse' : 'area' == render }"
+                                           href="javascript:void(0)" ng-click="render = 'area'">
+                                            <i class="icon-signal"></i>
+                                        </a>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a class="btn btn-trasparent "
+                                           href="javascript:void(0)" ng-hide="fs"  ng-click="fullScreen();">
+                                            <i class="icon-fullscreen"></i>
+                                        </a>
+                                    </div>
+                                    <div class="btn-group">
                                         <a class="btn btn-trasparent dropdown-toggle " data-toggle="dropdown"
                                            href="javascript:void(0)">
                                             <i class="icon-gears"></i>

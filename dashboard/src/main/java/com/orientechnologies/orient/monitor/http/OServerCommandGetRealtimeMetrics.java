@@ -181,7 +181,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 
 		Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
 
-		if (compress.equals("none")) {
+		if (compress.equals("none") || compress.equals("1")) {
 			for (ODocument oDocument : docs) {
 				oDocument.field("name", aggregation.get(oDocument.field("name")));
 			}
@@ -230,7 +230,6 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 
 			for (String k : mapDocs.get(d).keySet()) {
 				List<ODocument> doc = mapDocs.get(d).get(k);
-				System.out.println(doc.size());
 				ODocument retDoc = new ODocument();
 				for (ODocument oDocument : doc) {
 					retDoc.field("class", oDocument.field("class"));

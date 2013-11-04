@@ -480,7 +480,6 @@ section {
     color: #FFFFFF;
     cursor: pointer;
     margin-right: 0;
-    margin-top: -8px;
     padding: 8px 8px 7px;
 }
 
@@ -844,4 +843,11 @@ div.pagination span.disabled {
 
 .text-right {
     text-align: right;
+}
+.viewChart {
+    width: 80%; /* desired relative width */
+    left: 10%; /* (100%-width)/2 */
+    /* place center */
+    margin-left: auto;
+    margin-right: auto;
 }

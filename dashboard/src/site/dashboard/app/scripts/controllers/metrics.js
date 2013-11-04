@@ -1,20 +1,27 @@
 'use strict';
 
 var app = angular.module('MonitorApp');
-app.controller('SingleMetricController', function ($scope, $location, $routeParams, $timeout, Monitor, Metric) {
+app.controller('SingleMetricController', function ($scope, $location, $routeParams, $timeout, Monitor, Metric,$modal,$q) {
 
 
         $scope.loading = false;
         $scope.pollTime = 10000;
         $scope.render = "bar";
+        $scope.compress = "1";
+
+
+        $scope['fs'] = $scope.metricScope['fullScreen'];
         $scope.metricScope.$watch($scope.metric, function (data) {
             $scope.config = data;
+
             if (data && $scope.range)
                 $scope.refreshData(data, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
 
         });
         $scope.$watch('range', function (data) {
-            //$scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
+            if (data && $scope.config) {
+                $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
+            }
         });
         var real;
         $scope.startRealtime = function () {
@@ -27,7 +34,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             $timeout.cancel(real);
         }
         $scope.$watch('compress', function (data) {
-            if (data) {
+            if (data && $scope.config) {
                 $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
             }
         });
@@ -37,6 +44,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     $scope.metricsData = null;
                     $scope.refreshRealtime($scope.config)
                     $scope.startRealtime();
+                    $scope.render = "area";
                 } else {
                     $scope.metricsData = null;
                     $scope.stopRealtime();
@@ -46,6 +54,16 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                 }
             }
         });
+        $scope.fullScreen = function () {
+            var modalScope = $scope.$new(true);
+            modalScope.metricScope = modalScope;
+            modalScope.metricScope.selectedConfig = $scope.config;
+            modalScope.metricScope.fullScreen = true;
+            var modalPromise = $modal({template: 'views/modal/metric.html', scope: modalScope,modalClass : 'viewChart'});
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
+        }
         $scope.refreshRealtime = function (metrics) {
 
             var names = "";

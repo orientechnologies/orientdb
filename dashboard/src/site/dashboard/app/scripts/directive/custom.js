@@ -52,6 +52,7 @@ Widget.directive('rangepicker', function () {
                         'This Month': [moment().startOf('month'), moment().endOf('month')],
                         'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
                     },
+                    timePicker : true,
                     startDate: moment().subtract('days', 29),
                     endDate: moment()
                 },
@@ -60,12 +61,11 @@ Widget.directive('rangepicker', function () {
                     scope.$apply(function () {
                         ngModel.$setViewValue({ start: start, end: end});
                     });
-                    $(child).html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+                    $(child).html(start.format('MMM D, YYYY') + ' - ' + end.format('MMM D, YYYY'));
                 });
-            // scope[range] = { start : moment().subtract('days', 6) , end : moment()};
             ngModel.$setViewValue({ start: moment().subtract('days', 6), end: moment()});
             var child = element.children('span')[0]
-            $(child).html(moment().subtract('days', 6).format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
+            $(child).html(moment().subtract('days', 6).format('MMM D, YYYY') + ' - ' + moment().format('MMM D, YYYY'));
         }
     };
 });
