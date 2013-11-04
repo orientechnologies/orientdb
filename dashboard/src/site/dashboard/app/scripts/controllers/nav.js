@@ -1,9 +1,10 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('NavController', function ($scope, $routeParams, $location, Monitor) {
+    .controller('NavController', function ($scope, $routeParams, $location, Login) {
 
 
+        $scope.login = Login;
         $scope.menus = [
             {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard' },
             {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
@@ -34,4 +35,7 @@ angular.module('MonitorApp')
             $scope.setSelected();
         });
 
+        $scope.logout = function () {
+            Login.logout();
+        }
     });

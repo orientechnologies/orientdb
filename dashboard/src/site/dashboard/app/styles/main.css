@@ -145,13 +145,21 @@ button.btn-primary, .btn.btn-primary {
 }
 
 .well {
-    background: none repeat scroll 0 0 #F7F7F7;
+    background: none repeat scroll 0 0 #f5f5f5;
     border: 0 none;
     box-shadow: none !important;
     padding: 20px;
     text-shadow: none !important;
 }
 
+.well-fluid {
+    background: none repeat scroll 0 0 #f5f5f5;
+    border: 0 none;
+    box-shadow: none !important;
+    padding: 8px 0px;
+
+    text-shadow: none !important;
+}
 .box {
     background: none repeat scroll 0 0 #c95b5b;
     border: 0 none;
@@ -179,7 +187,6 @@ button.btn-primary, .btn.btn-primary {
     cursor: pointer;
     filter: none;
     outline: medium none;
-    padding: 7px 14px;
     text-shadow: none;
 }
 
@@ -833,4 +840,8 @@ div.pagination span.disabled {
 }
 .dashboard-metric .widget-caption {
     vertical-align: text-bottom;
+}
+
+.text-right {
+    text-align: right;
 }

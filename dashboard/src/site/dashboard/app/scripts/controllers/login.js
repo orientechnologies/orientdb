@@ -1,18 +1,11 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('LoginController', function ($scope, Monitor) {
-        $scope.awesomeThings = [
-            'HTML5 Boilerplate',
-            'AngularJS',
-            'Karma'
-        ];
+    .controller('LoginController', function ($scope, Monitor,Login) {
 
         $scope.login = function () {
-            Monitor.connect($scope.username, $scope.password, function (data) {
 
-            }, function (data) {
+            Login.login($scope.username, $scope.password);
 
-            });
         }
     });

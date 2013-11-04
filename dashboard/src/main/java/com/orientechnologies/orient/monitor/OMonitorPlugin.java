@@ -112,7 +112,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 				updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
 			else if (param.name.equalsIgnoreCase("dbName")) {
 				dbName = param.value;
-				dbName = "local:" + OServerMain.server().getDatabaseDirectory()
+				dbName = "plocal:" + OServerMain.server().getDatabaseDirectory()
 						+ dbName;
 			} else if (param.name.equalsIgnoreCase("dbUser"))
 				dbUser = param.value;
@@ -227,6 +227,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		OLogManager.instance().info(this, "MONITOR creating %s database...",
 				dbName);
 		db.create();
+		
 
 		final OSchema schema = db.getMetadata().getSchema();
 
@@ -241,8 +242,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		snapshot.createProperty("dateFrom", OType.DATETIME);
 		snapshot.createProperty("dateTo", OType.DATETIME);
 
-		final OClass metric = schema.createAbstractClass(CLASS_METRIC);
-		metric.createProperty("name", OType.STRING);
+		final OClass metric = schema.createClass(CLASS_METRIC);
+		OProperty prop = metric.createProperty("name", OType.STRING);
+		prop.createIndex(INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
 		metric.createProperty("snapshot", OType.LINK, snapshot);
 
 		final OClass log = schema.createClass(CLASS_LOG);

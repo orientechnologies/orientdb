@@ -76,11 +76,4 @@ angular.module('MonitorApp')
                 $scope.config = data.result[0];
             }
         });
-        $scope.login = function () {
-            Monitor.connect($scope.username, $scope.password, function (data) {
-                $location.path("/home");
-            }, function (data) {
-                console.log("ciao");
-            });
-        }
     });

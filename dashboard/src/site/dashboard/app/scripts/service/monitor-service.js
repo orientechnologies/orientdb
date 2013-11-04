@@ -59,7 +59,7 @@ monitor.factory('Notification', function ($http, $resource) {
 
     resource.latest = function (callback) {
         var query = 'select * from Log order by date desc fetchPlan *:1'
-        $http.post(API + 'command/monitor/sql/-/10', query).success(function (data) {
+        $http.post(API + 'command/monitor/sql/-/5', query).success(function (data) {
             callback(data);
         });
     }

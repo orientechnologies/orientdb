@@ -8,7 +8,7 @@
     <a class="navbar-brand" href="index.html">OrientDB Enterprise</a>
 </div>
 <div class="collapse navbar-collapse navbar-ex1-collapse">
-    <ul class="nav navbar-nav side-nav">
+    <ul class="nav navbar-nav side-nav" ng-show="login.logged">
         <li ng-repeat="menu in menus" ng-class="{ active : menu == selectedMenu }">
             <a ng-click="navigate(menu)" href="javascript:void(0)">
                 <i class="{{ menu.icon }}"></i>
@@ -18,10 +18,10 @@
         </li>
     </ul>
     <ul class="nav navbar-nav navbar-right navbar-user">
-        <li class="dropdown user-dropdown">
+        <li class="dropdown user-dropdown" ng-show="login.logged">
             <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
                 <i class="icon-user"></i>
-                John Smith
+                {{ login.username }}
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
@@ -38,7 +38,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="javascript:void(0)" ng-click="logout()">
                         <i class="icon-power-off"></i>
                         Log Out
                     </a>

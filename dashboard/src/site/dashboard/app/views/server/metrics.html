@@ -7,24 +7,6 @@
         <hr>
     </div>
     <div ng-controller="MetricsMonitorController">
-        <!--<div class="row-fluid">
-            <div class="well">
-                <label for="metricOnline" class="span2">{{ 'dashboard.metrics' | i18n }}</label>
-                <select id="metricOnline" ui-select2 ng-model="metric" class="span4" data-placeholder="Pick a Metric">
-                    <option ng-repeat="met in metrics" value="{{ met.name }}">{{ met.name }}</option>
-                </select>
-
-                <div class="span2">
-                    <button class="btn" ng-click="addMetric()"><span class="icon-plus"></span></button>
-
-                </div>
-                <div class="span4 metric-range" ng-model="range" rangepicker="range">
-                    <i class="icon-calendar"></i>
-                    <span></span>
-                    <i class="icon-angle-down"></i>
-                </div>
-            </div>
-        </div>-->
         <div class="row-fluid">
             <div class="span4">
 
@@ -69,7 +51,8 @@
                         </div>
                         <div class="actions">
                             <a class="btn btn-inverse  pull-right"
-                               href="javascript:void(0)" ng-click="saveMetricConfig()">
+                               href="javascript:void(0)" ng-disabled="metricForm.$invalid"
+                               ng-click="saveMetricConfig()">
                                 <i class="icon-save"> {{ 'dashboard.metric.save' | i18n }}</i>
                             </a>
                             <a class="btn btn-inverse  pull-right"
@@ -79,13 +62,14 @@
                         </div>
                     </div>
                     <div class="widget-body">
-                        <form class="form-horizontal">
+                        <form class="form-horizontal" name="metricForm">
                             <div class="control-group">
                                 <label class="control-label" for="inputName">{{ 'dashboard.metric.name' | i18n
                                     }}</label>
 
                                 <div class="controls">
-                                    <input type="text" id="inputName" placeholder="Name" ng-model="selectedConfig.name">
+                                    <input type="text" id="inputName" required placeholder="Name"
+                                           ng-model="selectedConfig.name">
                                     <button class="btn pull-right" ng-click="addConfig()"><span
                                             class="icon-plus"></span>
                                     </button>
@@ -97,7 +81,7 @@
                                     }}</label>
 
                                 <div class="controls">
-                                    <select ng-model="selectedConfig.server" class="span3"
+                                    <select ng-model="selectedConfig.server" required class="span3"
                                             ng-options="s['@rid'] as s.name for s in servers"
                                             data-placeholder="Pick a Server">
 
@@ -109,14 +93,19 @@
                             </div>
                             <div class="control-group" ng-repeat="conf in selectedConfig.config">
                                 <label class="control-label">{{ 'dashboard.metrics' | i18n }}</label>
-                                <select ui-select2 ng-model="conf.name" class="span4" data-placeholder="Pick a Metric">
+                                <select ui-select2 ng-model="conf.name" required class="span4"
+                                        data-placeholder="Pick a Metric">
                                     <option ng-repeat="met in metrics" value="{{ met.name }}">{{ met.name }}</option>
                                 </select>
-                                <select ui-select2 ng-model="conf.field" class="span4" data-placeholder="Pick a Metric">
+                                <select ui-select2 ng-model="conf.field" required class="span4"
+                                        data-placeholder="Pick a Metric">
                                     <option ng-repeat="f in fields" value="{{ f }}">{{ f }}</option>
                                 </select>
-                                <button class="btn" ng-click="removeMetric(met)"><span class="icon-trash"></span>
-                                </button>
+
+                                <div class="pull-right">
+                                    <button class="btn" ng-click="removeMetric(met)"><span class="icon-trash"></span>
+                                    </button>
+                                </div>
                             </div>
 
                         </form>
