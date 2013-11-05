@@ -2,11 +2,10 @@
     <div class="span12">
         <div class="widget boxed grey" ng-show="config">
             <div class="widget-title">
-                <div class="widget-caption span4">
+                <div class="widget-caption span6">
                     <i class="icon-bar-chart"></i>
                     {{ config.name }}
                 </div>
-
                 <div class="actions dropdown">
                     <div class="btn-toolbar">
                         <div class="btn-group">
@@ -30,7 +29,7 @@
                             </a>
                         </div>
                         <div class="btn-group config">
-                            <a class="btn btn-trasparent" data-placement="bottom" data-title="Chart configuration" bs-popover="'views/server/metric/config.html'" data-toggle="dropdown"
+                            <a class="btn btn-trasparent" data-placement="bottom" data-title="Chart configuration" ng-controller="ConfigChartController" bs-popover="'views/server/metric/config.html'" data-toggle="dropdown"
                                href="javascript:void(0)">
                                 <i class="icon-gears"></i>
                                 <b class="caret"></b>

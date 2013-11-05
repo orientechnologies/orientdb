@@ -52,7 +52,8 @@ Widget.directive('rangepicker', function () {
                         'This Month': [moment().startOf('month'), moment().endOf('month')],
                         'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
                     },
-                    timePicker : true,
+                    opens: 'left',
+                    timePicker: true,
                     startDate: moment().subtract('days', 29),
                     endDate: moment()
                 },
@@ -63,9 +64,17 @@ Widget.directive('rangepicker', function () {
                     });
                     $(child).html(start.format('MMM D, YYYY') + ' - ' + end.format('MMM D, YYYY'));
                 });
-            ngModel.$setViewValue({ start: moment().subtract('days', 6), end: moment()});
+
             var child = element.children('span')[0]
-            $(child).html(moment().subtract('days', 6).format('MMM D, YYYY') + ' - ' + moment().format('MMM D, YYYY'));
+            if (scope["range"]) {
+                ngModel.$setViewValue();
+                $(child).html(scope["range"].start.format('MMM D, YYYY') + ' - ' + scope["range"].end.format('MMM D, YYYY'));
+            } else {
+                ngModel.$setViewValue({ start: moment().subtract('days', 6), end: moment()});
+                $(child).html(moment().subtract('days', 6).format('MMM D, YYYY') + ' - ' + moment().format('MMM D, YYYY'));
+            }
+
+
         }
     };
 });
@@ -122,15 +131,15 @@ Widget.directive('rickarea', function () {
     var createStackedArea = function (scope, data, element, render) {
 
         var graph = new Rickshaw.Graph({
-            height : "500",
+            height: "500",
             series: [
-                {   color : 'steelblue',
+                {   color: 'steelblue',
                     data: [
-                    { x: 0, y: 2 },
-                    { x: 1, y: 4 },
-                    { x: 2, y: 4 },
-                    { x: 3, y: 4 }
-                ] }
+                        { x: 0, y: 2 },
+                        { x: 1, y: 4 },
+                        { x: 2, y: 4 },
+                        { x: 3, y: 4 }
+                    ] }
             ],
             renderer: 'area',
             element: element[0]

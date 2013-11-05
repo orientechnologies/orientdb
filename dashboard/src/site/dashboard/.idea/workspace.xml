@@ -213,7 +213,7 @@
     <file path="/metricswhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381492418071" ignored="false" />
     <file path="/singleMetric.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383242049827" ignored="false" />
     <file path="/metrics.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383230604697" ignored="false" />
-    <file path="/settings.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383656137453" ignored="false" />
+    <file path="/settings.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383657251328" ignored="false" />
     <file path="/db.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382975276477" ignored="false" />
     <file path="/query.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382697369251" ignored="false" />
     <file path="/overview.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382974969911" ignored="false" />
@@ -289,9 +289,9 @@
       <file leaf-file-name="settings.html" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="10" column="79" selection-start="388" selection-end="423" vertical-scroll-proportion="0.20169492">
+            <state line="25" column="39" selection-start="1392" selection-end="1392" vertical-scroll-proportion="0.6915254">
               <folding>
-                <element signature="n#style#0;n#form#0;n#div#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#form#0;n#div#0;n#div#4;n#div#0;n#!!top" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -309,7 +309,7 @@
       <file leaf-file-name="en.json" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="39" column="6" selection-start="1637" selection-end="1638" vertical-scroll-proportion="-2.2435896">
+            <state line="45" column="6" selection-start="1637" selection-end="1638" vertical-scroll-proportion="-2.2435896">
               <folding />
             </state>
           </provider>
@@ -330,7 +330,7 @@
       <file leaf-file-name="settings.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="110" column="66" selection-start="3668" selection-end="3668" vertical-scroll-proportion="-6.4150944">
+            <state line="130" column="72" selection-start="4297" selection-end="4297" vertical-scroll-proportion="-41.698112">
               <folding />
             </state>
           </provider>
@@ -800,7 +800,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="39" column="6" selection-start="1637" selection-end="1638" vertical-scroll-proportion="-2.2435896">
+        <state line="45" column="6" selection-start="1637" selection-end="1638" vertical-scroll-proportion="-2.2435896">
           <folding />
         </state>
       </provider>
@@ -844,16 +844,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="110" column="66" selection-start="3668" selection-end="3668" vertical-scroll-proportion="-6.4150944">
+        <state line="130" column="72" selection-start="4297" selection-end="4297" vertical-scroll-proportion="-41.698112">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="79" selection-start="388" selection-end="423" vertical-scroll-proportion="0.20169492">
+        <state line="25" column="39" selection-start="1392" selection-end="1392" vertical-scroll-proportion="0.6915254">
           <folding>
-            <element signature="n#style#0;n#form#0;n#div#0;n#div#3;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#form#0;n#div#0;n#div#4;n#div#0;n#!!top" expanded="true" />
           </folding>
         </state>
       </provider>

@@ -128,7 +128,6 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
     $scope.getMailSettings = function () {
 
-//        $scope.mainObject = $scope.config['mailProfile'];
         $scope.mailproperties = $scope.config['mailProfile'];
 
     }
