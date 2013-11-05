@@ -30,9 +30,10 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
                 }
             });
         }
-
+        console.log($scope.server);
 
     });
+
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -99,6 +100,8 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         if (data)
             $scope.getServerMetrics();
     });
+
+
 
 
 });

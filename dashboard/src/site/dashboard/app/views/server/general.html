@@ -14,7 +14,22 @@
                     data-placeholder="Pick a Server"></select>
         </div>
         <!--<div class="span4"><span>{{ 'general.serverUp' | i18n }}</span></div>-->
-        <div class="span4"><span>{{ 'general.lastMsg' | i18n }}</span></div>
+        <!--<div class="span4"><span>{{ 'general.lastMsg' | i18n }}</span></div>-->
+
+        <!--<p>-->
+        <div class="span4">
+            <i class="icon-angle-right"></i> Status: {{server.status}}
+            <br/>
+            <i class="icon-angle-right"></i> Num.CPU: {{server.configuration.cpus}}
+            <br/>
+            <i class="icon-angle-right"></i> Os name: {{server.configuration.os_name}}
+            <br>
+            <i class="icon-angle-right"></i> Os arch: {{server.configuration.os_arch}}
+            <br>
+            <i class="icon-angle-right"></i> Java vendor: {{server.configuration.java_vendor}}
+            <br>
+            <i class="icon-angle-right"></i> Java version: {{server.configuration.java_version}}
+        </div>
     </div>
 
 
