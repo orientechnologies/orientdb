@@ -241,6 +241,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		OLogManager.instance().info(this, "MONITOR creating %s database...",
 				dbName);
 		db.create();
+		
 
 		final OSchema schema = db.getMetadata().getSchema();
 
