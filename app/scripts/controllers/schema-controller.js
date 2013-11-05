@@ -15,12 +15,10 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
     $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'records'];
-
     $scope.refreshPage = function () {
         $scope.database.refreshMetadata($routeParams.database);
         $route.reload();
     }
-    $scope.refreshPage();
     $scope.setClass = function (clazz) {
         $scope.classClicked = clazz;
     }
@@ -228,7 +226,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                 }
             }, function (error) {
                 if (error) {
-                    console.log('error')
                     return false;
 
                 }

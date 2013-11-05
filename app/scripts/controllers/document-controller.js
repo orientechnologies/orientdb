@@ -218,7 +218,8 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
     $scope.save = function () {
         if (!$scope.isNew) {
             DocumentApi.updateDocument($scope.database, $scope.rid, $scope.doc, function (data) {
-                Notification.push({content: data});
+                console.log(JSON.stringify(data));
+                Notification.push({content: JSON.stringify(data)});
                 $route.reload();
             });
         } else {
