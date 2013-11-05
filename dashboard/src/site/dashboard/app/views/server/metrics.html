@@ -51,8 +51,8 @@
                         </div>
                         <div class="actions">
                             <button class="btn btn-inverse  pull-right"
-                               href="javascript:void(0)" ng-disabled="metricForm.$invalid"
-                               ng-click="saveMetricConfig()">
+                                    href="javascript:void(0)" ng-disabled="metricForm.$invalid"
+                                    ng-click="saveMetricConfig()">
                                 <i class="icon-save"> {{ 'dashboard.metric.save' | i18n }}</i>
                             </button>
                             <a class="btn btn-inverse  pull-right"
@@ -97,9 +97,10 @@
                                         data-placeholder="Pick a Metric">
                                     <option ng-repeat="met in metrics" value="{{ met.name }}">{{ met.name }}</option>
                                 </select>
-                                <select ui-select2 ng-model="conf.field" required class="span4"
+                                <select ui-select2 ng-model="conf.field"
+                                        required="" class="span4"
                                         data-placeholder="Pick a Metric">
-                                    <option ng-repeat="f in fields" value="{{ f }}">{{ f }}</option>
+                                    <option ng-repeat="f in fields | mvalue:mType:conf.name" value="{{ f }}">{{ f }}</option>
                                 </select>
 
                                 <div class="pull-right">

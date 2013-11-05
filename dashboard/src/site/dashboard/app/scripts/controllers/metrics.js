@@ -256,8 +256,8 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.rid = $routeParams.server;
     $scope.names = new Array;
     $scope.render = 'bar';
-    $scope.fields = ['value', 'entries', 'min', 'max', 'average', 'total'];
-
+    $scope.fields = ['value','entries', 'min', 'max', 'average', 'total'];
+    $scope.mType = {};
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
     });
@@ -267,6 +267,9 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             $scope.metric = $scope.metrics[0].name;
 
         }
+        $scope.metrics.forEach(function(elem){
+           $scope.mType[elem.name] = elem.type;
+        });
     });
     $scope.refreshMetricConfig = function () {
         MetricConfig.getAll(function (data) {
