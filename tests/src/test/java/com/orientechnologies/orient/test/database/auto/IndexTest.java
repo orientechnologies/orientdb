@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -96,7 +97,7 @@ public class IndexTest {
       // IT SHOULD GIVE ERROR ON DUPLICATED KEY
       Assert.assertTrue(false);
 
-    } catch (OIndexException e) {
+    } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
     }
   }
@@ -1158,7 +1159,7 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (ORecordDuplicatedException oie) {
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1195,7 +1196,7 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (ORecordDuplicatedException oie) {
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1230,7 +1231,7 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (ORecordDuplicatedException oie) {
     }
 
     Assert.assertEquals(
@@ -1270,7 +1271,7 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (ORecordDuplicatedException oie) {
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(

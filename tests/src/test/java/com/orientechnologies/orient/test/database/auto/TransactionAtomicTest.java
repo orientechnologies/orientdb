@@ -27,12 +27,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest {
@@ -180,7 +180,7 @@ public class TransactionAtomicTest {
       db.commit();
       Assert.assertTrue(false);
 
-    } catch (OIndexException e) {
+    } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
       db.rollback();
 
