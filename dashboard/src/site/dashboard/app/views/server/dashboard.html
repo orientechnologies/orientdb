@@ -106,7 +106,7 @@
 
     </div>
     <div class="row-fluid">
-        <div class="span6" ng-repeat="metr in config.metrics">
+        <div class="span6" ng-class="{ 'no-margin' : $index%2 == 0}" ng-repeat="metr in config.metrics">
             <div class="dashboard-metric" metricchart="config.metrics[$index]" chartheight="300" ></div>
         </div>
     </div>

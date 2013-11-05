@@ -20,10 +20,12 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         });
         var real;
         $scope.startRealtime = function () {
-            real = $timeout(function () {
-                $scope.refreshRealtime($scope.config);
-                $scope.startRealtime();
-            }, $scope.pollTime);
+            if ($scope.realtime) {
+                real = $timeout(function () {
+                    $scope.refreshRealtime($scope.config);
+                    $scope.startRealtime();
+                }, $scope.pollTime);
+            }
         }
         $scope.stopRealtime = function () {
             $timeout.cancel(real);
@@ -43,6 +45,9 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                         $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
                 }
             }
+        });
+        $scope.$on('$routeChangeStart', function (scope, next, current) {
+            $scope.stopRealtime();
         });
         $scope.fullScreen = function () {
             var modalScope = $scope.$new(true);
@@ -64,7 +69,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             if ($scope.popover.pollTime) {
                 $scope.pollTime = $scope.popover.pollTime;
             }
-            if ($scope.popover.realtime) {
+            if ($scope.popover.realtime != undefined) {
                 $scope.realtime = $scope.popover.realtime;
             } else {
                 $scope.refreshData($scope.config, $scope.range.start.format("YYYY-MM-DD HH:mm:ss"), $scope.range.end.format("YYYY-MM-DD HH:mm:ss"));
@@ -256,7 +261,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.rid = $routeParams.server;
     $scope.names = new Array;
     $scope.render = 'bar';
-    $scope.fields = ['value','entries', 'min', 'max', 'average', 'total'];
+    $scope.fields = ['value', 'entries', 'min', 'max', 'average', 'total'];
     $scope.mType = {};
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
@@ -267,8 +272,8 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             $scope.metric = $scope.metrics[0].name;
 
         }
-        $scope.metrics.forEach(function(elem){
-           $scope.mType[elem.name] = elem.type;
+        $scope.metrics.forEach(function (elem) {
+            $scope.mType[elem.name] = elem.type;
         });
     });
     $scope.refreshMetricConfig = function () {
@@ -321,7 +326,6 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 });
 
 app.controller('ConfigChartController', function ($scope, $location, $routeParams) {
-
 
 
 });
