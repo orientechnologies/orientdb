@@ -41,11 +41,11 @@
 <div ng-controller="HeaderController">
     <div ng-include src="'views/header.html'"></div>
 </div>
-
+<!--
     <div ng-controller="SpinnerController">
     <div ng-include src="'views/spinner.html'"></div>
 </div>
-
+-->
 
 <!-- Add your site or application content here -->
 <div class="container-fluid container-studio">
@@ -83,7 +83,7 @@
 <script src="components/angular-strap/dist/angular-strap.js"></script>
 <script src="components/bootstrap/docs/assets/js/bootstrap.js"></script>
 <script src="components/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-<script type="text/javascript" src="components/angular-localstorage/localStorageModule.js"></script>
+<script type="text/javascript" src="components/angular-localstorage/angular-local-storage.js"></script>
 <script type="text/javascript" src="components/codemirror/lib/codemirror.js"></script>
 <script type="text/javascript" src="components/codemirror/mode/javascript/javascript.js"></script>
 <script type="text/javascript" src="components/codemirror/mode/sql/sql.js"></script>
@@ -92,7 +92,11 @@
 <script type="text/javascript" src="components/angular-ui-codemirror/ui-codemirror.js"></script>
 <script src="components/angular-ui-bootstrap-bower/ui-bootstrap.js"></script>
 <script src="components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.js"></script>
+<<<<<<< HEAD
+<script type="text/javascript" src="components/nnnick-chartjs/Chart.min.js"></script>
+=======
 <script type="text/javascript" src="components/nnnick-chartjs/Chart.js"></script>
+>>>>>>> b142e26b7192a48a7e69efcbd54dd8ba52421eac
 <script type="text/javascript" src="components/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
 
 

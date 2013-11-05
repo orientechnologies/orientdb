@@ -233,8 +233,8 @@ form .required label:after {
     position: absolute;
     left: 50%;
     top: 50%;
-    margin-left: -32px; /* -1 * image width / 2 */
-    margin-top: -32px; /* -1 * image height / 2 */
+    margin-left: -100px; /* -1 * image width / 2 */
+    margin-top: -100px; /* -1 * image height / 2 */
     display: block;
 }
 
@@ -402,4 +402,11 @@ ul.horizontallist, ol.horizontallist {
 
 .pagination_select {
     margin-top: 22px;
+}
+
+table.editClass_panel {
+    margin-left: 20px;
+}
+table.editClass_panel>tbody>tr>td a {
+    margin-left: 5px;
 }

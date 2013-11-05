@@ -9,11 +9,11 @@
 angular.module('spinner.controller',['spinner.services']).controller("SpinnerController",['$scope','$routeParams','$http','$location','Spinner',function($scope,$routeParams,$http,$location,Spinner){
     $scope.sp = Spinner;
 
-    $scope.$on('$routeChangeStart', function(scope, next, current){
+/*    $scope.$on('$routeChangeStart', function(scope, next, current){
         Spinner.loading = true;
     });
 
     $scope.$on('$routeChangeSuccess', function(scope, next, current){
         Spinner.loading = false;
-    });
+    });*/
 }]);

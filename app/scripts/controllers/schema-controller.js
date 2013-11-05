@@ -16,7 +16,11 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 
     $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'records'];
 
-
+    $scope.refreshPage = function () {
+        $scope.database.refreshMetadata($routeParams.database);
+        $route.reload();
+    }
+    $scope.refreshPage();
     $scope.setClass = function (clazz) {
         $scope.classClicked = clazz;
     }
@@ -105,6 +109,36 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     for (inn in $scope.property) {
         $scope.propertyNames.push($scope.property[inn]['name'])
     }
+    $scope.createNewRecord = function (className) {
+        $location.path("/database/" + $scope.database.getName() + "/browse/create/" + className);
+    }
+    $scope.queryAll = function (className) {
+        $location.path("/database/" + $scope.database.getName() + "/browse/select * from " + className);
+    }
+
+    $scope.dropClass = function (nameClass) {
+
+        Utilities.confirm($scope, $modal, $q, {
+
+            title: 'Warning!',
+            body: 'You are dropping class ' + nameClass + '. Are you sure?',
+            success: function () {
+                var sql = 'DROP CLASS ' + nameClass;
+
+                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                    $location.path("/database/" + $scope.database.getName() + "/schema");
+
+                });
+
+            }
+
+        });
+
+    }
+    $scope.refreshPage = function () {
+        $scope.database.refreshMetadata($routeParams.database);
+    }
+
     $scope.listClasses = $scope.database.listNameOfClasses();
 
 
@@ -138,7 +172,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     }
     $scope.newIndex = function () {
         modalScope = $scope.$new(true);
-        modalScope.db = database;
+        modalScope.db = $scope.database;
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
         modalScope.propertiesName = $scope.propertyNames;
@@ -155,7 +189,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         modalScope.db = database;
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
-        modalScope.propertiesName = $scope.propertyNames;
         var modalPromise = $modal({template: 'views/database/newProperty.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
@@ -287,10 +320,17 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
 
     $scope.listTypeIndex = [ 'DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE', 'DICTIONARY_HASH_INDEX', 'FULLTEXT_HASH_INDEX', 'UNIQUE_HASH_INDEX', 'NOTUNIQUE_HASH_INDEX' ];
     $scope.newIndex = {"name": "", "type": "", "fields": "" }
-    $scope.namesProp = $scope.propertiesName;
+
     $scope.prop2add = new Array;
     $scope.nameIndexToShow = $scope.classInject + '.';
+    $scope.db.refreshMetadata($routeParams.database);
+    $scope.property = Database.listPropertiesForClass($scope.classInject);
+    $scope.propertyNames = new Array;
 
+    for (inn in $scope.property) {
+        $scope.propertyNames.push($scope.property[inn]['name'])
+    }
+    $scope.namesProp = $scope.propertyNames;
     $scope.addedField = function (nameField) {
         var index = $scope.prop2add.indexOf(nameField);
 
@@ -380,6 +420,8 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
                 if (i == 5) {
                     $scope.database.refreshMetadata($routeParams.database, function () {
                         $scope.parentScope.addProperties(prop);
+                        $scope.parentScope.indexes = Database.listIndexesForClass(clazz);
+                        $scope.parentScope.apply();
                     });
                     $scope.hide();
                 }

@@ -16,7 +16,6 @@
 
                             <th>Role</th>
 
-
                         </tr>
 
                         </thead>
@@ -50,13 +49,12 @@
 
                         </thead>
                         <tbody>
-                        <tr ng-repeat="i in rules track by $index ">
+                        <tr ng-repeat="i in rules track by $index">
                             <td ng-click="mostra(selectedRole[i])">{{ i }}</td>
                             <td ng-repeat="m in calcolaBitmask(selectedRole['rules'][i]) track by $index">
 
                                 <input type="checkbox" ng-model=" calcolaBitmask(selectedRole['rules'][i])[$index]"
                                        ng-disabled="true">
-
 
                             </td>
 
