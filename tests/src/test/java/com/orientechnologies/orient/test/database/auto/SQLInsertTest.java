@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -235,6 +236,10 @@ public class SQLInsertTest {
   public void insertAvoidingSubQuery() {
     database.open("admin", "admin");
 
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass("test") == null)
+      schema.createClass("test");
+
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test(text) VALUES ('(Hello World)')")).execute();
 
     Assert.assertTrue(doc != null);
@@ -246,6 +251,10 @@ public class SQLInsertTest {
   @Test
   public void insertSubQuery() {
     database.open("admin", "admin");
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass("test") == null)
+      schema.createClass("test");
 
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test SET names = (select name from OUser)"))
         .execute();
