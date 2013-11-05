@@ -32,7 +32,6 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 	private OMailPlugin mailPlugin;
 
 	public OEventLogMailExecutor(ODatabaseDocumentTx database) {
-
 		
 		this.oUserConfiguration = EventHelper.findOrCreateMailUserConfiguration(database);
 	}

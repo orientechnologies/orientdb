@@ -43,7 +43,11 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.monitor.event.OEventController;
+import com.orientechnologies.orient.monitor.event.OEventLogFunctionExecutor;
+import com.orientechnologies.orient.monitor.event.OEventLogHttpExecutor;
 import com.orientechnologies.orient.monitor.event.OEventLogMailExecutor;
+import com.orientechnologies.orient.monitor.event.OEventMetricFunctionExecutor;
+import com.orientechnologies.orient.monitor.event.OEventMetricHttpExecutor;
 import com.orientechnologies.orient.monitor.event.OEventMetricMailExecutor;
 import com.orientechnologies.orient.monitor.hooks.OEventHook;
 import com.orientechnologies.orient.server.OServer;
@@ -114,8 +118,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 				updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
 			else if (param.name.equalsIgnoreCase("dbName")) {
 				dbName = param.value;
-				dbName = "plocal:" + OServerMain.server().getDatabaseDirectory()
-						+ dbName;
+				dbName = "plocal:"
+						+ OServerMain.server().getDatabaseDirectory() + dbName;
 			} else if (param.name.equalsIgnoreCase("dbUser"))
 				dbUser = param.value;
 			else if (param.name.equalsIgnoreCase("dbPassword"))
@@ -153,6 +157,12 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 				new OEventLogMailExecutor(database));
 		OEventController.getInstance().register(
 				new OEventLogFunctionExecutor(database));
+		OEventController.getInstance().register(
+				new OEventMetricFunctionExecutor(database));
+		OEventController.getInstance().register(
+				new OEventLogHttpExecutor(database));
+		OEventController.getInstance().register(
+				new OEventMetricHttpExecutor(database));
 	}
 
 	private void registerCommand() {
@@ -337,7 +347,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		profile.createProperty("host", OType.STRING);
 
 		userConfig.createProperty("user", OType.LINK, ouser);
-		userConfig.createProperty("mailProfile", OType.LINK, profile);
+		userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
 
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);

@@ -8,6 +8,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
@@ -104,8 +105,11 @@ public class EventHelper {
 				sql);
 		final List<ODocument> response = database.query(osqlQuery);
 		ODocument configuration = null;
+		ODocument userconfiguration = null;
+		
 		if (response.size() == 1) {
-			configuration = response.get(0).field("mailProfile");
+			userconfiguration =  response.get(0); 
+			configuration = userconfiguration.field("mailProfile");
 		}
 		// mail = OServerMain.server().getPluginByClass(OMailPlugin.class);
 		if (configuration == null) {
@@ -118,19 +122,20 @@ public class EventHelper {
 			configuration.field("port", 25);
 			configuration.field("host", "192.168.0.50");
 			configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
-			ODocument userconfiguration = response != null
-					&& !response.isEmpty() ? response.get(0) : new ODocument(
-					"UserConfiguration");
+			configuration.field("@type","d");
 
 			sql = "select from OUser where name = 'admin'";
 			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
 			final List<ODocument> users = database.query(osqlQuery);
 			if (users.size() == 1) {
+				userconfiguration = new ODocument("UserConfiguration");
 				final ODocument ouserAdmin = users.get(0);
 				userconfiguration.field("user", ouserAdmin);
 				userconfiguration.field("mailProfile", configuration);
 				userconfiguration.save();
-				database.commit();
+			}
+			else{
+				throw new OConfigurationException("user admin not found");
 			}
 		}
 		

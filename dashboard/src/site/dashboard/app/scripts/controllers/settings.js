@@ -100,8 +100,15 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         });
     }
     $scope.saveSettings = function () {
+        $scope.testMsg = null;
         Settings.put($scope.config, function (data) {
+            console.log('aa')
+            $scope.testMsg = "Settings updated successfully.";
             $scope.config = data.result[0];
+            $scope.testMsgClass = 'alert alert-setting'
+        }, function (error) {
+            $scope.testMsg = error;
+            $scope.testMsgClass = 'alert alert-error alert-setting'
         });
     }
     $scope.selectConfig = function (config) {
@@ -119,9 +126,18 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
     }
 
+    $scope.getMailSettings = function () {
+
+        $scope.mailproperties = $scope.config['mailProfile'];
+
+    }
 
     $scope.$watch("config", function (data) {
-        if (data)
+        if (data) {
             $scope.refreshMetricConfig();
+            $scope.getMailSettings();
+        }
     });
+
+
 });

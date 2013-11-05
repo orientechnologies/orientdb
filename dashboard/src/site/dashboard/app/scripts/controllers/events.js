@@ -18,7 +18,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
     }
 
-    $scope.translate = function () {
+    $scope.translate = function(){
         var prova = "c'iao";
         console.log(replace(/'/))
     }
@@ -143,7 +143,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
             MetricConfig.saveConfig(elem, function (data) {
                     var index = array.indexOf(elem);
-//                    logs.push('Event ' + elem['name'] + ':  ' + data);
                     logs.push(data);
                     array.splice(index, 1);
                     if (array.length == 0) {
@@ -239,10 +238,6 @@ dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$
 
     }
 
-    $scope.submit = function () {
-        console.log($scope.eventWhen['name']);
-    }
-
 }
 ]);
 
@@ -262,7 +257,6 @@ dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$rou
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
 
-    console.log($scope.eventWhat);
     $scope.languages = ['SQL', 'Javascript'];
     $scope.addParam = function () {
         if ($scope.eventWhat['parameters'] == undefined) {
@@ -272,8 +266,8 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
         $scope.eventWhat['parameters'].push('');
     }
     $scope.removeParam = function (index) {
-        if ($scope.eventWhat != undefined && $scope.eventWhat['parameters'] != undefined) {
-            console.log($scope.eventWhat);
+        if ($scope.eventWhat != undefined &&  $scope.eventWhat['parameters']!= undefined) {
+            console.log($scope.eventWhat)  ;
             $scope.eventWhat['parameters'].splice(index, 1);
 
         }

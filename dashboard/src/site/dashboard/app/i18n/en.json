@@ -43,6 +43,7 @@
     "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
+    "dashboard.mailsettings": "Mail Settings",
     "dashboard.preview": "Dashboard Preview",
     "dashboard.config.available": "Available Configuration",
     "dashboard.settings": "Settings",

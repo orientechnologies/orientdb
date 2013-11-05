@@ -113,8 +113,12 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		String logDir = (String) prop.get("java.util.logging.FileHandler.pattern");
 		File directory = new File(logDir).getParentFile();
 		File[] files = directory.listFiles(filter);
-		Arrays.sort(files);
-
+		if(files!=null){
+			Arrays.sort(files);
+		}
+		else{
+			throw new Exception("logs directory is empty or does not exist");
+		}
 		List<ODocument> subdocuments = new ArrayList<ODocument>();
 		final ODocument result = new ODocument();
 
@@ -129,17 +133,17 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		if (TAIL.equals(type)) {
 			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[0]);
 		} else if (FILE.equals(type)) {
-			for (int i = 0; i < files.length - 1; i++) {
+			for (int i = 0; i <= files.length - 1; i++) {
 				if (files[i].getName().equals(selectedFile))
 					insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
 			}
 		} else if (SEARCH.equals(type)) {
-			for (int i = 0; i < files.length - 1; i++) {
+			for (int i = 0; i <= files.length - 1; i++) {
 				line = "";
 				insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
 			}
 		} else if (ALLFILES.equals(type)) {
-			for (int i = 0; i < files.length - 1; i++) {
+			for (int i = 0; i <= files.length - 1; i++) {
 				doc = new ODocument();
 				files[i].getName();
 				doc.field("name", files[i].getName());

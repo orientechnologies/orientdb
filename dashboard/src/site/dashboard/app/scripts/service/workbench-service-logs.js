@@ -112,7 +112,6 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
 
             file = '&file=' + params.file;
         }
-                  console.log(server);
         $http.get('/log/monitor/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
             callback(data);
         }).error(function (data) {
@@ -133,6 +132,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         var verbose = params.verbose != undefined ? params.verbose : true;
         var shallow = params.shallow != undefined ? '' : ',shallow';
         var text = '/command/' + 'monitor' + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
+       console.log(text)
         if (params.text) {
             var query = params.text.trim();
             $http.post(text, query).success(function (data) {
