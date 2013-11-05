@@ -34,41 +34,41 @@
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
-        <echo>   ___   ___  ____    _  </echo>  
-        <echo> .'   `.|_  ||_  _|  | | </echo>
-        <echo>/  .-.  \ | |_/ /    | | </echo>
-        <echo>| |   | | |  __'.    |_| </echo>
-        <echo>\  `-'  /_| |  \ \_   _  </echo>
-        <echo> `.___.'|____||____| (_) </echo>
-    </sequential>
+            <echo>___ ___ ____ _</echo>
+            <echo>.' `.|_ ||_ _| | |</echo>
+            <echo>/ .-. \ | |_/ / | |</echo>
+            <echo>| | | | | __'. |_|</echo>
+            <echo>\ `-' /_| | \ \_ _</echo>
+            <echo>`.___.'|____||____| (_)</echo>
+        </sequential>
 
     </macrodef>
 
     <target name="init">
-<echo>           .                                          </echo>
-<echo>          .`        `                                 </echo>
-<echo>          ,      `:.                                  </echo>
-<echo>         `,`    ,:`                                   </echo>
-<echo>         .,.   :,,                                    </echo>
-<echo>         .,,  ,,,                                     </echo>
-<echo>    .    .,.:::::  ````                                 :::::::::     :::::::::</echo>
-<echo>    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::</echo>
-<echo>    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::</echo>
-<echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::</echo>
-<echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::</echo>
-<echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::</echo>
-<echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::</echo>
-<echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::</echo>
-<echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::</echo>
-<echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::</echo>
-<echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::</echo>
-<echo>           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::</echo>
-<echo>           ,,:` `,,.                                  </echo>
-<echo>          ,,,    .,`                                  </echo>
-<echo>         ,,.     `,                                          GRAPH DATABASE   </echo>
-<echo>       ``        `.                                   </echo>
-<echo>                 ``                                   </echo>
-<echo>                 `                                    </echo>
+        <echo>.</echo>
+        <echo>.` `</echo>
+        <echo>, `:.</echo>
+        <echo>`,` ,:`</echo>
+        <echo>.,. :,,</echo>
+        <echo>.,, ,,,</echo>
+        <echo>. .,.::::: ```` ::::::::: :::::::::</echo>
+        <echo>,` .::,,,,::.,,,,,,`;; .: :::::::::: ::: :::</echo>
+        <echo>`,. ::,,,,,,,:.,,.` ` .: ::: ::: ::: :::</echo>
+        <echo>,,:,:,,,,,,,,::. ` ` `` .: ::: ::: ::: :::</echo>
+        <echo>,,:.,,,,,,,,,: `::, ,, ::,::` : :,::` :::: ::: ::: ::: :::</echo>
+        <echo>,:,,,,,,,,,,::,: ,, :. : :: : .: ::: ::: :::::::</echo>
+        <echo>:,,,,,,,,,,:,:: ,, : : : : .: ::: ::: :::::::::</echo>
+        <echo>` :,,,,,,,,,,:,::, ,, .:::::::: : : .: ::: ::: ::: :::</echo>
+        <echo>`,...,,:,,,,,,,,,: .:,. ,, ,, : : .: ::: ::: ::: :::</echo>
+        <echo>.,,,,::,,,,,,,: `: , ,, : ` : : .: ::: ::: ::: :::</echo>
+        <echo>...,::,,,,::.. `: .,, :, : : : .: ::::::::::: ::: :::</echo>
+        <echo>,::::,,,. `: ,, ::::: : : .: ::::::::: ::::::::::</echo>
+        <echo>,,:` `,,.</echo>
+        <echo>,,, .,`</echo>
+        <echo>,,. `, GRAPH DATABASE</echo>
+        <echo>`` `.</echo>
+        <echo>``</echo>
+        <echo>`</echo>
 
         <mkdir dir="${community.release}"/>
         <mkdir dir="${community.release}/log"/>
@@ -88,7 +88,8 @@
     <target name="javadoc" depends="init">
         <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
         <copy todir="${community.release}/javadoc" file="_base/images/orient_db.png"/>
-        <javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${community.release}/javadoc" public="true"
+        <javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${community.release}/javadoc"
+                 public="true"
                  useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
                  windowtitle="OrientDB v. ${version} Javadocs"
                  header="&lt;a target='_parent' href='http://www.orientdb.org/orient-db.htm' &gt;&lt;img src='http://www.orientdb.org/images/orientdb_small.png' border='0' /&gt;&lt;/a&gt;"
@@ -202,7 +203,7 @@
             <fileset dir="graphdb/config" includes="*.xml"/>
         </copy>
 
-        <copy todir="${community.release}/databases"> 
+        <copy todir="${community.release}/databases">
             <fileset dir="graphdb/target/databases" includes="*"/>
         </copy>
 
@@ -213,7 +214,7 @@
         <delete includeEmptyDirs="true">
             <fileset dir="${community.release}/log" includes="**/*"/>
         </delete>
-        <delete dir="${community.release}/databases/demo" />
+        <delete dir="${community.release}/databases/demo"/>
     </target>
 
     <target name="md5" depends="init">
@@ -276,7 +277,7 @@
         <delete file="../releases/orientdb-community-${version}.zip"/>
         <zip destfile="../releases/orientdb-community-${version}.zip" basedir="../releases" level="9" update="false"
              includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
-        <tar destfile="../releases/orientdb-community-${version}.tar.gz" basedir="../releases" compression="gzip" 
+        <tar destfile="../releases/orientdb-community-${version}.tar.gz" basedir="../releases" compression="gzip"
              includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
     </target>
 

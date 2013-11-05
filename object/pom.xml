@@ -60,16 +60,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-	<build>
-		<plugins>
-		</plugins>
-		<testResources>
-			<testResource>
-				<directory>src/test/resources</directory>
-				<filtering>true</filtering>
-			</testResource>
-		</testResources>
-	</build>
+    <build>
+        <plugins>
+        </plugins>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+    </build>
     <properties>
         <import.package>*</import.package>
         <export.package>com.orientechnologies.orient.object.*</export.package>

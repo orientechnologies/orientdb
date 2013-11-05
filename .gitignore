@@ -14,7 +14,7 @@ target
 # Eclipse IDE files
 *.classpath
 *.project
-*/*.settings
+.settings/
 *.prefs
 
 #IntelliJ IDEA files
