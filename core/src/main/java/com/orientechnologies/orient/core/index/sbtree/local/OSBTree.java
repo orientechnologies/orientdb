@@ -154,7 +154,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public V get(K key) {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
       if (bucketSearchResult.itemIndex < 0)
@@ -184,7 +184,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     acquireExclusiveLock();
     final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      final int keySize = keySerializer.getObjectSize(key, keyTypes);
+      final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
 
       final int valueSize = valueSerializer.getObjectSize(value);
       if (keySize > MAX_KEY_SIZE)
@@ -193,7 +193,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
 
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       startDurableOperation(transaction);
 
@@ -607,7 +607,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     acquireExclusiveLock();
     OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
       if (bucketSearchResult.itemIndex < 0)
@@ -709,7 +709,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final PartialSearchMode partialSearchMode;
       if (inclusive)
@@ -782,7 +782,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final PartialSearchMode partialSearchMode;
       if (inclusive)
@@ -990,8 +990,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       OTreeInternal.RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      keyFrom = keySerializer.prepocess(keyFrom, keyTypes);
-      keyTo = keySerializer.prepocess(keyTo, keyTypes);
+      keyFrom = keySerializer.prepocess(keyFrom, (Object[]) keyTypes);
+      keyTo = keySerializer.prepocess(keyTo, (Object[]) keyTypes);
 
       PartialSearchMode partialSearchModeFrom;
       if (fromInclusive)

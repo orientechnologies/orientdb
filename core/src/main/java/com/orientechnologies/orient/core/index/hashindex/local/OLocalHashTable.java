@@ -167,7 +167,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public V get(K key) {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final long hashCode = keyHashFunction.hashCode(key);
 
@@ -204,7 +204,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public void put(K key, V value) {
     acquireExclusiveLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       doPut(key, value);
     } catch (OIndexMaximumLimitReachedException e) {
@@ -219,7 +219,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public V remove(K key) {
     acquireExclusiveLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final long hashCode = keyHashFunction.hashCode(key);
 
@@ -297,7 +297,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit) {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
@@ -532,7 +532,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key) {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
@@ -682,7 +682,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) throws IOException {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
@@ -739,7 +739,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) throws IOException {
     acquireSharedLock();
     try {
-      key = keySerializer.prepocess(key, keyTypes);
+      key = keySerializer.prepocess(key, (Object[]) keyTypes);
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);

@@ -193,7 +193,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   public boolean addEntry(K key, V value) {
-    int entreeSize = keySerializer.getObjectSize(key, keyTypes) + valueSerializer.getObjectSize(value);
+    int entreeSize = keySerializer.getObjectSize(key, (Object[]) keyTypes) + valueSerializer.getObjectSize(value);
     int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(bufferPointer, FREE_POINTER_OFFSET);
 
     int size = size();
@@ -211,7 +211,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   private void insertEntry(K key, V value, int insertionPoint) {
-    int entreeSize = keySerializer.getObjectSize(key, keyTypes) + valueSerializer.getObjectSize(value);
+    int entreeSize = keySerializer.getObjectSize(key, (Object[]) keyTypes) + valueSerializer.getObjectSize(value);
     int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(bufferPointer, FREE_POINTER_OFFSET);
     int size = size();
     final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
@@ -230,7 +230,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
 
   public void appendEntry(K key, V value) {
     final int positionsOffset = size() * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
-    final int entreeSize = keySerializer.getObjectSize(key, keyTypes) + valueSerializer.getObjectSize(value);
+    final int entreeSize = keySerializer.getObjectSize(key, (Object[]) keyTypes) + valueSerializer.getObjectSize(value);
 
     final int freePointer = OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(bufferPointer, FREE_POINTER_OFFSET);
     final int entreePosition = freePointer - entreeSize;
@@ -244,8 +244,8 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
   }
 
   private void serializeEntry(K key, V value, int entryOffset) {
-    keySerializer.serializeInDirectMemory(key, bufferPointer, entryOffset, keyTypes);
-    entryOffset += keySerializer.getObjectSize(key, keyTypes);
+    keySerializer.serializeInDirectMemory(key, bufferPointer, entryOffset, (Object[]) keyTypes);
+    entryOffset += keySerializer.getObjectSize(key, (Object[]) keyTypes);
 
     valueSerializer.serializeInDirectMemory(value, bufferPointer, entryOffset);
   }
