@@ -21,13 +21,13 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest {
@@ -124,7 +124,7 @@ public class ClassIndexManagerTest {
     try {
       docTwo.field("prop1", "a");
       docTwo.save();
-    } catch (OIndexException e) {
+    } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);
@@ -165,7 +165,7 @@ public class ClassIndexManagerTest {
     try {
       docTwo.field("prop0", "a");
       docTwo.save();
-    } catch (OIndexException e) {
+    } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);
@@ -185,7 +185,7 @@ public class ClassIndexManagerTest {
     try {
       docTwo.field("prop1", "a");
       docTwo.save();
-    } catch (OIndexException e) {
+    } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);

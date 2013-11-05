@@ -20,10 +20,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -46,9 +46,9 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     // CHECK IF ALREADY EXISTS IN TX
     final OIdentifiable previousRecord = get(iKey);
     if (previousRecord != null && !previousRecord.equals(iRecord))
-      OLogManager.instance().exception(
-          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
-          OIndexException.class, iRecord, iKey, getName(), previousRecord);
+      throw new ORecordDuplicatedException(String.format(
+          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord, iKey,
+          getName(), previousRecord), previousRecord.getIdentity());
 
     super.checkEntry(iRecord, iKey);
   }
