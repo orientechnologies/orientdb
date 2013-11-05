@@ -23,6 +23,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDifference;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDocument;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionFirst;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionIntersect;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionLast;
@@ -63,6 +64,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     FUNCTIONS.put(OSQLFunctionDate.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDate.class);
     FUNCTIONS.put(OSQLFunctionSysdate.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionSysdate.class);
     FUNCTIONS.put(OSQLFunctionCount.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionCount.class);
+    FUNCTIONS.put(OSQLFunctionDocument.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDocument.class);
     FUNCTIONS.put(OSQLFunctionDistinct.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDistinct.class);
     FUNCTIONS.put(OSQLFunctionUnion.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionUnion.class);
     FUNCTIONS.put(OSQLFunctionIntersect.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionIntersect.class);
