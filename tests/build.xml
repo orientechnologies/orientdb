@@ -40,6 +40,7 @@
     <target name="test-memory" depends="test-init">
         <echo>EXECUTING TESTS USING MEMORY DATABASE: memory:demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Xmx2G" />
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -55,6 +56,7 @@
     <target name="test-local" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Xmx2G" />
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -70,6 +72,7 @@
     <target name="test-plocal" depends="test-init">
         <echo>EXECUTING TESTS USING PAGINATED LOCAL DATABASE: plocal:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Xmx2G" />
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -86,6 +89,7 @@
     <target name="test-local-lh" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE and LH data cluster: local:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
+            <jvmarg value="-Xmx2G" />
             <jvmarg value="-Dfile.cluster.useLHPEPS=true"/>
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -120,6 +124,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
+            <jvmarg value="-Xmx2G" />
             <jvmarg line="-Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <classpath>
                 <pathelement location="${project.build}"/>
