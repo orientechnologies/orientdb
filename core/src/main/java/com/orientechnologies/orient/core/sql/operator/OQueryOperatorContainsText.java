@@ -117,7 +117,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)

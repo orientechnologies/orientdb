@@ -17,15 +17,8 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -315,25 +308,65 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
     checkForRebuild();
 
-    return getValuesMajor(fromKey, isInclusive, -1);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    getValuesMajor(fromKey, isInclusive, new IndexValuesResultListener() {
+			@Override
+			public boolean addResult(OIdentifiable value) {
+				result.add(value);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
     checkForRebuild();
 
-    return getValuesMinor(toKey, isInclusive, -1);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    getValuesMinor(toKey, isInclusive, new IndexValuesResultListener() {
+			@Override
+			public boolean addResult(OIdentifiable value) {
+				result.add(value);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
     checkForRebuild();
 
-    return getEntriesMajor(fromKey, isInclusive, -1);
+    final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+    getEntriesMajor(fromKey, isInclusive, new IndexEntriesResultListener() {
+			@Override
+			public boolean addResult(ODocument entry) {
+				result.add(entry);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
     checkForRebuild();
 
-    return getEntriesMinor(toKey, isInclusive, -1);
+    final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+    getEntriesMinor(toKey, isInclusive, new IndexEntriesResultListener() {
+			@Override
+			public boolean addResult(ODocument entry) {
+				result.add(entry);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   /**
@@ -356,25 +389,66 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       final boolean iToInclusive) {
     checkForRebuild();
 
-    return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, new IndexValuesResultListener() {
+			@Override
+			public boolean addResult(OIdentifiable value) {
+				result.add(value);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
     checkForRebuild();
 
-    return getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, -1);
+    final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+    getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, new IndexEntriesResultListener() {
+			@Override
+			public boolean addResult(ODocument entry) {
+				result.add(entry);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
     checkForRebuild();
 
-    return getValues(iKeys, -1);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    getValues(iKeys, new IndexValuesResultListener() {
+			@Override
+			public boolean addResult(OIdentifiable value) {
+				result.add(value);
+
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
     checkForRebuild();
 
-    return getEntries(iKeys, -1);
+    final Set<ODocument> result = new ODocumentFieldsHashSet();
+
+    getEntries(iKeys, new IndexEntriesResultListener() {
+			@Override
+			public boolean addResult(ODocument entry) {
+				result.add(entry);
+				return true;
+			}
+		});
+
+    return result;
   }
 
   public ORID getIdentity() {

@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -225,38 +224,38 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer) {
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMinor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesBetween");
   }
 
