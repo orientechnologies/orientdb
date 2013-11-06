@@ -66,11 +66,13 @@ monitor.factory('Notification', function ($http, $resource) {
     return resource;
 });
 monitor.factory('Metric', function ($http, $resource) {
-    var resource = $resource(API + 'metrics/monitor/:server/:databases/:type/:kind/:names/:limit/:compress/:from/:to',{ },
+
+    var cachedMetrics = {};
+    var resource = $resource(API + 'metrics/monitor/:server/:databases/:type/:kind/:names/:limit/:compress/:from/:to', { },
         {
             get: {
-                method : 'GET',
-                isArray : false,
+                method: 'GET',
+                isArray: false,
                 params: {
                     databases: "all"
                 }
@@ -95,6 +97,19 @@ monitor.factory('Metric', function ($http, $resource) {
         $http.post(url, query).success(function (data) {
             callback(data);
         })
+    }
+    resource.getMetricWithName = function (name, callback) {
+        var url = API + 'command/monitor/sql/-/-1';
+        if (name && !cachedMetrics[name]) {
+            var query = 'select * from Dictionary where name = "' + name + '" ';
+            $http.post(url, query).success(function (data) {
+                cachedMetrics[data.result[0].name] = data.result[0];
+                callback(data.result[0]);
+            })
+        } else {
+            callback(cachedMetrics[name]);
+        }
+
     }
     resource.getMetrics = function (params, callback) {
         var limit = params.limit || -1;

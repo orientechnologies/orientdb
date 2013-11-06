@@ -69,6 +69,9 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
             if ($scope.popover.pollTime) {
                 $scope.pollTime = $scope.popover.pollTime;
             }
+            if ($scope.popover.render) {
+                $scope.render = $scope.popover.render;
+            }
             if ($scope.popover.realtime != undefined) {
                 $scope.realtime = $scope.popover.realtime;
             } else {

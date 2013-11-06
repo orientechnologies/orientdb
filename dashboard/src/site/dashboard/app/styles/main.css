@@ -171,8 +171,10 @@ button.btn-primary, .btn.btn-primary {
     border: 0 none;
     box-shadow: none !important;
     padding: 5px;
+    margin-bottom: 10px;
     text-shadow: none !important;
     color: #ffffff;
+    height: 140px;
 }
 
 .box .nav > li {
@@ -867,7 +869,7 @@ div.pagination span.disabled {
 }
 
 .no-margin {
-    margin: 0px !important;
+    margin-left: 0px !important;
 }
 
 .dashboard-metric .widget-caption {

@@ -333,10 +333,16 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		function.createProperty("name", OType.STRING);
 		function.createProperty("parameters", OType.EMBEDDED, OType.STRING);
 
+		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
+		metricConfig.createProperty("name", OType.STRING);
+		metricConfig.createProperty("server", OType.LINK, server);
+
+		
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
 		final OClass profile = schema.createClass("OMailProfile");
 
+		
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
 		profile.createProperty("port", OType.INTEGER);
@@ -348,11 +354,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		userConfig.createProperty("user", OType.LINK, ouser);
 		userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
+		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
 
-		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
-		metricConfig.createProperty("name", OType.STRING);
-		metricConfig.createProperty("server", OType.LINK, server);
-	}
+			}
 
 	@Override
 	public void shutdown() {

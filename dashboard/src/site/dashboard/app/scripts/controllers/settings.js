@@ -76,7 +76,12 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         $scope.total = $scope.metrics.length;
 
     });
-
+    $scope.getGridClass = function (index, gridOpt) {
+        var css = '';
+        css += (index % gridOpt == 0) ? 'no-margin' : '';
+        css += ' span' + 12 / gridOpt;
+        return css;
+    }
     $scope.refreshMetricConfig = function () {
         MetricConfig.getAll(function (data) {
             var tmp = data.result;
@@ -102,7 +107,6 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     $scope.saveSettings = function () {
         $scope.testMsg = null;
         Settings.put($scope.config, function (data) {
-            console.log('aa')
             $scope.testMsg = "Settings updated successfully.";
             $scope.config = data.result[0];
             $scope.testMsgClass = 'alert alert-setting'

@@ -79,15 +79,12 @@
                             <div class="control-group">
                                 <label class="control-label" for="inputName">{{ 'dashboard.metric.server' | i18n
                                     }}</label>
-
                                 <div class="controls">
                                     <select ng-model="selectedConfig.server" required class="span3"
                                             ng-options="s['@rid'] as s.name for s in servers"
                                             data-placeholder="Pick a Server">
 
                                     </select>
-
-                                    </button>
                                 </div>
 
                             </div>
@@ -98,7 +95,7 @@
                                     <option ng-repeat="met in metrics" value="{{ met.name }}">{{ met.name }}</option>
                                 </select>
                                 <select ui-select2 ng-model="conf.field"
-                                        required="" class="span4"
+                                        required class="span4"
                                         data-placeholder="Pick a Metric">
                                     <option ng-repeat="f in fields | mvalue:mType:conf.name" value="{{ f }}">{{ f }}</option>
                                 </select>

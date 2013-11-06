@@ -30,6 +30,7 @@ Widget.directive('piechart', function () {
 
             return chart;
         });
+
     }
 
     return {
@@ -106,7 +107,7 @@ Widget.directive('stackedchart', function () {
         }
     };
 });
-Widget.directive('stackedarea', function () {
+Widget.directive('stackedarea', function (Metric) {
 
     var createStackedArea = function (scope, data, element, render, realtime) {
 
@@ -147,6 +148,19 @@ Widget.directive('stackedarea', function () {
                 .call(chart);
 
             nv.utils.windowResize(chart.update);
+
+
+            d3.selectAll(".nv-series").on("mouseover", function (event) {
+                var self = this;
+                scope.$apply(function () {
+                    Metric.getMetricWithName(event.key, function (data) {
+                        if (data) {
+                            $(self).tooltip({title: data.description, container: 'body'});
+                            $(self).tooltip('show')
+                        }
+                    });
+                });
+            });
             return chart;
         });
     }

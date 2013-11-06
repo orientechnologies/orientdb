@@ -37,6 +37,7 @@ public final class OMonitorTask extends TimerTask {
 			for (Entry<String, OMonitoredServer> serverEntry : handler.getMonitoredServers()) {
 				final String serverName = serverEntry.getKey();
 				final ODocument server = serverEntry.getValue().getConfiguration();
+				server.reload();
 				final Date since = serverEntry.getValue().getLastConnection();
 
 				try {
