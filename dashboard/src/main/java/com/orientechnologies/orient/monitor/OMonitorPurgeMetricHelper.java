@@ -31,7 +31,7 @@ public final class OMonitorPurgeMetricHelper {
 	public static void delete(Integer hour, ODatabaseDocumentTx db) {
 		if (hour != 0) {
 
-			String osql = "select from Metric where snapshot.dateFrom <= :dateFrom ";
+			String osql = "select from Metric where snapshot.dateFrom <= :dateFrom order by snapshot.dateFrom";
 			final Map<String, Object> params = new HashMap<String, Object>();
 
 			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
@@ -43,25 +43,66 @@ public final class OMonitorPurgeMetricHelper {
 
 			List<ODocument> metrics = db.query(osqlQuery, params);
 
-			ODocument snapshot = null;
-			if (metrics != null && !metrics.isEmpty()) {
-				snapshot = metrics.get(0).field("snapshot");
-			}
-
-			for (ODocument doc : metrics) {
-				try {
-					ODocument snapshot2compare = doc.field("snapshot");
-					if (snapshot != snapshot2compare) {
-						snapshot.delete();
-						snapshot = snapshot2compare;
-					}
-					doc.delete();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-			}
-			snapshot.delete();
+			purgeMetricAndSnapshot(metrics);
 		}
 	}
+
+	public static void purgeMetricNow(ODatabaseDocumentTx db) {
+		String osql = "select from Metric";
+
+		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
+				osql);
+
+		List<ODocument> metrics = db.query(osqlQuery);
+
+		purgeMetricAndSnapshot(metrics);
+
+	}
+
+	public static void purgeLogsNow(ODatabaseDocumentTx db) {
+		String osql = "select from Log";
+
+		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
+				osql);
+
+		List<ODocument> logs = db.query(osqlQuery);
+
+		purgeLogs(logs);
+
+	}
+
+	private static void purgeLogs(List<ODocument> logs) {
+		
+		for (ODocument doc : logs) {
+			try {
+				doc.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static void purgeMetricAndSnapshot(List<ODocument> metrics) {
+		ODocument snapshot = null;
+		if (metrics != null && !metrics.isEmpty()) {
+			snapshot = metrics.get(0).field("snapshot");
+		}
+
+		for (ODocument doc : metrics) {
+			try {
+				ODocument snapshot2compare = doc.field("snapshot");
+				if (snapshot != snapshot2compare) {
+					snapshot.delete();
+					snapshot = snapshot2compare;
+				}
+				doc.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}
+		if (snapshot != null)
+			snapshot.delete();
+	}
+
 }

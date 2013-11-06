@@ -32,6 +32,7 @@ import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -136,6 +137,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	@Override
 	public void startup() {
 		setDb(new ODatabaseDocumentTx(dbName));
+		OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+		OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
 		if (getDb().exists())
 			loadConfiguration();
 		else

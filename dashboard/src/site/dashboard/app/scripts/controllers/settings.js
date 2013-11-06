@@ -43,7 +43,7 @@ module.controller('ServerEditController', function ($scope, $location, $injector
     });
 
 });
-module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric, MetricConfig, Settings) {
+module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric, MetricConfig, CommandLogApi, Settings) {
 
     $scope.currentTab = 'dashboard';
 
@@ -101,7 +101,6 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     }
     $scope.saveSettings = function () {
         $scope.testMsg = null;
-        console.log($scope.config);
         Settings.put($scope.config, function (data) {
             $scope.testMsg = "Settings updated successfully.";
             $scope.config = data.result[0];
@@ -135,8 +134,6 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
         $scope.deleteMetricConfiguration = $scope.config['deleteMetricConfiguration'];
 
-
-
     }
     $scope.$watch("config", function (data) {
         if (data) {
@@ -145,6 +142,12 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.getHoursDelete();
         }
     });
+
+    $scope.purgeMetrics = function () {
+        CommandLogApi.purge(function (data) {
+
+        });
+    }
 
 
 });

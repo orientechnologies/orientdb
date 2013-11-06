@@ -30,8 +30,6 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
                 }
             });
         }
-        console.log($scope.server);
-
     });
 
     $scope.editorOptions = {
