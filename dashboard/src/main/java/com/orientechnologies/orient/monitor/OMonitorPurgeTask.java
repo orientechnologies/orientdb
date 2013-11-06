@@ -55,7 +55,16 @@ public final class OMonitorPurgeTask extends TimerTask {
 				if (deleteConfiguration != null) {
 					Integer hours = deleteConfiguration.field("hours");
 					if (hours != null) {
-						OMonitorPurgeMetricHelper.delete(hours,
+						OMonitorPurgeMetricHelper.deleteMetrics(hours,
+								this.handler.getDb());
+					}
+				}
+				ODocument notificationsConfiguration = userConfiguration
+						.field("notificationsConfiguration");
+				if(notificationsConfiguration!= null){
+					Integer hours = notificationsConfiguration.field("hours");
+					if (hours != null) {
+						OMonitorPurgeMetricHelper.deleteLogs(hours,
 								this.handler.getDb());
 					}
 				}

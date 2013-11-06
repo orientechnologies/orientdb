@@ -137,7 +137,24 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     }
     $scope.getHoursDelete = function () {
 
+
+        console.log( $scope.deleteMetricConfiguration)
+
+            if($scope.config['deleteMetricConfiguration']==undefined){
+                $scope.config['deleteMetricConfiguration'] =  {};
+                $scope.config['deleteMetricConfiguration']['@class'] = 'DeleteMetricConfiguration';
+                $scope.config['deleteMetricConfiguration']['@type'] = 'document';
+                $scope.config['deleteMetricConfiguration']['hours'] = 0;
+            }
+        if( $scope.config['notificationsConfiguration']==undefined){
+            $scope.config['notificationsConfiguration'] =  {};
+            $scope.config['notificationsConfiguration']['@class'] = 'NotificationsConfiguration';
+            $scope.config['notificationsConfiguration']['@type'] = 'document';
+            $scope.config['notificationsConfiguration']['hours'] = 0;
+        }
+
         $scope.deleteMetricConfiguration = $scope.config['deleteMetricConfiguration'];
+        $scope.notificationsConfiguration = $scope.config['notificationsConfiguration'];
 
     }
     $scope.$watch("config", function (data) {
@@ -149,7 +166,12 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     });
 
     $scope.purgeMetrics = function () {
-        CommandLogApi.purge(function (data) {
+        CommandLogApi.purgeMetrics(function (data) {
+
+        });
+    }
+    $scope.purgeLogs = function () {
+        CommandLogApi.purgeLogs(function (data) {
 
         });
     }

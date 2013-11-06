@@ -33,6 +33,14 @@
                                                                   data-toggle="tab">{{
             'dashboard.metricsdelete' | i18n }}</a></li>
 
+        <li ng-class="{ active : 'metrics' == notificationsdelete }"><a href="javascript:void(0)"
+                                                                  ng-click="currentTab = 'notificationsdelete'"
+                                                                  data-toggle="tab">{{
+            'dashboard.notificationsdelete' | i18n }}</a></li>
+
+
+
+
     </ul>
 </div>
 
@@ -297,5 +305,24 @@
 
 
 </div>
+
+
+<div class="row-fluid" ng-show="currentTab == 'notificationsdelete'">
+
+
+    <div class="span12">
+        <p>
+            Notifications older then <input type="text" numbersonly="numbersonly" class="span1"
+                                      ng-model="notificationsConfiguration['hours']"> hours will be purged automatically
+            from server (0 to disable).
+        </p>
+
+    </div>
+
+    <button class="btn btn-primary" ng-click="purgeLogs()"> Purge All Now</button>
+
+
+</div>
+
 
 </div>

@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public final class OMonitorPurgeMetricHelper {
 
-	public static void delete(Integer hour, ODatabaseDocumentTx db) {
-		if (hour != 0) {
+	public static void deleteMetrics(Integer hour, ODatabaseDocumentTx db) {
+		if (hour!= null && hour != 0 ) {
 
 			String osql = "select from Metric where snapshot.dateFrom <= :dateFrom order by snapshot.dateFrom";
 			final Map<String, Object> params = new HashMap<String, Object>();
@@ -46,6 +46,26 @@ public final class OMonitorPurgeMetricHelper {
 			purgeMetricAndSnapshot(metrics);
 		}
 	}
+	
+	public static void deleteLogs(Integer hour, ODatabaseDocumentTx db) {
+		if (hour!= null && hour != 0 ) {
+
+			String osql = "select from Log where date <= :dateFrom";
+			final Map<String, Object> params = new HashMap<String, Object>();
+
+			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
+					osql);
+
+			Calendar calendar = Calendar.getInstance();
+			calendar.add(Calendar.HOUR, -hour);
+			params.put("dateFrom", calendar.getTime());
+
+			List<ODocument> metrics = db.query(osqlQuery, params);
+
+			purgeMetricAndSnapshot(metrics);
+		}
+	}
+	
 
 	public static void purgeMetricNow(ODatabaseDocumentTx db) {
 		String osql = "select from Metric";

@@ -126,7 +126,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
             })
     }
 
-    resource.purge = function (params, callback) {
+    resource.purgeMetrics = function (params, callback) {
         $http.get('/purge/monitor/metrics').success(function (data) {
             callback(data);
         }).error(function (data) {

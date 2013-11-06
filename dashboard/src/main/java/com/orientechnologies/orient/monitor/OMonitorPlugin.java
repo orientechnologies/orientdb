@@ -96,11 +96,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String CLASS_USER_CONFIGURATION = "UserConfiguration";
 	public static final String CLASS_MAIL_PROFILE = "OMailProfile";
 	public static final String CLASS_DELETE_METRIC_CONFIG = "DeleteMetricConfiguration";
+	public static final String CLASS_DELETE_NOTIFICATIONS_CONFIG = "NotificationsConfiguration";
 
 	public static final String CLASS_METRIC_CONFIG = "MetricConfig";
 
 	private OServer serverInstance;
 	private long updateTimer;
+	private long purgeTimer = 1000*60*30;
 	private String dbName = "monitor";
 	private String dbUser = "admin";
 	private String dbPassword = "admin";
@@ -158,7 +160,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
 		//
 		Orient.instance().getTimer()
-				.schedule(new OMonitorPurgeTask(this), 1000, 1000);
+				.schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
 
 	}
 
@@ -358,6 +360,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 				.createClass(CLASS_DELETE_METRIC_CONFIG);
 		deleteMetricConfiguration.createProperty("hours", OType.INTEGER);
 
+		final OClass notificationsConfiguration = schema
+				.createClass(CLASS_DELETE_NOTIFICATIONS_CONFIG);
+		notificationsConfiguration.createProperty("hours", OType.INTEGER);
+		
+		
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
 		profile.createProperty("port", OType.INTEGER);
@@ -371,6 +378,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
 		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED,
 				deleteMetricConfiguration);
+		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED,
+				notificationsConfiguration);
+		
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
 		
 
