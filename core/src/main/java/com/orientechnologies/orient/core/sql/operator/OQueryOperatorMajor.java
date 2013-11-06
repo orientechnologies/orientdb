@@ -59,7 +59,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -80,9 +80,10 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
         result = index.count(key, false, null, false, fetchLimit);
-      else if (fetchLimit > -1)
-        result = index.getValuesMajor(key, false, fetchLimit);
-      else
+      else if (resultListener != null) {
+        index.getValuesMajor(key, false, resultListener);
+        result = resultListener.getResult();
+      } else
         result = index.getValuesMajor(key, false);
     } else {
       // if we have situation like "field1 = 1 AND field2 > 2"
@@ -104,9 +105,10 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
         result = index.count(keyOne, false, keyTwo, true, fetchLimit);
-      else if (fetchLimit > -1)
-        result = index.getValuesBetween(keyOne, false, keyTwo, true, fetchLimit);
-      else
+      else if (resultListener != null) {
+        index.getValuesBetween(keyOne, false, keyTwo, true, resultListener);
+        result = resultListener.getResult();
+      } else
         result = index.getValuesBetween(keyOne, false, keyTwo, true);
     }
 

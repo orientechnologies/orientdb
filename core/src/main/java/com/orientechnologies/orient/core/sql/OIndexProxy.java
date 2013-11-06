@@ -1,15 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -18,12 +9,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexOneValue;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -90,14 +76,22 @@ public class OIndexProxy<T> implements OIndex<T> {
    * {@inheritDoc}
    */
   public T get(Object iKey) {
-    final Object result = lastIndex.get(iKey);
+    final Object lastIndexResult = lastIndex.get(iKey);
 
-    final Collection<T> resultSet = applyTailIndexes(result, -1);
-    if (getInternal() instanceof OIndexOneValue && resultSet.size() == 1) {
-      return resultSet.iterator().next();
-    } else {
-      return (T) resultSet;
-    }
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    applyTailIndexes(lastIndexResult, new IndexValuesResultListener() {
+      @Override
+      public boolean addResult(OIdentifiable value) {
+        result.add(value);
+        return true;
+      }
+    });
+
+    if (getInternal() instanceof OIndexOneValue)
+      return (T) (result.isEmpty() ? null : result.iterator().next());
+
+    return (T) result;
   }
 
   public long count(Object iKey) {
@@ -107,29 +101,51 @@ public class OIndexProxy<T> implements OIndex<T> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo) {
-    final Object result = lastIndex.getValuesBetween(iRangeFrom, iRangeTo);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final Object lastIndexValuesBetween = lastIndex.getValuesBetween(iRangeFrom, iRangeTo);
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, -1);
+    applyTailIndexes(lastIndexValuesBetween, new IndexValuesResultListener() {
+      @Override
+      public boolean addResult(OIdentifiable value) {
+        result.add(value);
+        return true;
+      }
+    });
+
+    return result;
   }
 
   /**
    * {@inheritDoc}
    */
+  @Override
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive) {
-    final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, -1);
+    final Object lastIndexValuesBetween = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
+
+    applyTailIndexes(lastIndexValuesBetween, new IndexValuesResultListener() {
+      @Override
+      public boolean addResult(OIdentifiable value) {
+        result.add(value);
+        return true;
+      }
+    });
+
+    return result;
   }
 
   /**
    * {@inheritDoc}
    */
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
-      boolean iToInclusive, int maxValuesToFetch) {
+  @Override
+  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
+      IndexValuesResultListener resultListener) {
     final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
+    applyTailIndexes(result, resultListener);
   }
 
   @Override
@@ -141,55 +157,91 @@ public class OIndexProxy<T> implements OIndex<T> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive) {
-    final Object result = lastIndex.getValuesMajor(fromKey, isInclusive);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, -1);
+    final Object lastIndexValuesMajor = lastIndex.getValuesMajor(fromKey, isInclusive);
+
+    applyTailIndexes(lastIndexValuesMajor, new IndexValuesResultListener() {
+      @Override
+      public boolean addResult(OIdentifiable value) {
+        result.add(value);
+        return true;
+      }
+    });
+
+    return result;
   }
 
   /**
    * {@inheritDoc}
    */
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch) {
+  @Override
+  public void getValuesMajor(Object fromKey, boolean isInclusive, IndexValuesResultListener resultListener) {
     final Object result = lastIndex.getValuesMajor(fromKey, isInclusive);
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
+    applyTailIndexes(result, resultListener);
   }
 
   /**
    * {@inheritDoc}
    */
+  @Override
   public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive) {
-    final Object result = lastIndex.getValuesMinor(toKey, isInclusive);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, -1);
+    final Object lastIndexValuesMinor = lastIndex.getValuesMinor(toKey, isInclusive);
+
+    applyTailIndexes(lastIndexValuesMinor, new IndexValuesResultListener() {
+      @Override
+      public boolean addResult(OIdentifiable value) {
+        result.add(value);
+        return true;
+      }
+    });
+
+    return result;
   }
 
   /**
    * {@inheritDoc}
    */
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch) {
+  @Override
+  public void getValuesMinor(Object toKey, boolean isInclusive, IndexValuesResultListener resultListener) {
     final Object result = lastIndex.getValuesMinor(toKey, isInclusive);
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
+    applyTailIndexes(result, resultListener);
   }
 
   /**
    * {@inheritDoc}
    */
+  @Override
   public Collection<OIdentifiable> getValues(Collection<?> iKeys) {
-    final Object result = lastIndex.getValues(iKeys);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, -1);
+    final Object lastIndexResult = lastIndex.getValues(iKeys);
+
+    applyTailIndexes(lastIndexResult, new IndexValuesResultListener() {
+      @Override
+      public boolean addResult(OIdentifiable value) {
+        result.add(value);
+        return true;
+      }
+    });
+
+    return result;
   }
 
   /**
    * {@inheritDoc}
    */
-  public Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch) {
+  @Override
+  public void getValues(Collection<?> iKeys, IndexValuesResultListener resultListener) {
     final Object result = lastIndex.getValues(iKeys);
 
-    return (Collection<OIdentifiable>) applyTailIndexes(result, maxValuesToFetch);
+    applyTailIndexes(result, resultListener);
   }
 
   /**
@@ -206,7 +258,7 @@ public class OIndexProxy<T> implements OIndex<T> {
     return indexChain.get(indexChain.size() - 1).getDefinition();
   }
 
-  private Collection<T> applyTailIndexes(final Object result, int maxValuesToFetch) {
+  private void applyTailIndexes(final Object result, IndexValuesResultListener resultListener) {
     final OIndex<?> previousIndex = indexChain.get(indexChain.size() - 2);
     Set<Comparable> currentKeys = prepareKeys(previousIndex, result);
     for (int j = indexChain.size() - 2; j > 0; j--) {
@@ -226,7 +278,7 @@ public class OIndexProxy<T> implements OIndex<T> {
       currentKeys = newKeys;
     }
 
-    return applyMainIndex(currentKeys, maxValuesToFetch);
+    applyMainIndex(currentKeys, resultListener);
   }
 
   private Set<Comparable> convertResult(Object result, Class<?> targetType) {
@@ -257,28 +309,21 @@ public class OIndexProxy<T> implements OIndex<T> {
     return convertResult(keys, targetType);
   }
 
-  private Collection<T> applyMainIndex(Iterable<Comparable> currentKeys, int maxValuesToFetch) {
-    Collection<T> resultSet = new TreeSet<T>();
-    for (Comparable key : currentKeys) {
+  private void applyMainIndex(Iterable<Comparable> currentKeys, IndexValuesResultListener resultListener) {
+    keysLoop: for (Comparable key : currentKeys) {
       final T result = index.get(index.getDefinition().createValue(key));
       if (result instanceof Set) {
         for (T o : (Set<T>) result) {
-          resultSet.add(o);
-          if (maxValuesToFetch != -1 && resultSet.size() >= maxValuesToFetch) {
-            break;
-          }
+          if (!resultListener.addResult((OIdentifiable) o))
+            break keysLoop;
         }
       } else {
-        resultSet.add(result);
-      }
-      if (maxValuesToFetch != -1 && resultSet.size() >= maxValuesToFetch) {
-        break;
+        if (!resultListener.addResult((OIdentifiable) result))
+          break;
       }
     }
 
     updateStatistic(index);
-
-    return resultSet;
   }
 
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
@@ -387,44 +432,53 @@ public class OIndexProxy<T> implements OIndex<T> {
   // Following methods are not allowed for proxy.
   //
 
+  @Override
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
   public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch) {
+  @Override
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
   public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch) {
+  @Override
+  public void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch) {
+  @Override
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
+  @Override
   public Collection<ODocument> getEntries(Collection<?> iKeys) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
+  public void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

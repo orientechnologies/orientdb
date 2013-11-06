@@ -232,38 +232,38 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.hashCode();
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive, final int maxValuesToFetch) {
-    return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
+  public void getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+      final boolean iToInclusive, IndexValuesResultListener valuesResultListener) {
+    delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, valuesResultListener);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
-    return delegate.getValuesMajor(fromKey, isInclusive, maxValuesToFetch);
+  public void getValuesMajor(final Object fromKey, final boolean isInclusive, IndexValuesResultListener valuesResultListener) {
+    delegate.getValuesMajor(fromKey, isInclusive, valuesResultListener);
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
-    return delegate.getValuesMinor(toKey, isInclusive, maxValuesToFetch);
+  public void getValuesMinor(final Object toKey, final boolean isInclusive, IndexValuesResultListener valuesResultListener) {
+    delegate.getValuesMinor(toKey, isInclusive, valuesResultListener);
   }
 
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
-    return delegate.getEntriesMajor(fromKey, isInclusive, maxEntriesToFetch);
+  public void getEntriesMajor(final Object fromKey, final boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesMajor(fromKey, isInclusive, entriesResultListener);
   }
 
-  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive, final int maxEntriesToFetch) {
-    return delegate.getEntriesMinor(toKey, isInclusive, maxEntriesToFetch);
+  public void getEntriesMinor(final Object toKey, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesMinor(toKey, isInclusive, entriesResultListener);
   }
 
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      final int maxEntriesToFetch) {
-    return delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, maxEntriesToFetch);
+  public void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
+      final IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, entriesResultListener);
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
-    return delegate.getValues(iKeys, maxValuesToFetch);
+  public void getValues(final Collection<?> iKeys, final IndexValuesResultListener resultListener) {
+    delegate.getValues(iKeys, resultListener);
   }
 
-  public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
-    return delegate.getEntries(iKeys, maxEntriesToFetch);
+  public void getEntries(final Collection<?> iKeys, IndexEntriesResultListener resultListener) {
+    delegate.getEntries(iKeys, resultListener);
   }
 
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {

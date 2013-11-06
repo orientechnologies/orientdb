@@ -23,11 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -108,7 +104,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, final INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -150,9 +146,10 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (internalIndex.hasRangeQuerySupport()) {
         if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType)) {
           result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-        } else if (fetchLimit > -1)
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-        else
+        } else if (resultListener != null) {
+          index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+          result = resultListener.getResult();
+        } else
           result = index.getValuesBetween(keyOne, true, keyTwo, true);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
