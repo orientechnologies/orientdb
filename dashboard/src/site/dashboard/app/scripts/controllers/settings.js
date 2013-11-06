@@ -76,7 +76,12 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         $scope.total = $scope.metrics.length;
 
     });
-
+    $scope.getGridClass = function (index, gridOpt) {
+        var css = '';
+        css += (index % gridOpt == 0) ? 'no-margin' : '';
+        css += ' span' + 12 / gridOpt;
+        return css;
+    }
     $scope.refreshMetricConfig = function () {
         MetricConfig.getAll(function (data) {
             var tmp = data.result;

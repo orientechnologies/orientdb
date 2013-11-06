@@ -51,6 +51,7 @@
                     <i class="icon-reorder"></i>
                     {{ 'dashboard.config.available' | i18n }}
                 </div>
+
             </div>
             <div class="widget-body">
                 <table class="table table-striped  table-hover table-condensed table-nocolor">
@@ -86,11 +87,16 @@
                     <i class="icon-reorder"></i>
                     {{ 'dashboard.preview' | i18n }}
                 </div>
+                <div class="actions">
+                    <button class="btn" ng-click="config.grid = 1"><i class="icon-th-list"></i></button>
+                    <button class="btn" ng-click="config.grid = 2"><i class="icon-th-large"></i></button>
+                    <button class="btn" ng-click="config.grid = 3"><i class="icon-th"></i></button>
+                </div>
             </div>
             <div class="widget-body">
 
                 <div class="row-fluid">
-                    <div class="span4 box" ng-class="{ 'no-margin' : $index%3 == 0}" ng-repeat="metr in config.metrics">
+                    <div class="box" ng-class="getGridClass($index,config.grid)" ng-repeat="metr in config.metrics">
                         <div class="span12">
                             <div class="span10">
                                 <h4>{{ metr.name }}</h4>

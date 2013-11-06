@@ -52,7 +52,7 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
 				params.put("user", session.getUserName());
 				final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
 						"select from UserConfiguration where user.name = :user"), params);
-				iResponse.writeRecords(response);
+				iResponse.writeRecords(response,"*:1");
 			} else {
 				ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
 				ODatabaseRecordThreadLocal.INSTANCE.set(db);
@@ -63,7 +63,7 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
 				ODocument user = users.iterator().next();
 				doc.field("user", user);
 				doc.save();
-				iResponse.writeResult(doc, "indent:6");
+				iResponse.writeResult(doc, "*:1");
 			}
 			return false;
 		} else {

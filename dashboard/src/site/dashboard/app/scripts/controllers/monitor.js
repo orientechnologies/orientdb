@@ -38,6 +38,12 @@ angular.module('MonitorApp')
                 modalEl.modal('show');
             });
         }
+        $scope.getGridClass = function (index, gridOpt) {
+            var css = '';
+            css += (index % gridOpt == 0) ? 'no-margin' : '';
+            css += ' span' + 12 / gridOpt;
+            return css;
+        }
         $scope.getStatusLabel = function (status) {
             var label = 'label ';
             label += status == 'ONLINE' ? 'label-success' : 'label-important';
