@@ -76,6 +76,8 @@ public interface OProfilerMBean extends OService {
   public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
       final OProfilerHookValue iHookValue, final String iMetadataName);
 
+  public String getSystemMetric(String iMetricName);
+
   public String getProcessMetric(String iName);
 
   public String getDatabaseMetric(String databaseName, String iName);
