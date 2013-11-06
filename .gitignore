@@ -1,5 +1,5 @@
 target/
 
-agent/.project
-agent/.classpath
+*/.project
+*/.classpath
 *.prefs

@@ -23,32 +23,23 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 @SuppressWarnings("restriction")
 public class OL {
 
-  public static String generate(final int clientId, int serverId, int year, int month, int day) {
-    String plaintext = String.format("%06d%06d%04d%02d%02d", clientId, serverId, year, month, day);
+  public static int checkDate(final String iLicense) throws OLicenseException {
+    if (iLicense == null || iLicense.isEmpty())
+      throw new OLicenseException("license not found");
 
-    final String key = "@Ld" + "ks#2" + new Integer(7 - 4) + "dsLvc" + (35 - 18 - 6) + "a!Po" + "weRr";
-
-    final String license = en(plaintext, key);
-    if (license.endsWith("\n"))
-      return license.substring(0, license.length() - 1);
-    return license;
-  }
-
-  public static int checkDate(final String iLicense) {
     final String key = "@Ld" + "ks#2" + "" + "3dsLvc" + (35 - 12 * 2) + "a!Po" + "weRr";
     try {
       final Date now = new Date();
       final Date d = new SimpleDateFormat("yyyyMMdd").parse(de(iLicense, key).substring(12));
       if (!d.after(now))
-        throw new RuntimeException("License expired on: " + d);
+        throw new OLicenseException("license expired on: " + d);
       return getDateDiff(d, now);
     } catch (Exception e) {
-      throw new RuntimeException("License not valid");
+      throw new OLicenseException("license not valid");
     }
   }
 
@@ -68,27 +59,6 @@ public class OL {
     } catch (Exception e) {
       throw new RuntimeException("License not valid");
     }
-  }
-
-  private static String en(final String message, final String key) {
-    if (message == null || key == null)
-      return null;
-
-    char[] keys = key.toCharArray();
-    char[] mesg = message.toCharArray();
-    final BASE64Encoder encoder = new BASE64Encoder();
-
-    int ml = mesg.length;
-    int kl = keys.length;
-    char[] newmsg = new char[ml];
-
-    for (int i = 0; i < ml; i++) {
-      newmsg[i] = (char) (mesg[i] ^ keys[i % kl]);
-    }
-    mesg = null;
-    keys = null;
-    String temp = new String(newmsg);
-    return new String(encoder.encodeBuffer(temp.getBytes()));
   }
 
   private static String de(String message, final String key) throws IOException {
