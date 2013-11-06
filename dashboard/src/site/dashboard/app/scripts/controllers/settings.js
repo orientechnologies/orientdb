@@ -101,8 +101,8 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     }
     $scope.saveSettings = function () {
         $scope.testMsg = null;
+        console.log($scope.config);
         Settings.put($scope.config, function (data) {
-            console.log('aa')
             $scope.testMsg = "Settings updated successfully.";
             $scope.config = data.result[0];
             $scope.testMsgClass = 'alert alert-setting'
@@ -131,11 +131,18 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         $scope.mailproperties = $scope.config['mailProfile'];
 
     }
+    $scope.getHoursDelete = function () {
 
+        $scope.deleteMetricConfiguration = $scope.config['deleteMetricConfiguration'];
+
+
+
+    }
     $scope.$watch("config", function (data) {
         if (data) {
             $scope.refreshMetricConfig();
             $scope.getMailSettings();
+            $scope.getHoursDelete();
         }
     });
 

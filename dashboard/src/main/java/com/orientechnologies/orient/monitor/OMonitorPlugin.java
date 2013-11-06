@@ -94,6 +94,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public static final String CLASS_USER_CONFIGURATION = "UserConfiguration";
 	public static final String CLASS_MAIL_PROFILE = "OMailProfile";
+	public static final String CLASS_DELETE_METRIC_CONFIG = "DeleteMetricConfiguration";
 
 	public static final String CLASS_METRIC_CONFIG = "MetricConfig";
 
@@ -102,7 +103,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	private String dbName = "monitor";
 	private String dbUser = "admin";
 	private String dbPassword = "admin";
-	ODatabaseDocumentTx db;
+	private ODatabaseDocumentTx db;
 	Map<String, OMonitoredServer> servers = new HashMap<String, OMonitoredServer>();
 	Map<String, OPair<String, METRIC_TYPE>> dictionary;
 	private Set<OServerConfigurationListener> listeners = new HashSet<OServerConfigurationListener>();
@@ -134,20 +135,28 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	@Override
 	public void startup() {
-		db = new ODatabaseDocumentTx(dbName);
-		if (db.exists())
+		setDb(new ODatabaseDocumentTx(dbName));
+		if (getDb().exists())
 			loadConfiguration();
 		else
 			createConfiguration();
 
 		updateDictionary();
 
-		db.registerHook(new OEventHook());
+		getDb().registerHook(new OEventHook());
 
-		registerExecutors(db);
+		registerExecutors(getDb());
 		registerCommand();
 		Orient.instance().getTimer()
 				.schedule(new OMonitorTask(this), updateTimer, updateTimer);
+
+		// Orient.instance()
+		// .getTimer()
+		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
+		//
+		Orient.instance().getTimer()
+				.schedule(new OMonitorPurgeTask(this), 1000, 1000);
+
 	}
 
 	private void registerExecutors(ODatabaseDocumentTx database) {
@@ -183,8 +192,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public void updateActiveServerList() {
 		Map<String, OMonitoredServer> tmpServers = new HashMap<String, OMonitoredServer>();
-		final List<ODocument> enabledServers = db
-				.query(new OSQLSynchQuery<Object>(
+		final List<ODocument> enabledServers = getDb().query(
+				new OSQLSynchQuery<Object>(
 						"select from Server where enabled = true"));
 		for (ODocument s : enabledServers) {
 			final String serverName = s.field("name");
@@ -209,13 +218,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	}
 
 	protected void loadConfiguration() {
-		db.open(dbUser, dbPassword);
+		getDb().open(dbUser, dbPassword);
 
 		// LOAD THE SERVERS CONFIGURATION
 		updateActiveServerList();
 
 		// UPDATE LAST CONNECTION FOR EACH SERVERS
-		final List<ODocument> snapshotDates = db
+		final List<ODocument> snapshotDates = getDb()
 				.query(new OSQLSynchQuery<Object>(
 						"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
 
@@ -240,10 +249,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	protected void createConfiguration() {
 		OLogManager.instance().info(this, "MONITOR creating %s database...",
 				dbName);
-		db.create();
-		
+		getDb().create();
 
-		final OSchema schema = db.getMetadata().getSchema();
+		final OSchema schema = getDb().getMetadata().getSchema();
 
 		final OClass server = schema.createClass(CLASS_SERVER);
 		server.createProperty("name", OType.STRING);
@@ -313,8 +321,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		http.setSuperClass(eventWhat);
 		http.createProperty("method", OType.STRING);
 		http.createProperty("url", OType.STRING);
-		http.createProperty("port", OType.INTEGER);
+		// http.createProperty("port", OType.INTEGER);
 		http.createProperty("body", OType.STRING);
+		http.createProperty("proxy", OType.STRING);
 
 		final OClass mail = schema.createClass(CLASS_MAIL_WHAT);
 		mail.setSuperClass(eventWhat);
@@ -335,7 +344,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
-		final OClass profile = schema.createClass("OMailProfile");
+
+		final OClass profile = schema.createClass(CLASS_MAIL_PROFILE);
+		final OClass deleteMetricConfiguration = schema
+				.createClass(CLASS_DELETE_METRIC_CONFIG);
+		deleteMetricConfiguration.createProperty("hours", OType.INTEGER);
 
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
@@ -348,10 +361,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		userConfig.createProperty("user", OType.LINK, ouser);
 		userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
+		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED,
+				deleteMetricConfiguration);
 
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
 		metricConfig.createProperty("server", OType.LINK, server);
+
 	}
 
 	@Override
@@ -359,7 +375,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	}
 
 	protected void updateDictionary() {
-		final OSchema schema = db.getMetadata().getSchema();
+		final OSchema schema = getDb().getMetadata().getSchema();
 
 		if (!schema.existsClass(CLASS_DICTIONARY)) {
 			final OClass dictionary = schema.createClass(CLASS_DICTIONARY);
@@ -392,5 +408,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public Map<String, OPair<String, METRIC_TYPE>> getDictionary() {
 		return dictionary;
+	}
+
+	public ODatabaseDocumentTx getDb() {
+		return db;
+	}
+
+	public void setDb(ODatabaseDocumentTx db) {
+		this.db = db;
 	}
 }

@@ -17,10 +17,11 @@
                     Date from:
                 </td>
                 <td>
-                    <div class="input-append">
+                    <div class="input-append querySearch">
                         <input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateFrom"
                                 >
-                        <a href="javascript:void(0)" class="btn" data-toggle="datepicker"> <i class="icon-calendar"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="datepicker"> <i
+                                class="icon-calendar"></i>
                         </a>
 
                     </div>
@@ -31,7 +32,8 @@
                 <td>
                     <div class="input-append">
                         <input type="text" bs-timepicker ng-model="selectedHourFrom" ng-disabled="checkDateFrom()">
-                        <a href="javascript:void(0)" class="btn" data-toggle="timepicker"> <i class="icon-time"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="timepicker"> <i
+                                class="icon-time"></i>
                         </a>
                     </div>
                 </td>
@@ -42,7 +44,8 @@
                     <div class="input-append">
                         <input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateTo"
                                 >
-                        <a href="javascript:void(0)" class="btn" data-toggle="datepicker"> <i class="icon-calendar"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="datepicker"> <i
+                                class="icon-calendar"></i>
                         </a>
 
                     </div>
@@ -53,7 +56,8 @@
                 <td>
                     <div class="input-append">
                         <input type="text" bs-timepicker ng-model="selectedHourTo" ng-disabled="checkDateTo()">
-                        <a href="javascript:void(0)" class="btn" data-toggle="timepicker"> <i class="icon-time"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="timepicker"> <i
+                                class="icon-time"></i>
                         </a>
                     </div>
                 </td>
@@ -67,7 +71,8 @@
                         <select ng-model="level" ng-options="t for t in levels">
                             <option value=""></option>
                         </select>
-                        <a href="javascript:void(0)" class="btn" ng-click="clearLevel()"> <i class="icon-remove"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification " ng-click="clearLevel()"> <i
+                                class="icon-remove"></i>
                         </a>
                     </div>
                 </td>
@@ -77,7 +82,8 @@
                 <td>
                     <div class="input-append">
                         <input type="text" ng-model="description">
-                        <a href="javascript:void(0)" class="btn" ng-click="clearSearch()"> <i class="icon-remove"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" ng-click="clearSearch()"> <i
+                                class="icon-remove"></i>
                         </a>
                     </div>
                 </td>
@@ -103,7 +109,7 @@
                             href="javascript:void(0)" ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
                 <li><a href="javascript:void(0)" ng-click="next()">»</a></li>
             </ul>
-            <select class="input-small pagination_limit" ng-model="countPage"   >
+            <select class="input-small pagination_limit" ng-model="countPage">
                 <option ng-repeat="options in countPageOptions"> {{ options }}</option>
             </select>
         </div>

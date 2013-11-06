@@ -194,6 +194,9 @@ button.btn-primary, .btn.btn-primary {
     outline: medium none;
     text-shadow: none;
 }
+.btn-notification{
+    height: 22px;
+}
 
 .btn-small {
     background-color: #D3D3D3;
@@ -537,12 +540,12 @@ section {
 }
 
 table.form-search-width > tbody > tr > td select {
-    height: 34px;
+    /*height: 34px;*/
     width: 72%;
 }
 
 table.form-search-width > tbody > tr > td input {
-    height: 24px;
+    /*height: 24px;*/
     width: 65%;
 }
 
