@@ -75,7 +75,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     };
 
     $scope.modifiedMetrics = function (row) {
-
+        console.log($scope.metricsModified);
         if ($scope.metricsModified[row.name] == undefined) {
             $scope.metricsModified[row.name] = new Array(row);
         }
@@ -121,9 +121,12 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.config = data.result[0];
             $scope.testMsgClass = 'alert alert-setting'
 
-            CommandLogApi.notifyModifiedMetrics({metrics: $scope.metricsModified}, function (data) {
+            for (var elem in $scope.metricsModified) {
+                MetricConfig.saveConfig($scope.metricsModified[elem][0], function (data) {
+                })
 
-            });
+            }
+
         }, function (error) {
             $scope.testMsg = error;
             $scope.testMsgClass = 'alert alert-error alert-setting'

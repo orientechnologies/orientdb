@@ -161,7 +161,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
 		//
 		Orient.instance().getTimer().schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
-		Orient.instance().getTimer().schedule(new OMonitorMessageTask(this), 5000, 5000);
+		Orient.instance().getTimer().schedule(new OMonitorMessageTask(this), 5000*60, 5000*60);
 	}
 
 	private void registerExecutors(ODatabaseDocumentTx database) {
