@@ -41,28 +41,20 @@ public class OEventHook extends ORecordHookAbstract {
 		List<ODocument> triggers = new ArrayList<ODocument>();
 
 		if (doc.getClassName().equalsIgnoreCase("Log")) {
-			triggers = doc.getDatabase().query(
-					new OSQLSynchQuery<Object>(
-							"select from Event where when.type = '"
-									+ doc.field("level") + "'"));
+			triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.type = '" + doc.field("level") + "'"));
 		} else {
 
 			String metricName = doc.field("name");
 			ODocument snapshot = doc.field("snapshot");
-			ODocument server = (ODocument) (snapshot != null ? snapshot
-					.field("server") : null);
+			ODocument server = (ODocument) (snapshot != null ? snapshot.field("server") : null);
 			if (server != null) {
 				String urlServer = server.field("url");
 				if (metricName != null)
 					urlServer = urlServer.split(":")[0];
-					metricName = metricName.replaceAll(urlServer+":"+"[0-9]*.", "*.");
-					
+				metricName = metricName.replaceAll(urlServer + ":" + "[0-9]*.", "*.");
 
 			}
-			triggers = doc.getDatabase().query(
-					new OSQLSynchQuery<Object>(
-							"select from Event where when.name = '"
-									+ metricName + "'"));
+			triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.name = '" + metricName + "'"));
 		}
 		for (ODocument oDocument : triggers) {
 
@@ -70,8 +62,7 @@ public class OEventHook extends ORecordHookAbstract {
 			ODocument what = oDocument.field("what");
 			String classWhen = when.field("@class");
 			String classWhat = what.field("@class");
-			OEventExecutor executor = OEventController.getInstance()
-					.getExecutor(classWhen, classWhat);
+			OEventExecutor executor = OEventController.getInstance().getExecutor(classWhen, classWhat);
 			executor.execute(doc, when, what);
 
 		}

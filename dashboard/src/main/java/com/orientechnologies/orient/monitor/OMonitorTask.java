@@ -275,7 +275,7 @@ public final class OMonitorTask extends TimerTask {
 
 	protected void log(final ODocument iServer, final LOG_LEVEL iLevel, final String iDescription) {
 		
-		new ODocument(OMonitorPlugin.CLASS_LOG).field("date", new Date()).field("server", iServer).field("level", iLevel.name())
+		new ODocument(OMonitorPlugin.CLASS_LOG).field("date", new Date()).field("server", iServer).field("level", iLevel.ordinal()).field("levelDescription", iLevel.name())
 				.field("description", iDescription).save();
 		
 		
