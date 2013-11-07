@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.monitor;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -28,23 +29,20 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public final class OMonitorPurgeMetricLogHelper {
 
-	
-	
 	/**
 	 * 
-	 * @param hour 
+	 * @param hour
 	 * @param db
 	 * <br>
-	 * delete metrics older than @hour 
+	 *          delete metrics older than @hour
 	 */
 	public static void deleteMetrics(Integer hour, ODatabaseDocumentTx db) {
-		if (hour!= null && hour != 0 ) {
+		if (hour != null && hour != 0) {
 
 			String osql = "select from Metric where snapshot.dateFrom <= :dateFrom order by snapshot.dateFrom";
 			final Map<String, Object> params = new HashMap<String, Object>();
 
-			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
-					osql);
+			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
 
 			Calendar calendar = Calendar.getInstance();
 			calendar.add(Calendar.HOUR, -hour);
@@ -55,22 +53,21 @@ public final class OMonitorPurgeMetricLogHelper {
 			purgeMetricAndSnapshot(metrics);
 		}
 	}
-	
+
 	/**
 	 * 
-	 * @param hour 
+	 * @param hour
 	 * @param db
 	 * <br>
-	 * delete logs older than @hour 
+	 *          delete logs older than @hour
 	 */
 	public static void deleteLogs(Integer hour, ODatabaseDocumentTx db) {
-		if (hour!= null && hour != 0 ) {
+		if (hour != null && hour != 0) {
 
 			String osql = "select from Log where date <= :dateFrom";
 			final Map<String, Object> params = new HashMap<String, Object>();
 
-			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
-					osql);
+			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
 
 			Calendar calendar = Calendar.getInstance();
 			calendar.add(Calendar.HOUR, -hour);
@@ -81,48 +78,97 @@ public final class OMonitorPurgeMetricLogHelper {
 			purgeLogs(logs);
 		}
 	}
-	
 
-	
 	/**
 	 * 
 	 * @param db
 	 * <br>
-	 * delete all metrics
+	 *          delete all metrics
 	 */
 	public static void purgeMetricNow(ODatabaseDocumentTx db) {
+		purgeMetricNow(null, db);
+	}
+
+	/**
+	 * 
+	 * @param db
+	 * <br>
+	 *          delete all metrics
+	 */
+	public static void purgeMetricNow(ODocument server, ODatabaseDocumentTx db) {
 		String osql = "select from Metric";
+		Map<String, Object> params = new HashMap<String, Object>();
+		if (server != null) {
+			osql += " where spnapshot.server = :server";
+			params.put("server", server);
+		}
+		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
 
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
-				osql);
-
-		List<ODocument> metrics = db.query(osqlQuery);
+		List<ODocument> metrics = db.query(osqlQuery, params);
 
 		purgeMetricAndSnapshot(metrics);
 
 	}
 
+	/**
+	 * 
+	 * @param db
+	 * <br>
+	 *          delete all logs
+	 */
+	public static void purgeLogsNow(ODatabaseDocumentTx db) {
+		purgeLogsNow(null, db);
+
+	}
 
 	/**
 	 * 
 	 * @param db
 	 * <br>
-	 * delete all logs
+	 *          delete all logs
 	 */
-	public static void purgeLogsNow(ODatabaseDocumentTx db) {
+	public static void purgeLogsNow(ODocument server, ODatabaseDocumentTx db) {
 		String osql = "select from Log";
 
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
-				osql);
+		Map<String, Object> params = new HashMap<String, Object>();
+		if (server != null) {
+			osql += " where server = :server";
+		}
+		params.put("server", server);
+		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
 
-		List<ODocument> logs = db.query(osqlQuery);
+		List<ODocument> logs = db.query(osqlQuery, params);
 
 		purgeLogs(logs);
 
 	}
 
+	public static void purgeConfigNow(ODocument server, ODatabaseDocumentTx db) {
+		String osql = "select from MetricConfig";
+		Map<String, Object> params = new HashMap<String, Object>();
+		if (server != null) {
+			osql += " where server = :server";
+		}
+		params.put("server", server);
+		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+		List<ODocument> logs = db.query(osqlQuery, params);
+
+		for (ODocument oDocument : new ArrayList<ODocument>(logs)) {
+			osql = "select from UserConfiguration where metrics contains(:metric)";
+			params.clear();
+			params.put("metric", oDocument);
+			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+			List<ODocument> usr = db.query(osqlQuery, params);
+			for (ODocument oDocument2 : usr) {
+				List<ODocument> metrics = oDocument2.field("metrics");
+			}
+		}
+		purgeLogs(logs);
+
+	}
+
 	private static void purgeLogs(List<ODocument> logs) {
-		
+
 		for (ODocument doc : logs) {
 			try {
 				doc.delete();

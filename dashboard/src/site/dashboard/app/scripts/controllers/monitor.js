@@ -72,7 +72,7 @@ angular.module('MonitorApp')
                 title: 'Warning!',
                 body: 'You are removing Server ' + server.name + '. Are you sure?',
                 success: function () {
-                    Server.delete(server['@rid'], function (data) {
+                    Server.delete(server.name, function (data) {
                         $scope.refresh();
                     });
                 }

@@ -17,11 +17,11 @@ package com.orientechnologies.orient.monitor.http;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.monitor.OMonitorPlugin;
-import com.orientechnologies.orient.monitor.OMonitorPurgeMetricHelper;
+import com.orientechnologies.orient.monitor.OMonitorPurgeMetricLogHelper;
 import com.orientechnologies.orient.monitor.OMonitoredServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -34,6 +34,9 @@ public class OServerCommandDeleteServer extends OServerCommandAuthenticatedDbAbs
 	private static final String[]	NAMES	= { "DELETE|monitoredServer/*" };
 
 	private OMonitorPlugin				monitor;
+
+	public OServerCommandDeleteServer() {
+	}
 
 	public OServerCommandDeleteServer(final OServerCommandConfiguration iConfiguration) {
 	}
@@ -54,7 +57,12 @@ public class OServerCommandDeleteServer extends OServerCommandAuthenticatedDbAbs
 			if (server == null)
 				throw new IllegalArgumentException("Invalid server '" + serverName + "'");
 
-			
+			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+			OMonitorPurgeMetricLogHelper.purgeLogsNow(server.getConfiguration(), db);
+			OMonitorPurgeMetricLogHelper.purgeMetricNow(server.getConfiguration(), db);
+			OMonitorPurgeMetricLogHelper.purgeConfigNow(server.getConfiguration(), db);
+			iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+			server.getConfiguration().delete();
 		} catch (Exception e) {
 			iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
 		}

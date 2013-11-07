@@ -51,6 +51,7 @@ import com.orientechnologies.orient.monitor.event.OEventMetricFunctionExecutor;
 import com.orientechnologies.orient.monitor.event.OEventMetricHttpExecutor;
 import com.orientechnologies.orient.monitor.event.OEventMetricMailExecutor;
 import com.orientechnologies.orient.monitor.hooks.OEventHook;
+import com.orientechnologies.orient.monitor.http.OServerCommandDeleteServer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -174,7 +175,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OServerNetworkListener listener = serverInstance.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 		if (listener == null)
 			throw new OConfigurationException("HTTP listener not found");
-
 	}
 
 	public OMonitoredServer getMonitoredServer(final String iServer) {

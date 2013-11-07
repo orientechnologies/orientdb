@@ -43,6 +43,7 @@
     "dashboard.javalog": "Notifications",
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
+    "dashboard.messages": "Messages",
     "dashboard.mailsettings": "Mail Settings",
     "dashboard.metricsdelete": "Metrics Purge",
     "dashboard.notificationsdelete": "Notifications Purge",

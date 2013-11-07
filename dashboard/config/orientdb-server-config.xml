@@ -64,6 +64,8 @@
 					</command>
 					<command implementation="com.orientechnologies.orient.monitor.http.OServerCommandPurgeMetric">
 					</command>
+					<command implementation="com.orientechnologies.orient.monitor.http.OServerCommandDeleteServer">
+					</command>
 				</commands>
 				<parameters>
 					<parameter value="utf-8" name="network.http.charset" />
