@@ -150,12 +150,6 @@ public class OMetadataDefault implements OMetadata {
                 security = instance;
                 instance.load();
               }
-
-              // if (instance.getAllRoles().isEmpty()) {
-              // OLogManager.instance().error(this, "No security has been installed, create default users and roles");
-              // security.repair();
-              // }
-
               return instance;
             }
           }), database);
@@ -198,14 +192,10 @@ public class OMetadataDefault implements OMetadata {
    * Closes internal objects
    */
   public void close() {
-    if (indexManager != null)
-      indexManager.flush();
     if (schema != null)
       schema.close();
     if (security != null)
       security.close();
-    // if (functionLibrary != null)
-    // functionLibrary.close();
   }
 
   protected ODatabaseRecord getDatabase() {
