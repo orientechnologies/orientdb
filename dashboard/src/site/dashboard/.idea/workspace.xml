@@ -194,7 +194,7 @@
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/font-awesome/src/assets/js/backbone.min.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="$USER_HOME$/orientbi/www/biconsole/bower_components/codemirror/mode/javascript/javascript.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380124921377" ignored="false" />
     <file path="/datepicker.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380210153179" ignored="false" />
-    <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383830775146" ignored="false" />
+    <file path="/logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383832050604" ignored="false" />
     <file path="/workbench-service-logs.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383824840849" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editclass.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381416802554" ignored="false" />
     <file path="/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380364362509" ignored="false" />
@@ -267,7 +267,7 @@
       <file leaf-file-name="logs.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="42" column="53" selection-start="1555" selection-end="1555" vertical-scroll-proportion="0.45107794">
+            <state line="260" column="54" selection-start="9848" selection-end="9848" vertical-scroll-proportion="0.75272727">
               <folding />
             </state>
           </provider>
@@ -847,13 +847,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="193" column="12" selection-start="7394" selection-end="7394" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/eventWhen/logwhen.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="16" column="26" selection-start="454" selection-end="454" vertical-scroll-proportion="-10.461538">
@@ -861,9 +854,16 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="193" column="12" selection-start="7394" selection-end="7394" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="42" column="53" selection-start="1555" selection-end="1555" vertical-scroll-proportion="0.45107794">
+        <state line="260" column="54" selection-start="9848" selection-end="9848" vertical-scroll-proportion="0.75272727">
           <folding />
         </state>
       </provider>

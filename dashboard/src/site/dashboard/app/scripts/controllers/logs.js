@@ -39,12 +39,10 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
         });
     }
     $scope.$watch("countPage", function (data) {
-
-        console.log($scope.resultTotal['logs'].length)
         if ($scope.resultTotal) {
             $scope.results = $scope.resultTotal.logs.slice(0, $scope.countPage);
             $scope.currentPage = 1;
-            $scope.numberOfPage = new Array(Math.ceil($scope.resultTotal.length / $scope.countPage));
+            $scope.numberOfPage = new Array(Math.ceil($scope.resultTotal.logs.length / $scope.countPage));
         }
     });
     $scope.clear = function () {
@@ -140,7 +138,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     $scope.selectedDateTo = undefined;
     $scope.selectedHourTo = undefined;
     $scope.countPage = 1000;
-    $scope.countPageOptions = [100, 500, 1000];
+    $scope.countPageOptions = [1, 2, 3];
 
     $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
     });
@@ -248,5 +246,22 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
             return true;
         }
         return false
+    }
+    $scope.$watch("countPage", function (data) {
+        console.log($scope.resultTotal)
+        if ($scope.resultTotal) {
+            $scope.results = $scope.resultTotal.result.slice(0, $scope.countPage);
+            $scope.currentPage = 1;
+            $scope.numberOfPage = new Array(Math.ceil($scope.resultTotal.result.length / $scope.countPage));
+        }
+    });
+    $scope.switchPage = function (index) {
+        if (index != $scope.currentPage) {
+            $scope.currentPage = index;
+            $scope.results = $scope.resultTotal.result.slice(
+                (index - 1) * $scope.countPage,
+                index * $scope.countPage
+            );
+        }
     }
 }]);
