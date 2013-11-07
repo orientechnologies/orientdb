@@ -1,5 +1,13 @@
 package com.orientechnologies.orient.monitor.event;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,22 +24,19 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.plugin.mail.OMailProfile;
 
 public class EventHelper {
+	private final static String	USER_AGENT	= "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36";
 
-	public static Object resolve(final Map<String, Object> body2name2,
-			final Object iContent) {
+	public static Object resolve(final Map<String, Object> body2name2, final Object iContent) {
 		Object value = null;
 		if (iContent instanceof String)
-			value = OVariableParser.resolveVariables((String) iContent,
-					OSystemVariableResolver.VAR_BEGIN,
-					OSystemVariableResolver.VAR_END,
-					new OVariableParserListener() {
+			value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END, new OVariableParserListener() {
 
-						@Override
-						public Object resolve(final String iVariable) {
-							return body2name2.get(iVariable);
-						}
+				@Override
+				public Object resolve(final String iVariable) {
+					return body2name2.get(iVariable);
+				}
 
-					});
+			});
 		else
 			value = iContent;
 
@@ -50,8 +55,7 @@ public class EventHelper {
 		return body;
 	}
 
-	public static Map<String, Object> createConfiguration(ODocument what,
-			Map<String, Object> body2name) {
+	public static Map<String, Object> createConfiguration(ODocument what, Map<String, Object> body2name) {
 
 		Map<String, Object> configuration = new HashMap<String, Object>();
 
@@ -76,39 +80,29 @@ public class EventHelper {
 	}
 
 	public static OMailProfile createOMailProfile(ODocument oUserConfiguration) {
-		
-		
+
 		OMailProfile enterpriseProfile = new OMailProfile();
-		
-		enterpriseProfile.put("mail.smtp.user",
-				oUserConfiguration.field("user"));
-		enterpriseProfile.put("mail.smtp.password",
-				oUserConfiguration.field("password"));
-		enterpriseProfile.put("mail.smtp.port",
-				oUserConfiguration.field("port"));
-		enterpriseProfile.put("mail.smtp.auth",
-				oUserConfiguration.field("auth"));
-		enterpriseProfile.put("mail.smtp.host",
-				oUserConfiguration.field("host"));
-		enterpriseProfile.put("enabled",
-				oUserConfiguration.field("enabled"));
-		enterpriseProfile.put("mail.smtp.starttls.enable",
-				oUserConfiguration.field("starttlsEnable"));
-		enterpriseProfile.put("mail.date.format",
-				oUserConfiguration.field("dateFormat"));
+
+		enterpriseProfile.put("mail.smtp.user", oUserConfiguration.field("user"));
+		enterpriseProfile.put("mail.smtp.password", oUserConfiguration.field("password"));
+		enterpriseProfile.put("mail.smtp.port", oUserConfiguration.field("port"));
+		enterpriseProfile.put("mail.smtp.auth", oUserConfiguration.field("auth"));
+		enterpriseProfile.put("mail.smtp.host", oUserConfiguration.field("host"));
+		enterpriseProfile.put("enabled", oUserConfiguration.field("enabled"));
+		enterpriseProfile.put("mail.smtp.starttls.enable", oUserConfiguration.field("starttlsEnable"));
+		enterpriseProfile.put("mail.date.format", oUserConfiguration.field("dateFormat"));
 		return enterpriseProfile;
 	}
 
 	public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocumentTx database) {
 		String sql = "select from UserConfiguration where user.name = 'admin'";
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
-				sql);
+		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
 		final List<ODocument> response = database.query(osqlQuery);
 		ODocument configuration = null;
 		ODocument userconfiguration = null;
-		
+
 		if (response.size() == 1) {
-			userconfiguration =  response.get(0); 
+			userconfiguration = response.get(0);
 			configuration = userconfiguration.field("mailProfile");
 		}
 		// mail = OServerMain.server().getPluginByClass(OMailPlugin.class);
@@ -122,7 +116,7 @@ public class EventHelper {
 			configuration.field("port", 25);
 			configuration.field("host", "192.168.0.50");
 			configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
-			configuration.field("@type","d");
+			configuration.field("@type", "d");
 
 			sql = "select from OUser where name = 'admin'";
 			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
@@ -133,14 +127,116 @@ public class EventHelper {
 				userconfiguration.field("user", ouserAdmin);
 				userconfiguration.field("mailProfile", configuration);
 				userconfiguration.save();
-			}
-			else{
+			} else {
 				throw new OConfigurationException("user admin not found");
 			}
 		}
-		
+
 		return configuration;
-		
+
 	}
 
+	public static void executeHttpRequest(ODocument what, ODatabaseDocumentTx db) throws MalformedURLException {
+
+		String url = what.field("url");
+
+		String method = what.field("method"); // GET POST
+
+		// Integer port = what.field("port");
+
+		String parameters = what.field("body"); // parameters
+
+		URL obj = new URL(url);
+
+		// GET
+		if ("GET".equalsIgnoreCase(method)) {
+			try {
+
+				Proxy proxy = retrieveProxy(db);
+				HttpURLConnection con = null;
+				if (proxy != null)
+					con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
+				else
+					con = (HttpURLConnection) obj.openConnection();
+
+				con.setRequestMethod(method);
+
+				// add request header
+				con.setRequestProperty("User-Agent", USER_AGENT);
+
+				int responseCode = con.getResponseCode();
+
+				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				StringBuffer response = new StringBuffer();
+
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+
+				// print result
+				System.out.println(response.toString());
+				in.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+			}
+		}
+		// POST
+		else {
+			try {
+
+				Proxy proxy = retrieveProxy(db);
+				HttpURLConnection con = null;
+				if (proxy != null)
+					con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
+				else
+					con = (HttpURLConnection) obj.openConnection();
+
+				con.setRequestMethod(method);
+
+				// add request header
+				con.setRequestProperty("User-Agent", USER_AGENT);
+
+				con.setDoOutput(true);
+				DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+				wr.writeBytes(parameters);
+				wr.flush();
+				wr.close();
+				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				StringBuffer response = new StringBuffer();
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+
+				// print result
+//				System.out.println(response.toString());
+				in.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {
+			}
+		}
+	}
+
+	private static Proxy retrieveProxy(ODatabaseDocumentTx db) {
+		String sql = "select from  UserConfiguration where user.name = 'admin'";
+		Proxy proxy = null;
+		OSQLSynchQuery<Object> osql = new OSQLSynchQuery<Object>(sql);
+		List<ODocument> userconfiguration = db.query(osql);
+		if (userconfiguration != null) {
+			ODocument userConf = userconfiguration.get(0);
+			ODocument proxyConfiguration = userConf.field("proxyConfiguration");
+			if (proxyConfiguration != null && proxyConfiguration.field("proxyIp") != null && proxyConfiguration.field("proxyPort") != null) {
+
+				String proxyIp = proxyConfiguration.field("proxyIp");
+				String proxyPort = proxyConfiguration.field("proxyPort");
+				if (!proxyIp.isEmpty() && proxyPort != null)
+					proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
+			}
+
+		}
+		return proxy;
+	}
 }

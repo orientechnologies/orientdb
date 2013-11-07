@@ -41,7 +41,7 @@ public class OEventHook extends ORecordHookAbstract {
 		List<ODocument> triggers = new ArrayList<ODocument>();
 
 		if (doc.getClassName().equalsIgnoreCase("Log")) {
-			triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.type = '" + doc.field("level") + "'"));
+			triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.type = '" + doc.field("levelDescription") + "'"));
 		} else {
 
 			String metricName = doc.field("name");

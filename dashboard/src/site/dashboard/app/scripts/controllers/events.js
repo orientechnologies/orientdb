@@ -244,8 +244,20 @@ dbModule.controller("SchedulerWhenController", ['$scope', '$http', '$location', 
     $scope.properties = CommandLogApi.listPropertiesForClass($scope.eventWhen['@class'].trim());
 }]);
 dbModule.controller("HttpWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
-    $scope.methods = ["GET", "POST", "PUT"];
+    $scope.methods = ["GET", "POST"];
 
+
+    $scope.checkMethod = function () {
+
+        if ($scope.eventWhat['method'] == 'POST') {
+
+            return false
+        }
+        else {
+            $scope.eventWhat['body'] = undefined;
+            return true
+        }
+    }
 
 }]);
 dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {

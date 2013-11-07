@@ -665,11 +665,11 @@ ul.horizontallist, ol.horizontallist {
     padding: 0px;
 }
 
-div.functionwhatform select.ng-invalid.ng-dirty, div.functionwhatform input.ng-invalid.ng-dirty, div.mailwhatform input.ng-invalid.ng-dirty {
+div.httpwhatform select.ng-invalid.ng-dirty,div.httpwhatform input.ng-invalid.ng-dirty,  div.functionwhatform select.ng-invalid.ng-dirty, div.functionwhatform input.ng-invalid.ng-dirty, div.mailwhatform input.ng-invalid.ng-dirty {
     border: 1px solid #FA787E;
 }
 
-div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-valid.ng-dirty, div.mailwhatform input.ng-valid.ng-dirty {
+div.httpwhatform select.ng-valid.ng-dirty,div.httpwhatform input.ng-valid.ng-dirty, div.functionwhatform select.ng-valid.ng-dirty, div.functionwhatform input.ng-valid.ng-dirty, div.mailwhatform input.ng-valid.ng-dirty {
     border: 1px solid #78FA89;
 }
 
