@@ -15,17 +15,18 @@
                 Method:
                 <select class="input-block-level" ng-model="eventWhat['method']"
                         ng-options="meth for meth in methods" required> </select>
-                Url:
+                Url ("localhost" is not reccomended):
                 <input type="url" class="input-block-level" placeholder="http://0.0.0.0"
                        ng-model="eventWhat['url']" required>
-                Port:
-                <input type="text" name="name" class="input-block-level" placeholder="port"
-                       ng-model="eventWhat['port']" required>
-
+                <!--Port:-->
+                <!--<input type="text" name="name" class="input-block-level" placeholder="port"-->
+                <!--ng-model="eventWhat['port']" >-->
                 <div>
-                    Body:
+                    Parameters:
                     <textarea type="text" rows="3" id="description" name="body" class="input-block-level"
-                              placeholder="body" ng-model="eventWhat['body']"></textarea>
+                              ng-disabled="checkMethod()"
+                              placeholder="sn=example&cn=&locale=&caller=&num=12345"
+                              ng-model="eventWhat['body']"></textarea>
                 </div>
             </fieldset>
         </form>
