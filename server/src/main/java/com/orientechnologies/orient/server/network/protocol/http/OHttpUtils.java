@@ -15,9 +15,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.orientechnologies.common.exception.OException;
 
 /**
  * Contains HTTP utilities static methods and constants.
@@ -99,7 +103,11 @@ public class OHttpUtils {
       for (String p : paramPairs) {
         final String[] parts = p.split("=");
         if (parts.length == 2)
-          params.put(parts[0], parts[1]);
+          try {
+            params.put(parts[0], URLDecoder.decode(parts[1], "UTF-8"));
+          } catch (UnsupportedEncodingException e) {
+            throw new OException(e);
+          }
       }
       return params;
     }
