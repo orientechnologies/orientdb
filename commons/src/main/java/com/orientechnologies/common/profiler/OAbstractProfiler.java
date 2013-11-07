@@ -199,7 +199,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("db.");
-    buffer.append(iDatabaseName);
+    buffer.append(iDatabaseName != null ? iDatabaseName : "*");
     buffer.append('.');
     buffer.append(iMetricName);
     return buffer.toString();
