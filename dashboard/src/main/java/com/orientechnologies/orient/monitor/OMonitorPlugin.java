@@ -99,6 +99,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	public static final String												CLASS_DELETE_NOTIFICATIONS_CONFIG	= "NotificationsConfiguration";
 
 	public static final String												CLASS_METRIC_CONFIG								= "MetricConfig";
+	private static final String												CLASS_PROXY_CONFIG								= "ProxyConfiguration";
 
 	private OServer																		serverInstance;
 	private long																			updateTimer;
@@ -240,8 +241,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		// UPDATE LAST CONNECTION FOR EACH SERVERS
 		final List<ODocument> snapshotDates = getDb().query(
-				new OSQLSynchQuery<Object>(
-						"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
+				new OSQLSynchQuery<Object>("select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
 
 		for (ODocument snapshot : snapshotDates) {
 			final String serverName = snapshot.field("serverName");
@@ -252,8 +252,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		}
 		OLogManager.instance().info(this, "MONITOR loading server configuration (%d)...", servers.size());
 		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
-			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(),
-					serverEntry.getValue().getLastConnection());
+			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(), serverEntry.getValue().getLastConnection());
 		}
 	}
 
@@ -362,6 +361,10 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass notificationsConfiguration = schema.createClass(CLASS_DELETE_NOTIFICATIONS_CONFIG);
 		notificationsConfiguration.createProperty("hours", OType.INTEGER);
 
+		final OClass proxyConfiguration = schema.createClass(CLASS_PROXY_CONFIG);
+		notificationsConfiguration.createProperty("proxyIp", OType.STRING);
+		notificationsConfiguration.createProperty("proxyPort", OType.INTEGER);
+
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
 		profile.createProperty("port", OType.INTEGER);
@@ -375,6 +378,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
 		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED, deleteMetricConfiguration);
 		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED, notificationsConfiguration);
+		userConfig.createProperty("proxyConfiguration", OType.EMBEDDED, proxyConfiguration);
 
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
 

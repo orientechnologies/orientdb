@@ -178,7 +178,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         var sql = "select * from Log ";
 
         if ($scope.level != undefined && $scope.level != null) {
-            var sqlapp = "WHERE level = '" + $scope.level +"'";
+            var sqlapp = "WHERE levelDescription = '" + $scope.level +"'";
 
             sql = sql.concat(sqlapp);
             first = false;

@@ -144,6 +144,14 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.config['deleteMetricConfiguration']['@type'] = 'document';
             $scope.config['deleteMetricConfiguration']['hours'] = 0;
         }
+
+        if ($scope.config['proxyConfiguration'] == undefined) {
+            $scope.config['proxyConfiguration'] = {};
+            $scope.config['proxyConfiguration']['@class'] = 'ProxyConfiguration';
+            $scope.config['proxyConfiguration']['@type'] = 'document';
+            $scope.config['proxyConfiguration']['proxyIp'] = undefined;
+            $scope.config['proxyConfiguration']['proxyPort'] = undefined;
+        }
         if ($scope.config['notificationsConfiguration'] == undefined) {
             $scope.config['notificationsConfiguration'] = {};
             $scope.config['notificationsConfiguration']['@class'] = 'NotificationsConfiguration';
@@ -153,6 +161,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
         $scope.deleteMetricConfiguration = $scope.config['deleteMetricConfiguration'];
         $scope.notificationsConfiguration = $scope.config['notificationsConfiguration'];
+        $scope.proxyConfiguration = $scope.config['proxyConfiguration'];
 
     }
     $scope.$watch("config", function (data) {
@@ -169,9 +178,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         );
     }
     $scope.purgeLogs = function () {
-        console.log('passato');
         CommandLogApi.purge({type: 'logs'}, function (data) {
-
             }
         );
     }

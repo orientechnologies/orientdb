@@ -28,17 +28,10 @@
                                                                  data-toggle="tab">{{
             'dashboard.mailsettings' | i18n }}</a></li>
 
-        <li ng-class="{ active : 'metrics' == metricsdelete }"><a href="javascript:void(0)"
-                                                                  ng-click="currentTab = 'metricsdelete'"
-                                                                  data-toggle="tab">{{
-            'dashboard.metricsdelete' | i18n }}</a></li>
-
-        <li ng-class="{ active : 'metrics' == notificationsdelete }"><a href="javascript:void(0)"
-                                                                  ng-click="currentTab = 'notificationsdelete'"
-                                                                  data-toggle="tab">{{
-            'dashboard.notificationsdelete' | i18n }}</a></li>
-
-
+        <li ng-class="{ active : 'metrics' == globalsettings }"><a href="javascript:void(0)"
+                                                                   ng-click="currentTab = 'globalsettings'"
+                                                                   data-toggle="tab">{{
+            'dashboard.globalsettings' | i18n }}</a></li>
 
 
     </ul>
@@ -289,7 +282,7 @@
 
 
 </div>
-<div class="row-fluid" ng-show="currentTab == 'metricsdelete'">
+<div class="row-fluid" ng-show="currentTab == 'globalsettings'">
 
 
     <div class="span12">
@@ -297,29 +290,28 @@
             Metrics older then <input type="text" numbersonly="numbersonly" class="span1"
                                       ng-model="deleteMetricConfiguration['hours']"> hours will be purged automatically
             from server (0 to disable).
+            <button class="btn btn-primary" ng-click="purgeMetrics()"> Purge All Metrics Now</button>
         </p>
 
-    </div>
 
-    <button class="btn btn-primary" ng-click="purgeMetrics()"> Purge All Now</button>
+        <br>
 
-
-</div>
-
-
-<div class="row-fluid" ng-show="currentTab == 'notificationsdelete'">
-
-
-    <div class="span12">
         <p>
             Notifications older then <input type="text" numbersonly="numbersonly" class="span1"
-                                      ng-model="notificationsConfiguration['hours']"> hours will be purged automatically
+                                            ng-model="notificationsConfiguration['hours']"> hours will be purged
+            automatically
             from server (0 to disable).
+            <button class="btn btn-primary" ng-click="purgeLogs()"> Purge All Logs Now</button>
         </p>
 
-    </div>
 
-    <button class="btn btn-primary" ng-click="purgeLogs()"> Purge All Now</button>
+        <br>
+
+
+        Proxy IP.: <input type="text" ng-model="proxyConfiguration['proxyIp']">
+        Proxy Port: <input type="text" ng-model="proxyConfiguration['proxyPort']">
+
+    </div>
 
 
 </div>
