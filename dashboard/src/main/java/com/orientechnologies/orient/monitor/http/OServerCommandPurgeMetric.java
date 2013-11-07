@@ -16,11 +16,12 @@
 package com.orientechnologies.orient.monitor.http;
 
 import com.orientechnologies.orient.monitor.OMonitorPlugin;
-import com.orientechnologies.orient.monitor.OMonitorPurgeMetricHelper;
+import com.orientechnologies.orient.monitor.OMonitorPurgeMetricLogHelper;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandPurgeMetric extends
@@ -51,16 +52,18 @@ public class OServerCommandPurgeMetric extends
 				"Syntax error: purge/metrics");
 
 		if (METRICS.equalsIgnoreCase(urlParts[2])) {
-			OMonitorPurgeMetricHelper
+			OMonitorPurgeMetricLogHelper
 					.purgeMetricNow(getProfiledDatabaseInstance(iRequest));
+			iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
-			return true;
+			return false;
 		}
 		if (LOGS.equalsIgnoreCase(urlParts[2])) {
-			OMonitorPurgeMetricHelper
+			OMonitorPurgeMetricLogHelper
 					.purgeLogsNow(getProfiledDatabaseInstance(iRequest));
 
-			return true;
+			iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+			return false;
 		}
 		return false;
 

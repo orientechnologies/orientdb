@@ -281,7 +281,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass log = schema.createClass(CLASS_LOG);
 		log.createProperty("date", OType.DATETIME);
-		log.createProperty("level", OType.INTEGER);
+		log.createProperty("level", OType.STRING);
 		log.createProperty("server", OType.LINK, server);
 		log.createProperty("message", OType.STRING);
 

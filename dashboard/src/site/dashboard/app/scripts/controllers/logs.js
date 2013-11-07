@@ -2,7 +2,12 @@ var dbModule = angular.module('workbench-logs.controller', ['workbench-logs.serv
 dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor) {
     $scope.countPage = 1000;
     $scope.countPageOptions = [100, 500, 1000];
-    $scope.types = ['CONFIG', 'FINE', 'FINER', 'FINEST', 'INFO', 'SEVE', 'WARN'];
+//  LOG_LEVEL.ERROR.ordinal() 4
+//  LOG_LEVEL.CONFIG.ordinal() 7
+//	LOG_LEVEL.DEBUG.ordinal() 0
+//	LOG_LEVEL.INFO.ordinal() 1
+//	LOG_LEVEL.WARN.ordinal() 3
+    $scope.types = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
     $scope.files = ['ALL_FILES', 'LAST'];
     $scope.selectedType = undefined;
     $scope.selectedFile = undefined;
@@ -34,8 +39,10 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
         });
     }
     $scope.$watch("countPage", function (data) {
+
+        console.log($scope.resultTotal['logs'].length)
         if ($scope.resultTotal) {
-            $scope.results = $scope.resultTotal.slice(0, $scope.countPage);
+            $scope.results = $scope.resultTotal.logs.slice(0, $scope.countPage);
             $scope.currentPage = 1;
             $scope.numberOfPage = new Array(Math.ceil($scope.resultTotal.length / $scope.countPage));
         }
@@ -127,7 +134,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     $scope.level = undefined;
     $scope.description = undefined;
     $scope.date = undefined;
-    $scope.levels = ['1', '2', '3', '4', '5', '6', '7'];
+    $scope.levels = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
     $scope.selectedDateFrom = undefined;
     $scope.selectedHourFrom = undefined;
     $scope.selectedDateTo = undefined;
@@ -139,9 +146,10 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     });
 
     $scope.getJavaLogs = function () {
-        CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql }, function (data) {
+        CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql, shallow: 'shallow'}, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
+                console.log(data)
                 $scope.resultTotal = data;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
@@ -172,7 +180,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         var sql = "select * from Log ";
 
         if ($scope.level != undefined && $scope.level != null) {
-            var sqlapp = "where level = " + $scope.level;
+            var sqlapp = "WHERE level = '" + $scope.level +"'";
 
             sql = sql.concat(sqlapp);
             first = false;

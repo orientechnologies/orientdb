@@ -26,8 +26,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-public final class OMonitorPurgeMetricHelper {
+public final class OMonitorPurgeMetricLogHelper {
 
+	
+	
+	/**
+	 * 
+	 * @param hour 
+	 * @param db
+	 * <br>
+	 * delete metrics older than @hour 
+	 */
 	public static void deleteMetrics(Integer hour, ODatabaseDocumentTx db) {
 		if (hour!= null && hour != 0 ) {
 
@@ -47,6 +56,13 @@ public final class OMonitorPurgeMetricHelper {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param hour 
+	 * @param db
+	 * <br>
+	 * delete logs older than @hour 
+	 */
 	public static void deleteLogs(Integer hour, ODatabaseDocumentTx db) {
 		if (hour!= null && hour != 0 ) {
 
@@ -60,13 +76,20 @@ public final class OMonitorPurgeMetricHelper {
 			calendar.add(Calendar.HOUR, -hour);
 			params.put("dateFrom", calendar.getTime());
 
-			List<ODocument> metrics = db.query(osqlQuery, params);
+			List<ODocument> logs = db.query(osqlQuery, params);
 
-			purgeMetricAndSnapshot(metrics);
+			purgeLogs(logs);
 		}
 	}
 	
 
+	
+	/**
+	 * 
+	 * @param db
+	 * <br>
+	 * delete all metrics
+	 */
 	public static void purgeMetricNow(ODatabaseDocumentTx db) {
 		String osql = "select from Metric";
 
@@ -79,6 +102,13 @@ public final class OMonitorPurgeMetricHelper {
 
 	}
 
+
+	/**
+	 * 
+	 * @param db
+	 * <br>
+	 * delete all logs
+	 */
 	public static void purgeLogsNow(ODatabaseDocumentTx db) {
 		String osql = "select from Log";
 
