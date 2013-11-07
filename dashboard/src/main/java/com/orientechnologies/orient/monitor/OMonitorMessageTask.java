@@ -40,18 +40,21 @@ public class OMonitorMessageTask extends TimerTask {
 		for (Entry<String, OMonitoredServer> server : this.handler.getMonitoredServers()) {
 			ODocument s = server.getValue().getConfiguration();
 			Map<String, Object> cfg = s.field("configuration");
-			String license = (String) cfg.get("license");
-			cId = OL.getClientId(license);
-			licenses += (i == 0) ? "" : ",";
-			licenses += license;
-			i++;
+			if (cfg != null) {
+
+				String license = (String) cfg.get("license");
+				cId = OL.getClientId(license);
+				licenses += (i == 0) ? "" : ",";
+				licenses += license;
+				i++;
+			}
 		}
 
 		final List<ODocument> response = this.handler.getDb().query(osqlQuery);
 		licenses = licenses.isEmpty() ? "none" : licenses;
 		if (response.size() > 0) {
 			ODocument config = response.iterator().next();
-			String url = "http://www.orientechnologies.com/"; //config.field("orientdbSite");
+			String url = "http://www.orientechnologies.com/"; // config.field("orientdbSite");
 			OLogManager.instance().info(this, "MONITOR contacting [%s] ", url);
 			if (url != null) {
 				try {
@@ -92,8 +95,7 @@ public class OMonitorMessageTask extends TimerTask {
 						Map<String, Object> params = new HashMap<String, Object>();
 						params.put("message", text);
 						params.put("date", date);
-						List<ODocument> resultSet = handler.getDb().query(
-								new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
+						List<ODocument> resultSet = handler.getDb().query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
 						if (resultSet.isEmpty()) {
 							ODocument saved = new ODocument("Message");
 							saved.field("message", text);

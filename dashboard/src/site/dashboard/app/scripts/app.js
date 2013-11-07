@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('MonitorApp', ['ngI18n', 'workbench-logs.controller', 'workbench-events.controller','login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives','ui.codemirror','ngGrid','bootstrap.tabset','message.services'])
+angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.controller', 'workbench-events.controller','login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives','ui.codemirror','ngGrid','bootstrap.tabset','message.services'])
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
@@ -43,6 +43,10 @@ angular.module('MonitorApp', ['ngI18n', 'workbench-logs.controller', 'workbench-
             .when('/dashboard/events/:rid', {
                 templateUrl: 'views/server/events.html',
                 controller: 'EventsController'
+            })
+            .when('/dashboard/messages/:rid', {
+                templateUrl: 'views/server/messages.html',
+                controller: 'MessagesController'
             })
             .otherwise({
                 redirectTo: '/'

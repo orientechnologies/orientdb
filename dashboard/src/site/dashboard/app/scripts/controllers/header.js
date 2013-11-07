@@ -13,7 +13,7 @@ angular.module('MonitorApp')
         }
     });
 angular.module('MonitorApp')
-    .controller('MessageController', function ($scope, $timeout,$location, Message) {
+    .controller('MessageController', function ($scope, $timeout, $location, Message, MetricConfig) {
 
 
         $.extend($.gritter.options, {
@@ -29,7 +29,13 @@ angular.module('MonitorApp')
                             class_name: 'onotification',
                             // (string | mandatory) the text inside the notification
                             text: elem.message
+
                         });
+                        elem.status = 'notified';
+                        MetricConfig.saveConfig(elem, function (data) {
+
+                        });
+
                     })
 
                 }
