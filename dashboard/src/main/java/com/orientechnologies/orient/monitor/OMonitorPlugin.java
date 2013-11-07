@@ -101,6 +101,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public static final String												CLASS_METRIC_CONFIG								= "MetricConfig";
 	private static final String												CLASS_PROXY_CONFIG								= "ProxyConfiguration";
+	private static final String												CLASS_MESSAGE								= "Message";
 
 	private OServer																		serverInstance;
 	private long																			updateTimer;
@@ -381,7 +382,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("proxyConfiguration", OType.EMBEDDED, proxyConfiguration);
 
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
-
+		final OClass message = schema.createClass(CLASS_MESSAGE);
+		
+		message.createProperty("message", OType.STRING);
+		message.createProperty("read", OType.BOOLEAN);
+		
 	}
 
 	@Override

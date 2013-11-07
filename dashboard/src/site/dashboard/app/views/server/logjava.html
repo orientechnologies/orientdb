@@ -10,7 +10,14 @@
         <hr>
     </div>
     <div class="row-fluid" ng-controller="LogsJavaController">
-
+        <div>
+            <button class="btn" ng-click="search()"><i
+                    class="icon-search"></i> Search
+            </button>
+            <button class="btn btn-danger " ng-click="purgeLogs()"><i
+                    class="icon-trash"></i> Purge Logs Now
+            </button>
+        </div>
         <table class="form-search-width">
             <tr>
                 <td>
@@ -89,14 +96,8 @@
                 </td>
                 <td>
                 </td>
-                <td>
-                    <div>
-                        <a href="javascript:void(0)" class="btn" ng-click="search()"> <i class="icon-search"></i>Search
-                        </a>
-                    </div>
-                </td>
-                <td>
-                </td>
+
+
             </tr>
         </table>
         <br>

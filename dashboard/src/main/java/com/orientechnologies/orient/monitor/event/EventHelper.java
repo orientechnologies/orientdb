@@ -164,8 +164,6 @@ public class EventHelper {
 				// add request header
 				con.setRequestProperty("User-Agent", USER_AGENT);
 
-				int responseCode = con.getResponseCode();
-
 				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 				String inputLine;
 				StringBuffer response = new StringBuffer();
@@ -211,7 +209,7 @@ public class EventHelper {
 				}
 
 				// print result
-//				System.out.println(response.toString());
+				// System.out.println(response.toString());
 				in.close();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -232,8 +230,15 @@ public class EventHelper {
 
 				String proxyIp = proxyConfiguration.field("proxyIp");
 				String proxyPort = proxyConfiguration.field("proxyPort");
-				if (!proxyIp.isEmpty() && proxyPort != null)
-					proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
+				if (!proxyIp.isEmpty() && proxyPort != null) {
+					try {
+						proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
+					} catch (Exception e) {
+						e.printStackTrace();
+						//execute without proxy
+						return null;
+					}
+				}
 			}
 
 		}
