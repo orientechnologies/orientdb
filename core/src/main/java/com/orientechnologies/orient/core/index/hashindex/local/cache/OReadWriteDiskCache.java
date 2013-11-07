@@ -53,8 +53,6 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   private static String                               METRIC_HITS;
   private static String                               METRIC_HITS_METADATA;
-  private static String                               METRIC_FLUSHES;
-  private static String                               METRIC_FLUSHES_METADATA;
   private static String                               METRIC_MISSED;
   private static String                               METRIC_MISSED_METADATA;
 
@@ -637,8 +635,6 @@ public class OReadWriteDiskCache implements ODiskCache {
 
       METRIC_HITS = profiler.getDatabaseMetric(storageName, "diskCache.hits");
       METRIC_HITS_METADATA = profiler.getDatabaseMetric(null, "diskCache.hits");
-      METRIC_FLUSHES = profiler.getDatabaseMetric(storageName, "diskCache.flushes");
-      METRIC_FLUSHES_METADATA = profiler.getDatabaseMetric(null, "diskCache.flushes");
       METRIC_MISSED = profiler.getDatabaseMetric(storageName, "diskCache.missed");
       METRIC_MISSED_METADATA = profiler.getDatabaseMetric(null, "diskCache.missed");
 
