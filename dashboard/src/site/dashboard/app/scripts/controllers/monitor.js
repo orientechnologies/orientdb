@@ -91,3 +91,4 @@ angular.module('MonitorApp')
         $scope.refreshConfig();
         $scope.refresh();
     });
+
