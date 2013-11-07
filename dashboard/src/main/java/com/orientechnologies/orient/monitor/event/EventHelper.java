@@ -123,7 +123,7 @@ public class EventHelper {
 			configuration.field("host", "192.168.0.50");
 			configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
 			configuration.field("@type","d");
-
+			
 			sql = "select from OUser where name = 'admin'";
 			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
 			final List<ODocument> users = database.query(osqlQuery);
@@ -132,6 +132,7 @@ public class EventHelper {
 				final ODocument ouserAdmin = users.get(0);
 				userconfiguration.field("user", ouserAdmin);
 				userconfiguration.field("mailProfile", configuration);
+				userconfiguration.field("orientdbSite", "http://www.orientechnologies.com/");
 				userconfiguration.save();
 			}
 			else{
