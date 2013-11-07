@@ -2,7 +2,7 @@
 	"name" : "enterprise-agent",
 	"javaClass": "com.orientechnologies.agent.OEnterpriseAgent",
 	"parameters" : {
-		"license" : "123732738723181"
+		"license" : "@LICENSE@"
 	},
 	"version" : "1.0",
 	"description" : "This is the Agent part of the commercial OrientDB Enterprise suite",

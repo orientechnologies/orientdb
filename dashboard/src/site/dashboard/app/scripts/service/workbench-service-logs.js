@@ -126,13 +126,21 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
             })
     }
 
+    resource.purgeMetrics = function (params, callback) {
+        $http.get('/purge/monitor/metrics').success(function (data) {
+            callback(data);
+        }).error(function (data) {
+            })
+    }
+
+
     resource.queryText = function (params, callback, error) {
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
         var shallow = params.shallow != undefined ? '' : ',shallow';
         var text = '/command/' + 'monitor' + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
-       console.log(text)
+        console.log(text)
         if (params.text) {
             var query = params.text.trim();
             $http.post(text, query).success(function (data) {

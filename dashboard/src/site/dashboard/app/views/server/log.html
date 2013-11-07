@@ -14,7 +14,7 @@
                     <div class="input-append">
                         <input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateFrom"
                                 >
-                        <a href="javascript:void(0)" class="btn" data-toggle="datepicker"> <i class="icon-calendar"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="datepicker"> <i class="icon-calendar"></i>
                         </a>
 
                     </div>
@@ -25,7 +25,7 @@
                 <td>
                     <div class="input-append">
                         <input type="text" bs-timepicker ng-model="selectedHourFrom" ng-disabled="checkDateFrom()">
-                        <a href="javascript:void(0)" class="btn" data-toggle="timepicker"> <i class="icon-time"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="timepicker"> <i class="icon-time"></i>
                         </a>
                     </div>
                 </td>
@@ -37,7 +37,7 @@
                     <div class="input-append">
                         <input type="text" data-date-format="dd/mm/yyyy" bs-datepicker ng-model="selectedDateTo"
                                 >
-                        <a href="javascript:void(0)" class="btn" data-toggle="datepicker"> <i class="icon-calendar"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="datepicker"> <i class="icon-calendar"></i>
                         </a>
 
                     </div>
@@ -49,7 +49,7 @@
                     <div class="input-append">
                         <input type="text" bs-timepicker ng-model="selectedHourTo"
                                 >
-                        <a href="javascript:void(0)" class="btn" data-toggle="timepicker"> <i class="icon-time"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" data-toggle="timepicker"> <i class="icon-time"></i>
                         </a>
                     </div>
                 </td>
@@ -65,7 +65,7 @@
                         <select ng-model="selectedFile" ng-options="t for t in files"
                                 ng-change="selectType(selectedType)">
                         </select>
-                        <a href="javascript:void(0)" class="btn" ng-click="clearType()"> <i class="icon-remove"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" ng-click="clearType()"> <i class="icon-remove"></i>
                         </a>
                     </div>
                 </td>
@@ -80,7 +80,7 @@
                                 ng-change="selectType(selectedType)">
                             <option value=""></option>
                         </select>
-                        <a href="javascript:void(0)" class="btn" ng-click="clearType()"> <i class="icon-remove"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" ng-click="clearType()"> <i class="icon-remove"></i>
                         </a>
                     </div>
                 </td>
@@ -92,7 +92,7 @@
 
 
                         <input type="text" ng-model="selectedSearch">
-                        <a href="javascript:void(0)" class="btn" ng-click="clearSearch()"> <i class="icon-remove"></i>
+                        <a href="javascript:void(0)" class="btn btn-notification" ng-click="clearSearch()"> <i class="icon-remove"></i>
                         </a>
                     </div>
 
@@ -101,7 +101,7 @@
                 </td>
                 <td>
                     <div>
-                        <a href="javascript:void(0)" class="btn" ng-click="search()"> <i class="icon-search"></i>Search
+                        <a href="javascript:void(0)" class="btn btn-notification" ng-click="search()"> <i class="icon-search"></i>Search
                         </a>
                     </div>
 

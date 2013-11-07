@@ -22,9 +22,12 @@ import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
 import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
@@ -35,6 +38,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
   private OServer server;
+  private String  license;
 
   public OEnterpriseAgent() {
   }
@@ -42,6 +46,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     server = oServer;
+    for (OServerParameterConfiguration p : iParams) {
+      if (p.name.equals("license"))
+        license = p.value;
+    }
   }
 
   @Override
@@ -51,6 +59,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
 
   @Override
   public void startup() {
+    checkLicense();
     installProfiler();
     installCommands();
   }
@@ -99,5 +108,27 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();
+  }
+
+  private void checkLicense() {
+    try {
+      OLogManager.instance().warn(null, "License check ok. It expires in %d days", OL.checkDate(license));
+
+      Orient
+          .instance()
+          .getProfiler()
+          .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
+              METRIC_TYPE.TEXT, new OProfilerHookValue() {
+
+                @Override
+                public Object getValue() {
+                  return license;
+                }
+              });
+
+    } catch (OLicenseException e) {
+      OLogManager.instance().warn(null, "Error on validating Enterprise License (%s): enterprise features will be disabled",
+          e.getMessage());
+    }
   }
 }

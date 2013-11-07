@@ -44,6 +44,8 @@
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
     "dashboard.mailsettings": "Mail Settings",
+    "dashboard.metricsdelete": "Metrics Purge",
+    "dashboard.notificationsdelete": "Notifications Purge",
     "dashboard.preview": "Dashboard Preview",
     "dashboard.config.available": "Available Configuration",
     "dashboard.settings": "Settings",

@@ -5,7 +5,7 @@
 
 	<groupId>com.orientechnologies</groupId>
 	<artifactId>agent</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.6.1</version>
 	<packaging>jar</packaging>
 
 	<name>agent</name>
@@ -14,9 +14,23 @@
 	<properties>
 		<javac.src.version>1.6</javac.src.version>
 		<javac.target.version>1.6</javac.target.version>
-		<orientdb.version>1.6</orientdb.version>
+		<orientdb.version>1.6.1-SNAPSHOT</orientdb.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+	
+	<repositories>
+		<repository>
+			<id>sonatype-nexus-snapshots</id>
+			<name>Sonatype Nexus Snapshots</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
@@ -27,6 +41,32 @@
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.google.code.maven-replacer-plugin</groupId>
+				<artifactId>replacer</artifactId>
+				<version>1.5.2</version>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>replace</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<file>target/classes/plugin.json</file>
+					<outputFile>
+						target/classes/plugin.json
+					</outputFile>
+					<regex>false</regex>
+					<replacements>
+						<replacement>
+							<token>@LICENSE@</token>
+							<value>${license}</value>
+						</replacement>
+					</replacements>
 				</configuration>
 			</plugin>
 		</plugins>
