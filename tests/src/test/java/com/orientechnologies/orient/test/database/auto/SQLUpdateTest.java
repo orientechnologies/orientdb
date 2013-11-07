@@ -15,12 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -252,25 +247,6 @@ public class SQLUpdateTest {
     database.close();
   }
 
-  @Test
-  public void updateWithNamedParameters(){
-	    database.open("admin", "admin");
-	    ODocument doc = new ODocument("Person");
-	    doc.field("name", "Caf");
-	    doc.field("city", "Torino");
-	    doc.field("gender", "fmale");
-	    doc.save();
-	    OCommandSQL updatecommand = new OCommandSQL("update Person set gender = :gender , city = :city where name = :name");
-	    Map<String,Object> params = new HashMap<String, Object>();
-	    params.put("gender", "f");
-	    params.put("city", "TOR");
-	    params.put("name", "Caf");
-	    database.command(updatecommand).execute(params);
-	    checkUpdatedDoc(database, "Caf", "TOR", "f");
-
-	    database.close();
-  }
-  
   public void updateIncrement() {
     database.open("admin", "admin");
 

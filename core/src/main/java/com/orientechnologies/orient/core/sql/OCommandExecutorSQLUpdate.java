@@ -15,15 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -155,9 +148,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parameters = new OCommandParameters(iArgs);
 
+    Map<Object, Object> queryArgs = new HashMap<Object, Object>();
+    for (int i = parameterCounter; i < parameters.size(); i++) {
+      if (parameters.getByName(i) != null)
+        queryArgs.put(i - parameterCounter, parameters.getByName(i));
+    }
+
     query.setUseCache(false);
     query.setContext(context);
-    getDatabase().query(query, iArgs);
+    getDatabase().query(query, queryArgs);
     return recordCount;
   }
 

@@ -155,7 +155,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (connection != null) {
       if (connection.database != null)
-        connection.database.getLevel1Cache().clear();
+        if (!connection.database.isClosed())
+          connection.database.getLevel1Cache().clear();
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
