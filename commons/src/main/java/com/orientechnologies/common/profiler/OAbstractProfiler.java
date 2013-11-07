@@ -179,6 +179,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
       hooks.remove(iName);
   }
 
+  @Override
   public String getSystemMetric(final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("system.");
@@ -186,6 +187,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     return buffer.toString();
   }
 
+  @Override
   public String getProcessMetric(final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("process.");
@@ -193,6 +195,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     return buffer.toString();
   }
 
+  @Override
   public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("db.");

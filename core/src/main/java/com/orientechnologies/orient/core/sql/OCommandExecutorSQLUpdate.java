@@ -148,15 +148,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parameters = new OCommandParameters(iArgs);
 
-    Map<Object, Object> queryArgs = new HashMap<Object, Object>();
-    for (int i = parameterCounter; i < parameters.size(); i++) {
-      if (parameters.getByName(i) != null)
-        queryArgs.put(i - parameterCounter, parameters.getByName(i));
-    }
-
     query.setUseCache(false);
     query.setContext(context);
-    getDatabase().query(query, queryArgs);
+    getDatabase().query(query, iArgs);
     return recordCount;
   }
 
