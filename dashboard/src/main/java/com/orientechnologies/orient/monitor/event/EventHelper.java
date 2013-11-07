@@ -126,6 +126,7 @@ public class EventHelper {
 				final ODocument ouserAdmin = users.get(0);
 				userconfiguration.field("user", ouserAdmin);
 				userconfiguration.field("mailProfile", configuration);
+				userconfiguration.field("orientdbSite", "http://www.orientechnologies.com/");
 				userconfiguration.save();
 			} else {
 				throw new OConfigurationException("user admin not found");

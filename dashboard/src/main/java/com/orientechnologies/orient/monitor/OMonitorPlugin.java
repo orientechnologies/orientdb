@@ -161,7 +161,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
 		//
 		Orient.instance().getTimer().schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
-
+		Orient.instance().getTimer().schedule(new OMonitorMessageTask(this), 5000, 5000);
 	}
 
 	private void registerExecutors(ODatabaseDocumentTx database) {
@@ -380,7 +380,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED, deleteMetricConfiguration);
 		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED, notificationsConfiguration);
 		userConfig.createProperty("proxyConfiguration", OType.EMBEDDED, proxyConfiguration);
-
+    userConfig.createProperty("orientdbSite", OType.STRING);
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
 		final OClass message = schema.createClass(CLASS_MESSAGE);
 		

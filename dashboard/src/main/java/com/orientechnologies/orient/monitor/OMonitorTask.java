@@ -47,7 +47,7 @@ public final class OMonitorTask extends TimerTask {
 						int idC = OL.getClientId(license);
 						int idS = OL.getServerId(license);
 
-						if (handler.getKeyMap().get(idC).get(idS).size() > 1) {
+						if (handler.getKeyMap().size()>1 && handler.getKeyMap().get(idC).get(idS).size() > 1) {
 							updateServerStatus(server, OMonitorPlugin.STATUS.LICENSE_INVALID);
 							log(server, LOG_LEVEL.ERROR, "License " + license + " invalid");
 							continue;
