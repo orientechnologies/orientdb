@@ -9,7 +9,6 @@ public final class OMonitoredServer {
   private final OMonitorPlugin  handler;
   private final ODocument       server;
   private final ORealtimeMetric realtime;
-
   private Date                  lastConnection = new Date(0);
   private Map<String, Object>   lastSnapshot;
 
