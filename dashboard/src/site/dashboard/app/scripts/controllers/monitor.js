@@ -5,29 +5,23 @@ angular.module('MonitorApp')
 
 
         $scope.chartHeight = 300;
+        $scope.pollTime = 5000;
 
-        (function poll() {
 
-            Monitor.getServers(function (data) {
-                $scope.servers = data.result;
-
-                $scope.healthData = new Array;
-                $scope.servers.forEach(function (elem, idx, arr) {
-                    $scope.healthData.push({ label: elem.name, value: 100});
-                });
-            })
-
-        })();
-        $scope.refresh = function () {
-            Monitor.getServers(function (data) {
-                $scope.servers = data.result;
-
-                $scope.healthData = new Array;
-                $scope.servers.forEach(function (elem, idx, arr) {
-                    $scope.healthData.push({ label: elem.name, value: 100});
-                });
-            })
+        var watcher;
+        $scope.startWatching = function () {
+            watcher = $timeout(function () {
+                $scope.refresh();
+                $scope.startWatching();
+            }, $scope.pollTime);
         }
+        $scope.stopWatching = function () {
+            $timeout.cancel(watcher);
+        }
+        $scope.$on('$routeChangeStart', function () {
+            $scope.stopWatching();
+        });
+        $scope.startWatching();
         $scope.addServer = function () {
 
             var modalScope = $scope.$new(true)
@@ -36,6 +30,18 @@ angular.module('MonitorApp')
 
             $q.when(modalPromise).then(function (modalEl) {
                 modalEl.modal('show');
+            });
+        }
+        $scope.refresh = function () {
+            Monitor.getServers(function (data) {
+                $scope.servers = data.result;
+                $scope.healthData = new Array;
+                $scope.servers.forEach(function (elem, idx, arr) {
+                    $scope.healthData.push({ label: elem.name, value: 100});
+                });
+            });
+            Notification.latest(function (data) {
+                $scope.notifications = data.result;
             });
         }
         $scope.getGridClass = function (index, gridOpt) {
@@ -73,13 +79,11 @@ angular.module('MonitorApp')
             });
 
         }
-        Notification.latest(function (data) {
-            $scope.notifications = data.result;
-        });
 
         Settings.get(function (data) {
             if (data.result.length > 0) {
                 $scope.config = data.result[0];
             }
         });
+        $scope.refresh();
     });

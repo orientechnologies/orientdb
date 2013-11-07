@@ -258,7 +258,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass metric = schema.createClass(CLASS_METRIC);
 		OProperty prop = metric.createProperty("name", OType.STRING);
-		prop.createIndex(INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
+		prop.createIndex(INDEX_TYPE.NOTUNIQUE);
 		metric.createProperty("snapshot", OType.LINK, snapshot);
 
 		final OClass log = schema.createClass(CLASS_LOG);
