@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="components/bootstrap-timepicker/css/bootstrap-timepicker.min.css">
     <link rel="stylesheet" href="components/codemirror/lib/codemirror.css">
     <link rel="stylesheet" href="components/ng-grid/ng-grid.min.css">
-
+    <link rel="stylesheet" href="components/gritter/css/jquery.gritter.css">
 
     <!-- endbuild -->
 </head>
@@ -52,6 +52,7 @@
          ng-controller="NavController">
 
     </nav>
+    <div ng-controller="MessageController"></div>
     <div class="monitor-app row-fluid">
         <div class="span12 mainSection">
             <div class="row-fluid" ng-view>
@@ -108,6 +109,7 @@
 <script src="components/codemirror/lib/codemirror.js"></script>
 <script src="components/codemirror/mode/xml/xml.js"></script>
 <script src="components/ng-grid/ng-grid-2.0.7.debug.js"></script>
+<script src="components/gritter/js/jquery.gritter.min.js"></script>
 
 
 <!-- build:js scripts/scripts.js -->
@@ -124,6 +126,7 @@
 <script src="scripts/controllers/header.js"></script>
 <script src="scripts/controllers/metrics.js"></script>
 <script src="scripts/service/monitor-service.js"></script>
+<script src="scripts/service/message-service.js"></script>
 <script src="scripts/service/login-service.js"></script>
 <script src="scripts/directive/angularjs.nvd3.js"></script>
 <script src="scripts/directive/custom.js"></script>

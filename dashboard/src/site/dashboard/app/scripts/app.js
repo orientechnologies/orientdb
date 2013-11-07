@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('MonitorApp', ['ngI18n', 'workbench-logs.controller', 'workbench-events.controller','login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives','ui.codemirror','ngGrid','bootstrap.tabset'])
+angular.module('MonitorApp', ['ngI18n', 'workbench-logs.controller', 'workbench-events.controller','login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives','ui.codemirror','ngGrid','bootstrap.tabset','message.services'])
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {

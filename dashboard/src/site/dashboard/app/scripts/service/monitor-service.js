@@ -158,8 +158,8 @@ monitor.factory('Metric', function ($http, $resource) {
 monitor.factory('Server', function ($http, $resource, Metric) {
     var resource = $resource(API + 'metrics/monitor/:server/:type/:kind/:names');
 
-    resource.delete = function (rid, callback) {
-        var url = API + 'document/monitor/' + rid.replace('#', '');
+    resource.delete = function (name, callback) {
+        var url = API + 'monitoredServer/monitor/' + name;
         $http.delete(url).success(function (data) {
             callback(data);
         })
