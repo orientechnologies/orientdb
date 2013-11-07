@@ -197,6 +197,13 @@ public class OServerPluginManager implements OService {
 
       // LOAD PLUGIN.JSON FILE
       final URL r = pluginClassLoader.getResource("plugin.json");
+      if (r == null) {
+        OLogManager.instance().error(this, "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'",
+            pluginName);
+        throw new IllegalArgumentException(String.format(
+            "Plugin definition file ('plugin.json') is not found for dynamic plugin '%s'", pluginName));
+      }
+
       final InputStream pluginConfigFile = r.openStream();
 
       try {
