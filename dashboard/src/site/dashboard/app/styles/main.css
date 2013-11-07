@@ -1002,3 +1002,7 @@ body {
     border-top-left-radius: 0px;
     border-top-right-radius: 0px;
 }
+
+div.unread {
+    background-color: #d3d3d3;
+}

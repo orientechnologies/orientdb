@@ -11,26 +11,32 @@
                         class="icon-ok"></i>
                     Mark All As Read</a>
             </td>
+
+            <td>
+                <a href="javascript:void(0)" class="btn btn-danger" ng-click="queryAll(class2show)"> <i
+                        class="icon-Trash"></i>
+                    Delete All</a>
+            </td>
         </tr>
 
     </table>
     <div class="row">
         <div class="panel panel-default widget">
             <div class="panel-heading">
-                <span class="label label-info">
-                    {{countUnread}} Messages unread
-                    </span>
+                <span class="label label-info" ">
+                {{countUnread}} Messages unread
+                </span>
             </div>
             <br>
 
             <div class="panel-body">
                 <ul class="list-group" style="list-style-type: none;">
-                    <li class="list-group-item" ng-repeat="message in messages">
-                        <div class="row">
+                    <li class="list-group-item" ng-repeat="message in messages" style="margin-top: 2px;">
+                        <div class="row" ng-class="{{unread}}">
                             <!--<div class="col-xs-2 col-md-1">-->
                             <!--<img src="http://placehold.it/80" class="img-circle img-responsive" alt=""/></div>-->
                             <div style="margin-left: 2%;">
-                                               {{message['message']}}
+                                {{message['message']}}
                             </div>
                             <div class="action" style="margin-left: 2%;">
                                 <button type="button" class="btn btn-success btn-xs" title="mark as read">
@@ -41,8 +47,10 @@
                                 </button>
                             </div>
                             <br>
+
                         </div>
                     </li>
+                    <br>
                 </ul>
             </div>
         </div>
