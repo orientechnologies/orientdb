@@ -99,9 +99,10 @@ public final class OMonitorPurgeMetricLogHelper {
 		String osql = "select from Metric";
 		Map<String, Object> params = new HashMap<String, Object>();
 		if (server != null) {
-			osql += " where spnapshot.server = :server";
+			osql += " where snapshot.server = :server";
 			params.put("server", server);
 		}
+		osql+= " order by snapshot.dateFrom";
 		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
 
 		List<ODocument> metrics = db.query(osqlQuery, params);
@@ -161,6 +162,8 @@ public final class OMonitorPurgeMetricLogHelper {
 			List<ODocument> usr = db.query(osqlQuery, params);
 			for (ODocument oDocument2 : usr) {
 				List<ODocument> metrics = oDocument2.field("metrics");
+				metrics.remove(oDocument);
+				oDocument2.save();
 			}
 		}
 		purgeLogs(logs);
@@ -187,7 +190,7 @@ public final class OMonitorPurgeMetricLogHelper {
 		for (ODocument doc : metrics) {
 			try {
 				ODocument snapshot2compare = doc.field("snapshot");
-				if (snapshot != snapshot2compare) {
+				if (!snapshot.getIdentity().equals(snapshot2compare.getIdentity())) {
 					snapshot.delete();
 					snapshot = snapshot2compare;
 				}

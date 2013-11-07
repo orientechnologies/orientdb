@@ -32,6 +32,13 @@ angular.module('MonitorApp')
                 modalEl.modal('show');
             });
         }
+        $scope.refreshConfig = function () {
+            Settings.get(function (data) {
+                if (data.result.length > 0) {
+                    $scope.config = data.result[0];
+                }
+            });
+        }
         $scope.refresh = function () {
             Monitor.getServers(function (data) {
                 $scope.servers = data.result;
@@ -74,16 +81,13 @@ angular.module('MonitorApp')
                 success: function () {
                     Server.delete(server.name, function (data) {
                         $scope.refresh();
+                        $scope.refreshConfig();
                     });
                 }
             });
 
         }
 
-        Settings.get(function (data) {
-            if (data.result.length > 0) {
-                $scope.config = data.result[0];
-            }
-        });
+        $scope.refreshConfig();
         $scope.refresh();
     });
