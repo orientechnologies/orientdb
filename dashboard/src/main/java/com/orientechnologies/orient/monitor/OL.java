@@ -15,7 +15,7 @@
  * 
  * For more information: http://www.orientechnologies.com
  */
-package com.orientechnologies.agent;
+package com.orientechnologies.orient.monitor;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;

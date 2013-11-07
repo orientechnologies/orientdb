@@ -240,7 +240,6 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 			if (serverCfg != null)
 				serverCfg.setLastConnection((Date) snapshot.field("date"));
 		}
-
 		OLogManager.instance().info(this,
 				"MONITOR loading server configuration (%d)...", servers.size());
 		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
