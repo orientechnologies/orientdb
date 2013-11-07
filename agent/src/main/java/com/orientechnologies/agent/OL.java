@@ -17,12 +17,9 @@
  */
 package com.orientechnologies.agent;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-
-import sun.misc.BASE64Decoder;
 
 @SuppressWarnings("restriction")
 public class OL {
@@ -34,7 +31,7 @@ public class OL {
     final String key = "@Ld" + "ks#2" + "" + "3dsLvc" + (35 - 12 * 2) + "a!Po" + "weRr";
     try {
       final Date now = new Date();
-      final Date d = new SimpleDateFormat("yyyyMMdd").parse(de(iLicense, key).substring(12));
+      final Date d = new SimpleDateFormat("yyyyMMdd").parse(OCry.decrypt(iLicense, key).substring(12));
       if (!d.after(now))
         throw new OLicenseException("license expired on: " + d);
       return getDateDiff(d, now);
@@ -46,7 +43,7 @@ public class OL {
   public static int getClientId(final String iLicense) {
     final String key = "@Ld" + "ks#" + new Integer(27 - 4) + "dsLvc" + (13 - 4 + 2) + "a!Po" + "weRr";
     try {
-      return Integer.parseInt(de(iLicense, key).substring(0, 6));
+      return Integer.parseInt(OCry.decrypt(iLicense, key).substring(0, 6));
     } catch (Exception e) {
       throw new RuntimeException("License not valid");
     }
@@ -55,30 +52,10 @@ public class OL {
   public static int getServerId(final String iLicense) {
     final String key = "@Ld" + "ks#" + new Integer(23 + 9 - 19 + 10) + "dsLvc" + (110 / 10) + "a!Po" + "weRr";
     try {
-      return Integer.parseInt(de(iLicense, key).substring(6, 12));
+      return Integer.parseInt(OCry.decrypt(iLicense, key).substring(6, 12));
     } catch (Exception e) {
       throw new RuntimeException("License not valid");
     }
-  }
-
-  private static String de(String message, final String key) throws IOException {
-    if (message == null || key == null)
-      return null;
-    final BASE64Decoder decoder = new BASE64Decoder();
-    char[] keys = key.toCharArray();
-    message = new String(decoder.decodeBuffer(message));
-    char[] mesg = message.toCharArray();
-
-    int ml = mesg.length;
-    int kl = keys.length;
-    final char[] newmsg = new char[ml];
-
-    for (int i = 0; i < ml; i++) {
-      newmsg[i] = (char) (mesg[i] ^ keys[i % kl]);
-    }
-    mesg = null;
-    keys = null;
-    return new String(newmsg);
   }
 
   private static int getDateDiff(Date date1, Date date2) {

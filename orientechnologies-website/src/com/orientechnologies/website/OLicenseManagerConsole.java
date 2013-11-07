@@ -2,7 +2,7 @@ package com.orientechnologies.website;
 
 import java.io.IOException;
 
-import sun.misc.BASE64Encoder;
+import com.orientechnologies.agent.OCry;
 
 @SuppressWarnings("restriction")
 public class OLicenseManagerConsole {
@@ -36,31 +36,10 @@ public class OLicenseManagerConsole {
 
     final String key = "@Ld" + "ks#2" + new Integer(7 - 4) + "dsLvc" + (35 - 18 - 6) + "a!Po" + "weRr";
 
-    final String license = en(plaintext, key);
+    final String license = OCry.encrypt(plaintext, key);
     if (license.endsWith("\n"))
       return license.substring(0, license.length() - 1);
     return license;
-  }
-
-  private static String en(final String message, final String key) {
-    if (message == null || key == null)
-      return null;
-
-    char[] keys = key.toCharArray();
-    char[] mesg = message.toCharArray();
-    final BASE64Encoder encoder = new BASE64Encoder();
-
-    int ml = mesg.length;
-    int kl = keys.length;
-    char[] newmsg = new char[ml];
-
-    for (int i = 0; i < ml; i++) {
-      newmsg[i] = (char) (mesg[i] ^ keys[i % kl]);
-    }
-    mesg = null;
-    keys = null;
-    String temp = new String(newmsg);
-    return new String(encoder.encodeBuffer(temp.getBytes()));
   }
 
   private static void syntaxError() {
