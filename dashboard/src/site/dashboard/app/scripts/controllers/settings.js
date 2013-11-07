@@ -47,6 +47,8 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
 
     $scope.currentTab = 'dashboard';
 
+
+    $scope.metricsModified = {};
     Settings.get(function (data) {
         if (data.result.length == 0) {
             $scope.config = Settings.new();
@@ -68,9 +70,17 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         columnDefs: [
             {field: 'name', displayName: 'Name'},
             {field: 'description', displayName: 'Age'},
-            {field: 'enabled', displayName: 'Enabled'}
+            {field: 'enabled', displayName: 'Enabled', enableCellEdit: true, cellTemplate: '<input type="checkbox" ng-change="modifiedMetrics(row.entity)" ng-model="row.entity.enabled">'}
         ]
     };
+
+    $scope.modifiedMetrics = function (row) {
+
+        if ($scope.metricsModified[row.name] == undefined) {
+            $scope.metricsModified[row.name] = new Array(row);
+        }
+    }
+
     Metric.getMetricTypes(null, function (data) {
         $scope.metrics = data.result;
         $scope.total = $scope.metrics.length;
@@ -110,6 +120,10 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.testMsg = "Settings updated successfully.";
             $scope.config = data.result[0];
             $scope.testMsgClass = 'alert alert-setting'
+
+            CommandLogApi.notifyModifiedMetrics({metrics: $scope.metricsModified}, function (data) {
+
+            });
         }, function (error) {
             $scope.testMsg = error;
             $scope.testMsgClass = 'alert alert-error alert-setting'

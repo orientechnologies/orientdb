@@ -58,7 +58,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
     }
 
     var header = ["@rid", "@version", "@class"];
-    var exclude = ["@rid", "@version", "@class","@type", "@fieldTypes", "$then", "$resolved"];
+    var exclude = ["@rid", "@version", "@class", "@type", "@fieldTypes", "$then", "$resolved"];
 
     var resource = $resource($http);
     resource.getLogs = function (params, callback) {
@@ -134,7 +134,15 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         }).error(function (data) {
             })
     }
+    resource.notifyModifiedMetrics = function (params, callback) {
 
+        var metrics = params.metrics;
+        var text = '/notifymetrics/monitor/';
+        $http.post(text,JSON.stringify(metrics)).success(function (data) {
+
+        });
+
+    }
 
     resource.queryText = function (params, callback, error) {
         var startTime = new Date().getTime();
@@ -142,7 +150,6 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         var verbose = params.verbose != undefined ? params.verbose : true;
         var shallow = params.shallow != undefined ? '' : ',shallow';
         var text = '/command/' + 'monitor' + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
-        console.log(text)
         if (params.text) {
             var query = params.text.trim();
             $http.post(text, query).success(function (data) {
@@ -231,7 +238,8 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         });
     }
     return resource;
-});
+})
+;
 
 
 

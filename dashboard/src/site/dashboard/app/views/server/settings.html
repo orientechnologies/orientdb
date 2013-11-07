@@ -291,32 +291,51 @@
 
 
     <div class="span12">
-        <p>
-            Metrics older then <input type="text" numbersonly="numbersonly" class="span1"
-                                      ng-model="deleteMetricConfiguration['hours']"> hours will be purged automatically
-            from server (0 to disable).
-            <button class="btn btn-danger" ng-click="purgeMetrics()"><i
-                    class="icon-trash"></i> Purge All Metrics Now</button>
-        </p>
 
+        <ul>
+            <li>
+                <div>
+                    <b>Metrics </b>older then <input type="text" numbersonly="numbersonly" class="span1"
+                                                     ng-model="deleteMetricConfiguration['hours']"> hours will be
+                    purged
+                    automatically
+                    from server (0 to disable).
 
-        <br>
+                </div>
 
-        <p>
-            Notifications older then <input type="text" numbersonly="numbersonly" class="span1"
-                                            ng-model="notificationsConfiguration['hours']"> hours will be purged
-            automatically
-            from server (0 to disable).
-            <button class="btn btn-danger" ng-click="purgeLogs()"><i
-                    class="icon-trash"></i> Purge All Logs Now</button>
-        </p>
+                <div class="action" style="float: right">
+                    <button class="btn btn-danger" ng-click="purgeMetrics()"><i
+                            class="icon-trash"></i> Purge All Metrics Now
+                    </button>
+                </div>
 
+            </li>
+            <br>
+            <hr>
+            <li>
+                <div>
+                    <b> Notifications </b>older then <input type="text" numbersonly="numbersonly" class="span1"
+                                                            ng-model="notificationsConfiguration['hours']"> hours will
+                    be purged
+                    automatically
+                    from server (0 to disable).
 
-        <br>
+                </div>
 
-
-        Proxy IP: <input type="text" ng-model="proxyConfiguration['proxyIp']">
-        Proxy Port: <input type="text" ng-model="proxyConfiguration['proxyPort']">
+                <div class="action" style="float: right">
+                    <button class="btn btn-danger" ng-click="purgeLogs()"><i
+                            class="icon-trash"></i> Purge All Notifications Now
+                    </button>
+                </div>
+            </li>
+            <br>
+            <hr>
+            <li>
+                <b>Proxy</b> IP: <input type="text" ng-model="proxyConfiguration['proxyIp']" placeholder="xx.xx.xx.xx">
+                <b> Proxy</b> Port: <input type="text" ng-model="proxyConfiguration['proxyPort']" placeholder="1234">
+            </li>
+            <hr>
+        </ul>
 
     </div>
 

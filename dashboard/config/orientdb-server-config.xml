@@ -66,6 +66,9 @@
 					</command>
 					<command implementation="com.orientechnologies.orient.monitor.http.OServerCommandDeleteServer">
 					</command>
+					<command implementation="com.orientechnologies.orient.monitor.http.OServerCommandNotifyChangedMetric">
+					</command>
+					
 				</commands>
 				<parameters>
 					<parameter value="utf-8" name="network.http.charset" />
