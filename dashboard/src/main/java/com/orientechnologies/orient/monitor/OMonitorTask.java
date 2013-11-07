@@ -39,8 +39,20 @@ public final class OMonitorTask extends TimerTask {
 				final ODocument server = serverEntry.getValue().getConfiguration();
 				server.reload();
 				final Date since = serverEntry.getValue().getLastConnection();
-
 				try {
+
+					Map<String, Object> cfg = server.field("configuration");
+					if (cfg != null) {
+						String license = (String) cfg.get("license");
+						int idC = OL.getClientId(license);
+						int idS = OL.getServerId(license);
+
+						if (handler.getKeyMap().get(idC).get(idS).size() > 1) {
+							updateServerStatus(server, OMonitorPlugin.STATUS.LICENSE_INVALID);
+							log(server, LOG_LEVEL.ERROR, "License " + license + " invalid");
+							continue;
+						}
+					}
 					createSnapshot(serverEntry.getValue(), fetchSnapshots(server, since));
 
 					// UPDATE SERVER STATUS TO ONLINE
@@ -177,7 +189,7 @@ public final class OMonitorTask extends TimerTask {
 
 		URL remoteUrl = new java.net.URL(url + "/profiler/metadata");
 		final ODocument docMetrics = fetchFromRemoteServer(server, remoteUrl);
-		Map<String,  Map<String, Object>> metadata = docMetrics.field("metadata");
+		Map<String, Map<String, Object>> metadata = docMetrics.field("metadata");
 
 		OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Received  metadata", serverName, url);
 

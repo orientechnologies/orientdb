@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.monitor.OMonitorPlugin;
+import com.orientechnologies.orient.monitor.OMonitorPlugin.STATUS;
 import com.orientechnologies.orient.monitor.OMonitoredServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -115,31 +116,35 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 			}
 
 		}
-		Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
-		for (String metricName : expandMetric(server, metricNames, dbs)) {
-			final Map<String, Object> metrics;
+		final String status = server.getConfiguration().field("status");
+		String licenseInvalid = OMonitorPlugin.STATUS.LICENSE_INVALID.toString();
+		String licenseExpired = OMonitorPlugin.STATUS.LICENSE_EXPIRED.toString();
+		if (!licenseInvalid.equals(status) && !licenseExpired.equals(status)) {
+			Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
+			for (String metricName : expandMetric(server, metricNames, dbs)) {
+				final Map<String, Object> metrics;
 
-			if (iMetricKind.equals("chrono"))
-				metrics = server.getRealtime().getChrono(metricName);
-			else if (iMetricKind.equals("statistics"))
-				metrics = server.getRealtime().getStatistic(metricName);
-			else if (iMetricKind.equals("information"))
-				metrics = server.getRealtime().getInformation(metricName);
-			else if (iMetricKind.equals("counter"))
-				metrics = server.getRealtime().getCounter(metricName);
-			else
-				throw new IllegalArgumentException("Unsupported type '" + iMetricKind + "'");
+				if (iMetricKind.equals("chrono"))
+					metrics = server.getRealtime().getChrono(metricName);
+				else if (iMetricKind.equals("statistics"))
+					metrics = server.getRealtime().getStatistic(metricName);
+				else if (iMetricKind.equals("information"))
+					metrics = server.getRealtime().getInformation(metricName);
+				else if (iMetricKind.equals("counter"))
+					metrics = server.getRealtime().getCounter(metricName);
+				else
+					throw new IllegalArgumentException("Unsupported type '" + iMetricKind + "'");
 
-			if (metrics != null)
-				for (Entry<String, Object> metric : metrics.entrySet()) {
-					String key = aggregation.get(metric.getKey());
-					if (key == null) {
-						key = metric.getKey();
+				if (metrics != null)
+					for (Entry<String, Object> metric : metrics.entrySet()) {
+						String key = aggregation.get(metric.getKey());
+						if (key == null) {
+							key = metric.getKey();
+						}
+						result.put(key, metric.getValue());
 					}
-					result.put(key, metric.getValue());
-				}
+			}
 		}
-
 		iResponse.writeResult(result, "indent:6");
 	}
 
@@ -177,8 +182,13 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
 			query += " LIMIT " + limit;
 		}
 
-		List<ODocument> docs = getProfiledDatabaseInstance(iRequest).query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
-
+		final String status = server.getConfiguration().field("status");
+		List<ODocument> docs = new ArrayList<ODocument>();
+		String licenseInvalid = OMonitorPlugin.STATUS.LICENSE_INVALID.toString();
+		String licenseExpired = OMonitorPlugin.STATUS.LICENSE_EXPIRED.toString();
+		if (!licenseInvalid.equals(status) && !licenseExpired.equals(status)) {
+			docs = getProfiledDatabaseInstance(iRequest).query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
+		}
 		Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
 
 		if (compress.equals("none") || compress.equals("1")) {

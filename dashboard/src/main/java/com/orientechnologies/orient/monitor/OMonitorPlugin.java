@@ -64,66 +64,65 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	}
 
 	public enum STATUS {
-		OFFLINE, ONLINE, UNAUTHORIZED, PROFILEROFF
+		OFFLINE, ONLINE, UNAUTHORIZED, PROFILEROFF, LICENSE_EXPIRED, LICENSE_INVALID
 	}
 
-	public static final String VERSION = OConstants.ORIENT_VERSION;
-	static final String SYSTEM_CONFIG = "system.config";
+	public static final String												VERSION														= OConstants.ORIENT_VERSION;
+	static final String																SYSTEM_CONFIG											= "system.config";
 
-	public static final String CLASS_SERVER = "Server";
-	public static final String CLASS_LOG = "Log";
-	public static final String CLASS_EVENT = "Event";
+	public static final String												CLASS_SERVER											= "Server";
+	public static final String												CLASS_LOG													= "Log";
+	public static final String												CLASS_EVENT												= "Event";
 
-	public static final String CLASS_EVENT_WHEN = "EventWhen";
-	public static final String CLASS_EVENT_WHAT = "EventWhat";
+	public static final String												CLASS_EVENT_WHEN									= "EventWhen";
+	public static final String												CLASS_EVENT_WHAT									= "EventWhat";
 
 	// public static final String CLASS_SCHEDULER_WHEN = "SchedulerWhen";
-	public static final String CLASS_LOG_WHEN = "LogWhen";
-	private static final String CLASS_METRICS_WHEN = "MetricsWhen";
+	public static final String												CLASS_LOG_WHEN										= "LogWhen";
+	private static final String												CLASS_METRICS_WHEN								= "MetricsWhen";
 
-	public static final String CLASS_HTTP_WHAT = "HttpWhat";
-	public static final String CLASS_MAIL_WHAT = "MailWhat";
-	private static final String CLASS_FUNCTION_WHAT = "FunctionWhat";
+	public static final String												CLASS_HTTP_WHAT										= "HttpWhat";
+	public static final String												CLASS_MAIL_WHAT										= "MailWhat";
+	private static final String												CLASS_FUNCTION_WHAT								= "FunctionWhat";
 
-	public static final String CLASS_SNAPSHOT = "Snapshot";
-	public static final String CLASS_METRIC = "Metric";
-	public static final String CLASS_COUNTER = "Counter";
-	public static final String CLASS_CHRONO = "Chrono";
-	public static final String CLASS_STATISTIC = "Statistic";
-	public static final String CLASS_INFORMATION = "Information";
-	public static final String CLASS_DICTIONARY = "Dictionary";
+	public static final String												CLASS_SNAPSHOT										= "Snapshot";
+	public static final String												CLASS_METRIC											= "Metric";
+	public static final String												CLASS_COUNTER											= "Counter";
+	public static final String												CLASS_CHRONO											= "Chrono";
+	public static final String												CLASS_STATISTIC										= "Statistic";
+	public static final String												CLASS_INFORMATION									= "Information";
+	public static final String												CLASS_DICTIONARY									= "Dictionary";
 
-	public static final String CLASS_USER_CONFIGURATION = "UserConfiguration";
-	public static final String CLASS_MAIL_PROFILE = "OMailProfile";
-	public static final String CLASS_DELETE_METRIC_CONFIG = "DeleteMetricConfiguration";
-	public static final String CLASS_DELETE_NOTIFICATIONS_CONFIG = "NotificationsConfiguration";
+	public static final String												CLASS_USER_CONFIGURATION					= "UserConfiguration";
+	public static final String												CLASS_MAIL_PROFILE								= "OMailProfile";
+	public static final String												CLASS_DELETE_METRIC_CONFIG				= "DeleteMetricConfiguration";
+	public static final String												CLASS_DELETE_NOTIFICATIONS_CONFIG	= "NotificationsConfiguration";
 
-	public static final String CLASS_METRIC_CONFIG = "MetricConfig";
+	public static final String												CLASS_METRIC_CONFIG								= "MetricConfig";
 
-	private OServer serverInstance;
-	private long updateTimer;
-	private long purgeTimer = 1000*60*30;
-	private String dbName = "monitor";
-	private String dbUser = "admin";
-	private String dbPassword = "admin";
-	private ODatabaseDocumentTx db;
-	Map<String, OMonitoredServer> servers = new HashMap<String, OMonitoredServer>();
-	Map<String, OPair<String, METRIC_TYPE>> dictionary;
-	private Set<OServerConfigurationListener> listeners = new HashSet<OServerConfigurationListener>();
+	private OServer																		serverInstance;
+	private long																			updateTimer;
+	private long																			purgeTimer												= 1000 * 60 * 30;
+	private String																		dbName														= "monitor";
+	private String																		dbUser														= "admin";
+	private String																		dbPassword												= "admin";
+	private ODatabaseDocumentTx												db;
+	Map<String, OMonitoredServer>											servers														= new HashMap<String, OMonitoredServer>();
+	Map<Integer, Map<Integer, Set<OMonitoredServer>>>	keyMap;
+	Map<String, OPair<String, METRIC_TYPE>>						dictionary;
+	private Set<OServerConfigurationListener>					listeners													= new HashSet<OServerConfigurationListener>();
 
 	@Override
 	public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
 		serverInstance = iServer;
-		OLogManager.instance().info(this,
-				"Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
+		OLogManager.instance().info(this, "Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
 
 		for (OServerParameterConfiguration param : iParams) {
 			if (param.name.equalsIgnoreCase("updateTimer"))
 				updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
 			else if (param.name.equalsIgnoreCase("dbName")) {
 				dbName = param.value;
-				dbName = "plocal:"
-						+ OServerMain.server().getDatabaseDirectory() + dbName;
+				dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
 			} else if (param.name.equalsIgnoreCase("dbUser"))
 				dbUser = param.value;
 			else if (param.name.equalsIgnoreCase("dbPassword"))
@@ -152,36 +151,27 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		registerExecutors(getDb());
 		registerCommand();
-		Orient.instance().getTimer()
-				.schedule(new OMonitorTask(this), updateTimer, updateTimer);
+		Orient.instance().getTimer().schedule(new OMonitorTask(this), updateTimer, updateTimer);
 
 		// Orient.instance()
 		// .getTimer()
 		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
 		//
-		Orient.instance().getTimer()
-				.schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
+		Orient.instance().getTimer().schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
 
 	}
 
 	private void registerExecutors(ODatabaseDocumentTx database) {
-		OEventController.getInstance().register(
-				new OEventMetricMailExecutor(database));
-		OEventController.getInstance().register(
-				new OEventLogMailExecutor(database));
-		OEventController.getInstance().register(
-				new OEventLogFunctionExecutor(database));
-		OEventController.getInstance().register(
-				new OEventMetricFunctionExecutor(database));
-		OEventController.getInstance().register(
-				new OEventLogHttpExecutor(database));
-		OEventController.getInstance().register(
-				new OEventMetricHttpExecutor(database));
+		OEventController.getInstance().register(new OEventMetricMailExecutor(database));
+		OEventController.getInstance().register(new OEventLogMailExecutor(database));
+		OEventController.getInstance().register(new OEventLogFunctionExecutor(database));
+		OEventController.getInstance().register(new OEventMetricFunctionExecutor(database));
+		OEventController.getInstance().register(new OEventLogHttpExecutor(database));
+		OEventController.getInstance().register(new OEventMetricHttpExecutor(database));
 	}
 
 	private void registerCommand() {
-		final OServerNetworkListener listener = serverInstance
-				.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+		final OServerNetworkListener listener = serverInstance.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 		if (listener == null)
 			throw new OConfigurationException("HTTP listener not found");
 
@@ -195,11 +185,14 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		return Collections.unmodifiableSet(servers.entrySet());
 	}
 
+	public Map<Integer, Map<Integer, Set<OMonitoredServer>>> getKeyMap() {
+		return keyMap;
+	}
+
 	public void updateActiveServerList() {
+		Map<Integer, Map<Integer, Set<OMonitoredServer>>> keyMap = new HashMap<Integer, Map<Integer, Set<OMonitoredServer>>>();
 		Map<String, OMonitoredServer> tmpServers = new HashMap<String, OMonitoredServer>();
-		final List<ODocument> enabledServers = getDb().query(
-				new OSQLSynchQuery<Object>(
-						"select from Server where enabled = true"));
+		final List<ODocument> enabledServers = getDb().query(new OSQLSynchQuery<Object>("select from Server where enabled = true"));
 		for (ODocument s : enabledServers) {
 			final String serverName = s.field("name");
 
@@ -207,8 +200,26 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 			if (serverCfg == null) {
 				serverCfg = new OMonitoredServer(this, s);
 			}
+			Map<String, Object> cfg = s.field("configuration");
+			if (cfg != null) {
+				String license = (String) cfg.get("license");
+				int idC = OL.getClientId(license);
+				int idS = OL.getServerId(license);
+				Map<Integer, Set<OMonitoredServer>> serv = keyMap.get(idC);
+				if (serv == null) {
+					serv = new HashMap<Integer, Set<OMonitoredServer>>();
+				}
+				Set<OMonitoredServer> mSer = serv.get(idS);
+				if (mSer == null) {
+					mSer = new HashSet<OMonitoredServer>();
+				}
+				mSer.add(serverCfg);
+				serv.put(idS, mSer);
+				keyMap.put(idC, serv);
+			}
 			tmpServers.put(serverName, serverCfg);
 		}
+		this.keyMap = keyMap;
 		this.servers = tmpServers;
 	}
 
@@ -216,8 +227,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		return Collections.unmodifiableCollection(listeners);
 	}
 
-	public OMonitorPlugin addListeners(
-			final OServerConfigurationListener iListener) {
+	public OMonitorPlugin addListeners(final OServerConfigurationListener iListener) {
 		listeners.add(iListener);
 		return this;
 	}
@@ -229,8 +239,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		updateActiveServerList();
 
 		// UPDATE LAST CONNECTION FOR EACH SERVERS
-		final List<ODocument> snapshotDates = getDb()
-				.query(new OSQLSynchQuery<Object>(
+		final List<ODocument> snapshotDates = getDb().query(
+				new OSQLSynchQuery<Object>(
 						"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
 
 		for (ODocument snapshot : snapshotDates) {
@@ -240,19 +250,15 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 			if (serverCfg != null)
 				serverCfg.setLastConnection((Date) snapshot.field("date"));
 		}
-		OLogManager.instance().info(this,
-				"MONITOR loading server configuration (%d)...", servers.size());
+		OLogManager.instance().info(this, "MONITOR loading server configuration (%d)...", servers.size());
 		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
-			OLogManager.instance().info(this,
-					"MONITOR * server [%s] updated to: %s",
-					serverEntry.getKey(),
+			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(),
 					serverEntry.getValue().getLastConnection());
 		}
 	}
 
 	protected void createConfiguration() {
-		OLogManager.instance().info(this, "MONITOR creating %s database...",
-				dbName);
+		OLogManager.instance().info(this, "MONITOR creating %s database...", dbName);
 		getDb().create();
 
 		final OSchema schema = getDb().getMetadata().getSchema();
@@ -279,8 +285,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		log.createProperty("server", OType.LINK, server);
 		log.createProperty("message", OType.STRING);
 
-		final OClass chrono = schema.createClass(CLASS_CHRONO).setSuperClass(
-				metric);
+		final OClass chrono = schema.createClass(CLASS_CHRONO).setSuperClass(metric);
 		chrono.createProperty("entries", OType.LONG);
 		chrono.createProperty("last", OType.LONG);
 		chrono.createProperty("min", OType.LONG);
@@ -288,16 +293,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		chrono.createProperty("average", OType.LONG);
 		chrono.createProperty("total", OType.LONG);
 
-		final OClass counter = schema.createClass(CLASS_COUNTER).setSuperClass(
-				metric);
+		final OClass counter = schema.createClass(CLASS_COUNTER).setSuperClass(metric);
 		counter.createProperty("value", OType.LONG);
 
-		final OClass statistics = schema.createClass(CLASS_STATISTIC)
-				.setSuperClass(metric);
+		final OClass statistics = schema.createClass(CLASS_STATISTIC).setSuperClass(metric);
 		statistics.createProperty("value", OType.STRING);
 
-		final OClass information = schema.createClass(CLASS_INFORMATION)
-				.setSuperClass(metric);
+		final OClass information = schema.createClass(CLASS_INFORMATION).setSuperClass(metric);
 		information.createProperty("value", OType.STRING);
 
 		final OClass eventWhat = schema.createClass(CLASS_EVENT_WHAT);
@@ -349,21 +351,17 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
 		metricConfig.createProperty("server", OType.LINK, server);
-		
-		
+
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
 
 		final OClass profile = schema.createClass(CLASS_MAIL_PROFILE);
-		final OClass deleteMetricConfiguration = schema
-				.createClass(CLASS_DELETE_METRIC_CONFIG);
+		final OClass deleteMetricConfiguration = schema.createClass(CLASS_DELETE_METRIC_CONFIG);
 		deleteMetricConfiguration.createProperty("hours", OType.INTEGER);
 
-		final OClass notificationsConfiguration = schema
-				.createClass(CLASS_DELETE_NOTIFICATIONS_CONFIG);
+		final OClass notificationsConfiguration = schema.createClass(CLASS_DELETE_NOTIFICATIONS_CONFIG);
 		notificationsConfiguration.createProperty("hours", OType.INTEGER);
-		
-		
+
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
 		profile.createProperty("port", OType.INTEGER);
@@ -375,13 +373,10 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		userConfig.createProperty("user", OType.LINK, ouser);
 		userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
-		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED,
-				deleteMetricConfiguration);
-		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED,
-				notificationsConfiguration);
-		
+		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED, deleteMetricConfiguration);
+		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED, notificationsConfiguration);
+
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
-		
 
 	}
 
@@ -394,16 +389,14 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		if (!schema.existsClass(CLASS_DICTIONARY)) {
 			final OClass dictionary = schema.createClass(CLASS_DICTIONARY);
-			final OProperty name = dictionary.createProperty("name",
-					OType.STRING);
+			final OProperty name = dictionary.createProperty("name", OType.STRING);
 			name.createIndex(INDEX_TYPE.UNIQUE_HASH_INDEX);
 		}
 
 		if (dictionary == null)
 			dictionary = Orient.instance().getProfiler().getMetadata();
 
-		for (Entry<String, OPair<String, METRIC_TYPE>> entry : dictionary
-				.entrySet()) {
+		for (Entry<String, OPair<String, METRIC_TYPE>> entry : dictionary.entrySet()) {
 			try {
 				final String key = entry.getKey();
 				final OPair<String, METRIC_TYPE> value = entry.getValue();
