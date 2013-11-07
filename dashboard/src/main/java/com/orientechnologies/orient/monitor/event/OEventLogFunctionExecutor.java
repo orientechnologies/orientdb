@@ -54,6 +54,11 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
 		}
 		String metricName = source.field("name");
 		this.body2name.put("metric", metricName);
+		
+		
+		String sourcelevel = (String) source.field("level");
+		this.body2name.put("Log Value", sourcelevel);
+		
 
 		// pre-conditions
 		if (canExecute(source, when)) {

@@ -18,7 +18,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
     }
 
-    $scope.translate = function(){
+    $scope.translate = function () {
         var prova = "c'iao";
         console.log(replace(/'/))
     }
@@ -173,26 +173,24 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.levels = ['1', '2', '3', '4', '5', '6', '7'];
-    $scope.alertValues = ["Greater then", "Less then"];
+    $scope.levels = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
+//    $scope.alertValues = ["Greater then", "Less then"];
 
 
-    $scope.checkAlertValue = function () {
-        if ($scope.eventWhen['alertValue'] == undefined) {
-            $scope.eventWhen['type'] = null;
-            return true;
-        }
-        return false;
-    }
+//    $scope.checkAlertValue = function () {
+//        if ($scope.eventWhen['alertValue'] == undefined) {
+//            $scope.eventWhen['type'] = null;
+//            return true;
+//        }
+//        return false;
+//    }
 
     $scope.checkValidForm = function () {
 
-        if ($scope.eventWhen['info'] == undefined && $scope.eventWhen['alertValue'] == undefined && $scope.eventWhen['type'] == undefined) {
-            console.log('false1')
+        if ($scope.eventWhen['info'] == undefined && $scope.eventWhen['type'] == undefined) {
             return true;
         }
-        if ($scope.eventWhen['alertValue'] != null && $scope.eventWhen['type'] == null) {
-            console.log('false2')
+        if ($scope.eventWhen['type'] == null) {
             return true;
         }
         return false;
@@ -266,8 +264,8 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
         $scope.eventWhat['parameters'].push('');
     }
     $scope.removeParam = function (index) {
-        if ($scope.eventWhat != undefined &&  $scope.eventWhat['parameters']!= undefined) {
-            console.log($scope.eventWhat)  ;
+        if ($scope.eventWhat != undefined && $scope.eventWhat['parameters'] != undefined) {
+            console.log($scope.eventWhat);
             $scope.eventWhat['parameters'].splice(index, 1);
 
         }

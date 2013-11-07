@@ -102,7 +102,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	private OServer serverInstance;
 	private long updateTimer;
-	private long purgeTimer = 1000*60*30;
+	private static final long PURGETIMER = 1000 * 60 * 30;
 	private String dbName = "monitor";
 	private String dbUser = "admin";
 	private String dbPassword = "admin";
@@ -155,13 +155,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		Orient.instance().getTimer()
 				.schedule(new OMonitorTask(this), updateTimer, updateTimer);
 
-		// Orient.instance()
-		// .getTimer()
-		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
-		//
-		Orient.instance().getTimer()
-				.schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
-
+		// Orient.instance().getTimer()
+		// .schedule(new OMonitorPurgeTask(this), PURGETIMER, PURGETIMER);
+		Orient.instance()
+				.getTimer()
+				.schedule(new OMonitorPurgeTask(this), updateTimer, updateTimer);
 	}
 
 	private void registerExecutors(ODatabaseDocumentTx database) {
@@ -275,7 +273,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		final OClass log = schema.createClass(CLASS_LOG);
 		log.createProperty("date", OType.DATETIME);
-		log.createProperty("level", OType.INTEGER);
+		log.createProperty("level", OType.STRING);
 		log.createProperty("server", OType.LINK, server);
 		log.createProperty("message", OType.STRING);
 
@@ -349,8 +347,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
 		metricConfig.createProperty("server", OType.LINK, server);
-		
-		
+
 		final OClass userConfig = schema.createClass(CLASS_USER_CONFIGURATION);
 		final OClass ouser = schema.getClass(OUser.class);
 
@@ -362,8 +359,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		final OClass notificationsConfiguration = schema
 				.createClass(CLASS_DELETE_NOTIFICATIONS_CONFIG);
 		notificationsConfiguration.createProperty("hours", OType.INTEGER);
-		
-		
+
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
 		profile.createProperty("port", OType.INTEGER);
@@ -379,9 +375,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 				deleteMetricConfiguration);
 		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED,
 				notificationsConfiguration);
-		
+
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
-		
 
 	}
 

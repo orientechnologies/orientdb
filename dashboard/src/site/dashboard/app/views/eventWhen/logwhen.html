@@ -14,12 +14,13 @@
         <form name="form_log_when">
             <fieldset class="form_mailwhat">
                 <div class="controls controls-row">
-                    Alert Level Log Value:
-                    <select class="span3" ng-model="eventWhen['alertValue']"
-                            ng-options="t for t in alertValues">
-                        <option value=""></option>
-                    </select>
-                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels" ng-disabled="checkAlertValue()">
+                    Alert  Log Value =
+                    <!--<select class="span3" ng-model="eventWhen['alertValue']"-->
+                    <!--ng-options="t for t in alertValues">-->
+                    <!--<option value=""></option>-->
+                    <!--</select>-->
+                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels"
+                            ng-disabled="checkAlertValue()">
                         <option value=""></option>
                     </select>
                 </div>

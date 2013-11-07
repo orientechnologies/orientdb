@@ -57,8 +57,8 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         metadata: null
     }
 
-
-    var exclude = ["@type", "@fieldTypes", "$then", "$resolved"];
+    var header = ["@rid", "@version", "@class"];
+    var exclude = ["@rid", "@version", "@class","@type", "@fieldTypes", "$then", "$resolved"];
 
     var resource = $resource($http);
     resource.getLogs = function (params, callback) {
@@ -126,9 +126,11 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
             })
     }
 
-    resource.purgeMetrics = function (params, callback) {
-        $http.get('/purge/monitor/metrics').success(function (data) {
-            callback(data);
+    resource.purge = function (params, callback) {
+
+        var type = params.type;
+        $http.get('/purge/monitor/' + type).success(function (data) {
+
         }).error(function (data) {
             })
     }

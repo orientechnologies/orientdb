@@ -138,16 +138,14 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     $scope.getHoursDelete = function () {
 
 
-        console.log( $scope.deleteMetricConfiguration)
-
-            if($scope.config['deleteMetricConfiguration']==undefined){
-                $scope.config['deleteMetricConfiguration'] =  {};
-                $scope.config['deleteMetricConfiguration']['@class'] = 'DeleteMetricConfiguration';
-                $scope.config['deleteMetricConfiguration']['@type'] = 'document';
-                $scope.config['deleteMetricConfiguration']['hours'] = 0;
-            }
-        if( $scope.config['notificationsConfiguration']==undefined){
-            $scope.config['notificationsConfiguration'] =  {};
+        if ($scope.config['deleteMetricConfiguration'] == undefined) {
+            $scope.config['deleteMetricConfiguration'] = {};
+            $scope.config['deleteMetricConfiguration']['@class'] = 'DeleteMetricConfiguration';
+            $scope.config['deleteMetricConfiguration']['@type'] = 'document';
+            $scope.config['deleteMetricConfiguration']['hours'] = 0;
+        }
+        if ($scope.config['notificationsConfiguration'] == undefined) {
+            $scope.config['notificationsConfiguration'] = {};
             $scope.config['notificationsConfiguration']['@class'] = 'NotificationsConfiguration';
             $scope.config['notificationsConfiguration']['@type'] = 'document';
             $scope.config['notificationsConfiguration']['hours'] = 0;
@@ -164,17 +162,17 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.getHoursDelete();
         }
     });
-
     $scope.purgeMetrics = function () {
-        CommandLogApi.purgeMetrics(function (data) {
+        CommandLogApi.purge({type: 'metrics'}, function (data) {
 
-        });
+            }
+        );
     }
     $scope.purgeLogs = function () {
-        CommandLogApi.purgeLogs(function (data) {
+        console.log('passato');
+        CommandLogApi.purge({type: 'logs'}, function (data) {
 
-        });
+            }
+        );
     }
-
-
 });

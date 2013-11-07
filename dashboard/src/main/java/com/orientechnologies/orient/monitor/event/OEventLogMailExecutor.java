@@ -46,7 +46,7 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 			this.body2name.put("server", serverName);
 		}
 
-		Integer sourcelevel = (Integer) source.field("level");
+		String sourcelevel = (String) source.field("level");
 		this.body2name.put("Log Value", sourcelevel);
 
 		// pre-conditions
