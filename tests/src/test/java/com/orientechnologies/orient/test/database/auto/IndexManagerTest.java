@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test
 public class IndexManagerTest {
@@ -78,9 +79,10 @@ public class IndexManagerTest {
           null, null);
       fail();
     } catch (Exception e) {
-      if (e.getCause() != null)
+      if (e instanceof OResponseProcessingException)
         e = (Exception) e.getCause();
-      if (!(e instanceof IllegalAccessException) && e != null)
+
+      if (e.getCause() != null)
         e = (Exception) e.getCause();
 
       assertTrue(e instanceof IllegalArgumentException);
