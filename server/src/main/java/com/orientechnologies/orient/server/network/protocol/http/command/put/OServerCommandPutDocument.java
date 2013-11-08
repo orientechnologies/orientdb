@@ -85,7 +85,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       currentDocument.save();
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, doc.toJSON(),
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, currentDocument.toJSON(),
           null, true);
 
     } finally {
