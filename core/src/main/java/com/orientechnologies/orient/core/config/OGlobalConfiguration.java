@@ -49,11 +49,11 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
-  DIRECT_MEMORY_SAFE_MODE(
-      "memory.directMemory.safeMode",
-      "Indicates whether to perform range check before each direct memory update, it is true by default, "
-          + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
-      Boolean.class, true),
+  DIRECT_MEMORY_UNSAFE_MODE(
+      "memory.directMemory.unsafeMode",
+      "Indicates whether to do perform range check before each direct memory update, it is false by default, "
+          + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, false),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
@@ -661,6 +661,6 @@ public enum OGlobalConfiguration {
     }
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+    System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
   }
 }
