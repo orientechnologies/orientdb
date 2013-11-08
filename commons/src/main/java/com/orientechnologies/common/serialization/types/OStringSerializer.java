@@ -17,8 +17,6 @@
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.serialization.OBinaryConverter;
-import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
 /**
  * Serializer for {@link String} type.
@@ -27,10 +25,8 @@ import com.orientechnologies.common.serialization.OBinaryConverterFactory;
  * @since 18.01.12
  */
 public class OStringSerializer implements OBinarySerializer<String> {
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-
-  public static final OStringSerializer INSTANCE  = new OStringSerializer();
-  public static final byte              ID        = 13;
+  public static final OStringSerializer INSTANCE = new OStringSerializer();
+  public static final byte              ID       = 13;
 
   public int getObjectSize(final String object, Object... hints) {
     return object.length() * 2 + OIntegerSerializer.INT_SIZE;

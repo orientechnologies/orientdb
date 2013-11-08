@@ -17,8 +17,8 @@
 package com.orientechnologies.common.profiler;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class OProfiler extends OAbstractProfiler {
 
-  protected final Map<String, Long> counters = new HashMap<String, Long>();
+  protected final ConcurrentMap<String, Long> counters = new ConcurrentHashMap<String, Long>();
 
   public OProfiler() {
   }
@@ -66,28 +66,33 @@ public class OProfiler extends OAbstractProfiler {
     return false;
   }
 
-  public void updateCounter(final String iStatName, final String iDescription, final long iPlus, final String iMetadata) {
-    if (iStatName == null || !isRecording())
+  public void updateCounter(final String statName, final String description, final long plus, final String metadata) {
+    if (statName == null || !isRecording())
       return;
 
-    synchronized (counters) {
-      final Long stat = counters.get(iStatName);
-      final long oldValue = stat == null ? 0 : stat.longValue();
-      counters.put(iStatName, new Long(oldValue + iPlus));
-    }
+    Long oldValue;
+    Long newValue;
+    do {
+      oldValue = counters.get(statName);
+
+      if (oldValue == null) {
+        counters.putIfAbsent(statName, 0L);
+        oldValue = counters.get(statName);
+      }
+
+      newValue = oldValue + plus;
+    } while (!counters.replace(statName, oldValue, newValue));
   }
 
-  public long getCounter(final String iStatName) {
-    if (iStatName == null || !isRecording())
+  public long getCounter(final String statName) {
+    if (statName == null || !isRecording())
       return -1;
 
-    synchronized (counters) {
-      final Long stat = counters.get(iStatName);
-      if (stat == null)
-        return -1;
+    final Long stat = counters.get(statName);
+    if (stat == null)
+      return -1;
 
-      return stat.longValue();
-    }
+    return stat;
   }
 
   @Override
