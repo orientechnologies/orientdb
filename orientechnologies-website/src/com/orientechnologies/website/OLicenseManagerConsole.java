@@ -2,7 +2,7 @@ package com.orientechnologies.website;
 
 import java.io.IOException;
 
-import com.orientechnologies.agent.OCry;
+import com.orientechnologies.agent.OL;
 
 @SuppressWarnings("restriction")
 public class OLicenseManagerConsole {
@@ -36,7 +36,7 @@ public class OLicenseManagerConsole {
 
     final String key = "@Ld" + "ks#2" + new Integer(7 - 4) + "dsLvc" + (35 - 18 - 6) + "a!Po" + "weRr";
 
-    final String license = OCry.encrypt(plaintext, key);
+    final String license = OL.OCry.encrypt(plaintext, key);
     if (license.endsWith("\n"))
       return license.substring(0, license.length() - 1);
     return license;
