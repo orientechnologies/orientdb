@@ -108,7 +108,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
   @SuppressWarnings("unchecked")
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -146,9 +146,10 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-        if (fetchLimit > -1)
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-        else
+        if (resultListener != null) {
+          index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+          result = resultListener.getResult();
+        } else
           result = index.getValuesBetween(keyOne, true, keyTwo, true);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {

@@ -680,7 +680,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           opType = INDEX_OPERATION_TYPE.GET;
 
         try {
-          Object result = operator.executeIndexQuery(context, index, opType, keyParams, fetchLimit);
+          OQueryOperator.IndexResultListener resultListener;
+          if (fetchLimit < 0 || opType == INDEX_OPERATION_TYPE.COUNT)
+            resultListener = null;
+          else
+            resultListener = new IndexResultListener();
+
+          Object result = operator.executeIndexQuery(context, index, opType, keyParams, resultListener, fetchLimit);
 
           if (result == null)
             continue;
@@ -1429,6 +1435,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
       return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
+    }
+  }
+
+  private final class IndexResultListener implements OQueryOperator.IndexResultListener {
+    private final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    @Override
+    public Object getResult() {
+      return result;
+    }
+
+    @Override
+    public boolean addResult(OIdentifiable value) {
+      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
+        result.add(value);
+
+      return fetchLimit < 0 || fetchLimit >= result.size();
     }
   }
 }

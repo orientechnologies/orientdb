@@ -7,6 +7,8 @@ import com.orientechnologies.common.serialization.types.*;
  * @since 10/19/13
  */
 public class ODirectMemoryPointer {
+  private final boolean       SAFE_MODE    = Boolean.valueOf(System.getProperty("memory.directMemory.safeMode"));
+
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final long          pageSize;
@@ -30,86 +32,101 @@ public class ODirectMemoryPointer {
   }
 
   public byte[] get(long offset, int length) {
-    rangeCheck(offset, length);
+    if (SAFE_MODE)
+      rangeCheck(offset, length);
 
     return directMemory.get(dataPointer + offset, length);
   }
 
   public void get(long offset, byte[] array, int arrayOffset, int length) {
-    rangeCheck(offset, length);
+    if (SAFE_MODE)
+      rangeCheck(offset, length);
 
     directMemory.get(dataPointer + offset, array, arrayOffset, length);
   }
 
   public void set(long offset, byte[] content, int arrayOffset, int length) {
-    rangeCheck(offset, length);
+    if (SAFE_MODE)
+      rangeCheck(offset, length);
 
     directMemory.set(dataPointer + offset, content, arrayOffset, length);
   }
 
   public int getInt(long offset) {
-    rangeCheck(offset, OIntegerSerializer.INT_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OIntegerSerializer.INT_SIZE);
 
     return directMemory.getInt(dataPointer + offset);
   }
 
   public void setInt(long offset, int value) {
-    rangeCheck(offset, OIntegerSerializer.INT_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OIntegerSerializer.INT_SIZE);
 
     directMemory.setInt(dataPointer + offset, value);
   }
 
   public void setShort(long offset, short value) {
-    rangeCheck(offset, OShortSerializer.SHORT_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OShortSerializer.SHORT_SIZE);
 
     directMemory.setShort(dataPointer + offset, value);
   }
 
   public short getShort(long offset) {
-    rangeCheck(offset, OShortSerializer.SHORT_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OShortSerializer.SHORT_SIZE);
 
     return directMemory.getShort(dataPointer + offset);
   }
 
   public long getLong(long offset) {
-    rangeCheck(offset, OLongSerializer.LONG_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OLongSerializer.LONG_SIZE);
 
     return directMemory.getLong(dataPointer + offset);
   }
 
   public void setLong(long offset, long value) {
-    rangeCheck(offset, OLongSerializer.LONG_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OLongSerializer.LONG_SIZE);
 
     directMemory.setLong(dataPointer + offset, value);
   }
 
   public byte getByte(long offset) {
-    rangeCheck(offset, OByteSerializer.BYTE_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OByteSerializer.BYTE_SIZE);
 
     return directMemory.getByte(dataPointer + offset);
   }
 
   public void setByte(long offset, byte value) {
-    rangeCheck(offset, OByteSerializer.BYTE_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OByteSerializer.BYTE_SIZE);
 
     directMemory.setByte(dataPointer + offset, value);
   }
 
   public void setChar(long offset, char value) {
-    rangeCheck(offset, OCharSerializer.CHAR_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OCharSerializer.CHAR_SIZE);
 
     directMemory.setChar(dataPointer + offset, value);
   }
 
   public char getChar(long offset) {
-    rangeCheck(offset, OCharSerializer.CHAR_SIZE);
+    if (SAFE_MODE)
+      rangeCheck(offset, OCharSerializer.CHAR_SIZE);
 
     return directMemory.getChar(dataPointer + offset);
   }
 
   public void copyData(long srcOffset, ODirectMemoryPointer destPointer, long destOffset, long len) {
-    rangeCheck(srcOffset, len);
-    rangeCheck(destOffset, len);
+    if (SAFE_MODE) {
+      rangeCheck(srcOffset, len);
+      rangeCheck(destOffset, len);
+    }
 
     directMemory.copyData(dataPointer + srcOffset, destPointer.getDataPointer() + destOffset, len);
   }

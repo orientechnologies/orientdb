@@ -65,22 +65,23 @@ public interface OIndexEngine<V> {
 
   int removeValue(OIdentifiable value, ValuesTransformer<V> transformer);
 
-  Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer);
+  void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
 
-  Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
+  void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener);
 
-  Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
+  void getValuesMinor(final Object toKey, final boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener);
 
-  Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch,
-      ValuesTransformer<V> transformer);
+  void getEntriesMajor(final Object fromKey, final boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener);
 
-  Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch, ValuesTransformer<V> transformer);
+  void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener);
 
-  Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer);
+  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener);
 
   long size(ValuesTransformer<V> transformer);
 
@@ -93,5 +94,13 @@ public interface OIndexEngine<V> {
     Collection<OIdentifiable> transformFromValue(V value);
 
     V transformToValue(Collection<OIdentifiable> collection);
+  }
+
+  interface ValuesResultListener {
+    boolean addResult(OIdentifiable identifiable);
+  }
+
+  interface EntriesResultListener {
+    boolean addResult(ODocument entry);
   }
 }

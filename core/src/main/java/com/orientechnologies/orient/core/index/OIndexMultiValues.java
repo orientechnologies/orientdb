@@ -15,13 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -176,39 +170,54 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         serializer);
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object rangeFrom, final boolean fromInclusive, final Object rangeTo,
-      final boolean toInclusive, final int maxValuesToFetch) {
+  public void getValuesBetween(final Object rangeFrom, final boolean fromInclusive, final Object rangeTo,
+      final boolean toInclusive, final IndexValuesResultListener resultListener) {
     checkForRebuild();
     acquireSharedLock();
     try {
-      return indexEngine.getValuesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, maxValuesToFetch,
-          MultiValuesTransformer.INSTANCE);
+      indexEngine.getValuesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.ValuesResultListener() {
+            @Override
+            public boolean addResult(OIdentifiable identifiable) {
+              return resultListener.addResult(identifiable);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
+  public void getValuesMajor(final Object fromKey, final boolean isInclusive, final IndexValuesResultListener valuesResultListener) {
     checkForRebuild();
     acquireSharedLock();
     try {
-      return indexEngine.getValuesMajor(fromKey, isInclusive, maxValuesToFetch, MultiValuesTransformer.INSTANCE);
+      indexEngine.getValuesMajor(fromKey, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
+        @Override
+        public boolean addResult(OIdentifiable identifiable) {
+          return valuesResultListener.addResult(identifiable);
+        }
+      });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
+  public void getValuesMinor(final Object toKey, final boolean isInclusive, final IndexValuesResultListener resultListener) {
     checkForRebuild();
     acquireSharedLock();
     try {
-      return indexEngine.getValuesMinor(toKey, isInclusive, maxValuesToFetch, MultiValuesTransformer.INSTANCE);
+      indexEngine.getValuesMinor(toKey, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
+        @Override
+        public boolean addResult(OIdentifiable identifiable) {
+          return resultListener.addResult(identifiable);
+        }
+      });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
+  public void getValues(final Collection<?> iKeys, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
@@ -216,8 +225,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
       for (final Object key : sortedKeys) {
         final Set<OIdentifiable> values = indexEngine.get(key);
 
@@ -226,43 +233,52 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
         if (!values.isEmpty()) {
           for (final OIdentifiable value : values) {
-            if (maxValuesToFetch > -1 && maxValuesToFetch == result.size())
-              return result;
-
-            result.add(value);
+            if (!resultListener.addResult(value))
+              return;
           }
         }
       }
 
-      return result;
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
+  public void getEntriesMajor(final Object fromKey, final boolean isInclusive,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     acquireSharedLock();
     try {
-      return indexEngine.getEntriesMajor(fromKey, isInclusive, maxEntriesToFetch, MultiValuesTransformer.INSTANCE);
+      indexEngine.getEntriesMajor(fromKey, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
+        @Override
+        public boolean addResult(ODocument entry) {
+          return entriesResultListener.addResult(entry);
+        }
+      });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     acquireSharedLock();
     try {
-      return indexEngine.getEntriesMinor(toKey, isInclusive, maxEntriesToFetch, MultiValuesTransformer.INSTANCE);
+      indexEngine.getEntriesMinor(toKey, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
+        @Override
+        public boolean addResult(ODocument entry) {
+          return entriesResultListener.addResult(entry);
+        }
+      });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<ODocument> getEntriesBetween(Object rangeFrom, Object rangeTo, boolean inclusive, int maxEntriesToFetch) {
+  public void getEntriesBetween(Object rangeFrom, Object rangeTo, boolean inclusive,
+      final IndexEntriesResultListener indexEntriesResultListener) {
     checkForRebuild();
 
     final OType[] types = getDefinition().getTypes();
@@ -273,7 +289,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      return indexEngine.getEntriesBetween(rangeFrom, rangeTo, inclusive, maxEntriesToFetch, MultiValuesTransformer.INSTANCE);
+      indexEngine.getEntriesBetween(rangeFrom, rangeTo, inclusive, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.EntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return indexEntriesResultListener.addResult(entry);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
@@ -301,7 +323,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch) {
+  public void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener) {
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
@@ -309,8 +331,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      final Set<ODocument> result = new ODocumentFieldsHashSet();
-
       for (final Object key : sortedKeys) {
         final Set<OIdentifiable> values = indexEngine.get(key);
 
@@ -319,20 +339,16 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
         if (!values.isEmpty()) {
           for (final OIdentifiable value : values) {
-            if (maxEntriesToFetch > -1 && maxEntriesToFetch == result.size())
-              return result;
-
             final ODocument document = new ODocument();
             document.field("key", key);
             document.field("rid", value.getIdentity());
             document.unsetDirty();
 
-            result.add(document);
+            if (!resultListener.addResult(document))
+              return;
           }
         }
       }
-
-      return result;
     } finally {
       releaseSharedLock();
     }

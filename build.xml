@@ -203,9 +203,6 @@
             <fileset dir="graphdb/config" includes="*.xml"/>
         </copy>
 
-        <copy todir="${community.release}/databases">
-            <fileset dir="graphdb/target/databases" includes="*"/>
-        </copy>
 
         <copy todir="${community.release}/lib" flatten="true">
             <fileset dir="graphdb/lib" includes="*.jar"/>

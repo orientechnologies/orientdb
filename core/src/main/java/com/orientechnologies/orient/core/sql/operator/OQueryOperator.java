@@ -26,11 +26,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
+import com.orientechnologies.orient.core.sql.operator.math.*;
 
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
@@ -124,6 +120,9 @@ public abstract class OQueryOperator {
    * <p/>
    * Multiple parameters are passed in to implement composite indexes support.
    * 
+   * 
+   * 
+   * 
    * @param iContext
    *          TODO
    * @param index
@@ -132,13 +131,12 @@ public abstract class OQueryOperator {
    *          TODO
    * @param keyParams
    *          Parameters of query is used to calculate query result.
+   * @param resultListener
    * @param fetchLimit
-   *          Maximum amount of items to be fetched, corresponds to LIMIT operator in SQL query.
-   * 
    * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
    */
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      final List<Object> keyParams, final int fetchLimit) {
+      final List<Object> keyParams, final IndexResultListener resultListener, int fetchLimit) {
     return null;
   }
 
@@ -225,5 +223,9 @@ public abstract class OQueryOperator {
             + params + " params and " + keyParams.size() + " keys", +1);
       }
     }
+  }
+
+  public interface IndexResultListener extends OIndex.IndexValuesResultListener {
+    Object getResult();
   }
 }

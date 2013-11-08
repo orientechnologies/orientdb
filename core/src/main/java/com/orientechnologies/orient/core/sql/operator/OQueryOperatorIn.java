@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -114,7 +110,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   @SuppressWarnings("unchecked")
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Object result;
 
@@ -150,9 +146,10 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
       if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
         result = index.getValues(inKeys).size();
-      else if (fetchLimit > -1)
-        result = index.getValues(inKeys, fetchLimit);
-      else
+      else if (resultListener != null) {
+        index.getValues(inKeys, resultListener);
+        result = resultListener.getResult();
+      } else
         result = index.getValues(inKeys);
     } else
       return null;

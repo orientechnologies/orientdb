@@ -219,7 +219,7 @@ public interface OIndex<T> {
    */
   Collection<OIdentifiable> getValues(Collection<?> iKeys);
 
-  Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch);
+  void getValues(Collection<?> iKeys, IndexValuesResultListener resultListener);
 
   /**
    * Returns a set of documents with keys in specific set
@@ -230,7 +230,7 @@ public interface OIndex<T> {
    */
   Collection<ODocument> getEntries(Collection<?> iKeys);
 
-  Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch);
+  void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener);
 
   OIndexDefinition getDefinition();
 
@@ -321,8 +321,8 @@ public interface OIndex<T> {
    */
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive);
 
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
-      boolean iToInclusive, int maxValuesToFetch);
+  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
+      IndexValuesResultListener resultListener);
 
   /**
    * Returns a set of records with keys greater than passed parameter.
@@ -336,7 +336,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch);
+  public abstract void getValuesMajor(Object fromKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
 
   /**
    * Returns a set of records with keys less than passed parameter.
@@ -350,7 +350,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
 
-  public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch);
+  public abstract void getValuesMinor(Object toKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -365,7 +365,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch);
+  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -380,7 +380,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
 
-  public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch);
+  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents with key between the range passed as parameter.
@@ -396,8 +396,8 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
 
-  public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      final int maxEntriesToFetch);
+  public abstract void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
+      IndexEntriesResultListener entriesResultListener);
 
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
@@ -411,4 +411,12 @@ public interface OIndex<T> {
   public boolean supportsOrderedIterations();
 
   public boolean isRebuiding();
+
+  public interface IndexValuesResultListener {
+    boolean addResult(OIdentifiable value);
+  }
+
+  public interface IndexEntriesResultListener {
+    boolean addResult(ODocument entry);
+  }
 }
