@@ -65,12 +65,13 @@ public class OServerPluginManager implements OService {
     boolean hotReload = true;
     boolean dynamic = true;
 
-    for (OServerEntryConfiguration p : server.getConfiguration().properties) {
-      if (p.name.equals("plugin.hotReload"))
-        hotReload = Boolean.parseBoolean(p.value);
-      else if (p.name.equals("plugin.dynamic"))
-        dynamic = Boolean.parseBoolean(p.value);
-    }
+    if (server.getConfiguration() != null)
+      for (OServerEntryConfiguration p : server.getConfiguration().properties) {
+        if (p.name.equals("plugin.hotReload"))
+          hotReload = Boolean.parseBoolean(p.value);
+        else if (p.name.equals("plugin.dynamic"))
+          dynamic = Boolean.parseBoolean(p.value);
+      }
 
     if (!dynamic)
       return;

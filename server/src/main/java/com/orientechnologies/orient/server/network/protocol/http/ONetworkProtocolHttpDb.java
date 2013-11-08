@@ -50,6 +50,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBackupDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
@@ -122,6 +123,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     sharedCmdManager.registerCommand(new OServerCommandGetIndex());
     sharedCmdManager.registerCommand(new OServerCommandGetListDatabases());
     sharedCmdManager.registerCommand(new OServerCommandGetExportDatabase());
+    sharedCmdManager.registerCommand(new OServerCommandPostBackupDatabase());
     sharedCmdManager.registerCommand(new OServerCommandPostBatch());
     sharedCmdManager.registerCommand(new OServerCommandPostClass());
     sharedCmdManager.registerCommand(new OServerCommandPostCommand());

@@ -74,7 +74,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
   private static final String[] NAMES = { "POST|batch/*" };
 
-  @SuppressWarnings("unchecked")
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.url, 2, "Syntax error: batch/<database>");
