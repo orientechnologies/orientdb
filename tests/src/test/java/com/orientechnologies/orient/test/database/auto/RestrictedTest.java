@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "security")
 public class RestrictedTest {
@@ -109,6 +110,10 @@ public class RestrictedTest {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
       // OK AS EXCEPTION
+    } catch (OResponseProcessingException e) {
+      final Throwable t = e.getCause();
+
+      Assert.assertTrue(t instanceof OSecurityException || t instanceof ORecordNotFoundException);
     }
     database.close();
 
@@ -145,6 +150,8 @@ public class RestrictedTest {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
       // OK AS EXCEPTION
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OSecurityException || e.getCause() instanceof ORecordNotFoundException);
     }
     database.close();
 
@@ -194,15 +201,30 @@ public class RestrictedTest {
     Assert.assertNotNull(database.load(writerRecord.getIdentity()));
   }
 
-  @Test(dependsOnMethods = "testWriterAddReaderUserOnlyForRead", expectedExceptions = OSecurityException.class)
+  @Test(dependsOnMethods = "testWriterAddReaderUserOnlyForRead")
   public void testTruncateClass() {
     database.open("admin", "admin");
-    database.command(new OCommandSQL("truncate class CMSDocument")).execute();
+    try {
+      database.command(new OCommandSQL("truncate class CMSDocument")).execute();
+      Assert.fail();
+    } catch (OSecurityException e) {
+      Assert.assertTrue(true);
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OSecurityException);
+    }
+
   }
 
-  @Test(dependsOnMethods = "testTruncateClass", expectedExceptions = OSecurityException.class)
+  @Test(dependsOnMethods = "testTruncateClass")
   public void testTruncateUnderlyingCluster() {
     database.open("admin", "admin");
-    database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
+    try {
+      database.command(new OCommandSQL("truncate cluster CMSDocument")).execute();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OSecurityException);
+    } catch (OSecurityException e) {
+
+    }
+
   }
 }

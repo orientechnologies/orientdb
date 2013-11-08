@@ -15,16 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -56,6 +48,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -97,6 +90,8 @@ public class IndexTest {
       // IT SHOULD GIVE ERROR ON DUPLICATED KEY
       Assert.assertTrue(false);
 
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
     }
@@ -280,6 +275,8 @@ public class IndexTest {
       database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
       database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
       Assert.assertTrue(false);
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OIndexException);
     } catch (OIndexException e) {
       Assert.assertTrue(true);
     }
@@ -1159,6 +1156,8 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException oie) {
     }
 
@@ -1196,6 +1195,8 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException oie) {
     }
 
@@ -1231,6 +1232,8 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException oie) {
     }
 
@@ -1271,6 +1274,8 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
     } catch (ORecordDuplicatedException oie) {
     }
 

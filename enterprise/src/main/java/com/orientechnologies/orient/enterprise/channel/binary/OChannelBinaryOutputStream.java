@@ -25,46 +25,46 @@ import java.io.OutputStream;
  * 
  */
 public class OChannelBinaryOutputStream extends OutputStream {
-	private OChannelBinaryAsynch	channel;
-	private final byte[]					buffer;
-	private int										pos	= 0;
+  private OChannelBinaryAsynchClient channel;
+  private final byte[]               buffer;
+  private int                        pos = 0;
 
-	public OChannelBinaryOutputStream(final OChannelBinaryAsynch channel) {
-		this.channel = channel;
-		buffer = channel.getBuffer();
-	}
+  public OChannelBinaryOutputStream(final OChannelBinaryAsynchClient channel) {
+    this.channel = channel;
+    buffer = channel.getBuffer();
+  }
 
-	@Override
-	public void write(final int iByte) throws IOException {
-		if (pos >= buffer.length)
-			flush(true);
+  @Override
+  public void write(final int iByte) throws IOException {
+    if (pos >= buffer.length)
+      flush(true);
 
-		buffer[pos++] = (byte) iByte;
-	}
+    buffer[pos++] = (byte) iByte;
+  }
 
-	@Override
-	public void close() throws IOException {
-		flush(false);
-		channel = null;
-	}
+  @Override
+  public void close() throws IOException {
+    flush(false);
+    channel = null;
+  }
 
-	@Override
-	public void flush() throws IOException {
-		// flush(true);
-	}
+  @Override
+  public void flush() throws IOException {
+    // flush(true);
+  }
 
-	private void flush(final boolean iContinue) throws IOException {
-		channel.beginRequest();
-		try {
-			channel.out.writeInt(pos);
-			if (pos > 0) {
-				channel.out.write(buffer, 0, pos);
-				pos = 0;
-			}
-			channel.out.writeByte(iContinue ? 1 : 0);
+  private void flush(final boolean iContinue) throws IOException {
+    channel.beginRequest();
+    try {
+      channel.out.writeInt(pos);
+      if (pos > 0) {
+        channel.out.write(buffer, 0, pos);
+        pos = 0;
+      }
+      channel.out.writeByte(iContinue ? 1 : 0);
 
-		} finally {
-			channel.endRequest();
-		}
-	}
+    } finally {
+      channel.endRequest();
+    }
+  }
 }

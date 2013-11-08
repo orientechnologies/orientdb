@@ -16,11 +16,14 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -51,6 +54,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -1468,6 +1472,63 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeBytes(result.toStream());
     } finally {
       endResponse();
+    }
+  }
+
+  protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
+    channel.acquireWriteLock();
+    try {
+
+      channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
+      channel.writeInt(iClientTxId);
+
+      Throwable current;
+      if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
+        // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
+        current = t.getCause();
+      else
+        current = t;
+
+      final Throwable original = current;
+      while (current != null) {
+        // MORE DETAILS ARE COMING AS EXCEPTION
+        channel.writeByte((byte) 1);
+
+        channel.writeString(current.getClass().getName());
+        channel.writeString(current != null ? current.getMessage() : null);
+
+        current = current.getCause();
+      }
+      channel.writeByte((byte) 0);
+
+      if (connection != null && connection.data.protocolVersion >= 19) {
+        final OMemoryStream memoryStream = new OMemoryStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
+
+        objectOutputStream.writeObject(original);
+        objectOutputStream.flush();
+
+        final byte[] result = memoryStream.toByteArray();
+        objectOutputStream.close();
+
+        channel.writeBytes(result);
+      }
+
+      channel.flush();
+
+      if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
+        if (logClientFullStackTrace)
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+        else
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+      }
+    } catch (Exception e) {
+      if (e instanceof SocketException)
+        shutdown();
+    } finally {
+      channel.releaseWriteLock();
     }
   }
 

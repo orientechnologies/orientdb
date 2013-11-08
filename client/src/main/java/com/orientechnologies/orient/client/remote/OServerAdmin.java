@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
@@ -81,7 +81,7 @@ public class OServerAdmin {
     storage.setSessionId(null, -1);
 
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
 
       storage.sendClientInfo(network);
 
@@ -122,7 +122,7 @@ public class OServerAdmin {
     storage.checkConnection();
     final ODocument result = new ODocument();
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
       storage.endRequest(network);
 
       try {
@@ -188,7 +188,7 @@ public class OServerAdmin {
         if (iStorageMode == null)
           iStorageMode = "csv";
 
-        final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
+        final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
         try {
           network.writeString(iDatabaseName);
           if (network.getSrvProtocolVersion() >= 8)
@@ -220,7 +220,7 @@ public class OServerAdmin {
     storage.checkConnection();
 
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
       try {
         network.writeString(storage.getName());
         network.writeString(storageType);
@@ -271,7 +271,7 @@ public class OServerAdmin {
     while (retry)
       try {
 
-        final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
+        final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_DROP);
         try {
           network.writeString(storage.getName());
           network.writeString(storageType);
@@ -318,7 +318,7 @@ public class OServerAdmin {
   public synchronized OServerAdmin freezeDatabase(String storageType) throws IOException {
     storage.checkConnection();
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
 
       try {
         network.writeString(storage.getName());
@@ -338,7 +338,7 @@ public class OServerAdmin {
   public synchronized OServerAdmin releaseDatabase(String storageType) throws IOException {
     storage.checkConnection();
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
 
       try {
         network.writeString(storage.getName());
@@ -358,7 +358,7 @@ public class OServerAdmin {
   public synchronized OServerAdmin freezeCluster(int clusterId, String storageType) throws IOException {
     storage.checkConnection();
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
 
       try {
         network.writeString(storage.getName());
@@ -382,7 +382,7 @@ public class OServerAdmin {
   public synchronized OServerAdmin releaseCluster(int clusterId, String storageType) throws IOException {
     storage.checkConnection();
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
 
       try {
         network.writeString(storage.getName());
@@ -584,7 +584,7 @@ public class OServerAdmin {
 
     try {
 
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_COPY);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_COPY);
       try {
         network.writeString(iDatabaseName);
         network.writeString(iDatabaseUserName);
@@ -612,7 +612,7 @@ public class OServerAdmin {
     final Map<String, String> config = new HashMap<String, String>();
 
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_LIST);
       storage.endRequest(network);
 
       try {
@@ -635,7 +635,7 @@ public class OServerAdmin {
     storage.checkConnection();
 
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
       network.writeString(iConfig.getKey());
 
       try {
@@ -657,7 +657,7 @@ public class OServerAdmin {
     storage.checkConnection();
 
     try {
-      final OChannelBinaryClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
+      final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
       network.writeString(iConfig.getKey());
       network.writeString(iValue != null ? iValue.toString() : "");
       storage.getResponse(network);
@@ -689,7 +689,7 @@ public class OServerAdmin {
     while (retry)
       try {
 
-        final OChannelBinaryClient network = storage.beginRequest(iRequest);
+        final OChannelBinaryAsynchClient network = storage.beginRequest(iRequest);
         try {
           network.writeBytes(iPayLoad.toStream());
         } finally {

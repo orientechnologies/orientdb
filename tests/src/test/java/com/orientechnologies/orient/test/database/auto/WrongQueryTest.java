@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import junit.framework.Assert;
+
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -23,28 +25,35 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "query", sequential = true)
 public class WrongQueryTest {
-	private ODatabaseDocument	database;
+  private ODatabaseDocument database;
 
-	@Parameters(value = "url")
-	public WrongQueryTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public WrongQueryTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void queryOpen() {
-		database.open("admin", "admin");
-	}
+  @Test
+  public void queryOpen() {
+    database.open("admin", "admin");
+  }
 
-	@Test(dependsOnMethods = "queryOpen", expectedExceptions = OQueryParsingException.class)
-	public void queryFieldOperatorNotSupported() {
-		database.command(new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'")).execute();
-	}
+  @Test(dependsOnMethods = "queryOpen")
+  public void queryFieldOperatorNotSupported() {
+    try {
+      database.command(new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'")).execute();
+      Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
+    } catch (OQueryParsingException e) {
+    }
+  }
 
-	@Test(dependsOnMethods = "queryFieldOperatorNotSupported")
-	public void queryEnd() {
-		database.close();
-	}
+  @Test(dependsOnMethods = "queryFieldOperatorNotSupported")
+  public void queryEnd() {
+    database.close();
+  }
 }

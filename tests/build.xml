@@ -83,22 +83,6 @@
     </target>
 
 
-    <target name="test-local-lh" depends="test-init">
-        <echo>EXECUTING TESTS USING LOCAL DATABASE and LH data cluster: local:${orient.path}/databases/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Dfile.cluster.useLHPEPS=true"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="local-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
-
-
     <target name="test-remote" depends="test-init">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">

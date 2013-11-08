@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @Test(groups = "sql-select")
@@ -261,8 +262,7 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ) FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')"))
-        .execute();
+        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ) FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
@@ -274,15 +274,19 @@ public class SQLSelectProjectionsTest {
     database.close();
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void queryProjectionFlattenError() {
     database.open("admin", "admin");
 
     try {
-      database.command(
-          new OSQLSynchQuery<ODocument>(
-              "SELECT FLATTEN( out_ ), in_ FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')")).execute();
+      database.command(new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ), in_ FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')"))
+          .execute();
 
+      Assert.fail();
+    } catch (OCommandSQLParsingException e) {
+
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }

@@ -18,6 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
@@ -30,10 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "schema")
 public class SchemaTest {
@@ -363,37 +364,52 @@ public class SchemaTest {
 
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void invalidClusterWrongClusterId() {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
     try {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
-
+      Assert.fail();
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) ((OResponseProcessingException) e).getCause();
+      Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void invalidClusterWrongClusterName() {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 
     try {
       database.command(new OCommandSQL("create class Antani cluster blaaa")).execute();
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) ((OResponseProcessingException) e).getCause();
+      Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void invalidClusterWrongKeywords() {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 
     try {
       database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
+      Assert.fail();
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) ((OResponseProcessingException) e).getCause();
+      Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }

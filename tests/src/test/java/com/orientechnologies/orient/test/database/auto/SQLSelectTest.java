@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -646,9 +647,15 @@ public class SQLSelectTest {
     }
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void queryOrderByWrongSyntax() {
-    database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name aaaa")).execute();
+    try {
+      database.command(new OSQLSynchQuery<ODocument>("select from Profile order by name aaaa")).execute();
+      Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
+    } catch (OCommandSQLParsingException e) {
+    }
   }
 
   @Test

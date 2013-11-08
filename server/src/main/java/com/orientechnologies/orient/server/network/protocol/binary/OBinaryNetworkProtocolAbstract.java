@@ -65,8 +65,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
-  private final Level            logClientExceptions;
-  private final boolean          logClientFullStackTrace;
+  protected final Level          logClientExceptions;
+  protected final boolean        logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
