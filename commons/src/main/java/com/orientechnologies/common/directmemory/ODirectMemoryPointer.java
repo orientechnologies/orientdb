@@ -7,7 +7,7 @@ import com.orientechnologies.common.serialization.types.*;
  * @since 10/19/13
  */
 public class ODirectMemoryPointer {
-  private final boolean       SAFE_MODE    = Boolean.valueOf(System.getProperty("memory.directMemory.safeMode"));
+  private final boolean       SAFE_MODE    = !Boolean.valueOf(System.getProperty("memory.directMemory.unsafeMode"));
 
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
