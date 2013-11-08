@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 /**
@@ -640,7 +640,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getURL();
   }
 
-  public void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
+  public void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
     pushSession();
     try {
       delegate.beginResponse(iNetwork);
@@ -669,7 +669,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getClusterConfiguration();
   }
 
-  protected void handleException(final OChannelBinaryClient iNetwork, final String iMessage, final Exception iException) {
+  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
     delegate.handleException(iNetwork, iMessage, iException);
   }
 

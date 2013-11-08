@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest {
@@ -84,6 +85,8 @@ public class TransactionAtomicTest {
     try {
       doc.save();
       Assert.assertTrue(false);
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
     }
@@ -180,6 +183,9 @@ public class TransactionAtomicTest {
       db.commit();
       Assert.assertTrue(false);
 
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+      db.rollback();
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
       db.rollback();

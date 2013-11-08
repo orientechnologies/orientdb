@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
 public class TransactionOptimisticTest {
@@ -102,6 +103,10 @@ public class TransactionOptimisticTest {
 
       Assert.assertTrue(false);
 
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
+
+      db1.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
       db1.rollback();

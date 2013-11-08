@@ -17,14 +17,8 @@ package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynch;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -304,7 +298,7 @@ public class OClientConnectionManager {
     for (OClientConnection c : connections.values()) {
       if (c != iExcludeConnection) {
         final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
-        final OChannelBinaryAsynch channel = (OChannelBinaryAsynch) p.getChannel();
+        final OChannelBinaryAsynchClient channel = (OChannelBinaryAsynchClient) p.getChannel();
 
         if (c.database != null && c.database.getName().equals(dbName))
           synchronized (c) {

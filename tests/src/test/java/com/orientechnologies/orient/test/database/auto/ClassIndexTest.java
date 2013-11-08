@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.testng.Assert;
 import org.testng.annotations.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -17,6 +18,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = { "index" })
 public class ClassIndexTest {
@@ -123,6 +125,9 @@ public class ClassIndexTest {
       oClass.createIndex("ClassIndex:TestPropertyOne", OClass.INDEX_TYPE.UNIQUE, "fOne");
       fail();
     } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+
       if (e.getCause() != null)
         e = (Exception) e.getCause();
 
@@ -422,7 +427,11 @@ public class ClassIndexTest {
     boolean exceptionIsThrown = false;
     try {
       oClass.createIndex("ClassIndexTestPropertyWrongSpecifierEmbeddedMap", OClass.INDEX_TYPE.UNIQUE, "fEmbeddedMap by ttt");
-    } catch (IllegalArgumentException e) {
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) ((OResponseProcessingException) e).getCause();
+
+      Assert.assertTrue(e instanceof IllegalArgumentException);
       exceptionIsThrown = true;
       assertEquals(e.getMessage(), "Illegal field name format, should be '<property> [by key|value]' but was 'fEmbeddedMap by ttt'");
     }
@@ -1195,14 +1204,28 @@ public class ClassIndexTest {
     oClass.createIndex("ClassIndexTestCompositeFieldAbsent", OClass.INDEX_TYPE.UNIQUE, "fFive");
   }
 
-  @Test(expectedExceptions = OIndexException.class)
+  @Test
   public void testCreateProxyIndex() {
-    oClass.createIndex("ClassIndexTestProxyIndex", OClass.INDEX_TYPE.PROXY, "fOne");
+    try {
+      oClass.createIndex("ClassIndexTestProxyIndex", OClass.INDEX_TYPE.PROXY, "fOne");
+      Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OIndexException);
+    } catch (OIndexException e) {
+      Assert.assertTrue(true);
+    }
   }
 
-  @Test(expectedExceptions = OIndexException.class)
+  @Test
   public void testCreateFullTextIndexTwoProperties() {
-    oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix", "fSeven");
+    try {
+      oClass.createIndex("ClassIndexTestFulltextIndex", OClass.INDEX_TYPE.FULLTEXT, "fSix", "fSeven");
+      Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OIndexException);
+    } catch (OIndexException e) {
+      Assert.assertTrue(true);
+    }
   }
 
   @Test
