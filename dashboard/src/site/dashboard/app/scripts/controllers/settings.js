@@ -48,6 +48,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     $scope.currentTab = 'dashboard';
 
 
+    $scope.filterOptions = {filterText: '' };
     $scope.metricsModified = {};
     Settings.get(function (data) {
         if (data.result.length == 0) {
@@ -67,6 +68,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         enablePaging: true,
         pagingOptions: $scope.pagingOptions,
         totalServerItems: 'total',
+        filterOptions: $scope.filterOptions,
         columnDefs: [
             {field: 'name', displayName: 'Name'},
             {field: 'description', displayName: 'Age'},
@@ -81,7 +83,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         }
     }
 
-    Metric.getMetricTypes(null, function (data) {
+    Metric.getMetricDictionary(function (data) {
         $scope.metrics = data.result;
         $scope.total = $scope.metrics.length;
 

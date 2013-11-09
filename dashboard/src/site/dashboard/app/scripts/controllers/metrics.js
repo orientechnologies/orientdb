@@ -269,7 +269,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
     });
-    Metric.getMetricTypes(null, function (data) {
+    Metric.getMetricTypes({}, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
             $scope.metric = $scope.metrics[0].name;

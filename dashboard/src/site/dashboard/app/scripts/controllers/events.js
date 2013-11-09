@@ -209,7 +209,7 @@ dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$
 
     $scope.alertValues = ["Greater then", "Less then"];
     $scope.parameters = ["value", "entries", "min", "max", "average", "total" ];
-    Metric.getMetricTypes(null, function (data) {
+    Metric.getMetricTypes({}, function (data) {
         $scope.metric = new Array;
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {

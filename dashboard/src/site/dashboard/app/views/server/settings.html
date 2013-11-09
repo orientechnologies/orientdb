@@ -39,6 +39,10 @@
 
 <div class="row-fluid" ng-show="currentTab == 'metrics'">
 
+    <div class="input-append querySearch">
+        <input type="text" class="input-xxlarge" placeholder="Search" ng-model="filterOptions.filterText">
+        <span class="add-on"><i class="icon-search"></i></span>
+    </div>
     <div class="gridStyle" ng-grid="gridOptions"></div>
 
 </div>
@@ -55,10 +59,11 @@
 
             </div>
             <div class="widget-body">
+
                 <table class="table table-striped  table-hover table-condensed table-nocolor">
                     <thead>
                     <tr>
-                        <th>{{ 'dashboard.metric.name' | i18n }}</th>
+                        <th>{{ 'dashboard.metric.name' | i18n  }}</th>
                         <th></th>
                     </tr>
                     </thead>

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -101,7 +102,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public static final String												CLASS_METRIC_CONFIG								= "MetricConfig";
 	private static final String												CLASS_PROXY_CONFIG								= "ProxyConfiguration";
-	private static final String												CLASS_MESSAGE								= "Message";
+	private static final String												CLASS_MESSAGE											= "Message";
 
 	private OServer																		serverInstance;
 	private long																			updateTimer;
@@ -114,6 +115,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 	Map<Integer, Map<Integer, Set<OMonitoredServer>>>	keyMap;
 	Map<String, OPair<String, METRIC_TYPE>>						dictionary;
 	private Set<OServerConfigurationListener>					listeners													= new HashSet<OServerConfigurationListener>();
+	private ConcurrentHashMap<String, Boolean>				metricsEnabled = new ConcurrentHashMap<String, Boolean>();
 
 	@Override
 	public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -242,7 +244,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 		// UPDATE LAST CONNECTION FOR EACH SERVERS
 		final List<ODocument> snapshotDates = getDb().query(
-				new OSQLSynchQuery<Object>("select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
+				new OSQLSynchQuery<Object>(
+						"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
 
 		for (ODocument snapshot : snapshotDates) {
 			final String serverName = snapshot.field("serverName");
@@ -253,7 +256,8 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		}
 		OLogManager.instance().info(this, "MONITOR loading server configuration (%d)...", servers.size());
 		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
-			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(), serverEntry.getValue().getLastConnection());
+			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(),
+					serverEntry.getValue().getLastConnection());
 		}
 	}
 
@@ -380,13 +384,13 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED, deleteMetricConfiguration);
 		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED, notificationsConfiguration);
 		userConfig.createProperty("proxyConfiguration", OType.EMBEDDED, proxyConfiguration);
-    userConfig.createProperty("orientdbSite", OType.STRING);
+		userConfig.createProperty("orientdbSite", OType.STRING);
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
 		final OClass message = schema.createClass(CLASS_MESSAGE);
-		
+
 		message.createProperty("message", OType.STRING);
 		message.createProperty("read", OType.BOOLEAN);
-		
+
 	}
 
 	@Override
@@ -423,6 +427,9 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		}
 	}
 
+	public ConcurrentHashMap<String, Boolean> getMetricsEnabled() {
+		return metricsEnabled;
+	}
 	public Map<String, OPair<String, METRIC_TYPE>> getDictionary() {
 		return dictionary;
 	}
