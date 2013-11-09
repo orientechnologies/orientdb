@@ -2,14 +2,12 @@
     <div class="span12">
         <p>
             Welcome to OrientDB Studio. This is a graphical tool built as HTML + JS that communicates against OrientDB
-            server using the HTTP RESTful
-            protocol. To know more about OrientDB Studio look at the <a
-                href="http://code.google.com/p/orient/wiki/OrientDB_Studio">Documentation</a>. To
-            report problems use the <a href="http://code.google.com/p/orient/issues/list">Issue Tracker</a>, to receive
-            jump to the <a
-                href="http://groups.google.com/group/orient-database">Forum</a>. Need a <a
-                href="http://www.orientechnologies.com/training.htm">course</a> or <a
-                href="http://www.orientechnologies.com/professional.htm#support">professional support</a>?
+            server using the <a href="https://github.com/orientechnologies/orientdb/wiki/OrientDB-REST">HTTP RESTful protocol</a>. To know more about OrientDB Studio look at the <a href="https://github.com/orientechnologies/orientdb-studio/wiki">Documentation</a>. To
+            report problems use the <a href="https://github.com/orientechnologies/orientdb-studio/issues?state=open">Issue Tracker</a>, to receive
+            help go to the <a
+                href="http://groups.google.com/group/orient-database">Community Group</a>. Look also at <a
+                href="http://www.orientechnologies.com/enterprise.htm">Enterprise Edition</a> and <a
+                href="http://www.orientechnologies.com/support.htm">Professional Support</a>.
         </p>
     </div>
 </div>
@@ -57,11 +55,8 @@
             </form>
         </div>
         <p>
-            If this is your first time play with the 'demo' database provided in bundle with the official OrientDB
-            distribution. To Login use any database
-            user. By default "<b>reader</b>/reader" can read records from the database, "<b>writer</b>/writer" can read,
-            create, update and delete records. "<b>admin</b>/admin"
-            is God.
+            If this is your first time play with the 'GratefulDeadConcerts' database provided in bundle with the official OrientDB
+            distribution. To Login use any database user. By default "<b>reader</b>/reader" can read records from the database, "<b>writer</b>/writer" can read, create, update and delete records. "<b>admin</b>/admin" is God.
         </p>
     </div>
     <div class="span6">
@@ -78,12 +73,11 @@
             <div class="hidden-phone">
                 This is the section with the Server's information. To access it you have to provide the OrientDB
                 Server's
-                credentials. If you have access to the server look to the orientdb-server-config.xml file and search the
-                XML user tag. Remember that the first
-                time the Server is executed the 'root' user is created with a automatically generated password. For more
+                credentials. If you have access to the server look at the config/orientdb-server-config.xml file (config/orientdb-dserver-config.xml for the distributed version) and search the
+                XML user tag. Remember that the first time the Server runs, the 'root' user is created automatically with a random password. For more
                 information look at the <a
-                    href="http://code.google.com/p/orient/wiki/Security#OrientDB_Server_security">Security</a> page.
-                Below and example:
+                    href="https://github.com/orientechnologies/orientdb/wiki/Security">Security</a> page.
+                Below and example of content in config/orientdb-server-config.xml file:
 <pre>
 &lt;users&gt;<br/> &nbsp;&nbsp;&lt;user name="root"
          password="FAFF343DD54DKFJFKDA95F05A"
