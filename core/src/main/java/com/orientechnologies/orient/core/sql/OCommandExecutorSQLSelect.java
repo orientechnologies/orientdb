@@ -15,8 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
@@ -51,8 +61,17 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -233,10 +252,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * 
-   * @return {@code ture} if any of the sql functions perform aggreagation, {@code false} otherwise
+   * @return {@code ture} if any of the sql functions perform aggregation, {@code false} otherwise
    */
   public boolean isAnyFunctionAggregates() {
-    return groupedResult != null;
+    if (projections != null) {
+      for (Entry<String, Object> p : projections.entrySet()) {
+        if (p.getValue() instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) p.getValue()).aggregateResults())
+          return true;
+      }
+    }
+    return false;
   }
 
   public boolean hasNext() {
@@ -396,7 +421,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     addResult(lastRecord);
 
-    if (orderedFields == null && fetchLimit > -1 && resultCount >= fetchLimit)
+    if (orderedFields == null && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit)
       // BREAK THE EXECUTION
       return false;
 
