@@ -219,7 +219,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabaseName = null;
     }
 
-    message("\nOK");
+    message("OK");
   }
 
   @ConsoleCommand(aliases = { "close database" }, description = "Disconnect from the current database")
