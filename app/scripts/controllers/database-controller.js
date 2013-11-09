@@ -52,6 +52,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         }
 
         CommandApi.queryText({database: $routeParams.database, language: $scope.language, text: $scope.queryText, limit: $scope.limit}, function (data) {
+            Spinner.loading = false;
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
                 if ($scope.headers.length == 00) {
@@ -72,8 +73,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.queries.unshift($scope.queryText);
                 localStorageService.add("Queries",  $scope.queries);
             }
-
-            Spinner.loading = false;
         }, function (data) {
             Spinner.loading = false;
         });
