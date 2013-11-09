@@ -38,7 +38,7 @@
 		</div>
 	</div>
     <div ng-class="testMsgClass" ng-show="testMsg">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <button type="button" class="close" onclick="$('.alert-setting').hide()">&times;</button>
         {{ testMsg }}
     </div>
 	<div class="modal-footer">

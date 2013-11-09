@@ -380,7 +380,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
             $scope.hide();
             $scope.parentScope.addIndexFromExt($scope.newIndex);
         }, function (error) {
-            $scope.testMsgClass = 'alert alert-error'
+            $scope.testMsgClass = 'alert alert-error'   ;
             $scope.testMsg = error;
         });
     }
