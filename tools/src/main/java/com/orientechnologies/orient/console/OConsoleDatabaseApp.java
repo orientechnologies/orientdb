@@ -291,7 +291,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "List all the databases available on the connected server")
   public void listDatabases() throws IOException {
-    if (serverAdmin != null && serverAdmin.isConnected()) {
+    if (serverAdmin != null) {
       final Map<String, String> databases = serverAdmin.listDatabases();
       message("\nFound %d databases:\n", databases.size());
       for (Entry<String, String> database : databases.entrySet()) {
@@ -1635,9 +1635,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       printSupportedSerializerFormat();
       return;
     }
-    
+
     if (iOptions == null || iOptions.length() <= 0) {
-    	iOptions = "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
+      iOptions = "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
     }
 
     try {
