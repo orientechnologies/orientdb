@@ -203,8 +203,8 @@
             <fileset dir="graphdb/config" includes="*.xml"/>
         </copy>
 
-        <copy todir="${community.release}/databases">
-            <fileset dir="graphdb/target/databases" includes="*"/>
+        <copy todir="${community.release}/databases/GratefulDeadConcerts">
+            <fileset dir="graphdb/target/databases/GratefulDeadConcerts/" includes="*"/>
         </copy>
 
         <copy todir="${community.release}/lib" flatten="true">
