@@ -3,7 +3,6 @@ package com.orientechnologies.common.console;
 import java.io.*;
 import java.nio.CharBuffer;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,9 +10,16 @@ import java.util.Set;
  * @author <a href='mailto:enisher@gmail.com'> Artem Orobets </a>
  */
 public class ODFACommandStream implements OCommandStream {
+  public static final int BUFFER_SIZE = 1024;
+
   private Reader reader;
   private CharBuffer buffer;
   private final Set<Character> separators = new HashSet<Character>(Arrays.asList(';', '\n'));
+  private int position;
+  private int start;
+  private int end;
+  private StringBuilder partialResult;
+  private State state;
 
   public ODFACommandStream(String commands) {
     reader = new StringReader(commands);
@@ -26,7 +32,7 @@ public class ODFACommandStream implements OCommandStream {
   }
 
   private void init() {
-    buffer = CharBuffer.allocate(1024);
+    buffer = CharBuffer.allocate(BUFFER_SIZE);
     buffer.flip();
   }
 
@@ -54,38 +60,14 @@ public class ODFACommandStream implements OCommandStream {
     try {
       fillBuffer();
 
-      StringBuilder partialResult = new StringBuilder();
-      State state = State.S;
-      int start = 0, end = -1;
-      int position = 0;
+      partialResult = new StringBuilder();
+      state = State.S;
+      start = 0;
+      end = -1;
+      position = 0;
       Symbol s = null;
       while (state != State.E) {
-        if (buffer.position() + position < buffer.limit()) {
-          s = symbol(buffer.charAt(position));
-        } else {
-          buffer.compact();
-          int read = reader.read(buffer);
-          buffer.flip();
-
-          if (read == 0) {
-            //There is something in source, but buffer is full
-
-            if (state != State.S)
-              partialResult.append(buffer.subSequence(start, position).toString());
-            start = 0;
-            end = end - position;
-            buffer.clear();
-            read = reader.read(buffer);
-            buffer.flip();
-            position = 0;
-          }
-
-          if (read == -1) {
-            s = Symbol.EOF;
-          } else {
-            s = symbol(buffer.charAt(position));
-          }
-        }
+        s = nextSymbol();
 
         final State newState = transition(state, s);
 
@@ -123,6 +105,37 @@ public class ODFACommandStream implements OCommandStream {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private Symbol nextSymbol() throws IOException {
+    Symbol s;
+    if (buffer.position() + position < buffer.limit()) {
+      s = symbol(buffer.charAt(position));
+    } else {
+      buffer.compact();
+      int read = reader.read(buffer);
+      buffer.flip();
+
+      if (read == 0) {
+        //There is something in source, but buffer is full
+
+        if (state != State.S)
+          partialResult.append(buffer.subSequence(start, position).toString());
+        start = 0;
+        end = end - position;
+        buffer.clear();
+        read = reader.read(buffer);
+        buffer.flip();
+        position = 0;
+      }
+
+      if (read == -1) {
+        s = Symbol.EOF;
+      } else {
+        s = symbol(buffer.charAt(position));
+      }
+    }
+    return s;
   }
 
   private State transition(State s, Symbol c) {
