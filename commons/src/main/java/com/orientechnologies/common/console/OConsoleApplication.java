@@ -85,7 +85,7 @@ public class OConsoleApplication {
         if (consoleInput == null || consoleInput.length() == 0)
           continue;
 
-        if (!executeCommands(new Scanner(consoleInput), false))
+        if (!executeCommands(new OScannerCommandStream(consoleInput), false))
           break;
       }
     } else {
@@ -105,28 +105,22 @@ public class OConsoleApplication {
   protected boolean executeBatch(final String commandLine) {
     final File commandFile = new File(commandLine);
 
-    Scanner scanner = null;
-
+    OCommandStream scanner;
     try {
-      scanner = new Scanner(commandFile);
+      scanner = new OScannerCommandStream(commandFile);
     } catch (FileNotFoundException e) {
-      scanner = new Scanner(commandLine);
+      scanner = new OScannerCommandStream(commandLine);
     }
 
     return executeCommands(scanner, true);
   }
 
-  protected boolean executeCommands(final Scanner iScanner, final boolean iExitOnException) {
+  protected boolean executeCommands(final OCommandStream commandStream, final boolean iExitOnException) {
     final StringBuilder commandBuffer = new StringBuilder();
 
     try {
-      String commandLine = null;
-
-      iScanner.useDelimiter(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)(?=([^']*'[^']*')*[^']*$)|\n");
-
-      while (iScanner.hasNext()) {
-
-        commandLine = iScanner.next().trim();
+      while (commandStream.hasNext()) {
+        String commandLine = commandStream.nextCommand();
 
         if (commandLine.isEmpty())
           // EMPTY LINE
@@ -167,7 +161,7 @@ public class OConsoleApplication {
           return false;
       }
     } finally {
-      iScanner.close();
+      commandStream.close();
     }
     return true;
   }
