@@ -6,30 +6,43 @@
 	<formats>
 		<format>dir</format>
 	</formats>
+	<dependencySets>
+		<dependencySet>
+			<excludes>
+				<exclude>commons-lang:commons-lang</exclude>
+				<exclude>orientdb:workbench</exclude>
+			</excludes>
+			<outputDirectory>lib/</outputDirectory>
+		</dependencySet>
+	</dependencySets>
+	<fileSets>
+		<fileSet>
+			<directory>${basedir}</directory>
+			<includes>
+				<include>*.txt</include>
+			</includes>
+			<excludes>
+				<exclude>README.txt</exclude>
+				<exclude>LICENSE.txt</exclude>
+			</excludes>
+		</fileSet>
+		<fileSet>
+			<directory>config</directory>
+			<outputDirectory>config</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>script</directory>
+			<outputDirectory>bin</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>src/site</directory>
+			<outputDirectory>www</outputDirectory>
+		</fileSet>
+	</fileSets>
 	<files>
 		<file>
 			<source>target/${pom.artifactId}-${pom.version}.jar</source>
 			<outputDirectory>plugins/</outputDirectory>
 		</file>
-		<file>
-			<source>README.txt</source>
-			<outputDirectory>/</outputDirectory>
-			<filtered>true</filtered>
-		</file>
-		<file>
-			<source>LICENSE.txt</source>
-			<outputDirectory>/</outputDirectory>
-		</file>
 	</files>
-	<fileSets>
-		<fileSet>
-			<directory>config</directory>
-			<outputDirectory>config</outputDirectory>
-		</fileSet>
-
-		<fileSet>
-			<directory>script</directory>
-			<outputDirectory>bin</outputDirectory>
-		</fileSet>
-	</fileSets>
 </assembly>
