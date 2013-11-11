@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.workbench.http;
 
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.Proxy;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -24,8 +33,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
+import com.orientechnologies.workbench.event.EventHelper;
 
 public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbAbstract {
 	private static final String[]	NAMES	= { "POST|message/*" };
@@ -50,16 +59,54 @@ public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbA
 		try {
 
 			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+			ODatabaseRecordThreadLocal.INSTANCE.set(db);
 			ODocument message = new ODocument().fromJSON(iRequest.content);
 			message.reload();
-			Object field = message.field("type");
+			String field = message.field("type");
 			if ("chart".equals(field)) {
 				String payload = message.field("payload");
 				ODocument chart = new ODocument(OWorkbenchPlugin.CLASS_METRIC_CONFIG).fromJSON(payload);
 				chart.save();
 			} else if ("update".equals(field)) {
 
+				String payload = message.field("payload");
+				Proxy p = EventHelper.retrieveProxy(db);
+
+				URL remoteUrl = new java.net.URL(payload);
+				URLConnection urlConnection = null;
+				if (p != null) {
+					urlConnection = remoteUrl.openConnection(p);
+				} else {
+					urlConnection = remoteUrl.openConnection();
+				}
+				urlConnection.connect();
+				InputStream is = urlConnection.getInputStream();
+				ZipInputStream stream = new ZipInputStream(is);
+
+				// create a buffer to improve copy performance later.
+				byte[] buffer = new byte[2048];
+				ZipEntry entry;
+				while ((entry = stream.getNextEntry()) != null) {
+					String s = String.format("Entry: %s len %d added %TD", entry.getName(), entry.getSize(), new Date(entry.getTime()));
+					System.out.println(s);
+
+					// Once we get the entry from the stream, the stream is
+					// positioned read to read the raw data, and we keep
+					// reading until read returns 0 or less.
+					String outpath = "download/" + entry.getName();
+					FileOutputStream output = null;
+					try {
+						output = new FileOutputStream(outpath);
+						int len = 0;
+						while ((len = stream.read(buffer)) > 0) {
+							output.write(buffer, 0, len);
+						}
+					} finally {
+						// we must always close the output file
+						if (output != null)
+							output.close();
+					}
+				}
 			}
 
 			message.field("type", "news");
