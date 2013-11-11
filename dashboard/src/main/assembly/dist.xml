@@ -34,10 +34,6 @@
 			<directory>script</directory>
 			<outputDirectory>bin</outputDirectory>
 		</fileSet>
-		<fileSet>
-			<directory>src/site</directory>
-			<outputDirectory>www</outputDirectory>
-		</fileSet>
 	</fileSets>
 	<files>
 		<file>
