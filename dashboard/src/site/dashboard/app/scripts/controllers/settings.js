@@ -118,8 +118,8 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         $scope.testMsg = null;
         Settings.put($scope.config, function (data) {
             $scope.testMsg = "Settings updated successfully.";
-            $scope.config = data.result[0];
             $scope.testMsgClass = 'alert alert-setting'
+            $scope.config = data.result[0];
 
             for (var elem in $scope.metricsModified) {
                 MetricConfig.saveConfig($scope.metricsModified[elem][0], function (data) {

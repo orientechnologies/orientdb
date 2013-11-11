@@ -31,7 +31,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
                 $scope.resultTotal = data.result;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
-                console.log(new Array(Math.ceil(data.result.length / $scope.countPage)));
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
 
                 $scope.selectedWhen = new Array;

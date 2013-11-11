@@ -4,55 +4,120 @@
         Messages
     </h3>
     <hr>
-    <table class="editClass_panel">
-        <tr>
-            <td>
-                <a href="javascript:void(0)" class="btn" ng-click="queryAll(class2show)"> <i
-                        class="icon-ok"></i>
-                    Mark All As Read</a>
-            </td>
+    <div ng-class="testMsgClass" ng-show="testMsg">
+        <button type="button" class="close" onclick="$('.alert-setting').hide()">&times;</button>
+        {{ testMsg }}
+    </div>
 
-            <td>
-                <a href="javascript:void(0)" class="btn btn-danger" ng-click="queryAll(class2show)"> <i
-                        class="icon-Trash"></i>
-                    Delete All</a>
-            </td>
-        </tr>
-
-    </table>
-    <div class="row">
+    <div class="row-fluid">
         <div class="panel panel-default widget">
-            <div class="panel-heading">
-                <span class="label label-info" ">
-                {{countUnread}} Messages unread
-                </span>
-            </div>
-            <br>
 
-            <div class="panel-body">
-                <ul class="list-group" style="list-style-type: none;">
-                    <li class="list-group-item" ng-repeat="message in messages" style="margin-top: 2px;">
-                        <div class="row" ng-class="{{unread}}">
-                            <!--<div class="col-xs-2 col-md-1">-->
-                            <!--<img src="http://placehold.it/80" class="img-circle img-responsive" alt=""/></div>-->
-                            <div style="margin-left: 2%;">
-                                {{message['message']}}
-                            </div>
-                            <div class="action" style="margin-left: 2%;">
-                                <button type="button" class="btn btn-success btn-xs" title="mark as read">
-                                    <i class="icon-ok"></i>
-                                </button>
-                                <button type="button" class="btn btn-danger btn-xs" title="Delete">
-                                    <i class="icon-trash"></i>
-                                </button>
-                            </div>
-                            <br>
-
-                        </div>
+            <div class="btn-group">
+                <a class="btn" href="javascript:void(0)">Actions</a>
+                <a class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="javascript:void(0)" ng-click="checkAll(true)"><i class="icon-check"></i> Mark all
+                        as read</a>
                     </li>
-                    <br>
+                    <li><a href="javascript:void(0)" ng-click="checkAll(false)"><i class="icon-remove"></i> Mark all
+                        as
+                        unread</a></li>
+                    <li><a href="javascript:void(0)" ng-click="deleteAll()"><i class="icon-trash"></i> Delete
+                        All</a></li>
                 </ul>
             </div>
+
+            <div class="panel-body">
+                <div class="pagination">
+                    <ul>
+                        <li><a href="javascript:void(0)" ng-click="previous()">«</a></li>
+                        <li ng-class="{ 'active' : $index+1 == currentPage}"
+                            ng-repeat="c in numberOfPage track by $index">
+                            <a
+                                    href="javascript:void(0)" ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
+                        <li><a href="javascript:void(0)" ng-click="next()">»</a></li>
+                    </ul>
+                    <select class="input-small pagination_limit" ng-model="countPage"
+                            style="vertical-align: top;height: 40px; width: 50px; ">
+                        <option ng-repeat="options in countPageOptions"> {{ options }}</option>
+                    </select>
+
+                    <div class="panel-heading" style="float: right;">
+                        <span class="label label-info label-info-message">
+                         {{countUnread}}/{{countAll}} Messages unread
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <table class="table  table-hover pointer messages_table"
+                   style="width: 100%">
+
+
+                <tbody>
+                <tr ng-repeat="message in msgs"
+                    ng-class="{active : message['@rid']==selectedName['@rid'], 'unread' : !message.read}"
+                    ng-click="openMessageText(message)">
+                    <!--<div ng-class="{'read' : message.read, 'unread' : !message.read}">-->
+                    </td>
+                    <td>Orient Technologies</td>
+                    <td><span class="label pull-right">news</span></td>
+                    <td>{{message['subject']}}</td>
+                    <td>{{message['date']}}</td>
+                    <td>
+                        <!--<button type="button" ng-click="checkRead(message)"-->
+                        <!--class="btn btn-success btn-small">-->
+                        <!--<i ng-class="{'icon-envelope' : message.read, 'icon-lock' : !message.read}"></i>-->
+                        <!--</button>-->
+                        <button type="button" ng-click="deleteMsg(message)"
+                                class="btn btn-danger btn-small"> Delete
+                            <i class="icon-trash"></i>
+                        </button>
+                        <!--</div>-->
+                </tr>
+                <!--<tr ng-repeat="message in msgs">-->
+                <!--<td>-->
+                <!--<div style="margin-left: 5%;" ng-class="{'read' : message.read, 'unread' : !message.read}">-->
+                <!--{{message['subject']}}-->
+                <!--</div>-->
+                <!--</td>-->
+
+                <!--<td style="float: right; width: 25%;">-->
+                <!--<div class="controls">-->
+
+                <!--<button type="button" ng-click="checkRead(message)"-->
+                <!--class="btn btn-success btn-small" style="height: 23px">-->
+                <!--<i ng-class="{'icon-remove' : message.read, 'icon-check' : !message.read}"></i>-->
+                <!--</button>-->
+                <!--<button type="button" ng-click="checkRead()" class="btn btn-danger btn-small"-->
+                <!--title="Delete" style="height: 23px">-->
+                <!--<i class="icon-trash"></i>-->
+                <!--</button>-->
+                <!--</div>-->
+                <!--</td>-->
+                <!--</tr>-->
+                </tbody>
+            </table>
+            <br>
+
+            <div class="messageText " ng-show="messageText!=null"
+                 style="width: 100%; border: 1px solid #808080;min-height: 300px;text-align: justify">
+
+
+                <label class="control-label">
+                    <b> Subject: </b> {{ messageText['subject']}}
+                </label>
+
+                <label><b>Date:</b> {{messageText['date']}}</label>
+
+                <label ng-bind-html-unsafe="messageText['message']"></label>
+
+            </div>
+
         </div>
     </div>
+
+
+</div>
+</div>
 </div>

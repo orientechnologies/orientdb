@@ -8,11 +8,11 @@
     <ignored path="studioee.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="/home.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378941594688" ignored="false" />
-    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383865437874" ignored="false" />
-    <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383864122950" ignored="false" />
+    <file path="/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384163885461" ignored="false" />
+    <file path="/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384021645801" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380986941211" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/function-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380277123510" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665033127" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384021662250" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816329630" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985831148" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/styles/main.css" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665448225" ignored="false" />
@@ -52,7 +52,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/services/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381225263899" ignored="false" />
     <file path="/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380296352367" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/ace-builds/kitchen-sink/docs/xml.xml" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379952861709" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384118971410" ignored="false" />
     <file path="/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379261093460" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/angular-strap/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editDocument.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379000573044" ignored="false" />
@@ -87,7 +87,7 @@
     <file path="/addLabel.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378987226812" ignored="false" />
     <file path="/editVertex.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378908875025" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editVertex.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378990706577" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381329683487" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/schema.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384163379920" ignored="false" />
     <file path="/functions.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380898300407" ignored="false" />
     <file path="/app.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378915596273" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/config/import-export.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378979906760" ignored="false" />
@@ -149,7 +149,7 @@
     <file path="/dialog.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186712384" ignored="false" />
     <file path="/baseEditModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379197825195" ignored="false" />
     <file path="/custom.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383586117523" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383746993691" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384022255891" ignored="false" />
     <file path="/multiBar.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379449691980" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/studio/www/scripts/scripts.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380448807915" ignored="false" />
     <file path="/fragment.js2" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380889485567" ignored="false" />
@@ -225,9 +225,9 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/spinner-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665057054" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/spinner.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665176990" ignored="false" />
     <file path="/spinner.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665176990" ignored="false" />
-    <file path="/messages.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383865571619" ignored="false" />
+    <file path="/messages.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384164772849" ignored="false" />
     <file path="/header.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383863022199" ignored="false" />
-    <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383865488078" ignored="false" />
+    <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384165400598" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -247,16 +247,25 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="messages.html" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="messages.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="33" column="103" selection-start="1139" selection-end="1139" vertical-scroll-proportion="0.17677642">
+            <state line="11" column="9" selection-start="337" selection-end="337" vertical-scroll-proportion="21.615385">
               <folding>
-                <element signature="n#style#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-                <element signature="n#style#0;n#li#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-                <element signature="n#style#0;n#div#0;n#div#0;n#li#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-                <element signature="n#style#0;n#div#1;n#div#0;n#li#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#div#2;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="nav.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/nav.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="10" column="60" selection-start="517" selection-end="517" vertical-scroll-proportion="-2.1392405">
+              <folding />
             </state>
           </provider>
         </entry>
@@ -264,7 +273,7 @@
       <file leaf-file-name="settings.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="334" column="115" selection-start="11504" selection-end="11504" vertical-scroll-proportion="-218.38461">
+            <state line="14" column="22" selection-start="487" selection-end="504" vertical-scroll-proportion="-9.153846">
               <folding>
                 <element signature="n#style#0;n#form#0;n#div#0;n#div#4;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#1;n#li#0;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
@@ -277,64 +286,43 @@
       <file leaf-file-name="events.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="6" column="59" selection-start="134" selection-end="166" vertical-scroll-proportion="-3.9230769">
+            <state line="90" column="37" selection-start="3087" selection-end="3816" vertical-scroll-proportion="-58.846153">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="messages-controller.js" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="settings.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="142" column="11" selection-start="4763" selection-end="4763" vertical-scroll-proportion="-3.45283">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="messages-controller.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="11" column="35" selection-start="760" selection-end="760" vertical-scroll-proportion="0.0">
+            <state line="30" column="26" selection-start="1610" selection-end="1610" vertical-scroll-proportion="0.92727274">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/index.html">
+      <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="137" column="66" selection-start="6901" selection-end="6901" vertical-scroll-proportion="-15.038462">
-              <folding>
-                <marker date="1383864125000" expanded="true" signature="1700:1937" placeholder="..." />
-                <marker date="1383864125000" expanded="true" signature="1769:1803" placeholder="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="app.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="16" column="67" selection-start="840" selection-end="840" vertical-scroll-proportion="-5.1320753">
+            <state line="265" column="58" selection-start="9256" selection-end="9256" vertical-scroll-proportion="-5.3773584">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nav.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="message-service.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/message-service.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="14" column="13" selection-start="351" selection-end="351" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="171" column="3" selection-start="6580" selection-end="6586" vertical-scroll-proportion="0.0">
+            <state line="146" column="13" selection-start="4931" selection-end="4931" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -343,7 +331,16 @@
       <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="1006" column="30" selection-start="19315" selection-end="19315" vertical-scroll-proportion="-9.415094">
+            <state line="1056" column="17" selection-start="20431" selection-end="20431" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="125" column="69" selection-start="5266" selection-end="5266" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -364,17 +361,17 @@
         <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
         <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
         <option value="$PROJECT_DIR$/app/views/server/settings.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/message-service.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/header.js" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
         <option value="$PROJECT_DIR$/app/views/server/messages.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
       </list>
     </option>
   </component>
@@ -674,7 +671,8 @@
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3504" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24944155" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24869695" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -684,7 +682,6 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3504" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -753,94 +750,31 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="175" column="29" selection-start="6316" selection-end="6316" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="43" selection-start="485" selection-end="531" vertical-scroll-proportion="-11.115385">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="224" column="13" selection-start="7827" selection-end="7827" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="140" column="45" selection-start="4867" selection-end="4867" vertical-scroll-proportion="-4.8867927">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="124" column="23" selection-start="4198" selection-end="4198" vertical-scroll-proportion="0.0">
+        <state line="40" column="47" selection-start="1789" selection-end="1807" vertical-scroll-proportion="-7.056604">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/header.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="97" selection-start="423" selection-end="423" vertical-scroll-proportion="0.0">
+        <state line="24" column="37" selection-start="794" selection-end="799" vertical-scroll-proportion="-2.6981132">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/login.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/index.html">
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="137" column="66" selection-start="6901" selection-end="6901" vertical-scroll-proportion="-15.038462">
-          <folding>
-            <marker date="1383864125000" expanded="true" signature="1700:1937" placeholder="..." />
-            <marker date="1383864125000" expanded="true" signature="1769:1803" placeholder="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="171" column="3" selection-start="6580" selection-end="6586" vertical-scroll-proportion="0.0">
+        <state line="20" column="23" selection-start="899" selection-end="902" vertical-scroll-proportion="-6.3962264">
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="67" selection-start="840" selection-end="840" vertical-scroll-proportion="-5.1320753">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="59" selection-start="134" selection-end="166" vertical-scroll-proportion="-3.9230769">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="334" column="115" selection-start="11504" selection-end="11504" vertical-scroll-proportion="-218.38461">
-          <folding>
-            <element signature="n#style#0;n#form#0;n#div#0;n#div#4;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#1;n#li#0;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#1;n#li#1;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -851,29 +785,89 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="35" selection-start="760" selection-end="760" vertical-scroll-proportion="0.0">
+        <state line="35" column="23" selection-start="1192" selection-end="1192" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="90" column="37" selection-start="3087" selection-end="3816" vertical-scroll-proportion="-58.846153">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/nav.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="10" column="60" selection-start="517" selection-end="517" vertical-scroll-proportion="-2.1392405">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1006" column="30" selection-start="19315" selection-end="19315" vertical-scroll-proportion="-9.415094">
+        <state line="1056" column="17" selection-start="20431" selection-end="20431" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="22" selection-start="487" selection-end="504" vertical-scroll-proportion="-9.153846">
+          <folding>
+            <element signature="n#style#0;n#form#0;n#div#0;n#div#4;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#li#0;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#li#1;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="146" column="13" selection-start="4931" selection-end="4931" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="142" column="11" selection-start="4763" selection-end="4763" vertical-scroll-proportion="-3.45283">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="265" column="58" selection-start="9256" selection-end="9256" vertical-scroll-proportion="-5.3773584">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="125" column="69" selection-start="5266" selection-end="5266" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="33" column="103" selection-start="1139" selection-end="1139" vertical-scroll-proportion="0.17677642">
+        <state line="11" column="9" selection-start="337" selection-end="337" vertical-scroll-proportion="21.615385">
           <folding>
-            <element signature="n#style#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#li#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#0;n#div#0;n#li#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#1;n#div#0;n#li#0;n#ul#0;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#2;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="30" column="26" selection-start="1610" selection-end="1610" vertical-scroll-proportion="0.92727274">
+          <folding />
         </state>
       </provider>
     </entry>

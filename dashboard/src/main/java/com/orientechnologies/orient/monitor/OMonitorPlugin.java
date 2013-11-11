@@ -101,7 +101,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public static final String												CLASS_METRIC_CONFIG								= "MetricConfig";
 	private static final String												CLASS_PROXY_CONFIG								= "ProxyConfiguration";
-	private static final String												CLASS_MESSAGE								= "Message";
+	private static final String												CLASS_MESSAGE											= "Message";
 
 	private OServer																		serverInstance;
 	private long																			updateTimer;
@@ -161,7 +161,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
 		//
 		Orient.instance().getTimer().schedule(new OMonitorPurgeTask(this), purgeTimer, purgeTimer);
-		Orient.instance().getTimer().schedule(new OMonitorMessageTask(this), 5000, 5000);
+//		Orient.instance().getTimer().schedule(new OMonitorMessageTask(this), 5000, 5000);
 	}
 
 	private void registerExecutors(ODatabaseDocumentTx database) {
@@ -380,13 +380,16 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED, deleteMetricConfiguration);
 		userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED, notificationsConfiguration);
 		userConfig.createProperty("proxyConfiguration", OType.EMBEDDED, proxyConfiguration);
-    userConfig.createProperty("orientdbSite", OType.STRING);
+		userConfig.createProperty("orientdbSite", OType.STRING);
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
 		final OClass message = schema.createClass(CLASS_MESSAGE);
-		
+
 		message.createProperty("message", OType.STRING);
+		message.createProperty("status", OType.STRING);
 		message.createProperty("read", OType.BOOLEAN);
-		
+		message.createProperty("type", OType.STRING);
+		message.createProperty("subject", OType.STRING);
+
 	}
 
 	@Override

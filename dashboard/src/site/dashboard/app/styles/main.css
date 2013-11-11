@@ -1003,6 +1003,56 @@ body {
     border-top-right-radius: 0px;
 }
 
-div.unread {
-    background-color: #d3d3d3;
+tr.unread {
+    font-weight: bold;
+    /*background-color: #808080;*/
+}
+
+tr.read {
+}
+
+.btn-group > .btn-large + .dropdown-toggle {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.btn-group.open .dropdown-toggle {
+    background-image: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-group.open .btn.dropdown-toggle {
+    background-color: #E6E6E6;
+}
+
+.btn-group > .btn {
+    background-image: linear-gradient(to bottom, #FFFFFF, #E6E6E6);
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) #B3B3B3;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 0 0 0 0 !important;
+    position: relative;
+}
+
+table.messages_table>tbody>tr {
+    border-bottom: 1px solid #d3d3d3;
+}
+
+.widget .label-info-message {
+    background-color: #808080;
+    border-radius: 21px 21px 21px 21px;
+    border-style: none;
+    box-shadow: none;
+    float: right;
+    height: 32px;
+}
+
+table.messages_table tr.active {
+    background-color: #f5f5f5 !important;
+}
+
+div.messageText label {
+    margin-left: 2%;
+    margin-top: 1%;
 }
