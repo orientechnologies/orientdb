@@ -225,7 +225,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/spinner-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665057054" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/spinner.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665176990" ignored="false" />
     <file path="/spinner.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665176990" ignored="false" />
-    <file path="/messages.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384196782349" ignored="false" />
+    <file path="/messages.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384196937038" ignored="false" />
     <file path="/header.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383863022199" ignored="false" />
     <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384196290272" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -250,7 +250,7 @@
       <file leaf-file-name="messages.html" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="72" column="88" selection-start="3580" selection-end="3580" vertical-scroll-proportion="0.6169844">
+            <state line="73" column="94" selection-start="3676" selection-end="3676" vertical-scroll-proportion="0.6169844">
               <folding>
                 <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
@@ -836,7 +836,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="72" column="88" selection-start="3580" selection-end="3580" vertical-scroll-proportion="0.6169844">
+        <state line="73" column="94" selection-start="3676" selection-end="3676" vertical-scroll-proportion="0.6169844">
           <folding>
             <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />

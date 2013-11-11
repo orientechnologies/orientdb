@@ -70,7 +70,8 @@
                             <i class="icon-trash"></i>
                         </button>
                         <button type="button" ng-click="deleteMsg(message)"
-                                class="btn btn-success" style="background-color: #008000"> Install
+                                class="btn btn-success" style="background-color: #008000"
+                                ng-show="{{message['type']=='update'|| message['type']=='chart'}}"> Install
                             <i class="icon-trash"></i>
                         </button>
                     </td>

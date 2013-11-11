@@ -64,12 +64,15 @@ public class OWorkbenchMessageTask extends TimerTask {
 					URLConnection urlConnection = null;
 
 					ODocument proxy = config.field("proxyConfiguration");
-					String ip = proxy.field("proxyIp");
-					Integer port = proxy.field("proxyPort");
-					if (ip != null && port != null) {
-						Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
-						urlConnection = remoteUrl.openConnection(proxyConn);
-					} else {
+					if(proxy!=null){
+						String ip = proxy.field("proxyIp");
+						Integer port = proxy.field("proxyPort");
+						if (ip != null && port != null) {
+							Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
+							urlConnection = remoteUrl.openConnection(proxyConn);
+						} 
+					}
+					else {
 						urlConnection = remoteUrl.openConnection();
 					}
 					urlConnection.connect();
@@ -96,7 +99,7 @@ public class OWorkbenchMessageTask extends TimerTask {
 						Object date = values.get("date");
 						Object subject = values.get("subject");
 						Object type = values.get("type");
-						Object urlfromjson = values.get("url");
+						Object payload = values.get("payload");
 
 						Map<String, Object> params = new HashMap<String, Object>();
 						params.put("message", text);
@@ -108,7 +111,7 @@ public class OWorkbenchMessageTask extends TimerTask {
 							saved.field("date", date);
 							saved.field("subject", subject);
 							saved.field("type", type);
-							saved.field("url", urlfromjson);
+							saved.field("payload", payload);
 
 							saved.save();
 						}
