@@ -166,6 +166,10 @@ public enum OGlobalConfiguration {
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
 
+  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
+
+  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Default database pool maximum size", Integer.class, 0),
+
   @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
 
