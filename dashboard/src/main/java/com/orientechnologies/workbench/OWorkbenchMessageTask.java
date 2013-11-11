@@ -105,7 +105,8 @@ public class OWorkbenchMessageTask extends TimerTask {
 						Map<String, Object> params = new HashMap<String, Object>();
 						params.put("message", text);
 						params.put("date", date);
-						List<ODocument> resultSet = handler.getDb().query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
+						List<ODocument> resultSet = handler.getDb().query(
+								new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
 						if (resultSet.isEmpty()) {
 							ODocument saved = new ODocument("Message");
 							saved.field("message", text);
@@ -118,7 +119,6 @@ public class OWorkbenchMessageTask extends TimerTask {
 						}
 					}
 				} catch (Exception e) {
-					OLogManager.instance().error(this, "MONITOR error contacting [%s] ", url);
 				}
 			}
 		}
