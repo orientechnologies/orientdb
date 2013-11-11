@@ -1062,3 +1062,16 @@ div.messageText label {
 .mediumH {
     min-height: 300px;
 }
+
+.user-dropdown .dropdown-menu:after {
+    left: auto !important;
+    right: 13px;
+}
+.user-dropdown .dropdown-menu:before {
+    left: auto !important;
+    right: 13px;
+}
+.user-dropdown .dropdown-menu {
+    left: auto;
+    right: 0;
+}

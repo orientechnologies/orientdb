@@ -55,7 +55,7 @@ public class OWorkbenchMessageTask extends TimerTask {
 		if (response.size() > 0) {
 			ODocument config = response.iterator().next();
 			String url = "http://www.orientechnologies.com/"; // config.field("orientdbSite");
-			OLogManager.instance().info(this, "MONITOR contacting [%s] ", url);
+			//OLogManager.instance().info(this, "MONITOR contacting [%s] ", url);
 			if (url != null) {
 				try {
 					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId + "/" + licenses + "/true");
