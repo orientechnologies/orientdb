@@ -339,6 +339,27 @@
                 <b>Proxy</b> IP: <input type="text" ng-model="proxyConfiguration['proxyIp']" placeholder="xx.xx.xx.xx">
                 <b> Proxy</b> Port: <input type="text" ng-model="proxyConfiguration['proxyPort']" placeholder="1234">
             </li>
+
+            <li>
+                <div>
+                    <b> Check for updates </b>every<input type="text" numbersonly="numbersonly" class="span1"
+                                                            ng-model="notificationsConfiguration['hours']"> hours will
+                    (0 to disable).
+
+                </div>
+
+                <div class="controls">
+                    <label class="checkbox">
+                        Keep me updated about News
+                        <input class="ng-pristine ng-valid" type="checkbox" ng-model="aboutNews" ng-change="changed()">
+                    </label>
+                </div>
+                <div class="action" style="float: right">
+                    <button class="btn btn-danger" ng-click="purgeLogs()"><i
+                            class="icon-trash"></i> Purge All Notifications Now
+                    </button>
+                </div>
+            </li>
             <hr>
         </ul>
 

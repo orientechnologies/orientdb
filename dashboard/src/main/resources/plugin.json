@@ -1,0 +1,13 @@
+{
+	"name" : "enterprise-workbench",
+	"version" : "1.6.1",
+	"javaClass": "com.orientechnologies.workbench.OWorkbenchPlugin",
+	"parameters" : {
+		"dbName":      "workbench",
+		"updateTimer": "10s"
+	},
+	"description" : "This is the Enterprise Workbench, part of the commercial OrientDB Enterprise suite",
+	"web" : "http://www.orientechnologies.com/enterprise.htm",
+	"copyrights" : "Orient Technologies LTD",
+	"license" : "Commercial"
+}

@@ -102,11 +102,18 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
                 for (var entry in $scope.msgs) {
 
                     if ($scope.msgs[entry]['@rid'] == msg['@rid']) {
+
                         $scope.msgs[entry] = data;
                     }
                 }
 
-//                $scope.refresh();
+
+                for (var entry in $scope.msgsTotal) {
+                    if ($scope.msgsTotal[entry]['@rid'] == msg['@rid']) {
+
+                        $scope.msgsTotal[entry] = data;
+                    }
+                }
             },
             function (error) {
                 $scope.testMsg = error;
