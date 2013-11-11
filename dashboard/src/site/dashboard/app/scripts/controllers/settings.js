@@ -177,10 +177,19 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.config['notificationsConfiguration']['@type'] = 'document';
             $scope.config['notificationsConfiguration']['hours'] = 0;
         }
+        if ($scope.config['updateConfiguration'] == undefined) {
+            $scope.config['updateConfiguration'] = {};
+            $scope.config['updateConfiguration']['@class'] = 'UpdateConfiguration';
+            $scope.config['updateConfiguration']['@type'] = 'document';
+            $scope.config['updateConfiguration']['hours'] = 24;
+        }
+
 
         $scope.deleteMetricConfiguration = $scope.config['deleteMetricConfiguration'];
         $scope.notificationsConfiguration = $scope.config['notificationsConfiguration'];
         $scope.proxyConfiguration = $scope.config['proxyConfiguration'];
+        $scope.updateConfiguration = $scope.config['updateConfiguration'];
+
 
     }
     $scope.$watch("config", function (data) {

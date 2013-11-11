@@ -63,7 +63,7 @@
                 <table class="table table-striped  table-hover table-condensed table-nocolor">
                     <thead>
                     <tr>
-                        <th>{{ 'dashboard.metric.name' | i18n  }}</th>
+                        <th>{{ 'dashboard.metric.name' | i18n }}</th>
                         <th></th>
                     </tr>
                     </thead>
@@ -339,11 +339,12 @@
                 <b>Proxy</b> IP: <input type="text" ng-model="proxyConfiguration['proxyIp']" placeholder="xx.xx.xx.xx">
                 <b> Proxy</b> Port: <input type="text" ng-model="proxyConfiguration['proxyPort']" placeholder="1234">
             </li>
-
+            <br>
+            <hr>
             <li>
                 <div>
-                    <b> Check for updates </b>every<input type="text" numbersonly="numbersonly" class="span1"
-                                                            ng-model="notificationsConfiguration['hours']"> hours will
+                    <b> Check for updates </b>every <input type="text" numbersonly="numbersonly" class="span1"
+                                                           ng-model="updateConfiguration['hours']"> hours.
                     (0 to disable).
 
                 </div>
@@ -351,13 +352,9 @@
                 <div class="controls">
                     <label class="checkbox">
                         Keep me updated about News
-                        <input class="ng-pristine ng-valid" type="checkbox" ng-model="aboutNews" ng-change="changed()">
+                        <input class="ng-pristine ng-valid" type="checkbox"
+                               ng-model="updateConfiguration['receiveNews']">
                     </label>
-                </div>
-                <div class="action" style="float: right">
-                    <button class="btn btn-danger" ng-click="purgeLogs()"><i
-                            class="icon-trash"></i> Purge All Notifications Now
-                    </button>
                 </div>
             </li>
             <hr>
