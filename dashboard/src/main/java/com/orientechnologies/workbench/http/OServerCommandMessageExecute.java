@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.workbench.http;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
@@ -47,13 +49,10 @@ public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbA
 
 		try {
 
-			final String serverName = parts[2];
-			final OMonitoredServer server = monitor.getMonitoredServer(serverName);
-			if (server == null)
-				throw new IllegalArgumentException("Invalid server '" + serverName + "'");
-
+			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+      ODatabaseRecordThreadLocal.INSTANCE.set(db);
 			ODocument message = new ODocument().fromJSON(iRequest.content);
-
+			message.reload();
 			Object field = message.field("type");
 			if ("chart".equals(field)) {
 				String payload = message.field("payload");
