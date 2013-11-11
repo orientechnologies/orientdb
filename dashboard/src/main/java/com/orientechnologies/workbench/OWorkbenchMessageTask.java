@@ -58,8 +58,9 @@ public class OWorkbenchMessageTask extends TimerTask {
 			OLogManager.instance().info(this, "MONITOR contacting [%s] ", url);
 			if (url != null) {
 				try {
-					String checkUpdates = "true";
-					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId + "/" + licenses + "/" + checkUpdates);
+					ODocument updateConfiguration = config.field("updateConfiguration");
+					Boolean receiveNews = (Boolean) (updateConfiguration!= null ? updateConfiguration.field("receiveNews") : true);
+					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId + "/" + licenses + "/" + receiveNews);
 					URLConnection urlConnection = null;
 
 					ODocument proxy = config.field("proxyConfiguration");

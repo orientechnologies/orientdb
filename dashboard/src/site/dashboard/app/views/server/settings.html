@@ -337,21 +337,20 @@
             <hr>
             <li>
                 <b>Proxy</b> IP: <input type="text" ng-model="proxyConfiguration['proxyIp']" placeholder="xx.xx.xx.xx">
-                <b> Proxy</b> Port: <input type="text" ng-model="proxyConfiguration['proxyPort']" placeholder="1234">
+                <b>Proxy</b> Port: <input type="text" ng-model="proxyConfiguration['proxyPort']" placeholder="1234">
             </li>
             <br>
             <hr>
             <li>
-                <div>
-                    <b> Check for updates </b>every <input type="text" numbersonly="numbersonly" class="span1"
-                                                           ng-model="updateConfiguration['hours']"> hours.
-                    (0 to disable).
+                <!--<div>-->
+                <!--<b> Check for updates </b>every <input type="text" numbersonly="numbersonly" class="span1"-->
+                <!--ng-model="updateConfiguration['hours']"> hours.-->
+                <!--(0 to disable).-->
 
-                </div>
-
+                <!--</div>-->
                 <div class="controls">
                     <label class="checkbox">
-                        Keep me updated about News
+                        Keep me updated about <b>News</b>
                         <input class="ng-pristine ng-valid" type="checkbox"
                                ng-model="updateConfiguration['receiveNews']">
                     </label>

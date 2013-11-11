@@ -13,7 +13,7 @@ spinner.factory('Message', function (Monitor, $http,$resource) {
 
     var resource = $resource(API + 'database/:database');
     resource.getUnread = function (callback) {
-        var query = "select * from Message where status = 'received'";
+        var query = "select * from Message where status = 'received' or status is null";
         $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
             callback(data);
         });

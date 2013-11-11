@@ -262,6 +262,13 @@ dbModule.controller("HttpWhatController", ['$scope', '$http', '$location', '$rou
 dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
     $scope.properties = $scope.eventWhat;
+
+    $scope.openLegend = function(){
+        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
+        $q.when(modalPromise).then(function (modalEl) {
+            modalEl.modal('show');
+        });
+    }
 }]);
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 

@@ -560,7 +560,7 @@ table.align-left > tbody > tr > td {
 }
 
 .btn-events {
-    height: 16px;
+    /*height: 16px;*/
     vertical-align: top;
 }
 
@@ -1057,7 +1057,9 @@ table.messages_table tr.active {
 
 div.messageText label {
     margin-left: 2%;
+    margin-right: 2%;
     margin-top: 1%;
+
 }
 .mediumH {
     min-height: 300px;

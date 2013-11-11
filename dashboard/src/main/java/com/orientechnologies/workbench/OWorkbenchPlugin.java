@@ -419,8 +419,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     profile.createProperty("host", OType.STRING);
     
     final OClass updateConfiguration = schema.createClass(CLASS_UPDATE_CONFIG);
-		notificationsConfiguration.createProperty("receiveNews", OType.BOOLEAN);
-		notificationsConfiguration.createProperty("hours", OType.INTEGER);
+    updateConfiguration.createProperty("receiveNews", OType.BOOLEAN);
+    updateConfiguration.createProperty("hours", OType.INTEGER);
     
 		userConfig.createProperty("user", OType.LINK, ouser);
     userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
