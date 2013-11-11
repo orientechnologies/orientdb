@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.agent.OL;
-import com.orientechnologies.agent.OLicenseException;
+import com.orientechnologies.agent.OL.OLicenseException;
 
 public class OLicenseManagerTest {
 

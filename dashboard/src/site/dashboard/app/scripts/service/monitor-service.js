@@ -87,13 +87,25 @@ monitor.factory('Metric', function ($http, $resource) {
             callback(data);
         })
     }
-    resource.getMetricTypes = function (type, callback) {
+    resource.getMetricTypes = function (params, callback) {
+
+        var type = params.type;
+        var enabled = params.enabled;
         var url = API + 'command/monitor/sql/-/-1';
         if (type) {
-            var query = 'select * from Dictionary where type = "' + type + '" order by name';
+            var query = 'select * from Dictionary where enabled = ' + enabled + ' type = "' + type + '" order by name';
         } else {
-            var query = 'select * from Dictionary order by name';
+            var query = 'select * from Dictionary where enabled = true  order by name ';
         }
+        $http.post(url, query).success(function (data) {
+            callback(data);
+        })
+    }
+    resource.getMetricDictionary = function (callback) {
+
+        var url = API + 'command/monitor/sql/-/-1';
+
+        var query = 'select * from Dictionary order by name ';
         $http.post(url, query).success(function (data) {
             callback(data);
         })

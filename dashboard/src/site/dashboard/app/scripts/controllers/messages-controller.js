@@ -29,42 +29,6 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
     }
     $scope.refresh();
     $scope.refreshCount();
-    $scope.checkMessageUnread = function (msg) {
-
-        if (msg['read']) {
-            return 'read';
-        }
-        return 'unread';
-    }
-
-    $scope.checkRead = function (msg) {
-
-        msg['read'] = !msg['read'];
-        if (msg['read']) {
-            $scope.countUnread--;
-        }
-        else {
-            $scope.countUnread++;
-        }
-        MetricConfig.saveConfig(msg, function (data) {
-
-                for (var entry in $scope.msgs) {
-
-                    if ($scope.msgs[entry]['@rid'] == msg['@rid']) {
-                        $scope.msgs[entry] = data;
-                    }
-                }
-
-//                $scope.refresh();
-            },
-            function (error) {
-                $scope.testMsg = error;
-                $scope.testMsgClass = 'alert alert-error alert-setting';
-            });
-
-
-    }
-
     $scope.selectMsg = function (msg) {
         $scope.selectedName = msg;
     }
@@ -80,6 +44,7 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
                         $scope.testMsg = "Messages updated successfully.";
                         $scope.testMsgClass = 'alert alert-setting';
                         $scope.refresh();
+                        $scope.refreshCount();
                     }
                 },
                 function (error) {
@@ -88,7 +53,6 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
                 });
         });
     }
-
     $scope.checkAll = function (bool) {
         for (var entry in $scope.msgsTotal) {
 
@@ -101,8 +65,8 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
             $scope.msgsTotal[entry]['read'] = bool;
         }
         $scope.save();
+//        $scope.refreshCount();
     }
-
     $scope.switchPage = function (index) {
         if (index != $scope.currentPage) {
             $scope.currentPage = index;
@@ -112,7 +76,6 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
             );
         }
     }
-
     $scope.previous = function () {
         if ($scope.currentPage > 1) {
             $scope.switchPage($scope.currentPage - 1);
@@ -152,7 +115,6 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
 
         $scope.selectedName = msg;
     }
-
     $scope.deleteAll = function () {
         Utilities.confirm($scope, $modal, $q, {
 
@@ -169,18 +131,21 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
                 }
                 $scope.messageText = null;
                 $scope.refresh();
+                $scope.refreshCount();
             }
 
         });
     }
-
     $scope.deleteMsg = function (msg) {
         var index = $scope.msgs.indexOf(msg);
         $scope.msgs.splice(index, 1);
+        index = $scope.msgsTotal.indexOf(msg);
+        $scope.msgsTotal.splice(index, 1);
         MetricConfig.deleteConfig(msg, function (data) {
 
             $scope.testMsg = "Message deleted";
             $scope.testMsgClass = 'alert alert-setting';
+            $scope.refresh();
             $scope.refreshCount();
 
         });

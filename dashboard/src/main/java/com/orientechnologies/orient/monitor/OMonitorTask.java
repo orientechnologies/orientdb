@@ -15,8 +15,10 @@ import java.util.TimerTask;
 
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.monitor.OMonitorPlugin.LOG_LEVEL;
 import com.orientechnologies.orient.monitor.OMonitorPlugin.STATUS;
 
@@ -41,13 +43,14 @@ public final class OMonitorTask extends TimerTask {
 				final Date since = serverEntry.getValue().getLastConnection();
 				try {
 
+					updateDictionary(server);
 					Map<String, Object> cfg = server.field("configuration");
 					if (cfg != null) {
 						String license = (String) cfg.get("license");
 						int idC = OL.getClientId(license);
 						int idS = OL.getServerId(license);
 
-						if (handler.getKeyMap().size()>1 && handler.getKeyMap().get(idC).get(idS).size() > 1) {
+						if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).get(idS).size() > 1) {
 							updateServerStatus(server, OMonitorPlugin.STATUS.LICENSE_INVALID);
 							log(server, LOG_LEVEL.ERROR, "License " + license + " invalid");
 							continue;
@@ -60,7 +63,6 @@ public final class OMonitorTask extends TimerTask {
 						OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Restored connection", serverName, server.field("url"));
 						log(server, LOG_LEVEL.INFO, "Restored connection");
 					}
-					updateDictionary(server);
 				} catch (Exception e) {
 					final String msg = e.toString();
 					if (msg.contains("401")) {
@@ -113,8 +115,11 @@ public final class OMonitorTask extends TimerTask {
 						}
 						Object metric = serverMetrics.get(key);
 						if (metric == null || !metric.equals(value)) {
-							new ODocument(OMonitorPlugin.CLASS_INFORMATION).field("snapshot", snap).field("name", key).field("value", value)
-									.save();
+
+							if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(key))) {
+								new ODocument(OMonitorPlugin.CLASS_INFORMATION).field("snapshot", snap).field("name", key).field("value", value)
+										.save();
+							}
 							serverMetrics.put(key, value);
 						}
 					}
@@ -123,21 +128,28 @@ public final class OMonitorTask extends TimerTask {
 				// STATS VALUES
 				final Map<String, Object> statsValues = (Map<String, Object>) snapshot.get("statistics");
 				for (Entry<String, Object> statEntry : statsValues.entrySet())
-					new ODocument(OMonitorPlugin.CLASS_STATISTIC).field("snapshot", snap).field("name", statEntry.getKey())
-							.field("value", statEntry.getValue()).save();
+
+					if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(statEntry.getKey()))) {
+						new ODocument(OMonitorPlugin.CLASS_STATISTIC).field("snapshot", snap).field("name", statEntry.getKey())
+								.field("value", statEntry.getValue()).save();
+					}
 
 				// COUNTERS
 				final Map<String, Object> counters = (Map<String, Object>) snapshot.get("counters");
 				for (Entry<String, Object> counterEntry : counters.entrySet())
-					new ODocument(OMonitorPlugin.CLASS_COUNTER).field("snapshot", snap).field("name", counterEntry.getKey())
-							.field("value", counterEntry.getValue()).save();
-
+					if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(counterEntry.getKey()))) {
+						new ODocument(OMonitorPlugin.CLASS_COUNTER).field("snapshot", snap).field("name", counterEntry.getKey())
+								.field("value", counterEntry.getValue()).save();
+					}
 				// CHRONOS
 				final Map<String, Object> chronos = (Map<String, Object>) snapshot.get("chronos");
 				for (Entry<String, Object> chronoEntry : chronos.entrySet()) {
 					final Map<String, Object> chrono = (Map<String, Object>) chronoEntry.getValue();
-					new ODocument(OMonitorPlugin.CLASS_CHRONO).field("snapshot", snap).field("name", chronoEntry.getKey()).fields(chrono)
-							.save();
+
+					if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(chronoEntry.getKey()))) {
+						new ODocument(OMonitorPlugin.CLASS_CHRONO).field("snapshot", snap).field("name", chronoEntry.getKey()).fields(chrono)
+								.save();
+					}
 				}
 
 				iMonitoredServer.setLastConnection(new Date(to));
@@ -193,17 +205,29 @@ public final class OMonitorTask extends TimerTask {
 
 		OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Received  metadata", serverName, url);
 
+		handler.getMetricsEnabled().clear();
 		for (Entry<String, Map<String, Object>> entry : metadata.entrySet()) {
 			try {
 				final String key = entry.getKey();
 				Map<String, Object> value = entry.getValue();
 
-				final ODocument doc = new ODocument(OMonitorPlugin.CLASS_DICTIONARY);
-				doc.field("name", key);
-				doc.field("description", value.get("description"));
-				doc.field("type", value.get("type"));
-				doc.field("enabled", Boolean.TRUE);
-				doc.save();
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("name", key);
+				String query = "Select * from Dictionary where name = :name";
+				List<ODocument> docs = handler.getDb().query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
+				ODocument doc = null;
+				if (docs.size() > 0) {
+					doc = docs.iterator().next();
+				} else {
+					doc = new ODocument(OMonitorPlugin.CLASS_DICTIONARY);
+					doc.field("name", key);
+					doc.field("enabled", Boolean.TRUE);
+					doc.field("description", value.get("description"));
+					doc.field("type", value.get("type"));
+					doc.save();
+				}
+				Boolean enabled = doc.field("enabled");
+				handler.getMetricsEnabled().put(key, enabled);
 
 			} catch (Exception e) {
 				// Ignore duplicates
@@ -274,11 +298,9 @@ public final class OMonitorTask extends TimerTask {
 	}
 
 	protected void log(final ODocument iServer, final LOG_LEVEL iLevel, final String iDescription) {
-		
-		new ODocument(OMonitorPlugin.CLASS_LOG).field("date", new Date()).field("server", iServer).field("level", iLevel.ordinal()).field("levelDescription", iLevel.name())
-				.field("description", iDescription).save();
-		
-		
-		
+
+		new ODocument(OMonitorPlugin.CLASS_LOG).field("date", new Date()).field("server", iServer).field("level", iLevel.ordinal())
+				.field("levelDescription", iLevel.name()).field("description", iDescription).save();
+
 	}
 }

@@ -21,11 +21,12 @@ package com.orientechnologies.agent.profiler;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfilerEntry;
@@ -40,18 +41,14 @@ import com.orientechnologies.common.profiler.OProfilerEntry;
  * @copyrights Orient Technologies.com
  */
 public class OProfilerData {
-  private long                              recordingFrom = 0;
-  private long                              recordingTo   = Long.MAX_VALUE;
-  private final Map<String, Long>           counters;
-  private final Map<String, OProfilerEntry> chronos;
-  private final Map<String, OProfilerEntry> stats;
-  private final Map<String, Object>         hooks;
+  private long                                            recordingFrom = 0;
+  private long                                            recordingTo   = Long.MAX_VALUE;
+  private final ConcurrentHashMap<String, Long>           counters      = new ConcurrentHashMap<String, Long>();
+  private final ConcurrentHashMap<String, OProfilerEntry> chronos       = new ConcurrentHashMap<String, OProfilerEntry>();
+  private final ConcurrentHashMap<String, OProfilerEntry> stats         = new ConcurrentHashMap<String, OProfilerEntry>();
+  private final Map<String, Object>                       hooks         = new WeakHashMap<String, Object>();
 
   public OProfilerData() {
-    counters = new HashMap<String, Long>();
-    chronos = new HashMap<String, OProfilerEntry>();
-    stats = new HashMap<String, OProfilerEntry>();
-    hooks = new WeakHashMap<String, Object>();
     recordingFrom = System.currentTimeMillis();
   }
 
@@ -222,45 +219,48 @@ public class OProfilerData {
     if (iStatName == null)
       return;
 
-    synchronized (counters) {
-      final Long stat = counters.get(iStatName);
-      final long oldValue = stat == null ? 0 : stat.longValue();
-      counters.put(iStatName, new Long(oldValue + iPlus));
-    }
+    Long oldValue;
+    Long newValue;
+    do {
+      oldValue = counters.get(iStatName);
+
+      if (oldValue == null) {
+        counters.putIfAbsent(iStatName, 0L);
+        oldValue = counters.get(iStatName);
+      }
+
+      newValue = oldValue + iPlus;
+    } while (!counters.replace(iStatName, oldValue, newValue));
   }
 
   public long getCounter(final String iStatName) {
     if (iStatName == null)
       return -1;
 
-    synchronized (counters) {
-      final Long stat = counters.get(iStatName);
-      if (stat == null)
-        return -1;
+    final Long stat = counters.get(iStatName);
+    if (stat == null)
+      return -1;
 
-      return stat.longValue();
-    }
+    return stat.longValue();
   }
 
   public String dumpCounters() {
-    synchronized (counters) {
-      final StringBuilder buffer = new StringBuilder();
-      buffer.append("Dumping COUNTERS:");
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("Dumping COUNTERS:");
 
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
+    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-      final List<String> keys = new ArrayList<String>(counters.keySet());
-      Collections.sort(keys);
+    final List<String> keys = new ArrayList<String>(counters.keySet());
+    Collections.sort(keys);
 
-      for (String k : keys) {
-        final Long stat = counters.get(k);
-        buffer.append(String.format("\n%-50s | %-65d |", k, stat));
-      }
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      return buffer.toString();
+    for (String k : keys) {
+      final Long stat = counters.get(k);
+      buffer.append(String.format("\n%-50s | %-65d |", k, stat));
     }
+    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    return buffer.toString();
   }
 
   public long stopChrono(final String iName, final long iStartTime, final String iPayload) {
@@ -323,44 +323,21 @@ public class OProfilerData {
   }
 
   public String[] getCountersAsString() {
-    synchronized (counters) {
-      final String[] output = new String[counters.size()];
-      int i = 0;
-      for (Entry<String, Long> entry : counters.entrySet()) {
-        output[i++] = entry.getKey() + ": " + entry.getValue().toString();
-      }
-      return output;
-    }
+    return getMetricAsString(counters);
   }
 
   public String[] getChronosAsString() {
-    synchronized (chronos) {
-      final String[] output = new String[chronos.size()];
-      int i = 0;
-      for (Entry<String, OProfilerEntry> entry : chronos.entrySet()) {
-        output[i++] = entry.getKey() + ": " + entry.getValue().toString();
-      }
-      return output;
-    }
+    return getMetricAsString(chronos);
   }
 
   public String[] getStatsAsString() {
-    synchronized (stats) {
-      final String[] output = new String[stats.size()];
-      int i = 0;
-      for (Entry<String, OProfilerEntry> entry : stats.entrySet()) {
-        output[i++] = entry.getKey() + ": " + entry.getValue().toString();
-      }
-      return output;
-    }
+    return getMetricAsString(stats);
   }
 
   public List<String> getCounters() {
-    synchronized (counters) {
-      final List<String> list = new ArrayList<String>(counters.keySet());
-      Collections.sort(list);
-      return list;
-    }
+    final List<String> list = new ArrayList<String>(counters.keySet());
+    Collections.sort(list);
+    return list;
   }
 
   public List<String> getHooks() {
@@ -372,94 +349,95 @@ public class OProfilerData {
   }
 
   public List<String> getChronos() {
-    synchronized (chronos) {
-      final List<String> list = new ArrayList<String>(chronos.keySet());
-      Collections.sort(list);
-      return list;
-    }
+    final List<String> list = new ArrayList<String>(chronos.keySet());
+    Collections.sort(list);
+    return list;
   }
 
   public List<String> getStats() {
-    synchronized (stats) {
-      final List<String> list = new ArrayList<String>(stats.keySet());
-      Collections.sort(list);
-      return list;
-    }
+    final List<String> list = new ArrayList<String>(stats.keySet());
+    Collections.sort(list);
+    return list;
   }
 
   public OProfilerEntry getStat(final String iStatName) {
     if (iStatName == null)
       return null;
 
-    synchronized (stats) {
-      return stats.get(iStatName);
-    }
+    return stats.get(iStatName);
   }
 
   public OProfilerEntry getChrono(final String iChronoName) {
     if (iChronoName == null)
       return null;
 
-    synchronized (chronos) {
-      return chronos.get(iChronoName);
-    }
+    return chronos.get(iChronoName);
   }
 
   public long getRecordingFrom() {
     return recordingFrom;
   }
 
-  protected synchronized long updateEntry(final Map<String, OProfilerEntry> iValues, final String iName, final long iValue,
-      final String iPayload) {
-    synchronized (iValues) {
-      OProfilerEntry c = iValues.get(iName);
+  protected synchronized long updateEntry(final ConcurrentMap<String, OProfilerEntry> iValues, final String iName,
+      final long iValue, final String iPayload) {
 
-      if (c == null) {
-        // CREATE NEW CHRONO
-        c = new OProfilerEntry();
-        iValues.put(iName, c);
-      }
-
-      c.name = iName;
-      c.payLoad = iPayload;
-      c.entries++;
-      c.last = iValue;
-      c.total += c.last;
-      c.average = c.total / c.entries;
-
-      if (c.last < c.min)
-        c.min = c.last;
-
-      if (c.last > c.max)
-        c.max = c.last;
-
-      return c.last;
+    OProfilerEntry c = iValues.get(iName);
+    if (c == null) {
+      // CREATE NEW CHRONO
+      c = new OProfilerEntry();
+      final OProfilerEntry oldValue = iValues.putIfAbsent(iName, c);
+      if (oldValue != null)
+        c = oldValue;
     }
+
+    c.name = iName;
+    c.payLoad = iPayload;
+    c.entries++;
+    c.last = iValue;
+    c.total += c.last;
+    c.average = c.total / c.entries;
+
+    if (c.last < c.min)
+      c.min = c.last;
+
+    if (c.last > c.max)
+      c.max = c.last;
+
+    return c.last;
   }
 
-  protected synchronized String dumpEntries(final Map<String, OProfilerEntry> iValues, final StringBuilder iBuffer) {
+  protected synchronized String dumpEntries(final ConcurrentMap<String, OProfilerEntry> iValues, final StringBuilder iBuffer) {
     // CHECK IF CHRONOS ARE ACTIVED
-    synchronized (iValues) {
-      if (iValues.size() == 0)
-        return "";
+    if (iValues.size() == 0)
+      return "";
 
-      OProfilerEntry c;
+    OProfilerEntry c;
 
-      iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
-          "items"));
-      iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
+        "items"));
+    iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
 
-      final List<String> keys = new ArrayList<String>(iValues.keySet());
-      Collections.sort(keys);
+    final List<String> keys = new ArrayList<String>(iValues.keySet());
+    Collections.sort(keys);
 
-      for (String k : keys) {
-        c = iValues.get(k);
+    for (String k : keys) {
+      c = iValues.get(k);
+      if (c != null)
         iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
             c.entries));
-      }
-      iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      return iBuffer.toString();
     }
+    iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    return iBuffer.toString();
+
   }
+
+  protected String[] getMetricAsString(ConcurrentHashMap<String, ?> iMetrics) {
+    final List<String> output = new ArrayList<String>(iMetrics.size());
+    for (Entry<String, ?> entry : iMetrics.entrySet()) {
+      output.add(entry.getKey() + ": " + entry.getValue().toString());
+    }
+    return output.toArray(new String[output.size()]);
+  }
+
 }

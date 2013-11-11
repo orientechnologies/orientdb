@@ -61,49 +61,21 @@
                     <!--<div ng-class="{'read' : message.read, 'unread' : !message.read}">-->
                     </td>
                     <td>Orient Technologies</td>
-                    <td><span class="label pull-right">news</span></td>
+                    <td><span class="label pull-right">{{message['type']}}</span></td>
                     <td>{{message['subject']}}</td>
                     <td>{{message['date']}}</td>
                     <td>
-                        <!--<button type="button" ng-click="checkRead(message)"-->
-                        <!--class="btn btn-success btn-small">-->
-                        <!--<i ng-class="{'icon-envelope' : message.read, 'icon-lock' : !message.read}"></i>-->
-                        <!--</button>-->
                         <button type="button" ng-click="deleteMsg(message)"
                                 class="btn btn-danger btn-small"> Delete
                             <i class="icon-trash"></i>
                         </button>
-                        <!--</div>-->
                 </tr>
-                <!--<tr ng-repeat="message in msgs">-->
-                <!--<td>-->
-                <!--<div style="margin-left: 5%;" ng-class="{'read' : message.read, 'unread' : !message.read}">-->
-                <!--{{message['subject']}}-->
-                <!--</div>-->
-                <!--</td>-->
-
-                <!--<td style="float: right; width: 25%;">-->
-                <!--<div class="controls">-->
-
-                <!--<button type="button" ng-click="checkRead(message)"-->
-                <!--class="btn btn-success btn-small" style="height: 23px">-->
-                <!--<i ng-class="{'icon-remove' : message.read, 'icon-check' : !message.read}"></i>-->
-                <!--</button>-->
-                <!--<button type="button" ng-click="checkRead()" class="btn btn-danger btn-small"-->
-                <!--title="Delete" style="height: 23px">-->
-                <!--<i class="icon-trash"></i>-->
-                <!--</button>-->
-                <!--</div>-->
-                <!--</td>-->
-                <!--</tr>-->
                 </tbody>
             </table>
             <br>
 
             <div class="messageText " ng-show="messageText!=null"
                  style="width: 100%; border: 1px solid #808080;min-height: 300px;text-align: justify">
-
-
                 <label class="control-label">
                     <b> Subject: </b> {{ messageText['subject']}}
                 </label>
@@ -111,13 +83,9 @@
                 <label><b>Date:</b> {{messageText['date']}}</label>
 
                 <label ng-bind-html-unsafe="messageText['message']"></label>
-
             </div>
-
         </div>
     </div>
-
-
 </div>
 </div>
 </div>
