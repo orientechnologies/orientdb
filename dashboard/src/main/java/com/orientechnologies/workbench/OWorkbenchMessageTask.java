@@ -64,15 +64,16 @@ public class OWorkbenchMessageTask extends TimerTask {
 					URLConnection urlConnection = null;
 
 					ODocument proxy = config.field("proxyConfiguration");
-					if(proxy!=null){
+					if (proxy != null) {
 						String ip = proxy.field("proxyIp");
 						Integer port = proxy.field("proxyPort");
 						if (ip != null && port != null) {
 							Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
 							urlConnection = remoteUrl.openConnection(proxyConn);
-						} 
-					}
-					else {
+						} else {
+							urlConnection = remoteUrl.openConnection();
+						}
+					} else {
 						urlConnection = remoteUrl.openConnection();
 					}
 					urlConnection.connect();
@@ -104,7 +105,8 @@ public class OWorkbenchMessageTask extends TimerTask {
 						Map<String, Object> params = new HashMap<String, Object>();
 						params.put("message", text);
 						params.put("date", date);
-						List<ODocument> resultSet = handler.getDb().query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
+						List<ODocument> resultSet = handler.getDb().query(
+								new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
 						if (resultSet.isEmpty()) {
 							ODocument saved = new ODocument("Message");
 							saved.field("message", text);
@@ -117,7 +119,6 @@ public class OWorkbenchMessageTask extends TimerTask {
 						}
 					}
 				} catch (Exception e) {
-					OLogManager.instance().error(this, "MONITOR error contacting [%s] ", url);
 				}
 			}
 		}

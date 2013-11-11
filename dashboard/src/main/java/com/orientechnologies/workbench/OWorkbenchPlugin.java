@@ -68,6 +68,7 @@ import com.orientechnologies.workbench.http.OServerCommandGetMonitoredServers;
 import com.orientechnologies.workbench.http.OServerCommandGetRealtimeMetrics;
 import com.orientechnologies.workbench.http.OServerCommandGetServerConfiguration;
 import com.orientechnologies.workbench.http.OServerCommandGetServerLog;
+import com.orientechnologies.workbench.http.OServerCommandMessageExecute;
 import com.orientechnologies.workbench.http.OServerCommandNotifyChangedMetric;
 import com.orientechnologies.workbench.http.OServerCommandPurgeMetric;
 import com.orientechnologies.workbench.http.OServerCommandQueryPassThrough;
@@ -198,6 +199,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandPurgeMetric());
     listener.registerStatelessCommand(new OServerCommandDeleteServer());
     listener.registerStatelessCommand(new OServerCommandNotifyChangedMetric());
+    listener.registerStatelessCommand(new OServerCommandMessageExecute());
   }
 
   private void unregisterCommands() {
@@ -218,6 +220,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandPurgeMetric.class);
     listener.unregisterStatelessCommand(OServerCommandDeleteServer.class);
     listener.unregisterStatelessCommand(OServerCommandNotifyChangedMetric.class);
+    listener.unregisterStatelessCommand(OServerCommandMessageExecute.class);
   }
 
   public OMonitoredServer getMonitoredServer(final String iServer) {
