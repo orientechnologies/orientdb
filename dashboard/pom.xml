@@ -6,9 +6,9 @@
 
 	<groupId>com.orientechnologies</groupId>
 	<version>1.6.1-SNAPSHOT</version>
-	<artifactId>orientdb-dashboard</artifactId>
+	<artifactId>orientdb-workbench</artifactId>
 
-	<name>OrientDB Dashboard</name>
+	<name>OrientDB Workbench</name>
 
 	<properties>
 		<javac.src.version>1.6</javac.src.version>
@@ -19,31 +19,31 @@
 		<blueprints.version>2.5.0-SNAPSHOT</blueprints.version>
 	</properties>
 	<scm>
-		<url>https://github.com/nuvolabase/orientdb</url>
-		<connection>scm:git:git://github.com/nuvolabase/orientdb.git</connection>
-		<developerConnection>scm:git:git://github.com/nuvolabase/orientdb.git</developerConnection>
+		<url>https://github.com/orientechnologies/orientdb-enterprise</url>
+		<connection>scm:git:git://github.com/orientechnologies/orientdb-enterprise.git</connection>
+		<developerConnection>scm:git:git://github.com/orientechnologies/orientdb-enterprise.git</developerConnection>
 	</scm>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-server</artifactId>
-			<version>${version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-core</artifactId>
-			<version>${version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-enterprise</artifactId>
-			<version>${version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orient-commons</artifactId>
-			<version>${version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
@@ -90,81 +90,23 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-scm-plugin</artifactId>
-				<version>1.8</version>
-				<configuration>
-					<checkoutDirectory>${project.basedir}/srcOrient</checkoutDirectory>
-					<workingDirectory>${project.basedir}/srcOrient</workingDirectory>
-				</configuration>
+			    <artifactId>maven-assembly-plugin</artifactId>
+			    <version>2.2-beta-4</version>
+			    <executions>
+			        <execution>
+			            <id>user_distribution</id>
+			            <phase>package</phase>
+			            <goals>
+			                <goal>attached</goal>
+			            </goals>
+			            <configuration>
+			                <descriptors>
+			                    <descriptor>src/main/assembly/dist.xml</descriptor>
+			                </descriptors>
+			            </configuration>
+			        </execution>
+			    </executions>
 			</plugin>
-
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<id>1</id>
-						<phase>install</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<configuration>
-							<executable>ant</executable>
-							<workingDirectory>${project.basedir}/srcOrient</workingDirectory>
-							<arguments>
-								<argument>clean</argument>
-								<argument>installg</argument>
-							</arguments>
-						</configuration>
-					</execution>
-
-
-					<execution>
-						<id>2</id>
-						<phase>install</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<configuration>
-							<executable>cp</executable>
-							<workingDirectory>${project.basedir}/releases/orientdb-${project.version}
-							</workingDirectory>
-							<arguments>
-								<argument>${project.build.directory}/orientdb-monitor-${project.version}.jar</argument>
-								<argument>lib</argument>
-							</arguments>
-						</configuration>
-
-					</execution>
-
-
-					<execution>
-						<id>3</id>
-
-						<phase>install</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-						<configuration>
-							<executable>cp</executable>
-							<workingDirectory>${project.basedir}/releases/orientdb-${project.version}
-							</workingDirectory>
-							<arguments>
-								<argument>${project.basedir}/config/orientdb-server-config.xml</argument>
-								<argument>config</argument>
-							</arguments>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!--<plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-surefire-plugin</artifactId> 
-				<configuration> <argLine>-Xss2048k</argLine> &lt;!&ndash;IBM JDK StackOverflowException 
-				fix&ndash;&gt; <systemPropertyVariables> <ORIENTDB_HOME>${project.build.directory}</ORIENTDB_HOME> 
-				</systemPropertyVariables> <suiteXmlFiles> <suiteXmlFile> ${project.basedir}/src/test/resources/com/orientechnologies/orient/graph/gremlin/graphdb-test.xml 
-				</suiteXmlFile> </suiteXmlFiles> </configuration> </plugin> -->
 		</plugins>
 	</build>
 
