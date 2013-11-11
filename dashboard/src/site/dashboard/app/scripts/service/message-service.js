@@ -9,7 +9,7 @@
 
 var spinner = angular.module('message.services', []);
 
-spinner.factory('Message', function (Monitor, $http,$resource) {
+spinner.factory('Message', function (Monitor, $http, $resource) {
 
     var resource = $resource(API + 'database/:database');
     resource.getUnread = function (callback) {
@@ -18,5 +18,12 @@ spinner.factory('Message', function (Monitor, $http,$resource) {
             callback(data);
         });
     }
+
+    resource.installMsg = function (msg, callback) {
+        $http.post(API + 'message/monitor/execute', msg).success(function (data) {
+            callback(data);
+        });
+    }
+
     return resource;
 });

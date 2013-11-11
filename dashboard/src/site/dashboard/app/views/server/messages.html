@@ -58,22 +58,23 @@
                 <tr ng-repeat="message in msgs"
                     ng-class="{active : message['@rid']==selectedName['@rid'], 'unread' : !message.read}"
                     ng-click="openMessageText(message)">
-                    <!--<div ng-class="{'read' : message.read, 'unread' : !message.read}">-->
                     </td>
-                    <!--<td>Orient Technologies</td>-->
                     <td><span class="label pull-right">{{message['type']}}</span></td>
                     <td>{{message['subject']}}</td>
                     <td>{{message['date']}}</td>
                     <td>
                         <button type="button" ng-click="deleteMsg(message)"
-                                class="btn btn-danger btn-small"> Delete
-                            <i class="icon-trash"></i>
-                        </button>
-                        <button type="button" ng-click="deleteMsg(message)"
-                                class="btn btn-success" style="background-color: #008000"
+                                class="btn btn-success"
                                 ng-show="{{message['type']=='update'|| message['type']=='chart'}}"> Install
                             <i class="icon-trash"></i>
                         </button>
+                    </td>
+                    <td>
+                        <button type="button" ng-click="deleteMsg(message)"
+                                class="btn btn-danger btn-small"> Delete
+                            <i class="icon-trash"></i>
+                        </button>
+
                     </td>
                 </tr>
                 </tbody>
