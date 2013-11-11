@@ -134,17 +134,22 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     serverInstance = iServer;
     OLogManager.instance().info(this, "Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
 
-    for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("updateTimer"))
-        updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
-      else if (param.name.equalsIgnoreCase("dbName")) {
-        dbName = param.value;
-        dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
-      } else if (param.name.equalsIgnoreCase("dbUser"))
-        dbUser = param.value;
-      else if (param.name.equalsIgnoreCase("dbPassword"))
-        dbPassword = param.value;
-    }
+    // for (OServerParameterConfiguration param : iParams) {
+    // if (param.name.equalsIgnoreCase("updateTimer"))
+    // updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
+    // else if (param.name.equalsIgnoreCase("dbName")) {
+    // dbName = param.value;
+    // dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
+    // } else if (param.name.equalsIgnoreCase("dbUser"))
+    // dbUser = param.value;
+    // else if (param.name.equalsIgnoreCase("dbPassword"))
+    // dbPassword = param.value;
+    // }
+
+    updateTimer = OIOUtils.getTimeAsMillisecs("10s");
+    dbUser = "admin";
+    dbPassword = "admin";
+    dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
   }
 
   @Override
@@ -167,7 +172,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     getDb().registerHook(new OEventHook());
 
     registerExecutors(getDb());
-    registerCommand();
+    registerCommands();
     Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
 
     // Orient.instance()
@@ -176,8 +181,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     //
     Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
     Orient.instance().getTimer().schedule(new OWorkbenchMessageTask(this), 60000, 60000);
-
-    registerCommand();
   }
 
   private void registerExecutors(ODatabaseDocumentTx database) {
@@ -189,13 +192,12 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     OEventController.getInstance().register(new OEventMetricHttpExecutor(database));
   }
 
-  private void registerCommand() {
+  private void registerCommands() {
     final OServerNetworkListener listener = serverInstance.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     if (listener == null)
       throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandGetRealtimeMetrics());
-
     listener.registerStatelessCommand(new OServerCommandQueryPassThrough());
     listener.registerStatelessCommand(new OServerCommandAuthenticateSingleDatabase());
     listener.registerStatelessCommand(new OServerCommandGetLoggedUserInfo());
@@ -208,6 +210,26 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandPurgeMetric());
     listener.registerStatelessCommand(new OServerCommandDeleteServer());
     listener.registerStatelessCommand(new OServerCommandNotifyChangedMetric());
+  }
+
+  private void unregisterCommands() {
+    final OServerNetworkListener listener = serverInstance.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener == null)
+      throw new OConfigurationException("HTTP listener not found");
+
+    listener.unregisterStatelessCommand(OServerCommandGetRealtimeMetrics.class);
+    listener.unregisterStatelessCommand(OServerCommandQueryPassThrough.class);
+    listener.unregisterStatelessCommand(OServerCommandAuthenticateSingleDatabase.class);
+    listener.unregisterStatelessCommand(OServerCommandGetLoggedUserInfo.class);
+    listener.unregisterStatelessCommand(OServerCommandGetMonitoredServers.class);
+    listener.unregisterStatelessCommand(OServerCommandGetExplainCommand.class);
+    listener.unregisterStatelessCommand(OServerCommandGetConnectionsCommand.class);
+    listener.unregisterStatelessCommand(OServerCommandDeleteRealtimeMetrics.class);
+    listener.unregisterStatelessCommand(OServerCommandGetServerLog.class);
+    listener.unregisterStatelessCommand(OServerCommandGetServerConfiguration.class);
+    listener.unregisterStatelessCommand(OServerCommandPurgeMetric.class);
+    listener.unregisterStatelessCommand(OServerCommandDeleteServer.class);
+    listener.unregisterStatelessCommand(OServerCommandNotifyChangedMetric.class);
   }
 
   public OMonitoredServer getMonitoredServer(final String iServer) {
@@ -432,6 +454,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
   @Override
   public void shutdown() {
+    unregisterCommands();
   }
 
   protected void updateDictionary() {
