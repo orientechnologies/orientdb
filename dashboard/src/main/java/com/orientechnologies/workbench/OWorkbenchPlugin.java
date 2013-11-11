@@ -134,21 +134,9 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     serverInstance = iServer;
     OLogManager.instance().info(this, "Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
 
-    // for (OServerParameterConfiguration param : iParams) {
-    // if (param.name.equalsIgnoreCase("updateTimer"))
-    // updateTimer = OIOUtils.getTimeAsMillisecs(param.value);
-    // else if (param.name.equalsIgnoreCase("dbName")) {
-    // dbName = param.value;
-    // dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
-    // } else if (param.name.equalsIgnoreCase("dbUser"))
-    // dbUser = param.value;
-    // else if (param.name.equalsIgnoreCase("dbPassword"))
-    // dbPassword = param.value;
-    // }
-
     updateTimer = OIOUtils.getTimeAsMillisecs("10s");
     dbUser = "admin";
-    dbPassword = "admin";
+    dbPassword = "OrientDB_KILLS_Neo4J!";
     dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
   }
 
