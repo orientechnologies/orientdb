@@ -102,6 +102,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 
 	public static final String												CLASS_METRIC_CONFIG								= "MetricConfig";
 	private static final String												CLASS_PROXY_CONFIG								= "ProxyConfiguration";
+	private static final String												CLASS_UPDATE_CONFIG								= "updateConfiguration";
 	private static final String												CLASS_MESSAGE											= "Message";
 
 	private OServer																		serverInstance;
@@ -370,6 +371,11 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		notificationsConfiguration.createProperty("proxyIp", OType.STRING);
 		notificationsConfiguration.createProperty("proxyPort", OType.INTEGER);
 
+		
+		final OClass updateConfiguration = schema.createClass(CLASS_UPDATE_CONFIG);
+		notificationsConfiguration.createProperty("receiveNews", OType.BOOLEAN);
+		notificationsConfiguration.createProperty("hours", OType.INTEGER);
+		
 		profile.createProperty("user", OType.STRING);
 		profile.createProperty("password", OType.STRING);
 		profile.createProperty("port", OType.INTEGER);
@@ -386,6 +392,7 @@ public class OMonitorPlugin extends OServerHandlerAbstract {
 		userConfig.createProperty("proxyConfiguration", OType.EMBEDDED, proxyConfiguration);
 		userConfig.createProperty("orientdbSite", OType.STRING);
 		userConfig.createProperty("metrics", OType.LINKLIST, metricConfig);
+		userConfig.createProperty("updateConfiguration", OType.EMBEDDED, updateConfiguration);
 		final OClass message = schema.createClass(CLASS_MESSAGE);
 
 		message.createProperty("message", OType.STRING);

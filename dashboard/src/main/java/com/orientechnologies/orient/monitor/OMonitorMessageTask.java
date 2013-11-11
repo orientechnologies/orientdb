@@ -54,11 +54,12 @@ public class OMonitorMessageTask extends TimerTask {
 		licenses = licenses.isEmpty() ? "none" : licenses;
 		if (response.size() > 0) {
 			ODocument config = response.iterator().next();
-			String url = "http://www.orientechnologies.com/"; // config.field("orientdbSite");
+			String url = config.field("orientdbSite"); // "http://www.orientechnologies.com/";
 			OLogManager.instance().info(this, "MONITOR contacting [%s] ", url);
 			if (url != null) {
 				try {
-					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId + "/" + licenses + "/true");
+					String checkUpdates = "true";
+					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId + "/" + licenses + "/" + checkUpdates);
 					URLConnection urlConnection = null;
 
 					ODocument proxy = config.field("proxyConfiguration");
