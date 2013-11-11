@@ -1043,8 +1043,8 @@ table.messages_table>tbody>tr {
 }
 
 .widget .label-info-message {
+
     background-color: #808080;
-    border-radius: 21px 21px 21px 21px;
     border-style: none;
     box-shadow: none;
     float: right;
@@ -1061,6 +1061,7 @@ div.messageText label {
     margin-top: 1%;
 
 }
+
 .mediumH {
     min-height: 300px;
 }
@@ -1069,11 +1070,20 @@ div.messageText label {
     left: auto !important;
     right: 13px;
 }
+
 .user-dropdown .dropdown-menu:before {
     left: auto !important;
     right: 13px;
 }
+
 .user-dropdown .dropdown-menu {
     left: auto;
     right: 0;
+}
+
+.btn-success {
+
+    color: #ffffff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+    background-color: #5bb75b;
 }

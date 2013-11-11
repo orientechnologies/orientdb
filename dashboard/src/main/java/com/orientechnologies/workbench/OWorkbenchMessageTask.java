@@ -64,15 +64,16 @@ public class OWorkbenchMessageTask extends TimerTask {
 					URLConnection urlConnection = null;
 
 					ODocument proxy = config.field("proxyConfiguration");
-					if(proxy!=null){
+					if (proxy != null) {
 						String ip = proxy.field("proxyIp");
 						Integer port = proxy.field("proxyPort");
 						if (ip != null && port != null) {
 							Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
 							urlConnection = remoteUrl.openConnection(proxyConn);
-						} 
-					}
-					else {
+						} else {
+							urlConnection = remoteUrl.openConnection();
+						}
+					} else {
 						urlConnection = remoteUrl.openConnection();
 					}
 					urlConnection.connect();
