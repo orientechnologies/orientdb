@@ -89,9 +89,7 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
     }
     $scope.openMessageText = function (msg) {
 
-
         $scope.messageText = msg;
-
 
         if (!msg['read']) {
             $scope.countUnread--;

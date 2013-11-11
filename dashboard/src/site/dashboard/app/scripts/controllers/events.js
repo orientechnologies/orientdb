@@ -264,7 +264,7 @@ dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$rou
     $scope.properties = $scope.eventWhat;
 
     $scope.openLegend = function(){
-        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
+        var modalPromise = $modal({template: 'views/server/maillegend.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });

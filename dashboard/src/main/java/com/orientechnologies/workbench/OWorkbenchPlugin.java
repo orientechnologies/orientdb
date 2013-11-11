@@ -437,6 +437,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     message.createProperty("read", OType.BOOLEAN);
     message.createProperty("type", OType.STRING);
     message.createProperty("subject", OType.STRING);
+    message.createProperty("url", OType.STRING);
+    
 
   }
 

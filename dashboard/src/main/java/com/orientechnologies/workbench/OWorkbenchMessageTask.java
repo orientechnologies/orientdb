@@ -94,6 +94,10 @@ public class OWorkbenchMessageTask extends TimerTask {
 
 						Object text = values.get("text");
 						Object date = values.get("date");
+						Object subject = values.get("subject");
+						Object type = values.get("type");
+						Object urlfromjson = values.get("url");
+
 						Map<String, Object> params = new HashMap<String, Object>();
 						params.put("message", text);
 						params.put("date", date);
@@ -102,6 +106,10 @@ public class OWorkbenchMessageTask extends TimerTask {
 							ODocument saved = new ODocument("Message");
 							saved.field("message", text);
 							saved.field("date", date);
+							saved.field("subject", subject);
+							saved.field("type", type);
+							saved.field("url", urlfromjson);
+
 							saved.save();
 						}
 					}

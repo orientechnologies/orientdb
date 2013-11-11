@@ -225,9 +225,9 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/spinner-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665057054" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/spinner.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665176990" ignored="false" />
     <file path="/spinner.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665176990" ignored="false" />
-    <file path="/messages.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384165499711" ignored="false" />
+    <file path="/messages.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384196782349" ignored="false" />
     <file path="/header.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383863022199" ignored="false" />
-    <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384189301987" ignored="false" />
+    <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384196290272" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -247,25 +247,17 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="messages.html" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="messages.html" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="78" column="18" selection-start="3682" selection-end="3682" vertical-scroll-proportion="-15.653846">
+            <state line="72" column="88" selection-start="3580" selection-end="3580" vertical-scroll-proportion="0.6169844">
               <folding>
                 <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#button#1;n#td#3;n#tr#0;n#tbody#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#2;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="settings.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="190" column="34" selection-start="7024" selection-end="7043" vertical-scroll-proportion="-7.6226416">
-              <folding />
             </state>
           </provider>
         </entry>
@@ -273,16 +265,16 @@
       <file leaf-file-name="messages-controller.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="116" column="25" selection-start="4333" selection-end="4333" vertical-scroll-proportion="-12.113208">
+            <state line="92" column="8" selection-start="3722" selection-end="3722" vertical-scroll-proportion="-4.4150944">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="message-service.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="message-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/message-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="15" column="21" selection-start="406" selection-end="471" vertical-scroll-proportion="0.41396105">
+            <state line="15" column="21" selection-start="406" selection-end="471" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -309,7 +301,16 @@
       <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="269" column="11" selection-start="10167" selection-end="10167" vertical-scroll-proportion="-4.735849">
+            <state line="266" column="64" selection-start="10029" selection-end="10029" vertical-scroll-proportion="-3.7735848">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="maillegend.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="12" column="8" selection-start="185" selection-end="185" vertical-scroll-proportion="-7.8461537">
               <folding />
             </state>
           </provider>
@@ -318,7 +319,7 @@
       <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="563" column="19" selection-start="10814" selection-end="10814" vertical-scroll-proportion="0.0">
+            <state line="577" column="19" selection-start="11055" selection-end="11055" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -352,22 +353,22 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
         <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/header.js" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
-        <option value="$PROJECT_DIR$/app/views/server/messages.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
         <option value="$PROJECT_DIR$/app/views/server/settings.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/message-service.js" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/mailwhat.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
+        <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
+        <option value="$PROJECT_DIR$/app/views/server/messages.html" />
       </list>
     </option>
   </component>
@@ -512,28 +513,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="service" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="studioee" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="dashboard" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="app" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scripts" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
               <option name="myItemId" value="filters" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -578,11 +557,11 @@
   <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/views/server" />
       <recent name="$PROJECT_DIR$/app/scripts/controllers" />
       <recent name="$PROJECT_DIR$/app/scripts/service" />
       <recent name="$PROJECT_DIR$/app/views/server/metric" />
       <recent name="$PROJECT_DIR$/app/views" />
-      <recent name="$PROJECT_DIR$/app/scripts/directive" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app/views/server" />
@@ -746,13 +725,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="20" column="23" selection-start="899" selection-end="902" vertical-scroll-proportion="-6.3962264">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="35" column="23" selection-start="1192" selection-end="1192" vertical-scroll-proportion="0.0">
@@ -806,16 +778,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="116" column="25" selection-start="4333" selection-end="4333" vertical-scroll-proportion="-12.113208">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/styles/main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="563" column="19" selection-start="10814" selection-end="10814" vertical-scroll-proportion="0.0">
+        <state line="577" column="19" selection-start="11055" selection-end="11055" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -827,29 +792,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="269" column="11" selection-start="10167" selection-end="10167" vertical-scroll-proportion="-4.735849">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/odirective.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="78" column="18" selection-start="3682" selection-end="3682" vertical-scroll-proportion="-15.653846">
-          <folding>
-            <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#div#2;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -862,8 +808,42 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/message-service.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="21" selection-start="406" selection-end="471" vertical-scroll-proportion="0.41396105">
+        <state line="15" column="21" selection-start="406" selection-end="471" vertical-scroll-proportion="0.0">
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="266" column="64" selection-start="10029" selection-end="10029" vertical-scroll-proportion="-3.7735848">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="12" column="8" selection-start="185" selection-end="185" vertical-scroll-proportion="-7.8461537">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="92" column="8" selection-start="3722" selection-end="3722" vertical-scroll-proportion="-4.4150944">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="72" column="88" selection-start="3580" selection-end="3580" vertical-scroll-proportion="0.6169844">
+          <folding>
+            <element signature="n#style#0;n#select#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#0;n#div#0;n#div#1;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#button#1;n#td#3;n#tr#0;n#tbody#0;n#table#0;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#2;n#div#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
