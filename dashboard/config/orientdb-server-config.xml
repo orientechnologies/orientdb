@@ -11,7 +11,7 @@
 		<handler class="com.orientechnologies.orient.server.plugin.mail.OMailPlugin">
 			<parameters>
 				<parameter value="true" name="enabled" />
-				<parameter value="192.168.0.50" name="profile.default.mail.smtp.host" />
+				<parameter value="localhost" name="profile.default.mail.smtp.host" />
 				<parameter value="25" name="profile.default.mail.smtp.port" />
 				<parameter value="true" name="profile.default.mail.smtp.auth" />
 				<parameter value="true"

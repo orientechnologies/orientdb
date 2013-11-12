@@ -8,10 +8,6 @@
 	</formats>
 	<dependencySets>
 		<dependencySet>
-			<excludes>
-				<exclude>commons-lang:commons-lang</exclude>
-				<exclude>orientdb:workbench</exclude>
-			</excludes>
 			<outputDirectory>lib/</outputDirectory>
 		</dependencySet>
 	</dependencySets>
