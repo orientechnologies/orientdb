@@ -112,7 +112,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   public static final String                        CLASS_MAIL_PROFILE                = "OMailProfile";
   public static final String                        CLASS_DELETE_METRIC_CONFIG        = "DeleteMetricConfiguration";
   public static final String                        CLASS_DELETE_NOTIFICATIONS_CONFIG = "NotificationsConfiguration";
-  private static final String												CLASS_UPDATE_CONFIG								= "updateConfiguration";
+  private static final String                       CLASS_UPDATE_CONFIG               = "updateConfiguration";
   public static final String                        CLASS_METRIC_CONFIG               = "MetricConfig";
   private static final String                       CLASS_PROXY_CONFIG                = "ProxyConfiguration";
   private static final String                       CLASS_MESSAGE                     = "Message";
@@ -121,8 +121,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   private long                                      updateTimer;
   private long                                      purgeTimer                        = 1000 * 60 * 30;
   private String                                    dbName                            = "monitor";
-  private String                                    dbUser                            = "admin";
-  private String                                    dbPassword                        = "admin";
+  private String                                    dbUser                            = "wb";
+  private String                                    dbPassword                        = "OrientDB_KILLS_Neo4J!";
   private ODatabaseDocumentTx                       db;
   Map<String, OMonitoredServer>                     servers                           = new HashMap<String, OMonitoredServer>();
   Map<Integer, Map<Integer, Set<OMonitoredServer>>> keyMap;
@@ -136,8 +136,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     OLogManager.instance().info(this, "Installing OrientDB Enterprise MONITOR v.%s...", VERSION);
 
     updateTimer = OIOUtils.getTimeAsMillisecs("10s");
-    dbUser = "admin";
-    dbPassword = "OrientDB_KILLS_Neo4J!";
     dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
   }
 
@@ -420,12 +418,12 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     profile.createProperty("starttlsEnable", OType.BOOLEAN);
     profile.createProperty("dateFormat", OType.STRING);
     profile.createProperty("host", OType.STRING);
-    
+
     final OClass updateConfiguration = schema.createClass(CLASS_UPDATE_CONFIG);
     updateConfiguration.createProperty("receiveNews", OType.BOOLEAN);
     updateConfiguration.createProperty("hours", OType.INTEGER);
-    
-		userConfig.createProperty("user", OType.LINK, ouser);
+
+    userConfig.createProperty("user", OType.LINK, ouser);
     userConfig.createProperty("mailProfile", OType.EMBEDDED, profile);
     userConfig.createProperty("deleteMetricConfiguration", OType.EMBEDDED, deleteMetricConfiguration);
     userConfig.createProperty("notificationsConfiguration", OType.EMBEDDED, notificationsConfiguration);
@@ -441,8 +439,24 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     message.createProperty("type", OType.STRING);
     message.createProperty("subject", OType.STRING);
     message.createProperty("payload", OType.STRING);
-    
 
+    try {
+      // OVERWRITE ADMIN PASSWORD
+      OUser user = db.getMetadata().getSecurity().getUser("admin");
+      user.setName(dbUser);
+      user.setPassword(dbPassword);
+      user.save();
+
+      // CREATE ADMIN WITH WRITER ROLE
+      db.getMetadata().getSecurity().createUser("admin", "admin", "writer");
+
+      // REOPEN THE DATABASE WITH NEW CREDENTIALS
+      db.close();
+      db.open(dbUser, dbPassword);
+
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on creation of admin user", e);
+    }
   }
 
   @Override
