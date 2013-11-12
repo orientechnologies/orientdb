@@ -918,13 +918,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
-
+      throw new OStorageException("Error while removing cluster '" + iClusterId + "'", e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return false;
   }
 
   public boolean dropDataSegment(final String iName) {
