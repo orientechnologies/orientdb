@@ -84,6 +84,7 @@ public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbA
 				urlConnection.connect();
 				File zip = WUtils.unpackArchive(remoteUrl, new File("download"));
 				zip.delete();
+				monitor.getUpdater().run();
 			}
 
 			message.field("type", "news");
