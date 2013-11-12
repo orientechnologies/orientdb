@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -655,10 +656,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         // We get only subset contained in processed sub query.
         for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
           final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
+          if (fieldValue instanceof OSQLQuery<?>)
+            return false;
+
           if (fieldValue != null)
             keyParams.add(fieldValue);
-          else
+          else {
+            if (searchResult.lastValue instanceof OSQLQuery<?>)
+              return false;
+
             keyParams.add(searchResult.lastValue);
+          }
         }
 
         INDEX_OPERATION_TYPE opType = null;
