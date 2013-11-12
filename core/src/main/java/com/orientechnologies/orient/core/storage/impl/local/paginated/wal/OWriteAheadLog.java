@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
@@ -347,9 +348,7 @@ public class OWriteAheadLog {
 
         logSize -= first.filledUpTo();
 
-        if (!first.delete(false))
-          OLogManager.instance().error(this, "Log segment %s can not be removed from WAL", first.getPath());
-
+        first.delete(false);
         logSegments.remove(0);
 
         fixMasterRecords();
@@ -425,12 +424,13 @@ public class OWriteAheadLog {
       close(flush);
 
       for (LogSegment logSegment : logSegments)
-        if (!logSegment.delete(false))
-          OLogManager.instance().error(this, "Can not delete WAL segment %s for storage %s", logSegment.getPath(),
-              storage.getName());
+        logSegment.delete(false);
 
-      if (!masterRecordFile.delete())
-        OLogManager.instance().error(this, "Can not delete WAL state file for %s storage", storage.getName());
+      boolean deleted = masterRecordFile.delete();
+      while (!deleted) {
+        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+        deleted = !masterRecordFile.exists() || masterRecordFile.delete();
+      }
     }
   }
 
@@ -736,9 +736,14 @@ public class OWriteAheadLog {
       return prevOffset;
     }
 
-    public boolean delete(boolean flush) throws IOException {
+    public void delete(boolean flush) throws IOException {
       close(flush);
-      return file.delete();
+
+      boolean deleted = file.delete();
+      while (!deleted) {
+        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+        deleted = !file.exists() || file.delete();
+      }
     }
 
     public String getPath() {
