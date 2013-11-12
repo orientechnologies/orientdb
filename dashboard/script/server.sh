@@ -4,29 +4,29 @@
 #
 
 echo "           .                                              "
-echo "          .\`        \`                                     "
-echo "          ,      \`:.                                      "
-echo "         \`,\`    ,:\`                                       "
+echo "          .\`        \`                                   "
+echo "          ,      \`:.                                     "
+echo "         \`,\`    ,:\`                                    "
 echo "         .,.   :,,                                        "
 echo "         .,,  ,,,                                         "
-echo "    .    .,.:::::  \`\`\`\`                                   "
-echo "    ,\`   .::,,,,::.,,,,,,\`;;                      .:      "
-echo "    \`,.  ::,,,,,,,:.,,.\`  \`                       .:      "
-echo "     ,,:,:,,,,,,,,::.   \`        \`         \`\`     .:      "
-echo "      ,,:.,,,,,,,,,: \`::, ,,   ::,::\`   : :,::\`  ::::     "
+echo "    .    .,.:::::  \`\`\`\`                               "
+echo "    ,\`   .::,,,,::.,,,,,,\`;;                      .:    "
+echo "    \`,.  ::,,,,,,,:.,,.\`  \`                       .:   "
+echo "     ,,:,:,,,,,,,,::.   \`        \`         \`\`     .:  "
+echo "      ,,:.,,,,,,,,,: \`::, ,,   ::,::\`   : :,::\`  ::::  "
 echo "       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      "
 echo "        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      "
-echo "  \`     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      "
-echo "  \`,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      "
-echo "    .,,,,::,,,,,,,:  \`: , ,,  :     \`   :     :   .:      "
-echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:      "
-echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:      "
-echo "           ,,:\` \`,,.                                      "
-echo "          ,,,    .,\`                                      "
-echo "         ,,.     \`,                      S E R V E R        "
-echo "       \`\`        \`.                                       "
-echo "                 \`\`                                       "
-echo "                 \`                                        "
+echo "  \`     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:     "
+echo "  \`,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:     "
+echo "    .,,,,::,,,,,,,:  \`: , ,,  :     \`   :     :   .:    "
+echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:     "
+echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:     "
+echo "           ,,:\` \`,,.                                    "
+echo "          ,,,    .,\`               E N T E R P R I S E   "
+echo "         ,,.     \`,                      S E R V E R     "
+echo "       \`\`        \`.                                    "
+echo "                 \`\`                                     "
+echo "                 \`                                       "
 
 # resolve links - $0 may be a softlink
 PRG="$0"
@@ -56,7 +56,7 @@ fi
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_CONSOLE_LEVEL=info
 LOG_FILE_LEVEL=fine
-WWW_PATH=$ORIENTDB_HOME/src/site
+WWW_PATH=$ORIENTDB_HOME/www
 ORIENTDB_SETTINGS="-Dprofiler.enabled=true -Dcache.level1.enabled=false -Dcache.level2.strategy=1"
 JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError
 

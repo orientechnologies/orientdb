@@ -22,10 +22,6 @@
 			<includes>
 				<include>*.txt</include>
 			</includes>
-			<excludes>
-				<exclude>README.txt</exclude>
-				<exclude>LICENSE.txt</exclude>
-			</excludes>
 		</fileSet>
 		<fileSet>
 			<directory>config</directory>
@@ -39,6 +35,13 @@
 		<fileSet>
 			<directory>agents</directory>
 			<outputDirectory>agents</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>src/site</directory>
+			<outputDirectory>www</outputDirectory>
+			<excludes>
+				<exclude>dashboard/</exclude>
+			</excludes>
 		</fileSet>
 		<fileSet>
 			<directory>download</directory>
