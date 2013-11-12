@@ -11,7 +11,7 @@ module.exports = function (grunt) {
   // configurable paths
   var yeomanConfig = {
     app: 'app',
-    dist: 'dist'
+    dist: '../../../target/classes/www'
   };
 
   try {
@@ -200,7 +200,7 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           cwd: '<%= yeoman.app %>',
-          src: ['*.html', 'views/*.html'],
+          src: ['*.html', 'views/{,*/,*/*/}*.html'],
           dest: '<%= yeoman.dist %>'
         }]
       }
@@ -282,20 +282,20 @@ module.exports = function (grunt) {
 
   grunt.registerTask('build', [
     'clean:dist',
-    'jshint',
-    'test',
-    'coffee',
-    'compass:dist',
+    //'jshint',
+    //'test',
+    //'coffee',
+    //'compass:dist',
     'useminPrepare',
-    'imagemin',
-    'cssmin',
+    //'imagemin',
+    //'cssmin',
     'htmlmin',
     'concat',
     'copy',
-    'cdnify',
-    'ngmin',
-    'uglify',
-    'rev',
+    //'cdnify',
+    //'ngmin',
+    //'uglify',
+    //'rev',
     'usemin'
   ]);
 
