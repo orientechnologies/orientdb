@@ -37,7 +37,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
     super("database.backup");
   }
 
-  private static final String[] NAMES = { "POST|backup/*" };
+  private static final String[] NAMES = { "GET|backup/*","POST|backup/*" };
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {

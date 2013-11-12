@@ -197,6 +197,10 @@ monitor.factory('Server', function ($http, $resource, Metric) {
 //                error(data);
             });
     }
+    resource.backUpDb = function (server,db, callback, error) {
+        var url = API + 'passThrough/monitor/' + server.name + '/backup/' + db;
+        window.open(url);
+    }
     resource.saveConfiguration = function (server, config, callback, error) {
         var url = API + 'configuration/monitor/' + server.name + '';
 

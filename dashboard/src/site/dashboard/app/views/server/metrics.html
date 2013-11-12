@@ -61,30 +61,31 @@
                             </a>
                         </div>
                     </div>
-                    <div class="widget-body">
-                        <form class="form-horizontal" name="metricForm">
+                    <div class="widget-body ">
+                        <form class="form-horizontal well" name="metricForm">
                             <div class="control-group">
                                 <label class="control-label" for="inputName">{{ 'dashboard.metric.name' | i18n
                                     }}</label>
 
                                 <div class="controls">
-                                    <input type="text" id="inputName" required placeholder="Name"
+                                    <input type="text" id="inputName" class="input-large" required placeholder="Name"
                                            ng-model="selectedConfig.name">
-                                    <button class="btn pull-right" ng-click="addConfig()"><span
-                                            class="icon-plus"></span>
-                                    </button>
                                 </div>
 
                             </div>
                             <div class="control-group">
                                 <label class="control-label" for="inputName">{{ 'dashboard.metric.server' | i18n
                                     }}</label>
+
                                 <div class="controls">
-                                    <select ng-model="selectedConfig.server" required class="span3"
+                                    <select ng-model="selectedConfig.server" required class="input-large"
                                             ng-options="s['@rid'] as s.name for s in servers"
                                             data-placeholder="Pick a Server">
 
                                     </select>
+                                    <button class="btn pull-right" ng-click="addConfig()"><span
+                                            class="icon-plus"></span>
+                                    </button>
                                 </div>
 
                             </div>
@@ -97,7 +98,8 @@
                                 <select ui-select2 ng-model="conf.field"
                                         required class="span4"
                                         data-placeholder="Pick a Metric">
-                                    <option ng-repeat="f in fields | mvalue:mType:conf.name" value="{{ f }}">{{ f }}</option>
+                                    <option ng-repeat="f in fields | mvalue:mType:conf.name" value="{{ f }}">{{ f }}
+                                    </option>
                                 </select>
 
                                 <div class="pull-right">

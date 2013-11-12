@@ -115,7 +115,7 @@ public class EventHelper {
 			configuration.field("starttlsEnable", true);
 			configuration.field("auth", true);
 			configuration.field("port", 25);
-			configuration.field("host", "192.168.0.50");
+			configuration.field("host", "");
 			configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
 			configuration.field("@type", "d");
 

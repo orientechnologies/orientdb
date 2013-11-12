@@ -102,7 +102,7 @@ body {
 button.btn-primary, .btn.btn-primary {
     background: none repeat scroll 0 0 #A5360F;
     color: #FFFFFF;
-    border-radius: 5px !important;
+    border-radius: 0 0 0 0 !important;
 }
 
 .btn-block {
@@ -114,7 +114,7 @@ button.btn-primary, .btn.btn-primary {
 }
 
 .monitor-app {
-    margin: 53px auto 0;
+    margin: 30px auto 0;
     min-height: 100%;
 }
 
@@ -138,7 +138,7 @@ button.btn-primary, .btn.btn-primary {
 }
 
 .table th {
-    background: none repeat scroll 0 0 #4E4E4E;
+    background: none repeat scroll 0 0 #D3D3D3;
     /*color: #FFFFFF;*/
     font-size: 13px;
     padding-bottom: 6px;
@@ -191,7 +191,7 @@ button.btn-primary, .btn.btn-primary {
     background-color: #D3D3D3;
     background-image: none;
     border: 0 none;
-    border-radius: 4px !important;
+    border-radius: 0 0 0 0 !important;
     box-shadow: none !important;
     color: #333333;
     cursor: pointer;
@@ -208,7 +208,7 @@ button.btn-primary, .btn.btn-primary {
     background-color: #D3D3D3;
     background-image: none;
     border: 0 none;
-    border-radius: 4px !important;
+    border-radius: 0 0 0 0 !important;
     box-shadow: none !important;
     color: #333333;
     cursor: pointer;
@@ -230,7 +230,7 @@ button.btn-primary, .btn.btn-primary {
 button.btn-inverse, .btn.btn-inverse {
     background: none repeat scroll 0 0 #A5360F;
     color: #FFFFFF;
-    border-radius: 5px !important;
+    border-radius: 0 0 0 0 !important;
     margin-right: 5px;
 }
 

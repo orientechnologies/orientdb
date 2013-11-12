@@ -22,8 +22,8 @@ echo    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:
 echo      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:      
 echo           ,::::,,,. `:   ,,   :::::    :     :   .:      
 echo           ,,:` `,,.                                      
-echo          ,,,    .,`                                      
-echo         ,,.     `,                D B   S E R V E R        
+echo          ,,,    .,`             E N T E R P R I S E                         
+echo         ,,.     `,                   S E R V E R        
 echo       ``        `.                                       
 echo                 ``                                       
 echo                 `                                        
@@ -69,7 +69,7 @@ if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-ser
 set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
 set LOG_CONSOLE_LEVEL=info
 set LOG_FILE_LEVEL=fine
-set WWW_PATH=%ORIENTDB_HOME%/src/site
+set WWW_PATH=%ORIENTDB_HOME%/www
 set ORIENTDB_SETTINGS=-Dprofiler.enabled=true -Dcache.level1.enabled=false -Dcache.level2.strategy=1
 set JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError
 
