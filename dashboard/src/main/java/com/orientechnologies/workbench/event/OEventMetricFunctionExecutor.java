@@ -34,8 +34,8 @@ import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
 
 @EventConfig(when = "MetricsWhen", what = "FunctionWhat")
 public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
-	Map<String, Object> body2name = new HashMap<String, Object>();
-	private ODatabaseDocumentTx db;
+	Map<String, Object>					body2name	= new HashMap<String, Object>();
+	private ODatabaseDocumentTx	db;
 
 	public OEventMetricFunctionExecutor(ODatabaseDocumentTx database) {
 
@@ -45,19 +45,25 @@ public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
 
-		ODocument server = when.field("server");
-		this.body2name.clear();
-
-		if (server != null) {
-			this.body2name.put("server", server);
-
-		}
-		String metricName = source.field("name");
-		this.body2name.put("metric", metricName);
-
-		// pre-conditions
 		if (canExecute(source, when)) {
-			executeFunction(what);
+			this.body2name.clear();
+
+			ODocument snapshot = source.field("snapshot");
+			if (snapshot != null) {
+				ODocument server = snapshot.field("server");
+				if (server != null) {
+					String serverName = server.field("name");
+					this.body2name.put("server", serverName);
+
+				}
+			}
+			String metricName = source.field("name");
+			this.body2name.put("metric", metricName);
+
+			// pre-conditions
+			if (canExecute(source, when)) {
+				executeFunction(what);
+			}
 		}
 	}
 
@@ -76,12 +82,10 @@ public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 				args[i++] = EventHelper.resolve(body2name, arg);
 		}
 
-		final OScriptManager scriptManager = Orient.instance()
-				.getScriptManager();
+		final OScriptManager scriptManager = Orient.instance().getScriptManager();
 		final ScriptEngine scriptEngine = scriptManager.getEngine(language);
 
-		db.checkSecurity(ODatabaseSecurityResources.FUNCTION,
-				ORole.PERMISSION_READ, name);
+		db.checkSecurity(ODatabaseSecurityResources.FUNCTION, ORole.PERMISSION_READ, name);
 
 		try {
 			// COMPILE FUNCTION LIBRARY

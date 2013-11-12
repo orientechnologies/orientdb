@@ -49,7 +49,8 @@ public class EventHelper {
 
 		for (String word : splitBody) {
 			String resolvedWord = (String) resolve(body2name, word);
-			body = body.replace(word, resolvedWord);
+			if (resolvedWord != null)
+				body = body.replace(word, resolvedWord);
 		}
 
 		return body;
@@ -236,7 +237,7 @@ public class EventHelper {
 						proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
 					} catch (Exception e) {
 						e.printStackTrace();
-						//execute without proxy
+						// execute without proxy
 						return null;
 					}
 				}

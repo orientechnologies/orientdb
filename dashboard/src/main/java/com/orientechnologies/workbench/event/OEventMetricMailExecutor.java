@@ -43,7 +43,6 @@ public class OEventMetricMailExecutor extends OEventMetricExecutor {
 
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
-		;
 
 		if (canExecute(source, when)) {
 			this.body2name.clear();

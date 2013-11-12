@@ -161,7 +161,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         })
     };
-    $scope.openLegend = function(){
+    $scope.openLegend = function () {
         modalScope = $scope.$new(true);
         modalScope.parentScope = $scope;
         var modalPromise = $modal({template: 'views/server/maillegend.html', scope: modalScope});
@@ -171,26 +171,46 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
 
     $scope.newEvent = function () {
-        var object = {"name": "", '@rid': "#-1:-1", "@class": "Event"};
+
+
+        modalScope = $scope.$new(true);
+        modalScope.parentScope = $scope;
+        var modalPromise = $modal({template: 'views/server/newevent.html', scope: modalScope});
+        $q.when(modalPromise).then(function (modalEl) {
+            modalEl.modal('show');
+        });
+    }
+
+    $scope.createNewEvent = function (name) {
+        var object = {"name": name, '@rid': "#-1:-1", "@class": "Event"};
         $scope.results.push(object);
     }
-}
-])
-;
+    $scope.checkExist = function (name) {
+        var check = false;
+        for (var entry in $scope.resultTotal) {
+            if ($scope.resultTotal[entry].name == name) {
+                check = true;
+            }
+
+        }
+        return check;
+    }
+}]);
+dbModule.controller("NewEventController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
+
+    $scope.eventName = undefined;
+    $scope.submit = function () {
+        if (!$scope.parentScope.checkExist($scope.eventName)) {
+            $scope.parentScope.createNewEvent($scope.eventName);
+            $scope.hide();
+        }
+    }
+
+}]);
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
     $scope.levels = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
-//    $scope.alertValues = ["Greater then", "Less then"];
-
-
-//    $scope.checkAlertValue = function () {
-//        if ($scope.eventWhen['alertValue'] == undefined) {
-//            $scope.eventWhen['type'] = null;
-//            return true;
-//        }
-//        return false;
-//    }
 
     $scope.checkValidForm = function () {
 
