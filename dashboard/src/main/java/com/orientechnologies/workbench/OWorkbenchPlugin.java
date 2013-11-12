@@ -169,7 +169,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     // .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
     //
     Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
-    Orient.instance().getTimer().schedule(new OWorkbenchMessageTask(this), 6000, 6000);
+    Orient.instance().getTimer().schedule(new OWorkbenchMessageTask(this), 600000, 600000);
   }
 
   private void registerExecutors(ODatabaseDocumentTx database) {

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.workbench.http;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.Proxy;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
+import com.orientechnologies.workbench.WUtils;
 import com.orientechnologies.workbench.event.EventHelper;
 
 public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbAbstract {
@@ -80,12 +82,15 @@ public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbA
 					urlConnection = remoteUrl.openConnection();
 				}
 				urlConnection.connect();
-				InputStream is = urlConnection.getInputStream();
+				File zip = WUtils.unpackArchive(remoteUrl, new File("download"));
+				zip.delete();
+				/*InputStream is = urlConnection.getInputStream();
 				ZipInputStream stream = new ZipInputStream(is);
 
 				// create a buffer to improve copy performance later.
 				byte[] buffer = new byte[2048];
 				ZipEntry entry;
+				stream.available();
 				while ((entry = stream.getNextEntry()) != null) {
 					String s = String.format("Entry: %s len %d added %TD", entry.getName(), entry.getSize(), new Date(entry.getTime()));
 					System.out.println(s);
@@ -106,7 +111,7 @@ public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbA
 						if (output != null)
 							output.close();
 					}
-				}
+				}*/
 			}
 
 			message.field("type", "news");
