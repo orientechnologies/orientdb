@@ -15,51 +15,83 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
 import java.net.SocketException;
 import java.util.Date;
+import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticatedDbAbstract implements OCommandOutputListener {
+public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticatedServerAbstract implements OCommandOutputListener {
+  public OServerCommandPostBackupDatabase() {
+    super("database.backup");
+  }
+
   private static final String[] NAMES = { "POST|backup/*" };
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: backup/<database>/[<name>][?params*]");
+    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: backup/<database>");
 
-    if (urlParts.length > 2) {
-    } else {
-      backupStandard(iRequest, iResponse);
+    iRequest.data.commandInfo = "Database backup";
+    try {
+      iRequest.databaseName = urlParts[1];
+
+      final ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
+
+      try {
+        iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
+        iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
+        iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
+        iResponse.writeLine("Date: " + new Date());
+        iResponse.writeLine(null);
+        database.backup(iResponse.getOutputStream(), null, null);
+
+        try {
+          iResponse.flush();
+        } catch (SocketException e) {
+        }
+      } finally {
+        if (database != null)
+          database.close();
+      }
+    } catch (Exception e) {
+      iResponse.sendStream(404, "File not found", null, null, 0);
     }
     return false;
   }
 
-  protected void backupStandard(final OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException,
-      IOException {
-    iRequest.data.commandInfo = "Database backup";
-    final ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
-    try {
-      iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
-      iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);
-      iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
-      iResponse.writeLine("Date: " + new Date());
-      iResponse.writeLine(null);
-      database.backup(iResponse.getOutputStream(), null, null);
+  protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
+    // after authentication, if current login user is different compare with current DB user, reset DB user to login user
+    ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
-      try {
-        iResponse.flush();
-      } catch (SocketException e) {
+    if (localDatabase == null) {
+      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, parts.get(0), parts.get(1));
+    } else {
+
+      String currentUserId = iRequest.data.currentUserId;
+      if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+          ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
+          localDatabase.setUser(new OUser(userDoc));
+        }
       }
-    } finally {
-      if (database != null)
-        database.close();
     }
+
+    iRequest.data.lastDatabase = localDatabase.getName();
+    iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
   }
 
   @Override
