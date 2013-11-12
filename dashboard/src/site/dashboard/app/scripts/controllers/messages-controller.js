@@ -1,5 +1,5 @@
 var dbModule = angular.module('messages.controller', []);
-dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$location', '$routeParams', 'CommandLogApi', 'Monitor', 'MetricConfig', '$modal', '$q', 'Message', function ($scope, $http, $route, $location, $routeParams, CommandLogApi, Monitor, MetricConfig, $modal, $q, Message) {
+dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$location', '$routeParams', 'CommandLogApi', 'Monitor', 'MetricConfig', '$modal', '$q', 'Message', '$odialog', function ($scope, $http, $route, $location, $routeParams, CommandLogApi, Monitor, MetricConfig, $modal, $q, Message, $odialog) {
     $scope.countPage = 5;
     $scope.countPageOptions = [5, 10, 20];
     $scope.unread = 'unread';
@@ -156,20 +156,35 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
     }
 
     $scope.installMsg = function (msg) {
-        Message.installMsg(msg, function () {
-            if (msg['type'] == 'chart') {
 
-                $.gritter.add({
-                    // (string | mandatory) the heading of the notification
-                    title: 'Attention',
-                    class_name: 'onotification',
-                    // (string | mandatory) the text inside the notification
-                    text: 'New configuration installed (<a href="#/dashboard/metrics">Metrics</a>)'
+        $odialog.confirm({title: 'Install ' + msg.type, body: 'Are you sure?', success: function () {
+            Message.installMsg(msg, function () {
+                if (msg['type'] == 'chart') {
 
-                });
-                $scope.refreshAll();
-            }
-        })
+                    $.gritter.add({
+                        // (string | mandatory) the heading of the notification
+                        title: 'Attention',
+                        class_name: 'onotification',
+                        // (string | mandatory) the text inside the notification
+                        text: 'New configuration installed (<a href="#/dashboard/metrics">Metrics</a>)'
+
+                    });
+                    $scope.refreshAll();
+                }
+                if (msg['type'] == 'update') {
+                    $.gritter.add({
+                        // (string | mandatory) the heading of the notification
+                        title: 'Attention',
+                        class_name: 'onotification',
+                        // (string | mandatory) the text inside the notification
+                        text: 'Updated installed. Restart your workbench for the updates.'
+
+                    });
+                    $scope.refreshAll();
+                }
+            })
+        }});
+
     }
 
 }]);

@@ -5,13 +5,21 @@
     </h3>
     <hr>
     <div class="row-fluid" ng-controller="EventsController">
-        <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveEvents()"> <i
-                class="icon-save"></i> Save</a>
-        <a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i
-                class="icon-refresh"></i> Refresh</a>
-        <a href="javascript:void(0)" class="btn" ng-click="newEvent()"> <i
-                class="icon-plus"></i> New Event</a>
-        <input class="input input_functions" placeholder="Search" ng-model="queryy" style="height: 26px;">
+        <div class="span4">
+
+            <a href="javascript:void(0)" class="btn btn-primary" ng-click="saveEvents()"> <i
+                    class="icon-save"></i> Save</a>
+            <a href="javascript:void(0)" class="btn" ng-click="refreshPage()"> <i
+                    class="icon-refresh"></i> Refresh</a>
+            <a href="javascript:void(0)" class="btn" ng-click="newEvent()"> <i
+                    class="icon-plus"></i> New Event</a>
+        </div>
+
+        <div class="input-append span6 ">
+            <input type="text" class="input-xlarge" placeholder="Search" ng-model="queryy">
+            <span class="add-on"><i class="icon-search"></i></span>
+        </div>
+        <!--<input class="input input_functions" placeholder="Search" ng-model="queryy" style="height: 26px;">-->
 
         <br>
 
@@ -67,7 +75,7 @@
                         <a class="btn btn-events"
                            ng-click="openLegend()"> <i
                                 class="icon-info-sign"></i>
-                            </a>
+                        </a>
 
 
                     </div>
@@ -90,7 +98,8 @@
                             href="javascript:void(0)" ng-click="switchPage($index+1)">{{ $index+1 }}</a></li>
                 <li><a href="javascript:void(0)" ng-click="next()">»</a></li>
             </ul>
-            <select class="input-small pagination_limit" ng-model="countPage" style="vertical-align: top;height: 40px; width: 50px; ">
+            <select class="input-small pagination_limit" ng-model="countPage"
+                    style="vertical-align: top;height: 40px; width: 50px; ">
                 <option ng-repeat="options in countPageOptions"> {{ options }}</option>
             </select>
         </div>
