@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.orientechnologies</groupId>
-	<version>1.6.1-SNAPSHOT</version>
+	<version>1.6.1</version>
 	<artifactId>orientdb-workbench</artifactId>
 
 	<name>OrientDB Workbench</name>
@@ -16,6 +16,7 @@
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
 		<osgi.import>*</osgi.import>
 		<osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
+		<orientdb.version>1.6.1-SNAPSHOT</orientdb.version>
 		<blueprints.version>2.5.0-SNAPSHOT</blueprints.version>
 	</properties>
 	<scm>
@@ -28,22 +29,22 @@
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-server</artifactId>
-			<version>${project.version}</version>
+			<version>${orientdb.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-core</artifactId>
-			<version>${project.version}</version>
+			<version>${orientdb.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-enterprise</artifactId>
-			<version>${project.version}</version>
+			<version>${orientdb.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orient-commons</artifactId>
-			<version>${project.version}</version>
+			<version>${orientdb.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
@@ -90,22 +91,22 @@
 				</configuration>
 			</plugin>
 			<plugin>
-			    <artifactId>maven-assembly-plugin</artifactId>
-			    <version>2.2-beta-4</version>
-			    <executions>
-			        <execution>
-			            <id>user_distribution</id>
-			            <phase>package</phase>
-			            <goals>
-			                <goal>attached</goal>
-			            </goals>
-			            <configuration>
-			                <descriptors>
-			                    <descriptor>src/main/assembly/dist.xml</descriptor>
-			                </descriptors>
-			            </configuration>
-			        </execution>
-			    </executions>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2-beta-4</version>
+				<executions>
+					<execution>
+						<id>user_distribution</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attached</goal>
+						</goals>
+						<configuration>
+							<descriptors>
+								<descriptor>src/main/assembly/dist.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

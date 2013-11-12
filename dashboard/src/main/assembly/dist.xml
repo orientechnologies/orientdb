@@ -2,12 +2,17 @@
 <assembly xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/xsd/assembly-1.1.1.xsd">
 
-	<id>dist</id>
+	<id></id>
 	<formats>
 		<format>dir</format>
+		<format>zip</format>
+		<format>tar.gz</format>
 	</formats>
 	<dependencySets>
 		<dependencySet>
+			<excludes>
+				<exclude>com.orientechnologies:orientdb-workbench:jar</exclude>
+			</excludes>
 			<outputDirectory>lib/</outputDirectory>
 		</dependencySet>
 	</dependencySets>
@@ -29,11 +34,21 @@
 		<fileSet>
 			<directory>script</directory>
 			<outputDirectory>bin</outputDirectory>
+			<fileMode>744</fileMode>
+		</fileSet>
+		<fileSet>
+			<directory>agents</directory>
+			<outputDirectory>agents</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>download</directory>
+			<outputDirectory>download</outputDirectory>
 		</fileSet>
 	</fileSets>
 	<files>
 		<file>
 			<source>target/${pom.artifactId}-${pom.version}.jar</source>
+			<destName>${pom.artifactId}.jar</destName>
 			<outputDirectory>plugins/</outputDirectory>
 		</file>
 	</files>
