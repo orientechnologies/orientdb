@@ -21,6 +21,7 @@ import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
 import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
 import com.orientechnologies.agent.http.command.OServerCommandGetLog;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -37,98 +38,100 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
-	private OServer	server;
-	private String	license;
+  private OServer server;
+  private String  license;
 
-	public OEnterpriseAgent() {
-	}
+  public OEnterpriseAgent() {
+  }
 
-	@Override
-	public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-		server = oServer;
-		for (OServerParameterConfiguration p : iParams) {
-			if (p.name.equals("license"))
-				license = p.value;
-		}
-	}
+  @Override
+  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    server = oServer;
+    for (OServerParameterConfiguration p : iParams) {
+      if (p.name.equals("license"))
+        license = p.value;
+    }
+  }
 
-	@Override
-	public String getName() {
-		return "enterprise-agent";
-	}
+  @Override
+  public String getName() {
+    return "enterprise-agent";
+  }
 
-	@Override
-	public void startup() {
-		checkLicense();
-		installProfiler();
-		installCommands();
-	}
+  @Override
+  public void startup() {
+    checkLicense();
+    installProfiler();
+    installCommands();
+  }
 
-	@Override
-	public void shutdown() {
-		uninstallCommands();
-		uninstallProfiler();
-	}
+  @Override
+  public void shutdown() {
+    uninstallCommands();
+    uninstallProfiler();
+  }
 
-	private void installCommands() {
-		final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-		if (listener == null)
-			throw new OConfigurationException("HTTP listener not found");
+  private void installCommands() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener == null)
+      throw new OConfigurationException("HTTP listener not found");
 
-		listener.registerStatelessCommand(new OServerCommandGetProfiler());
-		listener.registerStatelessCommand(new OServerCommandGetDistributed());
-		listener.registerStatelessCommand(new OServerCommandGetLog());
-		listener.registerStatelessCommand(new OServerCommandConfiguration());
-	}
+    listener.registerStatelessCommand(new OServerCommandGetProfiler());
+    listener.registerStatelessCommand(new OServerCommandGetDistributed());
+    listener.registerStatelessCommand(new OServerCommandGetLog());
+    listener.registerStatelessCommand(new OServerCommandConfiguration());
+    listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
+  }
 
-	private void uninstallCommands() {
-		final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
-		if (listener == null)
-			throw new OConfigurationException("HTTP listener not found");
+  private void uninstallCommands() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener == null)
+      throw new OConfigurationException("HTTP listener not found");
 
-		listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
-		listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
-		listener.unregisterStatelessCommand(OServerCommandGetLog.class);
-		listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
-	}
+    listener.unregisterStatelessCommand(OServerCommandGetProfiler.class);
+    listener.unregisterStatelessCommand(OServerCommandGetDistributed.class);
+    listener.unregisterStatelessCommand(OServerCommandGetLog.class);
+    listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
+    listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
+  }
 
-	private void installProfiler() {
-		final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
+  private void installProfiler() {
+    final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-		Orient.instance().setProfiler(new OEnterpriseProfiler(60, 60, currentProfiler));
-		Orient.instance().getProfiler().startup();
+    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 60, currentProfiler));
+    Orient.instance().getProfiler().startup();
 
-		currentProfiler.shutdown();
-	}
+    currentProfiler.shutdown();
+  }
 
-	private void uninstallProfiler() {
-		final OProfilerMBean currentProfiler = Orient.instance().getProfiler();
+  private void uninstallProfiler() {
+    final OProfilerMBean currentProfiler = Orient.instance().getProfiler();
 
-		Orient.instance().setProfiler(new OProfiler((OProfiler) currentProfiler));
-		Orient.instance().getProfiler().startup();
+    Orient.instance().setProfiler(new OProfiler((OProfiler) currentProfiler));
+    Orient.instance().getProfiler().startup();
 
-		currentProfiler.shutdown();
-	}
+    currentProfiler.shutdown();
+  }
 
-	private void checkLicense() {
-		try {
-			OLogManager.instance().warn(null, "License check ok. It expires in %d days", OL.checkDate(license));
+  private void checkLicense() {
+    try {
+      OLogManager.instance().warn(null, "License check ok. It expires in %d days", OL.checkDate(license));
 
-			Orient
-					.instance()
-					.getProfiler()
-					.registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
-							METRIC_TYPE.TEXT, new OProfilerHookValue() {
+      Orient
+          .instance()
+          .getProfiler()
+          .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
+              METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
-								@Override
-								public Object getValue() {
-									return license;
-								}
-							});
+                @Override
+                public Object getValue() {
+                  return license;
+                }
+              });
 
-		} catch (OL.OLicenseException e) {
-			OLogManager.instance().warn(null, "Error on validating Enterprise License (%s): enterprise features will be disabled",
-					e.getMessage());
-		}
-	}
+    } catch (OL.OLicenseException e) {
+      OLogManager.instance().warn(null, "Error on validating Enterprise License (%s): enterprise features will be disabled",
+          e.getMessage());
+    }
+  }
 }
