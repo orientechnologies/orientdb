@@ -219,7 +219,7 @@ public class EventHelper {
 		}
 	}
 
-	private static Proxy retrieveProxy(ODatabaseDocumentTx db) {
+	public static Proxy retrieveProxy(ODatabaseDocumentTx db) {
 		String sql = "select from  UserConfiguration where user.name = 'admin'";
 		Proxy proxy = null;
 		OSQLSynchQuery<Object> osql = new OSQLSynchQuery<Object>(sql);

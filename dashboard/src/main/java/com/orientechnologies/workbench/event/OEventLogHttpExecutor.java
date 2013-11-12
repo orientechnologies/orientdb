@@ -58,7 +58,7 @@ public class OEventLogHttpExecutor extends OEventLogExecutor {
 		this.body2name.put("metric", metricName);
 
 		String sourcelevel = (String) source.field("levelDescription");
-		this.body2name.put("Log Value", sourcelevel);
+		this.body2name.put("logvalue", sourcelevel);
 
 		// pre-conditions
 		if (canExecute(source, when)) {

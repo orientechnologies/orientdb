@@ -59,12 +59,12 @@
                 <tbody>
                 <tr ng-repeat="message in msgs"
                     ng-class="{active : message['@rid']==selectedName['@rid'], 'unread' : !message.read}"
-                    ng-click="openMessageText(message)">
+                    >
                     </td>
-                    <td><span class="label"
+                    <td ng-click="openMessageText(message)"><span class="label"
                               style="text-align: center;width: 50px;display: block">{{message['type']}}</span></td>
-                    <td>{{message['subject']}}</td>
-                    <td>{{message['date']}}</td>
+                    <td ng-click="openMessageText(message)">{{message['subject']}}</td>
+                    <td ng-click="openMessageText(message)">{{message['date']}}</td>
                     <td>
                         <button type="button" ng-click="installMsg(message)"
                                 class="btn btn-success"

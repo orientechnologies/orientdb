@@ -161,6 +161,14 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         })
     };
+    $scope.openLegend = function(){
+        modalScope = $scope.$new(true);
+        modalScope.parentScope = $scope;
+        var modalPromise = $modal({template: 'views/server/maillegend.html', scope: modalScope});
+        $q.when(modalPromise).then(function (modalEl) {
+            modalEl.modal('show');
+        });
+    }
 
     $scope.newEvent = function () {
         var object = {"name": "", '@rid': "#-1:-1", "@class": "Event"};
@@ -235,6 +243,7 @@ dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$
 
     }
 
+
 }
 ]);
 
@@ -263,12 +272,7 @@ dbModule.controller("MailWhatController", ['$scope', '$http', '$location', '$rou
 
     $scope.properties = $scope.eventWhat;
 
-    $scope.openLegend = function(){
-        var modalPromise = $modal({template: 'views/server/maillegend.html', scope: modalScope});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
-    }
+
 }]);
 dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 

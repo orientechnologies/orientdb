@@ -39,22 +39,10 @@ public abstract class OEventLogExecutor implements OEventExecutor {
 				return false;
 			}
 		}
-		if (levelType != null
-				&& !levelType.isEmpty()) {
-			// Integer level = new Integer(levelType);
-			// Integer logLevel = new Integer(sourcelevel);
-
+		if (levelType != null && !levelType.isEmpty()) {
 			if (levelType.equalsIgnoreCase(sourcelevel))
 				return true;
 			return false;
-			// if (operator.equalsIgnoreCase("greater then")
-			// && sourcelevel >= level) {
-			// return true;
-			// } else if (operator.equalsIgnoreCase("less then")
-			// && sourcelevel <= level) {
-			// return true;
-			// }
-			// return false;
 		}
 		return false;
 
