@@ -45,7 +45,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
     $scope.getServerMetrics = function () {
 
 
-        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"] ;
+        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
 
         var cfg = MetricConfig.create();
         cfg.name = $i18n.get('server.operations');
@@ -71,7 +71,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         }
     });
     $scope.getDbMetrics = function (db) {
-        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"] ;
+        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
         var cfg = MetricConfig.create();
         cfg.name = $i18n.get('db.operations');
         cfg.server = $scope.server['@rid'];
@@ -88,6 +88,11 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         $scope.dbselected = db;
 
     }
+    $scope.downloadDb = function (db) {
+        $scope.dbselected = db;
+
+        Server.backUpDb($scope.server, db);
+    }
     $scope.$watch('dbselected', function (data) {
 
         if (data) {
@@ -98,8 +103,6 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
         if (data)
             $scope.getServerMetrics();
     });
-
-
 
 
 });
