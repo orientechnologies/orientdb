@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -38,7 +39,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
 
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
 
-    final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+    String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
     final String text = urlParts[3];
 
@@ -52,7 +53,9 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      response = (List<OIdentifiable>) db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan));
+      final OQueryAbstract command = new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan);
+      response = (List<OIdentifiable>) db.query(command);
+      fetchPlan = command.getFetchPlan();
 
       iResponse.writeRecords(response, fetchPlan);
 
