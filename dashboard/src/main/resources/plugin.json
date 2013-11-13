@@ -1,5 +1,5 @@
 {
-	"name" : "enterprise-workbench",
+	"name" : "workbench",
 	"version" : "1.6.1",
 	"javaClass": "com.orientechnologies.workbench.OWorkbenchPlugin",
 	"parameters" : {
