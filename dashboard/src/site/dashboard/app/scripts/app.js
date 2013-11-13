@@ -4,8 +4,8 @@ angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.c
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
-                templateUrl: 'views/login.html',
-                controller: 'LoginController'
+                templateUrl: 'views/main.html',
+                controller: 'ServerMonitorController'
             })
             .when('/login', {
                 templateUrl: 'views/login.html',
@@ -52,3 +52,7 @@ angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.c
                 redirectTo: '/'
             });
     });
+
+
+$('*', '.modal').on('show', function(e) {e.stopPropagation();}).on('hide', function(e) {e.stopPropagation();});
+$('*', '.popover').on('show', function(e) {e.stopPropagation();}).on('hide', function(e) {console.log(e); e.stopPropagation();});

@@ -47,7 +47,7 @@ public class OEventLogHttpExecutor extends OEventLogExecutor {
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
 
-		ODocument server = when.field("server");
+		ODocument server = source.field("server");
 		this.body2name.clear();
 
 		if (server != null) {

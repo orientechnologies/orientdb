@@ -14,7 +14,7 @@ spinner.factory('Login', function (Monitor, $location) {
     var login = {
         logged: true,
         username: "",
-            login: function (username, password) {
+        login: function (username, password) {
             var self = this;
             Monitor.connect(username, password, function (data) {
                 self.logged = true;
@@ -22,6 +22,15 @@ spinner.factory('Login', function (Monitor, $location) {
                 $location.path("/dashboard");
             }, function (data) {
 
+            });
+        },
+        current: function () {
+            var data = Monitor.get();
+
+
+            var self = this;
+            data.$then(function(){
+                self.username = data.currentUser;
             });
         },
         logout: function () {

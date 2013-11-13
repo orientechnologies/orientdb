@@ -9,7 +9,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.render = "bar";
         $scope.compress = "1"
         $scope.range = { start: moment().subtract('days', 6), end: moment()};
-        $scope.popover = { compress: $scope.compress, pollTime: $scope.pollTime, range: $scope.range};
+        $scope.popover = { compress: $scope.compress, pollTime: $scope.pollTime, range: $scope.range, render: $scope.render};
 
         $scope['fs'] = $scope.metricScope['fullScreen'];
         $scope.metricScope.$watch($scope.metric, function (data) {
@@ -201,7 +201,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     names.push(elem.name);
                     configs[elem.name] = elem.field;
                 });
-                var rid = metrics.server.name ? metrics.server['@rid'] : metrics.server;
+
                 var calculateArray = function (data) {
                     var tmpArr = new Array;
 
@@ -230,28 +230,30 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
 
                 }
                 var compress = $scope.compress || 'none';
-                if (!metrics.server.name) {
-                    Monitor.getServer(metrics.server, function (data) {
+                if (metrics.server) {
+                    if (!metrics.server.name) {
+                        Monitor.getServer(metrics.server, function (data) {
+                            if (databases) {
+                                var params = {  server: data.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: compress, from: dataFrom, to: dataTo };
+                            } else {
+                                var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: compress, from: dataFrom, to: dataTo };
+                            }
+
+                            Metric.get(params, function (data) {
+                                calculateArray(data);
+                            });
+                        });
+                    } else {
                         if (databases) {
-                            var params = {  server: data.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: compress, from: dataFrom, to: dataTo };
+                            var params = {  server: metrics.server.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, compress: compress, from: dataFrom, to: dataTo };
                         } else {
-                            var params = {  server: data.name, type: 'snapshot', kind: 'chrono', names: names, limit: '100', compress: compress, from: dataFrom, to: dataTo };
+                            var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names, compress: compress, from: dataFrom, to: dataTo };
                         }
 
                         Metric.get(params, function (data) {
                             calculateArray(data);
                         });
-                    });
-                } else {
-                    if (databases) {
-                        var params = {  server: metrics.server.name, databases: databases, type: 'snapshot', kind: 'chrono', names: names, compress: compress, from: dataFrom, to: dataTo };
-                    } else {
-                        var params = {  server: metrics.server.name, type: 'snapshot', kind: 'chrono', names: names, compress: compress, from: dataFrom, to: dataTo };
                     }
-
-                    Metric.get(params, function (data) {
-                        calculateArray(data);
-                    });
                 }
             }
         }
@@ -296,6 +298,9 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     }
     $scope.saveMetricConfig = function () {
         MetricConfig.saveConfig($scope.selectedConfig, function (data) {
+            ;
+            $scope.testMsg = 'Metrics configuration saved.';
+            $scope.testMsgClass = 'alert alert-setting'
             $scope.refreshMetricConfig();
         });
     }
@@ -329,6 +334,8 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 });
 
 app.controller('ConfigChartController', function ($scope, $location, $routeParams) {
+
+
 
 
 });

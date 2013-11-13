@@ -3,7 +3,16 @@ var monitor = angular.module('monitor.services', ['ngResource']);
 monitor.factory('Monitor', function ($http, $resource) {
 
     var db = "monitor"
-    var resource = $resource(API + 'database/:database');
+    var resource = $resource(API + 'database/:database', { },
+        {
+            get: {
+                method: 'GET',
+                isArray: false,
+                params: {
+                    database: db
+                }
+            }
+        });
 
     resource.connect = function (username, password, callback, error) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
@@ -197,7 +206,7 @@ monitor.factory('Server', function ($http, $resource, Metric) {
 //                error(data);
             });
     }
-    resource.backUpDb = function (server,db, callback, error) {
+    resource.backUpDb = function (server, db, callback, error) {
         var url = API + 'passThrough/monitor/' + server.name + '/backup/' + db;
         window.open(url);
     }

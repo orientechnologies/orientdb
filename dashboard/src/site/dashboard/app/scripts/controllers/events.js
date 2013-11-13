@@ -18,10 +18,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
     }
 
-    $scope.translate = function () {
-        var prova = "c'iao";
-        console.log(replace(/'/))
-    }
     $scope.refresh();
 
     $scope.getEvents = function () {
@@ -36,15 +32,16 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
                 $scope.selectedWhen = new Array;
                 $scope.selectedWhat = new Array;
                 $scope.resultTotal.forEach(function (elem, idx, array) {
-
+                    elem['idx'] = idx;
                     if (elem.when != undefined) {
-                        $scope.selectedWhen[elem.name] = elem.when['@class'];
+
+                        $scope.selectedWhen[idx] = elem.when['@class'];
                     }
                     if (elem.what != undefined) {
-                        $scope.selectedWhat[elem.name] = elem.what['@class'];
+                        $scope.selectedWhat[idx] = elem.what['@class'];
                     }
+                    $scope.count = idx;
                 })
-
             }
         });
     }
@@ -74,11 +71,10 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
     $scope.onWhenChange = function (event, eventWhen) {
         modalScope = $scope.$new(true);
-
         modalScope.eventParent = event;
-        if (event['when'] == undefined || event['when']['@class'] != $scope.selectedWhen[event.name] && $scope.selectedWhen[event.name] != undefined) {
+        if (event['when'] == undefined || event['when']['@class'] != $scope.selectedWhen[event['idx']] && $scope.selectedWhen[event['idx']] != undefined) {
             event['when'] = {};
-            event['when']['@class'] = $scope.selectedWhen[event.name].trim();
+            event['when']['@class'] = $scope.selectedWhen[event['idx']].trim();
             event['when']['@type'] = 'd';
         }
         else {
@@ -93,12 +89,13 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         });
     }
     $scope.onWhatChange = function (event, eventWhat) {
+
         modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
-        if (event['what'] == undefined || $scope.selectedWhat[event.name] != null && (event['what']['@class'] != $scope.selectedWhat[event.name].trim() && $scope.selectedWhat[event.name] != undefined)) {
+        if (event['what'] == undefined || $scope.selectedWhat[event['idx']] != null && (event['what']['@class'] != $scope.selectedWhat[event['idx']].trim() && $scope.selectedWhat[event['idx']] != undefined)) {
             event['what'] = {};
-            event['what']['@class'] = $scope.selectedWhat[event.name].trim();
+            event['what']['@class'] = $scope.selectedWhat[event['idx']].trim();
             event['what']['@type'] = 'd';
         }
         else {
@@ -139,7 +136,8 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         var resultsApp = JSON.parse(JSON.stringify($scope.results));
 
         resultsApp.forEach(function (elem, idx, array) {
-
+            delete elem['idx'];
+            console.log(elem['idx']);
             MetricConfig.saveConfig(elem, function (data) {
                     var index = array.indexOf(elem);
                     logs.push(data);
@@ -161,7 +159,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         })
     };
-    $scope.openLegend = function(){
+    $scope.openLegend = function () {
         modalScope = $scope.$new(true);
         modalScope.parentScope = $scope;
         var modalPromise = $modal({template: 'views/server/maillegend.html', scope: modalScope});
@@ -171,26 +169,50 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
 
     $scope.newEvent = function () {
-        var object = {"name": "", '@rid': "#-1:-1", "@class": "Event"};
+        $scope.count = $scope.count + 1;
+        var object = {"name": name, '@rid': "#-1:-1", 'idx': $scope.count, "@class": "Event"};
+        $scope.resultTotal.push(object);
+        $scope.results.push(object);
+
+//        modalScope = $scope.$new(true);
+//        modalScope.parentScope = $scope;
+//        var modalPromise = $modal({template: 'views/server/newevent.html', scope: modalScope});
+//        $q.when(modalPromise).then(function (modalEl) {
+//            modalEl.modal('show');
+//        });
+    }
+
+    $scope.createNewEvent = function (name) {
+        $scope.count = $scope.count + 1;
+        var object = {"name": '', '@rid': "#-1:-1", 'idx': $scope.count, "@class": "Event"};
         $scope.results.push(object);
     }
-}
-])
-;
+    $scope.checkExist = function (name) {
+//        var check = false;
+//        for (var entry in $scope.resultTotal) {
+//            if ($scope.resultTotal[entry].name == name) {
+//                check = true;
+//            }
+//
+//        }
+        return false;
+    }
+}]);
+dbModule.controller("NewEventController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
+
+    $scope.eventName = undefined;
+    $scope.submit = function () {
+//        if (!$scope.parentScope.checkExist($scope.eventName)) {
+        $scope.parentScope.createNewEvent($scope.eventName);
+        $scope.hide();
+//        }
+    }
+
+}]);
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
     $scope.levels = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
-//    $scope.alertValues = ["Greater then", "Less then"];
-
-
-//    $scope.checkAlertValue = function () {
-//        if ($scope.eventWhen['alertValue'] == undefined) {
-//            $scope.eventWhen['type'] = null;
-//            return true;
-//        }
-//        return false;
-//    }
 
     $scope.checkValidForm = function () {
 
@@ -287,7 +309,6 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
     }
     $scope.removeParam = function (index) {
         if ($scope.eventWhat != undefined && $scope.eventWhat['parameters'] != undefined) {
-            console.log($scope.eventWhat);
             $scope.eventWhat['parameters'].splice(index, 1);
 
         }

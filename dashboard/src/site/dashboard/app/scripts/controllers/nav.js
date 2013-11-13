@@ -5,6 +5,9 @@ angular.module('MonitorApp')
 
 
         $scope.login = Login;
+
+
+        Login.current();
         $scope.menus = [
             {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard' },
             {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
@@ -17,6 +20,7 @@ angular.module('MonitorApp')
 
 
         ]
+
 
         $scope.setSelected = function () {
 
