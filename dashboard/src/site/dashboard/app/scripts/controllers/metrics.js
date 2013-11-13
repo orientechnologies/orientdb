@@ -9,7 +9,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.render = "bar";
         $scope.compress = "1"
         $scope.range = { start: moment().subtract('days', 6), end: moment()};
-        $scope.popover = { compress: $scope.compress, pollTime: $scope.pollTime, range: $scope.range};
+        $scope.popover = { compress: $scope.compress, pollTime: $scope.pollTime, range: $scope.range, render: $scope.render};
 
         $scope['fs'] = $scope.metricScope['fullScreen'];
         $scope.metricScope.$watch($scope.metric, function (data) {
@@ -298,6 +298,9 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     }
     $scope.saveMetricConfig = function () {
         MetricConfig.saveConfig($scope.selectedConfig, function (data) {
+            ;
+            $scope.testMsg = 'Metrics configuration saved.';
+            $scope.testMsgClass = 'alert alert-setting'
             $scope.refreshMetricConfig();
         });
     }
@@ -331,6 +334,8 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 });
 
 app.controller('ConfigChartController', function ($scope, $location, $routeParams) {
+
+
 
 
 });

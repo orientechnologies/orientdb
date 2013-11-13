@@ -82,6 +82,7 @@
     "metric.resolution": "Resolution",
     "metric.range": "Range",
     "metric.polling": "Polling",
-    "metric.chart": "Metric Chart"
+    "metric.chart": "Metric Chart",
+    "metric.chartType": "Chart Type"
 
 }

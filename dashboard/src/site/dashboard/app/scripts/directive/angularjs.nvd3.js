@@ -153,12 +153,12 @@ Widget.directive('stackedarea', function (Metric) {
             d3.selectAll(".nv-series").on("mouseover", function (event) {
                 var self = this;
                 scope.$apply(function () {
-                    Metric.getMetricWithName(event.key, function (data) {
+                    /*Metric.getMetricWithName(event.key, function (data) {
                         if (data) {
                             $(self).tooltip({title: data.description, container: 'body'});
                             $(self).tooltip('show')
                         }
-                    });
+                    });*/
                 });
             });
             return chart;

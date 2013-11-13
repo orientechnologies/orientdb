@@ -1087,3 +1087,19 @@ div.messageText label {
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
     background-color: #5bb75b;
 }
+
+.chart-render .btn-inverse {
+    background: none repeat scroll 0 0 #A5360F;
+}
+
+.config .popover-title {
+    font-size: 12px !important;
+}
+
+.config .popover-content label {
+    font-size: 12px !important;
+}
+.config .popover-content > .row-fluid {
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
