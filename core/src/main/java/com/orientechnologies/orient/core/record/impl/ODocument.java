@@ -1103,13 +1103,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return (ODocument) this;
   }
 
-  @Override
-  public void unsetDirty() {
-    _fieldOriginalValues = null;
-    _fieldCollectionChangeTimeLines = null;
-    super.unsetDirty();
-  }
-
   /**
    * Returns the forced field type if any.
    * 
