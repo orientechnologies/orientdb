@@ -93,8 +93,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     try {
 
-      final Object result = executor.execute(iCommand.getParameters());
-      return result;
+      return executor.execute(iCommand.getParameters());
 
     } catch (OException e) {
       // PASS THROUGHT
