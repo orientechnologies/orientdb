@@ -785,15 +785,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (rid != null) {
         ++clusterRecords;
 
-        if (lastClusterId == -1)
+        if (lastClusterId == -1) {
           lastClusterId = rid.getClusterId();
-        else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
           // CHANGED CLUSTERID: DUMP STATISTICS
-          System.out.print("\n- Imported records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): " + clusterRecords + " records");
+          System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+              + lastClusterId + "): ");
+
+        } else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
+          // CHANGED CLUSTERID: DUMP STATISTICS
+          System.out.print(" = " + clusterRecords + " records");
           clusterRecords = 0;
+
           lastClusterId = rid.getClusterId();
-        }
+          System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+              + lastClusterId + "): ");
+        } else if (clusterRecords++ % 10000 == 0)
+          // DUMP PROGRESS
+          System.out.print(".");
 
         ++totalRecords;
       }
