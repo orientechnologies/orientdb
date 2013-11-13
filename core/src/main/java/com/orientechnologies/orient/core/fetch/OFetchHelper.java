@@ -188,8 +188,8 @@ public class OFetchHelper {
           final boolean isEmbedded = fieldValue instanceof ODocument
               && (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isValid());
 
-          if (!(isEmbedded && iContext.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath) && depthLevel > -1
-              && iCurrentLevel >= depthLevel)
+          if (!(isEmbedded && iContext.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath.toUpperCase())
+              && depthLevel > -1 && iCurrentLevel >= depthLevel)
             // MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
             continue;
 
