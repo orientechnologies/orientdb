@@ -245,14 +245,13 @@ public class OServerPluginManager implements OService {
             (String) properties.field("description"), (String) properties.field("web"), pluginInstance, parameters,
             pluginFile.lastModified(), pluginClassLoader);
 
+        registerPlugin(currentPluginData);
+        loadedPlugins.put(pluginFile.getName(), pluginName);
+
+        registerStaticDirectory(currentPluginData);
       } finally {
         pluginConfigFile.close();
       }
-
-      registerPlugin(currentPluginData);
-      loadedPlugins.put(pluginFile.getName(), pluginName);
-
-      registerStaticDirectory(currentPluginData);
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on installing dynamic plugin '%s'", e, pluginName);
@@ -272,7 +271,7 @@ public class OServerPluginManager implements OService {
       final URL wwwURL = iPluginData.getClassLoader().findResource("www/");
 
       final OCallable<Object, String> callback;
-      if (wwwURL != null && iPluginData.getInstance() == null)
+      if (wwwURL != null)
         callback = createStaticLinkCallback(iPluginData, wwwURL);
       else
         // LET TO THE COMMAND TO CONTROL IT
