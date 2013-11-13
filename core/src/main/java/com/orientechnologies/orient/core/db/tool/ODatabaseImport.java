@@ -799,7 +799,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           lastClusterId = rid.getClusterId();
           System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
               + lastClusterId + "): ");
-        } else if (clusterRecords++ % 10000 == 0)
+        } else if (clusterRecords % 10000 == 0)
           // DUMP PROGRESS
           System.out.print(".");
 
