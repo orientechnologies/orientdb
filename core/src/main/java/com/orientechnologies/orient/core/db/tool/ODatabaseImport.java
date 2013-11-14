@@ -100,6 +100,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private boolean                    preserveClusterIDs     = true;
   private boolean                    migrateLinks           = true;
   private boolean                    merge                  = false;
+  private boolean                    rebuildIndexes         = true;
 
   private Set<String>                indexesToRebuild       = new HashSet<String>();
 
@@ -147,6 +148,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       merge = Boolean.parseBoolean(items.get(0));
     else if (option.equalsIgnoreCase("-migrateLinks"))
       migrateLinks = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-rebuildIndexes"))
+      rebuildIndexes = Boolean.parseBoolean(items.get(0));
     else
       super.parseSetting(option, items);
   }
@@ -192,13 +195,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importManualIndexes();
       }
 
-      listener.onMessage("\nRebuild of stale indexes...");
-      for (String indexName : indexesToRebuild) {
-        listener.onMessage("\nStart rebuild index " + indexName);
-        database.command(new OCommandSQL("rebuild index " + indexName)).execute();
-        listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
-      }
-      listener.onMessage("\nStale indexes were rebuilt...");
+      if (rebuildIndexes)
+        rebuildIndexes();
 
       database.getStorage().synch();
       database.setStatus(STATUS.OPEN);
@@ -218,6 +216,16 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     return this;
+  }
+
+  public void rebuildIndexes() {
+    listener.onMessage("\nRebuild of stale indexes...");
+    for (String indexName : indexesToRebuild) {
+      listener.onMessage("\nStart rebuild index " + indexName);
+      database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+      listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
+    }
+    listener.onMessage("\nStale indexes were rebuilt...");
   }
 
   private void removeDefaultNonSecurityClasses() {
