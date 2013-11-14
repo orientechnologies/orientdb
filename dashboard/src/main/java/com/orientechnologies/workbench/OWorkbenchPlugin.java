@@ -130,7 +130,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 	private Set<OServerConfigurationListener>					listeners													= new HashSet<OServerConfigurationListener>();
 	private ConcurrentHashMap<String, Boolean>				metricsEnabled										= new ConcurrentHashMap<String, Boolean>();
 
-	private OWorkbenchUpdateTask											updater														;
+	private OWorkbenchUpdateTask											updater;
 
 	@Override
 	public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -286,8 +286,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
 		// UPDATE LAST CONNECTION FOR EACH SERVERS
 		final List<ODocument> snapshotDates = getDb().query(
-				new OSQLSynchQuery<Object>(
-						"select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
+				new OSQLSynchQuery<Object>("select server.name as serverName, max(dateTo) as date from Snapshot where server.enabled = true group by server"));
 
 		for (ODocument snapshot : snapshotDates) {
 			final String serverName = snapshot.field("serverName");
@@ -298,8 +297,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		}
 		OLogManager.instance().info(this, "MONITOR loading server configuration (%d)...", servers.size());
 		for (Entry<String, OMonitoredServer> serverEntry : servers.entrySet()) {
-			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(),
-					serverEntry.getValue().getLastConnection());
+			OLogManager.instance().info(this, "MONITOR * server [%s] updated to: %s", serverEntry.getKey(), serverEntry.getValue().getLastConnection());
 		}
 	}
 
@@ -392,7 +390,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		function.createProperty("idempotent", OType.BOOLEAN);
 		function.createProperty("language", OType.STRING);
 		function.createProperty("name", OType.STRING);
-		function.createProperty("parameters", OType.EMBEDDED, OType.STRING);
+		function.createProperty("parameters", OType.EMBEDDEDLIST, OType.STRING);
 
 		final OClass metricConfig = schema.createClass(CLASS_METRIC_CONFIG);
 		metricConfig.createProperty("name", OType.STRING);
@@ -449,10 +447,10 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		unregisterCommands();
 	}
 
-	
 	public OWorkbenchUpdateTask getUpdater() {
 		return updater;
 	}
+
 	protected void updateDictionary() {
 		final OSchema schema = getDb().getMetadata().getSchema();
 

@@ -70,14 +70,17 @@ public final class OWorkbenchTask extends TimerTask {
 						if (updateServerStatus(server, OWorkbenchPlugin.STATUS.UNAUTHORIZED)) {
 							OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
 									server.field("url"));
-							log(server, LOG_LEVEL.ERROR, e.toString());
+//							log(server, LOG_LEVEL.ERROR, e.toString());
+							log(server, LOG_LEVEL.ERROR, "Unauthorized");
 						}
 					} else
 					// UPDATE SERVER STATUS TO OFFLINE
 					if (updateServerStatus(server, OWorkbenchPlugin.STATUS.OFFLINE)) {
 						OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
 								server.field("url"));
-						log(server, LOG_LEVEL.ERROR, e.toString());
+//						log(server, LOG_LEVEL.ERROR, e.toString());
+						log(server, LOG_LEVEL.ERROR, "Connection refused");
+
 					}
 				}
 			}

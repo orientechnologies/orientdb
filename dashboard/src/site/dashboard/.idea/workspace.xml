@@ -204,7 +204,7 @@
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/index.htm" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816364393" ignored="false" />
     <file path="/index.htm" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380816361856" ignored="false" />
     <file path="/events.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384441120327" ignored="false" />
-    <file path="/events.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384443355138" ignored="false" />
+    <file path="/events.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384451670535" ignored="false" />
     <file path="/logWhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381399859439" ignored="false" />
     <file path="/logwhen.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381412980384" ignored="false" />
     <file path="/httpwhat.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383847599330" ignored="false" />
@@ -282,25 +282,38 @@
       <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="115" column="85" selection-start="4640" selection-end="4827" vertical-scroll-proportion="0.0">
+            <state line="151" column="33" selection-start="6153" selection-end="6153" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="functionwhat.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/eventWhat/functionwhat.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="41" column="70" selection-start="1736" selection-end="1736" vertical-scroll-proportion="-15.038462">
+              <folding>
+                <element signature="n#style#0;n#div#0;n#li#0;n#ul#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#input#0;n#div#0;n#li#0;n#ul#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#a#0;n#div#0;n#li#0;n#ul#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="logs.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="127" column="222" selection-start="4602" selection-end="4602" vertical-scroll-proportion="0.0">
+            <state line="140" column="45" selection-start="5049" selection-end="5049" vertical-scroll-proportion="0.6709091">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="maillegend.html" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="maillegend.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="34" column="49" selection-start="1240" selection-end="1240" vertical-scroll-proportion="0.9135593">
+            <state line="34" column="49" selection-start="1240" selection-end="1240" vertical-scroll-proportion="-20.73077">
               <folding />
             </state>
           </provider>
@@ -324,19 +337,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="general.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+      <file leaf-file-name="logjava.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="56" column="89" selection-start="2108" selection-end="2109" vertical-scroll-proportion="-5.6666665">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="db.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/general/db.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="24" column="24" selection-start="862" selection-end="862" vertical-scroll-proportion="-12.230769">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="37.26923">
               <folding />
             </state>
           </provider>
@@ -352,7 +356,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/scripts/app.js" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/stylesheets/asciidoc.css" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.html" />
@@ -365,9 +368,10 @@
         <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
         <option value="$PROJECT_DIR$/app/views/server/general/db.html" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
+        <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
+        <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
-        <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
       </list>
     </option>
   </component>
@@ -861,20 +865,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/log.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="308" column="23" selection-start="12329" selection-end="12330" vertical-scroll-proportion="-2.5576923">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/general/configuration.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="6" column="23" selection-start="231" selection-end="231" vertical-scroll-proportion="-3.9230769">
@@ -924,13 +914,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="249" column="13" selection-start="8601" selection-end="8601" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/eventsnotify.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
@@ -952,23 +935,48 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="34" column="49" selection-start="1240" selection-end="1240" vertical-scroll-proportion="-20.73077">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/eventWhat/functionwhat.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="41" column="70" selection-start="1736" selection-end="1736" vertical-scroll-proportion="-15.038462">
+          <folding>
+            <element signature="n#style#0;n#div#0;n#li#0;n#ul#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#input#0;n#div#0;n#li#0;n#ul#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#a#0;n#div#0;n#li#0;n#ul#0;n#fieldset#0;n#form#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="115" column="85" selection-start="4640" selection-end="4827" vertical-scroll-proportion="0.0">
+        <state line="151" column="33" selection-start="6153" selection-end="6153" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="249" column="13" selection-start="8601" selection-end="8601" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="37.26923">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="127" column="222" selection-start="4602" selection-end="4602" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="49" selection-start="1240" selection-end="1240" vertical-scroll-proportion="0.9135593">
+        <state line="140" column="45" selection-start="5049" selection-end="5049" vertical-scroll-proportion="0.6709091">
           <folding />
         </state>
       </provider>

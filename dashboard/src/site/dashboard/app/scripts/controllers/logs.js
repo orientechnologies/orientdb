@@ -138,7 +138,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     $scope.selectedDateTo = undefined;
     $scope.selectedHourTo = undefined;
     $scope.countPage = 1000;
-    $scope.countPageOptions = [1, 2, 3];
+    $scope.countPageOptions = [1000, 500, 100];
 
     $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
     });
