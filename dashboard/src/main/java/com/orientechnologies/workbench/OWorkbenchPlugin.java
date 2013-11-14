@@ -165,11 +165,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		registerExecutors(getDb());
 		registerCommands();
 		Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
-
-		// Orient.instance()
-		// .getTimer()
-		// .schedule(new OMonitorPurgeTask(this), 1000*60*30, 1000*60*30);
-		//
 		Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
 		Orient.instance().getTimer().schedule(new OWorkbenchMessageTask(this), 600000, 600000);
 		updater = new OWorkbenchUpdateTask(this);
