@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.workbench.event;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.MalformedURLException;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -24,7 +23,6 @@ import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
 
 @EventConfig(when = "MetricsWhen", what = "FunctionWhat")
 public class OEventMetricHttpExecutor extends OEventMetricExecutor {
-	Map<String, Object>					body2name	= new HashMap<String, Object>();
 	private ODatabaseDocumentTx	db;
 
 	public OEventMetricHttpExecutor(ODatabaseDocumentTx database) {
@@ -34,30 +32,19 @@ public class OEventMetricHttpExecutor extends OEventMetricExecutor {
 
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
-
+	
+		// pre-conditions
 		if (canExecute(source, when)) {
-			this.body2name.clear();
-
-			ODocument snapshot = source.field("snapshot");
-			if (snapshot != null) {
-				ODocument server = snapshot.field("server");
-				if (server != null) {
-					String serverName = server.field("name");
-					this.body2name.put("server", serverName);
-
-				}
-			}
-			String metricName = source.field("name");
-			this.body2name.put("metric", metricName);
-
-			// pre-conditions
-			if (canExecute(source, when)) {
+			fillMapResolve(source, when);
+			try {
 				executeHttp(what);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
 			}
 		}
 	}
 
-	private void executeHttp(ODocument what) {
-
+	private void executeHttp(ODocument what) throws MalformedURLException {
+		EventHelper.executeHttpRequest(what,db);
 	}
 }

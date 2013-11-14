@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.workbench.event.metric;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.workbench.event.OEventExecutor;
 
 public abstract class OEventLogExecutor implements OEventExecutor {
-
+	protected Map<String, Object>					body2name		= new HashMap<String, Object>();
 	public boolean canExecute(ODocument source, ODocument when) {
 
 		String operator = when.field("alertValue");
@@ -46,5 +49,29 @@ public abstract class OEventLogExecutor implements OEventExecutor {
 		}
 		return false;
 
+	}
+	public Map<String, Object> getBody2name() {
+		return body2name;
+	}
+	public void setBody2name(Map<String, Object> body2name) {
+		this.body2name = body2name;
+	}
+	
+	
+	
+	protected void fillMapResolve(ODocument source, ODocument when){
+		this.body2name.clear();
+		ODocument server = source.field("server");
+		this.getBody2name().clear();
+
+		if (server != null) {
+			this.getBody2name().put("server", server);
+
+		}
+		String metricName = source.field("name");
+		this.getBody2name().put("metric", metricName);
+
+		String sourcelevel = (String) source.field("levelDescription");
+		this.getBody2name().put("logvalue", sourcelevel);
 	}
 }

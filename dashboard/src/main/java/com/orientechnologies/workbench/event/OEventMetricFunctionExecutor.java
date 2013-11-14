@@ -34,7 +34,7 @@ import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
 
 @EventConfig(when = "MetricsWhen", what = "FunctionWhat")
 public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
-	Map<String, Object>					body2name	= new HashMap<String, Object>();
+
 	private ODatabaseDocumentTx	db;
 
 	public OEventMetricFunctionExecutor(ODatabaseDocumentTx database) {
@@ -45,25 +45,10 @@ public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
 
+		fillMapResolve(source, when);
+		// pre-conditions
 		if (canExecute(source, when)) {
-			this.body2name.clear();
-
-			ODocument snapshot = source.field("snapshot");
-			if (snapshot != null) {
-				ODocument server = snapshot.field("server");
-				if (server != null) {
-					String serverName = server.field("name");
-					this.body2name.put("server", serverName);
-
-				}
-			}
-			String metricName = source.field("name");
-			this.body2name.put("metric", metricName);
-
-			// pre-conditions
-			if (canExecute(source, when)) {
-				executeFunction(what);
-			}
+			executeFunction(what);
 		}
 	}
 
@@ -79,7 +64,7 @@ public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 			args = new Object[iArgs.length];
 			int i = 0;
 			for (Object arg : iArgs)
-				args[i++] = EventHelper.resolve(body2name, arg);
+				args[i++] = EventHelper.resolve(getBody2name(), arg);
 		}
 
 		final OScriptManager scriptManager = Orient.instance().getScriptManager();

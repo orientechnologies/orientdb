@@ -15,27 +15,14 @@
  */
 package com.orientechnologies.workbench.event;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.workbench.event.metric.OEventLogExecutor;
-import com.orientechnologies.workbench.hooks.OEventHook;
 
 @EventConfig(when = "LogWhen", what = "HttpWhat")
 public class OEventLogHttpExecutor extends OEventLogExecutor {
-	Map<String, Object>					body2name		= new HashMap<String, Object>();
-
 
 	private ODatabaseDocumentTx	db;
 
@@ -47,22 +34,10 @@ public class OEventLogHttpExecutor extends OEventLogExecutor {
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
 
-		ODocument server = source.field("server");
-		this.body2name.clear();
-
-		if (server != null) {
-			this.body2name.put("server", server);
-
-		}
-		String metricName = source.field("name");
-		this.body2name.put("metric", metricName);
-
-		String sourcelevel = (String) source.field("levelDescription");
-		this.body2name.put("logvalue", sourcelevel);
-
 		// pre-conditions
 		if (canExecute(source, when)) {
 			try {
+				fillMapResolve(source, when);
 				executeHttp(what);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
@@ -72,8 +47,7 @@ public class OEventLogHttpExecutor extends OEventLogExecutor {
 
 	private void executeHttp(ODocument what) throws MalformedURLException {
 
-		
-		EventHelper.executeHttpRequest(what,db);
+		EventHelper.executeHttpRequest(what, db);
 
 	}
 }

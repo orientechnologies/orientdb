@@ -120,6 +120,9 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
                     var index = $scope.results.indexOf(event);
                     $scope.results.splice(index, 1);
                     $scope.results.splice();
+                    var index = $scope.resultTotal.indexOf(event);
+                    $scope.resultTotal.splice(index, 1);
+                    $scope.resultTotal.splice();
                 });
 
             }

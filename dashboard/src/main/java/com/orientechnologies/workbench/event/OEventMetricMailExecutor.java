@@ -17,7 +17,6 @@
 package com.orientechnologies.workbench.event;
 
 import java.text.ParseException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.mail.MessagingException;
@@ -32,9 +31,8 @@ import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
 
 @EventConfig(when = "MetricsWhen", what = "MailWhat")
 public class OEventMetricMailExecutor extends OEventMetricExecutor {
-	Map<String, Object> body2name = new HashMap<String, Object>();
-	private ODocument oUserConfiguration;
-	private OMailPlugin mailPlugin;
+	private ODocument		oUserConfiguration;
+	private OMailPlugin	mailPlugin;
 
 	public OEventMetricMailExecutor(ODatabaseDocumentTx database) {
 
@@ -45,37 +43,21 @@ public class OEventMetricMailExecutor extends OEventMetricExecutor {
 	public void execute(ODocument source, ODocument when, ODocument what) {
 
 		if (canExecute(source, when)) {
-			this.body2name.clear();
-
-			ODocument snapshot = source.field("snapshot");
-			if (snapshot != null) {
-				ODocument server = snapshot.field("server");
-				if (server != null) {
-					String serverName = server.field("name");
-					this.body2name.put("server", serverName);
-
-				}
-			}
-			String metricName = source.field("name");
-			this.body2name.put("metric", metricName);
-
+			fillMapResolve(source, when);
 			mailEvent(what);
 		}
 	}
 
 	public void mailEvent(ODocument what) {
 		if (mailPlugin == null) {
-			mailPlugin = OServerMain.server().getPluginByClass(
-					OMailPlugin.class);
+			mailPlugin = OServerMain.server().getPluginByClass(OMailPlugin.class);
 
-			OMailProfile enterpriseProfile = EventHelper
-					.createOMailProfile(oUserConfiguration);
+			OMailProfile enterpriseProfile = EventHelper.createOMailProfile(oUserConfiguration);
 
 			mailPlugin.registerProfile("enterprise", enterpriseProfile);
 		}
 
-		Map<String, Object> configuration = EventHelper.createConfiguration(
-				what, body2name);
+		Map<String, Object> configuration = EventHelper.createConfiguration(what, body2name);
 
 		try {
 			mailPlugin.send(configuration);

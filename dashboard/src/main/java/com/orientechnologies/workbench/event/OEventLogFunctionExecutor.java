@@ -34,7 +34,6 @@ import com.orientechnologies.workbench.event.metric.OEventLogExecutor;
 
 @EventConfig(when = "LogWhen", what = "FunctionWhat")
 public class OEventLogFunctionExecutor extends OEventLogExecutor {
-	Map<String, Object> body2name = new HashMap<String, Object>();
 	private ODatabaseDocumentTx db;
 
 	public OEventLogFunctionExecutor(ODatabaseDocumentTx database) {
@@ -45,23 +44,12 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
 
-		ODocument server = source.field("server");
-		this.body2name.clear();
-
-		if (server != null) {
-			this.body2name.put("server", server);
-
-		}
-		String metricName = source.field("name");
-		this.body2name.put("metric", metricName);
-		
-		
-		String sourcelevel = (String) source.field("levelDescription");
-		this.body2name.put("logvalue", sourcelevel);
+	
 		
 
 		// pre-conditions
 		if (canExecute(source, when)) {
+			fillMapResolve(source, when);
 			executeFunction(what);
 		}
 	}
@@ -78,7 +66,7 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
 			args = new Object[iArgs.length];
 			int i = 0;
 			for (Object arg : iArgs)
-				args[i++] = EventHelper.resolve(body2name, arg);
+				args[i++] = EventHelper.resolve(getBody2name(), arg);
 		}
 
 		final OScriptManager scriptManager = Orient.instance()
