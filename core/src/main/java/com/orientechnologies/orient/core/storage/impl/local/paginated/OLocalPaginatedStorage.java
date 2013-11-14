@@ -1783,28 +1783,28 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void makeFuzzyCheckpoint() {
-    if (writeAheadLog == null)
-      return;
-
-    try {
-      lock.acquireExclusiveLock();
-      try {
-        writeAheadLog.flush();
-
-        writeAheadLog.logFuzzyCheckPointStart();
-
-        diskCache.forceSyncStoredChanges();
-        diskCache.logDirtyPagesTable();
-
-        writeAheadLog.logFuzzyCheckPointEnd();
-
-        writeAheadLog.flush();
-      } finally {
-        lock.releaseExclusiveLock();
-      }
-    } catch (IOException ioe) {
-      throw new OStorageException("Error during fuzzy checkpoint creation for storage " + name, ioe);
-    }
+    // if (writeAheadLog == null)
+    // return;
+    //
+    // try {
+    // lock.acquireExclusiveLock();
+    // try {
+    // writeAheadLog.flush();
+    //
+    // writeAheadLog.logFuzzyCheckPointStart();
+    //
+    // diskCache.forceSyncStoredChanges();
+    // diskCache.logDirtyPagesTable();
+    //
+    // writeAheadLog.logFuzzyCheckPointEnd();
+    //
+    // writeAheadLog.flush();
+    // } finally {
+    // lock.releaseExclusiveLock();
+    // }
+    // } catch (IOException ioe) {
+    // throw new OStorageException("Error during fuzzy checkpoint creation for storage " + name, ioe);
+    // }
   }
 
   public void makeFullCheckpoint() {
