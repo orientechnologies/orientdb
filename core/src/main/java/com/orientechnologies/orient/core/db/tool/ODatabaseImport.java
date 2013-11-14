@@ -98,6 +98,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private OIndex<OIdentifiable>      exportImportHashTable;
 
   private boolean                    preserveClusterIDs     = true;
+  private boolean                    migrateLinks           = true;
   private boolean                    merge                  = false;
 
   private Set<String>                indexesToRebuild       = new HashSet<String>();
@@ -144,6 +145,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       preserveClusterIDs = Boolean.parseBoolean(items.get(0));
     else if (option.equalsIgnoreCase("-merge"))
       merge = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-migrateLinks"))
+      migrateLinks = Boolean.parseBoolean(items.get(0));
     else
       super.parseSetting(option, items);
   }
@@ -808,7 +811,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       record = null;
     }
 
-    rewriteLinksInImportedDocuments();
+    if (migrateLinks)
+      migrateLinksInImportedDocuments();
 
     listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
 
@@ -1010,8 +1014,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return indexDefinition;
   }
 
-  private void rewriteLinksInImportedDocuments() throws IOException {
-    listener.onMessage("\nLinks are going to be updated according to new RIDs:");
+  private void migrateLinksInImportedDocuments() throws IOException {
+    listener.onMessage("\nStarted migration of links (-migrateLinks=true). Links are going to be updated according to new RIDs:");
 
     long totalDocuments = 0;
     Collection<String> clusterNames = database.getClusterNames();
