@@ -63,6 +63,8 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
 
       } else if (command.equalsIgnoreCase("reset")) {
         Orient.instance().getProfiler().resetRealtime(arg);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "deleted", null);
+        
 
       } else if (command.equalsIgnoreCase("restart")) {
         Orient.instance().getProfiler().stopRecording();
