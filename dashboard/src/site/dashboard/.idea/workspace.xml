@@ -229,6 +229,10 @@
     <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384203293796" ignored="false" />
     <file path="/message-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384200739943" ignored="false" />
     <file path="/maillegend.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384205785472" ignored="false" />
+    <file path="/userguide.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356156210" ignored="false" />
+    <file path="/userguide.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356764445" ignored="false" />
+    <file path="/gettingstarted.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384360070633" ignored="false" />
+    <file path="/gettingstarted.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384366666161" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -251,7 +255,7 @@
       <file leaf-file-name="metrics.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="338" column="4" selection-start="13209" selection-end="13209" vertical-scroll-proportion="-8.607843">
+            <state line="338" column="4" selection-start="13209" selection-end="13209" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -260,81 +264,81 @@
       <file leaf-file-name="popover.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/components/angular-strap/src/directives/popover.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="44" column="16" selection-start="1249" selection-end="1250" vertical-scroll-proportion="-3.4313726">
+            <state line="44" column="16" selection-start="1249" selection-end="1250" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="app.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="app.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="57" column="94" selection-start="2456" selection-end="2456" vertical-scroll-proportion="0.920354">
+            <state line="30" column="72" selection-start="1372" selection-end="1372" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="header.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/header.html">
+      <file leaf-file-name="userguide.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
+            <state line="0" column="0" selection-start="0" selection-end="1536" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="header.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/dist/views/header.html">
+      <file leaf-file-name="gettingstarted.txt" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
+            <state line="5" column="13" selection-start="101" selection-end="101" vertical-scroll-proportion="0.14096186">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="header.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/header.js">
+      <file leaf-file-name="userguide.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="42" column="28" selection-start="1532" selection-end="1532" vertical-scroll-proportion="0.0">
+            <state line="6" column="0" selection-start="302" selection-end="356" vertical-scroll-proportion="-3.9230769">
+              <folding>
+                <element signature="n#style#0;n#img#0;n#head#0;n#html#0;n#!!top" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="gettingstarted.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="1" column="15" selection-start="65" selection-end="65" vertical-scroll-proportion="-0.21518987">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="singleMetric.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
+      <file leaf-file-name="asciidoc.css" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/stylesheets/asciidoc.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="18" column="67" selection-start="1005" selection-end="1026" vertical-scroll-proportion="-11.25">
+            <state line="93" column="16" selection-start="1230" selection-end="1230" vertical-scroll-proportion="-3.8490567">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="config.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/metric/config.html">
+      <file leaf-file-name="main.css" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/styles/main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="70" column="21" selection-start="2557" selection-end="2557" vertical-scroll-proportion="-9.083333">
+            <state line="1103" column="19" selection-start="21209" selection-end="21209" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="angularjs.nvd3.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="160" column="25" selection-start="4683" selection-end="4683" vertical-scroll-proportion="-7.392157">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="settings.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="122" column="54" selection-start="4150" selection-end="4163" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
+      <file leaf-file-name="popup_server.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/popup_server.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
           </provider>
         </entry>
       </file>
@@ -348,11 +352,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
-        <option value="$PROJECT_DIR$/app/scripts/service/login-service.js" />
-        <option value="$PROJECT_DIR$/app/views/nav.html" />
-        <option value="$PROJECT_DIR$/app/views/login.html" />
-        <option value="$PROJECT_DIR$/app/views/server/query.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/query.js" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
         <option value="$PROJECT_DIR$/app/views/server/metric/config.html" />
@@ -364,14 +363,19 @@
         <option value="$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/stylesheets/asciidoc.css" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.html" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.html" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1365" />
-    <option name="y" value="-3" />
-    <option name="width" value="1368" />
-    <option name="height" value="772" />
+    <option name="x" value="-3" />
+    <option name="y" value="2" />
+    <option name="width" value="1372" />
+    <option name="height" value="769" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -399,6 +403,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -661,13 +666,30 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="components" />
+              <option name="myItemId" value="img" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="asciidoc-8.6.9" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -681,22 +703,17 @@
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="GoToClass.includeJavaFiles" value="false" />
   </component>
-  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
-    <servers>
-      <server id="55f9185c-b3c8-4084-aff3-b9a79ae606cb">
-        <serverdata />
-      </server>
-    </servers>
-  </component>
+  <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/img" />
       <recent name="$PROJECT_DIR$/app/views/server" />
       <recent name="$PROJECT_DIR$/app/scripts/controllers" />
       <recent name="$PROJECT_DIR$/app/scripts/service" />
       <recent name="$PROJECT_DIR$/app/views/server/metric" />
-      <recent name="$PROJECT_DIR$/app/views" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/asciidoc-8.6.9" />
       <recent name="$PROJECT_DIR$/app/views/server" />
       <recent name="$PROJECT_DIR$/app/views/metrics" />
       <recent name="$PROJECT_DIR$/app/views/queries" />
@@ -774,7 +791,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1365" y="-3" width="1368" height="772" extended-state="6" />
+    <frame x="-3" y="2" width="1372" height="769" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -858,48 +875,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="85" column="21" selection-start="3477" selection-end="3477" vertical-scroll-proportion="-19.375">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1103" column="19" selection-start="21209" selection-end="21209" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/modal/metric.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="131" column="4" selection-start="6045" selection-end="6045" vertical-scroll-proportion="-81.875">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="31" selection-start="322" selection-end="334" vertical-scroll-proportion="-5.625">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="122" column="54" selection-start="4150" selection-end="4163" vertical-scroll-proportion="0.0">
@@ -908,13 +883,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/header.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dist/views/header.html">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
           <folding />
@@ -930,42 +898,91 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/metric/config.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="70" column="21" selection-start="2557" selection-end="2557" vertical-scroll-proportion="-9.083333">
+        <state line="70" column="21" selection-start="2557" selection-end="2557" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="160" column="25" selection-start="4683" selection-end="4683" vertical-scroll-proportion="-7.392157">
+        <state line="160" column="25" selection-start="4683" selection-end="4683" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="18" column="67" selection-start="1005" selection-end="1026" vertical-scroll-proportion="-11.25">
+        <state line="18" column="67" selection-start="1005" selection-end="1026" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="338" column="4" selection-start="13209" selection-end="13209" vertical-scroll-proportion="-8.607843">
+        <state line="338" column="4" selection-start="13209" selection-end="13209" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/components/angular-strap/src/directives/popover.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="16" selection-start="1249" selection-end="1250" vertical-scroll-proportion="-3.4313726">
+        <state line="44" column="16" selection-start="1249" selection-end="1250" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="57" column="94" selection-start="2456" selection-end="2456" vertical-scroll-proportion="0.920354">
+        <state line="30" column="72" selection-start="1372" selection-end="1372" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/popup_server.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1103" column="19" selection-start="21209" selection-end="21209" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="1536" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="6" column="0" selection-start="302" selection-end="356" vertical-scroll-proportion="-3.9230769">
+          <folding>
+            <element signature="n#style#0;n#img#0;n#head#0;n#html#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/stylesheets/asciidoc.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="93" column="16" selection-start="1230" selection-end="1230" vertical-scroll-proportion="-3.8490567">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1" column="15" selection-start="65" selection-end="65" vertical-scroll-proportion="-0.21518987">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="5" column="13" selection-start="101" selection-end="101" vertical-scroll-proportion="0.14096186">
           <folding />
         </state>
       </provider>

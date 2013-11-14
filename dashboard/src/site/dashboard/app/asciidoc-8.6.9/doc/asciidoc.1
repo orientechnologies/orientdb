@@ -1,0 +1,310 @@
+'\" t
+.\"     Title: asciidoc
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 9 November 2013
+.\"    Manual: \ \&
+.\"    Source: \ \& 8.6.9
+.\"  Language: English
+.\"
+.TH "ASCIIDOC" "1" "9 November 2013" "\ \& 8\&.6\&.9" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+asciidoc \- converts an AsciiDoc text file to HTML or DocBook
+.SH "SYNOPSIS"
+.sp
+\fBasciidoc\fR [\fIOPTIONS\fR] \fIFILE\fR
+.SH "DESCRIPTION"
+.sp
+The asciidoc(1) command translates the AsciiDoc text file \fIFILE\fR to DocBook or HTML\&. If \fIFILE\fR is \fI\-\fR then the standard input is used\&.
+.SH "OPTIONS"
+.PP
+\fB\-a, \-\-attribute\fR=\fIATTRIBUTE\fR
+.RS 4
+Define or delete document attribute\&.
+\fIATTRIBUTE\fR
+is formatted like
+\fINAME=VALUE\fR\&. Command\-line attributes take precedence over document and configuration file attributes\&. Alternate acceptable forms are
+\fINAME\fR
+(the
+\fIVALUE\fR
+defaults to an empty string);
+\fINAME!\fR
+(delete the
+\fINAME\fR
+attribute);
+\fINAME=VALUE@\fR
+(do not override document or configuration file attributes)\&. Values containing spaces should be enclosed in double\-quote characters\&. This option may be specified more than once\&. A special attribute named
+\fItrace\fR
+controls the output of diagnostic information\&.
+.RE
+.PP
+\fB\-b, \-\-backend\fR=\fIBACKEND\fR
+.RS 4
+Backend output file format:
+\fIdocbook45\fR,
+\fIxhtml11\fR,
+\fIhtml4\fR,
+\fIhtml5\fR,
+\fIslidy\fR,
+\fIwordpress\fR
+or
+\fIlatex\fR
+(the
+\fIlatex\fR
+backend is experimental)\&. You can also use the backend alias names
+\fIhtml\fR
+(aliased to
+\fIxhtml11\fR) or
+\fIdocbook\fR
+(aliased to
+\fIdocbook45\fR)\&. Defaults to
+\fIhtml\fR\&. The
+\fB\-\-backend\fR
+option is also used to manage backend plugins (see
+\fBPLUGIN COMMANDS\fR)\&.
+.RE
+.PP
+\fB\-f, \-\-conf\-file\fR=\fICONF_FILE\fR
+.RS 4
+Use configuration file
+\fICONF_FILE\fR\&.Configuration files processed in command\-line order (after implicit configuration files)\&. This option may be specified more than once\&.
+.RE
+.PP
+\fB\-\-doctest\fR
+.RS 4
+Run Python doctests in
+\fIasciidoc\fR
+module\&.
+.RE
+.PP
+\fB\-d, \-\-doctype\fR=\fIDOCTYPE\fR
+.RS 4
+Document type:
+\fIarticle\fR,
+\fImanpage\fR
+or
+\fIbook\fR\&. The
+\fIbook\fR
+document type is only supported by the
+\fIdocbook\fR
+backend\&. Default document type is
+\fIarticle\fR\&.
+.RE
+.PP
+\fB\-c, \-\-dump\-conf\fR
+.RS 4
+Dump configuration to stdout\&.
+.RE
+.PP
+\fB\-\-filter\fR=\fIFILTER\fR
+.RS 4
+Specify the name of a filter to be loaded (used to load filters that are not auto\-loaded)\&. This option may be specified more than once\&. The
+\fB\-\-filter\fR
+option is also used to manage filter plugins (see
+\fBPLUGIN COMMANDS\fR)\&.
+.RE
+.PP
+\fB\-h, \-\-help\fR [\fITOPIC\fR]
+.RS 4
+Print help TOPIC\&.
+\fB\-\-help\fR
+\fItopics\fR
+will print a list of help topics,
+\fB\-\-help\fR
+\fIsyntax\fR
+summarizes AsciiDoc syntax,
+\fB\-\-help\fR
+\fImanpage\fR
+prints the AsciiDoc manpage\&.
+.RE
+.PP
+\fB\-e, \-\-no\-conf\fR
+.RS 4
+Exclude implicitly loaded configuration files except for those named like the input file (\fIinfile\&.conf\fR
+and
+\fIinfile\-backend\&.conf\fR)\&.
+.RE
+.PP
+\fB\-s, \-\-no\-header\-footer\fR
+.RS 4
+Suppress document header and footer output\&.
+.RE
+.PP
+\fB\-o, \-\-out\-file\fR=\fIOUT_FILE\fR
+.RS 4
+Write output to file
+\fIOUT_FILE\fR\&. Defaults to the base name of input file with
+\fIbackend\fR
+extension\&. If the input is stdin then the outfile defaults to stdout\&. If
+\fIOUT_FILE\fR
+is
+\fI\-\fR
+then the standard output is used\&.
+.RE
+.PP
+\fB\-n, \-\-section\-numbers\fR
+.RS 4
+Auto\-number HTML article section titles\&. Synonym for
+\fB\-\-attribute numbered\fR\&.
+.RE
+.PP
+\fB\-\-safe\fR
+.RS 4
+Enable safe mode\&. Safe mode is disabled by default\&. AsciiDoc
+\fIsafe mode\fR
+skips potentially dangerous scripted sections in AsciiDoc source files\&.
+.RE
+.PP
+\fB\-\-theme\fR=\fITHEME\fR
+.RS 4
+Specify a theme name\&. Synonym for
+\fB\-\-attribute theme\fR=\fITHEME\fR\&. The
+\fB\-\-theme\fR
+option is also used to manage theme plugins (see
+\fBPLUGIN COMMANDS\fR)\&.
+.RE
+.PP
+\fB\-v, \-\-verbose\fR
+.RS 4
+Verbosely print processing information and configuration file checks to stderr\&.
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Print program version number\&.
+.RE
+.SH "PLUGIN COMMANDS"
+.sp
+The asciidoc(1) \fB\-\-filter\fR, \fB\-\-backend\fR and \fB\-\-theme\fR options are used to install, remove and list AsciiDoc filter, backend and theme plugins\&. Syntax:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+asciidoc OPTION install ZIP_FILE [PLUGINS_DIR]
+asciidoc OPTION remove PLUGIN_NAME [PLUGINS_DIR]
+asciidoc OPTION list
+asciidoc OPTION build ZIP_FILE PLUGIN_SOURCE
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Where:
+.PP
+\fBOPTION\fR
+.RS 4
+asciidoc(1)
+\fB\-\-filter\fR,
+\fB\-\-backend\fR
+or
+\fB\-\-theme\fR
+option specifying the type of plugin\&.
+.RE
+.PP
+\fBPLUGIN_NAME\fR
+.RS 4
+A unique plugin name containing only alphanumeric or underscore characters\&.
+.RE
+.PP
+\fBZIP_FILE\fR
+.RS 4
+A Zip file containing plugin resources, the name must start with the plugin name e\&.g\&.
+my_filter\-1\&.0\&.zip
+packages filter
+my_filter\&.
+.RE
+.PP
+\fBPLUGINS_DIR\fR
+.RS 4
+The directory containing installed plugins\&. Each plugin is contained in its own separate subdirectory which has the same name as the plugin\&.
+\fBPLUGINS_DIR\fR
+defaults to the
+$HOME/\&.asciidoc/filters
+(for filter plugins) or
+$HOME/\&.asciidoc/backends
+(for backend plugins) or
+$HOME/\&.asciidoc/themes
+(for theme plugins)\&.
+.RE
+.PP
+\fBPLUGIN_SOURCE\fR
+.RS 4
+The name of a directory containing the plugin source files or the name of a single source file\&.
+.RE
+.sp
+The plugin commands perform as follows:
+.PP
+\fBinstall\fR
+.RS 4
+Create a subdirectory in
+\fBPLUGINS_DIR\fR
+with the same name as the plugin then extract the
+\fBZIP_FILE\fR
+into it\&.
+.RE
+.PP
+\fBremove\fR
+.RS 4
+Delete the
+\fBPLUGIN_NAME\fR
+plugin subdirectory and all its contents from the
+\fBPLUGINS_DIR\fR\&.
+.RE
+.PP
+\fBlist\fR
+.RS 4
+List the names and locations of all installed filter or theme plugins (including standard plugins installed in the global configuration directory)\&.
+.RE
+.PP
+\fBbuild\fR
+.RS 4
+Create a plugin file named
+\fBZIP_FILE\fR
+containing the files and subdirectories specified by
+\fBPLUGIN_SOURCE\fR\&. File and directory names starting with a period are skipped\&.
+.RE
+.SH "EXIT STATUS"
+.PP
+\fB0\fR
+.RS 4
+Success
+.RE
+.PP
+\fB1\fR
+.RS 4
+Failure (syntax or usage error; configuration error; document processing failure; unexpected error)\&.
+.RE
+.SH "BUGS"
+.sp
+See the AsciiDoc distribution BUGS file\&.
+.SH "AUTHOR"
+.sp
+AsciiDoc was originally written by Stuart Rackham\&. Many people have contributed to it\&.
+.SH "RESOURCES"
+.sp
+SourceForge: http://sourceforge\&.net/projects/asciidoc/
+.sp
+Main web site: http://asciidoc\&.org/
+.SH "COPYING"
+.sp
+Copyright (C) 2002\-2011 Stuart Rackham\&. Free use of this software is granted under the terms of the GNU General Public License (GPL)\&.
