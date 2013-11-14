@@ -98,6 +98,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private OIndex<OIdentifiable>      exportImportHashTable;
 
   private boolean                    preserveClusterIDs     = true;
+  private boolean                    merge                  = false;
 
   private Set<String>                indexesToRebuild       = new HashSet<String>();
 
@@ -141,6 +142,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       deleteRIDMapping = Boolean.parseBoolean(items.get(0));
     else if (option.equalsIgnoreCase("-preserveClusterIDs"))
       preserveClusterIDs = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-merge"))
+      merge = Boolean.parseBoolean(items.get(0));
     else
       super.parseSetting(option, items);
   }
@@ -160,12 +163,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.setStatus(STATUS.IMPORTING);
 
-      for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
+      for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName().toLowerCase());
       }
 
-      removeDefaultNonSecurityClasses();
+      if (!merge)
+        removeDefaultNonSecurityClasses();
 
       String tag;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
@@ -214,7 +218,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private void removeDefaultNonSecurityClasses() {
-    listener.onMessage("\nRemoving all default non security classes");
+    listener.onMessage("\nNon merge mode (-merge=false): removing all default non security classes");
 
     OSchema schema = database.getMetadata().getSchema();
     Collection<OClass> classes = schema.getClasses();
@@ -233,18 +237,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
 
+    int removedClasses = 0;
     for (String className : classesSortedByInheritance) {
       if (!className.equalsIgnoreCase(ORole.CLASS_NAME) && !className.equalsIgnoreCase(OUser.CLASS_NAME)
           && !className.equalsIgnoreCase(OSecurityShared.IDENTITY_CLASSNAME)) {
         schema.dropClass(className);
-        listener.onMessage("\nClass " + className + " was removed.");
+        removedClasses++;
+        listener.onMessage("\n- Class " + className + " was removed.");
       }
     }
 
     schema.save();
     schema.reload();
 
-    listener.onMessage("\nRemoving all default non security classes ... DONE.");
+    listener.onMessage("\nRemoved " + removedClasses + " classes.");
   }
 
   private void importInfo() throws IOException, ParseException {
@@ -779,15 +785,23 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (rid != null) {
         ++clusterRecords;
 
-        if (lastClusterId == -1)
+        if (lastClusterId == -1) {
           lastClusterId = rid.getClusterId();
-        else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
           // CHANGED CLUSTERID: DUMP STATISTICS
-          System.out.print("\n- Imported records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): " + clusterRecords + " records");
+          System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+              + lastClusterId + "): ");
+
+        } else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
+          // CHANGED CLUSTERID: DUMP STATISTICS
+          System.out.print(" = " + clusterRecords + " records");
           clusterRecords = 0;
+
           lastClusterId = rid.getClusterId();
-        }
+          System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+              + lastClusterId + "): ");
+        } else if (clusterRecords % 10000 == 0)
+          // DUMP PROGRESS
+          System.out.print(".");
 
         ++totalRecords;
       }

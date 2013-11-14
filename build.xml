@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="." default="installg" name="orient-ant">
+<project basedir="." default="install" name="orient-ant">
     <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
 
     <property environment="env"/>
@@ -34,41 +34,41 @@
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
-            <echo>___ ___ ____ _</echo>
-            <echo>.' `.|_ ||_ _| | |</echo>
-            <echo>/ .-. \ | |_/ / | |</echo>
-            <echo>| | | | | __'. |_|</echo>
-            <echo>\ `-' /_| | \ \_ _</echo>
-            <echo>`.___.'|____||____| (_)</echo>
-        </sequential>
+           <echo>   ___   ___  ____    _  </echo>  
+           <echo> .'   `.|_  ||_  _|  | | </echo>
+           <echo>/  .-.  \ | |_/ /    | | </echo>
+           <echo>| |   | | |  __'.    |_| </echo>
+           <echo>\  `-'  /_| |  \ \_   _  </echo>
+           <echo> `.___.'|____||____| (_) </echo>
+    </sequential>
 
     </macrodef>
 
     <target name="init">
-        <echo>.</echo>
-        <echo>.` `</echo>
-        <echo>, `:.</echo>
-        <echo>`,` ,:`</echo>
-        <echo>.,. :,,</echo>
-        <echo>.,, ,,,</echo>
-        <echo>. .,.::::: ```` ::::::::: :::::::::</echo>
-        <echo>,` .::,,,,::.,,,,,,`;; .: :::::::::: ::: :::</echo>
-        <echo>`,. ::,,,,,,,:.,,.` ` .: ::: ::: ::: :::</echo>
-        <echo>,,:,:,,,,,,,,::. ` ` `` .: ::: ::: ::: :::</echo>
-        <echo>,,:.,,,,,,,,,: `::, ,, ::,::` : :,::` :::: ::: ::: ::: :::</echo>
-        <echo>,:,,,,,,,,,,::,: ,, :. : :: : .: ::: ::: :::::::</echo>
-        <echo>:,,,,,,,,,,:,:: ,, : : : : .: ::: ::: :::::::::</echo>
-        <echo>` :,,,,,,,,,,:,::, ,, .:::::::: : : .: ::: ::: ::: :::</echo>
-        <echo>`,...,,:,,,,,,,,,: .:,. ,, ,, : : .: ::: ::: ::: :::</echo>
-        <echo>.,,,,::,,,,,,,: `: , ,, : ` : : .: ::: ::: ::: :::</echo>
-        <echo>...,::,,,,::.. `: .,, :, : : : .: ::::::::::: ::: :::</echo>
-        <echo>,::::,,,. `: ,, ::::: : : .: ::::::::: ::::::::::</echo>
-        <echo>,,:` `,,.</echo>
-        <echo>,,, .,`</echo>
-        <echo>,,. `, GRAPH DATABASE</echo>
-        <echo>`` `.</echo>
-        <echo>``</echo>
-        <echo>`</echo>
+     <echo>           .                                          </echo>
+     <echo>          .`        `                                 </echo>
+     <echo>          ,      `:.                                  </echo>
+     <echo>         `,`    ,:`                                   </echo>
+     <echo>         .,.   :,,                                    </echo>
+     <echo>         .,,  ,,,                                     </echo>
+     <echo>    .    .,.:::::  ````                                 :::::::::     :::::::::</echo>
+     <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::</echo>
+     <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::</echo>
+     <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::</echo>
+     <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::</echo>
+     <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::</echo>
+     <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::</echo>
+     <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::</echo>
+     <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::</echo>
+     <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::</echo>
+     <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::</echo>
+     <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::</echo>
+     <echo>           ,,:` `,,.                                  </echo>
+     <echo>          ,,,    .,`                                  </echo>
+     <echo>         ,,.     `,                                          GRAPH DATABASE   </echo>
+     <echo>       ``        `.                                   </echo>
+     <echo>                 ``                                   </echo>
+     <echo>                 `                                    </echo>
 
         <mkdir dir="${community.release}"/>
         <mkdir dir="${community.release}/log"/>
@@ -87,30 +87,26 @@
 
     <target name="javadoc" depends="init">
         <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
-        <copy todir="${community.release}/javadoc" file="_base/images/orient_db.png"/>
-        <javadoc sourcepath="." packagenames="com.orientechnologies.*" destdir="${community.release}/javadoc"
+        <javadoc sourcepath="." packagenames="com.orientechnologies.*,com.tinkerpop.blueprints.*"
+                 excludepackagenames="com.orientechnologies.core.storage.*,com.orientechnologies.core.iterator.*,,com.orientechnologies.core.processor.*"
+                 destdir="${community.release}/javadoc"
                  public="true"
                  useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
-                 windowtitle="OrientDB v. ${version} Javadocs"
-                 header="&lt;a target='_parent' href='http://www.orientdb.org/orient-db.htm' &gt;&lt;img src='http://www.orientdb.org/images/orientdb_small.png' border='0' /&gt;&lt;/a&gt;"
-                 bottom="&lt;center&gt;Copyrights 2010-2012 (c) Luca Garulli. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
-                 overview="overview.html">
+                 windowtitle="OrientDB Community Edition v${version} Javadocs"
+                 header="&lt;center&gt;&lt;a href='http://www.orientdb.org' target='_parent'&gt;OrientDB v${version} Javadocs&lt;/a&gt;"
+                 footer="&lt;center&gt;Copyrights 2010-2013 (c) &lt;a href='http://www.orientechnologies.com' target='_parent'&gt;Orient Technologies&lt;/a&gt;. All Rights Reserved. This software is released as Open Source using the &lt;a target='_parent' href='http://www.apache.org/licenses/LICENSE-2.0'&gt;Apache 2.0 license&lt;/a&gt;.&lt;/center&gt;"
+                 overview="overview.html"
+                 maxmemory="4G">
             <classpath>
                 <fileset dir=".">
                     <include name="object/lib/hibernate-jpa-2.0-api-1.0.0.Final.jar"/>
                 </fileset>
             </classpath>
-            <packageset dir="." defaultexcludes="yes">
-                <include name="commons/src/main/java/**"/>
-                <include name="core/src/main/java/**"/>
-                <include name="object/src/main/java/**/*.java"/>
-            </packageset>
             <fileset dir="." defaultexcludes="yes">
-                <include name="commons/src/main/java/**/*.java"/>
                 <include name="core/src/main/java/**/*.java"/>
-                <include name="client/src/main/java/**/*.java"/>
-                <include name="enterprise/src/main/java/**/*.java"/>
                 <include name="object/src/main/java/**/*.java"/>
+                <include name="../../os/tinkerpop/blueprints/blueprints-core/src/main/java/**/*.java"/>
+                <include name="../../os/tinkerpop/blueprints/blueprints-orient-graph/src/main/java/**/*.java"/>
             </fileset>
             <doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
                 <param name="-hide" value="java.*"/>
@@ -132,15 +128,21 @@
 
     <target name="install" depends="init">
         <delegate target="install"/>
+        <subant target="install">
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="version" value="${version}"/>
 
-        <copy todir="${community.release}" file="license.txt"/>
-        <copy tofile="${community.release}/readme.txt" file="readme.txt"/>
-        <copy tofile="${community.release}/history.txt" file="history.txt"/>
-        <copy tofile="${community.release}/upgrade.txt" file="upgrade.txt"/>
+            <fileset dir="graphdb" includes="build.xml"/>
+        </subant>
 
-        <copy todir="${community.release}/bin/" flatten="true">
+        <copy todir="${community.release}/" flatten="true">
+            <fileset dir="." includes="*.txt"/>
+        </copy>
+
+        <copy todir="${community.release}/bin/" flatten="true" overwrite="true">
             <fileset dir="."
                      includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat distributed/script/*.sh distributed/script/*.bat"/>
+            <fileset dir="graphdb/script" includes="*.sh *.bat"/>
             <filterset>
                 <filter token="VERSION" value="${version}"/>
                 <filter token="BUILD" value="${build.number}"/>
@@ -155,22 +157,26 @@
             <fileset dir="server/plugins"/>
         </copy>
 
-        <copy todir="${community.release}/config/" flatten="true">
+        <copy todir="${community.release}/config/" flatten="true" overwrite="true">
             <fileset dir="." includes="tools/config/*"/>
-        </copy>
-        <copy todir="${community.release}/config/" flatten="true">
             <fileset dir="." includes="server/config/*"/>
-        </copy>
-        <copy todir="${community.release}/config/" flatten="true">
             <fileset dir="." includes="distributed/config/*"/>
+            <fileset dir="graphdb/config" includes="*.xml"/>
         </copy>
 
         <copy todir="${community.release}/lib" flatten="true">
             <fileset dir="distributed/lib" includes="*.jar"/>
+            <fileset dir="graphdb/lib" includes="*.jar"/>
         </copy>
+
 
         <copy todir="${community.release}/benchmarks" flatten="true">
             <fileset dir="." includes="server/benchmarks/*"/>
+        </copy>
+
+
+        <copy todir="${community.release}/databases/GratefulDeadConcerts" failonerror="false">
+            <fileset dir="graphdb/target/databases/GratefulDeadConcerts/" includes="*"/>
         </copy>
 
         <delete includeEmptyDirs="true">
@@ -179,42 +185,6 @@
     </target>
 
     <target name="installg" depends="install">
-        <subant target="install">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="version" value="${version}"/>
-
-            <fileset dir="graphdb" includes="build.xml"/>
-        </subant>
-
-        <copy todir="${community.release}">
-            <fileset dir="${community.release}">
-                <exclude name="**/*.log.*"/>
-            </fileset>
-        </copy>
-
-        <copy todir="${community.release}/bin/" flatten="true" overwrite="true">
-            <fileset dir="graphdb/script" includes="*.sh *.bat"/>
-            <filterset>
-                <filter token="VERSION" value="${version}"/>
-            </filterset>
-        </copy>
-
-        <copy todir="${community.release}/config" flatten="true" overwrite="true">
-            <fileset dir="graphdb/config" includes="*.xml"/>
-        </copy>
-
-        <copy todir="${community.release}/databases/GratefulDeadConcerts" failonerror="false">
-            <fileset dir="graphdb/target/databases/GratefulDeadConcerts/" includes="*"/>
-        </copy>
-
-        <copy todir="${community.release}/lib" flatten="true">
-            <fileset dir="graphdb/lib" includes="*.jar"/>
-        </copy>
-
-        <delete includeEmptyDirs="true">
-            <fileset dir="${community.release}/log" includes="**/*"/>
-        </delete>
-        <delete dir="${community.release}/databases/demo"/>
     </target>
 
     <target name="md5" depends="init">

@@ -289,7 +289,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final ORecordLazyList coll;
         final Iterator<OIdentifiable> it;
         if (iValue instanceof OMultiCollectionIterator<?>) {
-          it = (Iterator<OIdentifiable>) iValue;
+          final OMultiCollectionIterator<OIdentifiable> iterator = (OMultiCollectionIterator<OIdentifiable>) iValue;
+          iterator.reset();
+          it = iterator;
           coll = null;
         } else if (!(iValue instanceof ORecordLazyList)) {
           // FIRST TIME: CONVERT THE ENTIRE COLLECTION

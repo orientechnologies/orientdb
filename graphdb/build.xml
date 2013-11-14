@@ -6,5 +6,5 @@
 	<property name="project.src2" value="src/test/java" />
 	<property name="project.lib2" value="../tests/lib" />
 
-  <import file="../_base/base-build.xml" />
+  	<import file="../_base/base-build.xml" />
 </project>

@@ -1522,7 +1522,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    message("\nImporting database " + text + "...");
+    message("\nImporting " + text + "...");
 
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
