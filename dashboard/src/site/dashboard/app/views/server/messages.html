@@ -1,7 +1,8 @@
 <div class="container-fluid" ng-controller="MessagesController">
     <h3>
         <i class="icon-bell"></i>
-        Messages
+        {{ 'dashboard.messages' | i18n }}
+
     </h3>
     <hr>
     <div ng-class="testMsgClass" ng-show="testMsg">
