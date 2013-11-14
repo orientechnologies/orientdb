@@ -137,27 +137,30 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         resultsApp.forEach(function (elem, idx, array) {
             delete elem['idx'];
-            console.log(elem['idx']);
             MetricConfig.saveConfig(elem, function (data) {
                     var index = array.indexOf(elem);
                     logs.push(data);
                     array.splice(index, 1);
                     if (array.length == 0) {
-                        modalScope = $scope.$new(true);
-                        modalScope.logs = logs;
-                        modalScope.parentScope = $scope;
-                        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
-                        $q.when(modalPromise).then(function (modalEl) {
-                            modalEl.modal('show');
-                        });
-
+//                        modalScope = $scope.$new(true);
+//                        modalScope.logs = logs;
+//                        modalScope.parentScope = $scope;
+//                        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
+//                        $q.when(modalPromise).then(function (modalEl) {
+//                            modalEl.modal('show');
+//                        });
+                        $scope.testMsg = "Events saved successfully";
+                        $scope.testMsgClass = 'alert alert-setting';
+                        $scope.getEvents();
 
                     }
+                }, function (error) {
+                    $scope.testMsg = error;
+                    $scope.testMsgClass = 'alert alert-error';
                 }
             );
+        });
 
-
-        })
     };
     $scope.openLegend = function () {
         modalScope = $scope.$new(true);
