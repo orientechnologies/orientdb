@@ -58,6 +58,7 @@
     "general.serverUp": "Server up since",
     "general.overview": "Overview",
     "general.logs": "Log",
+    "db.operations": "CRUD Operations",
     "general.configuration": "Configuration",
     "general.lastMsg": "Server last message",
     "server.db.operations": "DB operations",
