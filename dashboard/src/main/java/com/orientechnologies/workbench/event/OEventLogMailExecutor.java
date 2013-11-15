@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.workbench.event;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,7 +26,6 @@ import com.orientechnologies.workbench.event.metric.OEventLogExecutor;
 
 @EventConfig(when = "LogWhen", what = "MailWhat")
 public class OEventLogMailExecutor extends OEventLogExecutor {
-	Map<String, Object> body2name = new HashMap<String, Object>();
 	private ODocument oUserConfiguration;
 	private OMailPlugin mailPlugin;
 
@@ -38,19 +36,10 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 
 	@Override
 	public void execute(ODocument source, ODocument when, ODocument what) {
-		ODocument server = source.field("server");
-		this.body2name.clear();
-
-		if (server != null) {
-			String serverName = server.field("name");
-			this.body2name.put("server", serverName);
-		}
-
-		String sourcelevel = (String) source.field("levelDescription");
-		this.body2name.put("logvalue", sourcelevel);
-
+	
 		// pre-conditions
 		if (canExecute(source, when)) {
+			fillMapResolve(source, when);
 			mailEvent(what);
 		}
 	}
@@ -68,7 +57,7 @@ public class OEventLogMailExecutor extends OEventLogExecutor {
 		}
 
 		Map<String, Object> configuration = EventHelper.createConfiguration(
-				what, body2name);
+				what, getBody2name());
 
 		try {
 			mailPlugin.send(configuration);

@@ -74,7 +74,7 @@ public final class ORealtimeMetric {
 
     OLogManager.instance().info(this, "MONITOR [%s (%s)]-> resetting realtime metrics", serverName, url);
 
-    final URL remoteUrl = new java.net.URL("http://" + url + "/profiler/reset/realtime" + (iName != null ? ("/" + iName) : ""));
+    final URL remoteUrl = new java.net.URL("http://" + url + "/profiler/reset/" + (iName != null ? ("/" + iName) : ""));
     OWorkbenchUtils.fetchFromRemoteServer(server, remoteUrl);
   }
 

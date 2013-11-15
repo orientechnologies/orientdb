@@ -1,0 +1,747 @@
+'\" t
+.\"     Title: a2x
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 9 November 2013
+.\"    Manual: \ \&
+.\"    Source: \ \& 8.6.9
+.\"  Language: English
+.\"
+.TH "A2X" "1" "9 November 2013" "\ \& 8\&.6\&.9" "\ \&"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+a2x \- A toolchain manager for AsciiDoc (converts Asciidoc text files to other file formats)
+.SH "SYNOPSIS"
+.sp
+\fBa2x\fR [\fIOPTIONS\fR] \fISOURCE_FILE\fR
+.SH "DESCRIPTION"
+.sp
+A DocBook toolchain manager that translates an AsciiDoc text file \fISOURCE_FILE\fR to PDF, EPUB, DVI, PS, LaTeX, XHTML (single page or chunked), man page, HTML Help or plain text formats using \fIasciidoc(1)\fR and other applications (see REQUISITES section)\&. \fISOURCE_FILE\fR can also be a DocBook file with an \&.xml extension\&.
+.SH "OPTIONS"
+.PP
+\fB\-a, \-\-attribute\fR=\fIATTRIBUTE\fR
+.RS 4
+Set asciidoc(1) attribute value (shortcut for
+\fB\-\-asciidoc\-opts\fR=\fI"\-a ATTRIBUTE"\fR
+option)\&. This option may be specified more than once\&.
+.RE
+.PP
+\fB\-\-asciidoc\-opts\fR=\fIASCIIDOC_OPTS\fR
+.RS 4
+Additional
+\fIasciidoc(1)\fR
+options\&. This option may be specified more than once\&.
+.RE
+.PP
+\fB\-\-conf\-file\fR=\fICONF_FILE\fR
+.RS 4
+Load configuration file\&. See
+CONF FILES section\&.
+.RE
+.PP
+\fB\-D, \-\-destination\-dir\fR=\fIDESTINATION_DIR\fR
+.RS 4
+Output directory\&. Defaults to
+\fISOURCE_FILE\fR
+directory\&. This option is only applicable to HTML based output formats (\fIchunked\fR,
+\fIepub\fR,
+\fIhtmlhelp\fR,
+\fIxhtml\fR)\&.
+.RE
+.PP
+\fB\-d, \-\-doctype\fR=\fIDOCTYPE\fR
+.RS 4
+DocBook document type:
+\fIarticle\fR,
+\fImanpage\fR
+or
+\fIbook\fR\&. Default document type is
+\fIarticle\fR
+unless the format is
+\fImanpage\fR
+(in which case it defaults to
+\fImanpage\fR)\&.
+.RE
+.PP
+\fB\-b, \-\-backend\fR=\fIBACKEND\fR
+.RS 4
+
+\fIBACKEND\fR
+is the name of an installed backend plugin\&. When this option is specified
+\fIa2x\fR
+attempts load a file name
+\fIa2x\-backend\&.py\fR
+from the
+\fIBACKEND\fR
+plugin directory It then converts the
+\fISOURCE_FILE\fR
+to a
+\fIBACKEND\fR
+formatted output file using a global function defined in
+\fIa2x\-backend\&.py\fR
+called
+\fIto_BACKEND\fR\&.
+.RE
+.PP
+\fB\-f, \-\-format\fR=\fIFORMAT\fR
+.RS 4
+Output formats:
+\fIchunked\fR,
+\fIdocbook\fR,
+\fIdvi\fR,
+\fIepub\fR,
+\fIhtmlhelp\fR,
+\fImanpage\fR,
+\fIpdf\fR
+(default),
+\fIps\fR,
+\fItex\fR,
+\fItext\fR,
+\fIxhtml\fR\&. The AsciiDoc
+\fIa2x\-format\fR
+attribute value is set to
+\fIFORMAT\fR\&.
+.RE
+.PP
+\fB\-h, \-\-help\fR
+.RS 4
+Print command\-line syntax and program options to stdout\&.
+.RE
+.PP
+\fB\-\-icons\fR
+.RS 4
+Use admonition or navigation icon images in output documents\&. The default behavior is to use text in place of icons\&.
+.RE
+.PP
+\fB\-\-icons\-dir\fR=\fIPATH\fR
+.RS 4
+A path (relative to output files) containing admonition and navigation icons\&. Defaults to
+images/icons\&. The
+\fI\-\-icons\fR
+option is implicit if this option is used\&.
+.RE
+.PP
+\fB\-k, \-\-keep\-artifacts\fR
+.RS 4
+Do not delete temporary build files\&.
+.RE
+.PP
+\fB\-\-lynx\fR
+.RS 4
+Use
+\fIlynx(1)\fR
+to generate text formatted output\&. The default behavior is to use
+\fIw3m(1)\fR\&.
+.RE
+.PP
+\fB\-L, \-\-no\-xmllint\fR
+.RS 4
+Do not check asciidoc output with
+\fIxmllint(1)\fR\&.
+.RE
+.PP
+\fB\-\-\-epubcheck\fR
+.RS 4
+Check EPUB output with
+\fIepubcheck(1)\fR\&.
+.RE
+.PP
+\fB\-n, \-\-dry\-run\fR
+.RS 4
+Do not do anything just print what would have been done\&.
+.RE
+.PP
+\fB\-r, \-\-resource\fR=\fIRESOURCE_SPEC\fR
+.RS 4
+Specify a resource\&. This option may be specified more than once\&. See the
+\fBRESOURCES\fR
+section for more details\&.
+.RE
+.PP
+\fB\-m, \-\-resource\-manifest\fR=\fIFILE\fR
+.RS 4
+
+\fIFILE\fR
+contains a list resources (one per line)\&. Manifest
+\fIFILE\fR
+entries are formatted just like
+\fB\-\-resource\fR
+option arguments\&. Environment variables and tilde home directories are allowed\&.
+.RE
+.PP
+\fB\-\-stylesheet\fR=\fISTYLESHEET\fR
+.RS 4
+A space delimited list of one or more CSS stylesheet file names that are used to style HTML output generated by DocBook XSL Stylesheets\&. Defaults to
+\fIdocbook\-xsl\&.css\fR\&. The stylesheets are processed in list order\&. The stylesheets must reside in a valid
+resource file
+location\&. Applies to HTML formats:
+\fIxhtml\fR,
+\fIepub\fR,
+\fIchunked\fR,
+\fIhtmlhelp\fR
+formats\&.
+.RE
+.PP
+\fB\-v, \-\-verbose\fR
+.RS 4
+Print operational details to stderr\&. A second
+\fB\-v\fR
+option applies the verbose option to toolchain commands\&.
+.RE
+.PP
+\fB\-\-version\fR
+.RS 4
+Print program version to stdout\&.
+.RE
+.PP
+\fB\-\-xsltproc\-opts\fR=\fIXSLTPROC_OPTS\fR
+.RS 4
+Additional
+\fIxsltproc(1)\fR
+options\&. This option may be specified more than once\&.
+.RE
+.PP
+\fB\-\-xsl\-file\fR=\fIXSL_FILE\fR
+.RS 4
+Override the built\-in XSL stylesheet with the custom XSL stylesheet
+\fIXSL_FILE\fR\&.
+.RE
+.PP
+\fB\-\-fop\fR
+.RS 4
+Use FOP to generate PDFs\&. The default behavior is to use
+\fIdblatex(1)\fR\&. The
+\fI\-\-fop\fR
+option is implicit if this option is used\&.
+.RE
+.PP
+\fB\-\-fop\-opts\fR=\fIFOP_OPTS\fR
+.RS 4
+Additional
+\fIfop(1)\fR
+options\&. If this option is specified FOP is used to generate PDFs\&. This option may be specified more than once\&.
+.RE
+.PP
+\fB\-\-dblatex\-opts\fR=\fIDBLATEX_OPTS\fR
+.RS 4
+Additional
+\fIdblatex(1)\fR
+options\&. This option may be specified more than once\&.
+.RE
+.PP
+\fB\-\-backend\-opts\fR=\fIBACKEND_OPTS\fR
+.RS 4
+Options for the backend plugin specified by the
+\fI\-\-backend\fR
+option\&. This option may be specified more than once\&.
+.RE
+.sp
+Options can also be set in the AsciiDoc source file\&. If \fISOURCE_FILE\fR contains a comment line beginning with \fB// a2x:\fR then the remainder of the line will be treated as \fIa2x\fR command\-line options\&. For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+// a2x default options\&.
+//    a2x: \-dbook \-\-epubcheck
+// Suppress revision history in dblatex outputs\&.
+//    a2x: \-\-dblatex\-opts "\-P latex\&.output\&.revhistory=0"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Options spanning multiple such comment lines will be concatenated\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Zero or more white space characters can appear between the leading
+\fB//\fR
+and
+\fBa2x:\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Command\-line options take precedence over options set in the source file\&.
+.RE
+.SH "OUTPUT FILES"
+.sp
+Output files are written to the directory specified by the \fB\-\-destination\-dir\fR option\&. If no \fB\-\-destination\-dir\fR option is set output files are written to the \fISOURCE_FILE\fR directory\&.
+.sp
+Output files have the same name as the \fISOURCE_FILE\fR but with an appropriate file name extension: \&.html for \fIxhtml\fR; \&.epub for \fIepub\fR; \&.hhp for \fIhtmlhelp\fR; \&.pdf for \fIpdf\fR; \&.text for \fItext\fR, \&.xml for \fIdocbook\fR\&. By convention manpages have no \&.man extension (man page section number only)\&. Chunked HTML directory names have a \&.chunked extension; chunked HTML Help directory names have a \&.htmlhelp extension\&.
+.sp
+Same named existing files are overwritten\&.
+.sp
+In addition to generating HTML files the \fIxhtml\fR, \fIepub\fR, \fIchunked\fR and \fIhtmlhelp\fR formats ensure resource files are copied to their correct destination directory locations\&.
+.SH "RESOURCES"
+.sp
+Resources are files (typically CSS and images) that are required by HTML based outputs (\fIxhtml\fR, \fIepub\fR, \fIchunked\fR, \fIhtmlhelp\fR formats)\&. \fIa2x\fR scans the generated HTML files and builds a list of required CSS and image files\&. Additional resource files can be specified explicitly using the \fB\-\-resource\fR option\&.
+.sp
+\fIa2x\fR searches for resource files in the following locations in the following order:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+The
+\fISOURCE_FILE\fR
+directory\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+Resource directories specified by the
+\fB\-\-resource\fR
+option (searched recursively)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+Resource directories specified by the
+\fB\-\-resource\-manifest\fR
+option (searched recursively in the order they appear in the manifest file)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+The stock
+images
+and
+stylesheets
+directories in the
+\fIasciidoc(1)\fR
+configuration files directories (searched recursively)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 5.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  5." 4.2
+.\}
+The destination directory\&.
+.RE
+.sp
+When a resource file is found it is copied to the correct relative destination directory\&. Missing destination sub\-directories are created automatically\&.
+.sp
+There are two distinct mechanisms for specifying additional resources:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+A resource directory which will be searched recursively for missing resource files\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+A resource file which will be copied to the output destination directory\&.
+.RE
+.sp
+Resources are specified with \fB\-\-resource\fR option values which can be one of the following formats:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+<resource_dir>
+<resource_file>[=<destination_file>]
+\&.<ext>=<mimetype>
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Where:
+.PP
+<resource_dir>
+.RS 4
+Specifies a directory (absolute or relative to the
+\fISOURCE_FILE\fR) which is searched recursively for missing resource files\&. To eliminate ambiguity the
+<resource_dir>
+name should end with a directory separator character\&.
+.RE
+.PP
+<resource_file>
+.RS 4
+Specifies a resource file (absolute or relative to the
+\fISOURCE_FILE\fR) which will be copied to
+<destination_file>\&. If
+<destination_file>
+is not specified then it is the same as the
+<resource_file>\&.
+.RE
+.PP
+<destination_file>
+.RS 4
+Specifies the destination of the copied source file\&. The
+<destination_file>
+path is relative to the destination directory (absolute paths are not allowed)\&. The location of the destination directory depends on the output
+\fIFORMAT\fR
+(see the
+\fBOUTPUT FILES\fR
+section for details):
+.PP
+chunked, htmlhelp
+.RS 4
+The chunked output directory\&.
+.RE
+.PP
+epub
+.RS 4
+The archived
+OEBPS
+directory\&.
+.RE
+.PP
+xhtml
+.RS 4
+The output
+\fBDESTINATION_DIR\fR\&.
+.RE
+.RE
+.PP
+\&.<ext>=<mimetype>
+.RS 4
+When adding resources to EPUB files the mimetype is inferred from the
+<destination file>
+extension, if the mimetype cannot be guessed an error occurs\&. The
+\&.<ext>=<mimetype>
+resource syntax can be used to explicitly set mimetypes\&.
+<ext>
+is the file name extension,
+<mimetype>
+is the corresponding MIME type\&.
+.RE
+.sp
+Resource option examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-resource \&.\&./images/
+\-\-resource doc/README\&.txt=README\&.txt
+\-\-resource ~/images/tiger\&.png=images/tiger\&.png
+\-\-resource \&.ttf=application/x\-font\-ttf
+.fi
+.if n \{\
+.RE
+.\}
+.SH "EXAMPLES"
+.PP
+a2x \-f pdf doc/source\-highlight\-filter\&.txt
+.RS 4
+Generates
+doc/source\-highlight\-filter\&.pdf
+file\&.
+.RE
+.PP
+a2x \-f xhtml \-D \&.\&./doc \-\-icons \-r \&.\&./images/ team\&.txt
+.RS 4
+Creates HTML file
+\&.\&./doc/team\&.html, uses admonition icons and recursively searches the
+\&.\&./images/
+directory for any missing resources\&.
+.RE
+.PP
+a2x \-f manpage doc/asciidoc\&.1\&.txt
+.RS 4
+Generate
+doc/asciidoc\&.1
+manpage\&.
+.RE
+.SH "REQUISITES"
+.sp
+\fIa2x\fR uses the following programs:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBAsciidoc\fR:
+http://asciidoc\&.org/
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBxsltproc\fR: (all formats except text):
+http://xmlsoft\&.org/XSLT/
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBDocBook XSL Stylesheets\fR
+(all formats except text):
+http://docbook\&.sourceforge\&.net/projects/xsl/
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBdblatex\fR
+(pdf, dvi, ps, tex formats):
+http://dblatex\&.sourceforge\&.net/
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBFOP\fR
+(pdf format \(em alternative PDF file generator):
+http://xmlgraphics\&.apache\&.org/fop/
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBw3m\fR
+(text format):
+http://w3m\&.sourceforge\&.net/index\&.en\&.html
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBLynx\fR
+(text format \(em alternative text file generator):
+http://lynx\&.isc\&.org/
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBepubcheck\fR
+(epub format \(em EPUB file validator):
+http://code\&.google\&.com/p/epubcheck/
+.RE
+.sp
+See also the latest README file\&.
+.SH "CONF FILES"
+.sp
+A configuration file contains executable Python code that overrides the global configuration parameters in a2x\&.py\&. Optional configuration files are loaded in the following order:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+
+a2x\&.conf
+from the directory containing the
+\fIa2x\&.py\fR
+executable\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+
+a2x\&.conf
+from the AsciiDoc global configuration directory\&. Skip this step if we are executing a locally installed (non system wide) copy\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+
+a2x\&.conf
+from the AsciiDoc
+$HOME/\&.asciidoc
+configuration directory\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+The
+\fICONF_FILE\fR
+specified in the
+\fI\-\-conf\-file\fR
+option\&.
+.RE
+.sp
+Here are the default configuration file option values:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# Optional environment variable dictionary passed to
+# executing programs\&. If set to None the existing
+# environment is used\&.
+ENV = None
+
+# External executables\&.
+ASCIIDOC = \*(Aqasciidoc\*(Aq
+XSLTPROC = \*(Aqxsltproc\*(Aq
+DBLATEX = \*(Aqdblatex\*(Aq         # pdf generation\&.
+FOP = \*(Aqfop\*(Aq                 # pdf generation (\-\-fop option)\&.
+W3M = \*(Aqw3m\*(Aq                 # text generation\&.
+LYNX = \*(Aqlynx\*(Aq               # text generation (if no w3m)\&.
+XMLLINT = \*(Aqxmllint\*(Aq         # Set to \*(Aq\*(Aq to disable\&.
+EPUBCHECK = \*(Aqepubcheck\*(Aq     # Set to \*(Aq\*(Aq to disable\&.
+# External executable default options\&.
+ASCIIDOC_OPTS = \*(Aq\*(Aq
+DBLATEX_OPTS = \*(Aq\*(Aq
+FOP_OPTS = \*(Aq\*(Aq
+XSLTPROC_OPTS = \*(Aq\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.SH "BUGS"
+.sp
+See the AsciiDoc distribution BUGS file\&.
+.SH "AUTHOR"
+.sp
+a2x was originally written by Stuart Rackham\&. Many people have contributed to it\&.
+.SH "RESOURCES"
+.sp
+SourceForge: http://sourceforge\&.net/projects/asciidoc/
+.sp
+Main web site: http://asciidoc\&.org/
+.SH "COPYING"
+.sp
+Copyright (C) 2002\-2011 Stuart Rackham\&. Free use of this software is granted under the terms of the MIT license\&.

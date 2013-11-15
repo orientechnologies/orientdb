@@ -125,7 +125,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
 
 }]);
 
-dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor) {
+dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', '$modal', '$q', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, $modal, $q, Monitor) {
 
     var sql = "select * from Log fetchPlan *:1";
 
@@ -138,7 +138,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     $scope.selectedDateTo = undefined;
     $scope.selectedHourTo = undefined;
     $scope.countPage = 1000;
-    $scope.countPageOptions = [1, 2, 3];
+    $scope.countPageOptions = [1000, 500, 100];
 
     $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
     });
@@ -171,9 +171,18 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     }
 
     $scope.purgeLogs = function () {
-        CommandLogApi.purge({type: 'logs'}, function (data) {
 
-            $scope.refresh();
+        Utilities.confirm($scope, $modal, $q, {
+
+            title: 'Warning!',
+            body: 'You are dropping all Workench log. Are you sure?',
+            success: function () {
+                CommandLogApi.purge({type: 'logs'}, function (data) {
+
+                    $scope.getJavaLogs();
+
+                });
+            }
         });
     }
     $scope.search = function () {
@@ -271,4 +280,6 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
             );
         }
     }
-}]);
+}
+])
+;

@@ -1,0 +1,112 @@
+AsciiDoc Plugins
+================
+
+
+A list of backend, filter and theme link:userguide.html#X101[AsciiDoc
+plugins].
+
+If you have implemented a plugin and it's not in the list please post
+a message to the http://groups.google.com/group/asciidoc[asciidoc
+discussion list] and I'll add it.
+
+
+[[X1]]
+[cols="1e,1,3,3",frame="topbot",options="header"]
+.Backend Plugins
+|====
+|Backend name |Author |Home page |Description
+
+|9man
+|Alex Efros
+|http://powerman.name/asciidoc/
+|A backend plugin to generate man pages (troff) compatible with OS
+Inferno and Plan9.
+
+|blogger
+|Stuart Rackham
+|https://github.com/srackham/asciidoc-blogger-backend
+|Generates Blogger friendly HTML from AsciiDoc source.
+
+|deckjs
+|Qingping Hou
+|http://houqp.github.com/asciidoc-deckjs/
+|A 'deck.js' backend for AsciiDoc.
+
+|fossil
+|Stuart Rackham
+|https://github.com/srackham/asciidoc-fossil-backend
+|Generates Fossil friendly Wiki markup from AsciiDoc source.
+
+|ODF
+|Dag Wieers
+|https://github.com/dagwieers/asciidoc-odf
+|Backends for generating LibreOffice/OpenOffice Writer (`.fodt`) files
+and LibreOffice/OpenOffice Impress (`.fodp`) files.
+
+|slidy2
+|Jean-Michel Inglebert
+|http://code.google.com/p/asciidoc-slidy2-backend-plugin/
+|Enhanced slidy backend.
+
+|wordpress
+|Stuart Rackham
+|http://srackham.wordpress.com/blogpost-readme/
+|Generates WordPress friendly markup and is part of the
+http://srackham.wordpress.com/blogpost-readme/[blogpost] project.
+
+|====
+
+
+[[X2]]
+[cols="1e,1,3,3",frame="topbot",options="header"]
+.Filter Plugins
+|====
+|Filter name |Author |Home page |Description
+
+|aafigure |Henrik Maier
+|http://code.google.com/p/asciidoc-aafigure-filter/
+|https://launchpad.net/aafigure[Aafigure] ASCII line art filter.
+
+|diag |Michael Haberler
+|https://code.google.com/p/asciidoc-diag-filter/
+|http://blockdiag.com/[blockdiag] diagrams filter.
+
+|ditaa |Henrik Maier
+|http://code.google.com/p/asciidoc-ditaa-filter/
+|http://ditaa.sourceforge.net[ditaa] ASCII line art filter.
+
+|graphviz-cmap
+|Alex Efros
+|http://powerman.name/asciidoc/
+|A variant of the built-in graphviz filter, which adds support for
+client-side imagemaps.
+
+|matplotlib |Leonid Volnitsky
+|http://volnitsky.com/project/mplw/
+|Using this filter you can generate charts from inline matplotlib scripts.
+
+|mscgen |Henrik Maier
+|http://code.google.com/p/asciidoc-mscgen-filter/
+|Message sequence chart filter.
+
+|qrcode |Jean-Marc Temmos
+|http://code.google.com/p/asciidoc-qrencode-filter/
+|This filter generates
+http://fukuchi.org/works/qrencode/manual/index.html[QRencode] images.
+
+|====
+
+
+[[X3]]
+[cols="1e,1,3,3",frame="topbot",options="header"]
+.Theme Plugins
+|====
+|Theme name |Author |Home page |Description
+
+|compact
+|Alex Efros
+|http://powerman.name/asciidoc/
+|Similar to default theme but more compact.
+
+|====
+

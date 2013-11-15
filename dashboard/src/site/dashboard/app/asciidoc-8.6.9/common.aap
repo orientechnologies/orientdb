@@ -1,0 +1,9 @@
+#
+# Executed by all main.aap's before anything else.
+#
+
+_parent.VERS = 8.6.9
+_parent.DATE = 9 November 2013
+
+all:
+    :pass

@@ -94,11 +94,13 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         modalScope.eventParent = event;
         if (event['what'] == undefined || $scope.selectedWhat[event['idx']] != null && (event['what']['@class'] != $scope.selectedWhat[event['idx']].trim() && $scope.selectedWhat[event['idx']] != undefined)) {
+            console.log('if');
             event['what'] = {};
             event['what']['@class'] = $scope.selectedWhat[event['idx']].trim();
             event['what']['@type'] = 'd';
         }
         else {
+            console.log('else')
             event['what']['@class'] = eventWhat['@class'];
         }
         modalScope.eventWhat = event['what'];
@@ -120,6 +122,9 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
                     var index = $scope.results.indexOf(event);
                     $scope.results.splice(index, 1);
                     $scope.results.splice();
+                    var index = $scope.resultTotal.indexOf(event);
+                    $scope.resultTotal.splice(index, 1);
+                    $scope.resultTotal.splice();
                 });
 
             }
@@ -133,31 +138,41 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
     $scope.saveEvents = function () {
         var logs = new Array;
-        var resultsApp = JSON.parse(JSON.stringify($scope.results));
+        var resultsApp = JSON.parse(JSON.stringify($scope.resultTotal));
 
         resultsApp.forEach(function (elem, idx, array) {
             delete elem['idx'];
-            console.log(elem['idx']);
+            console.log(elem)
+            if (elem.what['@class'].trim() == "FunctionWhat") {
+                console.log(elem.what['parameters']);
+                for (var param in elem.when['parameters']) {
+                    console.log(param);
+                }
+            }
             MetricConfig.saveConfig(elem, function (data) {
                     var index = array.indexOf(elem);
-                    logs.push(data);
+//                    logs.push(data);
                     array.splice(index, 1);
                     if (array.length == 0) {
-                        modalScope = $scope.$new(true);
-                        modalScope.logs = logs;
-                        modalScope.parentScope = $scope;
-                        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
-                        $q.when(modalPromise).then(function (modalEl) {
-                            modalEl.modal('show');
-                        });
-
+//                        modalScope = $scope.$new(true);
+//                        modalScope.logs = logs;
+//                        modalScope.parentScope = $scope;
+//                        var modalPromise = $modal({template: 'views/server/eventsnotify.html', scope: modalScope});
+//                        $q.when(modalPromise).then(function (modalEl) {
+//                            modalEl.modal('show');
+//                        });
+                        $scope.testMsg = "Events saved successfully";
+                        $scope.testMsgClass = 'alert alert-setting';
+                        $scope.getEvents();
 
                     }
+                }, function (error) {
+                    $scope.testMsg = error;
+                    $scope.testMsgClass = 'alert alert-error';
                 }
             );
+        });
 
-
-        })
     };
     $scope.openLegend = function () {
         modalScope = $scope.$new(true);
@@ -300,6 +315,7 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
 
 
     $scope.languages = ['SQL', 'Javascript'];
+    console.log($scope.eventWhat['parameters'])
     $scope.addParam = function () {
         if ($scope.eventWhat['parameters'] == undefined) {
             $scope.eventWhat['parameters'] = new Array;

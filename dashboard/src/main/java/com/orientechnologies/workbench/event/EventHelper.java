@@ -67,8 +67,10 @@ public class EventHelper {
 		String bcc = what.field("bcc");
 		String body = what.field("body");
 
-		body = replaceText(body2name, body);
+		
 
+		body = replaceText(body2name, body);
+		body = replaceMarkers(body);
 		configuration.put("to", address);
 		configuration.put("from", fromAddress);
 		configuration.put("profile", "enterprise");
@@ -78,6 +80,26 @@ public class EventHelper {
 		configuration.put("subject", subject);
 
 		return configuration;
+	}
+
+	public static String replaceMarkers(String text) {
+		if (text != null) {
+			text = text.replaceAll("&", "&amp;");
+			text = text.replaceAll("�", "&egrave;");
+			text = text.replaceAll("�", "&eacute;");
+			text = text.replaceAll("�", "&ograve;");
+			text = text.replaceAll("�", "&agrave;");
+			text = text.replaceAll("�", "&ugrave;");
+			text = text.replaceAll("�", "&igrave;");
+			text = text.replaceAll("<", "&lt;");
+			text = text.replaceAll(">", "&gt;");
+			text = text.replaceAll("\u2018", "&lsquo;");
+			text = text.replaceAll("\u2019", "&rsquo;");
+			text = text.replaceAll("'", "&rsquo;");
+			text = text.replaceAll("\n", "<br/>");
+		}
+
+		return text;
 	}
 
 	public static OMailProfile createOMailProfile(ODocument oUserConfiguration) {
