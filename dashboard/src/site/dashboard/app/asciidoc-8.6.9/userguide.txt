@@ -145,11 +145,31 @@ Notifications panel is similar to Log panel.
 In this case you can search all notifications for the Workbench databases combining the search according to the date and time and the log type.
 
 
+.Notifications panel
+image::notifications.png[width="100%"]
 
-NOTE: To free up disk space, you can delete all the logs from the database by clicking the "purge notifications now".
+
+NOTE: To free up disk space, you can delete all the logs from the database by clicking the button "Purge notifications now".
 
 Events
 ------
+
+In this section you can configure alerts based on certain events that may occur over time, such as a server goes down or when some metrics exceed some critical values.
+
+Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution of an HTTP request or the execution of a function
+
+
+[BOLD]*When:*
+
+- Log
+- Metric
+
+[BOLD]*Do:*
+
+- Send Mail
+- Execute HTTP
+- Execute Function
+
 
 Settings
 --------

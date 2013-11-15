@@ -200,12 +200,12 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         }
         if ($scope.description != undefined && $scope.description != null && $scope.description != '') {
             if (!first) {
-                var sqlapp = " and  message like " + "'%" + $scope.description + "%' ";
+                var sqlapp = " and  description like " + "'%" + $scope.description + "%' ";
                 sql = sql.concat(sqlapp);
             }
             else {
                 first = false;
-                var sqlapp = " WHERE message like " + "'%" + $scope.description + "%' ";
+                var sqlapp = " WHERE description like " + "'%" + $scope.description + "%' ";
                 sql = sql.concat(sqlapp);
             }
         }
@@ -242,6 +242,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
             }
         }
         sql = sql.concat(" fetchPlan *:1");
+        console.log(sql)
         CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql, shallow: ''}, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
