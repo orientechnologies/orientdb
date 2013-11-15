@@ -17,6 +17,7 @@
     "server.health.status": "Status",
     "server.health.name": "Server",
     "server.health.lastcheck": "Last Heartbeat",
+    "server.agentVersion" : "Agent Version",
     "servers.new": "Add Server",
     "logs.title": "Latest Notifications",
     "logs.date": "When",

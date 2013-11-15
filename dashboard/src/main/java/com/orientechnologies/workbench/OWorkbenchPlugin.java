@@ -129,7 +129,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 	Map<String, OPair<String, METRIC_TYPE>>						dictionary;
 	private Set<OServerConfigurationListener>					listeners													= new HashSet<OServerConfigurationListener>();
 	private ConcurrentHashMap<String, Boolean>				metricsEnabled										= new ConcurrentHashMap<String, Boolean>();
-
+	private String version;
 	private OWorkbenchUpdateTask											updater;
 	private OWorkbenchMessageTask											messageTask;
 
@@ -142,6 +142,10 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		dbUser = "admin";
 		dbPassword = "admin";
 		dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
+		for (OServerParameterConfiguration p : iParams) {
+			if (p.name.equals("version"))
+				version = p.value;
+		}
 	}
 
 	@Override

@@ -3,13 +3,8 @@
     <handlers>
         <handler class="com.orientechnologies.agent.OEnterpriseAgent">
             <parameters>
-                <parameter value="true" name="enabled"/>
-            </parameters>
-        </handler>
-        <handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
-            <parameters>
-                <parameter value="true" name="enabled"/>
-                <parameter value="50" name="graph.pool.max"/>
+                <parameter name="license" value="DdOFTqwsd1ZOMQntexFHMqVfWIqfcPax"></parameter>
+                <parameter name="version" value="1.6.1"></parameter>
             </parameters>
         </handler>
         <handler class="com.orientechnologies.orient.server.handler.OJMXPlugin">
@@ -49,7 +44,6 @@
                             <entry value="Cache-Control: max-age=120" name="http.cache:default"/>
                         </parameters>
                     </command>
-                    <command implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi" pattern="GET|gephi/*" stateful="false"/>
                 </commands>
                 <parameters>
                     <parameter value="utf-8" name="network.http.charset"/>
