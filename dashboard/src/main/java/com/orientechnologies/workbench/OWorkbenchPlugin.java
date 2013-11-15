@@ -131,6 +131,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 	private ConcurrentHashMap<String, Boolean>				metricsEnabled										= new ConcurrentHashMap<String, Boolean>();
 
 	private OWorkbenchUpdateTask											updater;
+	private OWorkbenchMessageTask											messageTask;
 
 	@Override
 	public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -166,7 +167,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		registerCommands();
 		Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
 		Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
-		Orient.instance().getTimer().schedule(new OWorkbenchMessageTask(this), 600000, 600000);
+		messageTask = new OWorkbenchMessageTask(this);
+		Orient.instance().getTimer().schedule(messageTask, 600000, 600000);
 		updater = new OWorkbenchUpdateTask(this);
 		Orient.instance().getTimer().schedule(updater, 600000, 600000);
 
@@ -449,8 +451,16 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		unregisterCommands();
 	}
 
+	
 	public OWorkbenchUpdateTask getUpdater() {
 		return updater;
+	}
+
+	public OWorkbenchMessageTask getMessageTask() {
+		return messageTask;
+	}
+	public OServer getServerInstance() {
+		return serverInstance;
 	}
 
 	protected void updateDictionary() {

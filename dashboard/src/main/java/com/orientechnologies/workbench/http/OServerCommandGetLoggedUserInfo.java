@@ -33,55 +33,60 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|loggedUserInfo/*", "POST|loggedUserInfo/*" };
+	private static final String[]	NAMES	= { "GET|loggedUserInfo/*", "POST|loggedUserInfo/*" };
 
-  public OServerCommandGetLoggedUserInfo() {
-  }
+	public OServerCommandGetLoggedUserInfo() {
+	}
 
-  @Override
-  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
-    final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: loggedUserInfo/<db>/<type>");
+	@Override
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+		OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: loggedUserInfo/<db>/<type>");
 
-    String command = urlParts[2];
-    if ("configuration".equals(command)) {
-      if (iRequest.httpMethod.equals("GET")) {
-        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("user", session.getUserName());
-        final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
-            "select from UserConfiguration where user.name = :user"), params);
-        iResponse.writeRecords(response, "*:1");
-      } else {
-        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
-        ODocument doc = new ODocument().fromJSON(iRequest.content);
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("name", session.getUserName());
-        List<ODocument> users = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from OUser where name = :name"), params);
-        ODocument user = users.iterator().next();
-        doc.field("user", user);
-        doc.save();
-        iResponse.writeResult(doc, "*:1");
-      }
-      return false;
-    } else {
-      try {
-        ODocument document = new ODocument();
-        document.field("user", session.getUserName());
-        document.field("database", session.getDatabaseName());
-        document.field("host", session.getParameter("host"));
-        document.field("port", session.getParameter("port"));
-        iResponse.writeResult(document, "indent:6");
-      } catch (Exception e) {
-        iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-      }
-      return false;
-    }
-  }
+		String command = urlParts[2];
+		if ("configuration".equals(command)) {
+			if (iRequest.httpMethod.equals("GET")) {
+				ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("user", session.getUserName());
+				final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
+						"select from UserConfiguration where user.name = :user"), params);
+				iResponse.writeRecords(response, "*:1");
+			} else {
+				ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+				ODatabaseRecordThreadLocal.INSTANCE.set(db);
+				ODocument doc = new ODocument().fromJSON(iRequest.content);
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("name", session.getUserName());
+				List<ODocument> users = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from OUser where name = :name"), params);
+				ODocument user = users.iterator().next();
+				doc.field("user", user);
+				doc.save();
+				iResponse.writeResult(doc, "*:1");
+			}
+			return false;
 
-  @Override
-  public String[] getNames() {
-    return NAMES;
-  }
+		} else if ("version".equals(command)) {
+			
+			
+			return false;
+		} else {
+			try {
+				ODocument document = new ODocument();
+				document.field("user", session.getUserName());
+				document.field("database", session.getDatabaseName());
+				document.field("host", session.getParameter("host"));
+				document.field("port", session.getParameter("port"));
+				iResponse.writeResult(document, "indent:6");
+			} catch (Exception e) {
+				iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+			}
+			return false;
+		}
+	}
+
+	@Override
+	public String[] getNames() {
+		return NAMES;
+	}
 }

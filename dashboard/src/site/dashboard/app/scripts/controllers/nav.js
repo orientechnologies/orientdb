@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('NavController', function ($scope, $routeParams, $location, Login) {
+    .controller('NavController', function ($scope, $routeParams, $location, Login, Message) {
 
 
         $scope.login = Login;
@@ -40,6 +40,9 @@ angular.module('MonitorApp')
             $scope.setSelected();
         });
 
+        $scope.checkUpdates = function () {
+            Message.checkUpdates();
+        }
         $scope.logout = function () {
             Login.logout();
         }

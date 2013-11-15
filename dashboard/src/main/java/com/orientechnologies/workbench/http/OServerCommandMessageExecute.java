@@ -39,7 +39,7 @@ import com.orientechnologies.workbench.WUtils;
 import com.orientechnologies.workbench.event.EventHelper;
 
 public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "POST|message/*" };
+	private static final String[]	NAMES	= { "GET|message/*", "POST|message/*" };
 
 	private OWorkbenchPlugin			monitor;
 
@@ -54,42 +54,51 @@ public class OServerCommandMessageExecute extends OServerCommandAuthenticatedDbA
 		if (monitor == null)
 			monitor = OServerMain.server().getPluginByClass(OWorkbenchPlugin.class);
 
-		final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: message/database/execute");
+		final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: message/database/<command>");
 
+		String command = parts[2];
 		iRequest.data.commandInfo = "Reset metrics";
 
 		try {
 
-			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-			ODatabaseRecordThreadLocal.INSTANCE.set(db);
-			ODocument message = new ODocument().fromJSON(iRequest.content);
-			message.reload();
-			String field = message.field("type");
-			if ("chart".equals(field)) {
-				String payload = message.field("payload");
-				ODocument chart = new ODocument(OWorkbenchPlugin.CLASS_METRIC_CONFIG).fromJSON(payload);
-				chart.save();
-			} else if ("update".equals(field)) {
+			if ("execute".endsWith(command)) {
+				ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+				ODatabaseRecordThreadLocal.INSTANCE.set(db);
+				ODocument message = new ODocument().fromJSON(iRequest.content);
+				message.reload();
+				String field = message.field("type");
+				if ("chart".equals(field)) {
+					String payload = message.field("payload");
+					ODocument chart = new ODocument(OWorkbenchPlugin.CLASS_METRIC_CONFIG).fromJSON(payload);
+					chart.save();
+				} else if ("update".equals(field)) {
 
-				String payload = message.field("payload");
-				Proxy p = EventHelper.retrieveProxy(db);
+					String dbDir = monitor.getServerInstance().getDatabaseDirectory();
+					File dbDirFile = new File(dbDir);
+					String workbenchDir = dbDirFile.getParent();
+					String payload = message.field("payload");
+					Proxy p = EventHelper.retrieveProxy(db);
 
-				URL remoteUrl = new java.net.URL(payload);
-				URLConnection urlConnection = null;
-				if (p != null) {
-					urlConnection = remoteUrl.openConnection(p);
-				} else {
-					urlConnection = remoteUrl.openConnection();
+					URL remoteUrl = new java.net.URL(payload);
+					URLConnection urlConnection = null;
+					if (p != null) {
+						urlConnection = remoteUrl.openConnection(p);
+					} else {
+						urlConnection = remoteUrl.openConnection();
+					}
+					urlConnection.connect();
+					File zip = WUtils.unpackArchive(remoteUrl, new File(workbenchDir + "/download"));
+					zip.delete();
+					monitor.getUpdater().run();
 				}
-				urlConnection.connect();
-				File zip = WUtils.unpackArchive(remoteUrl, new File("download"));
-				zip.delete();
-				monitor.getUpdater().run();
-			}
 
-			message.field("type", "news");
-			message.save();
-			iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+				message.field("type", "news");
+				message.save();
+				iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+			} else if ("update".endsWith(command)) {
+				monitor.getMessageTask().run();
+				iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+			}
 
 		} catch (Exception e) {
 			iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
