@@ -149,10 +149,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int entrySize = keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        entrySize += valueSerializer.getFixedLength();
-      else
-        entrySize += valueSerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition + entrySize);
+      assert valueSerializer.isFixedLength();
+      entrySize += valueSerializer.getFixedLength();
     } else {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
@@ -250,10 +248,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     int entrySize = keySize;
 
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        valueSize = valueSerializer.getFixedLength();
-      else
-        valueSize = valueSerializer.getObjectSize(treeEntry.value);
+      assert valueSerializer.isFixedLength();
+      valueSize = valueSerializer.getFixedLength();
 
       entrySize += valueSize;
 
@@ -318,29 +314,17 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     return true;
   }
 
-  public boolean updateValue(int index, V value) throws IOException {
-    if (valueSerializer.isFixedLength()) {
-      int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+  public void updateValue(int index, V value) throws IOException {
+    assert valueSerializer.isFixedLength();
 
-      entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
+    int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
-      byte[] serializedValue = new byte[valueSerializer.getFixedLength()];
-      valueSerializer.serializeNative(value, serializedValue, 0);
+    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
 
-      setBinaryValue(offset + entryPosition, serializedValue);
-      return true;
-    }
+    byte[] serializedValue = new byte[valueSerializer.getFixedLength()];
+    valueSerializer.serializeNative(value, serializedValue, 0);
 
-    final int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-
-    int entreeSize = keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
-    entreeSize += valueSerializer.getObjectSize(value);
-
-    checkEntreeSize(entreeSize);
-
-    final K key = getKey(index);
-    remove(index);
-    return addEntry(index, new SBTreeEntry<K, V>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value), false);
+    setBinaryValue(offset + entryPosition, serializedValue);
   }
 
   private void checkEntreeSize(int entreeSize) {

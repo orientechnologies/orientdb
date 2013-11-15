@@ -49,14 +49,14 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
   protected static final OProfilerMBean         PROFILER             = Orient.instance().getProfiler();
 
   public OSBTreeIndexRIDContainer(String fileName) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
 
     tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
   public OSBTreeIndexRIDContainer(String fileName, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
     tree.load(fileName, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 

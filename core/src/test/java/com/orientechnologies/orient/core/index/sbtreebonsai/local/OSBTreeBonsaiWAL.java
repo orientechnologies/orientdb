@@ -120,7 +120,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
+    sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", false);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
@@ -156,7 +156,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
+    expectedSBTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", false);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
   }
 

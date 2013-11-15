@@ -16,17 +16,9 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -71,7 +63,6 @@ public class OSBTreeRIDSetTest {
   public void testInitialization() throws Exception {
     OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
 
-    assertNotNull(set.getFileName());
     assertNotNull(set.getRootPointer());
     assertTrue(set.isEmpty());
   }

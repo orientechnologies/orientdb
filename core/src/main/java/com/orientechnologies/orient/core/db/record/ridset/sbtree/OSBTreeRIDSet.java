@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, ORecordLazyMultiValue {
-  private final String                   fileName;
   private final OBonsaiBucketPointer     rootPointer;
   private ORecordInternal<?>             owner;
   private boolean                        autoConvertToRecord = true;
@@ -56,7 +55,6 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     collectionManager = database.getSbTreeCollectionManager();
 
     OSBTreeBonsai<OIdentifiable, Boolean> tree = collectionManager.createSBTree();
-    fileName = tree.getName();
     rootPointer = tree.getRootBucketPointer();
   }
 
@@ -72,7 +70,6 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   public OSBTreeRIDSet(ORecordInternal<?> owner, String fileName, OBonsaiBucketPointer rootPointer) {
     this.owner = owner;
-    this.fileName = fileName;
     this.rootPointer = rootPointer;
 
     if (owner != null)
@@ -86,12 +83,12 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     addAll(iValue);
   }
 
-  private OSBTreeBonsai<OIdentifiable, Boolean> getTree() {
-    return collectionManager.loadSBTree(fileName, rootPointer);
+  private OSBTreeBonsai<OIdentifiable, Boolean> loadTree() {
+    return collectionManager.loadSBTree(rootPointer);
   }
 
-  protected String getFileName() {
-    return fileName;
+  private void releaseTree() {
+    collectionManager.releaseSBTree(rootPointer);
   }
 
   protected OBonsaiBucketPointer getRootPointer() {
@@ -100,12 +97,18 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public int size() {
-    return (int) getTree().size();
+    OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+    try {
+      return (int) tree.size();
+    } finally {
+      releaseTree();
+    }
+
   }
 
   @Override
   public boolean isEmpty() {
-    return getTree().size() == 0L;
+    return size() == 0L;
   }
 
   @Override
@@ -114,12 +117,17 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   public boolean contains(OIdentifiable o) {
-    return getTree().get(o) != null;
+    OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+    try {
+      return tree.get(o) != null;
+    } finally {
+      releaseTree();
+    }
   }
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return new TreeKeyIterator(getTree(), autoConvertToRecord);
+    return null;
   }
 
   @Override
@@ -156,16 +164,16 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    return add(getTree(), oIdentifiable);
+    return false;
   }
 
   private boolean add(OSBTreeBonsai<OIdentifiable, Boolean> tree, OIdentifiable oIdentifiable) {
     // TODO check if we can avoid get operation
     // TODO fix race condition
-    if (getTree().get(oIdentifiable) != null)
-      return false;
-
-    getTree().put(oIdentifiable, Boolean.TRUE);
+    // if (getTree().get(oIdentifiable) != null)
+    // return false;
+    //
+    // getTree().put(oIdentifiable, Boolean.TRUE);
     return true;
   }
 
@@ -175,7 +183,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   public boolean remove(OIdentifiable o) {
-    return getTree().remove(o) != null;
+    return false;// getTree().remove(o) != null;
   }
 
   @Override
@@ -188,12 +196,13 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
-    final OSBTreeBonsai<OIdentifiable, Boolean> tree = getTree();
-    boolean modified = false;
-    for (OIdentifiable e : c)
-      if (add(tree, e))
-        modified = true;
-    return modified;
+    // final OSBTreeBonsai<OIdentifiable, Boolean> tree = getTree();
+    // boolean modified = false;
+    // for (OIdentifiable e : c)
+    // if (add(tree, e))
+    // modified = true;
+    // return modified;
+    return false;
   }
 
   @Override
@@ -221,23 +230,22 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public void clear() {
-    getTree().clear();
+    // getTree().clear();
   }
 
   @Override
-  public OSBTreeRIDSet toStream(StringBuilder iOutput) throws OSerializationException {
+  public OSBTreeRIDSet toStream(StringBuilder output) throws OSerializationException {
     final long timer = PROFILER.startChrono();
 
     try {
-      iOutput.append(OStringSerializerHelper.LINKSET_PREFIX);
+      output.append(OStringSerializerHelper.LINKSET_PREFIX);
 
       final ODocument document = new ODocument();
       document.field("rootIndex", getRootPointer().getPageIndex());
       document.field("rootOffset", getRootPointer().getPageOffset());
-      document.field("file", getFileName());
-      iOutput.append(new String(document.toStream()));
+      output.append(new String(document.toStream()));
 
-      iOutput.append(OStringSerializerHelper.SET_END);
+      output.append(OStringSerializerHelper.SET_END);
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.toStream"), "Serialize a MVRBTreeRID", timer);
     }
@@ -269,7 +277,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
-    return new TreeKeyIterator(getTree(), false);
+    return null;// new TreeKeyIterator(getTree(), false);
   }
 
   @Override
