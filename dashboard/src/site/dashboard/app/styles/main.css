@@ -685,8 +685,8 @@ div.httpwhatform select.ng-valid.ng-dirty, div.httpwhatform input.ng-valid.ng-di
 }
 
 div.pagination {
-    padding: 3px;
-    margin: 3px;
+    padding: 0px;
+    margin: 0px;
     text-align: left;
 }
 
@@ -1042,13 +1042,15 @@ table.messages_table>tbody>tr {
     border-bottom: 1px solid #d3d3d3;
 }
 
-.widget .label-info-message {
+.label-info-message {
 
     background-color: #808080;
     border-style: none;
     box-shadow: none;
-    float: right;
-    height: 32px;
+    padding: 5px;
+    vertical-align: middle;
+    margin-right: 5px;
+
 }
 
 table.messages_table tr.active {
@@ -1102,4 +1104,10 @@ div.messageText label {
 .config .popover-content > .row-fluid {
     margin-bottom: 5px;
     margin-top: 5px;
+}
+.pagination a, .pagination span {
+    line-height: 30px;
+}
+.pagination ul {
+    display: inline;
 }
