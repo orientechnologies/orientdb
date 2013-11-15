@@ -40,7 +40,7 @@ angular.module('MonitorApp')
 
                 }
             });
-            $timeout(tick, 60000);
+            $timeout(tick, 6000);
         })();
 
     });

@@ -24,6 +24,9 @@ spinner.factory('Message', function (Monitor, $http, $resource) {
             callback(data);
         });
     }
-
+    resource.checkUpdates = function () {
+        $http.get(API + 'message/monitor/update').success(function (data) {
+        });
+    }
     return resource;
 });

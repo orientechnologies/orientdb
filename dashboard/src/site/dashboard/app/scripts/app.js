@@ -56,3 +56,8 @@ angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.c
 
 $('*', '.modal').on('show', function(e) {e.stopPropagation();}).on('hide', function(e) {e.stopPropagation();});
 $('*', '.popover').on('show', function(e) {e.stopPropagation();}).on('hide', function(e) {console.log(e); e.stopPropagation();});
+
+$('.popover').on("hide", function (e) {
+
+    e.stopPropagation();
+});
