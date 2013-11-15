@@ -137,6 +137,8 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         $route.reload();
     }
     $scope.saveEvents = function () {
+        $scope.testMsg = undefined;
+        $scope.testMsgClass = undefined;
         var logs = new Array;
         var resultsApp = JSON.parse(JSON.stringify($scope.resultTotal));
 
@@ -184,7 +186,10 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
 
     $scope.newEvent = function () {
+        if ($scope.count == undefined)
+            $scope.count = 0;
         $scope.count = $scope.count + 1;
+        console.log($scope.count);
         var object = {"name": name, '@rid': "#-1:-1", 'idx': $scope.count, "@class": "Event"};
         $scope.resultTotal.push(object);
         $scope.results.push(object);

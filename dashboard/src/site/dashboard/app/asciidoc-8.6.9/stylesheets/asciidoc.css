@@ -138,7 +138,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
-  color: #527bbd;
+  color: #888;
   font-weight: bold;
   text-align: left;
   margin-top: 1.0em;

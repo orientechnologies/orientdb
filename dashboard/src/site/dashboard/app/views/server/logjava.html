@@ -15,7 +15,7 @@
                     class="icon-search"></i> Search
             </button>
             <button class="btn btn-danger " ng-click="purgeLogs()"><i
-                    class="icon-trash"></i> Purge Logs Now
+                    class="icon-trash"></i> Purge notifications now
             </button>
         </div>
         <table class="form-search-width">
@@ -129,7 +129,7 @@
                 <!--<td ng-repeat="header in headers">{{result[header]}}</td>-->
                 <td>{{result['date']}}</td>
                 <td>{{result['server']['name']}}</td>
-                <td>{{result['level']}}</td>
+                <td>{{result['levelDescription']}}</td>
                 <td>{{result['description']}}</td>
             </tr>
             </tbody>

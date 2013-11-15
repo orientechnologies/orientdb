@@ -334,6 +334,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 		log.createProperty("level", OType.STRING);
 		log.createProperty("server", OType.LINK, server);
 		log.createProperty("message", OType.STRING);
+		log.createProperty("levelDescription", OType.STRING);
+		
 
 		final OClass chrono = schema.createClass(CLASS_CHRONO).setSuperClass(metric);
 		chrono.createProperty("entries", OType.LONG);

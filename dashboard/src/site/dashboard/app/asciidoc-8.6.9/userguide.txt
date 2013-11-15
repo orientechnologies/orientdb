@@ -6,16 +6,13 @@ Luca Garulli <l.garulli@gmail.com>
 :icons:
 :numbered:
 :website: http://www.orientechnologies.com/
+:gettingstarted: gettingstarded.html
 
-.This document
-**********************************************************************
-
-**********************************************************************
 
 
 Introduction
 ------------
-Based on the Community Edition, provides additional Enterprise Class features like:
+Based on the Community Edition, OrientDB provides additional Enterprise Class features like:
 
 - Workbench, as a centralized cockpit to manage multiple servers
 - SQL Profiler, to tune the database based on usage patterns
@@ -24,39 +21,200 @@ Based on the Community Edition, provides additional Enterprise Class features li
 - Production support available on demand.
 
 
-Add Server
-----------
-Go to the dashboard panel and click to "add server"
-
-.Add Server
-[caption="Picture 1: "]
-image::addserver_1.png[Dashboard panel, add server]
-
-
-
-Server Configuration
---------------------
-
-When popup open, just fill the form and test your server connection. If it's ok save your server configuration by clicking "save changes".
-
-.Server Configuration
-[caption="Picture 2: "]
-image::popup_server.png[Server Configuration]
-
-
-Dashboard overview
-------------------
-
-
-
-.Dashboard overview
-[caption="Picture 3: "]
-image::dashboard_filled.png[width="90%"]
-
-
-NOTE: Now you have one server in your dashboard panel with latest notification about it.
- You can modify server configuration by clicking on the button at the right side of the server.
+.Login
+image::login.png[width="90%"]
 
 
 
 
+Getting Started
+---------------
+
+NOTE: For configuring server please follow this link:gettingstarted.html[guide]
+
+
+Server Management
+-----------------
+
+
+In Server Management panel there are 4 tabs:
+
+- [BOLD]*Overview*
+- [BOLD]*Database Management*
+- [BOLD]*Log*
+- [BOLD]*Configuration*
+
+Every information is referred to the server that you select at the top of the panel.
+
+At the top there are some information about the selected server:
+
+- Status
+- JVM
+- OS architecture
+- OS name
+- Number of CPU
+- Java vendor
+
+Overview
+~~~~~~~~
+
+
+The first tab of the server panel, shows a chart that represents CRUD operations for all databases of the selected server, divided by date and time and the number of executions for each operation.
+
+.Crud operations of all databases
+image::overview_full.png[width="90%"]
+
+At the right top corner of the tab you can configure chart choosing the resolution (1m, 5m, 30m, 1h), the date range and the chart type.
+
+.Chart configurations
+image::chart_configuration.png[height="20%"]
+
+
+NOTE: You can even choose to see the graphics in real time (realtime option) selecting pull interval.
+
+Database Management
+~~~~~~~~~~~~~~~~~~~
+
+.Database Management
+image::databasemanagement.png[width="90%"]
+
+
+Database management panel  shows the list of databases for each server and the chart of crud operations for the selected database.
+
+TIP: select the database by clicking on the name.
+
+Database Backup
+^^^^^^^^^^^^^^^
+
+
+NOTE: You can make a backup of each database, just click on the button to the right of the database name.
+
+.Backup
+image::backup.png[height="20%"]
+
+Log
+~~~
+
+In the log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.
+
+.Server Log
+image::server_log.png[height="20%"]
+
+NOTE: You can even search for a particular text just filling info input.
+
+CAUTION: Choose at least one file for your search.
+
+
+
+Configuration
+~~~~~~~~~~~~~
+
+In the last tab you can modify orientdb-server-config.xml. Click save to send the configuration back to the server.
+
+.Configurations
+image::configuration.png[width="100%"]
+
+
+CAUTION: Auto-reload isn't supported until 2.0.
+
+
+Metrics
+-------
+
+
+
+Query Profiler
+--------------
+
+
+Query profiler panel shows the commands executed for a database on a particular server.
+
+It also shows the type of command, the minimum and maximum number of times executed and the media.
+
+.List of commands executed
+image::query_profiler.png[width="100%"]
+
+
+
+
+Notifications
+-------------
+
+Notifications panel is similar to Log panel.
+
+In this case you can search all notifications for the Workbench databases combining the search according to the date and time and the log type.
+
+
+.Notifications panel
+image::notifications.png[width="100%"]
+
+
+NOTE: To free up disk space, you can delete all the logs from the database by clicking the button "Purge notifications now".
+
+Events
+------
+
+In this section you can configure alerts based on certain events that may occur over time, such as a server goes down or when some metrics exceed some critical values.
+
+Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution of an HTTP request or the execution of a function
+
+
+[BOLD]*When:*
+
+- Log
+- Metric
+
+[BOLD]*Do:*
+
+- Send Mail
+- Execute HTTP
+- Execute Function
+
+
+Settings
+--------
+
+In this panel you can configure some settings for the entire Workbench. There are four tabs:
+
+- Dashboard Configuration
+- Metrics Configuration
+- Mail Settings
+- Global Settings
+
+
+
+Dashboard Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+At the left of the panel you have a list of all metrics chart that you have configured in the Metrics panel.
+
+Here you can choose a set of it and the layout to componing the Workbench home page.
+
+
+Metrics Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+In metrics configuration you choose wich metrics the Workbench will save; check it to enable/disable it.
+
+Mail Settings
+~~~~~~~~~~~~~
+
+In mail settings panel you can configure your server smtp that will be used in events task.
+
+
+Global Settings
+~~~~~~~~~~~~~~~
+
+In order to avoid the full size disk a schedule will check metrics and logs older than x hour.
+
+You can even decide to purge all metric and notifications in Workbench database just click on the button "purge all metrics now" and "purge all notifications now".
+
+You can purge all notifications and metrics just clicking the buttons
+
+You can even confiure a proxy to permit http request in events panel.
+
+Choose if you want to keep update about news of orientDB
+
+
+Messages
+--------

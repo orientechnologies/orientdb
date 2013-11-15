@@ -71,7 +71,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         filterOptions: $scope.filterOptions,
         columnDefs: [
             {field: 'name', displayName: 'Name'},
-            {field: 'description', displayName: 'Age'},
+            {field: 'description', displayName: 'Description'},
             {field: 'enabled', displayName: 'Enabled', enableCellEdit: true, cellTemplate: '<input type="checkbox" ng-change="modifiedMetrics(row.entity)" ng-model="row.entity.enabled">'}
         ]
     };

@@ -10,7 +10,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
     $scope.types = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
     $scope.files = ['ALL_FILES', 'LAST'];
     $scope.selectedType = undefined;
-    $scope.selectedFile = undefined;
+    $scope.selectedFile = 'ALL_FILES';
 
 
     $scope.$watch("server", function (data) {
@@ -147,7 +147,6 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql, shallow: 'shallow'}, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
-                console.log(data)
                 $scope.resultTotal = data;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
@@ -201,12 +200,12 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         }
         if ($scope.description != undefined && $scope.description != null && $scope.description != '') {
             if (!first) {
-                var sqlapp = " and  message like " + "'%" + $scope.description + "%' ";
+                var sqlapp = " and  description like " + "'%" + $scope.description + "%' ";
                 sql = sql.concat(sqlapp);
             }
             else {
                 first = false;
-                var sqlapp = " WHERE message like " + "'%" + $scope.description + "%' ";
+                var sqlapp = " WHERE description like " + "'%" + $scope.description + "%' ";
                 sql = sql.concat(sqlapp);
             }
         }
@@ -225,6 +224,8 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
                 var sqlapp = " WHERE date >= " + "'" + formatted + '' + hour + "'";
                 sql = sql.concat(sqlapp);
             }
+
+
         }
         if ($scope.selectedDateTo != undefined && $scope.selectedDateTo != null && $scope.selectedDateTo != '') {
             var hour = $scope.parseTime($scope.selectedHourTo);
@@ -240,8 +241,9 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
                 sql = sql.concat(sqlapp);
             }
         }
+        sql = sql.concat(" fetchPlan *:1");
         console.log(sql)
-        CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql }, function (data) {
+        CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql, shallow: ''}, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
                 $scope.resultTotal = data;
