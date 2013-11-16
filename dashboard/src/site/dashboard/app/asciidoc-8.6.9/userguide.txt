@@ -102,8 +102,6 @@ NOTE: You can even search for a particular text just filling info input.
 
 CAUTION: Choose at least one file for your search.
 
-
-
 Configuration
 ~~~~~~~~~~~~~
 

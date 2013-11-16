@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.workbench.event.metric;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,22 +54,24 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
 		this.getBody2name().clear();
 
-			ODocument snapshot = source.field("snapshot");
-			if (snapshot != null) {
-				ODocument server = snapshot.field("server");
-				if (server != null) {
-					String serverName = server.field("name");
-					this.getBody2name().put("server", serverName);
-				}
+		ODocument snapshot = source.field("snapshot");
+		if (snapshot != null) {
+			ODocument server = snapshot.field("server");
+			if (server != null) {
+				String serverName = server.field("name");
+				this.getBody2name().put("server", serverName);
 			}
-			String metricName = source.field("name");
-			this.getBody2name().put("metric", metricName);
+			Date dateFrom = snapshot.field("dateFrom");
+			this.getBody2name().put("date", dateFrom);
+		}
+		String metricName = source.field("name");
+		this.getBody2name().put("metric", metricName);
 
-			String whenParameter = when.field("parameter");
-			this.getBody2name().put("parameter", whenParameter);
-			String metricValue = source.field(whenParameter);
-			this.getBody2name().put("metricvalue", metricValue);
-			
+		String whenParameter = when.field("parameter");
+		this.getBody2name().put("parameter", whenParameter);
+		String metricValue = source.field(whenParameter);
+		this.getBody2name().put("metricvalue", metricValue);
+
 	}
 
 	public Map<String, Object> getBody2name() {
