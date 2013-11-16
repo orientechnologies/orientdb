@@ -296,8 +296,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     else if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(dbName);
+
       if (path == null)
-        path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
+        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
     } else if (storageType.equals(OEngineMemory.NAME)) {
       path = storageType + ":" + dbName;
     } else
