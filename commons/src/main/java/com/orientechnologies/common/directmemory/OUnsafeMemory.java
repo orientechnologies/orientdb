@@ -202,7 +202,7 @@ public class OUnsafeMemory implements ODirectMemory {
   }
 
   @Override
-  public void copyData(long srcPointer, long destPointer, long len) {
+  public void moveData(long srcPointer, long destPointer, long len) {
     while (len > 0) {
       long size = (len > UNSAFE_COPY_THRESHOLD) ? UNSAFE_COPY_THRESHOLD : len;
       unsafe.copyMemory(srcPointer, destPointer, size);

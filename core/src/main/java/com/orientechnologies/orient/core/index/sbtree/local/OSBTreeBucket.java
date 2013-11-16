@@ -175,7 +175,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     int size = size();
     if (entryIndex < size - 1) {
-      copyData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + entryIndex
+      moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + entryIndex
           * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
@@ -184,7 +184,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
     if (size > 0 && entryPosition > freePointer) {
-      copyData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+      moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
     setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
 
@@ -294,7 +294,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       return false;
 
     if (index <= size - 1) {
-      copyData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
+      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
           * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
     }
 

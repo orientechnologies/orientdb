@@ -37,22 +37,17 @@ public class OStringSerializer implements OBinarySerializer<String> {
     OIntegerSerializer.INSTANCE.serialize(length, stream, startPosition);
 
     startPosition += OIntegerSerializer.INT_SIZE;
-
-    byte[] binaryData = new byte[length * 2];
     char[] stringContent = new char[length];
 
     object.getChars(0, length, stringContent, 0);
 
-    int counter = 0;
     for (char character : stringContent) {
-      binaryData[counter] = (byte) character;
-      counter++;
+      stream[startPosition] = (byte) character;
+      startPosition++;
 
-      binaryData[counter] = (byte) (character >>> 8);
-      counter++;
+      stream[startPosition] = (byte) (character >>> 8);
+      startPosition++;
     }
-
-    System.arraycopy(binaryData, 0, stream, startPosition, binaryData.length);
   }
 
   public String deserialize(final byte[] stream, int startPosition) {
@@ -61,11 +56,10 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
     startPosition += OIntegerSerializer.INT_SIZE;
 
-    byte[] binaryData = new byte[buffer.length * 2];
-    System.arraycopy(stream, startPosition, binaryData, 0, binaryData.length);
-
-    for (int i = 0; i < len; i++)
-      buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+    for (int i = 0; i < len; i++) {
+      buffer[i] = (char) ((0xFF & stream[startPosition]) | ((0xFF & stream[startPosition + 1]) << 8));
+      startPosition += 2;
+    }
 
     return new String(buffer);
   }
@@ -86,23 +80,18 @@ public class OStringSerializer implements OBinarySerializer<String> {
     int length = object.length();
     OIntegerSerializer.INSTANCE.serializeNative(length, stream, startPosition);
 
-    int pos = startPosition + OIntegerSerializer.INT_SIZE;
-
-    byte[] binaryData = new byte[length * 2];
+    startPosition += OIntegerSerializer.INT_SIZE;
     char[] stringContent = new char[length];
 
     object.getChars(0, length, stringContent, 0);
 
-    int counter = 0;
     for (char character : stringContent) {
-      binaryData[counter] = (byte) character;
-      counter++;
+      stream[startPosition] = (byte) character;
+      startPosition++;
 
-      binaryData[counter] = (byte) (character >>> 8);
-      counter++;
+      stream[startPosition] = (byte) (character >>> 8);
+      startPosition++;
     }
-
-    System.arraycopy(binaryData, 0, stream, pos, binaryData.length);
   }
 
   public String deserializeNative(byte[] stream, int startPosition) {
@@ -111,11 +100,10 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
     startPosition += OIntegerSerializer.INT_SIZE;
 
-    byte[] binaryData = new byte[buffer.length * 2];
-    System.arraycopy(stream, startPosition, binaryData, 0, binaryData.length);
-
-    for (int i = 0; i < len; i++)
-      buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+    for (int i = 0; i < len; i++) {
+      buffer[i] = (char) ((0xFF & stream[startPosition]) | ((0xFF & stream[startPosition + 1]) << 8));
+      startPosition += 2;
+    }
 
     return new String(buffer);
   }

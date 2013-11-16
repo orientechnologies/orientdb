@@ -1143,7 +1143,7 @@ public class OWriteAheadLog {
             ODirectMemoryPointer dataPointer;
             if (flushedPages == maxSize - 1) {
               dataPointer = new ODirectMemoryPointer(OWALPage.PAGE_SIZE);
-              page.getPagePointer().copyData(0, dataPointer, 0, OWALPage.PAGE_SIZE);
+              page.getPagePointer().moveData(0, dataPointer, 0, OWALPage.PAGE_SIZE);
             } else {
               dataPointer = page.getPagePointer();
             }

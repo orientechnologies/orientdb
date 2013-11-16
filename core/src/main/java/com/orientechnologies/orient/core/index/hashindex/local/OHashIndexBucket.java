@@ -170,11 +170,11 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     final int ridSize = valueSerializer.getObjectSizeInDirectMemory(bufferPointer, entryPosition + keySize);
     final int entrySize = keySize + ridSize;
 
-    bufferPointer.copyData(positionOffset + OIntegerSerializer.INT_SIZE, bufferPointer, positionOffset, size()
+    bufferPointer.moveData(positionOffset + OIntegerSerializer.INT_SIZE, bufferPointer, positionOffset, size()
         * OIntegerSerializer.INT_SIZE - (index + 1) * OIntegerSerializer.INT_SIZE);
 
     if (entryPosition > freePointer)
-      bufferPointer.copyData(freePointer, bufferPointer, freePointer + entrySize, entryPosition - freePointer);
+      bufferPointer.moveData(freePointer, bufferPointer, freePointer + entrySize, entryPosition - freePointer);
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
     int size = size();
@@ -216,7 +216,7 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     int size = size();
     final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
 
-    bufferPointer.copyData(positionsOffset, bufferPointer, positionsOffset + OIntegerSerializer.INT_SIZE, size()
+    bufferPointer.moveData(positionsOffset, bufferPointer, positionsOffset + OIntegerSerializer.INT_SIZE, size()
         * OIntegerSerializer.INT_SIZE - insertionPoint * OIntegerSerializer.INT_SIZE);
 
     final int entreePosition = freePointer - entreeSize;

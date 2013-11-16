@@ -113,7 +113,7 @@ public class OJNADirectMemory implements ODirectMemory {
   }
 
   @Override
-  public void copyData(long srcPointer, long destPointer, long len) {
+  public void moveData(long srcPointer, long destPointer, long len) {
     CLibrary.memoryMove(srcPointer, destPointer, len);
   }
 

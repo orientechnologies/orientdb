@@ -122,13 +122,13 @@ public class ODirectMemoryPointer {
     return directMemory.getChar(dataPointer + offset);
   }
 
-  public void copyData(long srcOffset, ODirectMemoryPointer destPointer, long destOffset, long len) {
+  public void moveData(long srcOffset, ODirectMemoryPointer destPointer, long destOffset, long len) {
     if (SAFE_MODE) {
       rangeCheck(srcOffset, len);
       rangeCheck(destOffset, len);
     }
 
-    directMemory.copyData(dataPointer + srcOffset, destPointer.getDataPointer() + destOffset, len);
+    directMemory.moveData(dataPointer + srcOffset, destPointer.getDataPointer() + destOffset, len);
   }
 
   private void rangeCheck(long offset, long size) {

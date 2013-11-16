@@ -126,7 +126,7 @@ public class ODurablePage {
       pagePointer.set(pageOffset, value, 0, value.length);
   }
 
-  public void copyData(int from, int to, int len) throws IOException {
+  public void moveData(int from, int to, int len) throws IOException {
     if (len == 0)
       return;
 
@@ -134,18 +134,18 @@ public class ODurablePage {
       byte[] content = pagePointer.get(from, len);
       byte[] oldContent = pagePointer.get(to, len);
 
-      pagePointer.copyData(from, pagePointer, to, len);
+      pagePointer.moveData(from, pagePointer, to, len);
 
       pageChanges.addChanges(to, content, oldContent);
     } else if (trackMode.equals(TrackMode.ROLLBACK_ONLY)) {
       byte[] oldContent = pagePointer.get(to, len);
 
-      pagePointer.copyData(from, pagePointer, to, len);
+      pagePointer.moveData(from, pagePointer, to, len);
 
       pageChanges.addChanges(to, null, oldContent);
 
     } else
-      pagePointer.copyData(from, pagePointer, to, len);
+      pagePointer.moveData(from, pagePointer, to, len);
   }
 
   public OPageChanges getPageChanges() {

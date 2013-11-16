@@ -40,7 +40,7 @@ public class StringSerializerTest {
     stringSerializer = new OStringSerializer();
     Random random = new Random();
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < random.nextInt(20) + 5; i++) {
       sb.append((char) random.nextInt());
     }
     OBJECT = sb.toString();

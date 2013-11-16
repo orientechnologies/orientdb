@@ -159,7 +159,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int size = size();
     if (entryIndex < size - 1) {
-      copyData(offset + POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, offset + POSITIONS_ARRAY_OFFSET
+      moveData(offset + POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, offset + POSITIONS_ARRAY_OFFSET
           + entryIndex * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
@@ -168,7 +168,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int freePointer = getIntValue(offset + FREE_POINTER_OFFSET);
     if (size > 0 && entryPosition > freePointer) {
-      copyData(offset + freePointer, offset + freePointer + entrySize, entryPosition - freePointer);
+      moveData(offset + freePointer, offset + freePointer + entrySize, entryPosition - freePointer);
     }
     setIntValue(offset + FREE_POINTER_OFFSET, freePointer + entrySize);
 
@@ -267,7 +267,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       return false;
 
     if (index <= size - 1) {
-      copyData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, offset + POSITIONS_ARRAY_OFFSET + (index + 1)
+      moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, offset + POSITIONS_ARRAY_OFFSET + (index + 1)
           * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
     }
 
