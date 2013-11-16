@@ -23,7 +23,7 @@ module.controller('ServerNewController', function ($scope, $location, $injector,
     $scope.server = new Object;
     $scope.server['@rid'] = '#-1:-1';
     $scope.server['@class'] = 'Server';
-
+    $scope.server.enabled = true;
     $scope.test = function () {
         Server.isAlive($scope.server, function (data) {
             $scope.testMsg = 'Connection is alive';

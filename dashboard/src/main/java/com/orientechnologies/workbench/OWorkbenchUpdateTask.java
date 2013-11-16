@@ -23,7 +23,7 @@ public class OWorkbenchUpdateTask extends TimerTask {
 					File dest = new File(workbenchDir+"/agents/" + file.getName());
 					file.renameTo(dest);
 				} else if (file.getName().startsWith("orientdb-workbench")) {
-					File dest = new File("plugins/" + file.getName());
+					File dest = new File(workbenchDir+"/plugins/" + file.getName());
 					file.renameTo(dest);
 				}
 			}

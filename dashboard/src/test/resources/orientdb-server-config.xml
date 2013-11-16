@@ -9,7 +9,9 @@
 			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.workbench.OWorkbenchPlugin">
-			
+			<parameters>
+				<parameter name="version" value="1.6.1"></parameter>
+			</parameters>
 		</handler>
 		<handler class="com.orientechnologies.orient.server.plugin.mail.OMailPlugin">
 			<parameters>

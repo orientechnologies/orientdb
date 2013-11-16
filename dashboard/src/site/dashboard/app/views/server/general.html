@@ -10,9 +10,9 @@
 
     <div class="row-fluid well" style="width: 96%">
 
-        <div class="span4">
+        <div class="span3">
 
-             {{ 'queryprofiler.server' | i18n }}:
+            {{ 'queryprofiler.server' | i18n }}:
             <select id="serverOnline" ng-model="server" class="span6" ng-options="s.name for s in servers"
                     data-placeholder="Pick a Server"></select>
         </div>
@@ -22,16 +22,16 @@
         <!--<p>-->
 
 
-        <div class="span8">
+        <div class="span9">
             <div class="span3">
                 <div>
                     <i class="icon-angle-right"></i> Status: <b>{{server.status}}</b>
                 </div>
                 <div>
-                    <i class="icon-angle-right"></i> Num.CPU: <b>{{server.configuration.cpus}}</b>
+                    <i class="icon-angle-right"></i> {{ 'server.agentVersion' | i18n }} : <b>{{server.configuration.agentVersion}}</b>
                 </div>
             </div>
-            <div class="span4">
+            <div class="span3">
                 <div class="row-fluid">
                     <i class="icon-angle-right"></i> Java version: <b>{{server.configuration.java_version}}</b>
                 </div>
@@ -39,7 +39,7 @@
                     <i class="icon-angle-right"></i> Os name: <b>{{server.configuration.os_name}} </b>
                 </div>
             </div>
-            <div class="span5">
+            <div class="span4">
                 <div class="row-fluid">
                     <i class="icon-angle-right"></i> Os arch: <b>{{server.configuration.os_arch}} </b>
                 </div>
@@ -47,6 +47,11 @@
                     <i class="icon-angle-right"></i> Java vendor: <b>{{server.configuration.java_vendor}} </b>
                 </div>
 
+            </div>
+            <div class="span2">
+                <div>
+                    <i class="icon-angle-right"></i> Num.CPU: <b>{{server.configuration.cpus}}</b>
+                </div>
             </div>
         </div>
     </div>

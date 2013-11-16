@@ -44,7 +44,7 @@
                         <tr ng-repeat="server in servers">
                             <td><span ng-class="getStatusLabel(server.status)">{{ server.status }}</span></td>
                             <td><a href="#/dashboard/general/{{ server['@rid'] | nopound }}">{{ server.name }}</a></td>
-                            <td>{{ server.last_success | fromNow }}</td>
+                            <td>{{ server.last_success | fromNow }}</td
                             <td>
                                 <a href="javascript:void(0)" class="btn btn-small"
                                    ng-click="editServer(server['@rid'])"><i
