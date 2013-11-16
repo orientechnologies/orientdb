@@ -749,35 +749,45 @@ asciidoc.install(2);
 <div class="ulist"><ul>
 <li>
 <p>
-Workbench, as a centralized cockpit to manage multiple servers
+Workbench, as a centralized cockpit to manage multiple servers;
 </p>
 </li>
 <li>
 <p>
-SQL Profiler, to tune the database based on usage patterns
+SQL Profiler, to tune the database based on usage patterns;
 </p>
 </li>
 <li>
 <p>
-Metric Analyzer, to monitor and analyze metrics
+Metric Analyzer, to monitor and analyze metrics;
 </p>
 </li>
 <li>
 <p>
-Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold
+Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold;
 </p>
 </li>
 <li>
 <p>
-Production support available on demand.
+Query Profiler;
+</p>
+</li>
+<li>
+<p>
+Notification about hot-fixes and new releases;
+</p>
+</li>
+<li>
+<p>
+Production support available on demand;
 </p>
 </li>
 </ul></div>
 <div class="imageblock">
 <div class="content">
-<img src="login.png" alt="login.png" width="90%" />
+<img src="login.png" alt="login.png" width="80%" />
 </div>
-<div class="title">Figure 1. Login</div>
+<div class="title">Figure 1. Login of Workbench</div>
 </div>
 </div>
 </div>
@@ -859,7 +869,7 @@ Java vendor
 <div class="paragraph"><p>The first tab of the server panel, shows a chart that represents CRUD operations for all databases of the selected server, divided by date and time and the number of executions for each operation.</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="overview_full.png" alt="overview_full.png" width="90%" />
+<img src="overview_full.png" alt="overview_full.png" width="80%" />
 </div>
 <div class="title">Figure 2. Crud operations of all databases</div>
 </div>
@@ -883,7 +893,7 @@ Java vendor
 <h3 id="_database_management">3.2. Database Management</h3>
 <div class="imageblock">
 <div class="content">
-<img src="databasemanagement.png" alt="databasemanagement.png" width="90%" />
+<img src="databasemanagement.png" alt="databasemanagement.png" width="80%" />
 </div>
 <div class="title">Figure 4. Database Management</div>
 </div>
@@ -903,7 +913,7 @@ Java vendor
 <td class="icon">
 <img src="./images/icons/note.png" alt="Note" />
 </td>
-<td class="content">You can make a backup of each database, just click on the button to the right of the database name.</td>
+<td class="content">You can make a backup of each database, just click on the button on the right of the database name.</td>
 </tr></table>
 </div>
 <div class="imageblock">
@@ -916,10 +926,10 @@ Java vendor
 </div>
 <div class="sect2">
 <h3 id="_log">3.3. Log</h3>
-<div class="paragraph"><p>In the log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.</p></div>
+<div class="paragraph"><p>In log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="server_log.png" alt="server_log.png" height="20%" />
+<img src="server_log.png" alt="server_log.png" width="80%" />
 </div>
 <div class="title">Figure 6. Server Log</div>
 </div>
@@ -945,7 +955,7 @@ Java vendor
 <div class="paragraph"><p>In the last tab you can modify orientdb-server-config.xml. Click save to send the configuration back to the server.</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="configuration.png" alt="configuration.png" width="100%" />
+<img src="configuration.png" alt="configuration.png" width="80%" />
 </div>
 <div class="title">Figure 7. Configurations</div>
 </div>
@@ -963,6 +973,56 @@ Java vendor
 <div class="sect1">
 <h2 id="_metrics">4. Metrics</h2>
 <div class="sectionbody">
+<div class="paragraph"><p>Metrics panel helps you to configure the metrics of interest by choosing from a list of these.</p></div>
+<div class="paragraph"><p>A list of saved configuration are displayed on the left.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="metricsbuilder.png" alt="metricsbuilder.png" width="80%" />
+</div>
+<div class="title">Figure 8. Metrics builder</div>
+</div>
+<div class="paragraph"><p>If you want to build a new configuration:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+click on "new" button
+</p>
+</li>
+<li>
+<p>
+write a name
+</p>
+</li>
+<li>
+<p>
+select a server
+</p>
+</li>
+<li>
+<p>
+click on plus button to add a metric
+</p>
+</li>
+<li>
+<p>
+choose a metric and a value
+</p>
+</li>
+</ul></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">if you want you can combine more metrics in one configuration</td>
+</tr></table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="combinemetrics.png" alt="combinemetrics.png" height="60%" />
+</div>
+<div class="title">Figure 9. Metrics builder</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -970,11 +1030,12 @@ Java vendor
 <div class="sectionbody">
 <div class="paragraph"><p>Query profiler panel shows the commands executed for a database on a particular server.</p></div>
 <div class="paragraph"><p>It also shows the type of command, the minimum and maximum number of times executed and the media.</p></div>
+<div class="paragraph"><p>Click "clear" to delete them.</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="query_profiler.png" alt="query_profiler.png" width="100%" />
+<img src="query_profiler.png" alt="query_profiler.png" width="80%" />
 </div>
-<div class="title">Figure 8. List of commands executed</div>
+<div class="title">Figure 10. List of commands executed</div>
 </div>
 </div>
 </div>
@@ -982,12 +1043,12 @@ Java vendor
 <h2 id="_notifications">6. Notifications</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Notifications panel is similar to Log panel.</p></div>
-<div class="paragraph"><p>In this case you can search all notifications for the Workbench databases combining the search according to the date and time and the log type.</p></div>
+<div class="paragraph"><p>In this case you can search all notifications in Workbench databases just combining the search according to the date and time and the log type.</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="notifications.png" alt="notifications.png" width="100%" />
+<img src="notifications.png" alt="notifications.png" width="80%" />
 </div>
-<div class="title">Figure 9. Notifications panel</div>
+<div class="title">Figure 11. Notifications panel</div>
 </div>
 <div class="admonitionblock">
 <table><tr>
@@ -1000,7 +1061,7 @@ Java vendor
 </div>
 </div>
 <div class="sect1">
-<h2 id="_events">7. Events</h2>
+<h2 id="_alerts">7. Alerts</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>In this section you can configure alerts based on certain events that may occur over time, such as a server goes down or when some metrics exceed some critical values.</p></div>
 <div class="paragraph"><p>Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution of an HTTP request or the execution of a function</p></div>
@@ -1035,6 +1096,87 @@ Execute Function
 </p>
 </li>
 </ul></div>
+<div class="imageblock">
+<div class="content">
+<img src="events.png" alt="events.png" width="80%" />
+</div>
+<div class="title">Figure 12. Alerts</div>
+</div>
+<div class="paragraph"><p>Let&#8217;s take an example to better understand how events work:</p></div>
+<div class="paragraph"><p>If I would like to receive an email when an error happens on my server I can:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+click on "new event button";
+</p>
+</li>
+<li>
+<p>
+select "Log" on column "when";
+</p>
+</li>
+<li>
+<p>
+click "configure" button (on column "when") and  enter the necessary data as shown in figure "Log alert";
+</p>
+</li>
+</ul></div>
+<div class="imageblock">
+<div class="content">
+<img src="logwhen.png" alt="logwhen.png" width="30%" />
+</div>
+<div class="title">Figure 13. Log alert</div>
+</div>
+<div class="ulist"><ul>
+<li>
+<p>
+now select "Mail" on "Do" column and click "configure" and  enter the necessary data as shown in figure  "Mail alert";
+</p>
+</li>
+</ul></div>
+<div class="imageblock">
+<div class="content">
+<img src="mailalert.png" alt="mailalert.png" width="30%" />
+</div>
+<div class="title">Figure 14. Mail alert</div>
+</div>
+<div class="ulist"><ul>
+<li>
+<p>
+click on save button
+</p>
+</li>
+</ul></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/tip.png" alt="Tip" />
+</td>
+<td class="content">There are some keywords that you can use for a better notification. Workbench will replace it with the right data.</td>
+</tr></table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="keyword.png" alt="keyword.png" width="30%" />
+</div>
+<div class="title">Figure 15. keyword</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">from address, to address, subject and body are mandatory in mail alert.</td>
+</tr></table>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">for smtp configure please see Setting chapter.</td>
+</tr></table>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1044,58 +1186,171 @@ Execute Function
 <div class="ulist"><ul>
 <li>
 <p>
-Dashboard Configuration
+<strong><span class="BOLD">Dashboard Configuration</span></strong>
 </p>
 </li>
 <li>
 <p>
-Metrics Configuration
+<strong><span class="BOLD">Metrics Configuration</span></strong>
 </p>
 </li>
 <li>
 <p>
-Mail Settings
+<strong><span class="BOLD">Mail Settings</span></strong>
 </p>
 </li>
 <li>
 <p>
-Global Settings
+<strong><span class="BOLD">Global Settings</span></strong>
 </p>
 </li>
 </ul></div>
 <div class="sect2">
 <h3 id="_dashboard_configuration">8.1. Dashboard Configuration</h3>
 <div class="paragraph"><p>At the left of the panel you have a list of all metrics chart that you have configured in the Metrics panel.</p></div>
-<div class="paragraph"><p>Here you can choose a set of it and the layout to componing the Workbench home page.</p></div>
+<div class="paragraph"><p>Here you can choose a set of it and the layout to componing the Workbench home page (list or a grid).</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="dashboard_settings.png" alt="dashboard_settings.png" width="70%" />
+</div>
+<div class="title">Figure 16. List Configuration</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="dashboard_setting_2.png" alt="dashboard_setting_2.png" width="70%" />
+</div>
+<div class="title">Figure 17. Grid Configuration</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">remember to click on the Save button to make the changes permanent</td>
+</tr></table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_metrics_configuration">8.2. Metrics Configuration</h3>
-<div class="paragraph"><p>In metrics configuration you choose wich metrics the Workbench will save; check it to enable/disable it.</p></div>
+<div class="paragraph"><p>In metrics configuration you choose wich metrics the Workbench will save in datatabase; check it to enable/disable a metric.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="metrics_settings.png" alt="metrics_settings.png" width="80%" />
+</div>
+<div class="title">Figure 18. Metrics configuration</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_mail_settings">8.3. Mail Settings</h3>
 <div class="paragraph"><p>In mail settings panel you can configure your server smtp that will be used in events task.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="mailsettings.png" alt="mailsettings.png" width="50%" />
+</div>
+<div class="title">Figure 19. Mail Settings</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">for proxy settings see Global Settings.</td>
+</tr></table>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_global_settings">8.4. Global Settings</h3>
-<div class="paragraph"><p>In order to avoid the full size disk a schedule will check metrics and logs older than x hour.</p></div>
-<div class="paragraph"><p>You can even decide to purge all metric and notifications in Workbench database just click on the button "purge all metrics now" and "purge all notifications now".</p></div>
-<div class="paragraph"><p>You can purge all notifications and metrics just clicking the buttons</p></div>
-<div class="paragraph"><p>You can even confiure a proxy to permit http request in events panel.</p></div>
-<div class="paragraph"><p>Choose if you want to keep update about news of orientDB</p></div>
+<div class="paragraph"><p>In this panel you can:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+free up disk space, a schedule will purge metrics and logs older than x hour;
+</p>
+</li>
+<li>
+<p>
+purge all metric and notifications in Workbench database. Click on the button "purge all metrics now" and "purge all notifications now";
+</p>
+</li>
+<li>
+<p>
+Set a proxy to permit http request in events panel.
+</p>
+</li>
+<li>
+<p>
+Keep update about news of orientDB.
+</p>
+</li>
+</ul></div>
+<div class="imageblock">
+<div class="content">
+<img src="globalsettings.png" alt="globalsettings.png" width="70%" />
+</div>
+<div class="title">Figure 20. Global Setting</div>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_messages">9. Messages</h2>
 <div class="sectionbody">
+<div class="paragraph"><p>Messages panel shows all notification from Orient Technlogies.</p></div>
+<div class="paragraph"><p>There are three types of messages:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Commercial <strong><span class="BOLD">news</span></strong> about orientDB.
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Chart</span></strong> configuration.
+</p>
+</li>
+<li>
+<p>
+Workbench or Agent <strong><span class="BOLD">updates</span></strong>, hot fixes.
+</p>
+</li>
+</ul></div>
+<div class="imageblock">
+<div class="content">
+<img src="messages.png" alt="messages.png" width="70%" />
+</div>
+<div class="title">Figure 21. Messages</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Just click on the message to open it.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>To install an upgrade version just click on the "install" button.</p></div>
+<div class="paragraph"><p>A pop-up will confirm the installation and instructions to make it effective as shown in the figure below.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="notification.png" alt="notification.png" width="70%" />
+</div>
+<div class="title">Figure 22. Notification of agent installation</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">You can mark all messages as read or you can delete them.</td>
+</tr></table>
+</div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-11-15 16:25:40 CET
+Last updated 2013-11-16 21:47:52 CET
 </div>
 </div>
 </body>

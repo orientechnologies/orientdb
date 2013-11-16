@@ -94,13 +94,11 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         modalScope.eventParent = event;
         if (event['what'] == undefined || $scope.selectedWhat[event['idx']] != null && (event['what']['@class'] != $scope.selectedWhat[event['idx']].trim() && $scope.selectedWhat[event['idx']] != undefined)) {
-            console.log('if');
             event['what'] = {};
             event['what']['@class'] = $scope.selectedWhat[event['idx']].trim();
             event['what']['@type'] = 'd';
         }
         else {
-            console.log('else')
             event['what']['@class'] = eventWhat['@class'];
         }
         modalScope.eventWhat = event['what'];

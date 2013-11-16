@@ -229,7 +229,7 @@
     <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384203293796" ignored="false" />
     <file path="/message-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384200739943" ignored="false" />
     <file path="/maillegend.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384447312774" ignored="false" />
-    <file path="/userguide.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384529117386" ignored="false" />
+    <file path="/userguide.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384634710104" ignored="false" />
     <file path="/userguide.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356764445" ignored="false" />
     <file path="/gettingstarted.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384360070633" ignored="false" />
     <file path="/gettingstarted.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384366666161" ignored="false" />
@@ -252,19 +252,47 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="userguide.txt" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="userguide.txt" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="161" column="13" selection-start="4007" selection-end="4007" vertical-scroll-proportion="-7.283019">
+            <state line="318" column="32" selection-start="7753" selection-end="7753" vertical-scroll-proportion="0.8026534">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="events.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="notification.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/notification.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="events.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/events.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dashboard_setting_2.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/dashboard_setting_2.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="mailalert.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/mailalert.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="events.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="140" column="40" selection-start="5722" selection-end="5722" vertical-scroll-proportion="0.14217253">
+            <state line="74" column="31" selection-start="2940" selection-end="2940" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -273,25 +301,7 @@
       <file leaf-file-name="events.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="log.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="65" column="68" selection-start="2518" selection-end="2518" vertical-scroll-proportion="-3.278481">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="logjava.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="131" column="46" selection-start="5228" selection-end="5228" vertical-scroll-proportion="-7.708861">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -300,25 +310,7 @@
       <file leaf-file-name="logs.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="207" column="49" selection-start="7370" selection-end="7370" vertical-scroll-proportion="-6.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="workbench-service-logs.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="190" column="13" selection-start="6806" selection-end="6806" vertical-scroll-proportion="-3.45283">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="messages.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="50" column="60" selection-start="2370" selection-end="2370" vertical-scroll-proportion="0.0">
+            <state line="207" column="49" selection-start="7370" selection-end="7370" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -327,7 +319,7 @@
       <file leaf-file-name="settings.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="10" column="79" selection-start="399" selection-end="434" vertical-scroll-proportion="-6.5384617">
+            <state line="10" column="79" selection-start="399" selection-end="434" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -366,8 +358,8 @@
         <option value="$PROJECT_DIR$/app/views/server/log.html" />
         <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
-        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
       </list>
     </option>
   </component>
@@ -403,6 +395,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -455,7 +448,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -472,11 +464,11 @@
   <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app" />
       <recent name="$PROJECT_DIR$/app/img" />
       <recent name="$PROJECT_DIR$/app/views/server" />
       <recent name="$PROJECT_DIR$/app/scripts/controllers" />
       <recent name="$PROJECT_DIR$/app/scripts/service" />
-      <recent name="$PROJECT_DIR$/app/views/server/metric" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app/asciidoc-8.6.9" />
@@ -563,7 +555,7 @@
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24944155" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24869695" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.14072971" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -641,93 +633,46 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="49" column="27" selection-start="1163" selection-end="1176" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/stylesheets/asciidoc.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="140" column="13" selection-start="2034" selection-end="2034" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/configuration.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/general/db.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="102" selection-start="940" selection-end="940" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="24" column="102" selection-start="940" selection-end="940" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="50" column="60" selection-start="2370" selection-end="2370" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="50" column="60" selection-start="2370" selection-end="2370" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/log.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="65" column="68" selection-start="2518" selection-end="2518" vertical-scroll-proportion="-3.278481">
-          <folding />
-        </state>
+        <state line="65" column="68" selection-start="2518" selection-end="2518" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="190" column="13" selection-start="6806" selection-end="6806" vertical-scroll-proportion="-3.45283">
-          <folding />
-        </state>
+        <state line="190" column="13" selection-start="6806" selection-end="6806" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="131" column="46" selection-start="5228" selection-end="5228" vertical-scroll-proportion="-7.708861">
-          <folding />
-        </state>
+        <state line="131" column="46" selection-start="5228" selection-end="5228" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="207" column="49" selection-start="7370" selection-end="7370" vertical-scroll-proportion="-6.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="161" column="13" selection-start="4007" selection-end="4007" vertical-scroll-proportion="-7.283019">
+        <state line="207" column="49" selection-start="7370" selection-end="7370" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="79" selection-start="399" selection-end="434" vertical-scroll-proportion="-6.5384617">
+        <state line="10" column="79" selection-start="399" selection-end="434" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
@@ -748,7 +693,34 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="140" column="40" selection-start="5722" selection-end="5722" vertical-scroll-proportion="0.14217253">
+        <state line="74" column="31" selection-start="2940" selection-end="2940" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/mailalert.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/dashboard_setting_2.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/events.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/notification.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="318" column="32" selection-start="7753" selection-end="7753" vertical-scroll-proportion="0.8026534">
           <folding />
         </state>
       </provider>
