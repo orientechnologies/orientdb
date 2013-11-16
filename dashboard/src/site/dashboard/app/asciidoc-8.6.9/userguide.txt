@@ -96,7 +96,7 @@ Log
 In log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.
 
 .Server Log
-image::server_log.png[width="80%"]
+image::server_log.png[width="75%"]
 
 NOTE: You can even search for a particular text just filling info input.
 

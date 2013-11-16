@@ -251,10 +251,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="userguide.txt" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="userguide.txt" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="103" column="3" selection-start="2744" selection-end="2744" vertical-scroll-proportion="0.0">
+            <state line="98" column="31" selection-start="2614" selection-end="2614" vertical-scroll-proportion="0.33272728">
               <folding />
             </state>
           </provider>
@@ -295,12 +295,28 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="maillegend.html" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="maillegend.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="22" column="49" selection-start="712" selection-end="712" vertical-scroll-proportion="0.25084746">
+            <state line="22" column="49" selection-start="712" selection-end="712" vertical-scroll-proportion="-5.6923075">
               <folding />
             </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="gettingstarted.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="5" column="36" selection-start="101" selection-end="101" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="server_log.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/server_log.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
           </provider>
         </entry>
       </file>
@@ -323,7 +339,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
         <option value="$PROJECT_DIR$/app/views/server/general/db.html" />
         <option value="$PROJECT_DIR$/app/views/server/events.html" />
         <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
@@ -337,8 +352,9 @@
         <option value="$PROJECT_DIR$/app/views/server/general.html" />
         <option value="$PROJECT_DIR$/Gruntfile.js" />
         <option value="$PROJECT_DIR$/app/index.html" />
-        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
         <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt" />
+        <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
       </list>
     </option>
   </component>
@@ -705,13 +721,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="103" column="3" selection-start="2744" selection-end="2744" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/databasemanagement.png">
       <provider selected="true" editor-type-id="images">
         <state />
@@ -746,7 +755,26 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="22" column="49" selection-start="712" selection-end="712" vertical-scroll-proportion="0.25084746">
+        <state line="22" column="49" selection-start="712" selection-end="712" vertical-scroll-proportion="-5.6923075">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/server_log.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="5" column="36" selection-start="101" selection-end="101" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="98" column="31" selection-start="2614" selection-end="2614" vertical-scroll-proportion="0.33272728">
           <folding />
         </state>
       </provider>
