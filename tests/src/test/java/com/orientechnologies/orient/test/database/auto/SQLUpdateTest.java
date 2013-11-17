@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,20 +50,19 @@ public class SQLUpdateTest {
   public SQLUpdateTest(String iURL) {
     database = new ODatabaseDocumentTx(iURL);
   }
-	
+
   @BeforeTest
   private void before() {
     database.open("admin", "admin");
   }
-  
+
   @AfterTest
   private void after() {
-	  database.close();
+    database.close();
   }
-  
+
   @Test
   public void updateWithWhereOperator() {
-    
 
     List<OClusterPosition> positions = getValidPositions(4);
 
@@ -72,13 +72,10 @@ public class SQLUpdateTest {
 
     Assert.assertEquals(records.intValue(), 3);
 
-    
   }
-
 
   @Test
   public void updateWithWhereRid() {
-    
 
     List<ODocument> result = database.command(new OCommandSQL("select @rid as rid from Profile where surname = 'Obama'")).execute();
 
@@ -89,32 +86,26 @@ public class SQLUpdateTest {
 
     Assert.assertEquals(records.intValue(), 1);
 
-    
   }
 
   @Test(dependsOnMethods = "updateWithWhereOperator")
   public void updateCollectionsAddWithWhereOperator() {
-    
 
     updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = #13:0")).execute();
 
-    
   }
 
   @Test(dependsOnMethods = "updateCollectionsAddWithWhereOperator")
   public void updateCollectionsRemoveWithWhereOperator() {
-    
 
     final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = #13:0")).execute();
 
     Assert.assertEquals(records, updatedRecords);
 
-    
   }
 
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateCollectionsWithSetOperator() {
-    
 
     List<ODocument> docs = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
 
@@ -136,12 +127,10 @@ public class SQLUpdateTest {
       database.save(loadedDoc);
     }
 
-    
   }
 
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateMapsWithSetOperator() {
-    
 
     ODocument doc = (ODocument) database
         .command(
@@ -170,12 +159,10 @@ public class SQLUpdateTest {
     Assert.assertEquals(entries.get("bla"), "zagzig");
     Assert.assertEquals(entries.get("testTestTEST"), "okOkOK");
 
-    
   }
 
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateMapsWithPutOperatorAndWhere() {
-    
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL(
@@ -201,12 +188,10 @@ public class SQLUpdateTest {
 
     Assert.assertEquals(entries.get("one"), "two");
 
-    
   }
 
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateAllOperator() {
-    
 
     Long total = database.countClass("Profile");
 
@@ -214,25 +199,21 @@ public class SQLUpdateTest {
 
     Assert.assertEquals(records.intValue(), total.intValue());
 
-    
   }
 
   @Test
   public void updateWithWildcards() {
-    
 
     int updated = (Integer) database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute(
         "male");
 
     Assert.assertEquals(updated, 1);
 
-    
   }
 
   @Test
   public void updateWithWildcardsOnSetAndWhere() {
 
-    
     ODocument doc = new ODocument("Person");
     doc.field("name", "Raf");
     doc.field("city", "Torino");
@@ -261,11 +242,10 @@ public class SQLUpdateTest {
     database.command(updatecommand).execute("f", "Raf");
     checkUpdatedDoc(database, "Raf", "TORINO", "f");
 
-    
   }
 
   @Test
-  public void updateWithNamedParameters(){
+  public void updateWithNamedParameters() {
     ODocument doc = new ODocument("Data");
     doc.field("name", "Raf");
     doc.field("city", "Torino");
@@ -273,11 +253,11 @@ public class SQLUpdateTest {
     doc.save();
 
     OCommandSQL updatecommand = new OCommandSQL("update Data set gender = :gender , city = :city where name = :name");
-    Map<String,Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<String, Object>();
     params.put("gender", "f");
     params.put("city", "TOR");
     params.put("name", "Raf");
-    
+
     database.command(updatecommand).execute(params);
     List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select * from Data"));
     ODocument oDoc = result.get(0);
@@ -286,10 +266,7 @@ public class SQLUpdateTest {
     Assert.assertEquals("f", oDoc.field("gender"));
   }
 
-
-  
   public void updateIncrement() {
-    
 
     List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
     Assert.assertFalse(result1.isEmpty());
@@ -321,11 +298,10 @@ public class SQLUpdateTest {
       float salary3 = (Float) result3.get(i).field("salary");
       Assert.assertEquals(salary3, salary1);
     }
-    
+
   }
 
   public void updateSetMultipleFields() {
-    
 
     List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
     Assert.assertFalse(result1.isEmpty());
@@ -345,11 +321,9 @@ public class SQLUpdateTest {
       Assert.assertEquals(result2.get(i).field("checkpoint"), true);
     }
 
-    
   }
 
   public void updateAddMultipleFields() {
-    
 
     updatedRecords = (Integer) database.command(new OCommandSQL("update Account add myCollection = 1, myCollection = 2 limit 1"))
         .execute();
@@ -362,7 +336,6 @@ public class SQLUpdateTest {
 
     Assert.assertTrue(myCollection.containsAll(Arrays.asList(new Integer[] { 1, 2 })));
 
-    
   }
 
   private void checkUpdatedDoc(ODatabaseDocument database, String expectedName, String expectedCity, String expectedGender) {
