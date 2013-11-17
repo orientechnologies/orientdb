@@ -147,11 +147,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     parameters = new OCommandParameters(iArgs);
-
-    Map<Object, Object> queryArgs = new HashMap<Object, Object>();
-    for (int i = parameterCounter; i < parameters.size(); i++) {
-      if (parameters.getByName(i) != null)
-        queryArgs.put(i - parameterCounter, parameters.getByName(i));
+    Map<Object, Object> queryArgs;
+    if(parameters.size() > 0 && parameters.getByName(0) != null ){
+      queryArgs = new HashMap<Object, Object>();
+	  for (int i = parameterCounter; i < parameters.size(); i++) {
+	  if (parameters.getByName(i) != null)
+	     queryArgs.put(i - parameterCounter, parameters.getByName(i));
+	  }
+    } else {
+      queryArgs = iArgs;
     }
 
     query.setUseCache(false);
