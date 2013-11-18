@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -9,11 +7,27 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexOneValue;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * <p>
@@ -27,32 +41,29 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * <p>
  * IMPORTANT: this class is only for internal usage!
  * </p>
- * 
+ *
  * @author Artem Orobets
  */
 
-@SuppressWarnings({ "unchecked", "rawtypes" })
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class OIndexProxy<T> implements OIndex<T> {
-  private final OIndex<T>       index;
+  private final OIndex<T> index;
 
   private final List<OIndex<?>> indexChain;
-  private final OIndex<?>       lastIndex;
+  private final OIndex<?> lastIndex;
 
   /**
    * Create proxies that support maximum number of different operations. In case when several different indexes which support
    * different operations (e.g. indexes of {@code UNIQUE} and {@code FULLTEXT} types) are possible, the creates the only one index
    * of each type.
-   * 
-   * @param index
-   *          - the index which proxies created for
-   * @param longChain
-   *          - property chain from the query, which should be evaluated
-   * @param database
-   *          - current database instance
+   *
+   * @param index     - the index which proxies created for
+   * @param longChain - property chain from the query, which should be evaluated
+   * @param database  - current database instance
    * @return proxies needed to process query.
    */
   public static <T> Collection<OIndexProxy<T>> createdProxy(OIndex<T> index, OSQLFilterItemField.FieldChain longChain,
-      ODatabaseComplex<?> database) {
+                                                            ODatabaseComplex<?> database) {
     Collection<OIndexProxy<T>> proxies = new ArrayList<OIndexProxy<T>>();
 
     for (List<OIndex<?>> indexChain : getIndexesForChain(index, longChain, database)) {
@@ -142,7 +153,7 @@ public class OIndexProxy<T> implements OIndex<T> {
    */
   @Override
   public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-      IndexValuesResultListener resultListener) {
+                               IndexValuesResultListener resultListener) {
     final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
 
     applyTailIndexes(result, resultListener);
@@ -150,7 +161,7 @@ public class OIndexProxy<T> implements OIndex<T> {
 
   @Override
   public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
-      final int maxValuesToFetch) {
+                    final int maxValuesToFetch) {
     return lastIndex.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
   }
 
@@ -255,7 +266,7 @@ public class OIndexProxy<T> implements OIndex<T> {
    * {@inheritDoc}
    */
   public OIndexDefinition getDefinition() {
-    return indexChain.get(indexChain.size() - 1).getDefinition();
+    return lastIndex.getDefinition();
   }
 
   private void applyTailIndexes(final Object result, IndexValuesResultListener resultListener) {
@@ -296,11 +307,9 @@ public class OIndexProxy<T> implements OIndex<T> {
 
   /**
    * Make type conversion of keys for specific index.
-   * 
-   * @param index
-   *          - index for which keys prepared for.
-   * @param keys
-   *          - which should be prepared.
+   *
+   * @param index - index for which keys prepared for.
+   * @param keys  - which should be prepared.
    * @return keys converted to necessary type.
    */
   private Set<Comparable> prepareKeys(OIndex<?> index, Object keys) {
@@ -310,7 +319,8 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   private void applyMainIndex(Iterable<Comparable> currentKeys, IndexValuesResultListener resultListener) {
-    keysLoop: for (Comparable key : currentKeys) {
+    keysLoop:
+    for (Comparable key : currentKeys) {
       final T result = index.get(index.getDefinition().createValue(key));
       if (result instanceof Set) {
         for (T o : (Set<T>) result) {
@@ -327,7 +337,7 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
-      ODatabaseComplex<?> database) {
+                                                              ODatabaseComplex<?> database) {
     List<OIndex<?>> baseIndexes = prepareBaseIndexes(index, fieldChain, database);
 
     Collection<OIndex<?>> lastIndexes = prepareLastIndexVariants(index, fieldChain, database);
@@ -345,7 +355,7 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   private static Collection<OIndex<?>> prepareLastIndexVariants(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
-      ODatabaseComplex<?> database) {
+                                                                ODatabaseComplex<?> database) {
     OClass oClass = database.getMetadata().getSchema().getClass(index.getDefinition().getClassName());
     for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
       oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
@@ -372,7 +382,7 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   private static List<OIndex<?>> prepareBaseIndexes(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
-      ODatabaseComplex<?> database) {
+                                                    ODatabaseComplex<?> database) {
     List<OIndex<?>> result = new ArrayList<OIndex<?>>(fieldChain.getItemCount() - 1);
 
     result.add(index);
@@ -403,9 +413,8 @@ public class OIndexProxy<T> implements OIndex<T> {
 
   /**
    * Register statistic information about usage of index in {@link OProfiler}.
-   * 
-   * @param index
-   *          which usage is registering.
+   *
+   * @param index which usage is registering.
    */
   private void updateStatistic(OIndex<?> index) {
 
@@ -434,7 +443,7 @@ public class OIndexProxy<T> implements OIndex<T> {
 
   @Override
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
-      boolean rebuild, OProgressListener progressListener) {
+                          boolean rebuild, OProgressListener progressListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -564,10 +573,6 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   public long rebuild() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public void automaticRebuild() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
