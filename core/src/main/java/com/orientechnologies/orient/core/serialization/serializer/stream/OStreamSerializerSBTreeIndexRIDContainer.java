@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
@@ -27,14 +25,16 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
-public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OSBTreeIndexRIDContainer> {
-  public static final String                                   NAME     = "ic";
-  public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE = new OStreamSerializerSBTreeIndexRIDContainer();
-  private static final ORecordSerializerSchemaAware2CSV        FORMAT   = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                                                                            .instance().getFormat(
-                                                                                ORecordSerializerSchemaAware2CSV.NAME);
+import java.io.IOException;
 
-  public static final byte                                     ID       = 20;
+public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OSBTreeIndexRIDContainer> {
+  public static final String NAME = "ic";
+  public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE = new OStreamSerializerSBTreeIndexRIDContainer();
+  private static final ORecordSerializerSchemaAware2CSV FORMAT = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
+      .instance().getFormat(
+          ORecordSerializerSchemaAware2CSV.NAME);
+
+  public static final byte ID = 20;
 
   public Object fromStream(final byte[] iStream) throws IOException {
     if (iStream == null)
@@ -154,7 +154,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public OSBTreeIndexRIDContainer prepocess(OSBTreeIndexRIDContainer value, Object... hints) {
+  public OSBTreeIndexRIDContainer preprocess(OSBTreeIndexRIDContainer value, Object... hints) {
     return value;
   }
 }

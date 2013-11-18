@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
@@ -26,13 +24,15 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
-public class OStreamSerializerListRID implements OStreamSerializer, OBinarySerializer<OMVRBTreeRIDSet> {
-  public static final String                            NAME     = "y";
-  public static final OStreamSerializerListRID          INSTANCE = new OStreamSerializerListRID();
-  private static final ORecordSerializerSchemaAware2CSV FORMAT   = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                                                                     .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+import java.io.IOException;
 
-  public static final byte                              ID       = 19;
+public class OStreamSerializerListRID implements OStreamSerializer, OBinarySerializer<OMVRBTreeRIDSet> {
+  public static final String NAME = "y";
+  public static final OStreamSerializerListRID INSTANCE = new OStreamSerializerListRID();
+  private static final ORecordSerializerSchemaAware2CSV FORMAT = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
+      .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+
+  public static final byte ID = 19;
 
   public Object fromStream(final byte[] iStream) throws IOException {
     if (iStream == null)
@@ -137,7 +137,7 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public OMVRBTreeRIDSet prepocess(OMVRBTreeRIDSet value, Object... hints) {
+  public OMVRBTreeRIDSet preprocess(OMVRBTreeRIDSet value, Object... hints) {
     return value;
   }
 }

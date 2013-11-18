@@ -20,13 +20,13 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serialize and deserialize null values
- * 
+ * <p/>
  * <a href="mailto:gmandnepr@gmail.com">Evgeniy Degtiarenko</a>
  */
 public class ONullSerializer implements OBinarySerializer<Object> {
 
   public static ONullSerializer INSTANCE = new ONullSerializer();
-  public static final byte      ID       = 11;
+  public static final byte ID = 11;
 
   public int getObjectSize(final Object object, Object... hints) {
     return 0;
@@ -83,7 +83,7 @@ public class ONullSerializer implements OBinarySerializer<Object> {
   }
 
   @Override
-  public Object prepocess(Object value, Object... hints) {
+  public Object preprocess(Object value, Object... hints) {
     return null;
   }
 }

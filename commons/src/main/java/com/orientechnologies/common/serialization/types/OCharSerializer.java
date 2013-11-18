@@ -16,14 +16,13 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
- * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
@@ -33,10 +32,10 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   /**
    * size of char value in bytes
    */
-  public static final int               CHAR_SIZE        = 2;
+  public static final int CHAR_SIZE = 2;
 
-  public static OCharSerializer         INSTANCE         = new OCharSerializer();
-  public static final byte              ID               = 3;
+  public static OCharSerializer INSTANCE = new OCharSerializer();
+  public static final byte ID = 3;
 
   public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
@@ -95,7 +94,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public Character prepocess(Character value, Object... hints) {
+  public Character preprocess(Character value, Object... hints) {
     return value;
   }
 }

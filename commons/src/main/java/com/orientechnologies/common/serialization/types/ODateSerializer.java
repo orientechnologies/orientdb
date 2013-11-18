@@ -16,21 +16,21 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+
 import java.util.Calendar;
 import java.util.Date;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-
 /**
  * Serializer for {@link Date} type, it serializes it without time part.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
 public class ODateSerializer implements OBinarySerializer<Date> {
 
   public static ODateSerializer INSTANCE = new ODateSerializer();
-  public static final byte      ID       = 4;
+  public static final byte ID = 4;
 
   public int getObjectSize(Date object, Object... hints) {
     return OLongSerializer.LONG_SIZE;
@@ -112,7 +112,7 @@ public class ODateSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public Date prepocess(Date value, Object... hints) {
+  public Date preprocess(Date value, Object... hints) {
     final Calendar calendar = Calendar.getInstance();
     calendar.setTime(value);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
