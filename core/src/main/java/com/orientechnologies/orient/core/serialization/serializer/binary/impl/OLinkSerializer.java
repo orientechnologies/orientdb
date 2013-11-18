@@ -118,6 +118,9 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
 
   @Override
   public OIdentifiable preprocess(OIdentifiable value, Object... hints) {
-    return value.getIdentity();
+    if (value == null)
+      return null;
+    else
+      return value.getIdentity();
   }
 }
