@@ -1,11 +1,11 @@
 var dbModule = angular.module('database.controller', ['database.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner','localStorageService', function ($scope, $routeParams, $location, Database, CommandApi, Spinner,localStorageService) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'localStorageService', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, localStorageService) {
 
     $scope.database = Database;
     $scope.limit = 20;
 
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Query");
-    if(localStorageService.get("Queries")==null){
+    if (localStorageService.get("Queries") == null) {
         localStorageService.add("Queries", new Array);
     }
     $scope.queries = localStorageService.get("Queries");
@@ -43,7 +43,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.query = function () {
         Spinner.loading = true;
         $scope.queryText = $scope.queryText.trim();
-        $scope.queryText =  $scope.queryText.replace(/\n/g," ");
+        $scope.queryText = $scope.queryText.replace(/\n/g, " ");
         if ($scope.queryText.startsWith('g.')) {
             $scope.language = 'gremlin';
         }
@@ -67,19 +67,22 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
                 if ($scope.queries.indexOf($scope.queryText) != -1) {
                     var idx = $scope.queries.indexOf($scope.queryText);
-                    $scope.queries.splice(idx,1);
+                    $scope.queries.splice(idx, 1);
 
                 }
                 $scope.queries.unshift($scope.queryText);
-                localStorageService.add("Queries",  $scope.queries);
+                localStorageService.add("Queries", $scope.queries);
             }
         }, function (data) {
+            $scope.headers = undefined;
+            $scope.resultTotal = undefined;
+            $scope.results = undefined;
             Spinner.loading = false;
         });
     }
-    $scope.clear = function(){
+    $scope.clear = function () {
         $scope.queries = new Array;
-        localStorageService.add("Queries",  $scope.queries);
+        localStorageService.add("Queries", $scope.queries);
     }
     $scope.switchPage = function (index) {
         if (index != $scope.currentPage) {
