@@ -83,9 +83,36 @@ public class OIndexProxy<T> implements OIndex<T> {
     return index.getDatabaseName();
   }
 
+  public List<String> getIndexNames() {
+    final ArrayList<String> names = new ArrayList<String>(indexChain.size());
+    for (OIndex<?> oIndex : indexChain) {
+      names.add(oIndex.getName());
+    }
+
+    return names;
+  }
+
+  @Override
+  public String getName() {
+    final StringBuilder res = new StringBuilder("IndexChain{");
+    final List<String> indexNames = getIndexNames();
+
+    for (int i = 0; i < indexNames.size(); i++) {
+      String indexName = indexNames.get(i);
+      if (i > 0)
+        res.append(", ");
+      res.append(indexName);
+    }
+
+    res.append("}");
+
+    return res.toString();
+  }
+
   /**
    * {@inheritDoc}
    */
+  @Override
   public T get(Object iKey) {
     final Object lastIndexResult = lastIndex.get(iKey);
 
@@ -557,10 +584,6 @@ public class OIndexProxy<T> implements OIndex<T> {
   }
 
   public OIndex<T> delete() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public String getName() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
