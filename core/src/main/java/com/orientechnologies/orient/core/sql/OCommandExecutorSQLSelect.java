@@ -695,8 +695,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames = new HashSet<String>();
             context.setVariable("involvedIndexes", idxNames);
           }
-          if (index instanceof OIndexProxy) {
-            idxNames.addAll(((OIndexProxy) index).getIndexNames());
+          if (index instanceof OChainedIndexProxy) {
+            idxNames.addAll(((OChainedIndexProxy) index).getIndexNames());
           } else
             idxNames.add(index.getName());
         }
@@ -757,7 +757,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
     for (OIndex<?> involvedIndex : involvedIndexes) {
       if (searchResultFields.lastField.isLong()) {
-        result.addAll(OIndexProxy.createdProxy(involvedIndex, searchResultFields.lastField, getDatabase()));
+        result.addAll(OChainedIndexProxy.createdProxy(involvedIndex, searchResultFields.lastField, getDatabase()));
       } else {
         result.add(involvedIndex);
       }
