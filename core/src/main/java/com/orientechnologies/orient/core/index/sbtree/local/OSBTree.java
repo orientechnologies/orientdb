@@ -152,6 +152,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   public V get(K key) {
+    if (key == null)
+      return null;
+
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);

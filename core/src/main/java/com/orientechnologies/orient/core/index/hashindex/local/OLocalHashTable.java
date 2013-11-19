@@ -165,6 +165,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   public V get(K key) {
+    if (key == null)
+      return null;
+
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
