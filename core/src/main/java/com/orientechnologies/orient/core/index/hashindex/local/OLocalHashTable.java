@@ -1183,9 +1183,19 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final int index = bucket.getIndex(hashCode, key);
 
       if (index > -1) {
+        final int updateResult = bucket.updateEntry(index, value);
+        if (updateResult == 0)
+          return;
+
+        if (updateResult == 1) {
+          cacheEntry.markDirty();
+          return;
+        }
+
+        assert updateResult == -1;
+
         bucket.deleteEntry(index);
         size--;
-        cacheEntry.markDirty();
       }
 
       if (bucket.addEntry(hashCode, key, value)) {
