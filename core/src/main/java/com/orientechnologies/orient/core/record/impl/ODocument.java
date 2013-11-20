@@ -1595,11 +1595,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public Map<String, Object> toMap() {
     Map<String, Object> map = new HashMap<String, Object>();
     String[] fields = this.fieldNames();
-    Object[] values = this.fieldValues();
-    int i = 0;
     for(String field : fields) {
-      map.put(field, values[i]);
-      i++;
+      map.put(field, this.field(field));
     }
     return map;
   }
