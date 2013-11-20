@@ -1,26 +1,26 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.List;
-
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OChainedIndexProxy;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * <p>
- * Testing functionality of {@link com.orientechnologies.orient.core.sql.OIndexProxy}.
+ * Testing functionality of {@link OChainedIndexProxy}.
  * </p>
  * <p>
  * Each test method tests different traverse index combination with different operations.
@@ -29,12 +29,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * Method name are used to describe test case, first part is chain of types of indexes that are used in test, second part define
  * operation which are tested, and the last part describe whether or not {@code limit} operator are used in query.
  * </p>
- * 
+ * <p/>
  * <p>
  * Prefix "lpirt" in class names means "LinkedPropertyIndexReuseTest".
  * </p>
  */
-@Test(groups = { "index" })
+@Test(groups = {"index"})
 public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseTest {
 
   @Parameters(value = "url")

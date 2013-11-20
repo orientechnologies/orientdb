@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
@@ -35,7 +35,7 @@ public class TestLoadGraph {
   public void testImport() throws IOException, FileNotFoundException {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
-    OGraphDatabase db = new OGraphDatabase(DBURL);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DBURL);
     ODatabaseHelper.deleteDatabase(db, "plocal");
 
     OrientBaseGraph g = new OrientGraphNoTx(dbURL);

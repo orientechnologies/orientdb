@@ -20,13 +20,13 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for {@link String} type.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OStringSerializer implements OBinarySerializer<String> {
   public static final OStringSerializer INSTANCE = new OStringSerializer();
-  public static final byte              ID       = 13;
+  public static final byte ID = 13;
 
   public int getObjectSize(final String object, Object... hints) {
     return object.length() * 2 + OIntegerSerializer.INT_SIZE;
@@ -161,7 +161,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public String prepocess(String value, Object... hints) {
+  public String preprocess(String value, Object... hints) {
     return value;
   }
 }

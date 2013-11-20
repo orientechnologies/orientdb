@@ -20,7 +20,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for byte type .
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
@@ -28,10 +28,10 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   /**
    * size of byte value in bytes
    */
-  public static final int       BYTE_SIZE = 1;
+  public static final int BYTE_SIZE = 1;
 
-  public static OByteSerializer INSTANCE  = new OByteSerializer();
-  public static final byte      ID        = 2;
+  public static OByteSerializer INSTANCE = new OByteSerializer();
+  public static final byte ID = 2;
 
   public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;
@@ -89,7 +89,7 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   }
 
   @Override
-  public Byte prepocess(Byte value, Object... hints) {
+  public Byte preprocess(Byte value, Object... hints) {
     return value;
   }
 }

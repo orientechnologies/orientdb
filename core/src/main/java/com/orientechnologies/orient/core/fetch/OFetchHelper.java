@@ -432,21 +432,26 @@ public class OFetchHelper {
       final Object o = linked.get(key);
 
       if (o instanceof OIdentifiable) {
-        final ODocument d = ((OIdentifiable) o).getRecord();
-        if (d != null) {
-          // GO RECURSIVELY
-          final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
-          if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
-            removeParsedFromMap(parsedRecords, d);
-            iContext.onBeforeDocument(iRootRecord, d, key.toString(), iUserObject);
-            final Object userObject = iListener.fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key.toString(), d,
-                iContext);
-            processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
-                iFieldPathFromRoot, iListener, iContext, "");
-            iContext.onAfterDocument(iRootRecord, d, key.toString(), iUserObject);
-          } else {
-            iListener.parseLinked(iRootRecord, d, iUserObject, key.toString(), iContext);
-          }
+        final ORecordInternal<?> r = ((OIdentifiable) o).getRecord();
+        if (r != null) {
+          if (r instanceof ODocument) {
+            // GO RECURSIVELY
+            final ODocument d = (ODocument) r;
+            final Integer fieldDepthLevel = parsedRecords.get(d.getIdentity());
+            if (!d.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
+              removeParsedFromMap(parsedRecords, d);
+              iContext.onBeforeDocument(iRootRecord, d, key.toString(), iUserObject);
+              final Object userObject = iListener.fetchLinkedMapEntry(iRootRecord, iUserObject, fieldName, key.toString(), d,
+                  iContext);
+              processRecord(d, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,
+                  iFieldPathFromRoot, iListener, iContext, "");
+              iContext.onAfterDocument(iRootRecord, d, key.toString(), iUserObject);
+            } else {
+              iListener.parseLinked(iRootRecord, d, iUserObject, key.toString(), iContext);
+            }
+          } else
+            iListener.parseLinked(iRootRecord, r, iUserObject, key.toString(), iContext);
+
         }
       } else if (o instanceof Map) {
         fetchMap(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot, iFieldDepthLevel,

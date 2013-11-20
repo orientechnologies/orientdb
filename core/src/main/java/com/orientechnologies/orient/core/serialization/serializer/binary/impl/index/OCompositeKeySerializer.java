@@ -16,9 +16,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -30,18 +27,21 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
+import java.io.IOException;
+import java.util.List;
+
 /**
  * Serializer that is used for serialization of {@link OCompositeKey} keys in index.
- * 
+ *
  * @author Andrey Lomakin
  * @since 29.07.11
  */
 public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>, OStreamSerializer {
 
-  public static final String                  NAME     = "cks";
+  public static final String NAME = "cks";
 
   public static final OCompositeKeySerializer INSTANCE = new OCompositeKeySerializer();
-  public static final byte                    ID       = 14;
+  public static final byte ID = 14;
 
   @SuppressWarnings("unchecked")
   public int getObjectSize(OCompositeKey compositeKey, Object... hints) {
@@ -313,7 +313,10 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   }
 
   @Override
-  public OCompositeKey prepocess(OCompositeKey value, Object... hints) {
+  public OCompositeKey preprocess(OCompositeKey value, Object... hints) {
+    if (value == null)
+      return null;
+
     final OType[] types = getKeyTypes(hints);
 
     final List<Object> keys = value.getKeys();
@@ -330,7 +333,7 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
         type = OType.getTypeByClass(key.getClass());
 
       OBinarySerializer<Object> keySerializer = ((OBinarySerializer<Object>) factory.getObjectSerializer(type));
-      compositeKey.addKey(keySerializer.prepocess(key));
+      compositeKey.addKey(keySerializer.preprocess(key));
     }
 
     return compositeKey;

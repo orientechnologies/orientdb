@@ -1,32 +1,32 @@
 #!/bin/sh
 #
-# Copyright (c) 1999-2012 Luca Garulli
+# Copyright (c) 1999-2013 Luca Garulli
 #
 
-echo "           .                                              "
-echo "          .\`        \`                                     "
-echo "          ,      \`:.                                      "
-echo "         \`,\`    ,:\`                                       "
-echo "         .,.   :,,                                        "
-echo "         .,,  ,,,                                         "
-echo "    .    .,.:::::  \`\`\`\`                                   "
-echo "    ,\`   .::,,,,::.,,,,,,\`;;                      .:      "
-echo "    \`,.  ::,,,,,,,:.,,.\`  \`                       .:      "
-echo "     ,,:,:,,,,,,,,::.   \`        \`         \`\`     .:      "
-echo "      ,,:.,,,,,,,,,: \`::, ,,   ::,::\`   : :,::\`  ::::     "
-echo "       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:      "
-echo "        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:      "
-echo "  \`     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:      "
-echo "  \`,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:      "
-echo "    .,,,,::,,,,,,,:  \`: , ,,  :     \`   :     :   .:      "
-echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:      "
-echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:      "
-echo "           ,,:\` \`,,.                                      "
-echo "          ,,,    .,\`                                      "
-echo "         ,,.     \`,                      S E R V E R        "
-echo "       \`\`        \`.                                       "
-echo "                 \`\`                                       "
-echo "                 \`                                        "
+echo "           .                                          "
+echo "          .\`        \`                                 "
+echo "          ,      \`:.                                  "
+echo "         \`,\`    ,:\`                                   "
+echo "         .,.   :,,                                    "
+echo "         .,,  ,,,                                     "
+echo "    .    .,.:::::  \`\`\`\`                                 :::::::::     :::::::::   "
+echo "    ,\`   .::,,,,::.,,,,,,\`;;                      .:    ::::::::::    :::    :::  "
+echo "    \`,.  ::,,,,,,,:.,,.\`  \`                       .:    :::      :::  :::     ::: "
+echo "     ,,:,:,,,,,,,,::.   \`        \`         \`\`     .:    :::      :::  :::     ::: "
+echo "      ,,:.,,,,,,,,,: \`::, ,,   ::,::\`   : :,::\`  ::::   :::      :::  :::    :::  "
+echo "       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::     "
+echo "        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::   "
+echo "  \`     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     ::: "
+echo "  \`,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     ::: "
+echo "    .,,,,::,,,,,,,:  \`: , ,,  :     \`   :     :   .:    :::      :::  :::     ::: "
+echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:    :::::::::::   :::     ::: "
+echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:    :::::::::     ::::::::::  "
+echo "           ,,:\` \`,,.                                  "
+echo "          ,,,    .,\`                                  "
+echo "         ,,.     \`,                                          GRAPH DATABASE  "
+echo "       \`\`        \`.                                                          "
+echo "                 \`\`                                         www.orientdb.org "
+echo "                 \`                                    "
 
 cd "$(dirname "$0")"
 
@@ -64,10 +64,8 @@ fi
 export JAVA
 
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
-LOG_CONSOLE_LEVEL=info
-LOG_FILE_LEVEL=fine
 WWW_PATH=$ORIENTDB_HOME/www
 ORIENTDB_SETTINGS="-Dprofiler.enabled=true -Dcache.level1.enabled=false -Dcache.level2.enabled=false"
-JAVA_OPTS_SCRIPT="-XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true"
+JAVA_OPTS_SCRIPT="-XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8"
 
-$JAVA -server $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Dfile.encoding=UTF8 -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain
+$JAVA -server $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain

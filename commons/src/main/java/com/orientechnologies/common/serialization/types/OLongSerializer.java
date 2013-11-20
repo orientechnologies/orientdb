@@ -16,28 +16,28 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
  * Serializer for {@link Long} type.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
   private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static OLongSerializer         INSTANCE  = new OLongSerializer();
-  public static final byte              ID        = 10;
+  public static OLongSerializer INSTANCE = new OLongSerializer();
+  public static final byte ID = 10;
 
   /**
    * size of long value in bytes
    */
-  public static final int               LONG_SIZE = 8;
+  public static final int LONG_SIZE = 8;
 
   public int getObjectSize(Long object, Object... hints) {
     return LONG_SIZE;
@@ -105,7 +105,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   @Override
-  public Long prepocess(Long value, Object... hints) {
+  public Long preprocess(Long value, Object... hints) {
     return value;
   }
 }

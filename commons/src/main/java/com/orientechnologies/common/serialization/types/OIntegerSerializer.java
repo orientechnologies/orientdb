@@ -16,28 +16,28 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
  * Serializer for {@link Integer} type.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 17.01.12
  */
 public class OIntegerSerializer implements OBinarySerializer<Integer> {
   private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static OIntegerSerializer      INSTANCE  = new OIntegerSerializer();
-  public static final byte              ID        = 8;
+  public static OIntegerSerializer INSTANCE = new OIntegerSerializer();
+  public static final byte ID = 8;
 
   /**
    * size of int value in bytes
    */
-  public static final int               INT_SIZE  = 4;
+  public static final int INT_SIZE = 4;
 
   public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
@@ -101,7 +101,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   @Override
-  public Integer prepocess(Integer value, Object... hints) {
+  public Integer preprocess(Integer value, Object... hints) {
     return value;
   }
 }
