@@ -5,7 +5,7 @@
     <property environment="env"/>
     <property name="vendor" value="NuvolaBase Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="1.6.1-SNAPSHOT"/>
+    <property name="version" value="1.6.1"/>
     <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
                else="../releases/orientdb-community-${version}">
         <isset property="releaseHome"/>
@@ -65,9 +65,9 @@
      <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::</echo>
      <echo>           ,,:` `,,.                                  </echo>
      <echo>          ,,,    .,`                                  </echo>
-     <echo>         ,,.     `,                                          GRAPH DATABASE   </echo>
-     <echo>       ``        `.                                   </echo>
-     <echo>                 ``                                   </echo>
+     <echo>         ,,.     `,                                          GRAPH DATABASE</echo>
+     <echo>       ``        `.                                        COMMUNITY  EDITION</echo>
+     <echo>                 ``                                         www.orientdb.org</echo>
      <echo>                 `                                    </echo>
 
         <mkdir dir="${community.release}"/>
@@ -148,6 +148,11 @@
                 <filter token="BUILD" value="${build.number}"/>
             </filterset>
         </copy>
+        <chmod perm="u+x" verbose="yes">
+            <fileset dir="${community.release}/bin">
+                <include name="**/*.sh"/>
+            </fileset>
+        </chmod>
 
         <copy todir="${community.release}/www/">
             <fileset dir="server/src/site"/>
@@ -174,6 +179,12 @@
             <fileset dir="." includes="server/benchmarks/*"/>
         </copy>
 
+        <delete dir="${community.release}/databases"/>
+    	<java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+            <classpath>
+            	<fileset dir="${community.release}/lib" includes="*.jar"/>
+            </classpath>
+        </java>
 
         <copy todir="${community.release}/databases/GratefulDeadConcerts" failonerror="false">
             <fileset dir="graphdb/target/databases/GratefulDeadConcerts/" includes="*"/>
@@ -247,8 +258,15 @@
         <delete file="../releases/orientdb-community-${version}.zip"/>
         <zip destfile="../releases/orientdb-community-${version}.zip" basedir="../releases" level="9" update="false"
              includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
-        <tar destfile="../releases/orientdb-community-${version}.tar.gz" basedir="../releases" compression="gzip"
-             includes="orientdb-community-${version}/" excludes="**/*.log.*"/>
+        <tar destfile="../releases/orientdb-community-${version}.tar.gz" compression="gzip">
+            <tarfileset dir="../releases/orientdb-community-${version}">
+                <include name="**"/>
+                <exclude name="**/*.sh"/>
+            </tarfileset>
+            <tarfileset dir="../releases/orientdb-community-${version}" mode="755">
+                <include name="**/*.sh"/>
+            </tarfileset>
+         </tar>
     </target>
 
 </project>
