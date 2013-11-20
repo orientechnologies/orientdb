@@ -88,7 +88,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -208,8 +207,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabase.open(iUserName, iUserPassword);
 
       currentDatabaseName = currentDatabase.getName();
-      if (currentDatabase.getStorage() instanceof OStorageProxy)
-        serverAdmin = new OServerAdmin(currentDatabase.getStorage().getURL());
+      // if (currentDatabase.getStorage() instanceof OStorageProxy)
+      // serverAdmin = new OServerAdmin(currentDatabase.getStorage().getURL());
     } else {
       // CONNECT TO REMOTE SERVER
       message("Connecting to remote Server instance [" + iURL + "] with user '" + iUserName + "'...");
@@ -872,6 +871,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
       final String dbURL = iDatabaseURL.substring(OEngineRemote.NAME.length() + 1);
+
+      if (serverAdmin != null)
+        serverAdmin.close();
+
       serverAdmin = new OServerAdmin(dbURL).connect(iUserName, iUserPassword);
       serverAdmin.dropDatabase(storageType);
       disconnect();
@@ -1351,125 +1354,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Gets the replication journal for a database against a remote server")
-  public void replicationGetJournal(
-      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
-      @ConsoleParameter(name = "limit", description = "Limit as maximum number of records starting from the end", optional = true) final String iLimit)
-      throws IOException {
-
-    checkForRemoteServer();
-
-    final long start = System.currentTimeMillis();
-
-    int limit = iLimit == null ? -1 : Integer.parseInt(iLimit);
-
-    try {
-      final ODocument response = serverAdmin.getReplicationJournal(iDatabaseName, iRemoteName, limit);
-      currentResultSet = response.field("result");
-      if (currentResultSet.size() == 0)
-        message("\nReplication journal for database '" + iDatabaseName + "' is empty");
-      else {
-        float elapsedSeconds = getElapsedSecs(start);
-
-        new OTableFormatter(this).hideRID(true).setMaxWidthSize(Integer.parseInt(properties.get("width")))
-            .writeRecords(currentResultSet, -1);
-
-        message("\n\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
-      }
-      out.println();
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Resets the replication journal for a database against a remote server")
-  public void replicationResetJournal(
-      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName)
-      throws IOException {
-
-    checkForRemoteServer();
-
-    try {
-      final ODocument response = serverAdmin.resetReplicationJournal(iDatabaseName, iRemoteName);
-      message("\nReset replication journal for database '" + iDatabaseName + "': removed " + response.field("removedEntries")
-          + " entries");
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Gets the replication conflicts for a database against a remote server")
-  public void replicationGetConflicts(@ConsoleParameter(name = "db-name", description = "Name of the database") String iDatabaseName)
-      throws IOException {
-
-    checkForRemoteServer();
-
-    try {
-      final ODocument response = serverAdmin.getReplicationConflicts(iDatabaseName);
-      currentResultSet = response.field("result");
-
-      if (currentResultSet == null || currentResultSet.size() == 0)
-        message("\nThere are not replication conflicts for database '" + iDatabaseName + "'");
-      else {
-        new OTableFormatter(this).hideRID(true).setMaxWidthSize(Integer.parseInt(properties.get("width")))
-            .writeRecords(currentResultSet, -1);
-      }
-      out.println();
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
   @ConsoleCommand(description = "Displays the status of the cluster nodes")
   public void clusterStatus() throws IOException {
+    if (serverAdmin == null)
+      throw new IllegalStateException("You must be connected to a remote server to get the cluster status");
 
     checkForRemoteServer();
     try {
 
       message("\nCluster status:");
       out.println(serverAdmin.clusterStatus().toJSON("attribSameRow,alwaysFetchEmbedded,fetchPlan:*:0"));
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Align two databases in different servers")
-  public void replicationAlign(
-      @ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName,
-      @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
-      @ConsoleParameter(name = "options", description = "Alignment options", optional = true) final String iOptions)
-      throws IOException {
-
-    try {
-      if (serverAdmin == null)
-        throw new IllegalStateException("You must be connected to a remote server to align database");
-
-      serverAdmin.replicationAlign(iDatabaseName, iRemoteName, iOptions);
-
-      message("\nAlignment started for database '" + iDatabaseName + "' against the server '" + iRemoteName + "'");
-
-    } catch (Exception e) {
-      printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Returns the configuration of a distributed database")
-  public void replicationConfig(@ConsoleParameter(name = "db-name", description = "Name of the database") final String iDatabaseName)
-      throws IOException {
-
-    try {
-      if (serverAdmin == null)
-        throw new IllegalStateException("You must be connected to a remote server to align database");
-
-      final ODocument response = serverAdmin.replicationConfig(iDatabaseName);
-
-      message("\nDistributed configuration for database '%s':\n%s", iDatabaseName, response.toJSON("prettyPrint"));
 
     } catch (Exception e) {
       printError(e);
