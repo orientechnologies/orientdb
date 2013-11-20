@@ -141,8 +141,7 @@
 
         <copy todir="${community.release}/bin/" flatten="true" overwrite="true">
             <fileset dir="."
-                     includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat distributed/script/*.sh distributed/script/*.bat"/>
-            <fileset dir="graphdb/script" includes="*.sh *.bat"/>
+                     includes="tools/script/*.sh tools/script/*.bat server/script/*.sh server/script/*.bat distributed/script/*.sh distributed/script/*.bat graphdb/script/*.sh graphdb/script/*.bat"/>
             <filterset>
                 <filter token="VERSION" value="${version}"/>
                 <filter token="BUILD" value="${build.number}"/>
