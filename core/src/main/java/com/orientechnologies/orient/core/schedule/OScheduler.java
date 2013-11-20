@@ -128,6 +128,7 @@ public class OScheduler implements Runnable {
   public void setDatabase(ODatabaseRecord database) {
     if(this.db.isClosed()) {
       OLogManager.instance().warn(this, "database closed reset required");
+      this.db = database;
     }
   }
 
