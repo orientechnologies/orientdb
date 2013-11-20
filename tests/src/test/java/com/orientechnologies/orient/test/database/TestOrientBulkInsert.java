@@ -1,11 +1,5 @@
 package com.orientechnologies.orient.test.database;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -16,6 +10,11 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+import org.testng.annotations.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class TestOrientBulkInsert {
 
@@ -39,16 +38,16 @@ public class TestOrientBulkInsert {
     OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0); // Turn off cache
 
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
-    OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0); // Turn off cache
+    OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
 
-    OGlobalConfiguration.FILE_MMAP_STRATEGY.setValue(4); // Kein Memory Filemapping
-    OGlobalConfiguration.TX_USE_LOG.setValue(false); // Keine Transaction logs benutzen
+    OGlobalConfiguration.FILE_MMAP_STRATEGY.setValue(4);
+    OGlobalConfiguration.TX_USE_LOG.setValue(false);
 
     Map defaultsMap = new HashMap<String, Object>();
-    defaultsMap.put("mvrbtree.lazyUpdates", 1); // Index wird immer direkt upgedated (Memory)
-    defaultsMap.put("index.auto.lazyUpdates", 1); // Index wird immer direkt upgedated (Memory)
-    defaultsMap.put("index.manual.lazyUpdates", 1); // Index wird immer direkt upgedated (Memory)
-    defaultsMap.put("index.auto.rebuildAfterNotSoftClose", false); // Index wird nicht eigenständig aufgebaut (memory Probleme)
+    defaultsMap.put("mvrbtree.lazyUpdates", 1);
+    defaultsMap.put("index.auto.lazyUpdates", 1);
+    defaultsMap.put("index.manual.lazyUpdates", 1);
+    defaultsMap.put("index.auto.rebuildAfterNotSoftClose", false);
 
     OGlobalConfiguration.setConfiguration(defaultsMap);
 
@@ -106,9 +105,9 @@ public class TestOrientBulkInsert {
     return document;
   }
 
-  static final String AB      = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static Random       rnd     = new Random();
-  static int          counter = 0;
+  static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static Random rnd = new Random();
+  static int counter = 0;
 
   private String getRandomText(int len) {
 
@@ -117,7 +116,6 @@ public class TestOrientBulkInsert {
       sb.append(AB.charAt(rnd.nextInt(AB.length())));
     }
     String s = sb.toString() + " - " + (++counter);
-    // System.out.println(s);
     return s;
   }
 
