@@ -63,7 +63,9 @@ shift
 goto setArgs
 
 :doneSetArgs
-set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-server-config.xml
+
+if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-server-config.xml
+
 set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
 set LOG_CONSOLE_LEVEL=info
 set LOG_FILE_LEVEL=fine

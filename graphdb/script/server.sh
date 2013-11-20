@@ -52,6 +52,11 @@ cd $PRGDIR
 [ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENTDB_HOME
 
+if [ ! -f "${CONFIG_FILE}" ]
+then
+  CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
+fi
+
 # Set JavaHome if it exists
 if [ -f "${JAVA_HOME}/bin/java" ]; then 
    JAVA=${JAVA_HOME}/bin/java
@@ -60,7 +65,6 @@ else
 fi
 export JAVA
 
-CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_CONSOLE_LEVEL=info
 LOG_FILE_LEVEL=fine
