@@ -1,10 +1,7 @@
 #!/bin/sh
 #
-# Copyright (c) 1999-2010 Luca Garulli
+# Copyright (c) 1999-2013 Luca Garulli
 #
-# 2012-07-31 - Added -w option 
-#
-# resolve links - $0 may be a softlink
 PRG="$0"
 
 while [ $# -gt 0 ]; do
@@ -34,15 +31,14 @@ export ORIENTDB_HOME
 
 if [ ! -f "${CONFIG_FILE}" ]
 then
-  CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
+  CONFIG_FILE=$ORIENTDB_HOME/config/workbench-config.xml
 fi
 
-LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
-LOG_LEVEL=warning
+LOG_FILE=$ORIENTDB_HOME/config/workbench-log.properties
 WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
 
-java -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-1.4.0-SNAPSHOT.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
+java -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
 
 if [ "x$wait" == "xyes" ] ; then
   while true ; do
