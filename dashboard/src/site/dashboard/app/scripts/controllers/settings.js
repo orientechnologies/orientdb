@@ -182,6 +182,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
             $scope.config['updateConfiguration']['@class'] = 'UpdateConfiguration';
             $scope.config['updateConfiguration']['@type'] = 'document';
             $scope.config['updateConfiguration']['hours'] = 24;
+            $scope.config['updateConfiguration']['receiveNews'] = true;
         }
 
 
