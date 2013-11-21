@@ -30,7 +30,17 @@
 		<fileSet>
 			<directory>script</directory>
 			<outputDirectory>bin</outputDirectory>
+			<includes>
+				<include>*.bat</include>
+			</includes>
+		</fileSet>
+		<fileSet>
+			<directory>script</directory>
+			<outputDirectory>bin</outputDirectory>
 			<fileMode>744</fileMode>
+			<excludes>
+				<exclude>*.bat</exclude>
+			</excludes>
 		</fileSet>
 		<fileSet>
 			<directory>log</directory>
