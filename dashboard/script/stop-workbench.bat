@@ -1,6 +1,6 @@
 @echo off
 rem
-rem Copyright (c) 1999-2011 Luca Garulli @www.orientechnologies.com
+rem Copyright (c) 1999-2013 Luca Garulli @www.orientechnologies.com
 rem
 
 rem Guess ORIENTDB_HOME if not defined
@@ -38,13 +38,11 @@ shift
 goto setArgs
 
 :doneSetArgs
-if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-server-config.xml
+if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/workbench-config.xml
 
-set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
-set LOG_LEVEL=warning
+set LOG_FILE=%ORIENTDB_HOME%/config/workbench-log.properties
 set WWW_PATH=%ORIENTDB_HOME%/www
-REM set JAVA_OPTS=-Xms1024m -Xmx1024m
 
-call %JAVA% -client %JAVA_OPTS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\orientdb-tools-1.2.0-SNAPSHOT.jar;%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
+call %JAVA% -client %JAVA_OPTS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
 
 :end
