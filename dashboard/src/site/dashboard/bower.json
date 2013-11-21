@@ -17,6 +17,7 @@
     "angular-strap": "0.7.7",
     "moment": "2.3.1",
     "d3": "3.3.5",
+    "nvd3" : "latest",
     "bootstrap-daterangepicker": "latest",
     "stringjs": "1.5.1",
     "flot": "0.8.1",
