@@ -147,12 +147,10 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
         }
 
         final boolean result;
-        if (value != VALUE_NOT_FOUND)
-          if (key != null)
-            result = index.remove(key, (OIdentifiable) value);
-          else
-            return index.remove((OIdentifiable) value);
-        else
+        if (value != VALUE_NOT_FOUND) {
+          assert key != null;
+          result = index.remove(key, (OIdentifiable) value);
+        } else
           result = index.remove(key);
 
         return result ? 1 : 0;

@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -30,18 +32,14 @@ public class OIndexDictionary extends OIndexOneValue {
     super(typeId, algorithm, engine, valueContainerAlgorithm);
   }
 
-  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(final Object key, final OIdentifiable value) {
     modificationLock.requestModificationLock();
 
     try {
       acquireExclusiveLock();
       try {
         checkForKeyType(key);
-        final OIdentifiable value = indexEngine.get(key);
-
-        if (value == null || !value.equals(iSingleValue))
-          indexEngine.put(key, iSingleValue);
-
+        indexEngine.put(key, value);
         return this;
 
       } finally {
@@ -49,6 +47,30 @@ public class OIndexDictionary extends OIndexOneValue {
       }
     } finally {
       modificationLock.releaseModificationLock();
+    }
+  }
+
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    snapshot.put(key, value.getIdentity());
+  }
+
+  @Override
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    snapshot.put(key, RemovedValue.INSTANCE);
+  }
+
+  @Override
+  protected void commitSnapshot(Map<Object, Object> snapshot) {
+    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+      Object key = snapshotEntry.getKey();
+      checkForKeyType(key);
+
+      Object snapshotValue = snapshotEntry.getValue();
+      if (snapshotValue.equals(RemovedValue.INSTANCE))
+        indexEngine.remove(key);
+      else
+        indexEngine.put(key, (OIdentifiable) snapshotValue);
     }
   }
 

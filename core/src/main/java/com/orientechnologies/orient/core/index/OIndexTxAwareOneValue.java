@@ -22,6 +22,8 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -44,13 +46,16 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   @Override
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXISTS IN TX
-    final OIdentifiable previousRecord = get(iKey);
-    if (previousRecord != null && !previousRecord.equals(iRecord))
-      throw new ORecordDuplicatedException(String.format(
-          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord, iKey,
-          getName(), previousRecord), previousRecord.getIdentity());
+    String storageType = database.getStorage().getType();
+    if (storageType.equals(OEngineMemory.NAME) || storageType.equals(OEngineLocal.NAME) || !database.getTransaction().isActive()) {
+      final OIdentifiable previousRecord = get(iKey);
+      if (previousRecord != null && !previousRecord.equals(iRecord))
+        throw new ORecordDuplicatedException(String.format(
+            "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord, iKey,
+            getName(), previousRecord), previousRecord.getIdentity());
 
-    super.checkEntry(iRecord, iKey);
+      super.checkEntry(iRecord, iKey);
+    }
   }
 
   @Override

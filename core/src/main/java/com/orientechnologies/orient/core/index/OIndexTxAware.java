@@ -79,8 +79,8 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   }
 
   @Override
-  public boolean remove(final Object iKey) {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
+  public boolean remove(final Object key) {
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
     return true;
   }
 
@@ -88,12 +88,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
     return true;
-  }
-
-  @Override
-  public int remove(final OIdentifiable iRID) {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
-    return 1;
   }
 
   @Override

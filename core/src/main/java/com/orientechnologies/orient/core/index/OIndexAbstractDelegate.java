@@ -88,13 +88,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.put(iKey, iValue);
   }
 
-  public boolean remove(final Object iKey) {
-    return delegate.remove(iKey);
-  }
-
-  @Override
-  public int remove(OIdentifiable iRID) {
-    return delegate.remove(iRID);
+  public boolean remove(final Object key) {
+    return delegate.remove(key);
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
@@ -178,10 +173,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   public ORID getIdentity() {
     return delegate.getIdentity();
-  }
-
-  public void commit(final ODocument iDocument) {
-    delegate.commit(iDocument);
   }
 
   public void unload() {
