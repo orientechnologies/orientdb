@@ -175,37 +175,21 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
     entryPosition += OLongSerializer.LONG_SIZE;
     entryPosition += keySerializer.getObjectSizeInDirectMemory(bufferPointer, entryPosition);
 
-    if (valueSerializer.isFixedLength()) {
-      byte[] newSerializedValue = new byte[valueSerializer.getFixedLength()];
-      valueSerializer.serializeNative(value, newSerializedValue, 0);
+    final int newSize = valueSerializer.getObjectSize(value);
+    final int oldSize = valueSerializer.getObjectSizeInDirectMemory(bufferPointer, entryPosition);
+    if (newSize != oldSize)
+      return -1;
 
-      byte[] oldSerializedValue = bufferPointer.get(entryPosition, newSerializedValue.length);
+    byte[] newSerializedValue = new byte[newSize];
+    valueSerializer.serializeNative(value, newSerializedValue, 0);
 
-      if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, newSerializedValue) == 0)
-        return 0;
+    byte[] oldSerializedValue = bufferPointer.get(entryPosition, oldSize);
 
-      bufferPointer.set(entryPosition, newSerializedValue, 0, newSerializedValue.length);
-      return 1;
-    } else {
-      final int newSize = valueSerializer.getObjectSize(value);
-      final int oldSize = valueSerializer.getObjectSizeInDirectMemory(bufferPointer, entryPosition);
+    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, newSerializedValue) == 0)
+      return 0;
 
-      byte[] newSerializedValue = new byte[newSize];
-      valueSerializer.serializeNative(value, newSerializedValue, 0);
-
-      byte[] oldSerializedValue = bufferPointer.get(entryPosition, oldSize);
-
-      if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, newSerializedValue) == 0)
-        return 0;
-
-      if (oldSize == newSize) {
-        bufferPointer.set(entryPosition, newSerializedValue, 0, newSerializedValue.length);
-
-        return 1;
-      }
-    }
-
-    return -1;
+    bufferPointer.set(entryPosition, newSerializedValue, 0, newSerializedValue.length);
+    return 1;
   }
 
   public Entry<K, V> deleteEntry(int index) {

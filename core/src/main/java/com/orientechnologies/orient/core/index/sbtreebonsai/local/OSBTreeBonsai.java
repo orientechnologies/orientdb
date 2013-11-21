@@ -17,7 +17,13 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -207,22 +213,15 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       final boolean itemFound = bucketSearchResult.itemIndex >= 0;
 
       if (itemFound) {
-        while (!keyBucket.updateValue(bucketSearchResult.itemIndex, value)) {
-          keyBucketPointer.releaseExclusiveLock();
-          diskCache.release(keyBucketCacheEntry);
+        final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
 
-          bucketSearchResult = splitBucket(bucketSearchResult.path, bucketSearchResult.itemIndex, key);
-          bucketPointer = bucketSearchResult.getLastPathItem();
-
-          keyBucketCacheEntry = diskCache.load(fileId, bucketPointer.getPageIndex(), false);
-          keyBucketPointer = keyBucketCacheEntry.getCachePointer();
-          keyBucketPointer.acquireExclusiveLock();
-
-          keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketPointer.getDataPointer(), bucketPointer.getPageOffset(),
-              keySerializer, valueSerializer, getTrackMode());
+        if (updateResult == 1) {
+          logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
+          keyBucketCacheEntry.markDirty();
         }
 
-        logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
+        assert updateResult == 0 || updateResult == 1;
+
       } else {
         int insertionIndex = -bucketSearchResult.itemIndex - 1;
 
@@ -245,9 +244,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         }
 
         logPageChanges(keyBucket, fileId, bucketPointer.getPageIndex(), false);
+        keyBucketCacheEntry.markDirty();
       }
 
-      keyBucketCacheEntry.markDirty();
       keyBucketPointer.releaseExclusiveLock();
       diskCache.release(keyBucketCacheEntry);
 
