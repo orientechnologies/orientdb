@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
@@ -24,12 +25,16 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.plugin.mail.OMailProfile;
 
 public class EventHelper {
+	
+	private final static String VAR_BEGIN = "$";
+	
+	
 	private final static String	USER_AGENT	= "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36";
 
 	public static Object resolve(final Map<String, Object> body2name2, final Object iContent) {
 		Object value = null;
 		if (iContent instanceof String)
-			value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+			value = resolveVariables((String) iContent, VAR_BEGIN, OSystemVariableResolver.VAR_END, new OVariableParserListener() {
 
 				@Override
 				public Object resolve(final String iVariable) {
@@ -42,7 +47,38 @@ public class EventHelper {
 
 		return value;
 	}
+	 public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
+	      final OVariableParserListener iListener) {
+	    if (iListener == null)
+	      throw new IllegalArgumentException("Missed VariableParserListener listener");
 
+	    int beginPos = iText.lastIndexOf(iBegin);
+	    if (beginPos == -1)
+	      return iText;
+
+//	    int endPos = iText.indexOf(iEnd, beginPos + 1);
+//	    if (endPos == -1)
+//	      return iText;
+
+	    String pre = iText.substring(0, beginPos);
+//	    String var = iText.substring(beginPos + iBegin.length(), endPos);
+	    String var = iText.substring(beginPos + iBegin.length());
+//	    String post = iText.substring(endPos + iEnd.length());
+
+	    Object resolved = iListener.resolve(var);
+
+	    if (resolved == null) {
+	      OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
+	      // resolved = "null";
+	    }
+
+	    if (pre.length() > 0) {
+	      final String path = pre + (resolved != null ? resolved.toString() : "");
+	      return resolveVariables(path, iBegin, iEnd, iListener);
+	    }
+
+	    return resolved;
+	  }
 	public static String replaceText(Map<String, Object> body2name, String body) {
 
 		String[] splitBody = body.split(" ");

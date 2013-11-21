@@ -59,7 +59,7 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 			ODocument server = snapshot.field("server");
 			if (server != null) {
 				String serverName = server.field("name");
-				this.getBody2name().put("server", serverName);
+				this.getBody2name().put("servername", serverName);
 			}
 			Date dateFrom = snapshot.field("dateFrom");
 			this.getBody2name().put("date", dateFrom);

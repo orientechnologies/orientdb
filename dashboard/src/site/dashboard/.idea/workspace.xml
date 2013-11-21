@@ -22,8 +22,8 @@
     <file path="/header-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378996333011" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/notification.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378799466648" ignored="false" />
     <file path="/notification.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378730866722" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383665540663" ignored="false" />
-    <file path="/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1381322183186" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/controllers/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384774186073" ignored="false" />
+    <file path="/database-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384774184810" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/util/orientdb-hint.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379341688299" ignored="false" />
     <file path="/browse.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380361992786" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/browse.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380362062916" ignored="false" />
@@ -32,7 +32,7 @@
     <file path="/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379072588436" ignored="false" />
     <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384530085659" ignored="false" />
     <file path="/login.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383486146191" ignored="false" />
-    <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384265319079" ignored="false" />
+    <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384773699166" ignored="false" />
     <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384335278706" ignored="false" />
     <file path="/monitor.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382899462779" ignored="false" />
     <file path="/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985701222" ignored="false" />
@@ -147,7 +147,7 @@
     <file path="/dialog.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379186712384" ignored="false" />
     <file path="/baseEditModal.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379197825195" ignored="false" />
     <file path="/custom.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383586117523" ignored="false" />
-    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384437254147" ignored="false" />
+    <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/scripts/api.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384774221492" ignored="false" />
     <file path="/multiBar.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379449691980" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/studio/www/scripts/scripts.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380448807915" ignored="false" />
     <file path="/fragment.js2" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380889485567" ignored="false" />
@@ -227,7 +227,7 @@
     <file path="/header.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384334520228" ignored="false" />
     <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384203293796" ignored="false" />
     <file path="/message-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384200739943" ignored="false" />
-    <file path="/maillegend.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384638774808" ignored="false" />
+    <file path="/maillegend.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384770426504" ignored="false" />
     <file path="/userguide.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356156210" ignored="false" />
     <file path="/userguide.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356764445" ignored="false" />
     <file path="/gettingstarted.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384360070633" ignored="false" />
@@ -251,10 +251,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="userguide.txt" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="userguide.txt" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="98" column="31" selection-start="2614" selection-end="2614" vertical-scroll-proportion="0.33272728">
+            <state line="110" column="21" selection-start="2928" selection-end="2928" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -295,10 +295,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="maillegend.html" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="maillegend.html" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="22" column="49" selection-start="712" selection-end="712" vertical-scroll-proportion="-5.6923075">
+            <state line="17" column="52" selection-start="495" selection-end="495" vertical-scroll-proportion="0.2220339">
               <folding />
             </state>
           </provider>
@@ -317,15 +317,6 @@
         <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/server_log.png">
           <provider selected="true" editor-type-id="images">
             <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="code-filter.conf" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/filters/code/code-filter.conf">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
           </provider>
         </entry>
       </file>
@@ -352,9 +343,9 @@
         <option value="$PROJECT_DIR$/app/views/server/general.html" />
         <option value="$PROJECT_DIR$/Gruntfile.js" />
         <option value="$PROJECT_DIR$/app/index.html" />
-        <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
+        <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
       </list>
     </option>
   </component>
@@ -390,6 +381,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -490,19 +482,18 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="recentsLimit" value="5" />
     <property name="options.lastSelected" value="project.propDebugger" />
+    <property name="recentsLimit" value="5" />
     <property name="last_opened_file_path" value="$USER_HOME$/ReleezWorkspace/coachtrap-app" />
     <property name="DefaultHtmlFileTemplate" value="Html5" />
-    <property name="options.searchVisible" value="true" />
-    <property name="options.splitter.details.proportions" value="0.2" />
     <property name="GoToClass.includeJavaFiles" value="false" />
+    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.searchVisible" value="true" />
   </component>
   <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
@@ -678,47 +669,32 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/app/views/settings/newModal.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="39" selection-start="758" selection-end="758" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="24" column="39" selection-start="758" selection-end="758" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="41" column="29" selection-start="1542" selection-end="1542" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="41" column="29" selection-start="1542" selection-end="1542" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Gruntfile.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="255" column="46" selection-start="6192" selection-end="6192" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="255" column="46" selection-start="6192" selection-end="6192" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/index.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="95" column="29" selection-start="4549" selection-end="4549" vertical-scroll-proportion="-8.730769">
-          <folding>
-            <marker date="1384635332000" expanded="true" signature="-1:-1" placeholder="..." />
-            <marker date="1384635332000" expanded="true" signature="-1:-1" placeholder="..." />
-          </folding>
-        </state>
+        <state line="95" column="29" selection-start="4549" selection-end="4549" vertical-scroll-proportion="-8.730769" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/databasemanagement.png">
@@ -743,21 +719,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/filters/code/code-filter.conf">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/home.png">
       <provider selected="true" editor-type-id="images">
         <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="22" column="49" selection-start="712" selection-end="712" vertical-scroll-proportion="-5.6923075">
-          <folding />
-        </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/server_log.png">
@@ -774,7 +741,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="98" column="31" selection-start="2614" selection-end="2614" vertical-scroll-proportion="0.33272728">
+        <state line="110" column="21" selection-start="2928" selection-end="2928" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="52" selection-start="495" selection-end="495" vertical-scroll-proportion="0.2220339">
           <folding />
         </state>
       </provider>

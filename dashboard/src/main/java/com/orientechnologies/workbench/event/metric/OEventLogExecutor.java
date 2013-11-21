@@ -68,7 +68,8 @@ public abstract class OEventLogExecutor implements OEventExecutor {
 		Date date = source.field("date");
 		this.getBody2name().put("date", date);
 		if (server != null) {
-			this.getBody2name().put("server", server);
+			String serverName = server.field("name");
+			this.getBody2name().put("servername", serverName);
 
 		}
 		String metricName = source.field("name");

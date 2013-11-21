@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.workbench.event;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -48,31 +47,35 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
 		
 
 		// pre-conditions
+		fillMapResolve(source, when);
 		if (canExecute(source, when)) {
-			fillMapResolve(source, when);
 			executeFunction(what);
 		}
 	}
 
+	@SuppressWarnings("restriction")
 	private void executeFunction(ODocument what) {
 
-		OFunction fun = new OFunction(what);
+		
 		String language = what.field("language");
 		String name = what.field("name");
-		Object[] iArgs = what.field("parameters");
+		List<String> iArgs = what.field("parameters");
 
 		Object[] args = null;
 		if (iArgs != null) {
-			args = new Object[iArgs.length];
+			args = new Object[iArgs.size()];
 			int i = 0;
 			for (Object arg : iArgs)
 				args[i++] = EventHelper.resolve(getBody2name(), arg);
 		}
-
+		
+		
 		final OScriptManager scriptManager = Orient.instance()
 				.getScriptManager();
-		final ScriptEngine scriptEngine = scriptManager.getEngine(language);
+//		what.field("parameters", args);
 
+		OFunction fun = new OFunction(what);
+		ScriptEngine scriptEngine = scriptManager.getEngine(language);
 		db.checkSecurity(ODatabaseSecurityResources.FUNCTION,
 				ORole.PERMISSION_READ, name);
 
