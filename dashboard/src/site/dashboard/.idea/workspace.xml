@@ -32,7 +32,7 @@
     <file path="/widget.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379072588436" ignored="false" />
     <file path="/en.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384530085659" ignored="false" />
     <file path="/login.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383486146191" ignored="false" />
-    <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384773699166" ignored="false" />
+    <file path="/Dummy.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385059448347" ignored="false" />
     <file path="/monitor-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384335278706" ignored="false" />
     <file path="/monitor.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382899462779" ignored="false" />
     <file path="/login.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378985701222" ignored="false" />
@@ -53,7 +53,7 @@
     <file path="/database-services.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1380296352367" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/ace-builds/kitchen-sink/docs/xml.xml" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384118971410" ignored="false" />
-    <file path="/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379261093460" ignored="false" />
+    <file path="/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385047849155" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/dist/components/angular-strap/Gruntfile.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378815118544" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/views/database/editDocument.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379000573044" ignored="false" />
     <file path="$PROJECT_DIR$/../../../../../orientdb-studio/app/components/jquery/component.json" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1378821449721" ignored="false" />
@@ -138,8 +138,8 @@
     <file path="$PROJECT_DIR$/app/components/bootstrap/less/pager.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
     <file path="$PROJECT_DIR$/app/components/bootstrap/less/dropdowns.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
     <file path="$PROJECT_DIR$/app/components/bootstrap/less/tooltip.less" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379025831244" ignored="false" />
-    <file path="/dashboard.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384530063904" ignored="false" />
-    <file path="/nav.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384335242473" ignored="false" />
+    <file path="/dashboard.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385045613133" ignored="false" />
+    <file path="/nav.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385060489624" ignored="false" />
     <file path="/sidenav.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379111373664" ignored="false" />
     <file path="/select2.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1379110178110" ignored="false" />
     <file path="/general.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384530363717" ignored="false" />
@@ -215,7 +215,7 @@
     <file path="/db.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384439842848" ignored="false" />
     <file path="/query.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384336587745" ignored="false" />
     <file path="/overview.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1382974969911" ignored="false" />
-    <file path="/nav.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384335656835" ignored="false" />
+    <file path="/nav.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385060583537" ignored="false" />
     <file path="/rickSingleMetric.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383069749349" ignored="false" />
     <file path="/login-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384335605385" ignored="false" />
     <file path="/metric.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1383585044842" ignored="false" />
@@ -228,10 +228,11 @@
     <file path="/messages-controller.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384203293796" ignored="false" />
     <file path="/message-service.js" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384200739943" ignored="false" />
     <file path="/maillegend.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384770426504" ignored="false" />
-    <file path="/userguide.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356156210" ignored="false" />
-    <file path="/userguide.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384356764445" ignored="false" />
+    <file path="/userguide.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385060030065" ignored="false" />
+    <file path="/userguide.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385050667722" ignored="false" />
     <file path="/gettingstarted.html" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384360070633" ignored="false" />
     <file path="/gettingstarted.txt" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1384366666161" ignored="false" />
+    <file path="/asciidoc.conf" changelist="99461234-2958-484a-a89f-f302ab6271ce" time="1385059825216" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -251,72 +252,91 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="userguide.txt" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
+      <file leaf-file-name="nav.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="110" column="21" selection-start="2928" selection-end="2928" vertical-scroll-proportion="0.0">
+            <state line="53" column="27" selection-start="2070" selection-end="2086" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="databasemanagement.png" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/databasemanagement.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="1.png" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/callouts/1.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="caution.png" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/caution.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="example.png" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/example.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="home.png" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/home.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="maillegend.html" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
+      <file leaf-file-name="userguide.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/userguide.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="37" column="41" selection-start="1327" selection-end="1327" vertical-scroll-proportion="0.620339">
+            <state line="876" column="62" selection-start="19040" selection-end="19040" vertical-scroll-proportion="-6.5384617">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="nav.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/nav.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="56" column="19" selection-start="2219" selection-end="2219" vertical-scroll-proportion="-15.846154">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
       <file leaf-file-name="gettingstarted.txt" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="5" column="36" selection-start="101" selection-end="101" vertical-scroll-proportion="0.0">
+            <state line="40" column="16" selection-start="1177" selection-end="1177" vertical-scroll-proportion="-11.830189">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="server_log.png" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/server_log.png">
+      <file leaf-file-name="asciidoc.css" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/stylesheets/asciidoc.css">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="27" column="14" selection-start="447" selection-end="447" vertical-scroll-proportion="-0.16558442">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="userguide.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/userguide.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="9" column="0" selection-start="204" selection-end="236" vertical-scroll-proportion="-2.8867924">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="prova.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/prova.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="339.92307">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="asciidoc.conf" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/asciidoc.conf">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="19" column="8" selection-start="326" selection-end="334" vertical-scroll-proportion="-0.3207547">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="overview_info_server.png" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/overview_info_server.png">
           <provider selected="true" editor-type-id="images">
             <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="app.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="51" column="36" selection-start="2294" selection-end="2294" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
           </provider>
         </entry>
       </file>
@@ -330,22 +350,22 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/views/server/general/db.html" />
-        <option value="$PROJECT_DIR$/app/views/server/events.html" />
-        <option value="$PROJECT_DIR$/app/views/eventWhat/functionwhat.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
-        <option value="$PROJECT_DIR$/app/styles/main.css" />
-        <option value="$PROJECT_DIR$/app/views/server/messages.html" />
-        <option value="$PROJECT_DIR$/app/i18n/en.json" />
-        <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
         <option value="$PROJECT_DIR$/app/views/server/general.html" />
-        <option value="$PROJECT_DIR$/Gruntfile.js" />
         <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt" />
         <option value="$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt" />
         <option value="$PROJECT_DIR$/app/views/server/maillegend.html" />
+        <option value="$PROJECT_DIR$/app/scripts/service/message-service.js" />
+        <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
+        <option value="$PROJECT_DIR$/Gruntfile.js" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/userguide.html" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/asciidoc.conf" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/userguide.txt" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
+        <option value="$PROJECT_DIR$/app/scripts/app.js" />
+        <option value="$PROJECT_DIR$/app/views/nav.html" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.txt" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/stylesheets/asciidoc.css" />
       </list>
     </option>
   </component>
@@ -381,7 +401,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -428,7 +447,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="asciidoc-8.6.9" />
+              <option name="myItemId" value="views" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -446,11 +465,11 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="asciidoc-8.6.9" />
+              <option name="myItemId" value="views" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="themes" />
+              <option name="myItemId" value="server" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -468,45 +487,76 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="asciidoc-8.6.9" />
+              <option name="myItemId" value="views" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="themes" />
+              <option name="myItemId" value="server" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="flask" />
+              <option name="myItemId" value="asciidoc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="views" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="asciidoc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="stylesheets" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="recentsLimit" value="5" />
     <property name="options.lastSelected" value="project.propDebugger" />
+    <property name="recentsLimit" value="5" />
     <property name="last_opened_file_path" value="$USER_HOME$/ReleezWorkspace/coachtrap-app" />
     <property name="DefaultHtmlFileTemplate" value="Html5" />
-    <property name="options.searchVisible" value="true" />
-    <property name="options.splitter.details.proportions" value="0.2" />
     <property name="GoToClass.includeJavaFiles" value="false" />
+    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="options.searchVisible" value="true" />
   </component>
   <component name="PublishConfig" serverName="monitor" serverId="55f9185c-b3c8-4084-aff3-b9a79ae606cb" />
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/views/server/asciidoc/images/icons" />
+      <recent name="$PROJECT_DIR$/app/images" />
+      <recent name="$PROJECT_DIR$/app/views" />
       <recent name="$PROJECT_DIR$/app/img" />
       <recent name="$PROJECT_DIR$/app/views/server" />
-      <recent name="$PROJECT_DIR$/app/scripts/controllers" />
-      <recent name="$PROJECT_DIR$/app/scripts/service" />
-      <recent name="$PROJECT_DIR$/app/views/server/metric" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/app/asciidoc-8.6.9" />
       <recent name="$PROJECT_DIR$/app/views/server" />
+      <recent name="$PROJECT_DIR$/app/asciidoc-8.6.9" />
       <recent name="$PROJECT_DIR$/app/views/metrics" />
       <recent name="$PROJECT_DIR$/app/views/queries" />
     </key>
@@ -589,7 +639,7 @@
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24944155" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24869695" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21295607" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
@@ -667,88 +717,102 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/views/settings/newModal.html">
+    <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+        <state line="100" column="48" selection-start="4679" selection-end="4679" vertical-scroll-proportion="-13.038462" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/login-service.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="39" selection-start="758" selection-end="758" vertical-scroll-proportion="0.0" />
+        <state line="35" column="8" selection-start="879" selection-end="879" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="41" column="29" selection-start="1542" selection-end="1542" vertical-scroll-proportion="0.0" />
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/images/icons/callouts/1.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Gruntfile.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="255" column="46" selection-start="6192" selection-end="6192" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="95" column="29" selection-start="4549" selection-end="4549" vertical-scroll-proportion="-8.730769" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/databasemanagement.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/callouts/1.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/caution.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/example.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/filters/code/code-filter.conf">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/images/icons/home.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/gettingstarted.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="36" selection-start="101" selection-end="101" vertical-scroll-proportion="0.0">
+        <state line="270" column="55" selection-start="8550" selection-end="8550" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/userguide.txt">
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/asciidoc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="110" column="21" selection-start="2928" selection-end="2928" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="843" column="8" selection-start="29838" selection-end="29842" vertical-scroll-proportion="-3.45283" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/asciidoc-8.6.9/server_log.png">
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/images/icons/note.png">
       <provider selected="true" editor-type-id="images">
         <state />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/maillegend.html">
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/overview_info_server.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/asciidoc.conf">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="37" column="41" selection-start="1327" selection-end="1327" vertical-scroll-proportion="0.620339">
+        <state line="19" column="8" selection-start="326" selection-end="334" vertical-scroll-proportion="-0.3207547">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/prova.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="339.92307">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/userguide.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="876" column="62" selection-start="19040" selection-end="19040" vertical-scroll-proportion="-6.5384617">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="53" column="27" selection-start="2070" selection-end="2086" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="51" column="36" selection-start="2294" selection-end="2294" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/nav.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="56" column="19" selection-start="2219" selection-end="2219" vertical-scroll-proportion="-15.846154">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/userguide.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="0" selection-start="204" selection-end="236" vertical-scroll-proportion="-2.8867924">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="40" column="16" selection-start="1177" selection-end="1177" vertical-scroll-proportion="-11.830189">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/stylesheets/asciidoc.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="27" column="14" selection-start="447" selection-end="447" vertical-scroll-proportion="-0.16558442">
           <folding />
         </state>
       </provider>

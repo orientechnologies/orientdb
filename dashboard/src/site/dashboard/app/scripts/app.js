@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.controller', 'workbench-events.controller','login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives','ui.codemirror','ngGrid','bootstrap.tabset','message.services'])
+angular.module('MonitorApp', ['ngI18n', , 'messages.controller', 'workbench-logs.controller', 'workbench-events.controller', 'login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives', 'ui.codemirror', 'ngGrid', 'bootstrap.tabset', 'message.services'])
     .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
@@ -47,6 +47,10 @@ angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.c
             .when('/dashboard/messages/:rid', {
                 templateUrl: 'views/server/messages.html',
                 controller: 'MessagesController'
+            }).when('/help', {
+                templateUrl: 'views/server/asciidoc/userguide.html'
+            }).when('/gettingstarted', {
+                templateUrl: 'views/server/asciidoc/gettingstarted.html'
             })
             .otherwise({
                 redirectTo: '/'
@@ -54,8 +58,17 @@ angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbench-logs.c
     });
 
 
-$('*', '.modal').on('show', function(e) {e.stopPropagation();}).on('hide', function(e) {e.stopPropagation();});
-$('*', '.popover').on('show', function(e) {e.stopPropagation();}).on('hide', function(e) {console.log(e); e.stopPropagation();});
+$('*', '.modal').on('show',function (e) {
+    e.stopPropagation();
+}).on('hide', function (e) {
+    e.stopPropagation();
+});
+$('*', '.popover').on('show',function (e) {
+    e.stopPropagation();
+}).on('hide', function (e) {
+    console.log(e);
+    e.stopPropagation();
+});
 
 $('.popover').on("hide", function (e) {
 
