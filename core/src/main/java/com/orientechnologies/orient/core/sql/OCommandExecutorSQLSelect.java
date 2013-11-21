@@ -1364,12 +1364,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!w.equals(KEYWORD_FETCHPLAN))
       return false;
 
+    parserSkipWhiteSpaces();
+    int start = parserGetCurrentPosition();
+
     parserNextWord(true);
-    fetchPlan = OStringSerializerHelper.getStringContent(parserGetLastWord());
+    int end = parserGetCurrentPosition();
     parserSkipWhiteSpaces();
 
-    final int position = parserGetCurrentPosition();
-
+    int position = parserGetCurrentPosition();
     while (!parserIsEnded()) {
       parserNextWord(true);
 
@@ -1377,12 +1379,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (!word.matches(".*:-?\\d+"))
         break;
 
-      fetchPlan += " " + word;
+      end = parserGetCurrentPosition();
       parserSkipWhiteSpaces();
+      position = parserGetCurrentPosition();
     }
 
     parserSetCurrentPosition(position);
 
+    fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start, end));
     request.setFetchPlan(fetchPlan);
 
     return true;
