@@ -31,6 +31,8 @@
   },
   "resolutions": {
     "angular": ">= 1.0.2",
-    "bootstrap": "2.3.2"
+    "bootstrap": "2.3.2",
+    "jquery": ">=1.8.0 <2.1.0",
+    "moment": "2.3.1"
   }
 }
