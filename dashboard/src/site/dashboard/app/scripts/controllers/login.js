@@ -5,7 +5,9 @@ angular.module('MonitorApp')
 
         $scope.login = function () {
 
-            Login.login($scope.username, $scope.password);
+        	if (!$scope.username) $scope.username = $('#input_username').val();
+        	if (!$scope.password) $scope.password = $('#input_password').val();
+            Login.login($scope.username, $scope.password,function(){},function(){$scope.errorMsg = undefined;$scope.errorMsg ='Username or password invalid.'});
 
         }
     });
