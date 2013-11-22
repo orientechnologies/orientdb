@@ -188,7 +188,7 @@ public class OFetchHelper {
       } else {
         try {
           final boolean isEmbedded = isEmbedded(fieldValue);
-          if (!(isEmbedded && iContext.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath.toUpperCase())
+          if (!(isEmbedded && iContext.fetchEmbeddedDocuments()) && !iFetchPlan.containsKey(fieldPath)
               && depthLevel > -1 && iCurrentLevel >= depthLevel)
             // MAX DEPTH REACHED: STOP TO FETCH THIS FIELD
             continue;
