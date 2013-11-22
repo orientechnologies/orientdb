@@ -70,7 +70,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
 
     $scope.onWhenChange = function (event, eventWhen) {
-        modalScope = $scope.$new(true);
+        var modalScope = $scope.$new(true);
         modalScope.eventParent = event;
         if (event['when'] == undefined || event['when']['@class'] != $scope.selectedWhen[event['idx']] && $scope.selectedWhen[event['idx']] != undefined) {
             event['when'] = {};
@@ -90,7 +90,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
     $scope.onWhatChange = function (event, eventWhat) {
 
-        modalScope = $scope.$new(true);
+       var modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
         if (event['what'] == undefined || $scope.selectedWhat[event['idx']] != null && (event['what']['@class'] != $scope.selectedWhat[event['idx']].trim() && $scope.selectedWhat[event['idx']] != undefined)) {
@@ -175,7 +175,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
     };
     $scope.openLegend = function () {
-        modalScope = $scope.$new(true);
+        var modalScope = $scope.$new(true);
         modalScope.parentScope = $scope;
         var modalPromise = $modal({template: 'views/server/maillegend.html', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
