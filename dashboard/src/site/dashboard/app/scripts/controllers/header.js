@@ -13,13 +13,14 @@ angular.module('MonitorApp')
         }
     });
 angular.module('MonitorApp')
-    .controller('MessageController', function ($scope, $timeout, $location, Message, MetricConfig) {
+    .controller('MessageController', function ($scope, $timeout,$rootScope, $location, Message, MetricConfig) {
 
 
         $.extend($.gritter.options, {
             position: 'bottom-right', // defaults to 'top-right' but can be 'bottom-left', 'bottom-right', 'top-left', 'top-right' (added in 1.7.1)
         });
         (function tick() {
+        	if($rootScope.loggedIn == true){
             $scope.data = Message.getUnread(function (data) {
                 if (data.result.length > 0) {
                     data.result.forEach(function (elem) {
@@ -40,7 +41,9 @@ angular.module('MonitorApp')
 
                 }
             });
+        	}
             $timeout(tick, 6000);
+        	
         })();
 
     });
