@@ -23,9 +23,9 @@ echo "      ...,::,,,,::.. \`:  .,,  :,    :   :     :   .:    :::::::::::   :::
 echo "           ,::::,,,. \`:   ,,   :::::    :     :   .:    :::::::::     ::::::::::  "
 echo "           ,,:\` \`,,.                                  "
 echo "          ,,,    .,\`                                  "
-echo "         ,,.     \`,                                              WORKBENCH  "
-echo "       \`\`        \`.                                        ENTERPRISE EDITION"
-echo "                 \`\`                                      www.orientechnologies.com "
+echo "         ,,.     \`,                                             WORKBENCH  "
+echo "       \`\`        \`.                                        ENTERPRISE  EDITION"
+echo "                 \`\`                                     www.orientechnologies.com "
 echo "                 \`                                    "
 
 cd "$(dirname "$0")"

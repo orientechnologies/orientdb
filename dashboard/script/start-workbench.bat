@@ -23,9 +23,9 @@ echo       ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::  
 echo            ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
 echo            ,,:` `,,.                                  
 echo           ,,,    .,`                                  
-echo          ,,.     `,                                             WORKBENCH
-echo        ``        `.                                         ENTERPRISE EDITION
-echo                  ``                                     www.orientechnologies.com
+echo          ,,.     `,                                            WORKBENCH
+echo        ``        `.                                       ENTERPRISE  EDITION
+echo                  ``                                    www.orientechnologies.com
 echo                  `                                    
 
 rem Guess ORIENTDB_HOME if not defined

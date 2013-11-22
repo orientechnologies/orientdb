@@ -9,20 +9,25 @@
 
 var spinner = angular.module('login.services', []);
 
-spinner.factory('Login', function (Monitor, $location) {
+spinner.factory('Login', function (Monitor,$rootScope, $location,$http) {
 
     var login = {
-        logged: true,
+        logged: false,
         username: "",
-        login: function (username, password) {
+        login: function (username, password,ok,err) {
             var self = this;
             Monitor.connect(username, password, function (data) {
                 self.logged = true;
                 self.username = username;
+                $rootScope.loggedIn = true;
+                ok(data);
                 $location.path("/dashboard");
             }, function (data) {
-
+            	err(data);
             });
+        },
+        isLogged: function(){
+        	return this.logged;
         },
         current: function () {
             var data = Monitor.get();
@@ -30,6 +35,7 @@ spinner.factory('Login', function (Monitor, $location) {
 
             var self = this;
             data.$then(function(){
+            	self.logged = true;
                 self.username = data.currentUser;
             });
         },
@@ -38,6 +44,8 @@ spinner.factory('Login', function (Monitor, $location) {
             Monitor.disconnect(function (data) {
                 self.logged = false;
                 self.username = "";
+                $rootScope.loggedIn = false;
+                $http.defaults.headers.common['Authorization'] = null;
                 $location.path("/login");
             }, function (data) {
 
