@@ -16,20 +16,20 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+
 import java.util.Calendar;
 import java.util.Date;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-
 /**
  * Serializer for {@link Date} type.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
 public class ODateTimeSerializer implements OBinarySerializer<Date> {
   public static ODateTimeSerializer INSTANCE = new ODateTimeSerializer();
-  public static final byte          ID       = 5;
+  public static final byte ID = 5;
 
   public int getObjectSize(Date object, Object... hints) {
     return OLongSerializer.LONG_SIZE;
@@ -105,7 +105,7 @@ public class ODateTimeSerializer implements OBinarySerializer<Date> {
   }
 
   @Override
-  public Date prepocess(Date value, Object... hints) {
+  public Date preprocess(Date value, Object... hints) {
     return value;
   }
 }

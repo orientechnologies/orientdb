@@ -580,6 +580,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     polymorphicClusterIds[polymorphicClusterIds.length - 1] = iId;
     Arrays.sort(polymorphicClusterIds);
 
+    if (defaultClusterId == -1)
+      defaultClusterId = iId;
+
     setDirty();
     addClusterIdToIndexes(iId);
 
@@ -615,6 +618,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
       clusterIds = newClusterIds;
     }
+
+    if (defaultClusterId == iId)
+      defaultClusterId = -1;
+
     return this;
   }
 

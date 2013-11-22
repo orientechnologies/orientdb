@@ -210,10 +210,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           final OTransactionIndexChanges.OPERATION indexOperation = OTransactionIndexChanges.OPERATION.values()[operation];
           final OIdentifiable value = op.field("v", OType.LINK);
 
-          if (key != null)
-            transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
-          else
-            transactionIndexChanges.getChangesCrossKey().add(value, indexOperation);
+          transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
 
           if (value == null)
             continue;

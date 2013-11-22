@@ -16,24 +16,24 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-import java.util.Arrays;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+import java.util.Arrays;
+
 /**
  * Serializer for byte arrays .
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 20.01.12
  */
 public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
-  private static final OBinaryConverter     CONVERTER = OBinaryConverterFactory.getConverter();
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static final OBinaryTypeSerializer INSTANCE  = new OBinaryTypeSerializer();
-  public static final byte                  ID        = 17;
+  public static final OBinaryTypeSerializer INSTANCE = new OBinaryTypeSerializer();
+  public static final byte ID = 17;
 
   public int getObjectSize(int length) {
     return length + OIntegerSerializer.INT_SIZE;
@@ -110,7 +110,7 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   }
 
   @Override
-  public byte[] prepocess(byte[] value, Object... hints) {
+  public byte[] preprocess(byte[] value, Object... hints) {
     return value;
   }
 }

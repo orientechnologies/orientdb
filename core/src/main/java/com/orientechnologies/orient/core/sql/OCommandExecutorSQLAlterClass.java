@@ -24,9 +24,18 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -97,15 +106,54 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
    * Execute the ALTER CLASS.
    */
   public Object execute(final Map<Object, Object> iArgs) {
+    final ODatabaseRecord database = getDatabase();
+
     if (attribute == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OClassImpl cls = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
+    final OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (cls == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
     cls.setInternalAndSave(attribute, value);
+
+    if (OClass.ATTRIBUTES.NAME.equals(attribute)) {
+      final OStorage storage = database.getStorage();
+
+      for (int clusterId : cls.getClusterIds()) {
+        OClusterPosition[] range = storage.getClusterDataRange(clusterId);
+
+        OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
+        do {
+          for (OPhysicalPosition position : positions) {
+            final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
+            final ORawBuffer record = storage.readRecord(identity, null, true, null, false).getResult();
+
+            if (record.recordType == ODocument.RECORD_TYPE) {
+              final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
+                  .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+
+              if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(className)) {
+                final ODocument document = new ODocument();
+                document.setLazyLoad(false);
+                document.fromStream(record.buffer);
+                document.getRecordVersion().copyFrom(record.version);
+                document.setIdentity(identity);
+                document.setClassName(cls.getName());
+                document.setDirty();
+                document.save();
+              }
+            }
+
+            if (positions.length > 0)
+              positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
+          }
+        } while (positions.length > 0);
+      }
+    }
+
     renameCluster();
+
     return null;
   }
 

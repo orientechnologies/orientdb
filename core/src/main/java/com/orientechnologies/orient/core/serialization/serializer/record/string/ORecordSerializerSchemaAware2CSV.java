@@ -17,12 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -349,6 +344,21 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     }
 
     return linkedClass;
+  }
+
+  public String getClassName(String content) {
+    content = content.trim();
+
+    if (content.length() == 0)
+      return null;
+
+    final int posFirstValue = content.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
+    final int pos = content.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+
+    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1))
+      return content.substring(0, pos);
+
+    return null;
   }
 
   @Override

@@ -23,12 +23,12 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -71,15 +71,18 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     final OIdentifiable indexedRID = get(key);
     if (indexedRID != null && !indexedRID.getIdentity().equals(iRecord.getIdentity())) {
       // CHECK IF IN THE SAME TX THE ENTRY WAS DELETED
-      final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-          .getIndexChanges(getName());
-      if (indexChanges != null) {
-        final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(key);
-        if (keyChanges != null) {
-          for (OTransactionIndexEntry entry : keyChanges.entries) {
-            if (entry.operation == OPERATION.REMOVE)
-              // WAS DELETED, OK!
-              return;
+      String storageType = getDatabase().getStorage().getType();
+      if (storageType.equals(OEngineMemory.NAME) || storageType.equals(OEngineLocal.NAME)) {
+        final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
+            .getIndexChanges(getName());
+        if (indexChanges != null) {
+          final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(key);
+          if (keyChanges != null) {
+            for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChanges.entries) {
+              if (entry.operation == OTransactionIndexChanges.OPERATION.REMOVE)
+                // WAS DELETED, OK!
+                return;
+            }
           }
         }
       }

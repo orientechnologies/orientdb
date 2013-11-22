@@ -161,7 +161,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         * diskCacheSize);
     long readCacheSize = diskCacheSize - writeCacheSize;
 
-    diskCache = new OReadWriteDiskCache(readCacheSize, writeCacheSize,
+    diskCache = new OReadWriteDiskCache(name, readCacheSize, writeCacheSize,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, writeAheadLog, false, true);
@@ -918,10 +918,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      throw new OStorageException("Error while removing cluster '" + iClusterId + "'", e);
+      OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
+
     } finally {
       lock.releaseExclusiveLock();
     }
+
+    return false;
   }
 
   public boolean dropDataSegment(final String iName) {
@@ -1780,28 +1783,28 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void makeFuzzyCheckpoint() {
-    if (writeAheadLog == null)
-      return;
-
-    try {
-      lock.acquireExclusiveLock();
-      try {
-        writeAheadLog.flush();
-
-        writeAheadLog.logFuzzyCheckPointStart();
-
-        diskCache.forceSyncStoredChanges();
-        diskCache.logDirtyPagesTable();
-
-        writeAheadLog.logFuzzyCheckPointEnd();
-
-        writeAheadLog.flush();
-      } finally {
-        lock.releaseExclusiveLock();
-      }
-    } catch (IOException ioe) {
-      throw new OStorageException("Error during fuzzy checkpoint creation for storage " + name, ioe);
-    }
+    // if (writeAheadLog == null)
+    // return;
+    //
+    // try {
+    // lock.acquireExclusiveLock();
+    // try {
+    // writeAheadLog.flush();
+    //
+    // writeAheadLog.logFuzzyCheckPointStart();
+    //
+    // diskCache.forceSyncStoredChanges();
+    // diskCache.logDirtyPagesTable();
+    //
+    // writeAheadLog.logFuzzyCheckPointEnd();
+    //
+    // writeAheadLog.flush();
+    // } finally {
+    // lock.releaseExclusiveLock();
+    // }
+    // } catch (IOException ioe) {
+    // throw new OStorageException("Error during fuzzy checkpoint creation for storage " + name, ioe);
+    // }
   }
 
   public void makeFullCheckpoint() {
@@ -1828,16 +1831,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void scheduleFullCheckpoint() {
-    checkpointExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          makeFullCheckpoint();
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
+    if (checkpointExecutor != null)
+      checkpointExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            makeFullCheckpoint();
+          } catch (Throwable t) {
+            OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
+          }
         }
-      }
-    });
+      });
   }
 
   @Override

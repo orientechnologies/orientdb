@@ -68,6 +68,18 @@
             <timezone>+2</timezone>
         </developer>
         <developer>
+            <id>lomakin.andrey</id>
+            <name>Andrey Lomakin</name>
+            <email>a.lomakin@orientechnologies.com</email>
+            <organization>Orientechnologies</organization>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>+2</timezone>
+        </developer>
+        <developer>
             <id>molino.luca</id>
             <name>Luca Molino</name>
             <email>molino.luca@gmail.com</email>
@@ -76,16 +88,6 @@
                 <role>developer</role>
             </roles>
             <timezone>+1</timezone>
-        </developer>
-        <developer>
-            <id>lomakin.andrey</id>
-            <name>Andrey Lomakin</name>
-            <email>lomakin.andrey@gmail.com</email>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+2</timezone>
         </developer>
     </developers>
 

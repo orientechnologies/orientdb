@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -24,6 +25,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -33,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
@@ -373,7 +376,7 @@ public class SchemaTest {
       Assert.fail();
     } catch (Exception e) {
       if (e instanceof OResponseProcessingException)
-        e = (Exception) ((OResponseProcessingException) e).getCause();
+        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
@@ -391,7 +394,7 @@ public class SchemaTest {
 
     } catch (Exception e) {
       if (e instanceof OResponseProcessingException)
-        e = (Exception) ((OResponseProcessingException) e).getCause();
+        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
@@ -408,10 +411,34 @@ public class SchemaTest {
       Assert.fail();
     } catch (Exception e) {
       if (e instanceof OResponseProcessingException)
-        e = (Exception) ((OResponseProcessingException) e).getCause();
+        e = (Exception) e.getCause();
       Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
+  }
+
+  @Test
+  public void testRenameClass() {
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
+    databaseDocumentTx.open("admin", "admin");
+
+    OClass oClass = databaseDocumentTx.getMetadata().getSchema().createClass("RenameClassTest");
+
+    ODocument document = new ODocument("RenameClassTest");
+    document.save();
+
+    document.reset();
+
+    document.setClassName("RenameClassTest");
+    document.save();
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
+    Assert.assertEquals(result.size(), 2);
+
+    oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
+
+    result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
+    Assert.assertEquals(result.size(), 2);
   }
 }

@@ -156,5 +156,5 @@ public interface ODirectMemory {
    * @param len
    *          Data length.
    */
-  void copyData(long srcPointer, long destPointer, long len);
+  void moveData(long srcPointer, long destPointer, long len);
 }

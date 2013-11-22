@@ -115,15 +115,30 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public int remove(final OIdentifiable iRecord) {
-    checkForRebuild();
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    Object snapshotValue = snapshot.get(key);
 
-    acquireExclusiveLock();
-    try {
-      return indexEngine.removeValue(iRecord, MultiValuesTransformer.INSTANCE);
-    } finally {
-      releaseExclusiveLock();
+    Set<OIdentifiable> values;
+    if (snapshotValue == null)
+      values = indexEngine.get(key);
+    else if (snapshotValue.equals(RemovedValue.INSTANCE))
+      values = null;
+    else
+      values = (Set<OIdentifiable>) snapshotValue;
+
+    if (values == null) {
+      if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+        values = new OSBTreeIndexRIDContainer(getName());
+      } else {
+        values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
+        ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
+      }
+
+      snapshot.put(key, values);
     }
+
+    values.add(value.getIdentity());
   }
 
   @Override
@@ -155,6 +170,43 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       }
     } finally {
       modificationLock.releaseModificationLock();
+    }
+  }
+
+  @Override
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    Object snapshotValue = snapshot.get(key);
+
+    Set<OIdentifiable> values;
+    if (snapshotValue == null)
+      values = indexEngine.get(key);
+    else if (snapshotValue.equals(RemovedValue.INSTANCE))
+      values = null;
+    else
+      values = (Set<OIdentifiable>) snapshotValue;
+
+    if (values == null)
+      return;
+
+    if (values.remove(value)) {
+      if (values.isEmpty())
+        snapshot.put(key, RemovedValue.INSTANCE);
+      else
+        snapshot.put(key, values);
+    }
+  }
+
+  @Override
+  protected void commitSnapshot(Map<Object, Object> snapshot) {
+    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+      Object key = snapshotEntry.getKey();
+      Object value = snapshotEntry.getValue();
+      checkForKeyType(key);
+
+      if (value.equals(RemovedValue.INSTANCE))
+        indexEngine.remove(key);
+      else
+        indexEngine.put(key, (Set<OIdentifiable>) value);
     }
   }
 

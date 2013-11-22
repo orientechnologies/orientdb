@@ -16,28 +16,28 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
  * Serializer for {@link Short}.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OShortSerializer implements OBinarySerializer<Short> {
-  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static OShortSerializer        INSTANCE   = new OShortSerializer();
-  public static final byte              ID         = 12;
+  public static OShortSerializer INSTANCE = new OShortSerializer();
+  public static final byte ID = 12;
 
   /**
    * size of short value in bytes
    */
-  public static final int               SHORT_SIZE = 2;
+  public static final int SHORT_SIZE = 2;
 
   public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;
@@ -97,7 +97,7 @@ public class OShortSerializer implements OBinarySerializer<Short> {
   }
 
   @Override
-  public Short prepocess(Short value, Object... hints) {
+  public Short preprocess(Short value, Object... hints) {
     return value;
   }
 }

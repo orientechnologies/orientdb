@@ -15,10 +15,21 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -32,12 +43,21 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -78,6 +98,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private OIndex<OIdentifiable>      exportImportHashTable;
 
   private boolean                    preserveClusterIDs     = true;
+  private boolean                    migrateLinks           = true;
+  private boolean                    merge                  = false;
+  private boolean                    rebuildIndexes         = true;
 
   private Set<String>                indexesToRebuild       = new HashSet<String>();
 
@@ -121,6 +144,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       deleteRIDMapping = Boolean.parseBoolean(items.get(0));
     else if (option.equalsIgnoreCase("-preserveClusterIDs"))
       preserveClusterIDs = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-merge"))
+      merge = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-migrateLinks"))
+      migrateLinks = Boolean.parseBoolean(items.get(0));
+    else if (option.equalsIgnoreCase("-rebuildIndexes"))
+      rebuildIndexes = Boolean.parseBoolean(items.get(0));
     else
       super.parseSetting(option, items);
   }
@@ -140,12 +169,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.setStatus(STATUS.IMPORTING);
 
-      for (OIndex index : database.getMetadata().getIndexManager().getIndexes()) {
+      for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
         if (index.isAutomatic())
           indexesToRebuild.add(index.getName().toLowerCase());
       }
 
-      removeDefaultNonSecurityClasses();
+      if (!merge)
+        removeDefaultNonSecurityClasses();
 
       String tag;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
@@ -165,13 +195,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importManualIndexes();
       }
 
-      listener.onMessage("\nRebuild of stale indexes...");
-      for (String indexName : indexesToRebuild) {
-        listener.onMessage("\nStart rebuild index " + indexName);
-        database.command(new OCommandSQL("rebuild index " + indexName)).execute();
-        listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
-      }
-      listener.onMessage("\nStale indexes were rebuilt...");
+      if (rebuildIndexes)
+        rebuildIndexes();
 
       database.getStorage().synch();
       database.setStatus(STATUS.OPEN);
@@ -193,8 +218,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return this;
   }
 
+  public void rebuildIndexes() {
+    listener.onMessage("\nRebuild of stale indexes...");
+    for (String indexName : indexesToRebuild) {
+      listener.onMessage("\nStart rebuild index " + indexName);
+      database.command(new OCommandSQL("rebuild index " + indexName)).execute();
+      listener.onMessage("\nRebuild  of index " + indexName + " is completed.");
+    }
+    listener.onMessage("\nStale indexes were rebuilt...");
+  }
+
   private void removeDefaultNonSecurityClasses() {
-    listener.onMessage("\nRemoving all default non security classes");
+    listener.onMessage("\nNon merge mode (-merge=false): removing all default non security classes");
 
     OSchema schema = database.getMetadata().getSchema();
     Collection<OClass> classes = schema.getClasses();
@@ -213,18 +248,20 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
 
+    int removedClasses = 0;
     for (String className : classesSortedByInheritance) {
       if (!className.equalsIgnoreCase(ORole.CLASS_NAME) && !className.equalsIgnoreCase(OUser.CLASS_NAME)
           && !className.equalsIgnoreCase(OSecurityShared.IDENTITY_CLASSNAME)) {
         schema.dropClass(className);
-        listener.onMessage("\nClass " + className + " was removed.");
+        removedClasses++;
+        listener.onMessage("\n- Class " + className + " was removed.");
       }
     }
 
     schema.save();
     schema.reload();
 
-    listener.onMessage("\nRemoving all default non security classes ... DONE.");
+    listener.onMessage("\nRemoved " + removedClasses + " classes.");
   }
 
   private void importInfo() throws IOException, ParseException {
@@ -645,7 +682,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       }
 
-      listener.onMessage("\nOK, assigned id=" + clusterId);
+      listener.onMessage("OK, assigned id=" + clusterId);
 
       total++;
 
@@ -759,22 +796,31 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (rid != null) {
         ++clusterRecords;
 
-        if (lastClusterId == -1)
+        if (lastClusterId == -1) {
           lastClusterId = rid.getClusterId();
-        else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
           // CHANGED CLUSTERID: DUMP STATISTICS
-          System.out.print("\n- Imported records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): " + clusterRecords + " records");
+          System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+              + lastClusterId + "): ");
+
+        } else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
+          // CHANGED CLUSTERID: DUMP STATISTICS
+          System.out.print(" = " + clusterRecords + " records");
           clusterRecords = 0;
+
           lastClusterId = rid.getClusterId();
-        }
+          System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
+              + lastClusterId + "): ");
+        } else if (clusterRecords % 10000 == 0)
+          // DUMP PROGRESS
+          System.out.print(".");
 
         ++totalRecords;
       }
       record = null;
     }
 
-    rewriteLinksInImportedDocuments();
+    if (migrateLinks)
+      migrateLinksInImportedDocuments();
 
     listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
 
@@ -976,8 +1022,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return indexDefinition;
   }
 
-  private void rewriteLinksInImportedDocuments() throws IOException {
-    listener.onMessage("\nLinks are going to be updated according to new RIDs:");
+  private void migrateLinksInImportedDocuments() throws IOException {
+    listener.onMessage("\nStarted migration of links (-migrateLinks=true). Links are going to be updated according to new RIDs:");
 
     long totalDocuments = 0;
     Collection<String> clusterNames = database.getClusterNames();

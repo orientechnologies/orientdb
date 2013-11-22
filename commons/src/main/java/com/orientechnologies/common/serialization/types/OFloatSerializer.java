@@ -16,28 +16,28 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
  * Serializer for {@link Float} type.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
-  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static OFloatSerializer        INSTANCE   = new OFloatSerializer();
-  public static final byte              ID         = 7;
+  public static OFloatSerializer INSTANCE = new OFloatSerializer();
+  public static final byte ID = 7;
 
   /**
    * size of float value in bytes
    */
-  public static final int               FLOAT_SIZE = 4;
+  public static final int FLOAT_SIZE = 4;
 
   public int getObjectSize(Float object, Object... hints) {
     return FLOAT_SIZE;
@@ -95,7 +95,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public Float prepocess(Float value, Object... hints) {
+  public Float preprocess(Float value, Object... hints) {
     return value;
   }
 }

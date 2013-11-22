@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,21 +38,23 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   }
 
   @Override
-  public Collection<OIdentifiable> get(final Object iKey) {
+  public Collection<OIdentifiable> get(final Object key) {
 
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return super.get(key);
 
     final Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
-    if (indexChanges == null || !indexChanges.cleared) {
+    if (!indexChanges.cleared) {
       // BEGIN FROM THE UNDERLYING RESULT SET
-      final Collection<OIdentifiable> subResult = super.get(iKey);
+      final Collection<OIdentifiable> subResult = super.get(key);
       if (subResult != null)
         for (OIdentifiable oid : subResult)
           if (oid != null)
             result.add(oid);
     }
 
-    return filterIndexChanges(indexChanges, iKey, result);
+    return filterIndexChanges(indexChanges, key, result);
   }
 
   @Override
@@ -167,26 +165,6 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
 
     if (indexChanges.containsChangesPerKey(key)) {
       final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
-      if (value != null) {
-        for (final OTransactionIndexEntry entry : value.entries) {
-          if (entry.operation == OPERATION.REMOVE) {
-            if (entry.value == null) {
-              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-              keyResult.clear();
-              break;
-            } else
-              // REMOVE ONLY THIS RID
-              keyResult.remove(entry.value);
-          } else if (entry.operation == OPERATION.PUT) {
-            // ADD ALSO THIS RID
-            keyResult.add(entry.value);
-          }
-        }
-      }
-    }
-
-    if (indexChanges.containsChangesCrossKey()) {
-      final OTransactionIndexChangesPerKey value = indexChanges.getChangesCrossKey();
       if (value != null) {
         for (final OTransactionIndexEntry entry : value.entries) {
           if (entry.operation == OPERATION.REMOVE) {

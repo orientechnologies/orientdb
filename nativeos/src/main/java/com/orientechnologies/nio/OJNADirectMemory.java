@@ -25,7 +25,9 @@ import com.sun.jna.Pointer;
  * @since 5/6/13
  */
 public class OJNADirectMemory implements ODirectMemory {
-  public static final OJNADirectMemory INSTANCE = new OJNADirectMemory();
+  private static final CLibrary        C_LIBRARY = OCLibraryFactory.INSTANCE.library();
+
+  public static final OJNADirectMemory INSTANCE  = new OJNADirectMemory();
 
   @Override
   public long allocate(byte[] bytes) {
@@ -113,8 +115,8 @@ public class OJNADirectMemory implements ODirectMemory {
   }
 
   @Override
-  public void copyData(long srcPointer, long destPointer, long len) {
-    CLibrary.memoryMove(srcPointer, destPointer, len);
+  public void moveData(long srcPointer, long destPointer, long len) {
+    C_LIBRARY.memoryMove(srcPointer, destPointer, len);
   }
 
 }

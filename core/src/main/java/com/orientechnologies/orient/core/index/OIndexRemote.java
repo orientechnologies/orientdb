@@ -231,9 +231,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this;
   }
 
-  public boolean remove(final Object iKey) {
+  public boolean remove(final Object key) {
     final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
-    return ((Integer) getDatabase().command(cmd).execute(iKey)) > 0;
+    return ((Integer) getDatabase().command(cmd).execute(key)) > 0;
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iRID) {

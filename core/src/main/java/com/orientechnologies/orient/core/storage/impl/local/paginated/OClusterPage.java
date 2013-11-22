@@ -393,7 +393,7 @@ public class OClusterPage extends ODurablePage {
         currentPosition += entrySize;
       } else {
         entrySize = -entrySize;
-        copyData(freePosition, freePosition + entrySize, currentPosition - freePosition);
+        moveData(freePosition, freePosition + entrySize, currentPosition - freePosition);
         currentPosition += entrySize;
         freePosition += entrySize;
 

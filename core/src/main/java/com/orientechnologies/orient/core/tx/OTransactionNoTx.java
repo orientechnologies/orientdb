@@ -170,22 +170,20 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OPERATION iStatus, final Object iKey,
-      final OIdentifiable iValue) {
-    switch (iStatus) {
+  public void addIndexEntry(final OIndex<?> delegate, final String indexName, final OPERATION status, final Object key,
+      final OIdentifiable value) {
+    switch (status) {
     case CLEAR:
       delegate.clear();
       break;
 
     case PUT:
-      delegate.put(iKey, iValue);
+      delegate.put(key, value);
       break;
 
     case REMOVE:
-      if (iKey == null)
-        delegate.remove(iValue);
-      else
-        delegate.remove(iKey, iValue);
+      assert key != null;
+      delegate.remove(key, value);
       break;
     }
   }

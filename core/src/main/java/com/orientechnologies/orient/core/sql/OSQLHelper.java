@@ -33,10 +33,12 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -312,6 +314,32 @@ public class OSQLHelper {
             }
           }
 
+          if (OMultiValue.isMultiValue(fieldValue)) {
+            final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
+
+            String singleFieldName = null;
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+              if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
+                // TEMPORARY / EMBEDDED
+                final ORecord<?> rec = ((OIdentifiable) o).getRecord();
+                if (rec != null && rec instanceof ODocument) {
+                  // CHECK FOR ONE FIELD ONLY
+                  final ODocument doc = (ODocument) rec;
+                  if (doc.fields() == 1) {
+                    singleFieldName = doc.fieldNames()[0];
+                    tempColl.add(doc.field(singleFieldName));
+                  } else {
+                    // TRANSFORM IT IN EMBEDDED
+                    doc.getIdentity().reset();
+                    doc.addOwner(iDocument);
+                    tempColl.add(doc);
+                  }
+                }
+              }
+            }
+
+            fieldValue = tempColl;
+          }
         }
       }
 

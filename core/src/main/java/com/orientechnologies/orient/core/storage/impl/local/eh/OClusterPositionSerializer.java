@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
  */
 public class OClusterPositionSerializer implements OBinarySerializer<OClusterPosition> {
   public static final OClusterPositionSerializer INSTANCE = new OClusterPositionSerializer();
-  public static final byte                       ID       = 51;
+  public static final byte ID = 51;
 
   @Override
   public int getObjectSize(OClusterPosition object, Object... hints) {
@@ -98,7 +98,7 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public OClusterPosition prepocess(OClusterPosition value, Object... hints) {
+  public OClusterPosition preprocess(OClusterPosition value, Object... hints) {
     return value;
   }
 }

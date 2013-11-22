@@ -192,7 +192,9 @@ public class OServer {
 
     dbPool = new ODatabaseDocumentPool();
     dbPool.setup(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MIN),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX));
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX),
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT),
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY));
 
     databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);

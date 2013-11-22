@@ -16,7 +16,10 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -345,43 +348,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       sbTree.put(key, value);
     } finally {
       releaseSharedLock();
-    }
-  }
-
-  @Override
-  public int removeValue(final OIdentifiable value, final ValuesTransformer<V> transformer) {
-    acquireExclusiveLock();
-    try {
-      final Set<Object> keySetToRemove = new HashSet<Object>();
-
-      if (sbTree.size() == 0)
-        return 0;
-
-      final Object firstKey = sbTree.firstKey();
-      final Object lastKey = sbTree.lastKey();
-      sbTree.loadEntriesBetween(firstKey, true, lastKey, true, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          if (transformer == null) {
-            if (entry.getValue().equals(value))
-              keySetToRemove.add(entry.getKey());
-          } else {
-            Collection<OIdentifiable> identifiables = transformer.transformFromValue(entry.getValue());
-            for (OIdentifiable identifiable : identifiables) {
-              if (identifiable.equals(value))
-                keySetToRemove.add(entry.getKey());
-            }
-          }
-          return true;
-        }
-      });
-
-      for (Object keyToRemove : keySetToRemove)
-        sbTree.remove(keyToRemove);
-
-      return keySetToRemove.size();
-    } finally {
-      releaseExclusiveLock();
     }
   }
 

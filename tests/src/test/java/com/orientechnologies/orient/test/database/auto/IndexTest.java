@@ -1562,6 +1562,32 @@ public class IndexTest {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
   }
 
+  @Test
+  public void testIndexInCompositeQuery() {
+    OClass classOne = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest1");
+    OClass classTwo = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest2");
+
+    classTwo.createProperty("address", OType.LINK, classOne);
+
+    classTwo.createIndex("CompoundSQLIndexTestIndex", INDEX_TYPE.UNIQUE, "address");
+
+    ODocument docOne = new ODocument("CompoundSQLIndexTest1");
+    docOne.field("city", "Montreal");
+
+    docOne.save();
+
+    ODocument docTwo = new ODocument("CompoundSQLIndexTest2");
+    docTwo.field("address", docOne);
+    docTwo.save();
+
+    List<ODocument> result = database.getUnderlying().query(
+        new OSQLSynchQuery<ODocument>(
+            "select from CompoundSQLIndexTest2 where address in (select from CompoundSQLIndexTest1 where city='Montreal')"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).getIdentity(), docTwo.getIdentity());
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 

@@ -175,7 +175,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     int size = size();
     if (entryIndex < size - 1) {
-      copyData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + entryIndex
+      moveData(POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + entryIndex
           * OIntegerSerializer.INT_SIZE, (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
@@ -184,7 +184,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
     if (size > 0 && entryPosition > freePointer) {
-      copyData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+      moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
     setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
 
@@ -270,7 +270,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public boolean addEntry(int index, SBTreeEntry<K, V> treeEntry, boolean updateNeighbors) throws IOException {
-    final int keySize = keySerializer.getObjectSize(treeEntry.key, keyTypes);
+    final int keySize = keySerializer.getObjectSize(treeEntry.key, (Object[]) keyTypes);
     int valueSize = 0;
     int entrySize = keySize;
 
@@ -294,7 +294,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       return false;
 
     if (index <= size - 1) {
-      copyData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
+      moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
           * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
     }
 
@@ -306,7 +306,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     if (isLeaf) {
       byte[] serializedKey = new byte[keySize];
-      keySerializer.serializeNative(treeEntry.key, serializedKey, 0, keyTypes);
+      keySerializer.serializeNative(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
 
       setBinaryValue(freePointer, serializedKey);
       freePointer += keySize;
@@ -329,7 +329,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       freePointer += OLongSerializer.LONG_SIZE;
 
       byte[] serializedKey = new byte[keySize];
-      keySerializer.serializeNative(treeEntry.key, serializedKey, 0, keyTypes);
+      keySerializer.serializeNative(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
       setBinaryValue(freePointer, serializedKey);
 
       size++;
@@ -404,7 +404,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       if (o == null || getClass() != o.getClass())
         return false;
 
-      SBTreeEntry that = (SBTreeEntry) o;
+      final SBTreeEntry<?, ?> that = (SBTreeEntry<?, ?>) o;
 
       if (leftChild != that.leftChild)
         return false;

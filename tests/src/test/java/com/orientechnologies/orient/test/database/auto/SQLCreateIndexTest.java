@@ -172,17 +172,17 @@ public class SQLCreateIndexTest {
           .assertTrue(exception
               .getMessage()
               .contains(
-											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
-															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
-															+ "--------------------------------------------------------------------------------------------^"));
+                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
+                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
+                      + "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
               .getMessage()
               .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
+											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
+															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
+															+ "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -204,19 +204,19 @@ public class SQLCreateIndexTest {
 
       Assert
           .assertTrue(exception
-									.getMessage()
-									.contains(
-													"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
-																	+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
-																	+ "--------------------------------------------------------------------------------------------^"));
+              .getMessage()
+              .contains(
+											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
+															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
+															+ "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
               .getMessage()
               .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
+											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
+															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
+															+ "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -240,17 +240,17 @@ public class SQLCreateIndexTest {
           .assertTrue(exception
               .getMessage()
               .contains(
-											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
-															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
-															+ "--------------------------------------------------------------------------------------------^"));
+                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
+                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
+                      + "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
               .getMessage()
               .contains(
-                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
-                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
-                      + "--------------------------------------------------------------------------------------------^"));
+											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
+															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
+															+ "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");

@@ -20,7 +20,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * Serializer for boolean type .
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
@@ -28,10 +28,10 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   /**
    * size of boolean value in bytes
    */
-  public static final int          BOOLEAN_SIZE = 1;
+  public static final int BOOLEAN_SIZE = 1;
 
-  public static OBooleanSerializer INSTANCE     = new OBooleanSerializer();
-  public static final byte         ID           = 1;
+  public static OBooleanSerializer INSTANCE = new OBooleanSerializer();
+  public static final byte ID = 1;
 
   public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
@@ -92,7 +92,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public Boolean prepocess(Boolean value, Object... hints) {
+  public Boolean preprocess(Boolean value, Object... hints) {
     return value;
   }
 }

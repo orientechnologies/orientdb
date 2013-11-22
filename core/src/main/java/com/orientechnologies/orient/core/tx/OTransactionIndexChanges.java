@@ -15,7 +15,8 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Map;
+import java.util.Collection;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -32,11 +33,10 @@ public class OTransactionIndexChanges {
     PUT, REMOVE, CLEAR
   }
 
-  public Map<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
-                                                                       ODefaultComparator.INSTANCE);
+  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
+                                                                                ODefaultComparator.INSTANCE);
 
-  public OTransactionIndexChangesPerKey              changesCrossKey;
-  public boolean                                     cleared       = false;
+  public boolean                                              cleared       = false;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object iKey) {
     OTransactionIndexChangesPerKey changes = changesPerKey.get(iKey);
@@ -48,6 +48,10 @@ public class OTransactionIndexChanges {
     return changes;
   }
 
+  public Collection<OTransactionIndexChangesPerKey> getChangesForKeys(final Object firstKey, final Object lastKey) {
+    return changesPerKey.subMap(firstKey, lastKey).values();
+  }
+
   public void setCleared() {
     changesPerKey.clear();
     cleared = true;
@@ -57,13 +61,4 @@ public class OTransactionIndexChanges {
     return changesPerKey.containsKey(iKey);
   }
 
-  public boolean containsChangesCrossKey() {
-    return changesCrossKey != null;
-  }
-
-  public OTransactionIndexChangesPerKey getChangesCrossKey() {
-    if (changesCrossKey == null)
-      changesCrossKey = new OTransactionIndexChangesPerKey(null);
-    return changesCrossKey;
-  }
 }

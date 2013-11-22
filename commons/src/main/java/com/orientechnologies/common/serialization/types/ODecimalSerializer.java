@@ -16,20 +16,20 @@
 
 package com.orientechnologies.common.serialization.types;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-
 /**
  * Serializer for {@link BigDecimal} type.
- * 
+ *
  * @author Andrey Lomakin
  * @since 03.04.12
  */
 public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   public static final ODecimalSerializer INSTANCE = new ODecimalSerializer();
-  public static final byte               ID       = 18;
+  public static final byte ID = 18;
 
   public int getObjectSize(BigDecimal object, Object... hints) {
     return OIntegerSerializer.INT_SIZE + OBinaryTypeSerializer.INSTANCE.getObjectSize(object.unscaledValue().toByteArray());
@@ -116,7 +116,7 @@ public class ODecimalSerializer implements OBinarySerializer<BigDecimal> {
   }
 
   @Override
-  public BigDecimal prepocess(BigDecimal value, Object... hints) {
+  public BigDecimal preprocess(BigDecimal value, Object... hints) {
     return value;
   }
 }

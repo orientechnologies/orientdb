@@ -64,14 +64,14 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
       return null;
     } else {
       // IN-LINE MODE (STATELESS)
-      final Set<Object> result = new HashSet<Object>((Collection<?>) value);
+      final Set<Object> result = new HashSet<Object>();
       final Set<Object> rejected = new HashSet<Object>();
 
       for (Object iParameter : iParameters) {
         if (iParameter instanceof Collection<?>) {
           addItemsToResult((Collection<Object>) value, result, rejected);
         } else {
-          addItemToResult(value, result, rejected);
+          addItemToResult(iParameter, result, rejected);
         }
       }
 

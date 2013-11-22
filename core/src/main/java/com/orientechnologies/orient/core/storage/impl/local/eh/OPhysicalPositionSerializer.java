@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalPosition> {
   public static final OPhysicalPositionSerializer INSTANCE = new OPhysicalPositionSerializer();
-  public static final byte                        ID       = 50;
+  public static final byte ID = 50;
 
   @Override
   public int getObjectSize(OPhysicalPosition object, Object... hints) {
@@ -216,7 +216,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   }
 
   @Override
-  public OPhysicalPosition prepocess(OPhysicalPosition value, Object... hints) {
+  public OPhysicalPosition preprocess(OPhysicalPosition value, Object... hints) {
     return value;
   }
 }

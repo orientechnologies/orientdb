@@ -81,8 +81,6 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
    * @return {@code true} if given index can be used to calculate result of
    *         {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
    * 
-   * @see com.orientechnologies.orient.core.sql.operator.OQueryOperator#executeIndexQuery(com.orientechnologies.orient.core.command.
-   *      OCommandContext, OIndex
    */
   public boolean canBeUsedInEqualityOperators();
 
@@ -120,6 +118,14 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
   public void close();
 
   public String getAlgorithm();
+
+  public void preCommit();
+
+  void addTxOperation(ODocument operationDocument);
+
+  public void commit();
+
+  public void postCommit();
 
   public final class IndexMetadata {
     private final String           name;

@@ -23,17 +23,17 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 
 /**
  * Serializer that is used for serialization of non {@link com.orientechnologies.common.collection.OCompositeKey} keys in index.
- * 
+ *
  * @author Andrey Lomakin
  * @since 31.03.12
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySerializer<T> {
 
-  private OType              type;
-  private OBinarySerializer  binarySerializer;
+  private OType type;
+  private OBinarySerializer binarySerializer;
 
-  public static final byte   ID   = 15;
+  public static final byte ID = 15;
   public static final String NAME = "bsks";
 
   public OSimpleKeySerializer() {
@@ -154,9 +154,9 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
   }
 
   @Override
-  public T prepocess(T value, Object... hints) {
+  public T preprocess(T value, Object... hints) {
     init(value, hints);
 
-    return (T) binarySerializer.prepocess(value);
+    return (T) binarySerializer.preprocess(value);
   }
 }

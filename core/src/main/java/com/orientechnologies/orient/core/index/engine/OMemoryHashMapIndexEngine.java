@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +22,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
@@ -150,34 +147,6 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void put(Object key, V value) {
     concurrentHashMap.put(key, value);
-  }
-
-  @Override
-  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
-    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
-
-    for (Map.Entry<Object, V> entry : concurrentHashMap.entrySet()) {
-      if (transformer != null) {
-        Collection<OIdentifiable> rids = transformer.transformFromValue(entry.getValue());
-        if (rids.remove(valueToRemove))
-          entriesToUpdate.put(entry.getKey(), transformer.transformToValue(rids));
-      } else if (entry.getValue().equals(valueToRemove))
-        entriesToUpdate.put(entry.getKey(), entry.getValue());
-    }
-
-    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
-      V value = entry.getValue();
-      if (value instanceof Collection) {
-        Collection col = (Collection) value;
-        if (col.isEmpty())
-          concurrentHashMap.remove(entry.getKey());
-        else
-          concurrentHashMap.put(entry.getKey(), value);
-      } else
-        concurrentHashMap.remove(entry.getKey());
-    }
-
-    return entriesToUpdate.size();
   }
 
   @Override

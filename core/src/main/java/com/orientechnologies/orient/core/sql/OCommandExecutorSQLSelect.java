@@ -15,19 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -72,40 +59,54 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
  * together to the listener.
- * 
+ *
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
-  private static final String         KEYWORD_AS                        = " AS ";
-  public static final String          KEYWORD_SELECT                    = "SELECT";
-  public static final String          KEYWORD_ASC                       = "ASC";
-  public static final String          KEYWORD_DESC                      = "DESC";
-  public static final String          KEYWORD_ORDER                     = "ORDER";
-  public static final String          KEYWORD_BY                        = "BY";
-  public static final String          KEYWORD_GROUP                     = "GROUP";
-  public static final String          KEYWORD_FETCHPLAN                 = "FETCHPLAN";
-  private static final int            MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
+  private static final String KEYWORD_AS = " AS ";
+  public static final String KEYWORD_SELECT = "SELECT";
+  public static final String KEYWORD_ASC = "ASC";
+  public static final String KEYWORD_DESC = "DESC";
+  public static final String KEYWORD_ORDER = "ORDER";
+  public static final String KEYWORD_BY = "BY";
+  public static final String KEYWORD_GROUP = "GROUP";
+  public static final String KEYWORD_FETCHPLAN = "FETCHPLAN";
+  private static final int MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
 
-  private Map<String, String>         projectionDefinition              = null;
-  private Map<String, Object>         projections                       = null;       // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
-                                                                                       // IT'S
-                                                                                       // USED THE
-                                                                                       // PROJECTIONS IN GROUPED-RESULTS
+  private Map<String, String> projectionDefinition = null;
+  private Map<String, Object> projections = null;       // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
+  // IT'S
+  // USED THE
+  // PROJECTIONS IN GROUPED-RESULTS
   private List<OPair<String, String>> orderedFields;
-  private List<String>                groupByFields;
+  private List<String> groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
-  private Object                      expandTarget;
-  private int                         fetchLimit                        = -1;
-  private OIdentifiable               lastRecord;
-  private Iterator<OIdentifiable>     subIterator;
-  private String                      fetchPlan;
+  private Object expandTarget;
+  private int fetchLimit = -1;
+  private OIdentifiable lastRecord;
+  private Iterator<OIdentifiable> subIterator;
+  private String fetchPlan;
 
   /**
    * Compile the filter conditions only the first time.
@@ -176,7 +177,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Determine clusters that are used in select operation
-   * 
+   *
    * @return set of involved clusters
    */
   public Set<Integer> getInvolvedClusters() {
@@ -208,7 +209,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Add condition so that query will be executed only on the given id range. That is used to verify that query will be executed on
    * the single node
-   * 
+   *
    * @param fromId
    * @param toId
    * @return this
@@ -251,11 +252,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   /**
-   * 
-   * @return {@code ture} if any of the sql functions perform aggreagation, {@code false} otherwise
+   * @return {@code ture} if any of the sql functions perform aggregation, {@code false} otherwise
    */
   public boolean isAnyFunctionAggregates() {
-    return groupedResult != null;
+    if (projections != null) {
+      for (Entry<String, Object> p : projections.entrySet()) {
+        if (p.getValue() instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) p.getValue()).aggregateResults())
+          return true;
+      }
+    }
+    return false;
   }
 
   public boolean hasNext() {
@@ -668,10 +674,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         // We get only subset contained in processed sub query.
         for (final String fieldName : indexDefinition.getFields().subList(0, searchResultFieldsCount)) {
           final Object fieldValue = searchResult.fieldValuePairs.get(fieldName);
+          if (fieldValue instanceof OSQLQuery<?>)
+            return false;
+
           if (fieldValue != null)
             keyParams.add(fieldValue);
-          else
+          else {
+            if (searchResult.lastValue instanceof OSQLQuery<?>)
+              return false;
+
             keyParams.add(searchResult.lastValue);
+          }
         }
 
         INDEX_OPERATION_TYPE opType = null;
@@ -682,7 +695,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames = new HashSet<String>();
             context.setVariable("involvedIndexes", idxNames);
           }
-          idxNames.add(index.getName());
+          if (index instanceof OChainedIndexProxy) {
+            idxNames.addAll(((OChainedIndexProxy) index).getIndexNames());
+          } else
+            idxNames.add(index.getName());
         }
 
         if (projections != null && projections.size() == 1) {
@@ -698,36 +714,38 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (opType == null)
           opType = INDEX_OPERATION_TYPE.GET;
 
+        OQueryOperator.IndexResultListener resultListener;
+        if (fetchLimit < 0 || opType == INDEX_OPERATION_TYPE.COUNT)
+          resultListener = null;
+        else
+          resultListener = new IndexResultListener();
+
+        Object result;
         try {
-          OQueryOperator.IndexResultListener resultListener;
-          if (fetchLimit < 0 || opType == INDEX_OPERATION_TYPE.COUNT)
-            resultListener = null;
-          else
-            resultListener = new IndexResultListener();
-
-          Object result = operator.executeIndexQuery(context, index, opType, keyParams, resultListener, fetchLimit);
-
-          if (result == null)
-            continue;
-
-          if (opType == INDEX_OPERATION_TYPE.COUNT) {
-            // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
-            final String projName = projectionDefinition.keySet().iterator().next();
-            projectionDefinition.clear();
-            getProjectionGroup(null).applyValue(projName, result);
-          } else
-            fillSearchIndexResultSet(result);
-
-          return true;
+          result = operator.executeIndexQuery(context, index, opType, keyParams, resultListener, fetchLimit);
         } catch (Exception e) {
           OLogManager
               .instance()
               .error(
                   this,
                   "Error on using index %s in query '%s'. Probably you need to rebuild indexes. Now executing query using cluster scan",
-                  e, index, request != null && request.getText() != null ? request.getText() : "");
+                  e, index.getName(), request != null && request.getText() != null ? request.getText() : "");
+
           return false;
         }
+
+        if (result == null)
+          continue;
+
+        if (opType == INDEX_OPERATION_TYPE.COUNT) {
+          // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
+          final String projName = projectionDefinition.keySet().iterator().next();
+          projectionDefinition.clear();
+          getProjectionGroup(null).applyValue(projName, result);
+        } else
+          fillSearchIndexResultSet(result);
+
+        return true;
       }
     }
     return false;
@@ -739,7 +757,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(involvedIndexes.size());
     for (OIndex<?> involvedIndex : involvedIndexes) {
       if (searchResultFields.lastField.isLong()) {
-        result.addAll(OIndexProxy.createdProxy(involvedIndex, searchResultFields.lastField, getDatabase()));
+        result.addAll(OChainedIndexProxy.createdProxy(involvedIndex, searchResultFields.lastField, getDatabase()));
       } else {
         result.add(involvedIndex);
       }
@@ -749,7 +767,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, OSQLFilterCondition iCondition,
-      final List<OIndexSearchResult> iIndexSearchResults) {
+                                                       final List<OIndexSearchResult> iIndexSearchResults) {
     if (iCondition == null)
       return null;
 
@@ -800,11 +818,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Add SQL filter field to the search candidate list.
-   * 
-   * @param iCondition
-   *          Condition item
-   * @param iItem
-   *          Value to search
+   *
+   * @param iCondition Condition item
+   * @param iItem      Value to search
    * @return true if the property was indexed and found, otherwise false
    */
   private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
@@ -1185,7 +1201,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       try {
         // ADD ALL THE ITEMS AS RESULT
-        for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
+        for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext(); ) {
           final Entry<Object, Object> current = it.next();
 
           if (current.getValue() instanceof Collection<?>) {
@@ -1348,12 +1364,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!w.equals(KEYWORD_FETCHPLAN))
       return false;
 
+    parserSkipWhiteSpaces();
+    int start = parserGetCurrentPosition();
+
     parserNextWord(true);
-    fetchPlan = OStringSerializerHelper.getStringContent(parserGetLastWord());
+    int end = parserGetCurrentPosition();
     parserSkipWhiteSpaces();
 
-    final int position = parserGetCurrentPosition();
-
+    int position = parserGetCurrentPosition();
     while (!parserIsEnded()) {
       parserNextWord(true);
 
@@ -1361,12 +1379,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (!word.matches(".*:-?\\d+"))
         break;
 
-      fetchPlan += " " + word;
+      end = parserGetCurrentPosition();
       parserSkipWhiteSpaces();
+      position = parserGetCurrentPosition();
     }
 
     parserSetCurrentPosition(position);
 
+    fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start, end));
     request.setFetchPlan(fetchPlan);
 
     return true;

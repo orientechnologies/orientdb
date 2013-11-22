@@ -387,7 +387,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
 
       final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+							new OPhysicalPosition(clusterPosition));
 
       if (previousPositions != null) {
         channel.writeInt(previousPositions.length);
@@ -420,7 +420,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
 
       OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+							new OPhysicalPosition(clusterPosition));
 
       if (nextPositions != null) {
 
@@ -451,7 +451,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
 
       final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+							new OPhysicalPosition(clusterPosition));
 
       if (previousPositions != null) {
         channel.writeInt(previousPositions.length);
@@ -740,7 +740,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Shutdowning");
 
     OLogManager.instance().info(this, "Received shutdown command from the remote client %s:%d", channel.socket.getInetAddress(),
-        channel.socket.getPort());
+						channel.socket.getPort());
 
     final String user = channel.readString();
     final String passwd = channel.readString();

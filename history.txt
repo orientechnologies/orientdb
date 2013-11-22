@@ -26,6 +26,13 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.6.1 - (November, 20th 2013)
+---------------------------------------------------------------------------------------------------
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=10&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.6 - (October, 31nd 2013)
 ---------------------------------------------------------------------------------------------------
 
@@ -46,7 +53,7 @@ VERSION 1.6 - (October, 31nd 2013)
 Full list: https://github.com/orientechnologies/orientdb/issues?milestone=8&state=closed
 
 ---------------------------------------------------------------------------------------------------
-VERSION 1.5.0 - (July, 30th 2013)
+VERSION 1.5.1 - (September, 3rd 2013)
 ---------------------------------------------------------------------------------------------------
 
 - New PLOCAL (Paginated Local) storage engine. In comparison with LOCAL it's more durable (no usage
