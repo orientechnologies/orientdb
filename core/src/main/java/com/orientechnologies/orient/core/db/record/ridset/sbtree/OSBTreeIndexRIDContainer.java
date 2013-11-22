@@ -120,12 +120,7 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    // TODO check if we can avoid get operation
-    if (this.tree.get(oIdentifiable) != null)
-      return false;
-
-    this.tree.put(oIdentifiable, Boolean.TRUE);
-    return true;
+    return this.tree.put(oIdentifiable, Boolean.TRUE);
   }
 
   @Override

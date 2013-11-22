@@ -194,7 +194,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     }
   }
 
-  public void put(K key, V value) {
+  public boolean put(K key, V value) {
     acquireExclusiveLock();
     final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
@@ -211,9 +211,10 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
           bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
       final boolean itemFound = bucketSearchResult.itemIndex >= 0;
-
+      boolean result = true;
       if (itemFound) {
         final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
+
 
         if (updateResult == 1) {
           logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
@@ -222,6 +223,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
         assert updateResult == 0 || updateResult == 1;
 
+        result = updateResult != 0;
       } else {
         int insertionIndex = -bucketSearchResult.itemIndex - 1;
 
@@ -254,6 +256,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         setSize(size() + 1);
 
       endDurableOperation(transaction, false);
+      return result;
     } catch (IOException e) {
       rollback(transaction);
       throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
