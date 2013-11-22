@@ -46,4 +46,11 @@ angular.module('MonitorApp')
         $scope.logout = function () {
             Login.logout();
         }
+
+        $scope.helpHtml = function () {
+            $location.path("/help");
+        }
+        $scope.gettingStarted = function () {
+            $location.path("/gettingstarted");
+        }
     });

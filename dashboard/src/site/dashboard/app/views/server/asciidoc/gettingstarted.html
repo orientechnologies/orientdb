@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
 <meta name="generator" content="AsciiDoc 8.6.9" />
-<title>Workbench User Guide</title>
+<title>Getting Started</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -29,10 +29,10 @@ body {
 
 a {
   color: #A5360F;
-  text-decoration: underline;
+  /*text-decoration: underline;*/
 }
 a:visited {
-  color: fuchsia;
+  /*color: fuchsia;*/
 }
 
 em {
@@ -733,615 +733,69 @@ asciidoc.install(2);
 </head>
 <body class="article">
 <div id="header">
-<h1>Workbench User Guide</h1>
+<h1>Getting Started</h1>
 <span id="author">Luca Garulli</span><br />
 <span id="email"><code>&lt;<a href="mailto:l.garulli@gmail.com">l.garulli@gmail.com</a>&gt;</code></span><br />
+<span id="revdate">Introduction</span>
 <div id="toc">
   <div id="toctitle">Table of Contents</div>
   <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
 </div>
 </div>
 <div id="content">
-<div class="sect1">
-<h2 id="_introduction">1. Introduction</h2>
+<div id="preamble">
 <div class="sectionbody">
-<div class="paragraph"><p>Based on the Community Edition, OrientDB provides additional Enterprise Class features like:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Workbench, as a centralized cockpit to manage multiple servers;
-</p>
-</li>
-<li>
-<p>
-SQL Profiler, to tune the database based on usage patterns;
-</p>
-</li>
-<li>
-<p>
-Metric Analyzer, to monitor and analyze metrics;
-</p>
-</li>
-<li>
-<p>
-Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold;
-</p>
-</li>
-<li>
-<p>
-Query Profiler;
-</p>
-</li>
-<li>
-<p>
-Notification about hot-fixes and new releases;
-</p>
-</li>
-<li>
-<p>
-Production support available on demand;
-</p>
-</li>
-</ul></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>Based on the Community Edition, OrientDB provides additional Enterprise Class features like:
+
+- Workbench, as a centralized cockpit to manage multiple servers;
+- SQL Profiler, to tune the database based on usage patterns;
+- Metric Analyzer, to monitor and analyze metrics;
+- Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold;
+- Query Profiler;
+- Notification about hot-fixes and new releases;
+- Production support available on demand;
+
+Add Server</code></pre>
+</div></div>
+<div class="paragraph"><p>Go to the dashboard panel and click to "add server"</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="login.png" alt="login.png" width="80%" />
+<img src="views/server/asciidoc/addserver_1.png" alt="views/server/asciidoc/addserver_1.png" width="50%" />
 </div>
-<div class="title">Figure 1. Login of Workbench</div>
+<div class="title">Figure 1. Add Server</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_getting_started">2. Getting Started</h2>
+<h2 id="_server_configuration">1. Server Configuration</h2>
 <div class="sectionbody">
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">For configuring server please follow this <a href="gettingstarted.html">guide</a></td>
-</tr></table>
+<div class="paragraph"><p>When popup open, just fill the form and test your server connection. If it&#8217;s ok save your server configuration by clicking "save changes".</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="views/server/asciidoc/popup_server.png" alt="views/server/asciidoc/popup_server.png" width="30%" />
+</div>
+<div class="title">Figure 2. Server Configuration</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_server_management">3. Server Management</h2>
+<h2 id="_dashboard_overview">2. Dashboard overview</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>In Server Management panel there are 4 tabs:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong><span class="BOLD">Overview</span></strong>
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Database Management</span></strong>
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Log</span></strong>
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Configuration</span></strong>
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p>Every information is referred to the server that you select at the top of the panel.</p></div>
-<div class="paragraph"><p>At the top there are some information about the selected server:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Status
-</p>
-</li>
-<li>
-<p>
-JVM
-</p>
-</li>
-<li>
-<p>
-OS architecture
-</p>
-</li>
-<li>
-<p>
-OS name
-</p>
-</li>
-<li>
-<p>
-Number of CPU
-</p>
-</li>
-<li>
-<p>
-Java vendor
-</p>
-</li>
-</ul></div>
-<div class="sect2">
-<h3 id="_overview">3.1. Overview</h3>
-<div class="paragraph"><p>The first tab of the server panel, shows a chart that represents CRUD operations for all databases of the selected server, divided by date and time and the number of executions for each operation.</p></div>
 <div class="imageblock">
 <div class="content">
-<img src="overview_full.png" alt="overview_full.png" width="80%" />
+<img src="views/server/asciidoc/dashboard_filled.png" alt="views/server/asciidoc/dashboard_filled.png" width="80%" />
 </div>
-<div class="title">Figure 2. Crud operations of all databases</div>
-</div>
-<div class="paragraph"><p>At the right top corner of the tab you can configure chart choosing the resolution (1m, 5m, 30m, 1h), the date range and the chart type.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="chart_configuration.png" alt="chart_configuration.png" height="20%" />
-</div>
-<div class="title">Figure 3. Chart configurations</div>
+<div class="title">Figure 3. Dashboard overview</div>
 </div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
+<img src="views/server/asciidoc/images/icons/note.png" alt="Note" />
 </td>
-<td class="content">You can even choose to see the graphics in real time (realtime option) selecting pull interval.</td>
-</tr></table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_database_management">3.2. Database Management</h3>
-<div class="imageblock">
-<div class="content">
-<img src="databasemanagement.png" alt="databasemanagement.png" width="80%" />
-</div>
-<div class="title">Figure 4. Database Management</div>
-</div>
-<div class="paragraph"><p>Database management panel  shows the list of databases for each server and the chart of crud operations for the selected database.</p></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/tip.png" alt="Tip" />
-</td>
-<td class="content">select the database by clicking on the name.</td>
-</tr></table>
-</div>
-<div class="sect3">
-<h4 id="_database_backup">3.2.1. Database Backup</h4>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">You can make a backup of each database, just click on the button on the right of the database name.</td>
-</tr></table>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="backup.png" alt="backup.png" height="20%" />
-</div>
-<div class="title">Figure 5. Backup</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_log">3.3. Log</h3>
-<div class="paragraph"><p>In log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="server_log.png" alt="server_log.png" width="75%" />
-</div>
-<div class="title">Figure 6. Server Log</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">You can even search for a particular text just filling info input.</td>
-</tr></table>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/caution.png" alt="Caution" />
-</td>
-<td class="content">Choose at least one file for your search.</td>
-</tr></table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_configuration">3.4. Configuration</h3>
-<div class="paragraph"><p>In the last tab you can modify orientdb-server-config.xml. Click save to send the configuration back to the server.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="configuration.png" alt="configuration.png" width="80%" />
-</div>
-<div class="title">Figure 7. Configurations</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/caution.png" alt="Caution" />
-</td>
-<td class="content">Auto-reload isn&#8217;t supported until 2.0.</td>
-</tr></table>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_metrics">4. Metrics</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Metrics panel helps you to configure the metrics of interest by choosing from a list of these.</p></div>
-<div class="paragraph"><p>A list of saved configuration are displayed on the left.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="metricsbuilder.png" alt="metricsbuilder.png" width="80%" />
-</div>
-<div class="title">Figure 8. Metrics builder</div>
-</div>
-<div class="paragraph"><p>If you want to build a new configuration:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-click on "new" button
-</p>
-</li>
-<li>
-<p>
-write a name
-</p>
-</li>
-<li>
-<p>
-select a server
-</p>
-</li>
-<li>
-<p>
-click on plus button to add a metric
-</p>
-</li>
-<li>
-<p>
-choose a metric and a value
-</p>
-</li>
-</ul></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">if you want you can combine more metrics in one configuration</td>
-</tr></table>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="combinemetrics.png" alt="combinemetrics.png" height="60%" />
-</div>
-<div class="title">Figure 9. Metrics builder</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_query_profiler">5. Query Profiler</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Query profiler panel shows the commands executed for a database on a particular server.</p></div>
-<div class="paragraph"><p>It also shows the type of command, the minimum and maximum number of times executed and the media.</p></div>
-<div class="paragraph"><p>Click "clear" to delete them.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="query_profiler.png" alt="query_profiler.png" width="80%" />
-</div>
-<div class="title">Figure 10. List of commands executed</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_notifications">6. Notifications</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Notifications panel is similar to Log panel.</p></div>
-<div class="paragraph"><p>In this case you can search all notifications in Workbench databases just combining the search according to the date and time and the log type.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="notifications.png" alt="notifications.png" width="80%" />
-</div>
-<div class="title">Figure 11. Notifications panel</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">To free up disk space, you can delete all the logs from the database by clicking the button "Purge notifications now".</td>
-</tr></table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_alerts">7. Alerts</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>In this section you can configure alerts based on certain events that may occur over time, such as a server goes down or when some metrics exceed some critical values.</p></div>
-<div class="paragraph"><p>Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution of an HTTP request or the execution of a function</p></div>
-<div class="paragraph"><p><strong><span class="BOLD">When:</span></strong></p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Log
-</p>
-</li>
-<li>
-<p>
-Metric
-</p>
-</li>
-</ul></div>
-<div class="paragraph"><p><strong><span class="BOLD">Do:</span></strong></p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Send Mail
-</p>
-</li>
-<li>
-<p>
-Execute HTTP
-</p>
-</li>
-<li>
-<p>
-Execute Function
-</p>
-</li>
-</ul></div>
-<div class="imageblock">
-<div class="content">
-<img src="events.png" alt="events.png" width="80%" />
-</div>
-<div class="title">Figure 12. Alerts</div>
-</div>
-<div class="paragraph"><p>Let&#8217;s take an example to better understand how events work:</p></div>
-<div class="paragraph"><p>If I would like to receive an email when an error happens on my server I can:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-click on "new event button";
-</p>
-</li>
-<li>
-<p>
-select "Log" on column "when";
-</p>
-</li>
-<li>
-<p>
-click "configure" button (on column "when") and  enter the necessary data as shown in figure "Log alert";
-</p>
-</li>
-</ul></div>
-<div class="imageblock">
-<div class="content">
-<img src="logwhen.png" alt="logwhen.png" width="30%" />
-</div>
-<div class="title">Figure 13. Log alert</div>
-</div>
-<div class="ulist"><ul>
-<li>
-<p>
-now select "Mail" on "Do" column and click "configure" and  enter the necessary data as shown in figure  "Mail alert";
-</p>
-</li>
-</ul></div>
-<div class="imageblock">
-<div class="content">
-<img src="mailalert.png" alt="mailalert.png" width="30%" />
-</div>
-<div class="title">Figure 14. Mail alert</div>
-</div>
-<div class="ulist"><ul>
-<li>
-<p>
-click on save button
-</p>
-</li>
-</ul></div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/tip.png" alt="Tip" />
-</td>
-<td class="content">There are some keywords that you can use for a better notification. Workbench will replace it with the right data.</td>
-</tr></table>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="keyword.png" alt="keyword.png" width="30%" />
-</div>
-<div class="title">Figure 15. keyword</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">from address, to address, subject and body are mandatory in mail alert.</td>
-</tr></table>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">for smtp configure please see Setting chapter.</td>
-</tr></table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_settings">8. Settings</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>In this panel you can configure some settings for the entire Workbench. There are four tabs:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-<strong><span class="BOLD">Dashboard Configuration</span></strong>
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Metrics Configuration</span></strong>
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Mail Settings</span></strong>
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Global Settings</span></strong>
-</p>
-</li>
-</ul></div>
-<div class="sect2">
-<h3 id="_dashboard_configuration">8.1. Dashboard Configuration</h3>
-<div class="paragraph"><p>At the left of the panel you have a list of all metrics chart that you have configured in the Metrics panel.</p></div>
-<div class="paragraph"><p>Here you can choose a set of it and the layout to componing the Workbench home page (list or a grid).</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="dashboard_settings.png" alt="dashboard_settings.png" width="70%" />
-</div>
-<div class="title">Figure 16. List Configuration</div>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="dashboard_setting_2.png" alt="dashboard_setting_2.png" width="70%" />
-</div>
-<div class="title">Figure 17. Grid Configuration</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">remember to click on the Save button to make the changes permanent</td>
-</tr></table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_metrics_configuration">8.2. Metrics Configuration</h3>
-<div class="paragraph"><p>In metrics configuration you choose wich metrics the Workbench will save in datatabase; check it to enable/disable a metric.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="metrics_settings.png" alt="metrics_settings.png" width="80%" />
-</div>
-<div class="title">Figure 18. Metrics configuration</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_mail_settings">8.3. Mail Settings</h3>
-<div class="paragraph"><p>In mail settings panel you can configure your server smtp that will be used in events task.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="mailsettings.png" alt="mailsettings.png" width="50%" />
-</div>
-<div class="title">Figure 19. Mail Settings</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">for proxy settings see Global Settings.</td>
-</tr></table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_global_settings">8.4. Global Settings</h3>
-<div class="paragraph"><p>In this panel you can:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-free up disk space, a schedule will purge metrics and logs older than x hour;
-</p>
-</li>
-<li>
-<p>
-purge all metric and notifications in Workbench database. Click on the button "purge all metrics now" and "purge all notifications now";
-</p>
-</li>
-<li>
-<p>
-Set a proxy to permit http request in events panel.
-</p>
-</li>
-<li>
-<p>
-Keep update about news of orientDB.
-</p>
-</li>
-</ul></div>
-<div class="imageblock">
-<div class="content">
-<img src="globalsettings.png" alt="globalsettings.png" width="70%" />
-</div>
-<div class="title">Figure 20. Global Setting</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_messages">9. Messages</h2>
-<div class="sectionbody">
-<div class="paragraph"><p>Messages panel shows all notification from Orient Technlogies.</p></div>
-<div class="paragraph"><p>There are three types of messages:</p></div>
-<div class="ulist"><ul>
-<li>
-<p>
-Commercial <strong><span class="BOLD">news</span></strong> about orientDB.
-</p>
-</li>
-<li>
-<p>
-<strong><span class="BOLD">Chart</span></strong> configuration.
-</p>
-</li>
-<li>
-<p>
-Workbench or Agent <strong><span class="BOLD">updates</span></strong>, hot fixes.
-</p>
-</li>
-</ul></div>
-<div class="imageblock">
-<div class="content">
-<img src="messages.png" alt="messages.png" width="70%" />
-</div>
-<div class="title">Figure 21. Messages</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">Just click on the message to open it.</td>
-</tr></table>
-</div>
-<div class="paragraph"><p>To install an upgrade version just click on the "install" button.</p></div>
-<div class="paragraph"><p>A pop-up will confirm the installation and instructions to make it effective as shown in the figure below.</p></div>
-<div class="imageblock">
-<div class="content">
-<img src="notification.png" alt="notification.png" width="70%" />
-</div>
-<div class="title">Figure 22. Notification of agent installation</div>
-</div>
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<img src="./images/icons/note.png" alt="Note" />
-</td>
-<td class="content">You can mark all messages as read or you can delete them.</td>
+<td class="content">Now you have one server in your dashboard panel with latest notification about it.
+ You can modify server configuration by clicking on the button at the right side of the server.</td>
 </tr></table>
 </div>
 </div>
@@ -1350,7 +804,7 @@ Workbench or Agent <strong><span class="BOLD">updates</span></strong>, hot fixes
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-11-16 23:09:50 CET
+Last updated 2013-11-21 20:04:09 CET
 </div>
 </div>
 </body>

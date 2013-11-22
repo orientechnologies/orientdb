@@ -6,7 +6,7 @@ Luca Garulli <l.garulli@gmail.com>
 :icons:
 :numbered:
 :website: http://www.orientechnologies.com/
-
+:icondir: views/server/asciidoc/
 Introduction
 ------------
 Based on the Community Edition, OrientDB provides additional Enterprise Class features like:
@@ -24,7 +24,7 @@ Add Server
 Go to the dashboard panel and click to "add server"
 
 .Add Server
-image::addserver_1.png[width="50%"]
+image::{icondir}addserver_1.png[width="50%"]
 
 Server Configuration
 --------------------
@@ -32,13 +32,13 @@ Server Configuration
 When popup open, just fill the form and test your server connection. If it's ok save your server configuration by clicking "save changes".
 
 .Server Configuration
-image::popup_server.png[width="30%"]
+image::{icondir}popup_server.png[width="30%"]
 
 Dashboard overview
 ------------------
 
 .Dashboard overview
-image::dashboard_filled.png[width="80%"]
+image::{icondir}dashboard_filled.png[width="80%"]
 
 NOTE: Now you have one server in your dashboard panel with latest notification about it.
  You can modify server configuration by clicking on the button at the right side of the server.

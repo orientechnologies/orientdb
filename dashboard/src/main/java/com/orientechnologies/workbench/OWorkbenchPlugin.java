@@ -49,6 +49,7 @@ import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.workbench.event.OEventController;
 import com.orientechnologies.workbench.event.OEventLogFunctionExecutor;
@@ -145,14 +146,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
       if (p.name.equals("version"))
         version = p.value;
     }
-
-    System.out.printf("\n\n************************************************");
-    System.out.printf("\n*   ORIENTDB WORKBENCH -  ENTERPRISE EDITION   *");
-    System.out.printf("\n*                                              *");
-    System.out.printf("\n* Copyrights (c) 2013 Orient Technologies LTD  *");
-    System.out.printf("\n************************************************");
-    System.out.printf("\n* Version...: %-32s *", VERSION);
-    System.out.printf("\n************************************************\n");
   }
 
   @Override
@@ -182,6 +175,24 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     Orient.instance().getTimer().schedule(messageTask, 600000, 600000);
     updater = new OWorkbenchUpdateTask(this);
     Orient.instance().getTimer().schedule(updater, 600000, 600000);
+
+    System.out.printf("\n\n************************************************");
+    System.out.printf("\n*   ORIENTDB WORKBENCH -  ENTERPRISE EDITION   *");
+    System.out.printf("\n*                                              *");
+    System.out.printf("\n* Copyrights (c) 2013 Orient Technologies LTD  *");
+    System.out.printf("\n************************************************");
+    System.out.printf("\n* Version...: %-32s *", VERSION);
+    System.out.printf("\n************************************************\n");
+
+    for (OServerNetworkListener l : serverInstance.getNetworkListeners()) {
+      if (l.getProtocolType().equals(ONetworkProtocolHttpDb.class)) {
+        System.out
+            .printf(
+                "\nTo open the Web Console open your browser to the URL: http://%s and use 'admin' as user and password to log in, unless you already changed it.\n\n",
+                l.getListeningAddress());
+        break;
+      }
+    }
 
   }
 

@@ -47,6 +47,10 @@ var app = angular.module('MonitorApp', ['ngI18n', ,'messages.controller','workbe
             .when('/dashboard/messages/:rid', {
                 templateUrl: 'views/server/messages.html',
                 controller: 'MessagesController'
+            }).when('/help', {
+                templateUrl: 'views/server/asciidoc/userguide.html'
+            }).when('/gettingstarted', {
+                templateUrl: 'views/server/asciidoc/gettingstarted.html'
             })
             .otherwise({
                 redirectTo: '/'

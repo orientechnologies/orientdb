@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+
+<article lang="en">
+<articleinfo>
+    <title>Workbench User Guide</title>
+    <author>
+        <firstname>Luca</firstname>
+        <surname>Garulli</surname>
+        <email>l.garulli@gmail.com</email>
+    </author>
+    <authorinitials>LG</authorinitials>
+</articleinfo>
+<section id="_introduction">
+<title>Introduction</title>
+<simpara>Based on the Community Edition, OrientDB provides additional Enterprise Class features like:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Workbench, as a centralized cockpit to manage multiple servers;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+SQL Profiler, to tune the database based on usage patterns;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Metric Analyzer, to monitor and analyze metrics;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Query Profiler;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Notification about hot-fixes and new releases;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Production support available on demand;
+</simpara>
+</listitem>
+</itemizedlist>
+<figure><title>Login of Workbench</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="login.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>login.png</phrase></textobject>
+</mediaobject>
+</figure>
+</section>
+<section id="_getting_started">
+<title>Getting Started</title>
+<note><simpara>For configuring server please follow this <ulink url="gettingstarted.html">guide</ulink></simpara></note>
+</section>
+<section id="_server_management">
+<title>Server Management</title>
+<simpara>In Server Management panel there are 4 tabs:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Overview</phrase></emphasis>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Database Management</phrase></emphasis>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Log</phrase></emphasis>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Configuration</phrase></emphasis>
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara>Every information is referred to the server that you select at the top of the panel.</simpara>
+<simpara>At the top there are some information about the selected server:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Status
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+JVM
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+OS architecture
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+OS name
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Number of CPU
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Java vendor
+</simpara>
+</listitem>
+</itemizedlist>
+<section id="_overview">
+<title>Overview</title>
+<simpara>The first tab of the server panel, shows a chart that represents CRUD operations for all databases of the selected server, divided by date and time and the number of executions for each operation.</simpara>
+<figure><title>Crud operations of all databases</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="overview_full.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>overview_full.png</phrase></textobject>
+</mediaobject>
+</figure>
+<simpara>At the right top corner of the tab you can configure chart choosing the resolution (1m, 5m, 30m, 1h), the date range and the chart type.</simpara>
+<figure><title>Chart configurations</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="chart_configuration.png" contentdepth="20%"/>
+  </imageobject>
+  <textobject><phrase>chart_configuration.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>You can even choose to see the graphics in real time (realtime option) selecting pull interval.</simpara></note>
+</section>
+<section id="_database_management">
+<title>Database Management</title>
+<figure><title>Database Management</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="databasemanagement.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>databasemanagement.png</phrase></textobject>
+</mediaobject>
+</figure>
+<simpara>Database management panel  shows the list of databases for each server and the chart of crud operations for the selected database.</simpara>
+<tip><simpara>select the database by clicking on the name.</simpara></tip>
+<section id="_database_backup">
+<title>Database Backup</title>
+<note><simpara>You can make a backup of each database, just click on the button on the right of the database name.</simpara></note>
+<figure><title>Backup</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="backup.png" contentdepth="20%"/>
+  </imageobject>
+  <textobject><phrase>backup.png</phrase></textobject>
+</mediaobject>
+</figure>
+</section>
+</section>
+<section id="_log">
+<title>Log</title>
+<simpara>In log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.</simpara>
+<figure><title>Server Log</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="server_log.png" contentwidth="75%"/>
+  </imageobject>
+  <textobject><phrase>server_log.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>You can even search for a particular text just filling info input.</simpara></note>
+<caution><simpara>Choose at least one file for your search.</simpara></caution>
+</section>
+<section id="_configuration">
+<title>Configuration</title>
+<simpara>In the last tab you can modify orientdb-server-config.xml. Click save to send the configuration back to the server.</simpara>
+<figure><title>Configurations</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="configuration.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>configuration.png</phrase></textobject>
+</mediaobject>
+</figure>
+<caution><simpara>Auto-reload isn&#8217;t supported until 2.0.</simpara></caution>
+</section>
+</section>
+<section id="_metrics">
+<title>Metrics</title>
+<simpara>Metrics panel helps you to configure the metrics of interest by choosing from a list of these.</simpara>
+<simpara>A list of saved configuration are displayed on the left.</simpara>
+<figure><title>Metrics builder</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="metricsbuilder.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>metricsbuilder.png</phrase></textobject>
+</mediaobject>
+</figure>
+<simpara>If you want to build a new configuration:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+click on "new" button
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+write a name
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+select a server
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+click on plus button to add a metric
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+choose a metric and a value
+</simpara>
+</listitem>
+</itemizedlist>
+<note><simpara>if you want you can combine more metrics in one configuration</simpara></note>
+<figure><title>Metrics builder</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="combinemetrics.png" contentdepth="60%"/>
+  </imageobject>
+  <textobject><phrase>combinemetrics.png</phrase></textobject>
+</mediaobject>
+</figure>
+</section>
+<section id="_query_profiler">
+<title>Query Profiler</title>
+<simpara>Query profiler panel shows the commands executed for a database on a particular server.</simpara>
+<simpara>It also shows the type of command, the minimum and maximum number of times executed and the media.</simpara>
+<simpara>Click "clear" to delete them.</simpara>
+<figure><title>List of commands executed</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="query_profiler.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>query_profiler.png</phrase></textobject>
+</mediaobject>
+</figure>
+</section>
+<section id="_notifications">
+<title>Notifications</title>
+<simpara>Notifications panel is similar to Log panel.</simpara>
+<simpara>In this case you can search all notifications in Workbench databases just combining the search according to the date and time and the log type.</simpara>
+<figure><title>Notifications panel</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="notifications.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>notifications.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>To free up disk space, you can delete all the logs from the database by clicking the button "Purge notifications now".</simpara></note>
+</section>
+<section id="_alerts">
+<title>Alerts</title>
+<simpara>In this section you can configure alerts based on certain events that may occur over time, such as a server goes down or when some metrics exceed some critical values.</simpara>
+<simpara>Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution of an HTTP request or the execution of a function</simpara>
+<simpara><emphasis role="strong"><phrase role="BOLD">When:</phrase></emphasis></simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Log
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Metric
+</simpara>
+</listitem>
+</itemizedlist>
+<simpara><emphasis role="strong"><phrase role="BOLD">Do:</phrase></emphasis></simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Send Mail
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Execute HTTP
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Execute Function
+</simpara>
+</listitem>
+</itemizedlist>
+<figure><title>Alerts</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="events.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>events.png</phrase></textobject>
+</mediaobject>
+</figure>
+<simpara>Let&#8217;s take an example to better understand how events work:</simpara>
+<simpara>If I would like to receive an email when an error happens on my server I can:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+click on "new event button";
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+select "Log" on column "when";
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+click "configure" button (on column "when") and  enter the necessary data as shown in figure "Log alert";
+</simpara>
+</listitem>
+</itemizedlist>
+<figure><title>Log alert</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="logwhen.png" contentwidth="30%"/>
+  </imageobject>
+  <textobject><phrase>logwhen.png</phrase></textobject>
+</mediaobject>
+</figure>
+<itemizedlist>
+<listitem>
+<simpara>
+now select "Mail" on "Do" column and click "configure" and  enter the necessary data as shown in figure  "Mail alert";
+</simpara>
+</listitem>
+</itemizedlist>
+<figure><title>Mail alert</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="mailalert.png" contentwidth="30%"/>
+  </imageobject>
+  <textobject><phrase>mailalert.png</phrase></textobject>
+</mediaobject>
+</figure>
+<itemizedlist>
+<listitem>
+<simpara>
+click on save button
+</simpara>
+</listitem>
+</itemizedlist>
+<tip><simpara>There are some keywords that you can use for a better notification. Workbench will replace it with the right data.</simpara></tip>
+<figure><title>keyword</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="keyword.png" contentwidth="30%"/>
+  </imageobject>
+  <textobject><phrase>keyword.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>from address, to address, subject and body are mandatory in mail alert.</simpara></note>
+<note><simpara>for smtp configure please see Setting chapter.</simpara></note>
+</section>
+<section id="_settings">
+<title>Settings</title>
+<simpara>In this panel you can configure some settings for the entire Workbench. There are four tabs:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Dashboard Configuration</phrase></emphasis>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Metrics Configuration</phrase></emphasis>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Mail Settings</phrase></emphasis>
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Global Settings</phrase></emphasis>
+</simpara>
+</listitem>
+</itemizedlist>
+<section id="_dashboard_configuration">
+<title>Dashboard Configuration</title>
+<simpara>At the left of the panel you have a list of all metrics chart that you have configured in the Metrics panel.</simpara>
+<simpara>Here you can choose a set of it and the layout to componing the Workbench home page (list or a grid).</simpara>
+<figure><title>List Configuration</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="dashboard_settings.png" contentwidth="70%"/>
+  </imageobject>
+  <textobject><phrase>dashboard_settings.png</phrase></textobject>
+</mediaobject>
+</figure>
+<figure><title>Grid Configuration</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="dashboard_setting_2.png" contentwidth="70%"/>
+  </imageobject>
+  <textobject><phrase>dashboard_setting_2.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>remember to click on the Save button to make the changes permanent</simpara></note>
+</section>
+<section id="_metrics_configuration">
+<title>Metrics Configuration</title>
+<simpara>In metrics configuration you choose wich metrics the Workbench will save in datatabase; check it to enable/disable a metric.</simpara>
+<figure><title>Metrics configuration</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="metrics_settings.png" contentwidth="80%"/>
+  </imageobject>
+  <textobject><phrase>metrics_settings.png</phrase></textobject>
+</mediaobject>
+</figure>
+</section>
+<section id="_mail_settings">
+<title>Mail Settings</title>
+<simpara>In mail settings panel you can configure your server smtp that will be used in events task.</simpara>
+<figure><title>Mail Settings</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="mailsettings.png" contentwidth="50%"/>
+  </imageobject>
+  <textobject><phrase>mailsettings.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>for proxy settings see Global Settings.</simpara></note>
+</section>
+<section id="_global_settings">
+<title>Global Settings</title>
+<simpara>In this panel you can:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+free up disk space, a schedule will purge metrics and logs older than x hour;
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+purge all metric and notifications in Workbench database. Click on the button "purge all metrics now" and "purge all notifications now";
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Set a proxy to permit http request in events panel.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Keep update about news of orientDB.
+</simpara>
+</listitem>
+</itemizedlist>
+<figure><title>Global Setting</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="globalsettings.png" contentwidth="70%"/>
+  </imageobject>
+  <textobject><phrase>globalsettings.png</phrase></textobject>
+</mediaobject>
+</figure>
+</section>
+</section>
+<section id="_messages">
+<title>Messages</title>
+<simpara>Messages panel shows all notification from Orient Technlogies.</simpara>
+<simpara>There are three types of messages:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>
+Commercial <emphasis role="strong"><phrase role="BOLD">news</phrase></emphasis> about orientDB.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+<emphasis role="strong"><phrase role="BOLD">Chart</phrase></emphasis> configuration.
+</simpara>
+</listitem>
+<listitem>
+<simpara>
+Workbench or Agent <emphasis role="strong"><phrase role="BOLD">updates</phrase></emphasis>, hot fixes.
+</simpara>
+</listitem>
+</itemizedlist>
+<figure><title>Messages</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="messages.png" contentwidth="70%"/>
+  </imageobject>
+  <textobject><phrase>messages.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>Just click on the message to open it.</simpara></note>
+<simpara>To install an upgrade version just click on the "install" button.</simpara>
+<simpara>A pop-up will confirm the installation and instructions to make it effective as shown in the figure below.</simpara>
+<figure><title>Notification of agent installation</title>
+<mediaobject>
+  <imageobject>
+  <imagedata fileref="notification.png" contentwidth="70%"/>
+  </imageobject>
+  <textobject><phrase>notification.png</phrase></textobject>
+</mediaobject>
+</figure>
+<note><simpara>You can mark all messages as read or you can delete them.</simpara></note>
+</section>
+</article>
