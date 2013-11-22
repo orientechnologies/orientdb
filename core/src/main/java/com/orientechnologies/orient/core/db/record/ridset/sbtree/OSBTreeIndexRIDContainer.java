@@ -192,7 +192,7 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
 
       iOutput.append(OStringSerializerHelper.SET_END);
     } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.toStream"), "Serialize a MVRBTreeRID", timer);
+      PROFILER.stopChrono(PROFILER.getProcessMetric("index.valuecontainer.toStream"), "Serialize a not unique index value container", timer);
     }
     return this;
   }

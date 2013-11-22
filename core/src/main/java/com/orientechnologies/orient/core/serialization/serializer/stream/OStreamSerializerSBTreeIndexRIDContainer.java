@@ -30,9 +30,6 @@ import java.io.IOException;
 public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OSBTreeIndexRIDContainer> {
   public static final String NAME = "ic";
   public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE = new OStreamSerializerSBTreeIndexRIDContainer();
-  private static final ORecordSerializerSchemaAware2CSV FORMAT = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-      .instance().getFormat(
-          ORecordSerializerSchemaAware2CSV.NAME);
 
   public static final byte ID = 20;
 
@@ -40,16 +37,14 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     if (iStream == null)
       return null;
 
-    final String s = OBinaryProtocol.bytes2string(iStream);
-
-    return FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
+    return deserializeContainer(iStream);
   }
 
   public byte[] toStream(final Object iObject) throws IOException {
     if (iObject == null)
       return null;
 
-    return ((OSBTreeRIDSet) iObject).toStream();
+    return serializeContainer((OSBTreeIndexRIDContainer) iObject);
   }
 
   public String getName() {
@@ -69,7 +64,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
   @Override
   public void serialize(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
-    final byte[] serializedSet = object.toStream();
+    final byte[] serializedSet = serializeContainer(object);
     OBinaryTypeSerializer.INSTANCE.serialize(serializedSet, stream, startPosition);
   }
 
@@ -77,14 +72,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public OSBTreeIndexRIDContainer deserialize(byte[] stream, int startPosition) {
     final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserialize(stream, startPosition);
 
-    final String s = OBinaryProtocol.bytes2string(serializedSet);
-
-    if (s.startsWith("<#@")) {
-      final OSBTreeIndexRIDContainer set = OSBTreeIndexRIDContainer.fromStream(s);
-      return set;
-    }
-
-    return (OSBTreeIndexRIDContainer) FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
+    return deserializeContainer(serializedSet);
   }
 
   @Override
@@ -104,7 +92,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
   @Override
   public void serializeNative(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
-    final byte[] serializedSet = object.toStream();
+    final byte[] serializedSet = serializeContainer(object);
     OBinaryTypeSerializer.INSTANCE.serializeNative(serializedSet, stream, startPosition);
 
   }
@@ -113,14 +101,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public OSBTreeIndexRIDContainer deserializeNative(byte[] stream, int startPosition) {
     final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeNative(stream, startPosition);
 
-    final String s = OBinaryProtocol.bytes2string(serializedSet);
-
-    if (s.startsWith("<#@")) {
-      final OSBTreeIndexRIDContainer set = OSBTreeIndexRIDContainer.fromStream(s);
-      return set;
-    }
-
-    return (OSBTreeIndexRIDContainer) FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
+    return deserializeContainer(serializedSet);
   }
 
   @Override
@@ -130,7 +111,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
   @Override
   public void serializeInDirectMemory(OSBTreeIndexRIDContainer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    final byte[] serializedSet = object.toStream();
+    final byte[] serializedSet = serializeContainer(object);
     OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
   }
 
@@ -138,14 +119,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public OSBTreeIndexRIDContainer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
     final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
 
-    final String s = OBinaryProtocol.bytes2string(serializedSet);
-
-    if (s.startsWith("<#@")) {
-      final OSBTreeIndexRIDContainer set = OSBTreeIndexRIDContainer.fromStream(s);
-      return set;
-    }
-
-    return (OSBTreeIndexRIDContainer) FORMAT.embeddedCollectionFromStream(null, OType.EMBEDDEDSET, null, OType.LINK, s);
+    return deserializeContainer(serializedSet);
   }
 
   @Override
@@ -156,5 +130,13 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   @Override
   public OSBTreeIndexRIDContainer preprocess(OSBTreeIndexRIDContainer value, Object... hints) {
     return value;
+  }
+
+  private byte[] serializeContainer(OSBTreeIndexRIDContainer container) {
+    return container.toStream();
+  }
+
+  private OSBTreeIndexRIDContainer deserializeContainer(byte[] stream) {
+    return OSBTreeIndexRIDContainer.fromStream(OBinaryProtocol.bytes2string(stream));
   }
 }
