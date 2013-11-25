@@ -156,6 +156,8 @@ public interface OIndex<T> {
    */
   OIndex<T> delete();
 
+  void deleteWithoutIndexLoad(String indexName);
+
   /**
    * Returns the index name.
    * 

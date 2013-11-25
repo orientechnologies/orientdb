@@ -48,37 +48,37 @@ import java.util.Map;
  * @since 8/7/13
  */
 public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K, V> {
-  private static final int MAX_KEY_SIZE = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE
-      .getValueAsInteger();
-  private static final int MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
-      .getValueAsInteger();
-  private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
-  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
+  private static final int                    MAX_KEY_SIZE            = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE
+                                                                          .getValueAsInteger();
+  private static final int                    MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
+                                                                          .getValueAsInteger();
+  private static final OAlwaysLessKey         ALWAYS_LESS_KEY         = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey      ALWAYS_GREATER_KEY      = new OAlwaysGreaterKey();
 
-  private final static long ROOT_INDEX = 0;
+  private final static long                   ROOT_INDEX              = 0;
 
-  private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K>         comparator              = ODefaultComparator.INSTANCE;
 
-  private OStorageLocalAbstract storage;
-  private String name;
+  private OStorageLocalAbstract               storage;
+  private String                              name;
 
-  private final String dataFileExtension;
+  private final String                        dataFileExtension;
 
-  private ODiskCache diskCache;
+  private ODiskCache                          diskCache;
 
-  private long fileId;
+  private long                                fileId;
 
-  private int keySize;
+  private int                                 keySize;
 
-  private OBinarySerializer<K> keySerializer;
-  private OType[] keyTypes;
+  private OBinarySerializer<K>                keySerializer;
+  private OType[]                             keyTypes;
 
-  private OBinarySerializer<V> valueSerializer;
+  private OBinarySerializer<V>                valueSerializer;
 
-  private final boolean durableInNonTxMode;
-  private static final ODurablePage.TrackMode txTrackMode = ODurablePage.TrackMode
-      .valueOf(OGlobalConfiguration.INDEX_TX_MODE
-          .getValueAsString().toUpperCase());
+  private final boolean                       durableInNonTxMode;
+  private static final ODurablePage.TrackMode txTrackMode             = ODurablePage.TrackMode
+                                                                          .valueOf(OGlobalConfiguration.INDEX_TX_MODE
+                                                                              .getValueAsString().toUpperCase());
 
   public OSBTree(String dataFileExtension, int keySize, boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -88,7 +88,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-                     OStorageLocalAbstract storageLocal) {
+      OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -533,6 +533,20 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     }
   }
 
+  public void deleteWithoutLoad(String name, OStorageLocalAbstract storageLocal) {
+    acquireExclusiveLock();
+    try {
+      final ODiskCache diskCache = storageLocal.getDiskCache();
+
+      final long fileId = diskCache.openFile(name + dataFileExtension);
+      diskCache.deleteFile(fileId);
+    } catch (IOException ioe) {
+      throw new OSBTreeException("Exception during deletion of sbtree " + name, ioe);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public void load(String name, OType[] keyTypes, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
@@ -731,8 +745,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       }
 
       boolean firstBucket = true;
-      resultsLoop:
-      while (true) {
+      resultsLoop: while (true) {
         long nextPageIndex = -1;
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         final OCachePointer pointer = cacheEntry.getCachePointer();
@@ -803,8 +816,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
         index = -bucketSearchResult.itemIndex - 1;
       }
 
-      resultsLoop:
-      while (true) {
+      resultsLoop: while (true) {
         long nextPageIndex = -1;
         final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         final OCachePointer pointer = cacheEntry.getCachePointer();
@@ -992,7 +1004,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-                                 OTreeInternal.RangeResultListener<K, V> listener) {
+      OTreeInternal.RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
       keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
@@ -1035,8 +1047,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       int endIndex;
       long pageIndex = pageIndexFrom;
 
-      resultsLoop:
-      while (true) {
+      resultsLoop: while (true) {
         long nextPageIndex = -1;
 
         final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
@@ -1409,7 +1420,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   private static class BucketSearchResult {
-    private final int itemIndex;
+    private final int             itemIndex;
     private final ArrayList<Long> path;
 
     private BucketSearchResult(int itemIndex, ArrayList<Long> path) {
@@ -1444,7 +1455,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   private static final class PagePathItemUnit {
     private final long pageIndex;
-    private final int itemIndex;
+    private final int  itemIndex;
 
     private PagePathItemUnit(long pageIndex, int itemIndex) {
       this.pageIndex = pageIndex;

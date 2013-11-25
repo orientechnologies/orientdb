@@ -155,6 +155,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.delete();
   }
 
+  @Override
+  public void deleteWithoutIndexLoad(String indexName) {
+    delegate.deleteWithoutIndexLoad(indexName);
+  }
+
   public String getName() {
     return delegate.getName();
   }

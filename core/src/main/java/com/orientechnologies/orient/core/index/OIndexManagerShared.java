@@ -404,6 +404,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   if (indexName != null && indexDefinition != null && clusters != null && !clusters.isEmpty() && type != null) {
                     OLogManager.instance().info(this, "Start creation of index %s", indexName);
 
+                    if (algorithm.equals(ODefaultIndexFactory.SBTREE_ALGORITHM) || indexType.endsWith("HASH_INDEX"))
+                      index.deleteWithoutIndexLoad(indexName);
+
                     index.create(indexName, indexDefinition, defaultClusterName, clusters, false, new OIndexRebuildOutputListener(
                         index));
 
@@ -433,7 +436,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                 }
 
               } catch (Exception e) {
-                OLogManager.instance().error(this, "Error during addition of index %s", idx);
+                OLogManager.instance().error(this, "Error during addition of index %s", e, idx);
                 errors++;
               }
             }
