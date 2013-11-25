@@ -159,6 +159,15 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     }
   }
 
+  public long getFileId() {
+    acquireSharedLock();
+    try {
+      return fileId;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   public OBonsaiBucketPointer getRootBucketPointer() {
     acquireSharedLock();
     try {
@@ -420,7 +429,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     }
   }
 
-  public void load(String name, OBonsaiBucketPointer rootBucketPointer, OStorageLocalAbstract storageLocal) {
+  public void load(long fileId, OBonsaiBucketPointer rootBucketPointer, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -428,11 +437,12 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       diskCache = storage.getDiskCache();
 
-      this.name = name;
+      diskCache.openFile(fileId);
+      this.fileId = fileId;
+      final String fileName = diskCache.fileNameById(fileId);
+      this.name = fileName.substring(0, fileName.length() - dataFileExtension.length());
 
-      fileId = diskCache.openFile(name + dataFileExtension);
-
-      OCacheEntry rootCacheEntry = diskCache.load(fileId, this.rootBucketPointer.getPageIndex(), false);
+      OCacheEntry rootCacheEntry = diskCache.load(this.fileId, this.rootBucketPointer.getPageIndex(), false);
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
@@ -447,7 +457,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       initDurableComponent(storageLocal);
     } catch (IOException e) {
-      throw new OSBTreeException("Exception during loading of sbtree " + name, e);
+      throw new OSBTreeException("Exception during loading of sbtree " + fileId, e);
     } finally {
       releaseExclusiveLock();
     }

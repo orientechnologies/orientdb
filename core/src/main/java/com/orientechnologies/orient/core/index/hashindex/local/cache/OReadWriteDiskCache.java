@@ -128,6 +128,13 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public String fileNameById(long fileId) {
+    synchronized (syncObject) {
+      return writeCache.fileNameById(fileId);
+    }
+  }
+
+  @Override
   public void pinPage(final OCacheEntry cacheEntry) throws IOException {
     synchronized (syncObject) {
       remove(cacheEntry.fileId, cacheEntry.pageIndex);

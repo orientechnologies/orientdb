@@ -55,13 +55,13 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
-  public OSBTreeIndexRIDContainer(String fileName, OBonsaiBucketPointer rootPointer) {
+  private OSBTreeIndexRIDContainer(long fileId, OBonsaiBucketPointer rootPointer) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
-    tree.load(fileName, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+    tree.load(fileId, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
-  protected String getFileName() {
-    return tree.getName();
+  protected long getFileId() {
+    return tree.getFileId();
   }
 
   protected OBonsaiBucketPointer getRootPointer() {
@@ -187,7 +187,7 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
       final ODocument document = new ODocument();
       document.field("rootIndex", getRootPointer().getPageIndex());
       document.field("rootOffset", getRootPointer().getPageOffset());
-      document.field("file", getFileName());
+      document.field("fileId", getFileId());
       iOutput.append(new String(document.toStream()));
 
       iOutput.append(OStringSerializerHelper.SET_END);
@@ -215,9 +215,9 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
     doc.fromString(stream);
     final OBonsaiBucketPointer rootIndex = new OBonsaiBucketPointer((Long) doc.field("rootIndex"),
         (Integer) doc.field("rootOffset"));
-    final String fileName = doc.field("file");
+    final long fileId = doc.field("fileId");
 
-    return new OSBTreeIndexRIDContainer(fileName, rootIndex);
+    return new OSBTreeIndexRIDContainer(fileId, rootIndex);
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
