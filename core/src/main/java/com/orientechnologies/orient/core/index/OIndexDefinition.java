@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -120,4 +121,6 @@ public interface OIndexDefinition extends OIndexCallback {
   public String toCreateIndexDDL(String indexName, String indexType);
 
   public boolean isAutomatic();
+
+  public OCollate getCollate();
 }

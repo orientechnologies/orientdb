@@ -36,8 +36,10 @@ public class OIndexUnique extends OIndexOneValue {
   }
 
   @Override
-  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
     try {
@@ -72,6 +74,8 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
     Object snapshotValue = snapshot.get(key);
     if (snapshotValue == null) {
       final OIdentifiable storedValue = indexEngine.get(key);
@@ -98,6 +102,8 @@ public class OIndexUnique extends OIndexOneValue {
 
   @Override
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
     Object snapshotValue = snapshot.get(key);
 
     if (snapshotValue instanceof Set) {

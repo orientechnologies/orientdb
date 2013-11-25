@@ -17,8 +17,17 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -101,6 +110,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  protected Object getCollatingValue(final Object key) {
+    if (key != null && getDefinition() != null)
+      return getDefinition().getCollate().transform(key);
+    return key;
   }
 
   public void flush() {
@@ -266,8 +281,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
-  public boolean contains(final Object key) {
+  public boolean contains(Object key) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
@@ -392,9 +409,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * @return Returns a set of records with key between the range passed as parameter.
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
    */
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, final boolean iFromInclusive, Object iRangeTo,
       final boolean iToInclusive) {
     checkForRebuild();
+
+    iRangeFrom = getCollatingValue(iRangeFrom);
+    iRangeTo = getCollatingValue(iRangeTo);
 
     final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
@@ -409,8 +429,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return result;
   }
 
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean iInclusive) {
     checkForRebuild();
+
+    iRangeFrom = getCollatingValue(iRangeFrom);
+    iRangeTo = getCollatingValue(iRangeTo);
 
     final Set<ODocument> result = new ODocumentFieldsHashSet();
 

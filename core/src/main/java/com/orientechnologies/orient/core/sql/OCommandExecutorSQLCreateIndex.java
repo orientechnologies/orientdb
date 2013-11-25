@@ -205,7 +205,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   }
 
   private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
-    String[] fieldNameParts = fieldName.split("\\s+");
+    final String[] fieldNameParts = fieldName.split("\\s+");
     if (fieldNameParts.length == 1)
       return;
 
@@ -229,6 +229,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
   @Override
   public String getSyntax() {
-    return "CREATE INDEX <name> [ON <class-name> (prop-names)] <type> [<key-type>]";
+    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>]";
   }
 }

@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -57,11 +61,13 @@ public class OIndexFullText extends OIndexMultiValues {
    * the caller.
    */
   @Override
-  public OIndexFullText put(final Object key, final OIdentifiable iSingleValue) {
+  public OIndexFullText put(Object key, final OIdentifiable iSingleValue) {
     checkForRebuild();
 
     if (key == null)
       return this;
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
 
@@ -108,6 +114,9 @@ public class OIndexFullText extends OIndexMultiValues {
   protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
     if (key == null)
       return;
+
+    key = getCollatingValue(key);
+
     final List<String> words = splitIntoWords(key.toString());
 
     // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
@@ -149,8 +158,10 @@ public class OIndexFullText extends OIndexMultiValues {
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
-  public boolean remove(final Object key, final OIdentifiable value) {
+  public boolean remove(Object key, final OIdentifiable value) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
 
@@ -185,6 +196,8 @@ public class OIndexFullText extends OIndexMultiValues {
 
   @Override
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
     final List<String> words = splitIntoWords(key.toString());
     for (final String word : words) {
       final Set<OIdentifiable> recs;
