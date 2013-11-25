@@ -104,6 +104,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this;
   }
 
+  @Override
+  public void deleteWithoutIndexLoad(String indexName) {
+    throw new UnsupportedOperationException("deleteWithoutIndexLoad");
+  }
+
   public String getDatabaseName() {
     return databaseName;
   }

@@ -23,6 +23,8 @@ public interface OIndexEngine<V> {
 
   void delete();
 
+  void deleteWithoutLoad(String indexName);
+
   void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic);
 
   boolean contains(Object key);

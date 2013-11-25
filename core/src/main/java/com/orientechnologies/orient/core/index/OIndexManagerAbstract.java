@@ -185,6 +185,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return preProcessBeforeReturn(index);
   }
 
+  @Override
+  public void addClusterToIndex(String clusterName, String indexName) {
+    final OIndex<?> index = indexes.get(indexName.toLowerCase());
+    if (index == null)
+      throw new OIndexException("Index with name " + indexName + " does not exist.");
+
+    index.getInternal().addCluster(clusterName);
+    save();
+  }
+
   public boolean existsIndex(final String iName) {
     return indexes.containsKey(iName.toLowerCase());
   }

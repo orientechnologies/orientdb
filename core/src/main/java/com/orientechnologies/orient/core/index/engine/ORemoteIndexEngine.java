@@ -42,6 +42,10 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public void deleteWithoutLoad(String indexName) {
+  }
+
+  @Override
   public void delete() {
   }
 
