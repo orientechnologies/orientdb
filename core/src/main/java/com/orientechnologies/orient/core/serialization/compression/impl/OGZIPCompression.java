@@ -39,7 +39,7 @@ public class OGZIPCompression implements OCompression {
     try {
       final byte[] result;
       final OMemoryStream memoryOutputStream = new OMemoryStream();
-      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream);
+      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream, 16384); // 16KB
       try {
         gzipOutputStream.write(content);
         gzipOutputStream.finish();
@@ -58,7 +58,7 @@ public class OGZIPCompression implements OCompression {
   public byte[] uncompress(byte[] content) {
     try {
       final OMemoryInputStream memoryInputStream = new OMemoryInputStream(content);
-      final GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream);
+      final GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream, 16384); // 16KB
 
       try {
         final byte[] buffer = new byte[1024];

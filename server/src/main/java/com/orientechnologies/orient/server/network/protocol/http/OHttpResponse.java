@@ -333,7 +333,7 @@ public class OHttpResponse {
     try {
       byte[] incoming = jsonStr.getBytes("UTF-8");
       baos = new ByteArrayOutputStream();
-      gout = new GZIPOutputStream(baos);
+      gout = new GZIPOutputStream(baos, 16384); // 16KB
       gout.write(incoming);
       gout.finish();
       return baos.toByteArray();

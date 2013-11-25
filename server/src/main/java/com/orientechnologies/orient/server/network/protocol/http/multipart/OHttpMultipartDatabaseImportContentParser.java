@@ -36,7 +36,7 @@ public class OHttpMultipartDatabaseImportContentParser implements OHttpMultipart
     final String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
 
     if (fileName.endsWith(".gz") || fileName.endsWith(".gzip"))
-      return new GZIPInputStream(in);
+      return new GZIPInputStream(in, 16384); // 16KB
 
     return in;
   }

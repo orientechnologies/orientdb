@@ -590,7 +590,7 @@ public class OBase64Utils {
 			b64os = new OBase64Utils.OutputStream(baos, ENCODE | options);
 			if ((options & GZIP) != 0) {
 				// Gzip
-				gzos = new java.util.zip.GZIPOutputStream(b64os);
+        gzos = new java.util.zip.GZIPOutputStream(b64os, 16384); // 16KB
 				oos = new java.io.ObjectOutputStream(gzos);
 			} else {
 				// Not gzipped
@@ -888,7 +888,7 @@ public class OBase64Utils {
 				// GZip -> Base64 -> ByteArray
 				baos = new java.io.ByteArrayOutputStream();
 				b64os = new OBase64Utils.OutputStream(baos, ENCODE | options);
-				gzos = new java.util.zip.GZIPOutputStream(b64os);
+				gzos = new java.util.zip.GZIPOutputStream(b64os, 16384); // 16KB
 
 				gzos.write(source, off, len);
 				gzos.close();
@@ -1228,7 +1228,7 @@ public class OBase64Utils {
 				try {
 					baos = new java.io.ByteArrayOutputStream();
 					bais = new java.io.ByteArrayInputStream(bytes);
-					gzis = new java.util.zip.GZIPInputStream(bais);
+					gzis = new java.util.zip.GZIPInputStream(bais, 16384); // 16KB
 
 					while ((length = gzis.read(buffer)) >= 0) {
 						baos.write(buffer, 0, length);
