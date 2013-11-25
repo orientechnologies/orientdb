@@ -160,13 +160,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   private boolean add(OSBTreeBonsai<OIdentifiable, Boolean> tree, OIdentifiable oIdentifiable) {
-    // TODO check if we can avoid get operation
-    // TODO fix race condition
-    if (getTree().get(oIdentifiable) != null)
-      return false;
-
-    getTree().put(oIdentifiable, Boolean.TRUE);
-    return true;
+    return tree.put(oIdentifiable, Boolean.TRUE);
   }
 
   @Override
