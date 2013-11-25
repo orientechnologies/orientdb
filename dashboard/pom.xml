@@ -1,75 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
 
-	<modelVersion>4.0.0</modelVersion>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>agent</artifactId>
+        <version>1.6.1</version>
+        <packaging>jar</packaging>
 
-	<groupId>com.orientechnologies</groupId>
-	<version>1.6.1</version>
-	<artifactId>orientdb-workbench</artifactId>
+        <name>agent</name>
+        <url>http://maven.apache.org</url>
 
-	<name>OrientDB Workbench</name>
+        <properties>
+                <javac.src.version>1.6</javac.src.version>
+                <javac.target.version>1.6</javac.target.version>
+                <orientdb.version>1.6.1</orientdb.version>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        </properties>
+        
+        <repositories>
+                <repository>
+                        <id>sonatype-nexus-snapshots</id>
+                        <name>Sonatype Nexus Snapshots</name>
+                        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                        <releases>
+                                <enabled>false</enabled>
+                        </releases>
+                        <snapshots>
+                                <enabled>true</enabled>
+                        </snapshots>
+                </repository>
+        </repositories>
 
-	<properties>
-		<javac.src.version>1.6</javac.src.version>
-		<javac.target.version>1.6</javac.target.version>
-		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-		<osgi.import>*</osgi.import>
-		<osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
-		<orientdb.version>1.6.1-SNAPSHOT</orientdb.version>
-		<blueprints.version>2.5.0-SNAPSHOT</blueprints.version>
-	</properties>
-	<scm>
-		<url>https://github.com/orientechnologies/orientdb-enterprise</url>
-		<connection>scm:git:git://github.com/orientechnologies/orientdb-enterprise.git</connection>
-		<developerConnection>scm:git:git://github.com/orientechnologies/orientdb-enterprise.git</developerConnection>
-	</scm>
-
-	<dependencies>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-server</artifactId>
-			<version>${orientdb.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
-			<version>${orientdb.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-enterprise</artifactId>
-			<version>${orientdb.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orient-commons</artifactId>
-			<version>${orientdb.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.3.1</version>
-		</dependency>
-
-	</dependencies>
-	<repositories>
-		<repository>
-			<id>sonatype-nexus-snapshots</id>
-			<name>Sonatype Nexus Snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-
-	<build>
-		<plugins>
-			<plugin>
+        <build>
+                <plugins>
+                        <plugin>
                                 <groupId>org.apache.maven.plugins</groupId>
                                 <artifactId>maven-compiler-plugin</artifactId>
                                 <version>2.3.2</version>
@@ -78,65 +43,65 @@
                                         <target>1.6</target>
                                 </configuration>
                         </plugin>
-
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-4</version>
-				<executions>
-					<execution>
-						<id>user_distribution</id>
-						<phase>package</phase>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-						<configuration>
-							<descriptors>
-								<descriptor>src/main/assembly/plugin.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>${jar.manifest.mainclass}</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>com.github.github</groupId>
-				<artifactId>downloads-maven-plugin</artifactId>
-				<version>0.5</version>
-				<configuration>
-
-					<description>${project.version} release of ${project.name}</description>
-					<override>true</override>
-					<includeAttached>true</includeAttached>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-4</version>
-				<executions>
-					<execution>
-						<id>user_distribution</id>
-						<phase>package</phase>
-						<goals>
-							<goal>attached</goal>
-						</goals>
-						<configuration>
-							<descriptors>
-								<descriptor>src/main/assembly/dist.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-
+                        <plugin>
+                                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                                <artifactId>replacer</artifactId>
+                                <version>1.5.2</version>
+                                <executions>
+                                        <execution>
+                                                <phase>prepare-package</phase>
+                                                <goals>
+                                                        <goal>replace</goal>
+                                                </goals>
+                                        </execution>
+                                </executions>
+                                <configuration>
+                                        <file>target/classes/plugin.json</file>
+                                        <outputFile>
+                                                target/classes/plugin.json
+                                        </outputFile>
+                                        <regex>false</regex>
+                                        <replacements>
+                                                <replacement>
+                                                        <token>@LICENSE@</token>
+                                                        <value>${license}</value>
+                                                </replacement>
+                                        </replacements>
+                                </configuration>
+                        </plugin>
+                </plugins>
+        </build>
+        <dependencies>
+                <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.8.1</version>
+                        <scope>test</scope>
+                </dependency>
+                <dependency>
+                        <groupId>com.orientechnologies</groupId>
+                        <artifactId>orient-commons</artifactId>
+                        <version>${orientdb.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>com.orientechnologies</groupId>
+                        <artifactId>orientdb-core</artifactId>
+                        <version>${orientdb.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>com.orientechnologies</groupId>
+                        <artifactId>orientdb-client</artifactId>
+                        <version>${orientdb.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>com.orientechnologies</groupId>
+                        <artifactId>orientdb-enterprise</artifactId>
+                        <version>${orientdb.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>com.orientechnologies</groupId>
+                        <artifactId>orientdb-server</artifactId>
+                        <version>${orientdb.version}</version>
+                </dependency>
+        </dependencies>
 </project>
