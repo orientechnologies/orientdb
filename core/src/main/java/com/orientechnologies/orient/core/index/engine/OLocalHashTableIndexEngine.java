@@ -95,6 +95,11 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public void deleteWithoutLoad(String indexName) {
+    hashTable.deleteWithoutLoad(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
+  }
+
+  @Override
   public void delete() {
     hashTable.delete();
   }

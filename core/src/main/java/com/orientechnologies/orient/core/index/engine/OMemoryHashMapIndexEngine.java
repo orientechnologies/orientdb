@@ -59,6 +59,10 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public void deleteWithoutLoad(String indexName) {
+  }
+
+  @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
   }
 

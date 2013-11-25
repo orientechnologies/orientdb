@@ -261,7 +261,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       }
     }
 
-    final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS));
+    final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
 
     return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
@@ -674,6 +674,21 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
+  @Override
+  public void deleteWithoutIndexLoad(String indexName) {
+    modificationLock.requestModificationLock();
+    try {
+      acquireExclusiveLock();
+      try {
+        indexEngine.deleteWithoutLoad(indexName);
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      modificationLock.releaseModificationLock();
+    }
+  }
+
   public Iterator<Entry<Object, T>> iterator() {
     checkForRebuild();
 
@@ -738,10 +753,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  public OIndexAbstract<T> addCluster(final String iClusterName) {
+  public OIndexAbstract<T> addCluster(final String clusterName) {
     acquireExclusiveLock();
     try {
-      if (clustersToIndex.add(iClusterName))
+      if (clustersToIndex.add(clusterName))
         updateConfiguration();
       return this;
     } finally {

@@ -120,5 +120,7 @@ public interface OIndexManager {
 
   public void waitTillIndexRestore();
 
-	public boolean autoRecreateIndexesAfterCrash();
+  public boolean autoRecreateIndexesAfterCrash();
+
+  public void addClusterToIndex(String clusterName, String indexName);
 }

@@ -135,4 +135,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public boolean autoRecreateIndexesAfterCrash() {
     return delegate.autoRecreateIndexesAfterCrash();
   }
+
+  @Override
+  public void addClusterToIndex(String clusterName, String indexName) {
+    delegate.addClusterToIndex(clusterName, indexName);
+  }
 }

@@ -159,6 +159,11 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     }
   }
 
+  @Override
+  public void deleteWithoutLoad(String indexName) {
+    throw new UnsupportedOperationException("deleteWithoutLoad");
+  }
+
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
     acquireExclusiveLock();
     try {

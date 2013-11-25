@@ -124,6 +124,20 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
+  public void deleteWithoutLoad(String indexName) {
+    acquireExclusiveLock();
+    try {
+      final ODatabaseRecord database = getDatabase();
+      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+      sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
     acquireExclusiveLock();
     try {
