@@ -168,6 +168,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentUpdatesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
         </classes>
     </test>
     <test name="DbTools">

@@ -24,6 +24,7 @@ import java.util.Locale;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -45,6 +46,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDeleg
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   protected List<OPair<OSQLMethod, Object[]>> operationsChain = null;
+  protected OCollate                          collate;
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iText, '.');
@@ -103,7 +105,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
 
         } else {
-          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME), new Object[] { part }));
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME),
+              new Object[] { part }));
         }
       }
     }
@@ -132,6 +135,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     }
 
     return ioResult;
+  }
+
+  public OCollate getCollate() {
+    return collate;
   }
 
   public boolean hasChainOperators() {

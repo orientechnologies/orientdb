@@ -22,6 +22,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
@@ -55,10 +56,18 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(preLoadedFieldsArray))
+    if (doc.deserializeFields(preLoadedFieldsArray)) {
       // FIELD FOUND
-      return transformValue(iRecord, iContext,  ODocumentHelper.getFieldValue(doc, name));
+      Object v = ODocumentHelper.getFieldValue(doc, name);
 
+      if (doc.getSchemaClass() != null) {
+        final OProperty p = doc.getSchemaClass().getProperty(name);
+        if (p != null)
+          collate = p.getCollate();
+      }
+
+      return transformValue(iRecord, iContext, v);
+    }
     return null;
   }
 

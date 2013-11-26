@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -75,7 +76,9 @@ public class OSQLFilterCondition {
     Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext);
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
 
-    final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r);
+    final OCollate collate = getCollate();
+
+    final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
     if (convertedValues != null) {
       l = convertedValues[0];
       r = convertedValues[1];
@@ -100,6 +103,14 @@ public class OSQLFilterCondition {
     return result;
   }
 
+  public OCollate getCollate() {
+    if (left instanceof OSQLFilterItemAbstract)
+      return ((OSQLFilterItemAbstract) left).getCollate();
+    else if (right instanceof OSQLFilterItemAbstract)
+      return ((OSQLFilterItemAbstract) right).getCollate();
+    return null;
+  }
+
   public ORID getBeginRidRange() {
     if (operator == null)
       if (left instanceof OSQLFilterCondition)
@@ -120,8 +131,20 @@ public class OSQLFilterCondition {
     return operator.getEndRidRange(left, right);
   }
 
-  private Object[] checkForConversion(final OIdentifiable o, final Object l, final Object r) {
+  private Object[] checkForConversion(final OIdentifiable o, Object l, Object r, final OCollate collate) {
     Object[] result = null;
+
+    if (collate != null) {
+      final Object oldL = l;
+      final Object oldR = r;
+      
+      l = collate.transform(l);
+      r = collate.transform(r);
+      
+      if (l != oldL || r != oldR)
+        // CHANGED
+        result = new Object[] { l, r };
+    }
 
     try {
       // DEFINED OPERATOR
@@ -177,6 +200,7 @@ public class OSQLFilterCondition {
     } catch (Exception e) {
       // JUST IGNORE CONVERSION ERRORS
     }
+
     return result;
   }
 

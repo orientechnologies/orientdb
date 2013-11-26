@@ -1179,6 +1179,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
         extractFieldTypes(fields));
 
+    if (fields.length == 1) {
+      // TRY TO DETERMINE THE COLLATE IF ANY
+      final OProperty p = getProperty(fields[0]);
+      if (p != null) {
+        indexDefinition.setCollate(p.getCollate());
+      }
+    }
+
     return getDatabase().getMetadata().getIndexManager()
         .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener);
   }

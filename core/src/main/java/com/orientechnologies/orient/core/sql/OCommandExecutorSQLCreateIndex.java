@@ -154,7 +154,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         keyTypeList.toArray(keyTypes);
 
         if (fields != null && fields.length != 0 && fields.length != keyTypes.length) {
-          throw new OCommandSQLParsingException("Count of fields doesn't match with count of property types. " + "Fields: "
+          throw new OCommandSQLParsingException("Count of fields does not match with count of property types. " + "Fields: "
               + Arrays.toString(fields) + "; Types: " + Arrays.toString(keyTypes), parserText, oldPos);
         }
       }
