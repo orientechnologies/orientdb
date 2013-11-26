@@ -473,7 +473,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
       user.save();
 
       // CREATE ADMIN WITH WRITER ROLE
-      db.getMetadata().getSecurity().createUser("admin", "admin", "writer");
+      db.getMetadata().getSecurity().createUser("admin", "admin", "admin");
 
       // REOPEN THE DATABASE WITH NEW CREDENTIALS
       db.close();
