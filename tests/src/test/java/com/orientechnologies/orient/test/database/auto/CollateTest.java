@@ -37,6 +37,8 @@ public class CollateTest {
     assertEquals(database.query(new OSQLSynchQuery<Object>("select from ouser where name = 'admin'")).size(), 1);
     assertEquals(database.query(new OSQLSynchQuery<Object>("select from ouser where name like 'admin'")).size(), 1);
     assertEquals(database.query(new OSQLSynchQuery<Object>("select from ouser where name like 'AdMIN'")).size(), 1);
+    assertEquals(database.query(new OSQLSynchQuery<Object>("select from ouser where name like '%dm%'")).size(), 1);
+    assertEquals(database.query(new OSQLSynchQuery<Object>("select from ouser where name like '%MI%'")).size(), 1);
   }
 
 }
