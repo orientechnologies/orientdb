@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -1341,8 +1342,8 @@ public class IndexTest {
       anotherChildClassDocument.field("testParentProperty", 11L);
       anotherChildClassDocument.save();
 
-      Assert.assertFalse(new ORecordId(-1, ORecordId.CLUSTER_POS_INVALID).equals(childClassDocument.getIdentity()));
-      Assert.assertFalse(new ORecordId(-1, ORecordId.CLUSTER_POS_INVALID).equals(anotherChildClassDocument.getIdentity()));
+      Assert.assertFalse(new ORecordId(-1, ORID.CLUSTER_POS_INVALID).equals(childClassDocument.getIdentity()));
+      Assert.assertFalse(new ORecordId(-1, ORID.CLUSTER_POS_INVALID).equals(anotherChildClassDocument.getIdentity()));
     } finally {
       db.close();
     }

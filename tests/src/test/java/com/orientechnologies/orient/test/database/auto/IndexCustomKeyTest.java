@@ -49,6 +49,7 @@ public class IndexCustomKeyTest {
       value = buffer;
     }
 
+    @Override
     public int compareTo(ComparableBinary o) {
       final int size = value.length;
 
@@ -65,10 +66,12 @@ public class IndexCustomKeyTest {
       return value;
     }
 
+    @Override
     public byte[] toStream() throws OSerializationException {
       return value;
     }
 
+    @Override
     public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
       this.value = iStream;
       return this;
@@ -85,36 +88,44 @@ public class IndexCustomKeyTest {
       return length;
     }
 
+    @Override
     public int getObjectSize(final ComparableBinary object, Object... hints) {
       return object.toByteArray().length;
     }
 
+    @Override
     public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition, Object... hints) {
       final byte[] buffer = object.toByteArray();
       System.arraycopy(buffer, 0, stream, startPosition, buffer.length);
     }
 
+    @Override
     public ComparableBinary deserialize(final byte[] stream, final int startPosition) {
       final byte[] buffer = Arrays.copyOfRange(stream, startPosition, startPosition + LENGTH);
       return new ComparableBinary(buffer);
     }
 
+    @Override
     public int getObjectSize(byte[] stream, int startPosition) {
       return LENGTH;
     }
 
+    @Override
     public byte getId() {
       return ID;
     }
 
+    @Override
     public int getObjectSizeNative(byte[] stream, int startPosition) {
       return LENGTH;
     }
 
+    @Override
     public void serializeNative(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
       serialize(object, stream, startPosition);
     }
 
+    @Override
     public ComparableBinary deserializeNative(byte[] stream, int startPosition) {
       return deserialize(stream, startPosition);
     }
@@ -135,10 +146,12 @@ public class IndexCustomKeyTest {
       return LENGTH;
     }
 
+    @Override
     public boolean isFixedLength() {
       return true;
     }
 
+    @Override
     public int getFixedLength() {
       return LENGTH;
     }

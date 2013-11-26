@@ -155,14 +155,17 @@ public class IndexManagerTest {
   public void createCompositeIndexTestWithListener() {
     final AtomicInteger atomicInteger = new AtomicInteger(0);
     final OProgressListener progressListener = new OProgressListener() {
+      @Override
       public void onBegin(final Object iTask, final long iTotal) {
         atomicInteger.incrementAndGet();
       }
 
+      @Override
       public boolean onProgress(final Object iTask, final long iCounter, final float iPercent) {
         return true;
       }
 
+      @Override
       public void onCompletition(final Object iTask, final boolean iSucceed) {
         atomicInteger.incrementAndGet();
       }

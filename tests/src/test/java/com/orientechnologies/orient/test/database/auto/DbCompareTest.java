@@ -49,6 +49,7 @@ public class DbCompareTest implements OCommandOutputListener {
     Assert.assertTrue(databaseCompare.compare());
   }
 
+  @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
     System.out.print(iText);

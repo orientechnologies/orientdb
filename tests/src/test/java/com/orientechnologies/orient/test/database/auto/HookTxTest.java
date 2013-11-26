@@ -50,6 +50,7 @@ public class HookTxTest extends ORecordHookAbstract {
     database = new OObjectDatabaseTx(iURL);
   }
 
+  @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }
