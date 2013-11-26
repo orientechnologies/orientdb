@@ -266,6 +266,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (lastCheckPoint == null) {
       OLogManager.instance().info(this, "Checkpoints are absent will restore from beginning.");
       restoreFromBegging();
+      return;
     }
 
     OWALRecord checkPointRecord = writeAheadLog.read(lastCheckPoint);
