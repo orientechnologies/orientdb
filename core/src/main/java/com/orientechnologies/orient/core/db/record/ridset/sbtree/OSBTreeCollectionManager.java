@@ -31,8 +31,9 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeCollectionManager {
-  private final int                                                                  eviction_threshold = 100;
+  private static final int                                                           eviction_threshold = 100;
   private static final int                                                           CACHE_MAX_SIZE     = 100000;
+
   private static final String                                                        FILE_NAME          = "sbtreeridset";
 
   private final int                                                                  shift;
@@ -41,6 +42,8 @@ public class OSBTreeCollectionManager {
 
   public final String                                                                DEFAULT_EXTENSION  = ".sbc";
   private final ConcurrentLinkedHashMap<OBonsaiBucketPointer, SBTreeBonsaiContainer> treeCache          = new ConcurrentLinkedHashMap.Builder<OBonsaiBucketPointer, SBTreeBonsaiContainer>()
+                                                                                                            .maximumWeightedCapacity(
+                                                                                                                Long.MAX_VALUE)
                                                                                                             .build();
 
   public OSBTreeCollectionManager() {
