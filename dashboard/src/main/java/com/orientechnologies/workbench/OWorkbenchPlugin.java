@@ -122,15 +122,15 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   private long                                      updateTimer;
   private long                                      purgeTimer                        = 1000 * 60 * 30;
   private String                                    dbName                            = "monitor";
-  private String                                    dbUser                            = "admin";
-  private String                                    dbPassword                        = "admin";
+  private String                                    dbUser                            = "wb";
+  private String                                    dbPassword                        = "OrientDB_KILLS_Neo4J!";
   private ODatabaseDocumentTx                       db;
   Map<String, OMonitoredServer>                     servers                           = new HashMap<String, OMonitoredServer>();
   Map<Integer, Map<Integer, Set<OMonitoredServer>>> keyMap;
   Map<String, OPair<String, METRIC_TYPE>>           dictionary;
   private Set<OServerConfigurationListener>         listeners                         = new HashSet<OServerConfigurationListener>();
   private ConcurrentHashMap<String, Boolean>        metricsEnabled                    = new ConcurrentHashMap<String, Boolean>();
-  private String                                    version;
+  public   String                                    version;
   private OWorkbenchUpdateTask                      updater;
   private OWorkbenchMessageTask                     messageTask;
 
@@ -139,8 +139,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     serverInstance = iServer;
 
     updateTimer = OIOUtils.getTimeAsMillisecs("10s");
-    dbUser = "admin";
-    dbPassword = "admin";
     dbName = "plocal:" + OServerMain.server().getDatabaseDirectory() + dbName;
     for (OServerParameterConfiguration p : iParams) {
       if (p.name.equals("version"))
@@ -467,6 +465,23 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     message.createProperty("subject", OType.STRING);
     message.createProperty("payload", OType.STRING);
 
+    try {
+      // OVERWRITE ADMIN PASSWORD
+      OUser user = db.getMetadata().getSecurity().getUser("admin");
+      user.setName(dbUser);
+      user.setPassword(dbPassword);
+      user.save();
+
+      // CREATE ADMIN WITH WRITER ROLE
+      db.getMetadata().getSecurity().createUser("admin", "admin", "writer");
+
+      // REOPEN THE DATABASE WITH NEW CREDENTIALS
+      db.close();
+      db.open(dbUser, dbPassword);
+
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on creation of admin user", e);
+    }
   }
 
   @Override

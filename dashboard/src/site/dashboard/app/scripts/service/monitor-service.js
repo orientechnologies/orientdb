@@ -315,3 +315,22 @@ monitor.factory('Settings', function ($http, $resource) {
     }
     return resource;
 });
+monitor.factory('Users', function ($http, $resource) {
+    var resource = $resource(API + 'database/:database');
+
+    resource.savePasswd = function (ouser, callback) {
+        $http.put(API + 'document/monitor/' + ouser['@rid'].replace("#", ''), ouser).success(function (data) {
+            callback(data);
+        }).error(function (error) {
+                callback(error);
+            });
+    }
+    resource.getWithUsername = function (username, callback) {
+        var query = 'select * from OUser where name = "' + username + '"';
+        $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
+            if (data.result[0])
+                callback(data.result[0]);
+        });
+    }
+    return resource;
+});
