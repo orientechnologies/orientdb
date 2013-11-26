@@ -1809,13 +1809,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     // FREE DEAD CONNECTIONS
     int removedDeadConnections = 0;
     for (OChannelBinaryAsynchClient n : new ArrayList<OChannelBinaryAsynchClient>(networkPool)) {
-      if (n != null && !n.isConnected())
+      if (n != null && !n.isConnected())//Binary connection should be removed from the pool if the connection is null or not connected
+      {
         try {
           n.close();
         } catch (Exception e) {
         }
       networkPool.remove(n);
       removedDeadConnections++;
+      }
     }
 
     OLogManager.instance().debug(this, "Found and removed %d dead connections from the network pool", removedDeadConnections);
