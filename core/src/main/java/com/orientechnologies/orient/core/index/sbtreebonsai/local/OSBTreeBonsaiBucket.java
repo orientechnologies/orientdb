@@ -329,7 +329,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     byte[] serializedValue = new byte[size];
     valueSerializer.serializeNative(value, serializedValue, 0);
 
-    byte[] oldSerializedValue = pagePointer.get(entryPosition, size);
+    byte[] oldSerializedValue = pagePointer.get(offset + entryPosition, size);
 
     if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
       return 0;
