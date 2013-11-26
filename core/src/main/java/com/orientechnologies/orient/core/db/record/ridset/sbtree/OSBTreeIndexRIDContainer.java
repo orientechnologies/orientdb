@@ -23,6 +23,8 @@ import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -198,9 +200,26 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
   }
 
   public byte[] toStream() {
-    final StringBuilder iOutput = new StringBuilder();
-    toStream(iOutput);
-    return iOutput.toString().getBytes();
+    final byte[] stream = new byte[2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE];
+    int position = 0;
+    OLongSerializer.INSTANCE.serialize(getFileId(), stream, position);
+    position += OLongSerializer.LONG_SIZE;
+    OLongSerializer.INSTANCE.serialize(getRootPointer().getPageIndex(), stream, position);
+    position += OLongSerializer.LONG_SIZE;
+
+    OIntegerSerializer.INSTANCE.serialize(getRootPointer().getPageOffset(), stream, position);
+    return stream;
+  }
+
+  public static OSBTreeIndexRIDContainer fromStream(byte[] stream) {
+    int position = 0;
+    final Long fileId = OLongSerializer.INSTANCE.deserialize(stream, position);
+    position += OLongSerializer.LONG_SIZE;
+    final Long pageIndex = OLongSerializer.INSTANCE.deserialize(stream, position);
+    position += OLongSerializer.LONG_SIZE;
+    final Integer pageOffset = OIntegerSerializer.INSTANCE.deserialize(stream, position);
+
+    return new OSBTreeIndexRIDContainer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
   }
 
   @Override
