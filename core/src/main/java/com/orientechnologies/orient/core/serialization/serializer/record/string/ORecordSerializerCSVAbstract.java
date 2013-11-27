@@ -358,7 +358,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (!(iValue instanceof OMVRBTreeRIDSet || iValue instanceof OSBTreeRIDSet)) {
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
         if (preferSBTreeRIDSet && iRecord.getDatabase().getStorage() instanceof OLocalPaginatedStorage)
-          coll = new OSBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
+          coll = new OSBTreeRIDSet((Collection<OIdentifiable>) iValue);
         else
           coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 

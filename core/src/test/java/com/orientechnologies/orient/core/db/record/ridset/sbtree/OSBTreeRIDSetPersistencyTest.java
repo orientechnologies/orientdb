@@ -62,7 +62,7 @@ public class OSBTreeRIDSetPersistencyTest {
 
     final ODocument doc = new ODocument();
 
-    final OSBTreeRIDSet ridSet = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
     ridSet.addAll(expected);
 
     doc.field("ridset", ridSet);

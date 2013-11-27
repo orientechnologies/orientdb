@@ -37,8 +37,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OSBTreeRIDSetTest {
 
-  private ODocument doc;
-
   @BeforeClass
   public void setUp() throws Exception {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRIDSetTest");
@@ -49,8 +47,6 @@ public class OSBTreeRIDSetTest {
 
     db.create();
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
-    doc = new ODocument();
-    doc.save();
   }
 
   @AfterClass
@@ -60,16 +56,8 @@ public class OSBTreeRIDSetTest {
   }
 
   @Test
-  public void testInitialization() throws Exception {
-    OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
-
-    assertNotNull(set.getRootPointer());
-    assertTrue(set.isEmpty());
-  }
-
-  @Test
   public void testAdd() throws Exception {
-    OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    OSBTreeRIDSet set = new OSBTreeRIDSet();
 
     boolean result = set.add(new ORecordId("#77:1"));
     assertTrue(result);
@@ -79,7 +67,7 @@ public class OSBTreeRIDSetTest {
 
   @Test
   public void testAdd2() throws Exception {
-    OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    OSBTreeRIDSet set = new OSBTreeRIDSet();
 
     boolean result = set.add(new ORecordId("#77:2"));
     assertTrue(result);
@@ -92,7 +80,7 @@ public class OSBTreeRIDSetTest {
 
   @Test
   public void testEmptyIterator() throws Exception {
-    OSBTreeRIDSet ridSet = new OSBTreeRIDSet(doc);
+    OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
     assertEquals(ridSet.size(), 0);
 
     for (OIdentifiable id : ridSet) {
@@ -110,7 +98,7 @@ public class OSBTreeRIDSetTest {
     expected.add(new ORecordId("#77:15"));
     expected.add(new ORecordId("#77:16"));
 
-    OSBTreeRIDSet ridSet = new OSBTreeRIDSet(doc);
+    OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
     ridSet.setAutoConvertToRecord(false);
     ridSet.addAll(expected);
     assertEquals(ridSet.size(), 5);
@@ -125,7 +113,7 @@ public class OSBTreeRIDSetTest {
 
   @Test
   public void testContains() {
-    final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
 
     final ORecordId id1 = new ORecordId("#77:1");
     set.add(id1);
@@ -139,7 +127,7 @@ public class OSBTreeRIDSetTest {
 
   @Test
   public void testContainsAll() {
-    final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
 
     set.addAll(Arrays.asList(new ORecordId("#78:1"), new ORecordId("#78:2"), new ORecordId("#78:3")));
 
@@ -158,7 +146,7 @@ public class OSBTreeRIDSetTest {
     initialValues.add(new ORecordId("#77:15"));
     initialValues.add(new ORecordId("#77:16"));
 
-    final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
     set.addAll(initialValues);
 
     set.clear();
@@ -184,7 +172,7 @@ public class OSBTreeRIDSetTest {
     expected.add(new ORecordId("#77:15"));
     expected.add(new ORecordId("#77:16"));
 
-    final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
     set.addAll(expected);
 
     assertFalse(set.remove(new ORecordId("#77:23")));
@@ -206,7 +194,7 @@ public class OSBTreeRIDSetTest {
     expected.add(new ORecordId("#77:15"));
     expected.add(new ORecordId("#77:16"));
 
-    final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
     set.addAll(expected);
 
     assertFalse(set.removeAll(Arrays.asList(new ORecordId("#77:23"), new ORecordId("#77:27"))));
@@ -231,7 +219,7 @@ public class OSBTreeRIDSetTest {
     initialRecords.add(new ORecordId("#77:15"));
     initialRecords.add(new ORecordId("#77:16"));
 
-    final OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
+    final OSBTreeRIDSet set = new OSBTreeRIDSet();
     set.setAutoConvertToRecord(false);
     set.addAll(initialRecords);
 

@@ -16,19 +16,15 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -36,70 +32,71 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidSetUpdateSerializationOperation;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, ORecordLazyMultiValue {
-  private final OBonsaiBucketPointer     rootPointer;
-  private ORecordInternal<?>             owner;
-  private boolean                        autoConvertToRecord = true;
+public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, ORecordLazyMultiValue, OSizeable {
+  private static final OProfilerMBean       PROFILER            = Orient.instance().getProfiler();
 
-  private final OSBTreeCollectionManager collectionManager;
+  private OBonsaiBucketPointer              rootPointer;
 
-  protected static final OProfilerMBean  PROFILER            = Orient.instance().getProfiler();
+  private boolean                           autoConvertToRecord = true;
 
-  private OSBTreeRIDSet(ODatabaseRecord database) {
-    collectionManager = database.getSbTreeCollectionManager();
+  private final OSBTreeCollectionManager    collectionManager;
 
-    OSBTreeBonsai<OIdentifiable, Boolean> tree = collectionManager.createSBTree();
-    rootPointer = tree.getRootBucketPointer();
-  }
+  private final NavigableSet<OIdentifiable> addValues           = new TreeSet<OIdentifiable>();
+  private final Set<OIdentifiable>          removedValues       = new HashSet<OIdentifiable>();
+
+  private boolean                           clear               = false;
 
   public OSBTreeRIDSet() {
-    this(ODatabaseRecordThreadLocal.INSTANCE.get());
-    this.owner = null;
+    rootPointer = null;
+
+    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
   }
 
-  public OSBTreeRIDSet(ORecordInternal<?> owner) {
-    this(owner.getDatabase());
-    this.owner = owner;
-  }
-
-  public OSBTreeRIDSet(ORecordInternal<?> owner, String fileName, OBonsaiBucketPointer rootPointer) {
-    this.owner = owner;
+  public OSBTreeRIDSet(OBonsaiBucketPointer rootPointer) {
     this.rootPointer = rootPointer;
 
-    if (owner != null)
-      collectionManager = owner.getDatabase().getSbTreeCollectionManager();
-    else
-      collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
   }
 
-  public OSBTreeRIDSet(ODocument owner, Collection<OIdentifiable> iValue) {
-    this(owner);
-    addAll(iValue);
+  public OSBTreeRIDSet(Collection<OIdentifiable> value) {
+    rootPointer = null;
+
+    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+
+    addAll(value);
   }
 
   private OSBTreeBonsai<OIdentifiable, Boolean> loadTree() {
+    if (rootPointer == null)
+      return null;
+
     return collectionManager.loadSBTree(rootPointer);
   }
 
   private void releaseTree() {
-    collectionManager.releaseSBTree(rootPointer);
-  }
+    if (rootPointer == null)
+      return;
 
-  protected OBonsaiBucketPointer getRootPointer() {
-    return rootPointer;
+    collectionManager.releaseSBTree(rootPointer);
   }
 
   @Override
   public int size() {
     OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
     try {
-      return (int) tree.size();
+      final int size = addValues.size();
+      if (tree != null)
+        return size + (int) tree.size() - removedValues.size();
+
+      return size;
     } finally {
       releaseTree();
     }
@@ -108,7 +105,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public boolean isEmpty() {
-    return size() == 0L;
+    return size() == 0;
   }
 
   @Override
@@ -117,7 +114,16 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   public boolean contains(OIdentifiable o) {
-    OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+    if (addValues.contains(o))
+      return true;
+
+    if (removedValues.contains(o))
+      return false;
+
+    final OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+    if (tree == null)
+      return false;
+
     try {
       return tree.get(o) != null;
     } finally {
@@ -127,7 +133,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public Iterator<OIdentifiable> iterator() {
-    return null;
+    return new RIDSetIterator(addValues.iterator(), rootPointer != null ? new SBTreeValuesIterator() : null, removedValues);
   }
 
   @Override
@@ -163,17 +169,13 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   @Override
-  public boolean add(OIdentifiable oIdentifiable) {
-    return false;
-  }
+  public boolean add(OIdentifiable identifiable) {
+    if (contains(identifiable))
+      return false;
 
-  private boolean add(OSBTreeBonsai<OIdentifiable, Boolean> tree, OIdentifiable oIdentifiable) {
-    // TODO check if we can avoid get operation
-    // TODO fix race condition
-    // if (getTree().get(oIdentifiable) != null)
-    // return false;
-    //
-    // getTree().put(oIdentifiable, Boolean.TRUE);
+    removedValues.remove(identifiable);
+    addValues.add(identifiable);
+
     return true;
   }
 
@@ -183,7 +185,15 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
   }
 
   public boolean remove(OIdentifiable o) {
-    return false;// getTree().remove(o) != null;
+    if (!contains(o))
+      return false;
+
+    addValues.remove(o);
+
+    if (rootPointer != null)
+      removedValues.add(o);
+
+    return true;
   }
 
   @Override
@@ -196,13 +206,11 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
-    // final OSBTreeBonsai<OIdentifiable, Boolean> tree = getTree();
-    // boolean modified = false;
-    // for (OIdentifiable e : c)
-    // if (add(tree, e))
-    // modified = true;
-    // return modified;
-    return false;
+    boolean modified = false;
+    for (OIdentifiable e : c)
+      if (add(e))
+        modified = true;
+    return modified;
   }
 
   @Override
@@ -230,7 +238,9 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
 
   @Override
   public void clear() {
-    // getTree().clear();
+    clear = true;
+    addValues.clear();
+    removedValues.clear();
   }
 
   @Override
@@ -241,11 +251,24 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
       output.append(OStringSerializerHelper.LINKSET_PREFIX);
 
       final ODocument document = new ODocument();
-      document.field("rootIndex", getRootPointer().getPageIndex());
-      document.field("rootOffset", getRootPointer().getPageOffset());
+      if (rootPointer == null) {
+        final OSBTreeBonsai<OIdentifiable, Boolean> treeBonsai = ODatabaseRecordThreadLocal.INSTANCE.get()
+            .getSbTreeCollectionManager().createSBTree();
+        try {
+          rootPointer = treeBonsai.getRootBucketPointer();
+        } finally {
+          releaseTree();
+        }
+      }
+
+      document.field("rootIndex", rootPointer.getPageIndex());
+      document.field("rootOffset", rootPointer.getPageOffset());
       output.append(new String(document.toStream()));
 
       output.append(OStringSerializerHelper.SET_END);
+
+      ORecordSerializationContext context = ORecordSerializationContext.getContext();
+      context.push(new ORidSetUpdateSerializationOperation(addValues, removedValues, clear, rootPointer));
     } finally {
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.toStream"), "Serialize a MVRBTreeRID", timer);
     }
@@ -270,14 +293,13 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     doc.fromString(stream);
     final OBonsaiBucketPointer rootIndex = new OBonsaiBucketPointer((Long) doc.field("rootIndex"),
         (Integer) doc.field("rootOffset"));
-    final String fileName = doc.field("file");
 
-    return new OSBTreeRIDSet(owner, fileName, rootIndex);
+    return new OSBTreeRIDSet(rootIndex);
   }
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
-    return null;// new TreeKeyIterator(getTree(), false);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -305,33 +327,146 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     throw new UnsupportedOperationException();
   }
 
-  private static class TreeKeyIterator implements Iterator<OIdentifiable> {
-    private final boolean                                   autoConvertToRecord;
-    private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
+  private final class RIDSetIterator implements Iterator<OIdentifiable> {
+    private final Iterator<OIdentifiable> addedValuesIterator;
+    private final Iterator<OIdentifiable> sbTreeIterator;
 
-    public TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
-      entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(tree);
-      this.autoConvertToRecord = autoConvertToRecord;
+    private final Set<OIdentifiable>      removedValues;
+
+    private OIdentifiable                 nextAdded;
+    private OIdentifiable                 nextSBTree;
+
+    private OIdentifiable                 currentValue;
+
+    private RIDSetIterator(Iterator<OIdentifiable> addedValuesIterator, Iterator<OIdentifiable> sbTreeIterator,
+        Set<OIdentifiable> removedValues) {
+      this.addedValuesIterator = addedValuesIterator;
+      this.sbTreeIterator = sbTreeIterator;
+      this.removedValues = removedValues;
+
+      nextAdded = nextNotRemovedValue(addedValuesIterator);
+
+      if (sbTreeIterator != null)
+        nextSBTree = nextNotRemovedValue(sbTreeIterator);
     }
 
     @Override
     public boolean hasNext() {
-      return entryIterator.hasNext();
+      return nextAdded != null || nextSBTree != null;
+
     }
 
     @Override
     public OIdentifiable next() {
-      final OIdentifiable identifiable = entryIterator.next().getKey();
-      if (autoConvertToRecord)
-        return identifiable.getRecord();
-      else
-        return identifiable;
+      if (nextAdded != null && nextSBTree != null) {
+        if (nextAdded.compareTo(nextSBTree) <= 0) {
+          currentValue = nextAdded;
+          nextAdded = nextNotRemovedValue(addedValuesIterator);
+        } else {
+          currentValue = nextSBTree;
+          nextSBTree = nextNotRemovedValue(sbTreeIterator);
+        }
+      } else if (nextAdded != null) {
+        currentValue = nextAdded;
+        nextAdded = nextNotRemovedValue(addedValuesIterator);
+      } else if (nextSBTree != null) {
+        currentValue = nextSBTree;
+        nextSBTree = nextNotRemovedValue(sbTreeIterator);
+      } else
+        throw new NoSuchElementException();
+
+      return currentValue;
     }
 
     @Override
     public void remove() {
-      entryIterator.remove();
+      if (currentValue.equals(nextAdded)) {
+        nextAdded = nextNotRemovedValue(addedValuesIterator);
+        addedValuesIterator.remove();
+      }
+      if (currentValue.equals(nextSBTree)) {
+        nextSBTree = nextNotRemovedValue(sbTreeIterator);
+        removedValues.add(currentValue);
+      }
+
+      currentValue = null;
+    }
+
+    private OIdentifiable nextNotRemovedValue(Iterator<OIdentifiable> iterator) {
+      OIdentifiable identifiable;
+      while (iterator.hasNext()) {
+        identifiable = iterator.next();
+        if (!removedValues.contains(identifiable))
+          return identifiable;
+      }
+
+      return null;
     }
   }
 
+  private final class SBTreeValuesIterator implements Iterator<OIdentifiable> {
+    private LinkedList<OIdentifiable> preFetchedValues;
+    private OIdentifiable             firstKey;
+    private OIdentifiable             currentValue;
+
+    public SBTreeValuesIterator() {
+      final OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+      try {
+
+        if (tree.size() == 0) {
+          this.preFetchedValues = null;
+          return;
+        }
+
+        this.preFetchedValues = new LinkedList<OIdentifiable>();
+        firstKey = tree.firstKey();
+
+        prefetchData(tree, true);
+      } finally {
+        releaseTree();
+      }
+    }
+
+    private void prefetchData(OSBTreeBonsai<OIdentifiable, Boolean> tree, boolean firstTime) {
+      tree.loadEntriesMajor(firstKey, firstTime, new OTreeInternal.RangeResultListener<OIdentifiable, Boolean>() {
+        @Override
+        public boolean addResult(final Map.Entry<OIdentifiable, Boolean> entry) {
+          preFetchedValues.add(entry.getKey());
+          return preFetchedValues.size() <= 1000;
+        }
+      });
+
+      if (preFetchedValues.isEmpty())
+        preFetchedValues = null;
+      else
+        firstKey = preFetchedValues.getLast();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return preFetchedValues != null;
+    }
+
+    @Override
+    public OIdentifiable next() {
+      final OIdentifiable value = preFetchedValues.removeFirst();
+      if (preFetchedValues.isEmpty()) {
+        final OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+        try {
+          prefetchData(tree, false);
+        } finally {
+          releaseTree();
+        }
+      }
+
+      currentValue = value;
+
+      return value;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
 }

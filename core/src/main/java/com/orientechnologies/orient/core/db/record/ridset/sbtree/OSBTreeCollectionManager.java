@@ -76,7 +76,7 @@ public class OSBTreeCollectionManager {
     final Object lock = treesSubsetLock(tree.getRootBucketPointer());
     synchronized (lock) {
       SBTreeBonsaiContainer container = new SBTreeBonsaiContainer(tree);
-      SBTreeBonsaiContainer oldContainer = treeCache.put(tree.getRootBucketPointer(), new SBTreeBonsaiContainer(tree));
+      SBTreeBonsaiContainer oldContainer = treeCache.put(tree.getRootBucketPointer(), container);
       assert oldContainer == null;
 
       container.usagesCounter++;

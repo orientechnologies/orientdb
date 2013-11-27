@@ -268,7 +268,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         links = (Set<OIdentifiable>) field;
       } else if (field instanceof Collection<?>) {
         if (preferSBTreeSet)
-          links = new OSBTreeRIDSet(iVertex, (Collection<OIdentifiable>) field);
+          links = new OSBTreeRIDSet((Collection<OIdentifiable>) field);
         else
           links = new OMVRBTreeRIDSet(iVertex, (Collection<OIdentifiable>) field);
         iVertex.field(vertexField, links);
@@ -561,7 +561,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
   private Set<OIdentifiable> createRIDSet(ODocument iVertex) {
     if (preferSBTreeSet)
-      return new OSBTreeRIDSet(iVertex);
+      return new OSBTreeRIDSet();
     else
       return new OMVRBTreeRIDSet(iVertex);
   }
