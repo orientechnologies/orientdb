@@ -115,13 +115,49 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public void serializeNative(OIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
-    throw new UnsupportedOperationException("not implemented yet");
+  public void serializeNative(OIndexRIDContainer object, byte[] stream, int offset, Object... hints) {
+    LONG_SERIALIZER.serializeNative(object.getFileId(), stream, offset + FILE_ID_OFFSET);
+
+    final boolean embedded = object.isEmbedded();
+    BOOLEAN_SERIALIZER.serializeNative(embedded, stream, offset + EMBEDDED_OFFSET);
+
+    if (embedded) {
+      INT_SERIALIZER.serializeNative(object.size(), stream, offset + EMBEDDED_SIZE_OFFSET);
+
+      int p = offset + EMBEDDED_VALUES_OFFSET;
+      for (OIdentifiable ids : object) {
+        LINK_SERIALIZER.serializeNative(ids, stream, p);
+        p += RID_SIZE;
+      }
+    } else {
+      final OIndexRIDContainerSBTree underlying = (OIndexRIDContainerSBTree) object.getUnderlying();
+      final OBonsaiBucketPointer rootPointer = underlying.getRootPointer();
+      LONG_SERIALIZER.serializeNative(rootPointer.getPageIndex(), stream, offset + SBTREE_ROOTINDEX_OFFSET);
+      INT_SERIALIZER.serializeNative(rootPointer.getPageOffset(), stream, offset + SBTREE_ROOTOFFSET_OFFSET);
+    }
   }
 
   @Override
-  public OIndexRIDContainer deserializeNative(byte[] stream, int startPosition) {
-    throw new UnsupportedOperationException("not implemented yet");
+  public OIndexRIDContainer deserializeNative(byte[] stream, int offset) {
+    final long fileId = LONG_SERIALIZER.deserializeNative(stream, offset + FILE_ID_OFFSET);
+    if (BOOLEAN_SERIALIZER.deserializeNative(stream, offset + EMBEDDED_OFFSET)) {
+      final OIndexRIDContainerEmbedded underlying = new OIndexRIDContainerEmbedded();
+
+      final int size = INT_SERIALIZER.deserializeNative(stream, offset + EMBEDDED_SIZE_OFFSET);
+      int p = offset + EMBEDDED_VALUES_OFFSET;
+      for (int i = 0; i < size; i++) {
+        underlying.add(LINK_SERIALIZER.deserializeNative(stream, p));
+        p += RID_SIZE;
+      }
+
+      return new OIndexRIDContainer(fileId, underlying);
+    } else {
+      final long pageIndex = LONG_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTINDEX_OFFSET);
+      final int pageOffset = INT_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTOFFSET_OFFSET);
+      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer);
+      return new OIndexRIDContainer(fileId, underlying);
+    }
   }
 
   @Override
