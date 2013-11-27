@@ -23,20 +23,14 @@ import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
@@ -44,29 +38,25 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuilderSerializable {
+public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   public static final String                    INDEX_FILE_EXTENSION = ".irs";
   private OSBTreeBonsai<OIdentifiable, Boolean> tree;
 
   protected static final OProfilerMBean         PROFILER             = Orient.instance().getProfiler();
 
-  public OSBTreeIndexRIDContainer(String fileName) {
+  public OIndexRIDContainerSBTree(String fileName) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
 
     tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
-  private OSBTreeIndexRIDContainer(long fileId, OBonsaiBucketPointer rootPointer) {
+  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
     tree.load(fileId, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
-  protected long getFileId() {
-    return tree.getFileId();
-  }
-
-  protected OBonsaiBucketPointer getRootPointer() {
+  public OBonsaiBucketPointer getRootPointer() {
     return tree.getRootBucketPointer();
   }
 
@@ -177,66 +167,6 @@ public class OSBTreeIndexRIDContainer implements Set<OIdentifiable>, OStringBuil
   @Override
   public void clear() {
     tree.clear();
-  }
-
-  @Override
-  public OSBTreeIndexRIDContainer toStream(StringBuilder iOutput) throws OSerializationException {
-    final long timer = PROFILER.startChrono();
-
-    try {
-      iOutput.append(OStringSerializerHelper.LINKSET_PREFIX);
-
-      final ODocument document = new ODocument();
-      document.field("rootIndex", getRootPointer().getPageIndex());
-      document.field("rootOffset", getRootPointer().getPageOffset());
-      document.field("fileId", getFileId());
-      iOutput.append(new String(document.toStream()));
-
-      iOutput.append(OStringSerializerHelper.SET_END);
-    } finally {
-      PROFILER.stopChrono(PROFILER.getProcessMetric("index.valuecontainer.toStream"), "Serialize a not unique index value container", timer);
-    }
-    return this;
-  }
-
-  public byte[] toStream() {
-    final byte[] stream = new byte[2 * OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE];
-    int position = 0;
-    OLongSerializer.INSTANCE.serialize(getFileId(), stream, position);
-    position += OLongSerializer.LONG_SIZE;
-    OLongSerializer.INSTANCE.serialize(getRootPointer().getPageIndex(), stream, position);
-    position += OLongSerializer.LONG_SIZE;
-
-    OIntegerSerializer.INSTANCE.serialize(getRootPointer().getPageOffset(), stream, position);
-    return stream;
-  }
-
-  public static OSBTreeIndexRIDContainer fromStream(byte[] stream) {
-    int position = 0;
-    final Long fileId = OLongSerializer.INSTANCE.deserialize(stream, position);
-    position += OLongSerializer.LONG_SIZE;
-    final Long pageIndex = OLongSerializer.INSTANCE.deserialize(stream, position);
-    position += OLongSerializer.LONG_SIZE;
-    final Integer pageOffset = OIntegerSerializer.INSTANCE.deserialize(stream, position);
-
-    return new OSBTreeIndexRIDContainer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
-  }
-
-  @Override
-  public OStringBuilderSerializable fromStream(StringBuilder iInput) throws OSerializationException {
-    throw new UnsupportedOperationException("unimplemented yet");
-  }
-
-  public static OSBTreeIndexRIDContainer fromStream(String stream) {
-    stream = stream.substring(OStringSerializerHelper.LINKSET_PREFIX.length(), stream.length() - 1);
-
-    final ODocument doc = new ODocument();
-    doc.fromString(stream);
-    final OBonsaiBucketPointer rootIndex = new OBonsaiBucketPointer((Long) doc.field("rootIndex"),
-        (Integer) doc.field("rootOffset"));
-    final long fileId = doc.field("fileId");
-
-    return new OSBTreeIndexRIDContainer(fileId, rootIndex);
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {

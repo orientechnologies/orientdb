@@ -15,36 +15,60 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeRIDSet;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import static com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer.RID_SIZE;
 
 import java.io.IOException;
 
-public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OSBTreeIndexRIDContainer> {
-  public static final String NAME = "ic";
-  public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE = new OStreamSerializerSBTreeIndexRIDContainer();
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainerEmbedded;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainerSBTree;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
-  public static final byte ID = 20;
+public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OIndexRIDContainer> {
+  public static final String                                   NAME                     = "ic";
+  public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE                 = new OStreamSerializerSBTreeIndexRIDContainer();
+
+  public static final byte                                     ID                       = 20;
+  public static final int                                      FILE_ID_OFFSET           = 0;
+  public static final int                                      EMBEDDED_OFFSET          = FILE_ID_OFFSET
+                                                                                            + OLongSerializer.LONG_SIZE;
+  public static final int                                      SBTREE_ROOTINDEX_OFFSET  = EMBEDDED_OFFSET
+                                                                                            + OBooleanSerializer.BOOLEAN_SIZE;
+  public static final int                                      SBTREE_ROOTOFFSET_OFFSET = SBTREE_ROOTINDEX_OFFSET
+                                                                                            + OLongSerializer.LONG_SIZE;
+
+  public static final int                                      EMBEDDED_SIZE_OFFSET     = EMBEDDED_OFFSET
+                                                                                            + OBooleanSerializer.BOOLEAN_SIZE;
+  public static final int                                      EMBEDDED_VALUES_OFFSET   = EMBEDDED_SIZE_OFFSET
+                                                                                            + OIntegerSerializer.INT_SIZE;
+
+  public static final OLongSerializer                          LONG_SERIALIZER          = OLongSerializer.INSTANCE;
+  public static final OBooleanSerializer                       BOOLEAN_SERIALIZER       = OBooleanSerializer.INSTANCE;
+  public static final OIntegerSerializer                       INT_SERIALIZER           = OIntegerSerializer.INSTANCE;
+  public static final int                                      SBTREE_CONTAINER_SIZE    = OBooleanSerializer.BOOLEAN_SIZE + 2
+                                                                                            * OLongSerializer.LONG_SIZE
+                                                                                            + OIntegerSerializer.INT_SIZE;
+  public static final OLinkSerializer                          LINK_SERIALIZER          = OLinkSerializer.INSTANCE;
 
   public Object fromStream(final byte[] iStream) throws IOException {
     if (iStream == null)
       return null;
 
-    return deserializeContainer(iStream);
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   public byte[] toStream(final Object iObject) throws IOException {
     if (iObject == null)
       return null;
 
-    return serializeContainer((OSBTreeIndexRIDContainer) iObject);
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   public String getName() {
@@ -52,27 +76,27 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   @Override
-  public int getObjectSize(OSBTreeIndexRIDContainer object, Object... hints) {
-    final byte[] serializedSet = object.toStream();
-    return OBinaryTypeSerializer.INSTANCE.getObjectSize(serializedSet);
+  public int getObjectSize(OIndexRIDContainer object, Object... hints) {
+    if (object.isEmbedded()) {
+      return embeddedObjectSerializedSize(object.size());
+    } else {
+      return SBTREE_CONTAINER_SIZE;
+    }
   }
 
   @Override
   public int getObjectSize(byte[] stream, int startPosition) {
-    return OBinaryTypeSerializer.INSTANCE.getObjectSize(stream, startPosition);
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   @Override
-  public void serialize(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
-    final byte[] serializedSet = serializeContainer(object);
-    OBinaryTypeSerializer.INSTANCE.serialize(serializedSet, stream, startPosition);
+  public void serialize(OIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   @Override
-  public OSBTreeIndexRIDContainer deserialize(byte[] stream, int startPosition) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserialize(stream, startPosition);
-
-    return deserializeContainer(serializedSet);
+  public OIndexRIDContainer deserialize(byte[] stream, int startPosition) {
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   @Override
@@ -87,56 +111,85 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
 
   @Override
   public int getFixedLength() {
-    return 0;
+    throw new UnsupportedOperationException("Length is not fixed");
   }
 
   @Override
-  public void serializeNative(OSBTreeIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
-    final byte[] serializedSet = serializeContainer(object);
-    OBinaryTypeSerializer.INSTANCE.serializeNative(serializedSet, stream, startPosition);
-
+  public void serializeNative(OIndexRIDContainer object, byte[] stream, int startPosition, Object... hints) {
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   @Override
-  public OSBTreeIndexRIDContainer deserializeNative(byte[] stream, int startPosition) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeNative(stream, startPosition);
-
-    return deserializeContainer(serializedSet);
+  public OIndexRIDContainer deserializeNative(byte[] stream, int startPosition) {
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   @Override
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    return OBinaryTypeSerializer.INSTANCE.getObjectSizeNative(stream, startPosition);
+    throw new UnsupportedOperationException("not implemented yet");
   }
 
   @Override
-  public void serializeInDirectMemory(OSBTreeIndexRIDContainer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    final byte[] serializedSet = serializeContainer(object);
-    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
+  public void serializeInDirectMemory(OIndexRIDContainer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    LONG_SERIALIZER.serializeInDirectMemory(object.getFileId(), pointer, offset + FILE_ID_OFFSET);
+
+    final boolean embedded = object.isEmbedded();
+    BOOLEAN_SERIALIZER.serializeInDirectMemory(embedded, pointer, offset + EMBEDDED_OFFSET);
+
+    if (embedded) {
+      INT_SERIALIZER.serializeInDirectMemory(object.size(), pointer, offset + EMBEDDED_SIZE_OFFSET);
+
+      long p = offset + EMBEDDED_VALUES_OFFSET;
+      for (OIdentifiable ids : object) {
+        LINK_SERIALIZER.serializeInDirectMemory(ids, pointer, p);
+        p += RID_SIZE;
+      }
+    } else {
+      final OIndexRIDContainerSBTree underlying = (OIndexRIDContainerSBTree) object.getUnderlying();
+      final OBonsaiBucketPointer rootPointer = underlying.getRootPointer();
+      LONG_SERIALIZER.serializeInDirectMemory(rootPointer.getPageIndex(), pointer, offset + SBTREE_ROOTINDEX_OFFSET);
+      INT_SERIALIZER.serializeInDirectMemory(rootPointer.getPageOffset(), pointer, offset + SBTREE_ROOTOFFSET_OFFSET);
+    }
   }
 
   @Override
-  public OSBTreeIndexRIDContainer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
+  public OIndexRIDContainer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    final long fileId = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + FILE_ID_OFFSET);
+    if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_OFFSET)) {
+      final OIndexRIDContainerEmbedded underlying = new OIndexRIDContainerEmbedded();
 
-    return deserializeContainer(serializedSet);
+      final int size = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_SIZE_OFFSET);
+      long p = offset + EMBEDDED_VALUES_OFFSET;
+      for (int i = 0; i < size; i++) {
+        underlying.add(LINK_SERIALIZER.deserializeFromDirectMemory(pointer, p));
+        p += RID_SIZE;
+      }
+
+      return new OIndexRIDContainer(fileId, underlying);
+    } else {
+      final long pageIndex = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + SBTREE_ROOTINDEX_OFFSET);
+      final int pageOffset = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + SBTREE_ROOTOFFSET_OFFSET);
+      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer);
+      return new OIndexRIDContainer(fileId, underlying);
+    }
   }
 
   @Override
   public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return OBinaryTypeSerializer.INSTANCE.getObjectSizeInDirectMemory(pointer, offset);
+    if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_OFFSET)) {
+      return embeddedObjectSerializedSize(INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_SIZE_OFFSET));
+    } else {
+      return SBTREE_CONTAINER_SIZE;
+    }
   }
 
   @Override
-  public OSBTreeIndexRIDContainer preprocess(OSBTreeIndexRIDContainer value, Object... hints) {
+  public OIndexRIDContainer preprocess(OIndexRIDContainer value, Object... hints) {
     return value;
   }
 
-  private byte[] serializeContainer(OSBTreeIndexRIDContainer container) {
-    return container.toStream();
-  }
-
-  private OSBTreeIndexRIDContainer deserializeContainer(byte[] stream) {
-    return OSBTreeIndexRIDContainer.fromStream(OBinaryProtocol.bytes2string(stream));
+  private int embeddedObjectSerializedSize(int size) {
+    return OLongSerializer.LONG_SIZE + OBooleanSerializer.BOOLEAN_SIZE + OIntegerSerializer.INT_SIZE + size * RID_SIZE;
   }
 }

@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -653,7 +653,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
           if (storage instanceof OStorageLocal) {
             final ODiskCache diskCache = ((OStorageLocal) storage).getDiskCache();
             try {
-              final String fileName = getName() + OSBTreeIndexRIDContainer.INDEX_FILE_EXTENSION;
+              final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
               if (diskCache.exists(fileName)) {
                 final long fileId = diskCache.openFile(fileName);
                 diskCache.deleteFile(fileId);

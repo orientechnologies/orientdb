@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -53,7 +53,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
       public boolean addResult(final Map.Entry<K, V> entry) {
         final V value = entry.getValue();
         final V resultValue;
-        if (value instanceof OSBTreeIndexRIDContainer)
+        if (value instanceof OIndexRIDContainer)
           resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
         else
           resultValue = value;

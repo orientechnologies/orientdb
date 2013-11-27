@@ -1,21 +1,23 @@
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
-import org.testng.Assert;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeIndexRIDContainerSerializationPerformanceTest {
 
-  public static final int CYCLE_COUNT = 20000;
-  private static final int WARMUP_CYCLE_COUNT = 30000;
+  public static final int                  CYCLE_COUNT        = 20000;
+  private static final int                 WARMUP_CYCLE_COUNT = 30000;
+  public static final ODirectMemoryPointer POINTER            = new ODirectMemoryPointer(2048l);
 
   public static void main(String[] args) throws InterruptedException {
 
@@ -54,9 +56,8 @@ public class OSBTreeIndexRIDContainerSerializationPerformanceTest {
   }
 
   private static void cycle(Set<OIdentifiable> data) {
-    final OSBTreeIndexRIDContainer valueContainer = new OSBTreeIndexRIDContainer("ValueContainerPerformanceTest");
+    final OIndexRIDContainer valueContainer = new OIndexRIDContainer("ValueContainerPerformanceTest");
     valueContainer.addAll(data);
-    final byte[] bytes = valueContainer.toStream();
-    Assert.assertTrue(bytes.length > 0);
+    OStreamSerializerSBTreeIndexRIDContainer.INSTANCE.serializeInDirectMemory(valueContainer, POINTER, 0l);
   }
 }

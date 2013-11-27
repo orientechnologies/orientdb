@@ -20,7 +20,7 @@ import java.util.*;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -81,7 +81,7 @@ public class OIndexFullText extends OIndexMultiValues {
           if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
             if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              refs = new OSBTreeIndexRIDContainer(getName());
+              refs = new OIndexRIDContainer(getName());
             } else {
               refs = new OMVRBTreeRIDSet();
               ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
@@ -125,7 +125,7 @@ public class OIndexFullText extends OIndexMultiValues {
       if (refs == null) {
         // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
         if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-          refs = new OSBTreeIndexRIDContainer(getName());
+          refs = new OIndexRIDContainer(getName());
         } else {
           refs = new OMVRBTreeRIDSet();
           ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
