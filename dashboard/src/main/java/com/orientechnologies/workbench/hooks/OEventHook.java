@@ -17,7 +17,9 @@
 package com.orientechnologies.workbench.hooks;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -54,7 +56,9 @@ public class OEventHook extends ORecordHookAbstract {
 				metricName = metricName.replaceAll(urlServer + ":" + "[0-9]*.", "*.");
 
 			}
-			triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.name = '" + metricName + "'"));
+			Map<String, Object> params = new HashMap<String, Object>();
+			params.put("name", metricName);
+			triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.name = :name"),params);
 		}
 		for (ODocument oDocument : triggers) {
 
