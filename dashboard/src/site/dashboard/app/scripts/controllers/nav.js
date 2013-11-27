@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('NavController', function ($scope, $routeParams, $location, Login, Message) {
+    .controller('NavController', function ($scope, $routeParams, $location, Login, Message,$modal,$q) {
 
 
         $scope.login = Login;
@@ -42,6 +42,16 @@ angular.module('MonitorApp')
 
         $scope.checkUpdates = function () {
             Message.checkUpdates();
+        }
+
+        $scope.changePassword = function(){
+            var modalScope = $scope.$new(true)
+            modalScope.refresh = $scope.refresh;
+            var modalPromise = $modal({template: 'views/modal/changePassword.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
         }
         $scope.logout = function () {
             Login.logout();

@@ -4,6 +4,8 @@
     "maindescription": "Collect internal metrics and statistics of your OrientDB Servers and Clusters, find out the most costly SQL commands, handle the server configuration in a central cockpit, get hints to improve performances.",
     "settings.label": "Settings",
     "servers": "Servers",
+    "settings.password": "New password",
+    "settings.passwordConfirm": "Confirm password",
     "settings.help.label": "Help",
     "settings.server.name": "Server Name",
     "settings.server.url": "Server Url",

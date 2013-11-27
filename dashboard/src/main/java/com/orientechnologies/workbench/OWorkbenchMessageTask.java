@@ -2,17 +2,17 @@ package com.orientechnologies.workbench;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimerTask;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
@@ -35,23 +35,25 @@ public class OWorkbenchMessageTask extends TimerTask {
 		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
 
 		int cId = -1;
-		String licenses = "";
 		int i = 0;
+
+		ODocument body = new ODocument();
+		body.field("workbenchVersion", handler.version);
+		Map<String, String> agents = new HashMap<String, String>();
 		for (Entry<String, OMonitoredServer> server : this.handler.getMonitoredServers()) {
 			ODocument s = server.getValue().getConfiguration();
+
 			Map<String, Object> cfg = s.field("configuration");
 			if (cfg != null) {
-
 				String license = (String) cfg.get("license");
+				String version = (String) cfg.get("agentVersion");
 				cId = OL.getClientId(license);
-				licenses += (i == 0) ? "" : ",";
-				licenses += license;
-				i++;
+				agents.put(license, version);
 			}
 		}
+		body.field("agents", agents);
 
 		final List<ODocument> response = this.handler.getDb().query(osqlQuery);
-		licenses = licenses.isEmpty() ? "none" : licenses;
 		if (response.size() > 0) {
 			ODocument config = response.iterator().next();
 			String url = config.field("orientdbSite"); // "http://www.orientechnologies.com/";
@@ -60,8 +62,8 @@ public class OWorkbenchMessageTask extends TimerTask {
 				try {
 					ODocument updateConfiguration = config.field("updateConfiguration");
 					Boolean receiveNews = (Boolean) (updateConfiguration != null ? updateConfiguration.field("receiveNews") : true);
-					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId + "/" + licenses + "/" + receiveNews);
-					URLConnection urlConnection = null;
+					URL remoteUrl = new java.net.URL(url + "pro/function/business/check/" + cId  + "/" + receiveNews);
+					HttpURLConnection urlConnection = null;
 
 					ODocument proxy = config.field("proxyConfiguration");
 					if (proxy != null) {
@@ -69,14 +71,20 @@ public class OWorkbenchMessageTask extends TimerTask {
 						Integer port = proxy.field("proxyPort");
 						if (ip != null && port != null) {
 							Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
-							urlConnection = remoteUrl.openConnection(proxyConn);
+							urlConnection = (HttpURLConnection) remoteUrl.openConnection(proxyConn);
 						} else {
-							urlConnection = remoteUrl.openConnection();
+							urlConnection = (HttpURLConnection) remoteUrl.openConnection();
 						}
 					} else {
-						urlConnection = remoteUrl.openConnection();
+						urlConnection = (HttpURLConnection) remoteUrl.openConnection();
 					}
+					urlConnection.setDoOutput(true);
+					urlConnection.setRequestMethod("POST");
 					urlConnection.connect();
+
+					OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream());
+					out.write(body.toJSON());
+					out.close();
 					InputStream is = urlConnection.getInputStream();
 					InputStreamReader isr = new InputStreamReader(is);
 
@@ -119,6 +127,7 @@ public class OWorkbenchMessageTask extends TimerTask {
 						}
 					}
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		}
