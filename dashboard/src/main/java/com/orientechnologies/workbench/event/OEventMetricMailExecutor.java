@@ -48,7 +48,7 @@ public class OEventMetricMailExecutor extends OEventMetricExecutor {
 		}
 	}
 
-	public void mailEvent(ODocument what) {
+	public void mailEvent(ODocument what)  {
 		if (mailPlugin == null) {
 			mailPlugin = OServerMain.server().getPluginByClass(OMailPlugin.class);
 
@@ -61,13 +61,11 @@ public class OEventMetricMailExecutor extends OEventMetricExecutor {
 
 		try {
 			mailPlugin.send(configuration);
-		} catch (AddressException e) {
-			e.printStackTrace();
 		} catch (MessagingException e) {
 			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		} 
 
 	}
 
