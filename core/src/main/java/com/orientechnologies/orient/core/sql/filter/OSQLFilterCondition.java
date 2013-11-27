@@ -104,10 +104,10 @@ public class OSQLFilterCondition {
   }
 
   public OCollate getCollate() {
-    if (left instanceof OSQLFilterItemAbstract)
-      return ((OSQLFilterItemAbstract) left).getCollate();
-    else if (right instanceof OSQLFilterItemAbstract)
-      return ((OSQLFilterItemAbstract) right).getCollate();
+    if (left instanceof OSQLFilterItemField)
+      return ((OSQLFilterItemField) left).getCollate();
+    else if (right instanceof OSQLFilterItemField)
+      return ((OSQLFilterItemField) right).getCollate();
     return null;
   }
 
@@ -137,10 +137,10 @@ public class OSQLFilterCondition {
     if (collate != null) {
       final Object oldL = l;
       final Object oldR = r;
-      
+
       l = collate.transform(l);
       r = collate.transform(r);
-      
+
       if (l != oldL || r != oldR)
         // CHANGED
         result = new Object[] { l, r };

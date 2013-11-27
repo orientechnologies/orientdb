@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -46,7 +48,6 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDeleg
 public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   protected List<OPair<OSQLMethod, Object[]>> operationsChain = null;
-  protected OCollate                          collate;
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iText, '.');
@@ -137,10 +138,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     return ioResult;
   }
 
-  public OCollate getCollate() {
-    return collate;
-  }
-
   public boolean hasChainOperators() {
     return operationsChain != null;
   }
@@ -170,4 +167,14 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     }
     return buffer.toString();
   }
+
+  protected OCollate getCollateForField(final ODocument doc, final String iFieldName) {
+    if (doc.getSchemaClass() != null) {
+      final OProperty p = doc.getSchemaClass().getProperty(iFieldName);
+      if (p != null)
+        return p.getCollate();
+    }
+    return null;
+  }
+
 }
