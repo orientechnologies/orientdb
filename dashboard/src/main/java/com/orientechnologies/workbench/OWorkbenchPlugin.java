@@ -75,12 +75,9 @@ import com.orientechnologies.workbench.http.OServerCommandPurgeMetric;
 import com.orientechnologies.workbench.http.OServerCommandQueryPassThrough;
 
 public class OWorkbenchPlugin extends OServerPluginAbstract {
-  public enum LOG_LEVEL {
-    DEBUG, INFO, CONFIG, WARN, ERROR
-  }
 
   public enum STATUS {
-    OFFLINE, ONLINE, UNAUTHORIZED, PROFILEROFF, LICENSE_EXPIRED, LICENSE_INVALID
+    OFFLINE, ONLINE, UNAUTHORIZED, LICENSE_EXPIRED, LICENSE_INVALID
   }
 
   public static final String                        VERSION                           = OConstants.ORIENT_VERSION;
@@ -383,6 +380,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     logEvent.setSuperClass(eventWhen);
     logEvent.createProperty("type", OType.STRING);
     logEvent.createProperty("info", OType.STRING);
+    logEvent.createProperty("server", OType.EMBEDDED, server);
     logEvent.createProperty("alertValue", OType.STRING);
 
     final OClass metrics = schema.createClass(CLASS_METRICS_WHEN);

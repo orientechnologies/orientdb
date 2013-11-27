@@ -14,17 +14,32 @@
         <form name="form_log_when">
             <fieldset class="form_mailwhat">
                 <div class="controls controls-row">
-                    Alert  Log Value =
+                    Server (blank = any server)
+                    <select ng-model="serverToShow" ng-options="t for t in serversName" style="width: 100%" ng-change="changedServer(t)">
+                        <option value=""></option>
+                    </select>
+
+                    <!--<select ng-model="eventWhen['server']" style="width: 100%;" ng-change="eventWhen['server']">-->
+                    <!--<option ng-repeat="t in servers" ng-value="{{ t.name}}"-->
+                    <!--ng-selected="t.name == eventWhen['server']['name']">{{t.name}}-->
+                    <!--</option>-->
+                    <!--<option value=""></option>-->
+                    <!--</select>-->
+
+                </div>
+                <div class="controls controls-row">
+                    Status
                     <!--<select class="span3" ng-model="eventWhen['alertValue']"-->
                     <!--ng-options="t for t in alertValues">-->
                     <!--<option value=""></option>-->
                     <!--</select>-->
-                    <select class="span3" ng-model="eventWhen['type']" ng-options="t for t in levels"
-                            ng-disabled="checkAlertValue()">
-                        <option value=""></option>
+                    <select ng-model="eventWhen['type']" ng-options="t for t in levels"
+                            ng-disabled="checkAlertValue()" style="width: 100%">
                     </select>
                 </div>
-                Text (contains):
+
+
+                Text filter (blank = no filter):
                 <textarea type="text" id="textcontains" class="input-block-level" placeholder="insert text here.."
                           ng-model="eventWhen['info']"></textarea>
 

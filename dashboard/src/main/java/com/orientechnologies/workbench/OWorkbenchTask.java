@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.workbench.OWorkbenchPlugin.LOG_LEVEL;
 import com.orientechnologies.workbench.OWorkbenchPlugin.STATUS;
 
 public final class OWorkbenchTask extends TimerTask {
@@ -52,7 +51,7 @@ public final class OWorkbenchTask extends TimerTask {
 
 						if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).get(idS).size() > 1) {
 							updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
-							log(server, LOG_LEVEL.ERROR, "License " + license + " invalid");
+							log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
 							continue;
 						}
 					}
@@ -61,7 +60,7 @@ public final class OWorkbenchTask extends TimerTask {
 					// UPDATE SERVER STATUS TO ONLINE
 					if (updateServerStatus(server, OWorkbenchPlugin.STATUS.ONLINE)) {
 						OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Restored connection", serverName, server.field("url"));
-						log(server, LOG_LEVEL.INFO, "Restored connection");
+						log(server, OWorkbenchPlugin.STATUS.ONLINE, "Restored connection");
 					}
 				} catch (Exception e) {
 					final String msg = e.toString();
@@ -71,7 +70,7 @@ public final class OWorkbenchTask extends TimerTask {
 							OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
 									server.field("url"));
 //							log(server, LOG_LEVEL.ERROR, e.toString());
-							log(server, LOG_LEVEL.ERROR, "Unauthorized");
+							log(server, OWorkbenchPlugin.STATUS.UNAUTHORIZED, "Unauthorized");
 						}
 					} else
 					// UPDATE SERVER STATUS TO OFFLINE
@@ -79,7 +78,7 @@ public final class OWorkbenchTask extends TimerTask {
 						OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
 								server.field("url"));
 //						log(server, LOG_LEVEL.ERROR, e.toString());
-						log(server, LOG_LEVEL.ERROR, "Connection refused");
+						log(server, OWorkbenchPlugin.STATUS.OFFLINE, "Connection refused");
 
 					}
 				}
@@ -300,7 +299,7 @@ public final class OWorkbenchTask extends TimerTask {
 		return docMetrics;
 	}
 
-	protected void log(final ODocument iServer, final LOG_LEVEL iLevel, final String iDescription) {
+	protected void log(final ODocument iServer, final OWorkbenchPlugin.STATUS iLevel, final String iDescription) {
 
 		new ODocument(OWorkbenchPlugin.CLASS_LOG).field("date", new Date()).field("server", iServer).field("level", iLevel.ordinal())
 				.field("levelDescription", iLevel.name()).field("description", iDescription).save();

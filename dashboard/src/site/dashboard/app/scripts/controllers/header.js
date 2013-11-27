@@ -17,7 +17,7 @@ angular.module('MonitorApp')
 
 
         $.extend($.gritter.options, {
-            position: 'bottom-right', // defaults to 'top-right' but can be 'bottom-left', 'bottom-right', 'top-left', 'top-right' (added in 1.7.1)
+            position: 'bottom-right' // defaults to 'top-right' but can be 'bottom-left', 'bottom-right', 'top-left', 'top-right' (added in 1.7.1)
         });
         (function tick() {
         	if($rootScope.loggedIn == true){

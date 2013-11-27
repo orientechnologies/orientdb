@@ -90,7 +90,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
     }
     $scope.onWhatChange = function (event, eventWhat) {
 
-       var modalScope = $scope.$new(true);
+        var modalScope = $scope.$new(true);
 
         modalScope.eventParent = event;
         if (event['what'] == undefined || $scope.selectedWhat[event['idx']] != null && (event['what']['@class'] != $scope.selectedWhat[event['idx']].trim() && $scope.selectedWhat[event['idx']] != undefined)) {
@@ -142,13 +142,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
         resultsApp.forEach(function (elem, idx, array) {
             delete elem['idx'];
-            console.log(elem)
-            if (elem.what['@class'].trim() == "FunctionWhat") {
-                console.log(elem.what['parameters']);
-                for (var param in elem.when['parameters']) {
-                    console.log(param);
-                }
-            }
             MetricConfig.saveConfig(elem, function (data) {
                     var index = array.indexOf(elem);
 //                    logs.push(data);
@@ -187,7 +180,6 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         if ($scope.count == undefined)
             $scope.count = 0;
         $scope.count = $scope.count + 1;
-        console.log($scope.count);
         var object = {"name": name, '@rid': "#-1:-1", 'idx': $scope.count, "@class": "Event"};
         $scope.resultTotal.push(object);
         $scope.results.push(object);
@@ -230,7 +222,28 @@ dbModule.controller("NewEventController", ['$scope', '$http', '$location', '$rou
 
 dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q) {
 
-    $scope.levels = ['CONFIG', 'DEBUG', 'ERROR', 'INFO', 'WARN'];
+    $scope.levels = ['LICENSE_EXPIRED', 'LICENSE_INVALID', 'OFFLINE', 'ONLINE', 'UNAUTHORIZED' ];
+    $scope.serversName = [];
+    $scope.name2server = {};
+
+
+    //all server in a map
+    Monitor.getServers(function (data) {
+        $scope.servers = data.result;
+        for (i in $scope.servers) {
+            $scope.serversName.push($scope.servers[i]['name'])
+            if ($scope.name2server[$scope.servers[i]['name']] == undefined) {
+                $scope.name2server[$scope.servers[i]['name']] = $scope.servers[i];
+            }
+        }
+    });
+    console.log($scope.eventWhen['server']['name']);
+    $scope.serverToShow = $scope.eventWhen['server'] != undefined ? $scope.eventWhen['server']['name'] : '';
+
+    $scope.changedServer = function (name) {
+        $scope.eventWhen['server'] = $scope.name2server[$scope.serverToShow];
+    }
+
 
     $scope.checkValidForm = function () {
 
