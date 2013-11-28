@@ -44,10 +44,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   protected static final OProfilerMBean         PROFILER             = Orient.instance().getProfiler();
 
-  public OIndexRIDContainerSBTree(String fileName) {
+  public OIndexRIDContainerSBTree(long fileId) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
 
-    tree.create(fileName, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
+    tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
@@ -167,6 +167,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   @Override
   public void clear() {
     tree.clear();
+  }
+
+  public void delete() {
+    tree.delete();
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {

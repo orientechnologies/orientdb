@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import static com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer.RID_SIZE;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -26,7 +28,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainerEmbedded;
 import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -141,9 +142,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public OIndexRIDContainer deserializeNative(byte[] stream, int offset) {
     final long fileId = LONG_SERIALIZER.deserializeNative(stream, offset + FILE_ID_OFFSET);
     if (BOOLEAN_SERIALIZER.deserializeNative(stream, offset + EMBEDDED_OFFSET)) {
-      final OIndexRIDContainerEmbedded underlying = new OIndexRIDContainerEmbedded();
-
       final int size = INT_SERIALIZER.deserializeNative(stream, offset + EMBEDDED_SIZE_OFFSET);
+      final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
+
       int p = offset + EMBEDDED_VALUES_OFFSET;
       for (int i = 0; i < size; i++) {
         underlying.add(LINK_SERIALIZER.deserializeNative(stream, p));
@@ -192,9 +193,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public OIndexRIDContainer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
     final long fileId = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + FILE_ID_OFFSET);
     if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_OFFSET)) {
-      final OIndexRIDContainerEmbedded underlying = new OIndexRIDContainerEmbedded();
-
       final int size = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_SIZE_OFFSET);
+      final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
+
       long p = offset + EMBEDDED_VALUES_OFFSET;
       for (int i = 0; i < size; i++) {
         underlying.add(LINK_SERIALIZER.deserializeFromDirectMemory(pointer, p));

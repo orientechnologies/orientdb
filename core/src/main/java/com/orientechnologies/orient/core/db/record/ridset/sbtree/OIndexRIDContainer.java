@@ -18,11 +18,10 @@ package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
@@ -34,12 +33,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OIndexRIDContainer implements Set<OIdentifiable> {
-  public static final String            INDEX_FILE_EXTENSION = ".irs";
+  public static final String INDEX_FILE_EXTENSION = ".irs";
 
-  private final long                    fileId;
-  private Set<OIdentifiable>            underlying;
-
-  protected static final OProfilerMBean PROFILER             = Orient.instance().getProfiler();
+  private final long         fileId;
+  private Set<OIdentifiable> underlying;
+  private boolean            isEmbedded;
+  private int                topThreshold         = 80;
+  private int                bottomThreshold      = 60;
 
   public OIndexRIDContainer(String name) {
     final OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
@@ -49,12 +49,14 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     }
-    underlying = new OIndexRIDContainerEmbedded();
+    underlying = new HashSet<OIdentifiable>();
+    isEmbedded = true;
   }
 
   public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying) {
     this.fileId = fileId;
     this.underlying = underlying;
+    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
   }
 
   public long getFileId() {
@@ -93,12 +95,16 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   @Override
   public boolean add(OIdentifiable oIdentifiable) {
-    return underlying.add(oIdentifiable);
+    final boolean res = underlying.add(oIdentifiable);
+    checkTopThreshold();
+    return res;
   }
 
   @Override
   public boolean remove(Object o) {
-    return underlying.remove(o);
+    final boolean res = underlying.remove(o);
+    checkBottomThreshold();
+    return res;
   }
 
   @Override
@@ -108,7 +114,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
-    return underlying.addAll(c);
+    final boolean res = underlying.addAll(c);
+    checkTopThreshold();
+    return res;
   }
 
   @Override
@@ -118,19 +126,57 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   @Override
   public boolean removeAll(Collection<?> c) {
-    return underlying.removeAll(c);
+    final boolean res = underlying.removeAll(c);
+    checkBottomThreshold();
+    return res;
   }
 
   @Override
   public void clear() {
-    underlying.clear();
+    if (isEmbedded)
+      underlying.clear();
+    else {
+      final OIndexRIDContainerSBTree tree = (OIndexRIDContainerSBTree) underlying;
+      tree.delete();
+      underlying = new HashSet<OIdentifiable>();
+      isEmbedded = true;
+    }
   }
 
   public boolean isEmbedded() {
-    return underlying instanceof OIndexRIDContainerEmbedded;
+    return isEmbedded;
   }
 
   public Set<OIdentifiable> getUnderlying() {
     return underlying;
+  }
+
+  private void checkTopThreshold() {
+    if (isEmbedded && topThreshold < underlying.size())
+      convertToSbTree();
+  }
+
+  private void checkBottomThreshold() {
+    if (!isEmbedded && bottomThreshold > underlying.size())
+      convertToEmbedded();
+  }
+
+  private void convertToEmbedded() {
+    final OIndexRIDContainerSBTree tree = (OIndexRIDContainerSBTree) underlying;
+
+    final Set<OIdentifiable> set = new HashSet<OIdentifiable>(tree);
+
+    tree.delete();
+    underlying = set;
+    isEmbedded = true;
+  }
+
+  private void convertToSbTree() {
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId);
+
+    tree.addAll(underlying);
+
+    underlying = tree;
+    isEmbedded = false;
   }
 }

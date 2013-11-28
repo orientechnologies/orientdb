@@ -93,17 +93,28 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
       OStorageLocalAbstract storageLocal) {
+    try {
+      fileId = diskCache.openFile(name + dataFileExtension);
+    } catch (IOException e) {
+      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
+    }
+    create(fileId, keySerializer, valueSerializer, storageLocal);
+  }
+
+  public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+      OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
 
       this.diskCache = storage.getDiskCache();
 
-      this.name = name;
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
 
-      fileId = diskCache.openFile(name + dataFileExtension);
+      diskCache.openFile(fileId);
+      this.fileId = fileId;
+      this.name = resolveTreeName(fileId);
 
       initDurableComponent(storageLocal);
 
@@ -223,7 +234,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       boolean result = true;
       if (itemFound) {
         final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
-
 
         if (updateResult == 1) {
           logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
@@ -439,8 +449,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       diskCache.openFile(fileId);
       this.fileId = fileId;
-      final String fileName = diskCache.fileNameById(fileId);
-      this.name = fileName.substring(0, fileName.length() - dataFileExtension.length());
+      this.name = resolveTreeName(fileId);
 
       OCacheEntry rootCacheEntry = diskCache.load(this.fileId, this.rootBucketPointer.getPageIndex(), false);
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
@@ -461,6 +470,11 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private String resolveTreeName(long fileId) {
+    final String fileName = diskCache.fileNameById(fileId);
+    return fileName.substring(0, fileName.length() - dataFileExtension.length());
   }
 
   private void setSize(long size) throws IOException {
