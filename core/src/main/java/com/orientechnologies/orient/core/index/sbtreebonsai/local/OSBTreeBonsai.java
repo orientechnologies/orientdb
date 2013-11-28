@@ -94,7 +94,17 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
       OStorageLocalAbstract storageLocal) {
     try {
-      fileId = diskCache.openFile(name + dataFileExtension);
+      this.storage = storageLocal;
+
+      this.diskCache = storage.getDiskCache();
+
+      this.keySerializer = keySerializer;
+      this.valueSerializer = valueSerializer;
+
+      this.fileId = diskCache.openFile(name + dataFileExtension);
+      this.name = name;
+
+      initAfterCreate();
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     }
@@ -116,8 +126,18 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       this.fileId = fileId;
       this.name = resolveTreeName(fileId);
 
-      initDurableComponent(storageLocal);
+      initAfterCreate();
+    } catch (IOException e) {
+      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
 
+  private void initAfterCreate() {
+    initDurableComponent(storage);
+
+    try {
       initSysBucket();
 
       super.startDurableOperation(null);
@@ -151,8 +171,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         OLogManager.instance().error(this, "Error during sbtree data rollback", e1);
       }
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
-    } finally {
-      releaseExclusiveLock();
     }
   }
 
