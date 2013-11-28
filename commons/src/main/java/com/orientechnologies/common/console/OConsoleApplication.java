@@ -122,7 +122,7 @@ public class OConsoleApplication {
     try {
       String commandLine = null;
 
-      iScanner.useDelimiter(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)(?=([^']*'[^']*')*[^']*$)|\n");
+      iScanner.useDelimiter("\n|;");
 
       while (iScanner.hasNext()) {
 
