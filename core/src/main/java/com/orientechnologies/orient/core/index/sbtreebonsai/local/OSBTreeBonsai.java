@@ -430,9 +430,18 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public void delete() {
     acquireExclusiveLock();
+    OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      diskCache.deleteFile(fileId);
+      startDurableOperation(transaction);
+
+      final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
+      subTreesToDelete.add(rootBucketPointer);
+      recycleSubTrees(subTreesToDelete);
+
+      endDurableOperation(transaction, false);
     } catch (IOException e) {
+      rollback(transaction);
+
       throw new OSBTreeException("Error during delete of sbtree with name " + name, e);
     } finally {
       releaseExclusiveLock();
