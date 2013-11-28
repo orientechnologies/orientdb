@@ -285,7 +285,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("notNull", prop.isNotNull());
         json.writeAttribute("min", prop.getMin());
         json.writeAttribute("max", prop.getMax());
-        json.writeAttribute("collate", prop.getCollate());
+        json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
 
         if (prop instanceof OPropertyImpl) {
           final Map<String, String> custom = ((OPropertyImpl) prop).getCustomInternal();
