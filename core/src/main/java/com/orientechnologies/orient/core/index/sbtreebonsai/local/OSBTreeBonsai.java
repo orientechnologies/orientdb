@@ -17,7 +17,13 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
@@ -87,17 +93,28 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
       OStorageLocalAbstract storageLocal) {
+    try {
+      fileId = diskCache.openFile(name + dataFileExtension);
+    } catch (IOException e) {
+      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
+    }
+    create(fileId, keySerializer, valueSerializer, storageLocal);
+  }
+
+  public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+      OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
 
       this.diskCache = storage.getDiskCache();
 
-      this.name = name;
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
 
-      fileId = diskCache.openFile(name + dataFileExtension);
+      diskCache.openFile(fileId);
+      this.fileId = fileId;
+      this.name = resolveTreeName(fileId);
 
       initDurableComponent(storageLocal);
 
@@ -153,6 +170,15 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     }
   }
 
+  public long getFileId() {
+    acquireSharedLock();
+    try {
+      return fileId;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   public OBonsaiBucketPointer getRootBucketPointer() {
     acquireSharedLock();
     try {
@@ -188,7 +214,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     }
   }
 
-  public void put(K key, V value) {
+  public boolean put(K key, V value) {
     acquireExclusiveLock();
     final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
@@ -205,24 +231,18 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
           bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
 
       final boolean itemFound = bucketSearchResult.itemIndex >= 0;
-
+      boolean result = true;
       if (itemFound) {
-        while (!keyBucket.updateValue(bucketSearchResult.itemIndex, value)) {
-          keyBucketPointer.releaseExclusiveLock();
-          diskCache.release(keyBucketCacheEntry);
+        final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
 
-          bucketSearchResult = splitBucket(bucketSearchResult.path, bucketSearchResult.itemIndex, key);
-          bucketPointer = bucketSearchResult.getLastPathItem();
-
-          keyBucketCacheEntry = diskCache.load(fileId, bucketPointer.getPageIndex(), false);
-          keyBucketPointer = keyBucketCacheEntry.getCachePointer();
-          keyBucketPointer.acquireExclusiveLock();
-
-          keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketPointer.getDataPointer(), bucketPointer.getPageOffset(),
-              keySerializer, valueSerializer, getTrackMode());
+        if (updateResult == 1) {
+          logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
+          keyBucketCacheEntry.markDirty();
         }
 
-        logPageChanges(keyBucket, fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
+        assert updateResult == 0 || updateResult == 1;
+
+        result = updateResult != 0;
       } else {
         int insertionIndex = -bucketSearchResult.itemIndex - 1;
 
@@ -245,9 +265,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         }
 
         logPageChanges(keyBucket, fileId, bucketPointer.getPageIndex(), false);
+        keyBucketCacheEntry.markDirty();
       }
 
-      keyBucketCacheEntry.markDirty();
       keyBucketPointer.releaseExclusiveLock();
       diskCache.release(keyBucketCacheEntry);
 
@@ -255,6 +275,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         setSize(size() + 1);
 
       endDurableOperation(transaction, false);
+      return result;
     } catch (IOException e) {
       rollback(transaction);
       throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
@@ -409,16 +430,25 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public void delete() {
     acquireExclusiveLock();
+    OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      diskCache.deleteFile(fileId);
+      startDurableOperation(transaction);
+
+      final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
+      subTreesToDelete.add(rootBucketPointer);
+      recycleSubTrees(subTreesToDelete);
+
+      endDurableOperation(transaction, false);
     } catch (IOException e) {
+      rollback(transaction);
+
       throw new OSBTreeException("Error during delete of sbtree with name " + name, e);
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  public void load(String name, OBonsaiBucketPointer rootBucketPointer, OStorageLocalAbstract storageLocal) {
+  public void load(long fileId, OBonsaiBucketPointer rootBucketPointer, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -426,11 +456,11 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       diskCache = storage.getDiskCache();
 
-      this.name = name;
+      diskCache.openFile(fileId);
+      this.fileId = fileId;
+      this.name = resolveTreeName(fileId);
 
-      fileId = diskCache.openFile(name + dataFileExtension);
-
-      OCacheEntry rootCacheEntry = diskCache.load(fileId, this.rootBucketPointer.getPageIndex(), false);
+      OCacheEntry rootCacheEntry = diskCache.load(this.fileId, this.rootBucketPointer.getPageIndex(), false);
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
@@ -445,10 +475,15 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       initDurableComponent(storageLocal);
     } catch (IOException e) {
-      throw new OSBTreeException("Exception during loading of sbtree " + name, e);
+      throw new OSBTreeException("Exception during loading of sbtree " + fileId, e);
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private String resolveTreeName(long fileId) {
+    final String fileName = diskCache.fileNameById(fileId);
+    return fileName.substring(0, fileName.length() - dataFileExtension.length());
   }
 
   private void setSize(long size) throws IOException {
