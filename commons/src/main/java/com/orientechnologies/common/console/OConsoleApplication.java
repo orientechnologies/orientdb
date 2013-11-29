@@ -349,7 +349,7 @@ public class OConsoleApplication {
   /**
    * Returns a map of all console method and the object they can be called on.
    * 
-   * @return Map<Method,Object>
+   * @return Map&lt;Method,Object&gt;
    */
   protected Map<Method, Object> getConsoleMethods() {
 
