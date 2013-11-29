@@ -22,8 +22,14 @@ import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,7 +91,7 @@ public class OConsoleApplication {
         if (consoleInput == null || consoleInput.length() == 0)
           continue;
 
-        if (!executeCommands(new Scanner(consoleInput), false))
+        if (!executeCommands(new ODFACommandStream(consoleInput), false))
           break;
       }
     } else {
@@ -105,28 +111,22 @@ public class OConsoleApplication {
   protected boolean executeBatch(final String commandLine) {
     final File commandFile = new File(commandLine);
 
-    Scanner scanner = null;
-
+    OCommandStream scanner;
     try {
-      scanner = new Scanner(commandFile);
+      scanner = new ODFACommandStream(commandFile);
     } catch (FileNotFoundException e) {
-      scanner = new Scanner(commandLine);
+      scanner = new ODFACommandStream(commandLine);
     }
 
     return executeCommands(scanner, true);
   }
 
-  protected boolean executeCommands(final Scanner iScanner, final boolean iExitOnException) {
+  protected boolean executeCommands(final OCommandStream commandStream, final boolean iExitOnException) {
     final StringBuilder commandBuffer = new StringBuilder();
 
     try {
-      String commandLine = null;
-
-      iScanner.useDelimiter("\n|;");
-
-      while (iScanner.hasNext()) {
-
-        commandLine = iScanner.next().trim();
+      while (commandStream.hasNext()) {
+        String commandLine = commandStream.nextCommand();
 
         if (commandLine.isEmpty())
           // EMPTY LINE
@@ -167,7 +167,7 @@ public class OConsoleApplication {
           return false;
       }
     } finally {
-      iScanner.close();
+      commandStream.close();
     }
     return true;
   }
@@ -349,7 +349,7 @@ public class OConsoleApplication {
   /**
    * Returns a map of all console method and the object they can be called on.
    * 
-   * @return Map<Method,Object>
+   * @return Map&lt;Method,Object&gt;
    */
   protected Map<Method, Object> getConsoleMethods() {
 
