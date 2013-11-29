@@ -17,7 +17,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * Test that {@link OSBTreeRIDSet} is saved into the database correctly.
+ * Test that {@link OSBTreeRidBag} is saved into the database correctly.
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
@@ -62,7 +62,7 @@ public class OSBTreeRIDSetPersistencyTest {
 
     final ODocument doc = new ODocument();
 
-    final OSBTreeRIDSet ridSet = new OSBTreeRIDSet();
+    final OSBTreeRidBag ridSet = new OSBTreeRidBag();
     ridSet.addAll(expected);
 
     doc.field("ridset", ridSet);
@@ -72,10 +72,13 @@ public class OSBTreeRIDSetPersistencyTest {
     db.close();
     db.open("admin", "admin");
 
-    final OSBTreeRIDSet loaded = ((ODocument) db.load(id)).field("ridset");
+    final OSBTreeRidBag loaded = ((ODocument) db.load(id)).field("ridset");
 
     Assert.assertEquals(loaded.size(), expected.size());
-    Assert.assertTrue(loaded.containsAll(expected));
+    for (OIdentifiable identifiable : loaded)
+      Assert.assertTrue(expected.remove(identifiable));
+
+    Assert.assertTrue(expected.isEmpty());
   }
 
 }

@@ -25,6 +25,7 @@ import java.util.Stack;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -231,6 +232,8 @@ public class OJSONFetchContext implements OFetchContext {
         appendType(typesStack.peek(), iFieldName, 'c');
       else if (iFieldValue instanceof Set<?>)
         appendType(typesStack.peek(), iFieldName, 'e');
+      else if (iFieldValue instanceof OSBTreeRidBag)
+        appendType(typesStack.peek(), iFieldName, 'g');
     }
   }
 }

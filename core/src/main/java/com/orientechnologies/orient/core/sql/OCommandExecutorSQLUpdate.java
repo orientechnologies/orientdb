@@ -148,12 +148,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parameters = new OCommandParameters(iArgs);
     Map<Object, Object> queryArgs;
-    if(parameters.size() > 0 && parameters.getByName(0) != null ){
+    if (parameters.size() > 0 && parameters.getByName(0) != null) {
       queryArgs = new HashMap<Object, Object>();
-	  for (int i = parameterCounter; i < parameters.size(); i++) {
-	  if (parameters.getByName(i) != null)
-	     queryArgs.put(i - parameterCounter, parameters.getByName(i));
-	  }
+      for (int i = parameterCounter; i < parameters.size(); i++) {
+        if (parameters.getByName(i) != null)
+          queryArgs.put(i - parameterCounter, parameters.getByName(i));
+      }
     } else {
       queryArgs = iArgs;
     }
@@ -440,7 +440,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, false, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }
     return fieldValue;

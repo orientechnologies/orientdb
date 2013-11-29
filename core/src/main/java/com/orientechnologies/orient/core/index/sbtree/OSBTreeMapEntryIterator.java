@@ -34,8 +34,16 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private K                           firstKey;
   private Map.Entry<K, V>             currentEntry;
 
+  private final int                   prefetchSize;
+
   public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree) {
+    this(sbTree, 8000);
+  }
+
+  public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree, int prefetchSize) {
     this.sbTree = sbTree;
+    this.prefetchSize = prefetchSize;
+
     if (sbTree.size() == 0) {
       this.preFetchedValues = null;
       return;
@@ -75,7 +83,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
           }
         });
 
-        return preFetchedValues.size() <= 8000;
+        return preFetchedValues.size() <= prefetchSize;
       }
     });
 

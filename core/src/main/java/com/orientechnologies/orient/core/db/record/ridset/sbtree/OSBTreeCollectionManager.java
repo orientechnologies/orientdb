@@ -20,6 +20,7 @@ import java.util.Iterator;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
@@ -34,7 +35,7 @@ public class OSBTreeCollectionManager {
   private static final int                                                           eviction_threshold = 100;
   private static final int                                                           CACHE_MAX_SIZE     = 100000;
 
-  private static final String                                                        FILE_NAME          = "sbtreeridset";
+  private static final String                                                        FILE_NAME          = "sbtreeridbag";
 
   private final int                                                                  shift;
   private final int                                                                  mask;
@@ -67,10 +68,10 @@ public class OSBTreeCollectionManager {
     this.locks = locks;
   }
 
-  public OSBTreeBonsai<OIdentifiable, Boolean> createSBTree() {
-    OSBTreeBonsai<OIdentifiable, Boolean> tree = new OSBTreeBonsai<OIdentifiable, Boolean>(DEFAULT_EXTENSION, true);
+  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree() {
+    OSBTreeBonsai<OIdentifiable, Integer> tree = new OSBTreeBonsai<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
 
-    tree.create(FILE_NAME, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
+    tree.create(FILE_NAME, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
     final Object lock = treesSubsetLock(tree.getRootBucketPointer());
@@ -85,17 +86,17 @@ public class OSBTreeCollectionManager {
     return tree;
   }
 
-  public OSBTreeBonsai<OIdentifiable, Boolean> loadSBTree(OBonsaiBucketPointer rootIndex) {
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex) {
     final Object lock = treesSubsetLock(rootIndex);
 
-    OSBTreeBonsai<OIdentifiable, Boolean> tree;
+    OSBTreeBonsai<OIdentifiable, Integer> tree;
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.remove(rootIndex);
       if (container != null) {
         container.usagesCounter++;
         tree = container.tree;
       } else {
-        tree = new OSBTreeBonsai<OIdentifiable, Boolean>(DEFAULT_EXTENSION, true);
+        tree = new OSBTreeBonsai<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
         tree.load(FILE_NAME, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
             .getUnderlying());
 
@@ -157,10 +158,10 @@ public class OSBTreeCollectionManager {
   }
 
   private static final class SBTreeBonsaiContainer {
-    private final OSBTreeBonsai<OIdentifiable, Boolean> tree;
+    private final OSBTreeBonsai<OIdentifiable, Integer> tree;
     private int                                         usagesCounter = 0;
 
-    private SBTreeBonsaiContainer(OSBTreeBonsai<OIdentifiable, Boolean> tree) {
+    private SBTreeBonsaiContainer(OSBTreeBonsai<OIdentifiable, Integer> tree) {
       this.tree = tree;
     }
   }

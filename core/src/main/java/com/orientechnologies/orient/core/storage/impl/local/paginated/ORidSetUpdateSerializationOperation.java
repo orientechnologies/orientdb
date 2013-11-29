@@ -1,11 +1,15 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
 
@@ -14,18 +18,16 @@ import java.util.Set;
  * @since 11/26/13
  */
 public class ORidSetUpdateSerializationOperation implements ORecordSerializationOperation {
-  private final NavigableSet<OIdentifiable> addValues;
-  private final Set<OIdentifiable>          removedValues;
+  private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues;
 
-  private final boolean                     clear;
-  private final OBonsaiBucketPointer        rootPointer;
+  private final boolean                                         clear;
+  private final OBonsaiBucketPointer                            rootPointer;
 
-  private final OSBTreeCollectionManager    collectionManager;
+  private final OSBTreeCollectionManager                        collectionManager;
 
-  public ORidSetUpdateSerializationOperation(NavigableSet<OIdentifiable> addValues, Set<OIdentifiable> removedValues,
-      boolean clear, OBonsaiBucketPointer rootPointer) {
-    this.addValues = addValues;
-    this.removedValues = removedValues;
+  public ORidSetUpdateSerializationOperation(final NavigableMap<OIdentifiable, OModifiableInteger> changedValues, boolean clear,
+      OBonsaiBucketPointer rootPointer) {
+    this.changedValues = changedValues;
     this.clear = clear;
     this.rootPointer = rootPointer;
 
@@ -34,22 +36,29 @@ public class ORidSetUpdateSerializationOperation implements ORecordSerialization
 
   @Override
   public void execute(OLocalPaginatedStorage paginatedStorage) {
-    OSBTreeBonsai<OIdentifiable, Boolean> tree = loadTree();
+    OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
       if (clear)
         tree.clear();
 
-      for (OIdentifiable identifiable : addValues)
-        tree.put(identifiable, true);
+      for (Map.Entry<OIdentifiable, OModifiableInteger> entry : changedValues.entrySet()) {
+        Integer storedCounter = tree.get(entry.getKey());
+        if (storedCounter == null)
+          storedCounter = 0;
 
-      for (OIdentifiable identifiable : removedValues)
-        tree.remove(identifiable);
+        storedCounter += entry.getValue().intValue();
+        if (storedCounter <= 0)
+          tree.remove(entry.getKey());
+        else
+          tree.put(entry.getKey(), storedCounter);
+
+      }
     } finally {
       releaseTree();
     }
   }
 
-  private OSBTreeBonsai<OIdentifiable, Boolean> loadTree() {
+  private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
     return collectionManager.loadSBTree(rootPointer);
   }
 
