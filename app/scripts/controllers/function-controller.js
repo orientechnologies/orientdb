@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -110,11 +110,16 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             for (i in $scope.parametersToExecute) {
                 buildedParams = buildedParams.concat($scope.parametersToExecute[i] + '/');
             }
-
+            Spinner.start();
             FunctionApi.executeFunction({database: $routeParams.database, functionName: $scope.nameFunction, parameters: buildedParams, limit: $scope.limit}, function (data) {
                 if (data.result) {
                     $scope.resultExecute = JSON.stringify(data.result);
+                    Spinner.stopSpinner();
                 }
+                Spinner.stopSpinner();
+            }, function (error) {
+                $scope.resultExecute = error;
+                Spinner.stopSpinner();
             });
         }
     }

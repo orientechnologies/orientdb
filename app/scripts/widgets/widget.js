@@ -380,15 +380,29 @@ Widget.directive('dtpicker', function () {
     return {
         restrict: 'A',
         require: 'ngModel',
-        link: function (scope, element, attr,ngModel) {
+        link: function (scope, element, attr, ngModel) {
 
             element.datetimepicker({
                 format: 'dd/MM/yyyy hh:mm:ss',
                 language: 'en'
             });
-            element.on('changeDate', function(e) {
+            element.on('changeDate', function (e) {
                 ngModel.$setViewValue(e.date);
             });
+        }
+    };
+});
+Widget.directive('collaterender', function () {
+
+
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr, ngModel) {
+
+            var value = scope.result['collate'];
+            if (value == 'ci') {
+                scope.result['collate'] = 'Case Insensitive';
+            }
         }
     };
 });

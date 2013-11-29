@@ -439,7 +439,6 @@ database.factory('DatabaseApi', function ($http, $resource) {
 
     var urlWiki = "https://github.com/orientechnologies/orientdb-studio/wiki/Functions";
 
-
     var resource = $resource(API + 'database/:database');
     resource.listDatabases = function (callback) {
         $http.get(API + 'listDatabases').success(callback);
@@ -451,7 +450,6 @@ database.factory('DatabaseApi', function ($http, $resource) {
     resource.getUrlWiki = function () {
         return urlWiki;
     }
-
 
     resource.connect = function (database, username, password, callback, error) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
@@ -487,7 +485,7 @@ database.factory('DatabaseApi', function ($http, $resource) {
     }
     return resource;
 });
-database.factory('CommandApi', function ($http, $resource, Notification) {
+database.factory('CommandApi', function ($http, $resource, Notification, Spinner) {
 
     var resource = $resource(API + 'command/:database');
 
@@ -496,11 +494,16 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
         var shallow = params.shallow != undefined ? '' : ',shallow';
+//        var contentType = params.contentType || 'application/json';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
+
+
         if (params.text) {
             var query = params.text.trim();
+//            var config = {headers: "Content-Type: " + contentType};
             $http.post(text, query).success(function (data) {
+
                 var time = ((new Date().getTime() - startTime) / 1000);
                 var records = data.result ? data.result.length : "";
 
@@ -508,10 +511,13 @@ database.factory('CommandApi', function ($http, $resource, Notification) {
                     var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
                     Notification.push({content: noti});
                 }
-                if (data != undefined)
+                if (data != undefined) {
                     callback(data);
-                else
+                }
+                else {
                     callback('ok');
+                }
+
             }).error(function (data) {
                     Notification.push({content: data});
                     if (error) error(data);

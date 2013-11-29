@@ -228,6 +228,17 @@ form .required label:after {
     background-color: grey;
     opacity: .8;
 }
+.spinner-start{
+    text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background-color: #d3d3d3;
+    opacity: .4;
+}
 
 .ajax-loader {
     position: absolute;
@@ -237,6 +248,13 @@ form .required label:after {
     margin-top: -100px; /* -1 * image height / 2 */
     display: block;
 }
+
+#spinner, .spinner, #spinner-popup, .spinner-popup {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+
 
 .fade-hide, .fade-show {
     -webkit-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
@@ -407,6 +425,7 @@ ul.horizontallist, ol.horizontallist {
 table.editClass_panel {
     margin-left: 20px;
 }
+
 table.editClass_panel>tbody>tr>td a {
     margin-left: 5px;
 }

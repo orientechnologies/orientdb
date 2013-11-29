@@ -109,6 +109,12 @@
                                ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
                     </td>
                     <td>
+                        <select ng-model="result['collate']" ng-options="p.toString() for p in collateTypes"
+                                collaterender ng-change="modificato(result,'collate')" ng-disabled="result['type'] != 'STRING'">
+                        </select>
+
+                    </td>
+                    <td>
                         <a href="javascript:void(0)" class="btn btn-danger btn-small"
                            ng-click="dropProperty(result,result['name'])"> <i class="icon-white icon-trash"></i>
                             Drop</a>
@@ -170,6 +176,7 @@
                     </td>
                 </tr>
                 </tbody>
+            </table>
         </div>
 
     </div>
