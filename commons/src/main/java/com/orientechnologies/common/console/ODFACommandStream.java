@@ -1,6 +1,12 @@
 package com.orientechnologies.common.console;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -10,16 +16,16 @@ import java.util.Set;
  * @author <a href='mailto:enisher@gmail.com'> Artem Orobets </a>
  */
 public class ODFACommandStream implements OCommandStream {
-  public static final int BUFFER_SIZE = 1024;
+  public static final int      BUFFER_SIZE = 1024;
 
-  private Reader reader;
-  private CharBuffer buffer;
-  private final Set<Character> separators = new HashSet<Character>(Arrays.asList(';', '\n'));
-  private int position;
-  private int start;
-  private int end;
-  private StringBuilder partialResult;
-  private State state;
+  private Reader               reader;
+  private CharBuffer           buffer;
+  private final Set<Character> separators  = new HashSet<Character>(Arrays.asList(';', '\n'));
+  private int                  position;
+  private int                  start;
+  private int                  end;
+  private StringBuilder        partialResult;
+  private State                state;
 
   public ODFACommandStream(String commands) {
     reader = new StringReader(commands);
@@ -84,8 +90,13 @@ public class ODFACommandStream implements OCommandStream {
         position++;
       }
 
-      if (s == Symbol.EOF)
+      if (s == Symbol.EOF) {
         position--;
+        if (end == -1) {
+          start = 0;
+          end = 0;
+        }
+      }
 
       final String result;
       if (partialResult.length() > 0) {
@@ -117,7 +128,7 @@ public class ODFACommandStream implements OCommandStream {
       buffer.flip();
 
       if (read == 0) {
-        //There is something in source, but buffer is full
+        // There is something in source, but buffer is full
 
         if (state != State.S)
           partialResult.append(buffer.subSequence(start, position).toString());
@@ -140,75 +151,75 @@ public class ODFACommandStream implements OCommandStream {
 
   private State transition(State s, Symbol c) {
     switch (s) {
-      case S:
-        switch (c) {
-          case LATTER:
-            return State.A;
-          case WS:
-            return State.S;
-          case AP:
-            return State.B;
-          case QT:
-            return State.C;
-          case SEP:
-            return State.S;
-          case EOF:
-            return State.E;
-        }
-        break;
-      case A:
-      case D:
-        switch (c) {
-          case LATTER:
-            return State.A;
-          case WS:
-            return State.D;
-          case AP:
-            return State.B;
-          case QT:
-            return State.C;
-          case SEP:
-            return State.E;
-          case EOF:
-            return State.E;
-        }
-        break;
-      case B:
-        switch (c) {
-          case LATTER:
-            return State.B;
-          case WS:
-            return State.B;
-          case AP:
-            return State.A;
-          case QT:
-            return State.B;
-          case SEP:
-            return State.B;
-          case EOF:
-            return State.F;
-        }
-        break;
-      case C:
-        switch (c) {
-          case LATTER:
-            return State.C;
-          case WS:
-            return State.C;
-          case AP:
-            return State.C;
-          case QT:
-            return State.A;
-          case SEP:
-            return State.C;
-          case EOF:
-            return State.F;
-        }
-        break;
-      case E:
+    case S:
+      switch (c) {
+      case LATTER:
+        return State.A;
+      case WS:
+        return State.S;
+      case AP:
+        return State.B;
+      case QT:
+        return State.C;
+      case SEP:
+        return State.S;
+      case EOF:
         return State.E;
-      case F:
+      }
+      break;
+    case A:
+    case D:
+      switch (c) {
+      case LATTER:
+        return State.A;
+      case WS:
+        return State.D;
+      case AP:
+        return State.B;
+      case QT:
+        return State.C;
+      case SEP:
+        return State.E;
+      case EOF:
+        return State.E;
+      }
+      break;
+    case B:
+      switch (c) {
+      case LATTER:
+        return State.B;
+      case WS:
+        return State.B;
+      case AP:
+        return State.A;
+      case QT:
+        return State.B;
+      case SEP:
+        return State.B;
+      case EOF:
         return State.F;
+      }
+      break;
+    case C:
+      switch (c) {
+      case LATTER:
+        return State.C;
+      case WS:
+        return State.C;
+      case AP:
+        return State.C;
+      case QT:
+        return State.A;
+      case SEP:
+        return State.C;
+      case EOF:
+        return State.F;
+      }
+      break;
+    case E:
+      return State.E;
+    case F:
+      return State.F;
     }
 
     throw new IllegalStateException();
