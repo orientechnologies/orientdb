@@ -494,14 +494,14 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
         var shallow = params.shallow != undefined ? '' : ',shallow';
-//        var contentType = params.contentType || 'application/json';
-        //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
+        var contentType = params.contentType || 'application/json';
+//        rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
 
 
         if (params.text) {
             var query = params.text.trim();
-//            var config = {headers: "Content-Type: " + contentType};
+            var config = {headers: "Content-Type: " + contentType};
             $http.post(text, query).success(function (data) {
 
                 var time = ((new Date().getTime() - startTime) / 1000);
