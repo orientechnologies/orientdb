@@ -20,15 +20,13 @@ import java.util.Set;
 public class ORidSetUpdateSerializationOperation implements ORecordSerializationOperation {
   private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues;
 
-  private final boolean                                         clear;
   private final OBonsaiBucketPointer                            rootPointer;
 
   private final OSBTreeCollectionManager                        collectionManager;
 
-  public ORidSetUpdateSerializationOperation(final NavigableMap<OIdentifiable, OModifiableInteger> changedValues, boolean clear,
+  public ORidSetUpdateSerializationOperation(final NavigableMap<OIdentifiable, OModifiableInteger> changedValues,
       OBonsaiBucketPointer rootPointer) {
     this.changedValues = changedValues;
-    this.clear = clear;
     this.rootPointer = rootPointer;
 
     collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
@@ -38,9 +36,6 @@ public class ORidSetUpdateSerializationOperation implements ORecordSerialization
   public void execute(OLocalPaginatedStorage paginatedStorage) {
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
-      if (clear)
-        tree.clear();
-
       for (Map.Entry<OIdentifiable, OModifiableInteger> entry : changedValues.entrySet()) {
         Integer storedCounter = tree.get(entry.getKey());
         if (storedCounter == null)

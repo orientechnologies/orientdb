@@ -1183,6 +1183,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   public void setLazyLoad(final boolean iLazyLoad) {
     this._lazyLoad = iLazyLoad;
+    checkForFields();
 
     if (_fieldValues != null) {
       // PROPAGATE LAZINESS TO THE FIELDS

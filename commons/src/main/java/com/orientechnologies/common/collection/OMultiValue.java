@@ -271,7 +271,7 @@ public class OMultiValue {
   public static String toString(final Object iObject) {
     final StringBuilder sb = new StringBuilder();
 
-    if (iObject instanceof Collection<?>) {
+    if (iObject instanceof Iterable<?>) {
       final Collection<Object> coll = (Collection<Object>) iObject;
 
       sb.append('[');

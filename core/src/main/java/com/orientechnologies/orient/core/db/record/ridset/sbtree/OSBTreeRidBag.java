@@ -18,20 +18,19 @@ package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
 import java.util.*;
 
-import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidSetUpdateSerializationOperation;
@@ -41,18 +40,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidSetUpd
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIdentifiable> {
-  private static final OProfilerMBean                           PROFILER      = Orient.instance().getProfiler();
-
+public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue {
   private OBonsaiBucketPointer                                  rootPointer;
   private final OSBTreeCollectionManager                        collectionManager;
 
-  private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues = new TreeMap<OIdentifiable, OModifiableInteger>();
-
-  private boolean                                               clear         = false;
+  private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues       = new TreeMap<OIdentifiable, OModifiableInteger>();
 
   private int                                                   modCount;
   private int                                                   size;
+
+  private boolean                                               autoConvertToRecord = true;
 
   public OSBTreeRidBag() {
     rootPointer = null;
@@ -65,16 +62,6 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
     this.size = size;
 
     collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-  }
-
-  public OSBTreeRidBag(Collection<OIdentifiable> value) {
-    rootPointer = null;
-
-    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-
-    for (OIdentifiable identifiable : value) {
-      add(identifiable);
-    }
   }
 
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
@@ -92,7 +79,56 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   }
 
   public Iterator<OIdentifiable> iterator() {
-    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, modCount);
+    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, modCount,
+        autoConvertToRecord);
+  }
+
+  @Override
+  public Iterator<OIdentifiable> rawIterator() {
+    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, modCount, false);
+  }
+
+  @Override
+  public void convertLinks2Records() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean convertRecords2Links() {
+    final Map<OIdentifiable, OModifiableInteger> newChangedValues = new HashMap<OIdentifiable, OModifiableInteger>();
+    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : changedValues.entrySet()) {
+      OIdentifiable identifiable = entry.getKey();
+      if (identifiable instanceof ORecord) {
+        ORID identity = identifiable.getIdentity();
+        ORecord record = (ORecord) identifiable;
+        if (identity.isNew() || record.isDirty()) {
+          record.save();
+          identity = record.getIdentity();
+        }
+
+        newChangedValues.put(identity, entry.getValue());
+      }
+    }
+
+    changedValues.clear();
+    changedValues.putAll(newChangedValues);
+
+    return true;
+  }
+
+  @Override
+  public boolean isAutoConvertToRecord() {
+    return autoConvertToRecord;
+  }
+
+  @Override
+  public void setAutoConvertToRecord(boolean convertToRecord) {
+    autoConvertToRecord = convertToRecord;
+  }
+
+  @Override
+  public boolean detach() {
+    return convertRecords2Links();
   }
 
   public void addAll(Collection<OIdentifiable> values) {
@@ -120,15 +156,6 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
       counter.decrement();
 
     size--;
-    modCount++;
-  }
-
-  public void clear() {
-    clear = true;
-    changedValues.clear();
-
-    size = 0;
-
     modCount++;
   }
 
@@ -165,7 +192,7 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
     output.append(OBinaryProtocol.bytes2string(stream));
 
     ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    context.push(new ORidSetUpdateSerializationOperation(changedValues, clear, rootPointer));
+    context.push(new ORidSetUpdateSerializationOperation(changedValues, rootPointer));
     return this;
   }
 
@@ -197,24 +224,28 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   }
 
   private final class RIDBagIterator implements Iterator<OIdentifiable> {
-    private final NavigableMap<OIdentifiable, OModifiableInteger>        changedValues;
-    private final Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> changedValuesIterator;
-    private final Iterator<Map.Entry<OIdentifiable, Integer>>            sbTreeIterator;
+    private final NavigableMap<OIdentifiable, OModifiableInteger>  changedValues;
+    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> changedValuesIterator;
+    private final Iterator<Map.Entry<OIdentifiable, Integer>>      sbTreeIterator;
 
-    private Map.Entry<OIdentifiable, OModifiableInteger>                 nextChangedEntry;
-    private Map.Entry<OIdentifiable, Integer>                            nextSBTreeEntry;
+    private Map.Entry<OIdentifiable, OModifiableInteger>           nextChangedEntry;
+    private Map.Entry<OIdentifiable, Integer>                      nextSBTreeEntry;
 
-    private OIdentifiable                                                currentValue;
-    private int                                                          currentFinalCounter;
+    private OIdentifiable                                          currentValue;
+    private int                                                    currentFinalCounter;
 
-    private int                                                          currentCounter;
+    private int                                                    currentCounter;
 
-    private final int                                                    extModCount;
+    private final int                                              extModCount;
+    private final boolean                                          convertToRecord;
+
+    private boolean                                                currentRemoved;
 
     private RIDBagIterator(NavigableMap<OIdentifiable, OModifiableInteger> changedValues,
-        Iterator<Map.Entry<OIdentifiable, Integer>> sbTreeIterator, int extModCount) {
+        Iterator<Map.Entry<OIdentifiable, Integer>> sbTreeIterator, int extModCount, boolean convertToRecord) {
 
       this.changedValues = changedValues;
+      this.convertToRecord = convertToRecord;
       this.changedValuesIterator = changedValues.entrySet().iterator();
       this.sbTreeIterator = sbTreeIterator;
       this.extModCount = extModCount;
@@ -236,64 +267,72 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
       if (modCount != extModCount)
         throw new ConcurrentModificationException();
 
+      currentRemoved = false;
       if (currentCounter < currentFinalCounter) {
         currentCounter++;
         return currentValue;
       }
 
       if (nextChangedEntry != null && nextSBTreeEntry != null) {
-        if (nextChangedEntry.getKey().compareTo(nextSBTreeEntry.getKey()) <= 0)
-          nextChangedValue();
-        else
-          nextSBTreeValue();
-      } else if (nextChangedEntry != null)
-        nextChangedValue();
-      else if (nextSBTreeEntry != null)
-        nextSBTreeValue();
-      else
+        if (nextChangedEntry.getKey().compareTo(nextSBTreeEntry.getKey()) < 0) {
+          currentValue = nextChangedEntry.getKey();
+          currentFinalCounter = nextChangedEntry.getValue().intValue();
+          currentCounter = 1;
+
+          nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
+
+        } else if (nextChangedEntry.getKey().compareTo(nextSBTreeEntry.getKey()) >= 0) {
+          currentValue = nextSBTreeEntry.getKey();
+          currentFinalCounter = nextSBTreeEntry.getValue();
+          currentCounter = 1;
+
+          nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+          if (nextChangedEntry != null && nextChangedEntry.getKey().equals(currentValue))
+            nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
+        }
+      } else if (nextChangedEntry != null) {
+        currentValue = nextChangedEntry.getKey();
+        currentFinalCounter = nextChangedEntry.getValue().intValue();
+        currentCounter = 1;
+
+        nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
+      } else if (nextSBTreeEntry != null) {
+        currentValue = nextSBTreeEntry.getKey();
+        currentFinalCounter = nextSBTreeEntry.getValue();
+        currentCounter = 1;
+
+        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+      } else
         throw new NoSuchElementException();
+
+      if (convertToRecord)
+        return currentValue.getRecord();
 
       return currentValue;
     }
 
-    private void nextSBTreeValue() {
-      currentValue = nextSBTreeEntry.getKey();
-      currentFinalCounter = nextSBTreeEntry.getValue();
-      currentCounter = 1;
-
-      nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-    }
-
-    private void nextChangedValue() {
-      currentValue = nextChangedEntry.getKey();
-      currentFinalCounter = nextChangedEntry.getValue().intValue();
-      currentCounter = 1;
-
-      nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
-    }
-
     @Override
     public void remove() {
-      currentFinalCounter--;
+      if (currentRemoved)
+        throw new IllegalStateException("Current element has already been removed");
 
-      if (currentFinalCounter <= 0) {
-        if (currentValue.equals(nextChangedEntry.getKey())) {
-          nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
-          changedValuesIterator.remove();
+      if (currentValue == null)
+        throw new IllegalStateException("Next method was not called for given iterator");
+
+      OModifiableInteger counter = changedValues.get(currentValue);
+      if (counter != null)
+        counter.decrement();
+      else {
+        if (nextChangedEntry != null) {
+          changedValues.put(currentValue, new OModifiableInteger(-1));
+          changedValuesIterator = changedValues.tailMap(nextChangedEntry.getKey(), false).entrySet().iterator();
+        } else {
+          changedValues.put(currentValue, new OModifiableInteger(-1));
         }
-
-        if (currentValue.equals(nextSBTreeEntry.getKey())) {
-          nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-
-          OModifiableInteger counter = changedValues.get(nextChangedEntry.getKey());
-          if (counter == null)
-            changedValues.put(nextSBTreeEntry.getKey(), new OModifiableInteger(-1));
-          else
-            counter.decrement();
-        }
-
-        currentValue = null;
       }
+
+      size--;
+      currentRemoved = true;
     }
 
     private Map.Entry<OIdentifiable, OModifiableInteger> nextChangedNotRemovedEntry(
@@ -311,13 +350,29 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   }
 
   private Map.Entry<OIdentifiable, Integer> nextChangedNotRemovedSBTreeEntry(Iterator<Map.Entry<OIdentifiable, Integer>> iterator) {
-    Map.Entry<OIdentifiable, Integer> entry;
-
     while (iterator.hasNext()) {
-      entry = iterator.next();
-      OModifiableInteger changedCounter = changedValues.get(entry.getKey());
-      if (changedCounter == null || changedCounter.intValue() > 0)
+      final Map.Entry<OIdentifiable, Integer> entry = iterator.next();
+      final OModifiableInteger changedCounter = changedValues.get(entry.getKey());
+      if (changedCounter == null)
         return entry;
+
+      if (entry.getValue() + changedCounter.intValue() > 0)
+        return new Map.Entry<OIdentifiable, Integer>() {
+          @Override
+          public OIdentifiable getKey() {
+            return entry.getKey();
+          }
+
+          @Override
+          public Integer getValue() {
+            return entry.getValue() + changedCounter.intValue();
+          }
+
+          @Override
+          public Integer setValue(Integer value) {
+            throw new UnsupportedOperationException();
+          }
+        };
     }
 
     return null;

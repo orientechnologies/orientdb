@@ -20,6 +20,9 @@ import static org.testng.Assert.*;
 
 import java.util.*;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,18 +37,20 @@ import com.orientechnologies.orient.core.id.ORecordId;
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
+@Test
 public class OSBTreeRidBagTest {
+
+  private ODatabaseDocumentTx db;
 
   @BeforeClass
   public void setUp() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagTest");
+    db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagTest");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
     }
 
     db.create();
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
   }
 
   @AfterClass
@@ -54,9 +59,9 @@ public class OSBTreeRidBagTest {
     db.drop();
   }
 
-  @Test
   public void testAdd() throws Exception {
     OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
 
     bag.add(new ORecordId("#77:1"));
     Iterator<OIdentifiable> iterator = bag.iterator();
@@ -68,28 +73,347 @@ public class OSBTreeRidBagTest {
     Assert.assertTrue(!iterator.hasNext());
   }
 
-  @Test
   public void testAdd2() throws Exception {
     OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
 
     bag.add(new ORecordId("#77:2"));
     bag.add(new ORecordId("#77:2"));
     assertEquals(bag.size(), 2);
   }
 
-  @Test
-  public void testEmptyIterator() throws Exception {
-    OSBTreeRidBag ridSet = new OSBTreeRidBag();
-    assertEquals(ridSet.size(), 0);
+  public void testAddRemove() {
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
 
-    for (OIdentifiable id : ridSet) {
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:3"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:5"));
+    bag.add(new ORecordId("#77:6"));
+
+    bag.remove(new ORecordId("#77:1"));
+    bag.remove(new ORecordId("#77:2"));
+    bag.remove(new ORecordId("#77:2"));
+    bag.remove(new ORecordId("#77:4"));
+    bag.remove(new ORecordId("#77:6"));
+
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    rids.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:5"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+  }
+
+  public void testAddRemoveSBTreeContainsValues() {
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
+
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:3"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:5"));
+    bag.add(new ORecordId("#77:6"));
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    bag.remove(new ORecordId("#77:1"));
+    bag.remove(new ORecordId("#77:2"));
+    bag.remove(new ORecordId("#77:2"));
+    bag.remove(new ORecordId("#77:4"));
+    bag.remove(new ORecordId("#77:6"));
+
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    rids.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:5"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    rid = doc.getIdentity();
+
+    storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+  }
+
+  public void testAddRemoveDuringIterationSBTreeContainsValues() {
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
+
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:3"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:5"));
+    bag.add(new ORecordId("#77:6"));
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    bag.remove(new ORecordId("#77:1"));
+    bag.remove(new ORecordId("#77:2"));
+    bag.remove(new ORecordId("#77:2"));
+    bag.remove(new ORecordId("#77:4"));
+    bag.remove(new ORecordId("#77:6"));
+
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    rids.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:5"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    Iterator<OIdentifiable> iterator = bag.iterator();
+    while (iterator.hasNext()) {
+      final OIdentifiable identifiable = iterator.next();
+      if (identifiable.equals(new ORecordId("#77:4"))) {
+        iterator.remove();
+        assertTrue(rids.remove(identifiable));
+      }
+    }
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    rid = doc.getIdentity();
+
+    storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+  }
+
+  public void testEmptyIterator() throws Exception {
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
+    assertEquals(bag.size(), 0);
+
+    for (OIdentifiable id : bag) {
       Assert.fail();
     }
   }
 
-  @Test
+  public void testAddRemoveNotExisting() {
+    List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:3"));
+
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    bag.add(new ORecordId("#77:5"));
+    rids.add(new ORecordId("#77:5"));
+
+    bag.add(new ORecordId("#77:6"));
+    rids.add(new ORecordId("#77:6"));
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.remove(new ORecordId("#77:4"));
+    rids.remove(new ORecordId("#77:4"));
+
+    bag.remove(new ORecordId("#77:4"));
+    rids.remove(new ORecordId("#77:4"));
+
+    bag.remove(new ORecordId("#77:2"));
+    rids.remove(new ORecordId("#77:2"));
+
+    bag.remove(new ORecordId("#77:2"));
+    rids.remove(new ORecordId("#77:2"));
+
+    bag.remove(new ORecordId("#77:7"));
+    rids.remove(new ORecordId("#77:7"));
+
+    bag.remove(new ORecordId("#77:8"));
+    rids.remove(new ORecordId("#77:8"));
+
+    bag.remove(new ORecordId("#77:8"));
+    rids.remove(new ORecordId("#77:8"));
+
+    bag.remove(new ORecordId("#77:8"));
+    rids.remove(new ORecordId("#77:8"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    doc.setDirty();
+    doc.save();
+
+    storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+  }
+
   public void testAddAllAndIterator() throws Exception {
-    Set<OIdentifiable> expected = new HashSet<OIdentifiable>(8);
+    final Set<OIdentifiable> expected = new HashSet<OIdentifiable>(8);
 
     expected.add(new ORecordId("#77:12"));
     expected.add(new ORecordId("#77:13"));
@@ -98,6 +422,8 @@ public class OSBTreeRidBagTest {
     expected.add(new ORecordId("#77:16"));
 
     OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
+
     bag.addAll(expected);
 
     assertEquals(bag.size(), 5);
@@ -110,29 +436,245 @@ public class OSBTreeRidBagTest {
     assertEquals(actual, expected);
   }
 
-  @Test
-  void testClear() {
-    Set<OIdentifiable> initialValues = new HashSet<OIdentifiable>(8);
+  public void testAddSBTreeAddInMemoryIterate() {
+    List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
 
-    initialValues.add(new ORecordId("#77:12"));
-    initialValues.add(new ORecordId("#77:13"));
-    initialValues.add(new ORecordId("#77:14"));
-    initialValues.add(new ORecordId("#77:15"));
-    initialValues.add(new ORecordId("#77:16"));
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
 
-    final OSBTreeRidBag set = new OSBTreeRidBag();
-    set.addAll(initialValues);
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
 
-    set.clear();
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
 
-    assertTrue(set.isEmpty());
+    bag.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:3"));
 
-    for (OIdentifiable o : set) {
-      fail();
-    }
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    bag.add(new ORecordId("#77:0"));
+    rids.add(new ORecordId("#77:0"));
+
+    bag.add(new ORecordId("#77:1"));
+    rids.add(new ORecordId("#77:1"));
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:3"));
+
+    bag.add(new ORecordId("#77:5"));
+    rids.add(new ORecordId("#77:5"));
+
+    bag.add(new ORecordId("#77:6"));
+    rids.add(new ORecordId("#77:6"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    rid = doc.getIdentity();
+
+    storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
   }
 
-  @Test
+  public void testAddSBTreeAddInMemoryIterateAndRemove() {
+    List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:3"));
+
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    bag.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+
+    bag.add(new ORecordId("#77:7"));
+    rids.add(new ORecordId("#77:7"));
+
+    bag.add(new ORecordId("#77:8"));
+    rids.add(new ORecordId("#77:8"));
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    bag.add(new ORecordId("#77:0"));
+    rids.add(new ORecordId("#77:0"));
+
+    bag.add(new ORecordId("#77:1"));
+    rids.add(new ORecordId("#77:1"));
+
+    bag.add(new ORecordId("#77:2"));
+    rids.add(new ORecordId("#77:2"));
+
+    bag.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:3"));
+
+    bag.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:3"));
+
+    bag.add(new ORecordId("#77:5"));
+    rids.add(new ORecordId("#77:5"));
+
+    bag.add(new ORecordId("#77:6"));
+    rids.add(new ORecordId("#77:6"));
+
+    Iterator<OIdentifiable> iterator = bag.iterator();
+    int r2c = 0;
+    int r3c = 0;
+    int r6c = 0;
+    int r4c = 0;
+    int r7c = 0;
+
+    while (iterator.hasNext()) {
+      OIdentifiable identifiable = iterator.next();
+      if (identifiable.equals(new ORecordId("#77:2"))) {
+        if (r2c < 2) {
+          r2c++;
+          iterator.remove();
+          rids.remove(identifiable);
+        }
+      }
+
+      if (identifiable.equals(new ORecordId("#77:3"))) {
+        if (r3c < 1) {
+          r3c++;
+          iterator.remove();
+          rids.remove(identifiable);
+        }
+      }
+
+      if (identifiable.equals(new ORecordId("#77:6"))) {
+        if (r6c < 1) {
+          r6c++;
+          iterator.remove();
+          rids.remove(identifiable);
+        }
+      }
+
+      if (identifiable.equals(new ORecordId("#77:4"))) {
+        if (r4c < 1) {
+          r4c++;
+          iterator.remove();
+          rids.remove(identifiable);
+        }
+      }
+
+      if (identifiable.equals(new ORecordId("#77:7"))) {
+        if (r7c < 1) {
+          r7c++;
+          iterator.remove();
+          rids.remove(identifiable);
+        }
+      }
+    }
+
+    assertEquals(r2c, 2);
+    assertEquals(r3c, 1);
+    assertEquals(r6c, 1);
+    assertEquals(r4c, 1);
+    assertEquals(r7c, 1);
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    rid = doc.getIdentity();
+
+    storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+  }
+
   public void testRemove() {
     final Set<OIdentifiable> expected = new HashSet<OIdentifiable>(8);
 
@@ -143,6 +685,7 @@ public class OSBTreeRidBagTest {
     expected.add(new ORecordId("#77:16"));
 
     final OSBTreeRidBag bag = new OSBTreeRidBag();
+    bag.setAutoConvertToRecord(false);
     bag.addAll(expected);
 
     bag.remove(new ORecordId("#77:23"));
@@ -165,4 +708,47 @@ public class OSBTreeRidBagTest {
       assertTrue(expectedTwo.remove(identifiable));
     }
   }
+
+  public void testSaveLoad() throws Exception {
+    Set<OIdentifiable> expected = new HashSet<OIdentifiable>(8);
+
+    expected.add(new ORecordId("#77:12"));
+    expected.add(new ORecordId("#77:13"));
+    expected.add(new ORecordId("#77:14"));
+    expected.add(new ORecordId("#77:15"));
+    expected.add(new ORecordId("#77:16"));
+    expected.add(new ORecordId("#77:17"));
+    expected.add(new ORecordId("#77:18"));
+    expected.add(new ORecordId("#77:19"));
+    expected.add(new ORecordId("#77:20"));
+    expected.add(new ORecordId("#77:21"));
+    expected.add(new ORecordId("#77:22"));
+
+    ODocument doc = new ODocument();
+
+    final OSBTreeRidBag ridSet = new OSBTreeRidBag();
+    ridSet.addAll(expected);
+
+    doc.field("ridset", ridSet);
+    doc.save();
+    final ORID id = doc.getIdentity();
+
+    OStorage storage = db.getStorage();
+    db.close();
+    storage.close(true);
+
+    db.open("admin", "admin");
+
+    doc = db.load(id);
+    doc.setLazyLoad(false);
+
+    final OSBTreeRidBag loaded = doc.field("ridset");
+
+    Assert.assertEquals(loaded.size(), expected.size());
+    for (OIdentifiable identifiable : loaded)
+      Assert.assertTrue(expected.remove(identifiable));
+
+    Assert.assertTrue(expected.isEmpty());
+  }
+
 }

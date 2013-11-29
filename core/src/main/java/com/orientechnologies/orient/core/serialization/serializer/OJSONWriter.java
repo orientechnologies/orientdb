@@ -265,6 +265,8 @@ public class OJSONWriter {
       }
     } else if (iValue instanceof Iterator<?>)
       iteratorToJSON((Iterator<?>) iValue, iFormat, buffer);
+    else if (iValue instanceof Iterable<?>)
+      iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
 
     else if (iValue instanceof Map<?, ?>)
       mapToJSON((Map<Object, Object>) iValue, iFormat, buffer);
