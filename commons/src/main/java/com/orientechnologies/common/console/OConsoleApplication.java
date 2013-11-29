@@ -22,8 +22,14 @@ import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,7 +91,7 @@ public class OConsoleApplication {
         if (consoleInput == null || consoleInput.length() == 0)
           continue;
 
-        if (!executeCommands(new OScannerCommandStream(consoleInput), false))
+        if (!executeCommands(new ODFACommandStream(consoleInput), false))
           break;
       }
     } else {
@@ -107,9 +113,9 @@ public class OConsoleApplication {
 
     OCommandStream scanner;
     try {
-      scanner = new OScannerCommandStream(commandFile);
+      scanner = new ODFACommandStream(commandFile);
     } catch (FileNotFoundException e) {
-      scanner = new OScannerCommandStream(commandLine);
+      scanner = new ODFACommandStream(commandLine);
     }
 
     return executeCommands(scanner, true);
