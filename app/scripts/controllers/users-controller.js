@@ -9,7 +9,6 @@ schemaModule.controller("SecurityController", ['$scope', '$routeParams', '$locat
     $scope.tabsI18n['roles'] = 'Roles';
 
     $scope.getTemplate = function (tab) {
-//        console.log(tab);
         return 'views/database/security/' + tab + '.html';
     }
 }]);

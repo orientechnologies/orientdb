@@ -49,7 +49,6 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
 
                     var elem = $scope.listClassesTotal.indexOf(nameClass);
-                    console.log(elem);
                     $scope.listClassesTotal.splice(elem, 1)
                     $scope.listClassesTotal.splice();
                 });
@@ -219,7 +218,6 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             if(newValue == 'Case Insensitive')
             newValue = 'ci';
             var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName + ' ' + prop + ' ' + newValue;
-                console.log(sql);
             CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
                 if (data) {
                     var index = arrayToUpdate.indexOf(prop);
@@ -264,7 +262,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
                     for (entry in $scope.property) {
                         if ($scope.property[entry]['name'] == elementName) {
-                            // console.log($scope.property[entry])
+                            // ($scope.property[entry])
                             var index = $scope.property.indexOf($scope.property[entry])
                             $scope.property.splice(index, 1)
                         }
@@ -497,7 +495,6 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
                 });
             }
             else {
-                console.log('reload');
                 $scope.parentScope.refreshWindow();
                 $scope.hide();
             }

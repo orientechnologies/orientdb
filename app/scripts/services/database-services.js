@@ -502,7 +502,6 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
         if (params.text) {
             var query = params.text.trim();
             var config = {headers:{"Content-Type": contentType}};
-            console.log(contentType);
             $http.post(text,query,config).success(function (data) {
 
                 var time = ((new Date().getTime() - startTime) / 1000);
@@ -607,7 +606,6 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
     resource.executeFunction = function (params, callback, error) {
         var startTime = new Date().getTime();
         var verbose = params.verbose != undefined ? params.verbose : true;
-//        console.log(params.functionName)
         if (params.parameters == '') {
             var text = API + 'function/' + params.database + "/" + params.functionName;
         }

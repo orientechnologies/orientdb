@@ -181,7 +181,6 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 }]);
 configModule.controller("AllocationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
 
-    console.log(Database.getWiki());
     $scope.data = [
         {
             value: 30,

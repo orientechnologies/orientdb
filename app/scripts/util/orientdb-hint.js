@@ -41,7 +41,6 @@
     }
 
     function sqlHint(editor, options) {
-        console.log("HINT");
         return scriptHint(editor, sqlKeywords,
             function (e, cur) {
                 return e.getTokenAt(cur);

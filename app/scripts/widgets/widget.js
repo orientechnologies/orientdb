@@ -22,7 +22,6 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             }
         };
         formScope.onLoadEditor = function (_editor) {
-            console.log(_editor);
         }
         formScope.inSchema = function (header) {
             var property = Database.listPropertyForClass(scope.doc['@class'], header);
@@ -295,7 +294,6 @@ Widget.directive('orientdate', function (Database) {
                 if (input) {
                     var form = moment(input, 'DD/MM/YYYY').format(formatter.toUpperCase());
                 }
-                console.log(form);
                 return form;
             }
 
@@ -333,7 +331,6 @@ Widget.directive('orientdatetime', function (Database) {
                 });
                 var form = input;
 
-                console.log(input);
                 if (input) {
                     var form = moment(input).format(formatter.toUpperCase());
                 }

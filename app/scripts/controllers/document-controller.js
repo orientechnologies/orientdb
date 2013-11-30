@@ -218,7 +218,6 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
     $scope.save = function () {
         if (!$scope.isNew) {
             DocumentApi.updateDocument($scope.database, $scope.rid, $scope.doc, function (data) {
-                console.log(JSON.stringify(data));
                 Notification.push({content: JSON.stringify(data)});
                 $route.reload();
             });
@@ -259,7 +258,6 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
             body: 'You are removing ' + $scope.label + ' ' + recordID + '. Are you sure?',
             success: function () {
                 var command = "DELETE Vertex " + recordID;
-                console.log($scope.database);
                 DocumentApi.deleteDocument($scope.database, recordID, function (data) {
                     var clazz = $scope.doc['@class'];
                     $location.path('/database/' + $scope.database + '/browse/' + 'select * from ' + clazz);
