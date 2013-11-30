@@ -501,8 +501,9 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
 
         if (params.text) {
             var query = params.text.trim();
-            var config = {headers: "Content-Type: " + contentType};
-            $http.post(text, query).success(function (data) {
+            var config = {headers:{"Content-Type": contentType}};
+            console.log(contentType);
+            $http.post(text,query,config).success(function (data) {
 
                 var time = ((new Date().getTime() - startTime) / 1000);
                 var records = data.result ? data.result.length : "";
