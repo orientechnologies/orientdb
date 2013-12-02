@@ -114,7 +114,8 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
         }
 
         newChangedValues.put(identity, entry.getValue());
-      }
+      } else
+        newChangedValues.put(entry.getKey().getIdentity(), entry.getValue());
     }
 
     changedValues.clear();
@@ -228,6 +229,8 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
   @Override
   public OSBTreeRidBag toStream(StringBuilder output) throws OSerializationException {
+    convertRecords2Links();
+
     if (rootPointer == null) {
       final OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = ODatabaseRecordThreadLocal.INSTANCE.get()
           .getSbTreeCollectionManager().createSBTree();
