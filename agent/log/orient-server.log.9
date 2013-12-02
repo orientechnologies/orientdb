@@ -1,0 +1,35 @@
+
+2013-11-28 17:31:56:691 INFO Loading configuration from: config/orientdb-server-config.xml... [OServerConfigurationLoaderXml]
+2013-11-28 17:31:57:216 INFO OrientDB Server v1.6.2-SNAPSHOT is starting up... [OServer]
+2013-11-28 17:31:57:247 INFO Databases directory: /home/marco/Documenti/Lavoro/test/orientdb-enterprise/databases [OServer]
+2013-11-28 17:31:57:291 INFO Listening binary connections on 0.0.0.0:2424 (protocol v.19) [OServerNetworkListener]
+2013-11-28 17:31:57:292 INFO Listening http connections on 0.0.0.0:2480 (protocol v.10) [OServerNetworkListener]
+2013-11-28 17:31:57:338 INFO Mail plugin installed and active. Loaded 1 profile(s): [default] [OMailPlugin]
+2013-11-28 17:31:57:366 INFO Profiler is recording metrics with configuration: 60,60 [OEnterpriseProfiler]
+2013-11-28 17:31:57:377 INFO OrientDB Server v1.6.2-SNAPSHOT is active. [OServer]
+2013-11-28 17:32:09:630 WARN segment file 'database.ocf' was not closed correctly last time [OSingleFileSegment]
+2013-11-28 17:32:10:895 WARN Storage monitor was not closed properly. Will try to restore from write ahead log. [OLocalPaginatedStorage]
+2013-11-28 17:32:10:895 INFO Try to find last checkpoint. [OLocalPaginatedStorage]Exception during storage data restore.
+Last position of provided data interval [1654909] is more than size of allocated area [65536]
+-> com.orientechnologies.common.directmemory.ODirectMemoryPointer.rangeCheck(ODirectMemoryPointer.java:146)
+-> com.orientechnologies.common.directmemory.ODirectMemoryPointer.get(ODirectMemoryPointer.java:36)
+-> com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage.getRecord(OWALPage.java:64)
+-> com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog$LogSegment.readRecord(OWriteAheadLog.java:851)
+-> com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.read(OWriteAheadLog.java:464)
+-> com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage.restoreFromWAL(OLocalPaginatedStorage.java:272)
+-> com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage.restoreIfNeeded(OLocalPaginatedStorage.java:241)
+-> com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage.open(OLocalPaginatedStorage.java:223)
+-> com.orientechnologies.orient.core.db.raw.ODatabaseRaw.open(ODatabaseRaw.java:109)
+-> com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract.open(ODatabaseWrapperAbstract.java:53)
+-> com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract.open(ODatabaseRecordAbstract.java:127)
+-> com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract.open(ODatabaseWrapperAbstract.java:53)
+-> com.orientechnologies.orient.server.OServer.openDatabase(OServer.java:694)
+-> com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract.authenticate(OServerCommandAuthenticatedDbAbstract.java:125)
+-> com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract.beforeExecute(OServerCommandAuthenticatedDbAbstract.java:86)
+-> com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect.beforeExecute(OServerCommandGetConnect.java:46)
+-> com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract.service(ONetworkProtocolHttpAbstract.java:153)
+-> com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract.execute(ONetworkProtocolHttpAbstract.java:496)
+-> com.orientechnologies.common.thread.OSoftThread.run(OSoftThread.java:45)
+2013-11-28 17:32:10:930 INFO Storage data restore was completed [OLocalPaginatedStorage]
+2013-11-28 17:32:11:802 WARN segment file 'Dictionary.name.him' was not closed correctly last time [OHashIndexBufferStore]
+2013-11-28 17:32:11:836 WARN segment file 'Dictionary.name.hit' was not closed correctly last time [OHashIndexTreeStateStore]

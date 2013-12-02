@@ -47,6 +47,8 @@
     "dashboard.servers": "Servers",
     "dashboard.metrics": "Metrics",
     "dashboard.messages": "Messages",
+    "dashboard.help": "Help",
+    "dashboard.gettstart": "Getting Started",
     "dashboard.mailsettings": "Mail Settings",
     "dashboard.globalsettings": "Global Settings",
     "dashboard.preview": "Dashboard Preview",

@@ -1,0 +1,1 @@
+<div ng-include="template"></div>

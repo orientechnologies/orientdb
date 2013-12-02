@@ -2,7 +2,7 @@
 
 var app = angular.module('MonitorApp');
 
-app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n) {
+app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n, Spinner) {
 
 
     $scope.rid = $routeParams.server;
@@ -43,18 +43,22 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
     });
 
     $scope.refresh = function () {
-
+        Spinner.start();
         var metricName = 'db.' + $scope.db + '.command.';
         var params = {  server: $scope.server.name, type: 'realtime', kind: 'chrono', names: metricName };
         Metric.get(params, function (data) {
             $scope.commands = $scope.flatten(data.result, metricName);
+            Spinner.stopSpinner();
+
         });
     }
 
     $scope.delete = function () {
         var metricName = 'db.' + $scope.db + '.command.';
         var params = {  server: $scope.server.name, type: 'realtime', names: metricName };
+        Spinner.start();
         Metric.delete(params, function (data) {
+            Spinner.stopSpinner();
             $scope.refresh();
         });
     }

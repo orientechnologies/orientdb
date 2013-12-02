@@ -65,7 +65,7 @@ function generateToc(toclevels) {
     if (entry.element.id == "")
       entry.element.id = "toc" + i;
     var a = document.createElement("a");
-    a.href = "#" + entry.element.id;
+    a.href = "#/dashboard/" + entry.element.id;
     a.appendChild(document.createTextNode(entry.text));
     var div = document.createElement("div");
     div.appendChild(a);

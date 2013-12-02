@@ -6,7 +6,6 @@ angular.module('MonitorApp')
 
         $scope.login = function () {
             Monitor.connect($scope.username, $scope.password, function (data) {
-                     console.log(data);
             }, function (data) {
 
             });

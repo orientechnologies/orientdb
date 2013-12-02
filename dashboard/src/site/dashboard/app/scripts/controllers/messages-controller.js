@@ -1,5 +1,5 @@
 var dbModule = angular.module('messages.controller', []);
-dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$location', '$routeParams', 'CommandLogApi', 'Monitor', 'MetricConfig', '$modal', '$q', 'Message', '$odialog', function ($scope, $http, $route, $location, $routeParams, CommandLogApi, Monitor, MetricConfig, $modal, $q, Message, $odialog) {
+dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$location', '$routeParams', 'CommandLogApi', 'Monitor', 'MetricConfig', '$modal', '$q', 'Message', '$odialog', 'Spinner', function ($scope, $http, $route, $location, $routeParams, CommandLogApi, Monitor, MetricConfig, $modal, $q, Message, $odialog, Spinner) {
     $scope.countPage = 5;
     $scope.countPageOptions = [5, 10, 20];
     $scope.unread = 'unread';
@@ -18,13 +18,19 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
         );
     }
     $scope.refresh = function () {
+        Spinner.start();
         CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql, shallow: 'shallow' }, function (data) {
                 $scope.msgsTotal = data.result;
                 $scope.msgs = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
+                Spinner.stopSpinner();
+            }, function (error) {
+                Spinner.stopSpinner();
             }
+
         );
+
 
     }
 
@@ -40,7 +46,7 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
     }
 
     $scope.save = function () {
-
+        Spinner.start();
         var resultsApp = JSON.parse(JSON.stringify($scope.msgsTotal));
         resultsApp.forEach(function (elem, idx, array) {
             MetricConfig.saveConfig(elem, function (data) {
@@ -51,26 +57,31 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
                         $scope.testMsgClass = 'alert alert-setting';
                         $scope.refresh();
                         $scope.refreshCount();
+                        Spinner.stopSpinner();
                     }
                 },
                 function (error) {
                     $scope.testMsg = error;
                     $scope.testMsgClass = 'alert alert-error alert-setting';
+                    Spinner.stopSpinner();
                 });
         });
+
     }
     $scope.checkAll = function (bool) {
-        for (var entry in $scope.msgsTotal) {
+        if ($scope.msgsTotal.length > 0) {
+            for (var entry in $scope.msgsTotal) {
 
-            if (bool != $scope.msgsTotal[entry]['read'] && $scope.msgsTotal[entry]['read']) {
-                $scope.countUnread++;
+                if (bool != $scope.msgsTotal[entry]['read'] && $scope.msgsTotal[entry]['read']) {
+                    $scope.countUnread++;
+                }
+                else if (bool != $scope.msgsTotal[entry]['read'] && !$scope.msgsTotal[entry]['read']) {
+                    $scope.countUnread--;
+                }
+                $scope.msgsTotal[entry]['read'] = bool;
             }
-            else if (bool != $scope.msgsTotal[entry]['read'] && !$scope.msgsTotal[entry]['read']) {
-                $scope.countUnread--;
-            }
-            $scope.msgsTotal[entry]['read'] = bool;
+            $scope.save();
         }
-        $scope.save();
     }
     $scope.switchPage = function (index) {
         if (index != $scope.currentPage) {

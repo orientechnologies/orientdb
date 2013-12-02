@@ -115,6 +115,8 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         $http.get('/log/monitor/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
             callback(data);
         }).error(function (data) {
+                callback(data);
+
             })
     }
 
@@ -132,13 +134,14 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         $http.get('/purge/monitor/' + type).success(function (data) {
 
         }).error(function (data) {
+
             })
     }
     resource.notifyModifiedMetrics = function (params, callback) {
 
         var metrics = params.metrics;
         var text = '/notifymetrics/monitor/';
-        $http.post(text,JSON.stringify(metrics)).success(function (data) {
+        $http.post(text, JSON.stringify(metrics)).success(function (data) {
 
         });
 

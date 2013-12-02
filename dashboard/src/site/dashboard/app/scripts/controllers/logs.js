@@ -1,5 +1,5 @@
-var dbModule = angular.module('workbench-logs.controller', ['workbench-logs.services']);
-dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor) {
+var dbModule = angular.module('workbench-logs.controller', ['workbench-logs.services', 'spinner.services']);
+dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Spinner', function ($scope, $http, $location, $routeParams, CommandLogApi, Spinner) {
     $scope.countPage = 1000;
     $scope.countPageOptions = [100, 500, 1000];
 //  LOG_LEVEL.ERROR.ordinal() 4
@@ -29,6 +29,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
     $scope.results = undefined;
     $scope.selectedSearch = '';
     $scope.getListFiles = function () {
+        Spinner.start();
         CommandLogApi.getListFiles({server: $scope.server }, function (data) {
 
             if (data) {
@@ -36,6 +37,9 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
                     $scope.files.push(data['files'][entry]['name']);
                 }
             }
+            Spinner.stopSpinner();
+        }, function (error) {
+            Spinner.stopSpinner();
         });
     }
     $scope.$watch("countPage", function (data) {
@@ -88,7 +92,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
         }
     }
     $scope.search = function () {
-
+        Spinner.start();
         var typeofS = undefined;
         var filess = undefined;
         if ($scope.selectedFile == undefined || $scope.selectedFile == '') {
@@ -104,14 +108,24 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
             typeofS = 'file';
             filess = $scope.selectedFile
         }
-        CommandLogApi.getLastLogs({server: $scope.server.name, file: filess, typeofSearch: typeofS, searchvalue: $scope.selectedSearch, logtype: $scope.selectedType, dateFrom: $scope.selectedDateFrom, hourFrom: $scope.selectedHourFrom, dateTo: $scope.selectedDateTo, hourTo: $scope.selectedHourTo}, function (data) {
-            if (data) {
-                $scope.resultTotal = data;
-                $scope.results = data.logs.slice(0, $scope.countPage);
-                $scope.currentPage = 1;
-                $scope.numberOfPage = new Array(Math.ceil(data.logs.length / $scope.countPage));
-            }
-        });
+        if ($scope.server != undefined) {
+            CommandLogApi.getLastLogs({server: $scope.server.name, file: filess, typeofSearch: typeofS, searchvalue: $scope.selectedSearch, logtype: $scope.selectedType, dateFrom: $scope.selectedDateFrom, hourFrom: $scope.selectedHourFrom, dateTo: $scope.selectedDateTo, hourTo: $scope.selectedHourTo}, function (data) {
+                if (data) {
+                    $scope.resultTotal = data;
+                    if (data.logs) {
+                        $scope.results = data.logs.slice(0, $scope.countPage);
+                        $scope.currentPage = 1;
+                        $scope.numberOfPage = new Array(Math.ceil(data.logs.length / $scope.countPage));
+                    }
+                }
+                Spinner.stopSpinner();
+            }, function (error) {
+                Spinner.stopSpinner();
+            });
+        }
+        else {
+            Spinner.stopSpinner();
+        }
     }
     $scope.selectType = function (selectedType) {
         $scope.selectedType = selectedType;
@@ -125,7 +139,7 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
 
 }]);
 
-dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', '$modal', '$q', 'Monitor', function ($scope, $http, $location, $routeParams, CommandLogApi, $modal, $q, Monitor) {
+dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', '$modal', '$q', 'Monitor', 'Spinner', function ($scope, $http, $location, $routeParams, CommandLogApi, $modal, $q, Monitor, Spinner) {
 
     var sql = "select * from Log fetchPlan *:1";
 
@@ -144,6 +158,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
     });
 
     $scope.getJavaLogs = function () {
+        Spinner.start();
         CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql, shallow: 'shallow'}, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
@@ -152,6 +167,9 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
                 $scope.currentPage = 1;
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
             }
+            Spinner.stopSpinner();
+        }, function (error) {
+            Spinner.stopSpinner();
         });
     }
     $scope.getJavaLogs();
@@ -177,14 +195,15 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
             body: 'You are dropping all Workench log. Are you sure?',
             success: function () {
                 CommandLogApi.purge({type: 'logs'}, function (data) {
-
+                    Spinner.start();
                     $scope.getJavaLogs();
-
+                    Spinner.stopSpinner();
                 });
             }
         });
     }
     $scope.search = function () {
+        Spinner.start();
         var day = moment($scope.selectedDateFrom);
 
         var hourFrom = moment(new Date());
@@ -242,7 +261,6 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
             }
         }
         sql = sql.concat(" fetchPlan *:1");
-        console.log(sql)
         CommandLogApi.queryText({database: $routeParams.database, limit: -1, language: 'sql', text: sql, shallow: ''}, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
@@ -251,6 +269,9 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
                 $scope.currentPage = 1;
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
             }
+            Spinner.stopSpinner();
+        }, function (error) {
+            Spinner.stopSpinner()
         });
     }
     $scope.checkDateFrom = function () {
@@ -266,7 +287,6 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         return false
     }
     $scope.$watch("countPage", function (data) {
-        console.log($scope.resultTotal)
         if ($scope.resultTotal) {
             $scope.results = $scope.resultTotal.result.slice(0, $scope.countPage);
             $scope.currentPage = 1;

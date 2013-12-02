@@ -1,7 +1,5 @@
 Workbench User Guide
 ====================
-Luca Garulli <l.garulli@gmail.com>
-:Author Initials: LG
 :toc:
 :icons:
 :numbered:
@@ -30,7 +28,7 @@ image::{icondir}login.png[width="80%"]
 Getting Started
 ---------------
 
-NOTE: For configuring server please follow this link:gettingstarted.html[guide]
+NOTE: For configuring server please follow this link:#/dashboard/gettstart[guide]
 
 
 Server Management
@@ -58,12 +56,14 @@ Overview
 ~~~~~~~~
 
 
-The first tab of the server panel, shows a chart that represents CRUD operations for all databases of the selected server, divided by date and time and the number of executions for each operation.
+Overview shows a chart that represents CRUD operations for all databases divided by date and time and the number of
+ executions for each operation.
 
 .Crud operations of all databases
 image::{icondir}overview_full.png[width="80%"]
 
-At the right top corner of the tab you can configure chart choosing the resolution (1m, 5m, 30m, 1h), the date range and the chart type.
+At the right top corner of the tab you can configure chart choosing the resolution (1m, 5m, 30m, 1h), the date range
+ and the chart type.
 
 .Chart configurations
 image::{icondir}chart_configuration.png[height="20%"]
@@ -78,7 +78,8 @@ Database Management
 image::{icondir}databasemanagement.png[width="80%"]
 
 
-Database management panel  shows the list of databases for each server and the chart of crud operations for the selected database.
+Database management panel  shows the list of databases for each server and the chart of crud operations for the
+selected database.
 
 TIP: select the database by clicking on the name.
 
@@ -94,7 +95,10 @@ image::{icondir}backup.png[height="20%"]
 Log
 ~~~
 
-In log panel you can see all the logs for a particular server by combining the search according to the date and time, the log type, limiting the search to a single log file or to all files.
+Log panel shows all the logs for a particular server.
+
+You can combine  search according to the date and time, the log type, limiting the search to a single log file or to
+all files.
 
 .Server Log
 image::{icondir}server_log.png[width="75%"]
@@ -117,6 +121,7 @@ CAUTION: Auto-reload isn't supported until 2.0.
 
 Metrics
 -------
+
 Metrics panel helps you to configure the metrics of interest by choosing from a list of these.
 
 A list of saved configuration are displayed on the left.
@@ -162,21 +167,24 @@ Notifications
 
 Notifications panel is similar to Log panel.
 
-In this case you can search all notifications in Workbench databases just combining the search according to the date and time and the log type.
+In this case you can search all notifications in Workbench databases just combining the search according to the date
+and time and the log type.
 
 
 .Notifications panel
 image::{icondir}notifications.png[width="80%"]
 
 
-NOTE: To free up disk space, you can delete all the logs from the database by clicking the button "Purge notifications now".
+NOTE: To free up disk space, you can delete all the logs from the database by clicking the button
+"Purge notifications now".
 
 Alerts
 ------
 
-In this section you can configure alerts based on certain events that may occur over time, such as a server goes down or when some metrics exceed some critical values.
+You can configure alerts based on certain events that may occur over time (server down, metrics that exceed critical values).
 
-Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution of an HTTP request or the execution of a function
+Particularly when a metric or a log meets a certain condition can trigger the sending of an email, the execution
+of an HTTP request or the execution of a function
 
 
 [BOLD]*When:*
@@ -189,7 +197,6 @@ Particularly when a metric or a log meets a certain condition can trigger the se
 - Send Mail
 - Execute HTTP
 - Execute Function
-
 
 
 .Alerts
@@ -257,7 +264,9 @@ NOTE: remember to click on the Save button to make the changes permanent
 Metrics Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 
-In metrics configuration you choose wich metrics the Workbench will save in datatabase; check it to enable/disable a metric.
+In metrics configuration you choose wich metrics the Workbench will save in datatabase; check it to
+
+enable/disable a metric.
 
 .Metrics configuration
 image::{icondir}metrics_settings.png[width="80%"]
@@ -280,7 +289,8 @@ In this panel you can:
 
 - free up disk space, a schedule will purge metrics and logs older than x hour;
 
-- purge all metric and notifications in Workbench database. Click on the button "purge all metrics now" and "purge all notifications now";
+- purge all metric and notifications in Workbench database. Click on the button "purge all metrics now"
+and "purge all notifications now";
 
 - Set a proxy to permit http request in events panel.
 

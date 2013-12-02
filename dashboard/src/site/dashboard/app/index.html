@@ -8,6 +8,7 @@
 <!--[if gt IE 8]><!-->
 <html class="no-js"> <!--<![endif]-->
 <head>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title></title>
@@ -32,6 +33,7 @@
     <!-- endbuild -->
 </head>
 <body ng-app="MonitorApp">
+
 <!--[if lt IE 7]>
 <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser
     today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better
@@ -52,6 +54,10 @@
          ng-controller="NavController">
 
     </nav>
+    <div id="spinner-container" class="">
+        <div id="spinner">
+        </div>
+    </div>
     <div ng-controller="MessageController"></div>
     <div class="monitor-app row-fluid">
         <div class="span12 mainSection">
@@ -119,6 +125,7 @@
 <script src="scripts/controllers/monitor.js"></script>
 <script src="scripts/controllers/server.js"></script>
 <script src="scripts/controllers/settings.js"></script>
+<script src="scripts/controllers/asciidoc-controller.js"></script>
 <script src="scripts/controllers/query.js"></script>
 <script src="scripts/controllers/header.js"></script>
 <script src="scripts/controllers/metrics.js"></script>
@@ -131,10 +138,11 @@
 <script src="scripts/service/workbench-service-logs.js"></script>
 <script src="scripts/controllers/logs.js"></script>
 <script src="scripts/controllers/events.js"></script>
+<script src="components/spin.js/spin.js"></script>
+<script src="scripts/controllers/spinner-controller.js"></script>
 <script src="scripts/controllers/messages-controller.js"></script>
-
 <script src="scripts/util/library.js"></script>
-
+<script src="scripts/service/spinner-service.js"></script>
 
 <!-- endbuild -->
 

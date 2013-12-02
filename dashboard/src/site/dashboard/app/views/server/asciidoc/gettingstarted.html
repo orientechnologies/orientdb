@@ -10,7 +10,7 @@
 
 /* Default font. */
 body {
-  font-family: Georgia,serif;
+    font-family: Georgia, serif;
 }
 
 /* Title font. */
@@ -20,401 +20,565 @@ thead, p.table.header,
 #toctitle,
 #author, #revnumber, #revdate, #revremark,
 #footer {
-  font-family: Arial,Helvetica,sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
-  margin: 1em 5% 1em 5%;
+    margin: 1em 5% 1em 5%;
 }
 
 a {
-  color: #A5360F;
-  /*text-decoration: underline;*/
+    color: #A5360F;
+    /*text-decoration: underline;*/
 }
+
 a:visited {
-  /*color: fuchsia;*/
+    /*color: fuchsia;*/
 }
 
 em {
-  font-style: italic;
-  color: navy;
+    font-style: italic;
+    color: navy;
 }
 
 strong {
-  font-weight: bold;
-  color: #083194;
+    font-weight: bold;
+    color: #083194;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #A5360F;
-  margin-top: 1.2em;
-  margin-bottom: 0.5em;
-  line-height: 1.3;
+    color: #A5360F;
+    margin-top: 1.2em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+    max-width: 85%;
 }
 
 h1, h2, h3 {
-  border-bottom: 2px solid silver;
+    border-bottom: 2px solid silver;
 }
+
 h2 {
-  padding-top: 0.5em;
+    padding-top: 0.5em;
 }
+
 h3 {
-  float: left;
+    float: left;
 }
+
 h3 + * {
-  clear: left;
+    clear: left;
 }
+
 h5 {
-  font-size: 1.0em;
+    font-size: 1.0em;
 }
 
 div.sectionbody {
-  margin-left: 0;
+    margin-left: 0;
 }
 
 hr {
-  border: 1px solid silver;
+    border: 1px solid silver;
 }
 
 p {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 ul, ol, li > p {
-  margin-top: 0;
+    margin-top: 0;
 }
-ul > li     { color: #aaa; }
-ul > li > * { color: black; }
+
+ul > li {
+    color: #aaa;
+}
+
+ul > li > * {
+    color: black;
+}
 
 .monospaced, code, pre {
-  font-family: "Courier New", Courier, monospace;
-  font-size: inherit;
-  color: #A5360F;
-  padding: 0;
-  margin: 0;
+    font-family: "Courier New", Courier, monospace;
+    font-size: inherit;
+    color: #A5360F;
+    padding: 0;
+    margin: 0;
 }
+
 pre {
-  white-space: pre-wrap;
+    white-space: pre-wrap;
 }
 
 #author {
-  color: #A5360F;
-  font-weight: bold;
-  font-size: 1.1em;
+    color: #A5360F;
+    font-weight: bold;
+    font-size: 1.1em;
 }
+
 #email {
 }
+
 #revnumber, #revdate, #revremark {
 }
 
 #footer {
-  font-size: small;
-  border-top: 2px solid silver;
-  padding-top: 0.5em;
-  margin-top: 4.0em;
+    font-size: small;
+    border-top: 2px solid silver;
+    padding-top: 0.5em;
+    margin-top: 4.0em;
+    max-width: 80%;
 }
+
 #footer-text {
-  float: left;
-  padding-bottom: 0.5em;
+    float: left;
+    padding-bottom: 0.5em;
 }
+
 #footer-badges {
-  float: right;
-  padding-bottom: 0.5em;
+    float: right;
+    padding-bottom: 0.5em;
 }
 
 #preamble {
-  margin-top: 1.5em;
-  margin-bottom: 1.5em;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
 }
+
 div.imageblock, div.exampleblock, div.verseblock,
 div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
 div.admonitionblock {
-  margin-top: 1.0em;
-  margin-bottom: 1.5em;
-}
-div.admonitionblock {
-  margin-top: 2.0em;
-  margin-bottom: 2.0em;
-  margin-right: 10%;
-  color: #606060;
+    margin-top: 1.0em;
+    margin-bottom: 1.5em;
+    max-width: 85%;
 }
 
-div.content { /* Block element content. */
-  padding: 0;
+div.admonitionblock {
+    margin-top: 2.0em;
+    margin-bottom: 2.0em;
+    margin-right: 10%;
+    color: #606060;
+}
+
+div.content {
+    /* Block element content. */
+    padding: 0;
 }
 
 /* Block element titles. */
 div.title, caption.title {
-  color: #888;
-  font-weight: bold;
-  text-align: left;
-  margin-top: 1.0em;
-  margin-bottom: 0.5em;
+    color: #888;
+    font-weight: bold;
+    text-align: left;
+    margin-top: 1.0em;
+    margin-bottom: 0.5em;
 }
+
 div.title + * {
-  margin-top: 0;
+    margin-top: 0;
 }
 
 td div.title:first-child {
-  margin-top: 0.0em;
+    margin-top: 0.0em;
 }
+
 div.content div.title:first-child {
-  margin-top: 0.0em;
+    margin-top: 0.0em;
 }
+
 div.content + div.title {
-  margin-top: 0.0em;
+    margin-top: 0.0em;
 }
 
 div.sidebarblock > div.content {
-  background: #ffffee;
-  border: 1px solid #dddddd;
-  border-left: 4px solid #f0f0f0;
-  padding: 0.5em;
+    background: #ffffee;
+    border: 1px solid #dddddd;
+    border-left: 4px solid #f0f0f0;
+    padding: 0.5em;
 }
 
 div.listingblock > div.content {
-  border: 1px solid #dddddd;
-  border-left: 5px solid #f0f0f0;
-  background: #f8f8f8;
-  padding: 0.5em;
+    border: 1px solid #dddddd;
+    border-left: 5px solid #f0f0f0;
+    background: #f8f8f8;
+    padding: 0.5em;
 }
 
 div.quoteblock, div.verseblock {
-  padding-left: 1.0em;
-  margin-left: 1.0em;
-  margin-right: 10%;
-  border-left: 5px solid #f0f0f0;
-  color: #888;
+    padding-left: 1.0em;
+    margin-left: 1.0em;
+    margin-right: 10%;
+    border-left: 5px solid #f0f0f0;
+    color: #888;
 }
 
 div.quoteblock > div.attribution {
-  padding-top: 0.5em;
-  text-align: right;
+    padding-top: 0.5em;
+    text-align: right;
 }
 
 div.verseblock > pre.content {
-  font-family: inherit;
-  font-size: inherit;
+    font-family: inherit;
+    font-size: inherit;
 }
+
 div.verseblock > div.attribution {
-  padding-top: 0.75em;
-  text-align: left;
+    padding-top: 0.75em;
+    text-align: left;
 }
+
 /* DEPRECATED: Pre version 8.2.7 verse style literal block. */
 div.verseblock + div.attribution {
-  text-align: left;
+    text-align: left;
 }
 
 div.admonitionblock .icon {
-  vertical-align: top;
-  font-size: 1.1em;
-  font-weight: bold;
-  text-decoration: underline;
-  color: #527bbd;
-  padding-right: 0.5em;
+    vertical-align: top;
+    font-size: 1.1em;
+    font-weight: bold;
+    text-decoration: underline;
+    color: #527bbd;
+    padding-right: 0.5em;
 }
+
 div.admonitionblock td.content {
-  padding-left: 0.5em;
-  border-left: 3px solid #dddddd;
+    padding-left: 0.5em;
+    border-left: 3px solid #dddddd;
 }
 
 div.exampleblock > div.content {
-  border-left: 3px solid #dddddd;
-  padding-left: 0.5em;
+    border-left: 3px solid #dddddd;
+    padding-left: 0.5em;
 }
 
-div.imageblock div.content { padding-left: 0; }
-span.image img { border-style: none; vertical-align: text-bottom; }
-a.image:visited { color: white; }
+div.imageblock div.content {
+    padding-left: 0;
+}
+
+span.image img {
+    border-style: none;
+    vertical-align: text-bottom;
+}
+
+a.image:visited {
+    color: white;
+}
 
 dl {
-  margin-top: 0.8em;
-  margin-bottom: 0.8em;
+    margin-top: 0.8em;
+    margin-bottom: 0.8em;
 }
+
 dt {
-  margin-top: 0.5em;
-  margin-bottom: 0;
-  font-style: normal;
-  color: navy;
+    margin-top: 0.5em;
+    margin-bottom: 0;
+    font-style: normal;
+    color: navy;
 }
+
 dd > *:first-child {
-  margin-top: 0.1em;
+    margin-top: 0.1em;
 }
 
 ul, ol {
     list-style-position: outside;
 }
+
 ol.arabic {
-  list-style-type: decimal;
+    list-style-type: decimal;
 }
+
 ol.loweralpha {
-  list-style-type: lower-alpha;
+    list-style-type: lower-alpha;
 }
+
 ol.upperalpha {
-  list-style-type: upper-alpha;
+    list-style-type: upper-alpha;
 }
+
 ol.lowerroman {
-  list-style-type: lower-roman;
+    list-style-type: lower-roman;
 }
+
 ol.upperroman {
-  list-style-type: upper-roman;
+    list-style-type: upper-roman;
 }
 
 div.compact ul, div.compact ol,
 div.compact p, div.compact p,
 div.compact div, div.compact div {
-  margin-top: 0.1em;
-  margin-bottom: 0.1em;
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
 }
 
 tfoot {
-  font-weight: bold;
+    font-weight: bold;
 }
+
 td > div.verse {
-  white-space: pre;
+    white-space: pre;
 }
 
 div.hdlist {
-  margin-top: 0.8em;
-  margin-bottom: 0.8em;
+    margin-top: 0.8em;
+    margin-bottom: 0.8em;
 }
+
 div.hdlist tr {
-  padding-bottom: 15px;
+    padding-bottom: 15px;
 }
+
 dt.hdlist1.strong, td.hdlist1.strong {
-  font-weight: bold;
+    font-weight: bold;
 }
+
 td.hdlist1 {
-  vertical-align: top;
-  font-style: normal;
-  padding-right: 0.8em;
-  color: navy;
+    vertical-align: top;
+    font-style: normal;
+    padding-right: 0.8em;
+    color: navy;
 }
+
 td.hdlist2 {
-  vertical-align: top;
+    vertical-align: top;
 }
+
 div.hdlist.compact tr {
-  margin: 0;
-  padding-bottom: 0;
+    margin: 0;
+    padding-bottom: 0;
 }
 
 .comment {
-  background: yellow;
+    background: yellow;
 }
 
 .footnote, .footnoteref {
-  font-size: 0.8em;
+    font-size: 0.8em;
 }
 
 span.footnote, span.footnoteref {
-  vertical-align: super;
+    vertical-align: super;
 }
 
 #footnotes {
-  margin: 20px 0 20px 0;
-  padding: 7px 0 0 0;
+    margin: 20px 0 20px 0;
+    padding: 7px 0 0 0;
 }
 
 #footnotes div.footnote {
-  margin: 0 0 5px 0;
+    margin: 0 0 5px 0;
 }
 
 #footnotes hr {
-  border: none;
-  border-top: 1px solid silver;
-  height: 1px;
-  text-align: left;
-  margin-left: 0;
-  width: 20%;
-  min-width: 100px;
+    border: none;
+    border-top: 1px solid silver;
+    height: 1px;
+    text-align: left;
+    margin-left: 0;
+    width: 20%;
+    min-width: 100px;
 }
 
 div.colist td {
-  padding-right: 0.5em;
-  padding-bottom: 0.3em;
-  vertical-align: top;
+    padding-right: 0.5em;
+    padding-bottom: 0.3em;
+    vertical-align: top;
 }
+
 div.colist td img {
-  margin-top: 0.3em;
+    margin-top: 0.3em;
 }
 
 @media print {
-  #footer-badges { display: none; }
+    #footer-badges {
+        display: none;
+    }
 }
 
 #toc {
-  margin-bottom: 2.5em;
+    margin-bottom: 2.5em;
 }
 
 #toctitle {
-  color: #A5360F;
-  font-size: 1.1em;
-  font-weight: bold;
-  margin-top: 1.0em;
-  margin-bottom: 0.1em;
+    color: #A5360F;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-top: 1.0em;
+    margin-bottom: 0.1em;
 }
 
 div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
-  margin-top: 0;
-  margin-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
+
 div.toclevel2 {
-  margin-left: 2em;
-  font-size: 0.9em;
+    margin-left: 2em;
+    font-size: 0.9em;
 }
+
 div.toclevel3 {
-  margin-left: 4em;
-  font-size: 0.9em;
+    margin-left: 4em;
+    font-size: 0.9em;
 }
+
 div.toclevel4 {
-  margin-left: 6em;
-  font-size: 0.9em;
+    margin-left: 6em;
+    font-size: 0.9em;
 }
 
-span.aqua { color: aqua; }
-span.black { color: black; }
-span.blue { color: blue; }
-span.fuchsia { color: fuchsia; }
-span.gray { color: gray; }
-span.green { color: green; }
-span.lime { color: lime; }
-span.maroon { color: maroon; }
-span.navy { color: navy; }
-span.olive { color: olive; }
-span.purple { color: purple; }
-span.red { color: red; }
-span.silver { color: silver; }
-span.teal { color: teal; }
-span.white { color: white; }
-span.yellow { color: yellow; }
+span.aqua {
+    color: aqua;
+}
 
-span.aqua-background { background: aqua; }
-span.black-background { background: black; }
-span.blue-background { background: blue; }
-span.fuchsia-background { background: fuchsia; }
-span.gray-background { background: gray; }
-span.green-background { background: green; }
-span.lime-background { background: lime; }
-span.maroon-background { background: maroon; }
-span.navy-background { background: navy; }
-span.olive-background { background: olive; }
-span.purple-background { background: purple; }
-span.red-background { background: red; }
-span.silver-background { background: silver; }
-span.teal-background { background: teal; }
-span.white-background { background: white; }
-span.yellow-background { background: yellow; }
+span.black {
+    color: black;
+}
 
-span.big { font-size: 2em; }
-span.small { font-size: 0.6em; }
+span.blue {
+    color: blue;
+}
 
-span.underline { text-decoration: underline; }
-span.overline { text-decoration: overline; }
-span.line-through { text-decoration: line-through; }
+span.fuchsia {
+    color: fuchsia;
+}
 
-div.unbreakable { page-break-inside: avoid; }
+span.gray {
+    color: gray;
+}
 
+span.green {
+    color: green;
+}
+
+span.lime {
+    color: lime;
+}
+
+span.maroon {
+    color: maroon;
+}
+
+span.navy {
+    color: navy;
+}
+
+span.olive {
+    color: olive;
+}
+
+span.purple {
+    color: purple;
+}
+
+span.red {
+    color: red;
+}
+
+span.silver {
+    color: silver;
+}
+
+span.teal {
+    color: teal;
+}
+
+span.white {
+    color: white;
+}
+
+span.yellow {
+    color: yellow;
+}
+
+span.aqua-background {
+    background: aqua;
+}
+
+span.black-background {
+    background: black;
+}
+
+span.blue-background {
+    background: blue;
+}
+
+span.fuchsia-background {
+    background: fuchsia;
+}
+
+span.gray-background {
+    background: gray;
+}
+
+span.green-background {
+    background: green;
+}
+
+span.lime-background {
+    background: lime;
+}
+
+span.maroon-background {
+    background: maroon;
+}
+
+span.navy-background {
+    background: navy;
+}
+
+span.olive-background {
+    background: olive;
+}
+
+span.purple-background {
+    background: purple;
+}
+
+span.red-background {
+    background: red;
+}
+
+span.silver-background {
+    background: silver;
+}
+
+span.teal-background {
+    background: teal;
+}
+
+span.white-background {
+    background: white;
+}
+
+span.yellow-background {
+    background: yellow;
+}
+
+span.big {
+    font-size: 2em;
+}
+
+span.small {
+    font-size: 0.6em;
+}
+
+span.underline {
+    text-decoration: underline;
+}
+
+span.overline {
+    text-decoration: overline;
+}
+
+span.line-through {
+    text-decoration: line-through;
+}
+
+div.unbreakable {
+    page-break-inside: avoid;
+}
 
 /*
  * xhtml11 specific
@@ -422,32 +586,37 @@ div.unbreakable { page-break-inside: avoid; }
  * */
 
 div.tableblock {
-  margin-top: 1.0em;
-  margin-bottom: 1.5em;
-}
-div.tableblock > table {
-  border: 3px solid #527bbd;
-}
-thead, p.table.header {
-  font-weight: bold;
-  color: #527bbd;
-}
-p.table {
-  margin-top: 0;
-}
-/* Because the table frame attribute is overriden by CSS in most browsers. */
-div.tableblock > table[frame="void"] {
-  border-style: none;
-}
-div.tableblock > table[frame="hsides"] {
-  border-left-style: none;
-  border-right-style: none;
-}
-div.tableblock > table[frame="vsides"] {
-  border-top-style: none;
-  border-bottom-style: none;
+    margin-top: 1.0em;
+    margin-bottom: 1.5em;
 }
 
+div.tableblock > table {
+    border: 3px solid #527bbd;
+}
+
+thead, p.table.header {
+    font-weight: bold;
+    color: #527bbd;
+}
+
+p.table {
+    margin-top: 0;
+}
+
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+    border-style: none;
+}
+
+div.tableblock > table[frame="hsides"] {
+    border-left-style: none;
+    border-right-style: none;
+}
+
+div.tableblock > table[frame="vsides"] {
+    border-top-style: none;
+    border-bottom-style: none;
+}
 
 /*
  * html5 specific
@@ -455,62 +624,71 @@ div.tableblock > table[frame="vsides"] {
  * */
 
 table.tableblock {
-  margin-top: 1.0em;
-  margin-bottom: 1.5em;
+    margin-top: 1.0em;
+    margin-bottom: 1.5em;
 }
+
 thead, p.tableblock.header {
-  font-weight: bold;
-  color: #527bbd;
+    font-weight: bold;
+    color: #527bbd;
 }
+
 p.tableblock {
-  margin-top: 0;
+    margin-top: 0;
 }
+
 table.tableblock {
-  border-width: 3px;
-  border-spacing: 0px;
-  border-style: solid;
-  border-color: #527bbd;
-  border-collapse: collapse;
+    border-width: 3px;
+    border-spacing: 0px;
+    border-style: solid;
+    border-color: #527bbd;
+    border-collapse: collapse;
 }
+
 th.tableblock, td.tableblock {
-  border-width: 1px;
-  padding: 4px;
-  border-style: solid;
-  border-color: #527bbd;
+    border-width: 1px;
+    padding: 4px;
+    border-style: solid;
+    border-color: #527bbd;
 }
 
 table.tableblock.frame-topbot {
-  border-left-style: hidden;
-  border-right-style: hidden;
+    border-left-style: hidden;
+    border-right-style: hidden;
 }
+
 table.tableblock.frame-sides {
-  border-top-style: hidden;
-  border-bottom-style: hidden;
+    border-top-style: hidden;
+    border-bottom-style: hidden;
 }
+
 table.tableblock.frame-none {
-  border-style: hidden;
+    border-style: hidden;
 }
 
 th.tableblock.halign-left, td.tableblock.halign-left {
-  text-align: left;
+    text-align: left;
 }
+
 th.tableblock.halign-center, td.tableblock.halign-center {
-  text-align: center;
+    text-align: center;
 }
+
 th.tableblock.halign-right, td.tableblock.halign-right {
-  text-align: right;
+    text-align: right;
 }
 
 th.tableblock.valign-top, td.tableblock.valign-top {
-  vertical-align: top;
-}
-th.tableblock.valign-middle, td.tableblock.valign-middle {
-  vertical-align: middle;
-}
-th.tableblock.valign-bottom, td.tableblock.valign-bottom {
-  vertical-align: bottom;
+    vertical-align: top;
 }
 
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+    vertical-align: middle;
+}
+
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+    vertical-align: bottom;
+}
 
 /*
  * manpage specific
@@ -518,20 +696,24 @@ th.tableblock.valign-bottom, td.tableblock.valign-bottom {
  * */
 
 body.manpage h1 {
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  border-top: 2px solid silver;
-  border-bottom: 2px solid silver;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    border-top: 2px solid silver;
+    border-bottom: 2px solid silver;
 }
+
 body.manpage h2 {
-  border-style: none;
+    border-style: none;
 }
+
 body.manpage div.sectionbody {
-  margin-left: 3em;
+    margin-left: 3em;
 }
 
 @media print {
-  body.manpage div#toc { display: none; }
+    body.manpage div#toc {
+        display: none;
+    }
 }
 
 
@@ -727,38 +909,61 @@ install: function(toclevels) {
 }
 
 }
-asciidoc.install(2);
+asciidoc.install();
 /*]]>*/
 </script>
 </head>
 <body class="article">
 <div id="header">
 <h1>Getting Started</h1>
-<span id="author">Luca Garulli</span><br />
-<span id="email"><code>&lt;<a href="mailto:l.garulli@gmail.com">l.garulli@gmail.com</a>&gt;</code></span><br />
-<span id="revdate">Introduction</span>
-<div id="toc">
-  <div id="toctitle">Table of Contents</div>
-  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
-</div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_introduction">1. Introduction</h2>
 <div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre><code>Based on the Community Edition, OrientDB provides additional Enterprise Class features like:
-
-- Workbench, as a centralized cockpit to manage multiple servers;
-- SQL Profiler, to tune the database based on usage patterns;
-- Metric Analyzer, to monitor and analyze metrics;
-- Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold;
-- Query Profiler;
-- Notification about hot-fixes and new releases;
-- Production support available on demand;
-
-Add Server</code></pre>
-</div></div>
+<div class="paragraph"><p>Based on the Community Edition, OrientDB provides additional Enterprise Class features like:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Workbench, as a centralized cockpit to manage multiple servers;
+</p>
+</li>
+<li>
+<p>
+SQL Profiler, to tune the database based on usage patterns;
+</p>
+</li>
+<li>
+<p>
+Metric Analyzer, to monitor and analyze metrics;
+</p>
+</li>
+<li>
+<p>
+Configurable Alerts, to get notified when a node is unreacheable or when a metric breaks a configurable threashold;
+</p>
+</li>
+<li>
+<p>
+Query Profiler;
+</p>
+</li>
+<li>
+<p>
+Notification about hot-fixes and new releases;
+</p>
+</li>
+<li>
+<p>
+Production support available on demand;
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_add_server">2. Add Server</h2>
+<div class="sectionbody">
 <div class="paragraph"><p>Go to the dashboard panel and click to "add server"</p></div>
 <div class="imageblock">
 <div class="content">
@@ -769,7 +974,7 @@ Add Server</code></pre>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_server_configuration">1. Server Configuration</h2>
+<h2 id="_server_configuration">3. Server Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>When popup open, just fill the form and test your server connection. If it&#8217;s ok save your server configuration by clicking "save changes".</p></div>
 <div class="imageblock">
@@ -781,7 +986,7 @@ Add Server</code></pre>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_dashboard_overview">2. Dashboard overview</h2>
+<h2 id="_dashboard_overview">4. Dashboard overview</h2>
 <div class="sectionbody">
 <div class="imageblock">
 <div class="content">
@@ -804,7 +1009,7 @@ Add Server</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-11-21 20:04:09 CET
+Last updated 2013-12-02 12:04:44 CET
 </div>
 </div>
 </body>

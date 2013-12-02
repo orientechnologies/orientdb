@@ -1,6 +1,6 @@
 var dbModule = angular.module('workbench-events.controller', ['workbench-logs.services']);
 
-dbModule.controller("EventsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'MetricConfig', '$route', '$window', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, MetricConfig, $route, $window) {
+dbModule.controller("EventsController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'MetricConfig', '$route', '$window', 'Spinner', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, MetricConfig, $route, $window, Spinner) {
 
     var sql = "select * from Event";
 
@@ -11,16 +11,19 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
 
     $scope.refresh = function () {
         $scope.metadata = CommandLogApi.refreshMetadata('monitor', function (data) {
+            Spinner.start();
             $scope.eventsWhen = CommandLogApi.listClassesForSuperclass('EventWhen');
             $scope.eventsWhat = CommandLogApi.listClassesForSuperclass('EventWhat');
             $scope.selectedEventWhen = undefined;
             $scope.selectedEventWhat = undefined;
+            Spinner.stopSpinner();
         });
     }
 
     $scope.refresh();
 
     $scope.getEvents = function () {
+        Spinner.start()
         CommandLogApi.queryText({database: $routeParams.database, language: 'sql', text: sql, shallow: 'shallow' }, function (data) {
             if (data) {
                 $scope.headers = CommandLogApi.getPropertyTableFromResults(data.result);
@@ -43,6 +46,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
                     $scope.count = idx;
                 })
             }
+            Spinner.stopSpinner();
         });
     }
     $scope.getEvents();
@@ -139,7 +143,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
         $scope.testMsgClass = undefined;
         var logs = new Array;
         var resultsApp = JSON.parse(JSON.stringify($scope.resultTotal));
-
+        Spinner.start();
         resultsApp.forEach(function (elem, idx, array) {
             delete elem['idx'];
             MetricConfig.saveConfig(elem, function (data) {
@@ -165,6 +169,7 @@ dbModule.controller("EventsController", ['$scope', '$http', '$location', '$route
                 }
             );
         });
+        Spinner.stopSpinner()
 
     };
     $scope.openLegend = function () {
@@ -237,7 +242,6 @@ dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$rout
             }
         }
     });
-    console.log($scope.eventWhen['server']['name']);
     $scope.serverToShow = $scope.eventWhen['server'] != undefined ? $scope.eventWhen['server']['name'] : '';
 
     $scope.changedServer = function (name) {
@@ -331,7 +335,6 @@ dbModule.controller("FunctionWhatController", ['$scope', '$http', '$location', '
 
 
     $scope.languages = ['SQL', 'Javascript'];
-    console.log($scope.eventWhat['parameters'])
     $scope.addParam = function () {
         if ($scope.eventWhat['parameters'] == undefined) {
             $scope.eventWhat['parameters'] = new Array;

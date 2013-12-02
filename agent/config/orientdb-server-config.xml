@@ -21,7 +21,7 @@
         </handler>
         <handler class="com.orientechnologies.agent.OEnterpriseAgent">
            <parameters>
-           <parameter name="license" value="DdOFTqwsd1ZOMQntexFHMqVfWIqfcPax"></parameter>
+           <parameter name="license" value="qCt/OEAurroLpvivBguONCodpudSc/NA"></parameter>
            </parameters>
         </handler>
         <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">

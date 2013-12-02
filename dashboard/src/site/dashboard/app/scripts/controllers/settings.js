@@ -77,7 +77,6 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     };
 
     $scope.modifiedMetrics = function (row) {
-        console.log($scope.metricsModified);
         if ($scope.metricsModified[row.name] == undefined) {
             $scope.metricsModified[row.name] = new Array(row);
         }
