@@ -263,8 +263,15 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int size = size();
     int freePointer = getIntValue(offset + FREE_POINTER_OFFSET);
-    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
-      return false;
+    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+      if (size > 1)
+        return false;
+      else
+        throw new OSBTreeException("Entry size ('key + value') is more than is more than allowed "
+            + (freePointer - 2 * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
+            + " bytes, either increase page size using '" + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey()
+            + "' parameter, or decrease 'key + value' size.");
+    }
 
     if (index <= size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, offset + POSITIONS_ARRAY_OFFSET + (index + 1)
