@@ -83,7 +83,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         else
           format = "fetchPlan:" + fetchPlan;
 
-      iResponse.writeResult(response, format);
+      iResponse.writeResult(response, format, iRequest.contentType);
 
     } finally {
       if (db != null)

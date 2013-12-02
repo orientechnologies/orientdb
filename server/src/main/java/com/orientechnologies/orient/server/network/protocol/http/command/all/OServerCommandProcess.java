@@ -85,7 +85,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       if (result instanceof ODocument)
         result = ((ODocument) result).field("result");
 
-      iResponse.writeResult(result, "");
+      iResponse.writeResult(result, "", iRequest.contentType);
 
     } catch (OProcessException e) {
       // EXCEPTION

@@ -24,12 +24,14 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -160,11 +162,11 @@ public class OHttpResponse {
   }
 
   public void writeResult(Object iResult) throws InterruptedException, IOException {
-    writeResult(iResult, null);
+    writeResult(iResult, null, null);
   }
 
   @SuppressWarnings("unchecked")
-  public void writeResult(Object iResult, final String iFormat) throws InterruptedException, IOException {
+  public void writeResult(Object iResult, final String iFormat, final String iContentType) throws InterruptedException, IOException {
     if (iResult == null)
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
@@ -194,7 +196,7 @@ public class OHttpResponse {
       if (iResult == null)
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
       else if (iResult instanceof Iterator<?>)
-        writeRecords((Iterator<OIdentifiable>) iResult, null, iFormat);
+        writeRecords((Iterator<OIdentifiable>) iResult, null, iFormat, iContentType);
     }
   }
 
@@ -202,43 +204,106 @@ public class OHttpResponse {
     if (iRecords == null)
       return;
 
-    writeRecords(iRecords.iterator(), null, null);
+    writeRecords(iRecords.iterator(), null, null, null);
   }
 
   public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
     if (iRecords == null)
       return;
 
-    writeRecords(iRecords.iterator(), iFetchPlan, null);
+    writeRecords(iRecords.iterator(), iFetchPlan, null, null);
   }
 
   public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
-    writeRecords(iRecords, null, null);
+    writeRecords(iRecords, null, null, null);
   }
 
-  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan, String iFormat) throws IOException {
+  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan, String iFormat,
+      final String iContentType) throws IOException {
     if (iRecords == null)
       return;
 
-    if (iFormat == null)
-      iFormat = JSON_FORMAT;
-    else
-      iFormat = JSON_FORMAT + "," + iFormat;
+    if (iContentType == null || OHttpUtils.CONTENT_JSON.equals(iContentType)) {
+      if (iFormat == null)
+        iFormat = JSON_FORMAT;
+      else
+        iFormat = JSON_FORMAT + "," + iFormat;
 
-    final StringWriter buffer = new StringWriter();
-    final OJSONWriter json = new OJSONWriter(buffer, iFormat);
-    json.beginObject();
+      final StringWriter buffer = new StringWriter();
+      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
+      json.beginObject();
 
-    final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
+      final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
 
-    // WRITE RECORDS
-    json.beginCollection(-1, true, "result");
-    formatMultiValue(iRecords, buffer, format);
-    json.endCollection(-1, true);
+      // WRITE RECORDS
+      json.beginCollection(-1, true, "result");
+      formatMultiValue(iRecords, buffer, format);
+      json.endCollection(-1, true);
 
-    json.endObject();
+      json.endObject();
+      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+    } else if ("text/csv".equals(iContentType)) {
+      sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "data.csv", new OCallable<Void, OChunkedResponse>() {
 
-    send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+        @Override
+        public Void call(final OChunkedResponse iArgument) {
+          final LinkedHashSet<String> colNames = new LinkedHashSet<String>();
+          final List<ODocument> records = new ArrayList<ODocument>();
+
+          // BROWSE ALL THE RECORD TO HAVE THE COMPLETE COLUMN NAMES LIST
+          while (iRecords.hasNext()) {
+            final OIdentifiable r = iRecords.next();
+            if (r != null) {
+              final ORecord<?> rec = r.getRecord();
+              if (rec != null) {
+                if (rec instanceof ODocument) {
+                  final ODocument doc = (ODocument) rec;
+                  records.add(doc);
+
+                  for (String fieldName : doc.fieldNames())
+                    colNames.add(fieldName);
+                }
+              }
+            }
+          }
+
+          final List<String> orderedColumns = new ArrayList<String>(colNames);
+
+          try {
+            // WRITE THE HEADER
+            for (int col = 0; col < orderedColumns.size(); ++col) {
+              if (col > 0)
+                iArgument.write(',');
+              iArgument.write(orderedColumns.get(col).getBytes());
+            }
+            iArgument.write(OHttpUtils.EOL);
+
+            // WRITE EACH RECORD
+            for (ODocument doc : records) {
+              for (int col = 0; col < orderedColumns.size(); ++col) {
+                if (col > 0)
+                  iArgument.write(',');
+
+                Object value = doc.field(orderedColumns.get(col));
+                if (value != null) {
+                  if (!(value instanceof Number))
+                    value = "\"" + value + "\"";
+                  iArgument.write(value.toString().getBytes());
+                }
+              }
+              iArgument.write(OHttpUtils.EOL);
+            }
+
+            iArgument.flush();
+
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+
+          return null;
+        }
+      });
+    }
   }
 
   public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) throws IOException {
@@ -320,6 +385,25 @@ public class OHttpResponse {
       while ((b = iContent.read()) > -1)
         out.write(b);
     }
+
+    out.flush();
+  }
+
+  public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
+      final OCallable<Void, OChunkedResponse> iWriter) throws IOException {
+    writeStatus(iCode, iReason);
+    writeHeaders(iContentType);
+    writeLine("Content-Transfer-Encoding: binary");
+    writeLine("Transfer-Encoding: chunked");
+
+    if (iFileName != null)
+      writeLine("Content-Disposition: attachment; filename=\"" + iFileName + "\"");
+
+    writeLine(null);
+
+    final OChunkedResponse chunkedOutput = new OChunkedResponse(this);
+    iWriter.call(chunkedOutput);
+    chunkedOutput.close();
 
     out.flush();
   }
