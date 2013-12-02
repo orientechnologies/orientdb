@@ -16,21 +16,24 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
+import java.nio.charset.Charset;
 import java.util.*;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidSetUpdateSerializationOperation;
@@ -40,16 +43,20 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidSetUpd
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue {
-  private OBonsaiBucketPointer                                  rootPointer;
-  private final OSBTreeCollectionManager                        collectionManager;
+public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
+    OTrackedMultiValue<OIdentifiable, OIdentifiable> {
+  private OBonsaiBucketPointer                                         rootPointer;
+  private final OSBTreeCollectionManager                               collectionManager;
 
-  private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues       = new TreeMap<OIdentifiable, OModifiableInteger>();
+  private final NavigableMap<OIdentifiable, OModifiableInteger>        changedValues       = new TreeMap<OIdentifiable, OModifiableInteger>();
 
-  private int                                                   modCount;
-  private int                                                   size;
+  private int                                                          modCount;
+  private int                                                          size;
 
-  private boolean                                               autoConvertToRecord = true;
+  private boolean                                                      autoConvertToRecord = true;
+
+  private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
+                                                                                               .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
 
   public OSBTreeRidBag() {
     rootPointer = null;
@@ -146,17 +153,23 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
     size++;
     modCount++;
+
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+        identifiable, identifiable));
   }
 
-  public void remove(OIdentifiable o) {
-    OModifiableInteger counter = changedValues.get(o);
+  public void remove(OIdentifiable identifiable) {
+    OModifiableInteger counter = changedValues.get(identifiable);
     if (counter == null)
-      changedValues.put(o, new OModifiableInteger(-1));
+      changedValues.put(identifiable, new OModifiableInteger(-1));
     else
       counter.decrement();
 
     size--;
     modCount++;
+
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
+        identifiable, null, identifiable));
   }
 
   public int size() {
@@ -165,6 +178,52 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
   public boolean isEmpty() {
     return size() == 0;
+  }
+
+  public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+    changeListeners.add(changeListener);
+  }
+
+  public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+    changeListeners.remove(changeListener);
+  }
+
+  @Override
+  public Class<?> getGenericClass() {
+    return OIdentifiable.class;
+  }
+
+  @Override
+  public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
+    final OSBTreeRidBag reverted = new OSBTreeRidBag();
+    for (OIdentifiable identifiable : this)
+      reverted.add(identifiable);
+
+    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = multiValueChangeEvents
+        .listIterator(multiValueChangeEvents.size());
+
+    while (listIterator.hasPrevious()) {
+      final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
+      switch (event.getChangeType()) {
+      case ADD:
+        reverted.remove(event.getKey());
+        break;
+      case REMOVE:
+        reverted.add(event.getOldValue());
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+      }
+    }
+
+    return reverted;
+  }
+
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
   }
 
   @Override
@@ -189,7 +248,7 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
     OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
 
-    output.append(OBinaryProtocol.bytes2string(stream));
+    output.append(OBase64Utils.encodeBytes(stream));
 
     ORecordSerializationContext context = ORecordSerializationContext.getContext();
     context.push(new ORidSetUpdateSerializationOperation(changedValues, rootPointer));
@@ -209,7 +268,7 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   }
 
   public static OSBTreeRidBag fromStream(String value) {
-    final byte[] stream = OBinaryProtocol.string2bytes(value);
+    final byte[] stream = OBase64Utils.decode(value);
 
     int offset = 0;
     final long pageIndex = OLongSerializer.INSTANCE.deserialize(stream, offset);
@@ -332,6 +391,8 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
       }
 
       size--;
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue));
       currentRemoved = true;
     }
 

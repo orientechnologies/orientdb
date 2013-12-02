@@ -51,6 +51,8 @@ public class ORidSetUpdateSerializationOperation implements ORecordSerialization
     } finally {
       releaseTree();
     }
+
+    changedValues.clear();
   }
 
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {

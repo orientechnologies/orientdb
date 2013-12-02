@@ -20,6 +20,8 @@ import static org.testng.Assert.*;
 
 import java.util.*;
 
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -121,12 +123,6 @@ public class OSBTreeRidBagTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
-
-    db.open("admin", "admin");
-
     doc = db.load(rid);
     doc.setLazyLoad(false);
 
@@ -193,12 +189,6 @@ public class OSBTreeRidBagTest {
     doc.save();
 
     rid = doc.getIdentity();
-
-    storage = db.getStorage();
-    db.close();
-    storage.close(true);
-
-    db.open("admin", "admin");
 
     doc = db.load(rid);
     doc.setLazyLoad(false);
@@ -281,12 +271,6 @@ public class OSBTreeRidBagTest {
     doc.save();
 
     rid = doc.getIdentity();
-
-    storage = db.getStorage();
-    db.close();
-    storage.close(true);
-
-    db.open("admin", "admin");
 
     doc = db.load(rid);
     doc.setLazyLoad(false);
@@ -391,14 +375,7 @@ public class OSBTreeRidBagTest {
     for (OIdentifiable identifiable : bag)
       rids.add(identifiable);
 
-    doc.setDirty();
     doc.save();
-
-    storage = db.getStorage();
-    db.close();
-    storage.close(true);
-
-    db.open("admin", "admin");
 
     doc = db.load(rid);
     doc.setLazyLoad(false);
@@ -505,12 +482,6 @@ public class OSBTreeRidBagTest {
     doc.save();
 
     rid = doc.getIdentity();
-
-    storage = db.getStorage();
-    db.close();
-    storage.close(true);
-
-    db.open("admin", "admin");
 
     doc = db.load(rid);
     doc.setLazyLoad(false);
@@ -658,12 +629,6 @@ public class OSBTreeRidBagTest {
 
     rid = doc.getIdentity();
 
-    storage = db.getStorage();
-    db.close();
-    storage.close(true);
-
-    db.open("admin", "admin");
-
     doc = db.load(rid);
     doc.setLazyLoad(false);
 
@@ -751,4 +716,84 @@ public class OSBTreeRidBagTest {
     Assert.assertTrue(expected.isEmpty());
   }
 
+  public void testMassiveChanges() {
+    ODocument document = new ODocument();
+    OSBTreeRidBag bag = new OSBTreeRidBag();
+    Random random = new Random();
+    List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    document.field("bag", bag);
+    document.save();
+    ORID rid = document.getIdentity();
+
+    for (int i = 0; i < 10; i++) {
+      document = db.load(rid);
+      document.setLazyLoad(false);
+
+      bag = document.field("bag");
+
+      massiveInsertionIteration(random, rids, bag);
+
+      document.save();
+    }
+    document.delete();
+  }
+
+  private void massiveInsertionIteration(Random rnd, List<OIdentifiable> rids, OSBTreeRidBag bag) {
+    Iterator<OIdentifiable> ridsIterator = rids.iterator();
+    Iterator<OIdentifiable> bagIterator = bag.iterator();
+
+    while (ridsIterator.hasNext()) {
+      assertTrue(bagIterator.hasNext());
+
+      OIdentifiable ridValue = ridsIterator.next();
+      OIdentifiable bagValue = bagIterator.next();
+
+      assertEquals(bagValue, ridValue);
+    }
+
+    for (int i = 0; i < 100; i++) {
+      if (rnd.nextDouble() < 0.2 & rids.size() > 5) {
+        final int index = rnd.nextInt(rids.size());
+        final OIdentifiable rid = rids.remove(index);
+        bag.remove(rid);
+      } else {
+        final int positionIndex = rnd.nextInt(300);
+        final OClusterPosition position = OClusterPositionFactory.INSTANCE.valueOf(positionIndex);
+
+        final ORecordId recordId = new ORecordId(1, position);
+        rids.add(recordId);
+        bag.add(recordId);
+      }
+    }
+
+    Collections.sort(rids);
+    ridsIterator = rids.iterator();
+    bagIterator = bag.iterator();
+
+    while (ridsIterator.hasNext()) {
+      assertTrue(bagIterator.hasNext());
+
+      OIdentifiable ridValue = ridsIterator.next();
+      OIdentifiable bagValue = bagIterator.next();
+
+      assertEquals(bagValue, ridValue);
+
+      if (rnd.nextDouble() < 0.05) {
+        ridsIterator.remove();
+        bagIterator.remove();
+      }
+    }
+
+    ridsIterator = rids.iterator();
+    bagIterator = bag.iterator();
+
+    while (ridsIterator.hasNext()) {
+      assertTrue(bagIterator.hasNext());
+
+      OIdentifiable ridValue = ridsIterator.next();
+      OIdentifiable bagValue = bagIterator.next();
+
+      assertEquals(bagValue, ridValue);
+    }
+  }
 }

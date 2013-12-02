@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -84,8 +85,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
   protected Map<String, OType>                                           _fieldTypes;
-  protected Map<String, OSimpleMultiValueChangeListener<String, Object>> _fieldChangeListeners;
-  protected Map<String, OMultiValueChangeTimeLine<String, Object>>       _fieldCollectionChangeTimeLines;
+  protected Map<String, OSimpleMultiValueChangeListener<Object, Object>> _fieldChangeListeners;
+  protected Map<String, OMultiValueChangeTimeLine<Object, Object>>       _fieldCollectionChangeTimeLines;
 
   protected boolean                                                      _trackingChanges    = true;
   protected boolean                                                      _ordered            = true;
@@ -921,7 +922,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return _fieldOriginalValues != null ? _fieldOriginalValues.get(iFieldName) : null;
   }
 
-  public OMultiValueChangeTimeLine<String, Object> getCollectionTimeLine(final String iFieldName) {
+  public OMultiValueChangeTimeLine<Object, Object> getCollectionTimeLine(final String iFieldName) {
     return _fieldCollectionChangeTimeLines != null ? _fieldCollectionChangeTimeLines.get(iFieldName) : null;
   }
 
@@ -1411,21 +1412,25 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       fieldType = prop != null ? prop.getType() : null;
     }
 
+    if (fieldValue instanceof OSBTreeRidBag)
+      fieldType = OType.LINKBAG;
+
     if (fieldType == null
         || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
-            || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
+            || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType) || OType.LINKBAG
+              .equals(fieldType)))
       return;
 
     if (!(fieldValue instanceof OTrackedMultiValue))
       return;
 
-    final OTrackedMultiValue<String, Object> multiValue = (OTrackedMultiValue<String, Object>) fieldValue;
+    final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
 
     if (_fieldChangeListeners == null)
-      _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener<String, Object>>();
+      _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener<Object, Object>>();
 
     if (!_fieldChangeListeners.containsKey(fieldName)) {
-      final OSimpleMultiValueChangeListener<String, Object> listener = new OSimpleMultiValueChangeListener<String, Object>(
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(
           fieldName);
       multiValue.addChangeListener(listener);
       _fieldChangeListeners.put(fieldName, listener);
@@ -1455,7 +1460,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_fieldChangeListeners == null)
       return;
 
-    final OMultiValueChangeListener<String, Object> changeListener = _fieldChangeListeners.remove(fieldName);
+    final OMultiValueChangeListener<Object, Object> changeListener = _fieldChangeListeners.remove(fieldName);
 
     final Object fieldValue;
     if (_fieldValues == null)
@@ -1467,7 +1472,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return;
 
     if (changeListener != null) {
-      final OTrackedMultiValue<String, Object> multiValue = (OTrackedMultiValue<String, Object>) fieldValue;
+      final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
       multiValue.removeRecordChangeListener(changeListener);
     }
   }
@@ -1549,15 +1554,15 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         return;
 
       if (_fieldCollectionChangeTimeLines == null)
-        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<String, Object>>();
+        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
 
-      OMultiValueChangeTimeLine<String, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
+      OMultiValueChangeTimeLine<Object, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
       if (timeLine == null) {
-        timeLine = new OMultiValueChangeTimeLine<String, Object>();
+        timeLine = new OMultiValueChangeTimeLine<Object, Object>();
         _fieldCollectionChangeTimeLines.put(fieldName, timeLine);
       }
 
-      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<String, Object>) event);
+      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
     }
   }
 
