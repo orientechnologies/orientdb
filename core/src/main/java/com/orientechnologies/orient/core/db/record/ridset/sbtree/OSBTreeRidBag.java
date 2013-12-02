@@ -229,7 +229,16 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
   @Override
   public OSBTreeRidBag toStream(StringBuilder output) throws OSerializationException {
-    convertRecords2Links();
+    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : changedValues.entrySet()) {
+      final OIdentifiable identifiable = entry.getKey();
+      if (identifiable instanceof ORecord) {
+        final ORID identity = identifiable.getIdentity();
+        final ORecord record = (ORecord) identifiable;
+        if (identity.isNew() || record.isDirty()) {
+          record.save();
+        }
+      }
+    }
 
     if (rootPointer == null) {
       final OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = ODatabaseRecordThreadLocal.INSTANCE.get()
