@@ -37,6 +37,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     String text = urlParts.length > 3 ? urlParts[3].trim() : iRequest.content;
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4].trim()) : -1;
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
+    final String accept = iRequest.getHeader("accept");
 
     if (iRequest.content != null)
       // CONTENT REPLACES TEXT
@@ -83,7 +84,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         else
           format = "fetchPlan:" + fetchPlan;
 
-      iResponse.writeResult(response, format, iRequest.contentType);
+      iResponse.writeResult(response, format, accept);
 
     } finally {
       if (db != null)
