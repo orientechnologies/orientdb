@@ -43,7 +43,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
 
     $scope.query = function () {
-//        Spinner.start();
+        Spinner.start();
 
         $scope.queryText = $scope.queryText.trim();
         $scope.queryText = $scope.queryText.replace(/\n/g, " ");
