@@ -834,6 +834,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
+        all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
     }
