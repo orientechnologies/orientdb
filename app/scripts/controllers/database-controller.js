@@ -43,7 +43,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
 
     $scope.query = function () {
-        Spinner.start();
+//        Spinner.start();
 
         $scope.queryText = $scope.queryText.trim();
         $scope.queryText = $scope.queryText.replace(/\n/g, " ");
@@ -70,17 +70,17 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.resultTotal = data.result;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
-
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
-                if ($scope.queries.indexOf($scope.queryText) != -1) {
-                    var idx = $scope.queries.indexOf($scope.queryText);
-                    $scope.queries.splice(idx, 1);
-
-                }
-                $scope.queries.unshift($scope.queryText);
-                localStorageService.add("Queries", $scope.queries);
                 Spinner.stopSpinner();
             }
+            if ($scope.queries.indexOf($scope.queryText) != -1) {
+                var idx = $scope.queries.indexOf($scope.queryText);
+                $scope.queries.splice(idx, 1);
+
+            }
+            localStorageService.add("Queries", $scope.queries);
+            $scope.queries.unshift($scope.queryText);
+            Spinner.stopSpinner();
         }, function (data) {
             Spinner.stopSpinner();
             $scope.headers = undefined;

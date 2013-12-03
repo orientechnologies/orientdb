@@ -499,29 +499,62 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
 
 
-        if (params.text) {
+        if (contentType == 'text/csv') {
             var query = params.text.trim();
-            var config = {headers:{"Content-Type": contentType}};
-            $http.post(text,query,config).success(function (data) {
-
+            var config = {headers: {"accept": contentType}};
+            $http.post(text, query, config).success(function (data) {
                 var time = ((new Date().getTime() - startTime) / 1000);
                 var records = data.result ? data.result.length : "";
+                var form = $('<a style="display: none;" type="hidden" id="linkdownload" href="data:application/octet-stream;charset=utf-8;base64,' + Base64.encode(data) + '">asdasdasasd</a>');
+                $('#download').append(form);
 
+
+                query = query.replace(/ /gi, '');
+                query = query.replace(/[^\w\s]/gi, '');
+                query = query.replace(/^\*/gi, '');
+                var namefile = query.substring(0, 15);
+                document.getElementById('linkdownload').setAttribute("download", namefile + ".csv");
+                document.getElementById('linkdownload').click();
+                var elem = document.getElementById('linkdownload');
+                elem.parentNode.removeChild(elem);
                 if (verbose) {
-                    var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
+                    var noti = "Query executed  in " + time + " sec. Returned " + records + " record(s)";
                     Notification.push({content: noti});
                 }
-                if (data != undefined) {
-                    callback(data);
-                }
-                else {
-                    callback('ok');
-                }
-
+                callback(data);
             }).error(function (data) {
                     Notification.push({content: data});
                     if (error) error(data);
                 });
+            ;
+
+        }
+
+        else {
+            if (params.text) {
+                var query = params.text.trim();
+                var config = {headers: {"accept": contentType}};
+                $http.post(text, query, config).success(function (data) {
+
+                    var time = ((new Date().getTime() - startTime) / 1000);
+                    var records = data.result ? data.result.length : "";
+
+                    if (verbose) {
+                        var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
+                        Notification.push({content: noti});
+                    }
+                    if (data != undefined) {
+                        callback(data);
+                    }
+                    else {
+                        callback('ok');
+                    }
+
+                }).error(function (data) {
+                        Notification.push({content: data});
+                        if (error) error(data);
+                    });
+            }
         }
     }
 
@@ -534,7 +567,8 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
 
     }
     return resource;
-});
+})
+;
 database.factory('DocumentApi', function ($http, $resource, Database) {
 
     var resource = $resource(API + 'document/:database/:document');
