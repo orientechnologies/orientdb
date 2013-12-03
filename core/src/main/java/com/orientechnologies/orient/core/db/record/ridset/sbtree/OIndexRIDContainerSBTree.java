@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
+import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -54,6 +56,20 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer) {
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
     tree.load(fileId, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+  }
+
+  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer) {
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
+
+    final OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+        .getUnderlying();
+    final long fileId;
+    try {
+      fileId = storage.getDiskCache().openFile(file + INDEX_FILE_EXTENSION);
+    } catch (IOException e) {
+      throw new OSBTreeException("Exception during loading of sbtree " + file, e);
+    }
+    tree.load(fileId, rootPointer, storage);
   }
 
   public OBonsaiBucketPointer getRootPointer() {
@@ -171,6 +187,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   public void delete() {
     tree.delete();
+  }
+
+  public String getFileName() {
+    return tree.getFileName();
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
