@@ -105,7 +105,11 @@ public class OReadWriteDiskCache implements ODiskCache {
   @Override
   public long openFile(final String fileName) throws IOException {
     synchronized (syncObject) {
-      final long fileId = writeCache.openFile(fileName);
+      long fileId = writeCache.isOpen(fileName);
+      if (fileId >= 0)
+        return fileId;
+
+      fileId = writeCache.openFile(fileName);
       filePages.put(fileId, new HashSet<Long>());
 
       return fileId;
@@ -115,6 +119,9 @@ public class OReadWriteDiskCache implements ODiskCache {
   @Override
   public void openFile(final long fileId) throws IOException {
     synchronized (syncObject) {
+      if (writeCache.isOpen(fileId))
+        return;
+
       writeCache.openFile(fileId);
       filePages.put(fileId, new HashSet<Long>());
     }

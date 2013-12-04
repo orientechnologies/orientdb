@@ -379,6 +379,22 @@ public class OWOWCache {
     }
   }
 
+  public long isOpen(String fileName) throws IOException {
+    synchronized (syncObject) {
+      initNameIdMapping();
+
+      final Long fileId = nameIdMap.get(fileName);
+      if (fileId == null)
+        return -1;
+
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return -1;
+
+      return fileId;
+    }
+  }
+
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
     synchronized (syncObject) {
       OFileClassic fileClassic = files.get(fileId);
