@@ -35,7 +35,6 @@
     <properties>
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
-        <osgi.fragment.host>com.orientechnologies.orientdb-core</osgi.fragment.host>
     </properties>
 
     <dependencies>
@@ -45,6 +44,5 @@
             <version>${project.version}</version>
         </dependency>
     </dependencies>
-
 
 </project>

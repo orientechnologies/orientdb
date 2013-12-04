@@ -33,10 +33,10 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketP
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
 public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializer, OBinarySerializer<OIndexRIDContainer> {
-  public static final String                                   NAME                     = "ic";
+  public static final String                                   NAME                     = "icn";
   public static final OStreamSerializerSBTreeIndexRIDContainer INSTANCE                 = new OStreamSerializerSBTreeIndexRIDContainer();
 
-  public static final byte                                     ID                       = 20;
+  public static final byte                                     ID                       = 21;
   public static final int                                      FILE_ID_OFFSET           = 0;
   public static final int                                      EMBEDDED_OFFSET          = FILE_ID_OFFSET
                                                                                             + OLongSerializer.LONG_SIZE;

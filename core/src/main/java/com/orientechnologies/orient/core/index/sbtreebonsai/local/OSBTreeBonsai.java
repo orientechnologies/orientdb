@@ -1344,6 +1344,10 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     return new AllocationResult(oldFreeListHead, cacheEntry, false);
   }
 
+  public String getFileName() {
+    return name + dataFileExtension;
+  }
+
   private static class AllocationResult {
     private final OBonsaiBucketPointer pointer;
     private final OCacheEntry          cacheEntry;
