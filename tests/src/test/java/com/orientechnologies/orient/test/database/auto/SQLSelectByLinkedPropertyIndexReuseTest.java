@@ -92,9 +92,10 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     }
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select from lpirtStudent where group.curator.salary = 2000"));
-    assertEquals(result.size(), 1);
-    assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
+        "select from lpirtStudent where group.curator.salary = 600"));
+    assertEquals(result.size(), 2);
+    assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
+    assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
 
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
