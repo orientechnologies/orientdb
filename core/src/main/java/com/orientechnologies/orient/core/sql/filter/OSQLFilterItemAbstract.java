@@ -24,10 +24,13 @@ import java.util.Locale;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -103,7 +106,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
 
         } else {
-          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME), new Object[] { part }));
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME),
+              new Object[] { part }));
         }
       }
     }
@@ -163,4 +167,14 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     }
     return buffer.toString();
   }
+
+  protected OCollate getCollateForField(final ODocument doc, final String iFieldName) {
+    if (doc.getSchemaClass() != null) {
+      final OProperty p = doc.getSchemaClass().getProperty(iFieldName);
+      if (p != null)
+        return p.getCollate();
+    }
+    return null;
+  }
+
 }

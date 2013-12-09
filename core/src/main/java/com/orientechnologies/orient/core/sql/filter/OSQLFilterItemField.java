@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -37,6 +38,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected Set<String> preLoadedFields;
   protected String[]    preLoadedFieldsArray;
   protected String      name;
+  protected OCollate    collate;
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
     super(iQueryToParse, iName);
@@ -55,10 +57,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(preLoadedFieldsArray))
+    if (doc.deserializeFields(preLoadedFieldsArray)) {
       // FIELD FOUND
-      return transformValue(iRecord, iContext,  ODocumentHelper.getFieldValue(doc, name));
+      Object v = ODocumentHelper.getFieldValue(doc, name);
 
+      collate = getCollateForField(doc, name);
+
+      return transformValue(iRecord, iContext, v);
+    }
     return null;
   }
 
@@ -141,5 +147,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public void setPreLoadedFields(final Set<String> iPrefetchedFieldList) {
     this.preLoadedFields = iPrefetchedFieldList;
+  }
+
+  public OCollate getCollate() {
+    return collate;
   }
 }

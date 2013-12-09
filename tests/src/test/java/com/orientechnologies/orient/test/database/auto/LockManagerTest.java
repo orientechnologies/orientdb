@@ -51,6 +51,7 @@ public class LockManagerTest {
   public static class ResourceRead implements Callable<Void> {
     AtomicInteger countRead = new AtomicInteger(0);
 
+    @Override
     public Void call() throws Exception {
       lockMgr.acquireLock(Thread.currentThread(), this, LOCK.SHARED);
       try {
@@ -72,6 +73,7 @@ public class LockManagerTest {
   public static class ResourceWrite implements Callable<Void> {
     AtomicInteger countWrite = new AtomicInteger(0);
 
+    @Override
     public Void call() throws Exception {
       lockMgr.acquireLock(Thread.currentThread(), this, LOCK.EXCLUSIVE);
       try {
@@ -97,6 +99,7 @@ public class LockManagerTest {
     AtomicInteger    countWrite = new AtomicInteger(0);
     volatile boolean lastWasRead;
 
+    @Override
     public Void call() throws Exception {
       if (lastWasRead) {
         write();
@@ -150,6 +153,7 @@ public class LockManagerTest {
     AtomicInteger countWrite          = new AtomicInteger(0);
     AtomicInteger countReentrantWrite = new AtomicInteger(0);
 
+    @Override
     public Void call() throws Exception {
       write();
       return null;
@@ -226,6 +230,7 @@ public class LockManagerTest {
 
   public class Process implements Runnable {
 
+    @Override
     public void run() {
       try {
         for (int i = 0; i < cyclesByProcess; i++) {

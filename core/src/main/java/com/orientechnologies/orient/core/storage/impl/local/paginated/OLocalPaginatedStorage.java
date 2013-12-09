@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -85,7 +85,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
-      OWOWCache.NAME_ID_MAP_EXTENSION, OSBTreeIndexRIDContainer.INDEX_FILE_EXTENSION };
+      OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION };
 
   private OModificationLock            modificationLock                     = new OModificationLock();
 
@@ -266,6 +266,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (lastCheckPoint == null) {
       OLogManager.instance().info(this, "Checkpoints are absent will restore from beginning.");
       restoreFromBegging();
+      return;
     }
 
     OWALRecord checkPointRecord = writeAheadLog.read(lastCheckPoint);

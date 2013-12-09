@@ -123,4 +123,6 @@ public interface OIndexDefinition extends OIndexCallback {
   public boolean isAutomatic();
 
   public OCollate getCollate();
+
+  public void setCollate(OCollate iCollate);
 }

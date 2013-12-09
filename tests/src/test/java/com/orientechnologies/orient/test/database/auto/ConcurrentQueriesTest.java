@@ -50,6 +50,7 @@ public class ConcurrentQueriesTest {
       threadName = iThreadName;
     }
 
+    @Override
     public void run() {
       try {
         for (int i = 0; i < CYCLES; i++) {

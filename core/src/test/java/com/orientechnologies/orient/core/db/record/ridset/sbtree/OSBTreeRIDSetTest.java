@@ -71,7 +71,6 @@ public class OSBTreeRIDSetTest {
   public void testInitialization() throws Exception {
     OSBTreeRIDSet set = new OSBTreeRIDSet(doc);
 
-    assertNotNull(set.getFileName());
     assertNotNull(set.getRootPointer());
     assertTrue(set.isEmpty());
   }

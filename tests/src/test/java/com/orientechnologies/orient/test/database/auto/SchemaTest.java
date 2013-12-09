@@ -198,6 +198,7 @@ public class SchemaTest {
 
     Thread thread = new Thread(new Runnable() {
 
+      @Override
       public void run() {
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
         ODocument doc = new ODocument("NewClass");

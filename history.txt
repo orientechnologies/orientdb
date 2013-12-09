@@ -26,6 +26,14 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.6.2 - (December, 9th 2013)
+---------------------------------------------------------------------------------------------------
+- Support for COLLATE to case insensitive compare fields
+- Bug fixing
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=11&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.6.1 - (November, 20th 2013)
 ---------------------------------------------------------------------------------------------------
 - Bug fixing

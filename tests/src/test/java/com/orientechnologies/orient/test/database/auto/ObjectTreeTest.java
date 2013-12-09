@@ -852,11 +852,13 @@ public class ObjectTreeTest {
     OObjectSerializerContext serializerContext = new OObjectSerializerContext();
     serializerContext.bind(new OObjectSerializer<CustomType, Long>() {
 
+      @Override
       public Long serializeFieldValue(Class<?> itype, CustomType iFieldValue) {
         serialized++;
         return iFieldValue.value;
       }
 
+      @Override
       public CustomType unserializeFieldValue(Class<?> itype, Long iFieldValue) {
         unserialized++;
         return new CustomType(iFieldValue);
@@ -974,10 +976,12 @@ public class ObjectTreeTest {
       OObjectSerializerContext serializerContext = new OObjectSerializerContext();
       serializerContext.bind(new OObjectSerializer<SecurityRole, String>() {
 
+        @Override
         public Object serializeFieldValue(Class<?> type, SecurityRole role) {
           return role.name();
         }
 
+        @Override
         public Object unserializeFieldValue(Class<?> type, String str) {
           return SecurityRole.getByName(str);
         }
