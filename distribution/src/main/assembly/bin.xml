@@ -6,7 +6,6 @@
     <formats>
         <format>dir</format>
         <format>tar.gz</format>
-        <format>tar.bz2</format>
         <format>zip</format>
     </formats>
 
@@ -164,14 +163,11 @@
         </fileSet>
 
         <!--
-         | creates an empty databases directory
+         | copy databases directory
         -->
         <fileSet>
-            <directory>${basedir}/../server/config</directory>
+            <directory>${basedir}/../graphdb/target/databases</directory>
             <outputDirectory>databases</outputDirectory>
-            <excludes>
-                <exclude>*</exclude>
-            </excludes>
         </fileSet>
     </fileSets>
 
@@ -198,9 +194,16 @@
     -->
     <dependencySets>
         <dependencySet>
+            <!--useTransitiveDependencies>false</useTransitiveDependencies-->
             <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>*:jar:*</include>
+            </includes>
             <excludes>
-                <exclude>*:pom</exclude>
+                <exclude>*:ant:*</exclude>
+                <exclude>*:ant-launcher:*</exclude>
+                <exclude>*:antlr:*</exclude>
+                <exclude>*:ivy:*</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>
