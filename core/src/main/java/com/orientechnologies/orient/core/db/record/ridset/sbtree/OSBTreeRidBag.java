@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,8 +27,8 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -62,9 +61,8 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   private OBonsaiBucketPointer                                         rootPointer;
   private final OSBTreeCollectionManager                               collectionManager;
 
-  private final NavigableMap<OIdentifiable, OModifiableInteger>        changedValues       = new TreeMap<OIdentifiable, OModifiableInteger>();
+  private final NavigableMap<OIdentifiable, OModifiableInteger>        changedValues       = new ConcurrentSkipListMap<OIdentifiable, OModifiableInteger>();
 
-  private int                                                          modCount;
   private int                                                          size;
 
   private boolean                                                      autoConvertToRecord = true;
@@ -100,13 +98,12 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   }
 
   public Iterator<OIdentifiable> iterator() {
-    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, modCount,
-        autoConvertToRecord);
+    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, autoConvertToRecord);
   }
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
-    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, modCount, false);
+    return new RIDBagIterator(changedValues, rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, false);
   }
 
   @Override
@@ -167,7 +164,6 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
       counter.increment();
 
     size++;
-    modCount++;
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
         identifiable, identifiable));
@@ -181,7 +177,6 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
       counter.decrement();
 
     size--;
-    modCount++;
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
         identifiable, null, identifiable));
@@ -321,19 +316,17 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
     private int                                                    currentCounter;
 
-    private final int                                              extModCount;
     private final boolean                                          convertToRecord;
 
     private boolean                                                currentRemoved;
 
     private RIDBagIterator(NavigableMap<OIdentifiable, OModifiableInteger> changedValues, SBTreeMapEntryIterator sbTreeIterator,
-        int extModCount, boolean convertToRecord) {
+        boolean convertToRecord) {
 
       this.changedValues = changedValues;
       this.convertToRecord = convertToRecord;
       this.changedValuesIterator = changedValues.entrySet().iterator();
       this.sbTreeIterator = sbTreeIterator;
-      this.extModCount = extModCount;
 
       nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
 
@@ -349,9 +342,6 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
     @Override
     public OIdentifiable next() {
-      if (modCount != extModCount)
-        throw new ConcurrentModificationException();
-
       currentRemoved = false;
       if (currentCounter < currentFinalCounter) {
         currentCounter++;
