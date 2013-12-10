@@ -16,7 +16,7 @@
 		<jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
 		<osgi.import>*</osgi.import>
 		<osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
-		<orientdb.version>1.6.2-SNAPSHOT</orientdb.version>
+		<orientdb.version>1.6.2</orientdb.version>
 		<blueprints.version>2.5.0-SNAPSHOT</blueprints.version>
 	</properties>
 	<scm>
