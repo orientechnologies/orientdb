@@ -367,8 +367,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       throws IOException {
     externalModificationLock.requestModificationLock();
     try {
-      lockTillAtomicOperationCompletes();
-
       acquireExclusiveLock();
       try {
 
@@ -380,6 +378,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         if (entryContentLength < OClusterPage.MAX_RECORD_SIZE) {
           startAtomicOperation();
+          lockTillAtomicOperationCompletes();
 
           byte[] entryContent = new byte[entryContentLength];
 
@@ -410,6 +409,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           return createPhysicalPosition(recordType, clusterPosition, addEntryResult.recordVersion);
         } else {
           startAtomicOperation();
+          lockTillAtomicOperationCompletes();
 
           final OClusterPage.TrackMode trackMode = getTrackMode();
 
@@ -652,7 +652,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
-      lockTillAtomicOperationCompletes();
       acquireExclusiveLock();
       try {
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
@@ -687,6 +686,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
             } else if (removedContentSize == 0) {
               startAtomicOperation();
+              lockTillAtomicOperationCompletes();
             }
 
             byte[] content = localPage.getBinaryValue(recordPageOffset, localPage.getRecordSize(recordPosition));
@@ -731,8 +731,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        lockTillAtomicOperationCompletes();
-
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
 
         int recordPosition = positionEntry.getRecordPosition();
@@ -759,6 +757,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final OClusterPage.TrackMode trackMode = getTrackMode();
 
         startAtomicOperation();
+        lockTillAtomicOperationCompletes();
 
         int entryPosition = 0;
         recordEntry[entryPosition] = recordType;

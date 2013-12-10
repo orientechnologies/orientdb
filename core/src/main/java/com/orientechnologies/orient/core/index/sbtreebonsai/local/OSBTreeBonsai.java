@@ -186,8 +186,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   public void put(K key, V value) {
     acquireExclusiveLock();
     try {
-      lockTillAtomicOperationCompletes();
       startAtomicOperation();
+      lockTillAtomicOperationCompletes();
 
       BucketSearchResult bucketSearchResult = findBucket(key);
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
@@ -475,7 +475,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   public V remove(K key) {
     acquireExclusiveLock();
     try {
-      lockTillAtomicOperationCompletes();
 
       BucketSearchResult bucketSearchResult = findBucket(key);
       if (bucketSearchResult.itemIndex < 0)
@@ -491,6 +490,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       keyBucketPointer.acquireExclusiveLock();
       try {
         startAtomicOperation();
+        lockTillAtomicOperationCompletes();
 
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketPointer.getDataPointer(),
             bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
