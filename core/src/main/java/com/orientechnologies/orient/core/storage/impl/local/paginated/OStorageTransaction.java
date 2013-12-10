@@ -9,55 +9,13 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * @since 12.06.13
  */
 public class OStorageTransaction {
-  private final OTransaction     clientTx;
-  private final OOperationUnitId operationUnitId;
+  private final OTransaction clientTx;
 
-  private OLogSequenceNumber     startLSN;
-
-  public OStorageTransaction(OTransaction clientTx, OOperationUnitId operationUnitId) {
+  public OStorageTransaction(OTransaction clientTx) {
     this.clientTx = clientTx;
-    this.operationUnitId = operationUnitId;
   }
 
   public OTransaction getClientTx() {
     return clientTx;
-  }
-
-  public OOperationUnitId getOperationUnitId() {
-    return operationUnitId;
-  }
-
-  public OLogSequenceNumber getStartLSN() {
-    return startLSN;
-  }
-
-  public void setStartLSN(OLogSequenceNumber startLSN) {
-    this.startLSN = startLSN;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-
-    OStorageTransaction that = (OStorageTransaction) o;
-
-    if (!operationUnitId.equals(that.operationUnitId))
-      return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return operationUnitId.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return "OStorageTransaction{" + "clientTx=" + clientTx + ", operationUnitId=" + operationUnitId + ", startLSN=" + startLSN
-        + "} ";
   }
 }
