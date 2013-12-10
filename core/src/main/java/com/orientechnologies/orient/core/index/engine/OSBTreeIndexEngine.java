@@ -16,7 +16,10 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -117,6 +120,20 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       sbTree.delete();
     } finally {
       releaseSharedLock();
+    }
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
+    acquireExclusiveLock();
+    try {
+      final ODatabaseRecord database = getDatabase();
+      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+      sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
+    } finally {
+      releaseExclusiveLock();
     }
   }
 
@@ -345,43 +362,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       sbTree.put(key, value);
     } finally {
       releaseSharedLock();
-    }
-  }
-
-  @Override
-  public int removeValue(final OIdentifiable value, final ValuesTransformer<V> transformer) {
-    acquireExclusiveLock();
-    try {
-      final Set<Object> keySetToRemove = new HashSet<Object>();
-
-      if (sbTree.size() == 0)
-        return 0;
-
-      final Object firstKey = sbTree.firstKey();
-      final Object lastKey = sbTree.lastKey();
-      sbTree.loadEntriesBetween(firstKey, true, lastKey, true, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          if (transformer == null) {
-            if (entry.getValue().equals(value))
-              keySetToRemove.add(entry.getKey());
-          } else {
-            Collection<OIdentifiable> identifiables = transformer.transformFromValue(entry.getValue());
-            for (OIdentifiable identifiable : identifiables) {
-              if (identifiable.equals(value))
-                keySetToRemove.add(entry.getKey());
-            }
-          }
-          return true;
-        }
-      });
-
-      for (Object keyToRemove : keySetToRemove)
-        sbTree.remove(keyToRemove);
-
-      return keySetToRemove.size();
-    } finally {
-      releaseExclusiveLock();
     }
   }
 

@@ -135,7 +135,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
     } else if (iTarget instanceof OQueryRuntimeValueMulti) {
 
       final OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
-      for (final Object o : multi.values) {
+      for (final Object o : multi.getValues()) {
         if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
           return true;
       }

@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
@@ -38,10 +40,19 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
   }
 
   public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
+    final ODocument doc = ((ODocument) iRecord);
+
     if (names.size() == 1)
       return transformValue(iRecord, iContext, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
 
-    final Object[] values = ((ODocument) iRecord).fieldValues();
+    final String[] fieldNames = doc.fieldNames();
+    final Object[] values = new Object[fieldNames.length];
+    final List<OCollate> collates = new ArrayList<OCollate>();
+
+    for (int i = 0; i < fieldNames.length; ++i) {
+      values[i] = doc.field(fieldNames[i]);
+      collates.add(getCollateForField(doc, fieldNames[i]));
+    }
 
     if (hasChainOperators()) {
       // TRANSFORM ALL THE VALUES
@@ -49,6 +60,6 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
         values[i] = transformValue(iRecord, iContext, values[i]);
     }
 
-    return new OQueryRuntimeValueMulti(this, values);
+    return new OQueryRuntimeValueMulti(this, values, collates);
   }
 }

@@ -19,8 +19,23 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -364,6 +379,22 @@ public class OWOWCache {
     }
   }
 
+  public long isOpen(String fileName) throws IOException {
+    synchronized (syncObject) {
+      initNameIdMapping();
+
+      final Long fileId = nameIdMap.get(fileName);
+      if (fileId == null)
+        return -1;
+
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return -1;
+
+      return fileId;
+    }
+  }
+
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
     synchronized (syncObject) {
       OFileClassic fileClassic = files.get(fileId);
@@ -679,6 +710,12 @@ public class OWOWCache {
         if (!nameIdMapHolderFile.delete())
           throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
       }
+    }
+  }
+
+  public String fileNameById(long fileId) {
+    synchronized (syncObject) {
+      return files.get(fileId).getName();
     }
   }
 

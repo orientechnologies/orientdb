@@ -1339,8 +1339,8 @@ public class SQLSelectTest {
         .execute();
 
     Assert.assertTrue(result2.size() != 0);
-    Assert.assertTrue(((ODocument) result2.get(0)).field("$names") instanceof Collection<?>);
-    Assert.assertFalse(((Collection<?>) ((ODocument) result2.get(0)).field("$names")).isEmpty());
+    Assert.assertTrue(result2.get(0).field("$names") instanceof Collection<?>);
+    Assert.assertFalse(((Collection<?>) result2.get(0).field("$names")).isEmpty());
   }
 
   @Test

@@ -538,7 +538,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     ByteArrayOutputStream baos = null;
     try {
       in = new ByteArrayInputStream(zipBytes);
-      gzip = new GZIPInputStream(in);
+      gzip = new GZIPInputStream(in, 16384); // 16KB
       byte[] buffer = new byte[1024];
       baos = new ByteArrayOutputStream();
       int len = -1;

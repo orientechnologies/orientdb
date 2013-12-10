@@ -9,13 +9,11 @@ import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
+public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   private OType[] keyTypes;
 
   public OSimpleKeyIndexDefinition(final OType... keyTypes) {
-    super(new ODocument());
     this.keyTypes = keyTypes;
   }
 
@@ -77,6 +75,7 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
         keyTypeNames.add(keyType.toString());
 
       document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
+      document.field("collate", collate.getName());
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -93,6 +92,8 @@ public class OSimpleKeyIndexDefinition extends ODocumentWrapperNoClass implement
       keyTypes[i] = OType.valueOf(keyTypeName);
       i++;
     }
+
+    setCollate((String) document.field("collate"));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {

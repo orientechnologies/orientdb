@@ -224,9 +224,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       final List<ODocument> entries = new ArrayList<ODocument>();
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
-      if (indexEntry.getValue().changesCrossKey != null)
-        serializeIndexChangeEntry(indexEntry.getValue().changesCrossKey, indexDoc, entries);
-
       // STORE INDEX ENTRIES
       for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
         serializeIndexChangeEntry(entry, indexDoc, entries);
@@ -250,7 +247,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    * Bufferizes index changes to be flushed at commit time.
    */
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
-      final Object iKey, final OIdentifiable iValue) {
+      final Object key, final OIdentifiable iValue) {
     OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
     if (indexEntry == null) {
       indexEntry = new OTransactionIndexChanges();
@@ -269,16 +266,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
               changes.entries.remove(i);
               break;
             }
-
-        OTransactionIndexChangesPerKey changes = indexEntry.getChangesCrossKey();
-        for (int i = 0; i < changes.entries.size(); ++i)
-          if (changes.entries.get(i).value.equals(iValue)) {
-            changes.entries.remove(i);
-            break;
-          }
       }
 
-      OTransactionIndexChangesPerKey changes = iKey != null ? indexEntry.getChangesPerKey(iKey) : indexEntry.getChangesCrossKey();
+      OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
 
       changes.add(iValue, iOperation);
 
@@ -292,7 +282,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         recordIndexOperations.put(iValue.getIdentity().copy(), transactionIndexOperations);
       }
 
-      transactionIndexOperations.add(new OTransactionRecordIndexOperation(iIndexName, iKey, iOperation));
+      transactionIndexOperations.add(new OTransactionRecordIndexOperation(iIndexName, key, iOperation));
     }
   }
 
@@ -324,12 +314,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         if (indexEntryChanges == null)
           continue;
 
-        final OTransactionIndexChangesPerKey changesPerKey;
-        if (indexOperation.key != null)
-          changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
-        else
-          changesPerKey = indexEntryChanges.changesCrossKey;
-
+        final OTransactionIndexChangesPerKey changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
         updateChangesIdentity(oldRid, newRid, changesPerKey);
       }
     }

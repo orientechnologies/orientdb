@@ -23,6 +23,8 @@ public interface OIndexEngine<V> {
 
   void delete();
 
+  void deleteWithoutLoad(String indexName);
+
   void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic);
 
   boolean contains(Object key);
@@ -62,8 +64,6 @@ public interface OIndexEngine<V> {
   V get(Object key);
 
   void put(Object key, V value);
-
-  int removeValue(OIdentifiable value, ValuesTransformer<V> transformer);
 
   void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);

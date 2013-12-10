@@ -47,13 +47,13 @@ public class OSBTreeCollectionManager {
     return tree;
   }
 
-  public OSBTreeBonsai<OIdentifiable, Boolean> loadSBTree(String fileName, OBonsaiBucketPointer rootIndex) {
+  public OSBTreeBonsai<OIdentifiable, Boolean> loadSBTree(long fileId, OBonsaiBucketPointer rootIndex) {
     OSBTreeBonsai<OIdentifiable, Boolean> tree = treeCache.get(rootIndex);
     if (tree != null)
       return tree;
 
     tree = new OSBTreeBonsai<OIdentifiable, Boolean>(".sbt", 1, true);
-    tree.load(fileName, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+    tree.load(fileId, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
     treeCache.put(tree.getRootBucketPointer(), tree);
 

@@ -6,7 +6,6 @@
     <formats>
         <format>dir</format>
         <format>tar.gz</format>
-        <format>tar.bz2</format>
         <format>zip</format>
     </formats>
 
@@ -20,6 +19,7 @@
             <excludes>
                 <exclude>*.sh</exclude>
             </excludes>
+            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
@@ -41,6 +41,7 @@
             <includes>
                 <include>*.bat</include>
             </includes>
+            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
@@ -62,6 +63,7 @@
             <includes>
                 <include>*.bat</include>
             </includes>
+            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
@@ -83,6 +85,7 @@
             <includes>
                 <include>*.bat</include>
             </includes>
+            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
@@ -104,6 +107,7 @@
             <includes>
                 <include>*.bat</include>
             </includes>
+            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
@@ -122,18 +126,22 @@
         <fileSet>
             <directory>${basedir}/../server/config</directory>
             <outputDirectory>config</outputDirectory>
+            <fileMode>400</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
+            <fileMode>400</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../distributed/config</directory>
             <outputDirectory>config</outputDirectory>
+            <fileMode>400</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
+            <fileMode>400</fileMode>
         </fileSet>
 
         <!--
@@ -164,14 +172,11 @@
         </fileSet>
 
         <!--
-         | creates an empty databases directory
+         | copy databases directory
         -->
         <fileSet>
-            <directory>${basedir}/../server/config</directory>
+            <directory>${basedir}/../graphdb/target/databases</directory>
             <outputDirectory>databases</outputDirectory>
-            <excludes>
-                <exclude>*</exclude>
-            </excludes>
         </fileSet>
     </fileSets>
 
@@ -181,15 +186,15 @@
     <files>
         <file>
             <source>${basedir}/../license.txt</source>
-            <fileMode>644</fileMode>
+            <fileMode>444</fileMode>
         </file>
         <file>
             <source>${basedir}/../history.txt</source>
-            <fileMode>644</fileMode>
+            <fileMode>444</fileMode>
         </file>
         <file>
             <source>${basedir}/../readme.txt</source>
-            <fileMode>644</fileMode>
+            <fileMode>444</fileMode>
         </file>
     </files>
 
@@ -198,9 +203,16 @@
     -->
     <dependencySets>
         <dependencySet>
+            <!--useTransitiveDependencies>false</useTransitiveDependencies-->
             <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>*:jar:*</include>
+            </includes>
             <excludes>
-                <exclude>*:pom</exclude>
+                <exclude>*:ant:*</exclude>
+                <exclude>*:ant-launcher:*</exclude>
+                <exclude>*:antlr:*</exclude>
+                <exclude>*:ivy:*</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>

@@ -104,20 +104,11 @@ public interface OIndex<T> {
   /**
    * Removes an entry by its key.
    * 
-   * @param iKey
+   * @param key
    *          The entry's key to remove
    * @return True if the entry has been found and removed, otherwise false
    */
-  boolean remove(Object iKey);
-
-  /**
-   * Removes a value in all the index entries.
-   * 
-   * @param iRID
-   *          Record id to search
-   * @return Times the record was found, 0 if not found at all
-   */
-  int remove(OIdentifiable iRID);
+  boolean remove(Object key);
 
   /**
    * Removes an entry by its key and value.
@@ -164,6 +155,8 @@ public interface OIndex<T> {
    * @return The index instance itself to allow in chain calls
    */
   OIndex<T> delete();
+
+  void deleteWithoutIndexLoad(String indexName);
 
   /**
    * Returns the index name.
@@ -240,14 +233,6 @@ public interface OIndex<T> {
    * @return Names of clusters that will be indexed.
    */
   Set<String> getClusters();
-
-  /**
-   * Commits changes as atomic. It's called during the transaction's commit.
-   * 
-   * @param iDocument
-   *          Collection of entries to commit
-   */
-  void commit(ODocument iDocument);
 
   /**
    * Returns an iterator to walk across all the index items from the first to the latest one.

@@ -220,7 +220,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }, true);
   }
 
-  public OClass createClassInternal(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
+  public OClass createClassInternal(final String iClassName, final OClass superClass, final int[] iClusterIds) {
     if (iClassName == null || iClassName.length() == 0)
       throw new OSchemaException("Found class name null");
 
@@ -242,6 +242,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final String key = iClassName.toLowerCase();
 
     final OSchemaShared me = this;
+
     return getDatabase().getStorage().callInLock(new Callable<OClass>() {
       @Override
       public OClass call() throws Exception {
@@ -255,19 +256,19 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           // BIND SHORT NAME TOO
           classes.put(cls.getShortName().toLowerCase(), cls);
 
-        if (iSuperClass != null) {
-          cls.setSuperClassInternal(iSuperClass);
+        if (superClass != null) {
+          cls.setSuperClassInternal(superClass);
 
           // UPDATE INDEXES
-          final int[] clustersToIndex = iSuperClass.getPolymorphicClusterIds();
+          final int[] clustersToIndex = superClass.getPolymorphicClusterIds();
           final String[] clusterNames = new String[clustersToIndex.length];
           for (int i = 0; i < clustersToIndex.length; i++)
             clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
 
-          for (OIndex<?> index : iSuperClass.getIndexes())
+          for (OIndex<?> index : superClass.getIndexes())
             for (String clusterName : clusterNames)
               if (clusterName != null)
-                index.getInternal().addCluster(clusterName);
+                database.getMetadata().getIndexManager().addClusterToIndex(clusterName, index.getName());
         }
 
         return cls;

@@ -40,52 +40,52 @@ import java.util.Iterator;
  * @since 12.03.13
  */
 public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
-  private static final double MERGE_THRESHOLD = 0.2;
+  private static final double            MERGE_THRESHOLD        = 0.2;
 
-  private static final long HASH_CODE_MIN_VALUE = 0;
-  private static final long HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
+  private static final long              HASH_CODE_MIN_VALUE    = 0;
+  private static final long              HASH_CODE_MAX_VALUE    = 0xFFFFFFFFFFFFFFFFL;
 
-  private long[][] hashTree;
-  private OHashTreeNodeMetadata[] nodesMetadata;
+  private long[][]                       hashTree;
+  private OHashTreeNodeMetadata[]        nodesMetadata;
 
-  private int hashTreeSize;
+  private int                            hashTreeSize;
 
-  private long size;
+  private long                           size;
 
-  private int hashTreeTombstone = -1;
-  private long bucketTombstonePointer = -1;
+  private int                            hashTreeTombstone      = -1;
+  private long                           bucketTombstonePointer = -1;
 
-  private final String metadataConfigurationFileExtension;
-  private final String treeStateFileExtension;
-  private final String bucketFileExtension;
+  private final String                   metadataConfigurationFileExtension;
+  private final String                   treeStateFileExtension;
+  private final String                   bucketFileExtension;
 
-  public static final int HASH_CODE_SIZE = 64;
-  public static final int MAX_LEVEL_DEPTH = 8;
-  public static final int MAX_LEVEL_SIZE = 1 << MAX_LEVEL_DEPTH;
+  public static final int                HASH_CODE_SIZE         = 64;
+  public static final int                MAX_LEVEL_DEPTH        = 8;
+  public static final int                MAX_LEVEL_SIZE         = 1 << MAX_LEVEL_DEPTH;
 
-  public static final int LEVEL_MASK = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
+  public static final int                LEVEL_MASK             = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private OStorageLocalAbstract storage;
+  private OStorageLocalAbstract          storage;
 
-  private String name;
+  private String                         name;
 
-  private OHashIndexBufferStore metadataStore;
-  private OHashIndexTreeStateStore treeStateStore;
+  private OHashIndexBufferStore          metadataStore;
+  private OHashIndexTreeStateStore       treeStateStore;
 
-  private ODiskCache diskCache;
-  private final OHashFunction<K> keyHashFunction;
+  private ODiskCache                     diskCache;
+  private final OHashFunction<K>         keyHashFunction;
 
-  private OBinarySerializer<K> keySerializer;
-  private OBinarySerializer<V> valueSerializer;
-  private OType[] keyTypes;
+  private OBinarySerializer<K>           keySerializer;
+  private OBinarySerializer<V>           valueSerializer;
+  private OType[]                        keyTypes;
 
-  private OHashIndexFileLevelMetadata[] filesMetadata = new OHashIndexFileLevelMetadata[HASH_CODE_SIZE];
-  private final long[] fileLevelIds = new long[HASH_CODE_SIZE];
+  private OHashIndexFileLevelMetadata[]  filesMetadata          = new OHashIndexFileLevelMetadata[HASH_CODE_SIZE];
+  private final long[]                   fileLevelIds           = new long[HASH_CODE_SIZE];
 
   private final KeyHashCodeComparator<K> comparator;
 
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
-                         OHashFunction<K> keyHashFunction) {
+      OHashFunction<K> keyHashFunction) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -107,7 +107,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-                     OStorageLocalAbstract storageLocal) {
+      OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -424,6 +424,35 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
+  public void deleteWithoutLoad(String name, OStorageLocalAbstract storageLocal) {
+    acquireExclusiveLock();
+    try {
+      final ODiskCache diskCache = storageLocal.getDiskCache();
+
+      initStores(metadataConfigurationFileExtension, treeStateFileExtension);
+
+      metadataStore.open();
+      treeStateStore.open();
+
+      filesMetadata = metadataStore.loadMetadata();
+
+      for (int i = 0; i < filesMetadata.length; i++) {
+        OHashIndexFileLevelMetadata fileLevelMetadata = filesMetadata[i];
+        if (fileLevelMetadata != null) {
+          fileLevelIds[i] = diskCache.openFile(fileLevelMetadata.getFileName());
+          diskCache.deleteFile(fileLevelIds[i]);
+        }
+      }
+
+      metadataStore.delete();
+      treeStateStore.delete();
+    } catch (IOException ioe) {
+      throw new OIndexException("Can not delete hash table with name " + name, ioe);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   private OHashIndexBucket.Entry<K, V>[] convertBucketToEntries(final OHashIndexBucket<K, V> bucket, int startIndex, int endIndex) {
     final OHashIndexBucket.Entry<K, V>[] entries = new OHashIndexBucket.Entry[endIndex - startIndex];
     final Iterator<OHashIndexBucket.Entry<K, V>> iterator = bucket.iterator(startIndex);
@@ -472,8 +501,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private BucketPath nextNonEmptyNode(BucketPath bucketPath) {
-    nextBucketLoop:
-    while (bucketPath != null) {
+    nextBucketLoop: while (bucketPath != null) {
       final long[] node = hashTree[bucketPath.nodeIndex];
       final int startIndex = bucketPath.itemIndex + bucketPath.hashMapOffset;
       final int endIndex = MAX_LEVEL_SIZE;
@@ -827,8 +855,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private BucketPath prevNonEmptyNode(BucketPath nodePath) {
-    prevBucketLoop:
-    while (nodePath != null) {
+    prevBucketLoop: while (nodePath != null) {
       final long[] node = hashTree[nodePath.nodeIndex];
       final int startIndex = 0;
       final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
@@ -1274,7 +1301,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private void updateNodesAfterSplit(BucketPath bucketPath, long[] node, long[] newNode, int nodeLocalDepth, int hashMapSize,
-                                     boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) {
+      boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) {
 
     final int startIndex = findParentNodeStartIndex(bucketPath);
 
@@ -1586,7 +1613,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
 
     if (hashTreeTombstone > -1) {
-      final long[] tombstone = new long[]{hashTreeTombstone};
+      final long[] tombstone = new long[] { hashTreeTombstone };
       hashTree[nodeIndex] = tombstone;
       hashTreeTombstone = nodeIndex;
     } else {
@@ -1598,7 +1625,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private void splitBucketContent(OHashIndexBucket<K, V> bucket, OHashIndexBucket<K, V> updatedBucket,
-                                  OHashIndexBucket<K, V> newBucket, int newBucketDepth) {
+      OHashIndexBucket<K, V> newBucket, int newBucketDepth) {
     assert checkBucketDepth(bucket);
 
     for (OHashIndexBucket.Entry<K, V> entry : bucket) {
@@ -1806,11 +1833,11 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private static final class BucketPath {
     private final BucketPath parent;
-    private final int hashMapOffset;
-    private final int itemIndex;
-    private final int nodeIndex;
-    private final int nodeGlobalDepth;
-    private final int nodeLocalDepth;
+    private final int        hashMapOffset;
+    private final int        itemIndex;
+    private final int        nodeIndex;
+    private final int        nodeGlobalDepth;
+    private final int        nodeLocalDepth;
 
     private BucketPath(BucketPath parent, int hashMapOffset, int itemIndex, int nodeIndex, int nodeLocalDepth, int nodeGlobalDepth) {
       this.parent = parent;
@@ -1825,7 +1852,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private static final class BucketSplitResult {
     private final long updatedBucketPointer;
     private final long newBucketPointer;
-    private final int newDepth;
+    private final int  newDepth;
 
     private BucketSplitResult(long updatedBucketPointer, long newBucketPointer, int newDepth) {
       this.updatedBucketPointer = updatedBucketPointer;
@@ -1835,7 +1862,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private static final class NodeSplitResult {
-    private final long[] newNode;
+    private final long[]  newNode;
     private final boolean allLeftHashMapsEqual;
     private final boolean allRightHashMapsEqual;
 
@@ -1849,7 +1876,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private static final class KeyHashCodeComparator<K> implements Comparator<K> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    private final OHashFunction<K> keyHashFunction;
+    private final OHashFunction<K>      keyHashFunction;
 
     public KeyHashCodeComparator(OHashFunction<K> keyHashFunction) {
       this.keyHashFunction = keyHashFunction;

@@ -224,6 +224,13 @@ public class OServer {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onAfterActivate();
 
+    try {
+      loadStorages();
+      loadUsers();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
+    }
+
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
     startupLatch.countDown();
 
@@ -497,22 +504,15 @@ public class OServer {
   }
 
   protected void loadConfiguration(final OServerConfiguration iConfiguration) {
-    try {
-      configuration = iConfiguration;
+    configuration = iConfiguration;
 
-      // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
-      contextConfiguration = new OContextConfiguration();
-      if (iConfiguration.properties != null)
-        for (OServerEntryConfiguration prop : iConfiguration.properties)
-          contextConfiguration.setValue(prop.name, prop.value);
+    // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
+    contextConfiguration = new OContextConfiguration();
+    if (iConfiguration.properties != null)
+      for (OServerEntryConfiguration prop : iConfiguration.properties)
+        contextConfiguration.setValue(prop.name, prop.value);
 
-      loadStorages();
-      loadUsers();
-      hookManager = new OConfigurableHooksManager(iConfiguration);
-
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
-    }
+    hookManager = new OConfigurableHooksManager(iConfiguration);
   }
 
   protected OServerConfiguration loadConfigurationFromFile(final File iFile) {

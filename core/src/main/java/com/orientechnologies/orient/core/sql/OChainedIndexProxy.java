@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -51,6 +66,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private final List<OIndex<?>> indexChain;
   private final OIndex<?> lastIndex;
+  private final boolean isOneValue;
 
   /**
    * Create proxies that support maximum number of different operations. In case when several different indexes which support
@@ -77,6 +93,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     this.index = index;
     this.indexChain = Collections.unmodifiableList(indexChain);
     lastIndex = indexChain.get(indexChain.size() - 1);
+
+    isOneValue = isAllOneValue(indexChain);
+  }
+
+  private boolean isAllOneValue(List<OIndex<?>> indexChain) {
+    for (OIndex<?> oIndex : indexChain) {
+      if (!(oIndex.getInternal() instanceof OIndexOneValue))
+        return false;
+    }
+    return true;
   }
 
   public String getDatabaseName() {
@@ -126,7 +152,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       }
     });
 
-    if (getInternal() instanceof OIndexOneValue)
+    if (isOneValue)
       return (T) (result.isEmpty() ? null : result.iterator().next());
 
     return (T) result;
@@ -550,7 +576,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public boolean remove(Object iKey) {
+  public boolean remove(Object key) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -584,6 +610,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public OIndex<T> delete() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public void deleteWithoutIndexLoad(String indexName) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

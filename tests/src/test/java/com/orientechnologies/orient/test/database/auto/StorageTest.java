@@ -65,6 +65,7 @@ public class StorageTest {
 
     database.setDataSegmentStrategy(new ODataSegmentStrategy() {
 
+      @Override
       public int assignDataSegmentId(ODatabase iDatabase, ORecord<?> iRecord) {
         return 1;
       }

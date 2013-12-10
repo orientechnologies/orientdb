@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
@@ -94,6 +95,11 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public void deleteWithoutLoad(String indexName) {
+    hashTable.deleteWithoutLoad(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
+  }
+
+  @Override
   public void delete() {
     hashTable.delete();
   }
@@ -142,42 +148,6 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void put(Object key, V value) {
     hashTable.put(key, value);
-  }
-
-  @Override
-  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
-    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
-    OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
-    if (firstEntry == null)
-      return 0;
-
-    OHashIndexBucket.Entry<Object, V>[] entries = hashTable.ceilingEntries(firstEntry.key);
-
-    while (entries.length > 0) {
-      for (OHashIndexBucket.Entry<Object, V> entry : entries)
-        if (transformer != null) {
-          Collection<OIdentifiable> rids = transformer.transformFromValue(entry.value);
-          if (rids.remove(valueToRemove))
-            entriesToUpdate.put(entry.key, transformer.transformToValue(rids));
-        } else if (entry.value.equals(valueToRemove))
-          entriesToUpdate.put(entry.key, entry.value);
-
-      entries = hashTable.higherEntries(entries[entries.length - 1].key);
-    }
-
-    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
-      V value = entry.getValue();
-      if (value instanceof Collection) {
-        Collection col = (Collection) value;
-        if (col.isEmpty())
-          hashTable.remove(entry.getKey());
-        else
-          hashTable.put(entry.getKey(), value);
-      } else
-        hashTable.remove(entry.getKey());
-    }
-
-    return entriesToUpdate.size();
   }
 
   @Override

@@ -15,12 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -105,7 +113,6 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
     return OIndexReuseType.NO_INDEX;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
       List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
@@ -182,7 +189,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   private Object convertIndexResult(Object indexResult) {
     Object result;
     if (indexResult instanceof Collection)
-      result = (Collection<OIdentifiable>) indexResult;
+      result = (Collection<?>) indexResult;
     else if (indexResult == null)
       result = Collections.emptyList();
     else

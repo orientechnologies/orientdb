@@ -326,10 +326,12 @@ public class SQLFunctionsTest {
   @Test
   public void queryCustomFunction() {
     OSQLEngine.getInstance().registerFunction("bigger", new OSQLFunctionAbstract("bigger", 2, 2) {
+      @Override
       public String getSyntax() {
         return "bigger(<first>, <second>)";
       }
 
+      @Override
       public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
           OCommandContext iContext) {
         if (iParameters[0] == null || iParameters[1] == null)

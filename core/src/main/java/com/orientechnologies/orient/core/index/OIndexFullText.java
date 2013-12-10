@@ -18,12 +18,13 @@ package com.orientechnologies.orient.core.index;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -60,11 +61,13 @@ public class OIndexFullText extends OIndexMultiValues {
    * the caller.
    */
   @Override
-  public OIndexFullText put(final Object key, final OIdentifiable iSingleValue) {
+  public OIndexFullText put(Object key, final OIdentifiable iSingleValue) {
     checkForRebuild();
 
     if (key == null)
       return this;
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
 
@@ -84,7 +87,7 @@ public class OIndexFullText extends OIndexMultiValues {
           if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
             if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              refs = new OSBTreeIndexRIDContainer(getName());
+              refs = new OIndexRIDContainer(getName());
             } else {
               refs = new OMVRBTreeRIDSet();
               ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
@@ -107,6 +110,43 @@ public class OIndexFullText extends OIndexMultiValues {
     }
   }
 
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    if (key == null)
+      return;
+
+    key = getCollatingValue(key);
+
+    final List<String> words = splitIntoWords(key.toString());
+
+    // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+    for (final String word : words) {
+      Set<OIdentifiable> refs;
+
+      final Object snapshotValue = snapshot.get(word);
+      if (snapshotValue == null)
+        refs = indexEngine.get(word);
+      else if (snapshotValue.equals(RemovedValue.INSTANCE))
+        refs = null;
+      else
+        refs = (Set<OIdentifiable>) snapshotValue;
+
+      if (refs == null) {
+        // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+        if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+          refs = new OIndexRIDContainer(getName());
+        } else {
+          refs = new OMVRBTreeRIDSet();
+          ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
+        }
+
+        snapshot.put(word, refs);
+      }
+      // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+      refs.add(value.getIdentity());
+    }
+  }
+
   /**
    * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
    * passed in value.
@@ -118,8 +158,10 @@ public class OIndexFullText extends OIndexMultiValues {
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
-  public boolean remove(final Object key, final OIdentifiable value) {
+  public boolean remove(Object key, final OIdentifiable value) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
 
@@ -149,6 +191,32 @@ public class OIndexFullText extends OIndexMultiValues {
       return removed;
     } finally {
       modificationLock.releaseModificationLock();
+    }
+  }
+
+  @Override
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    final List<String> words = splitIntoWords(key.toString());
+    for (final String word : words) {
+      final Set<OIdentifiable> recs;
+      final Object snapshotValue = snapshot.get(word);
+      if (snapshotValue == null)
+        recs = indexEngine.get(word);
+      else if (snapshotValue.equals(RemovedValue.INSTANCE))
+        recs = null;
+      else
+        recs = (Set<OIdentifiable>) snapshotValue;
+
+      if (recs != null && !recs.isEmpty()) {
+        if (recs.remove(value)) {
+          if (recs.isEmpty())
+            snapshot.put(word, RemovedValue.INSTANCE);
+          else
+            snapshot.put(word, recs);
+        }
+      }
     }
   }
 

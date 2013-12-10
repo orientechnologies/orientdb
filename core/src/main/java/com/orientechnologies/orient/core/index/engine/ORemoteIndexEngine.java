@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.index.engine;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
@@ -40,6 +39,10 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
       OStreamSerializer valueSerializer, boolean isAutomatic) {
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
   }
 
   @Override
@@ -133,11 +136,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public void put(Object key, Object value) {
-  }
-
-  @Override
-  public int removeValue(OIdentifiable value, ValuesTransformer transformer) {
-    return 0;
   }
 
   @Override

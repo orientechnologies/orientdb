@@ -834,6 +834,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
+    	  all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
     }
@@ -1178,6 +1179,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
         extractFieldTypes(fields));
+
+    if (fields.length == 1) {
+      // TRY TO DETERMINE THE COLLATE IF ANY
+      final OProperty p = getProperty(fields[0]);
+      if (p != null) {
+        indexDefinition.setCollate(p.getCollate());
+      }
+    }
 
     return getDatabase().getMetadata().getIndexManager()
         .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener);
