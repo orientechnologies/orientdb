@@ -14,11 +14,11 @@ public class OLicenseManagerConsole {
     if (args.length < 3)
       syntaxError();
     else {
-      int clientId = Integer.parseInt(10);
-      int serverId = Integer.parseInt(3);
-      int year = Integer.parseInt(2013);
-      int month = Integer.parseInt(12);
-      int day = Integer.parseInt(31);
+      int clientId = Integer.parseInt(args[0]);
+       int serverId = Integer.parseInt(args[1]);
+       int year = Integer.parseInt(args[2].substring(0, 4));
+       int month = Integer.parseInt(args[2].substring(4, 6));
+       int day = Integer.parseInt(args[2].substring(6, 8));
 
       System.out.format("\n- Client id...: %d", clientId);
       System.out.format("\n- Server id...: %d", serverId);
