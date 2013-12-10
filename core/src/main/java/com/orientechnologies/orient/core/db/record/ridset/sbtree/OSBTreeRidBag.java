@@ -16,24 +16,38 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
-import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidSetUpdateSerializationOperation;
@@ -294,10 +308,10 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
     return new OSBTreeRidBag(new OBonsaiBucketPointer(pageIndex, pageOffset), size);
   }
 
-  private final class RIDBagIterator implements Iterator<OIdentifiable> {
+  private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable {
     private final NavigableMap<OIdentifiable, OModifiableInteger>  changedValues;
     private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> changedValuesIterator;
-    private final Iterator<Map.Entry<OIdentifiable, Integer>>      sbTreeIterator;
+    private final SBTreeMapEntryIterator                           sbTreeIterator;
 
     private Map.Entry<OIdentifiable, OModifiableInteger>           nextChangedEntry;
     private Map.Entry<OIdentifiable, Integer>                      nextSBTreeEntry;
@@ -312,8 +326,8 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
     private boolean                                                currentRemoved;
 
-    private RIDBagIterator(NavigableMap<OIdentifiable, OModifiableInteger> changedValues,
-        Iterator<Map.Entry<OIdentifiable, Integer>> sbTreeIterator, int extModCount, boolean convertToRecord) {
+    private RIDBagIterator(NavigableMap<OIdentifiable, OModifiableInteger> changedValues, SBTreeMapEntryIterator sbTreeIterator,
+        int extModCount, boolean convertToRecord) {
 
       this.changedValues = changedValues;
       this.convertToRecord = convertToRecord;
@@ -420,6 +434,18 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
       return null;
     }
+
+    @Override
+    public void reset() {
+      this.changedValuesIterator = changedValues.entrySet().iterator();
+      if (sbTreeIterator != null)
+        this.sbTreeIterator.reset();
+
+      nextChangedEntry = nextChangedNotRemovedEntry(changedValuesIterator);
+
+      if (sbTreeIterator != null)
+        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+    }
   }
 
   private Map.Entry<OIdentifiable, Integer> nextChangedNotRemovedSBTreeEntry(Iterator<Map.Entry<OIdentifiable, Integer>> iterator) {
@@ -451,7 +477,7 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
     return null;
   }
 
-  private final class SBTreeMapEntryIterator implements Iterator<Map.Entry<OIdentifiable, Integer>> {
+  private final class SBTreeMapEntryIterator implements Iterator<Map.Entry<OIdentifiable, Integer>>, OResettable {
     private LinkedList<Map.Entry<OIdentifiable, Integer>> preFetchedValues;
     private OIdentifiable                                 firstKey;
 
@@ -460,20 +486,7 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
     public SBTreeMapEntryIterator(int prefetchSize) {
       this.prefetchSize = prefetchSize;
 
-      OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-      try {
-        if (tree.size() == 0) {
-          this.preFetchedValues = null;
-          return;
-        }
-
-        firstKey = tree.firstKey();
-      } finally {
-        releaseTree();
-      }
-
-      this.preFetchedValues = new LinkedList<Map.Entry<OIdentifiable, Integer>>();
-      prefetchData(true);
+      init();
     }
 
     private void prefetchData(boolean firstTime) {
@@ -529,6 +542,28 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void reset() {
+      init();
+    }
+
+    private void init() {
+      OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
+      try {
+        if (tree.size() == 0) {
+          this.preFetchedValues = null;
+          return;
+        }
+
+        firstKey = tree.firstKey();
+      } finally {
+        releaseTree();
+      }
+
+      this.preFetchedValues = new LinkedList<Map.Entry<OIdentifiable, Integer>>();
+      prefetchData(true);
     }
   }
 
