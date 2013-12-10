@@ -36,6 +36,8 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -45,10 +47,11 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @since 28.03.13
  */
 public abstract class OStorageLocalAbstract extends OStorageEmbedded implements OFreezableStorage {
-  protected volatile OWriteAheadLog writeAheadLog;
-  protected volatile ODiskCache     diskCache;
+  protected volatile OWriteAheadLog                writeAheadLog;
+  protected volatile ODiskCache                    diskCache;
+  protected volatile OAtomicOperationsManager      atomicOperationsManager;
 
-  protected OStorageTransaction     transaction = null;
+  protected final ThreadLocal<OStorageTransaction> transaction = new ThreadLocal<OStorageTransaction>();
 
   public OStorageLocalAbstract(String name, String filePath, String mode) {
     super(name, filePath, mode);
@@ -73,12 +76,11 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 
   public OStorageTransaction getStorageTransaction() {
-    lock.acquireSharedLock();
-    try {
-      return transaction;
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return transaction.get();
+  }
+
+  public OAtomicOperationsManager getAtomicOperationsManager() {
+    return atomicOperationsManager;
   }
 
   @Override
@@ -107,31 +109,32 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   }
 
   protected void endStorageTx() throws IOException {
-    if (writeAheadLog == null)
-      return;
+    atomicOperationsManager.endAtomicOperation(false);
 
-    writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), false));
+    assert atomicOperationsManager.getCurrentOperation() == null;
   }
 
   protected void startStorageTx(OTransaction clientTx) throws IOException {
     if (writeAheadLog == null)
       return;
 
-    if (transaction != null && transaction.getClientTx().getId() != clientTx.getId())
+    final OStorageTransaction storageTx = transaction.get();
+    if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
 
-    transaction = new OStorageTransaction(clientTx, OOperationUnitId.generateId());
-
-    OLogSequenceNumber startLSN = writeAheadLog.log(new OAtomicUnitStartRecord(true, transaction.getOperationUnitId()));
-    transaction.setStartLSN(startLSN);
+    atomicOperationsManager.startAtomicOperation();
+    transaction.set(new OStorageTransaction(clientTx));
   }
 
   protected void rollbackStorageTx() throws IOException {
-    if (writeAheadLog == null || transaction == null)
+    if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), true));
-    final List<OWALRecord> operationUnit = readOperationUnit(transaction.getStartLSN(), transaction.getOperationUnitId());
+    final OAtomicOperation operation = atomicOperationsManager.endAtomicOperation(true);
+
+    assert atomicOperationsManager.getCurrentOperation() == null;
+
+    final List<OWALRecord> operationUnit = readOperationUnit(operation.getStartLSN(), operation.getOperationUnitId());
     undoOperation(operationUnit);
   }
 

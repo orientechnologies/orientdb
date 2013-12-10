@@ -142,7 +142,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
     this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression);
 
     storageLocal = storage;
-    init(storage.getWALInstance());
+    init(storage.getAtomicOperationsManager(), storage.getWALInstance());
 
     diskCache = storageLocal.getDiskCache();
     name = config.getName();
@@ -161,11 +161,11 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
       try {
         fileId = diskCache.openFile(name + DEF_EXTENSION);
 
-        startDurableOperation(null);
+        startAtomicOperation();
 
         initCusterState();
 
-        endDurableOperation(null, false);
+        endAtomicOperation(false);
 
         if (config.root.clusters.size() <= config.id)
           config.root.clusters.add(config);
@@ -395,7 +395,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
             + OLongSerializer.LONG_SIZE;
 
         if (entryContentLength < OClusterPage.MAX_RECORD_SIZE) {
-          startDurableOperation(transaction);
+          startAtomicOperation();
 
           byte[] entryContent = new byte[entryContentLength];
 
@@ -418,11 +418,11 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
           final AddEntryResult addEntryResult = addEntry(recordVersion, entryContent, trackMode);
 
           updateClusterState(trackMode, 1, addEntryResult.recordsSizeDiff);
-          endDurableOperation(transaction, false);
+          endAtomicOperation(false);
 
           return createPhysicalPosition(recordType, addEntryResult.pagePointer, addEntryResult.recordVersion);
         } else {
-          startDurableOperation(transaction);
+          startAtomicOperation();
 
           final OClusterPage.TrackMode trackMode = getTrackMode();
 
@@ -504,7 +504,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
 
           updateClusterState(trackMode, 1, recordsSizeDiff);
 
-          endDurableOperation(transaction, false);
+          endAtomicOperation(false);
 
           return createPhysicalPosition(recordType, firstPagePointer, version);
         }
@@ -692,7 +692,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
               else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
             } else if (removedContentSize == 0) {
-              startDurableOperation(transaction);
+              startAtomicOperation();
             }
 
             byte[] content = localPage.getBinaryValue(recordPageOffset, localPage.getRecordSize(recordPosition));
@@ -719,7 +719,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
 
         updateClusterState(trackMode, -1, -removedContentSize);
 
-        endDurableOperation(transaction, false);
+        endAtomicOperation(false);
 
         return true;
       } finally {
@@ -760,7 +760,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
 
         final OClusterPage.TrackMode trackMode = getTrackMode();
 
-        startDurableOperation(transaction);
+        startAtomicOperation();
 
         int entryPosition = 0;
         recordEntry[entryPosition] = recordType;
@@ -907,7 +907,7 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
 
         updateClusterState(trackMode, 0, recordsSizeDiff);
 
-        endDurableOperation(transaction, false);
+        endAtomicOperation(false);
 
       } finally {
         releaseExclusiveLock();
@@ -1174,14 +1174,14 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
       acquireExclusiveLock();
       try {
         if (config.useWal)
-          startDurableOperation(null);
+          startAtomicOperation();
 
         diskCache.truncateFile(fileId);
 
         initCusterState();
 
         if (config.useWal)
-          endDurableOperation(null, false);
+          endAtomicOperation(false);
 
       } finally {
         releaseExclusiveLock();
@@ -1529,19 +1529,19 @@ public class OPaginatedWithoutRidReuseCluster extends ODurableComponent implemen
   }
 
   @Override
-  protected void endDurableOperation(OStorageTransaction transaction, boolean rollback) throws IOException {
+  protected void endAtomicOperation(boolean rollback) throws IOException {
     if (!config.useWal)
       return;
 
-    super.endDurableOperation(transaction, rollback);
+    super.endAtomicOperation(rollback);
   }
 
   @Override
-  protected void startDurableOperation(OStorageTransaction transaction) throws IOException {
+  protected void startAtomicOperation() throws IOException {
     if (!config.useWal)
       return;
 
-    super.startDurableOperation(transaction);
+    super.startAtomicOperation();
   }
 
   @Override

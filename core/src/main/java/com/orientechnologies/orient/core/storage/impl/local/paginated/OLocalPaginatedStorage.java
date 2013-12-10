@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -165,6 +166,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, writeAheadLog, false, true);
+
+    atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -1436,7 +1439,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         else
           throw new OStorageException("Error during transaction commit.", e);
       } finally {
-        transaction = null;
+        transaction.set(null);
         lock.releaseExclusiveLock();
       }
     } finally {
@@ -1544,13 +1547,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock.acquireExclusiveLock();
       try {
-        if (transaction == null)
+        if (transaction.get() == null)
           return;
 
         if (writeAheadLog == null)
           throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-        if (transaction.getClientTx().getId() != clientTx.getId())
+        if (transaction.get().getClientTx().getId() != clientTx.getId())
           throw new OStorageException(
               "Passed in and active transaction are different transactions. Passed in transaction can not be rolled back.");
 
@@ -1561,7 +1564,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       } catch (IOException e) {
         throw new OStorageException("Error during transaction rollback.", e);
       } finally {
-        transaction = null;
+        transaction.set(null);
         lock.releaseExclusiveLock();
       }
     } finally {

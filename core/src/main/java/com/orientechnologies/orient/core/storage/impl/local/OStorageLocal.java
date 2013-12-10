@@ -70,6 +70,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -217,6 +218,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
         writeAheadLog = new OWriteAheadLog(this);
+      atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
       txManager.open();
 
@@ -288,6 +290,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       configuration.create();
 
       writeAheadLog = new OWriteAheadLog(this);
+      atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
       txManager.create();
     } catch (OStorageException e) {
@@ -1316,7 +1319,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           }
         }
       } finally {
-        transaction = null;
+        transaction.set(null);
         lock.releaseExclusiveLock();
       }
     } finally {
@@ -1338,7 +1341,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
         OLogManager.instance().error(this,
             "Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
       } finally {
-        transaction = null;
+        transaction.set(null);
         lock.releaseExclusiveLock();
       }
     } finally {
