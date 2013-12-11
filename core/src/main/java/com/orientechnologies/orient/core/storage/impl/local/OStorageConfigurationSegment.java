@@ -93,6 +93,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
       f.writeInt(0, buffer.length);
       f.write(OBinaryProtocol.SIZE_INT, buffer);
+      f.synch();
+
     } catch (Exception e) {
       throw new OSerializationException("Error on update storage configuration", e);
     }
