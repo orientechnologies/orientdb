@@ -14,7 +14,6 @@ import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -25,283 +24,279 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.plugin.mail.OMailProfile;
 
 public class EventHelper {
-	
-	private final static String VAR_BEGIN = "$";
-	
-	
-	private final static String	USER_AGENT	= "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36";
 
-	public static Object resolve(final Map<String, Object> body2name2, final Object iContent) {
-		Object value = null;
-		if (iContent instanceof String)
-			value = resolveVariables((String) iContent, VAR_BEGIN, OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+  private final static String VAR_BEGIN  = "$";
 
-				@Override
-				public Object resolve(final String iVariable) {
-					return body2name2.get(iVariable);
-				}
+  private final static String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36";
 
-			});
-		else
-			value = iContent;
+  public static Object resolve(final Map<String, Object> body2name2, final Object iContent) {
+    Object value = null;
+    if (iContent instanceof String)
+      value = resolveVariables((String) iContent, VAR_BEGIN, OSystemVariableResolver.VAR_END, new OVariableParserListener() {
 
-		return value;
-	}
-	 public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
-	      final OVariableParserListener iListener) {
-	    if (iListener == null)
-	      throw new IllegalArgumentException("Missed VariableParserListener listener");
+        @Override
+        public Object resolve(final String iVariable) {
+          return body2name2.get(iVariable);
+        }
 
-	    int beginPos = iText.lastIndexOf(iBegin);
-	    if (beginPos == -1)
-	      return iText;
+      });
+    else
+      value = iContent;
 
-//	    int endPos = iText.indexOf(iEnd, beginPos + 1);
-//	    if (endPos == -1)
-//	      return iText;
+    return value;
+  }
 
-	    String pre = iText.substring(0, beginPos);
-//	    String var = iText.substring(beginPos + iBegin.length(), endPos);
-	    String var = iText.substring(beginPos + iBegin.length());
-//	    String post = iText.substring(endPos + iEnd.length());
+  public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
+      final OVariableParserListener iListener) {
+    if (iListener == null)
+      throw new IllegalArgumentException("Missed VariableParserListener listener");
 
-	    Object resolved = iListener.resolve(var);
+    int beginPos = iText.lastIndexOf(iBegin);
+    if (beginPos == -1)
+      return iText;
 
-	    if (resolved == null) {
-	      OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
-	      // resolved = "null";
-	    }
+    // int endPos = iText.indexOf(iEnd, beginPos + 1);
+    // if (endPos == -1)
+    // return iText;
 
-	    if (pre.length() > 0) {
-	      final String path = pre + (resolved != null ? resolved.toString() : "");
-	      return resolveVariables(path, iBegin, iEnd, iListener);
-	    }
+    String pre = iText.substring(0, beginPos);
+    // String var = iText.substring(beginPos + iBegin.length(), endPos);
+    String var = iText.substring(beginPos + iBegin.length());
+    // String post = iText.substring(endPos + iEnd.length());
 
-	    return resolved;
-	  }
-	public static String replaceText(Map<String, Object> body2name, String body) {
+    Object resolved = iListener.resolve(var);
 
-		String[] splitBody = body.split(" ");
+    if (resolved == null) {
+      OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
+      // resolved = "null";
+    }
 
-		for (String word : splitBody) {
-			String resolvedWord = (String) resolve(body2name, word);
-			if (resolvedWord != null)
-				body = body.replace(word, resolvedWord);
-		}
+    if (pre.length() > 0) {
+      final String path = pre + (resolved != null ? resolved.toString() : "");
+      return resolveVariables(path, iBegin, iEnd, iListener);
+    }
 
-		return body;
-	}
+    return resolved;
+  }
 
-	public static Map<String, Object> createConfiguration(ODocument what, Map<String, Object> body2name) {
+  public static String replaceText(Map<String, Object> body2name, String body) {
 
-		Map<String, Object> configuration = new HashMap<String, Object>();
+    String[] splitBody = body.split(" ");
 
-		String subject = what.field("subject");
-		String address = what.field("toAddress");
-		String fromAddress = what.field("fromAddress");
-		String cc = what.field("cc");
-		String bcc = what.field("bcc");
-		String body = what.field("body");
+    for (String word : splitBody) {
+      String resolvedWord = (String) resolve(body2name, word);
+      if (resolvedWord != null)
+        body = body.replace(word, resolvedWord);
+    }
 
-		
+    return body;
+  }
 
-		body = replaceText(body2name, body);
-		body = replaceMarkers(body);
-		configuration.put("to", address);
-		configuration.put("from", fromAddress);
-		configuration.put("profile", "enterprise");
-		configuration.put("message", body);
-		configuration.put("cc", cc);
-		configuration.put("bcc", bcc);
-		configuration.put("subject", subject);
+  public static Map<String, Object> createConfiguration(ODocument what, Map<String, Object> body2name) {
 
-		return configuration;
-	}
+    Map<String, Object> configuration = new HashMap<String, Object>();
 
-	public static String replaceMarkers(String text) {
-		if (text != null) {
-			text = text.replaceAll("&", "&amp;");
-			text = text.replaceAll("�", "&egrave;");
-			text = text.replaceAll("�", "&eacute;");
-			text = text.replaceAll("�", "&ograve;");
-			text = text.replaceAll("�", "&agrave;");
-			text = text.replaceAll("�", "&ugrave;");
-			text = text.replaceAll("�", "&igrave;");
-			text = text.replaceAll("<", "&lt;");
-			text = text.replaceAll(">", "&gt;");
-			text = text.replaceAll("\u2018", "&lsquo;");
-			text = text.replaceAll("\u2019", "&rsquo;");
-			text = text.replaceAll("'", "&rsquo;");
-			text = text.replaceAll("\n", "<br/>");
-		}
+    String subject = what.field("subject");
+    String address = what.field("toAddress");
+    String fromAddress = what.field("fromAddress");
+    String cc = what.field("cc");
+    String bcc = what.field("bcc");
+    String body = what.field("body");
 
-		return text;
-	}
+    body = replaceText(body2name, body);
+    body = replaceMarkers(body);
+    configuration.put("to", address);
+    configuration.put("from", fromAddress);
+    configuration.put("profile", "enterprise");
+    configuration.put("message", body);
+    configuration.put("cc", cc);
+    configuration.put("bcc", bcc);
+    configuration.put("subject", subject);
 
-	public static OMailProfile createOMailProfile(ODocument oUserConfiguration) {
+    return configuration;
+  }
 
-		OMailProfile enterpriseProfile = new OMailProfile();
+  public static String replaceMarkers(String text) {
+    if (text != null) {
+      text = text.replaceAll("&", "&amp;");
+      text = text.replaceAll("���", "&egrave;");
+      text = text.replaceAll("���", "&eacute;");
+      text = text.replaceAll("���", "&ograve;");
+      text = text.replaceAll("���", "&agrave;");
+      text = text.replaceAll("���", "&ugrave;");
+      text = text.replaceAll("���", "&igrave;");
+      text = text.replaceAll("<", "&lt;");
+      text = text.replaceAll(">", "&gt;");
+      text = text.replaceAll("\u2018", "&lsquo;");
+      text = text.replaceAll("\u2019", "&rsquo;");
+      text = text.replaceAll("'", "&rsquo;");
+      text = text.replaceAll("\n", "<br/>");
+    }
 
-		enterpriseProfile.put("mail.smtp.user", oUserConfiguration.field("user"));
-		enterpriseProfile.put("mail.smtp.password", oUserConfiguration.field("password"));
-		enterpriseProfile.put("mail.smtp.port", oUserConfiguration.field("port"));
-		enterpriseProfile.put("mail.smtp.auth", oUserConfiguration.field("auth"));
-		enterpriseProfile.put("mail.smtp.host", oUserConfiguration.field("host"));
-		enterpriseProfile.put("enabled", oUserConfiguration.field("enabled"));
-		enterpriseProfile.put("mail.smtp.starttls.enable", oUserConfiguration.field("starttlsEnable"));
-		enterpriseProfile.put("mail.date.format", oUserConfiguration.field("dateFormat"));
-		return enterpriseProfile;
-	}
+    return text;
+  }
 
-	public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocumentTx database) {
-		String sql = "select from UserConfiguration where user.name = 'admin'";
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
-		final List<ODocument> response = database.query(osqlQuery);
-		ODocument configuration = null;
-		ODocument userconfiguration = null;
+  public static OMailProfile createOMailProfile(ODocument oUserConfiguration) {
 
-		if (response.size() == 1) {
-			userconfiguration = response.get(0);
-			configuration = userconfiguration.field("mailProfile");
-		}
-		// mail = OServerMain.server().getPluginByClass(OMailPlugin.class);
-		if (configuration == null) {
-			configuration = new ODocument("OMailProfile");
-			configuration.field("user", "");
-			configuration.field("password", "");
-			configuration.field("enabled", true);
-			configuration.field("starttlsEnable", true);
-			configuration.field("auth", true);
-			configuration.field("port", 25);
-			configuration.field("host", "");
-			configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
-			configuration.field("@type", "d");
+    OMailProfile enterpriseProfile = new OMailProfile();
 
-			sql = "select from OUser where name = 'admin'";
-			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
-			final List<ODocument> users = database.query(osqlQuery);
-			if (users.size() == 1) {
-				userconfiguration = new ODocument("UserConfiguration");
-				final ODocument ouserAdmin = users.get(0);
-				userconfiguration.field("user", ouserAdmin);
-				userconfiguration.field("mailProfile", configuration);
-				userconfiguration.field("orientdbSite", "http://www.orientechnologies.com/");
-				userconfiguration.save();
-			} else {
-				throw new OConfigurationException("user admin not found");
-			}
-		}
+    enterpriseProfile.put("mail.smtp.user", oUserConfiguration.field("user"));
+    enterpriseProfile.put("mail.smtp.password", oUserConfiguration.field("password"));
+    enterpriseProfile.put("mail.smtp.port", oUserConfiguration.field("port"));
+    enterpriseProfile.put("mail.smtp.auth", oUserConfiguration.field("auth"));
+    enterpriseProfile.put("mail.smtp.host", oUserConfiguration.field("host"));
+    enterpriseProfile.put("enabled", oUserConfiguration.field("enabled"));
+    enterpriseProfile.put("mail.smtp.starttls.enable", oUserConfiguration.field("starttlsEnable"));
+    enterpriseProfile.put("mail.date.format", oUserConfiguration.field("dateFormat"));
+    return enterpriseProfile;
+  }
 
-		return configuration;
+  public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocumentTx database) {
+    String sql = "select from UserConfiguration where user.name = 'admin'";
+    OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
+    final List<ODocument> response = database.query(osqlQuery);
+    ODocument configuration = null;
+    ODocument userconfiguration = null;
 
-	}
+    if (response.size() == 1) {
+      userconfiguration = response.get(0);
+      configuration = userconfiguration.field("mailProfile");
+    }
+    // mail = OServerMain.server().getPluginByClass(OMailPlugin.class);
+    if (configuration == null) {
+      configuration = new ODocument("OMailProfile");
+      configuration.field("user", "");
+      configuration.field("password", "");
+      configuration.field("enabled", true);
+      configuration.field("starttlsEnable", true);
+      configuration.field("auth", true);
+      configuration.field("port", 25);
+      configuration.field("host", "");
+      configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
+      configuration.field("@type", "d");
 
-	public static void executeHttpRequest(ODocument what, ODatabaseDocumentTx db) throws MalformedURLException {
+      sql = "select from OUser where name = 'admin'";
+      osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
+      final List<ODocument> users = database.query(osqlQuery);
+      if (users.size() == 1) {
+        userconfiguration = new ODocument("UserConfiguration");
+        final ODocument ouserAdmin = users.get(0);
+        userconfiguration.field("user", ouserAdmin);
+        userconfiguration.field("mailProfile", configuration);
+        userconfiguration.field("orientdbSite", "http://www.orientechnologies.com/");
+        userconfiguration.save();
+      } else {
+        throw new OConfigurationException("user admin not found");
+      }
+    }
 
-		String url = what.field("url");
+    return configuration;
 
-		String method = what.field("method"); // GET POST
+  }
 
-		// Integer port = what.field("port");
+  public static void executeHttpRequest(ODocument what, ODatabaseDocumentTx db) throws MalformedURLException {
 
-		String parameters = what.field("body"); // parameters
+    String url = what.field("url");
+    String method = what.field("method"); // GET POST
+    String parameters = what.field("body"); // parameters
 
-		URL obj = new URL(url);
+    URL obj = new URL(url);
 
-		// GET
-		if ("GET".equalsIgnoreCase(method)) {
-			try {
+    // GET
+    if ("GET".equalsIgnoreCase(method)) {
+      try {
 
-				Proxy proxy = retrieveProxy(db);
-				HttpURLConnection con = null;
-				if (proxy != null)
-					con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
-				else
-					con = (HttpURLConnection) obj.openConnection();
+        Proxy proxy = retrieveProxy(db);
+        HttpURLConnection con = null;
+        if (proxy != null)
+          con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
+        else
+          con = (HttpURLConnection) obj.openConnection();
 
-				con.setRequestMethod(method);
+        con.setRequestMethod(method);
 
-				// add request header
-				con.setRequestProperty("User-Agent", USER_AGENT);
+        // add request header
+        con.setRequestProperty("User-Agent", USER_AGENT);
 
-				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-				String inputLine;
-				StringBuffer response = new StringBuffer();
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
 
-				while ((inputLine = in.readLine()) != null) {
-					response.append(inputLine);
-				}
+        while ((inputLine = in.readLine()) != null) {
+          response.append(inputLine);
+        }
 
-				// print result
-				System.out.println(response.toString());
-				in.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-			}
-		}
-		// POST
-		else {
-			try {
+        // print result
+        System.out.println(response.toString());
+        in.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+      }
+    }
+    // POST
+    else {
+      try {
 
-				Proxy proxy = retrieveProxy(db);
-				HttpURLConnection con = null;
-				if (proxy != null)
-					con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
-				else
-					con = (HttpURLConnection) obj.openConnection();
+        Proxy proxy = retrieveProxy(db);
+        HttpURLConnection con = null;
+        if (proxy != null)
+          con = (HttpURLConnection) obj.openConnection(proxy);// set proxy
+        else
+          con = (HttpURLConnection) obj.openConnection();
 
-				con.setRequestMethod(method);
+        con.setRequestMethod(method);
 
-				// add request header
-				con.setRequestProperty("User-Agent", USER_AGENT);
+        // add request header
+        con.setRequestProperty("User-Agent", USER_AGENT);
 
-				con.setDoOutput(true);
-				DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-				wr.writeBytes(parameters);
-				wr.flush();
-				wr.close();
-				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-				String inputLine;
-				StringBuffer response = new StringBuffer();
-				while ((inputLine = in.readLine()) != null) {
-					response.append(inputLine);
-				}
+        con.setDoOutput(true);
+        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+        wr.writeBytes(parameters);
+        wr.flush();
+        wr.close();
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+          response.append(inputLine);
+        }
 
-				// print result
-				// System.out.println(response.toString());
-				in.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-			}
-		}
-	}
+        // print result
+        // System.out.println(response.toString());
+        in.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      } finally {
+      }
+    }
+  }
 
-	public static Proxy retrieveProxy(ODatabaseDocumentTx db) {
-		String sql = "select from  UserConfiguration where user.name = 'admin'";
-		Proxy proxy = null;
-		OSQLSynchQuery<Object> osql = new OSQLSynchQuery<Object>(sql);
-		List<ODocument> userconfiguration = db.query(osql);
-		if (userconfiguration != null) {
-			ODocument userConf = userconfiguration.get(0);
-			ODocument proxyConfiguration = userConf.field("proxyConfiguration");
-			if (proxyConfiguration != null && proxyConfiguration.field("proxyIp") != null && proxyConfiguration.field("proxyPort") != null) {
+  public static Proxy retrieveProxy(ODatabaseDocumentTx db) {
+    String sql = "select from  UserConfiguration where user.name = 'admin'";
+    Proxy proxy = null;
+    OSQLSynchQuery<Object> osql = new OSQLSynchQuery<Object>(sql);
+    List<ODocument> userconfiguration = db.query(osql);
+    if (userconfiguration != null) {
+      ODocument userConf = userconfiguration.get(0);
+      ODocument proxyConfiguration = userConf.field("proxyConfiguration");
+      if (proxyConfiguration != null && proxyConfiguration.field("proxyIp") != null
+          && proxyConfiguration.field("proxyPort") != null) {
 
-				String proxyIp = proxyConfiguration.field("proxyIp");
-				String proxyPort = proxyConfiguration.field("proxyPort");
-				if (!proxyIp.isEmpty() && proxyPort != null) {
-					try {
-						proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
-					} catch (Exception e) {
-						e.printStackTrace();
-						// execute without proxy
-						return null;
-					}
-				}
-			}
+        String proxyIp = proxyConfiguration.field("proxyIp");
+        String proxyPort = proxyConfiguration.field("proxyPort");
+        if (!proxyIp.isEmpty() && proxyPort != null) {
+          try {
+            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, new Integer(proxyPort)));
+          } catch (Exception e) {
+            e.printStackTrace();
+            // execute without proxy
+            return null;
+          }
+        }
+      }
 
-		}
-		return proxy;
-	}
+    }
+    return proxy;
+  }
 }

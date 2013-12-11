@@ -16,12 +16,11 @@
 
 package com.orientechnologies.workbench.event;
 
-import java.text.ParseException;
 import java.util.Map;
 
 import javax.mail.MessagingException;
-import javax.mail.internet.AddressException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
@@ -31,42 +30,45 @@ import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
 
 @EventConfig(when = "MetricsWhen", what = "MailWhat")
 public class OEventMetricMailExecutor extends OEventMetricExecutor {
-	private ODocument		oUserConfiguration;
-	private OMailPlugin	mailPlugin;
+  private ODocument   oUserConfiguration;
+  private OMailPlugin mailPlugin;
 
-	public OEventMetricMailExecutor(ODatabaseDocumentTx database) {
+  public OEventMetricMailExecutor(ODatabaseDocumentTx database) {
 
-		this.oUserConfiguration = EventHelper.findOrCreateMailUserConfiguration(database);
-	}
+    this.oUserConfiguration = EventHelper.findOrCreateMailUserConfiguration(database);
+  }
 
-	@Override
-	public void execute(ODocument source, ODocument when, ODocument what) {
+  @Override
+  public void execute(ODocument source, ODocument when, ODocument what) {
 
-		if (canExecute(source, when)) {
-			fillMapResolve(source, when);
-			mailEvent(what);
-		}
-	}
+    if (canExecute(source, when)) {
+      fillMapResolve(source, when);
+      mailEvent(what);
+    }
+  }
 
-	public void mailEvent(ODocument what)  {
-		if (mailPlugin == null) {
-			mailPlugin = OServerMain.server().getPluginByClass(OMailPlugin.class);
+  public void mailEvent(ODocument what) {
+    if (mailPlugin == null) {
+      mailPlugin = OServerMain.server().getPluginByClass(OMailPlugin.class);
 
-			OMailProfile enterpriseProfile = EventHelper.createOMailProfile(oUserConfiguration);
+      OMailProfile enterpriseProfile = EventHelper.createOMailProfile(oUserConfiguration);
 
-			mailPlugin.registerProfile("enterprise", enterpriseProfile);
-		}
+      mailPlugin.registerProfile("enterprise", enterpriseProfile);
+    }
 
-		Map<String, Object> configuration = EventHelper.createConfiguration(what, body2name);
+    Map<String, Object> configuration = EventHelper.createConfiguration(what, body2name);
 
-		try {
-			mailPlugin.send(configuration);
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} 
+    try {
 
-	}
+      OLogManager.instance().info(this, "EMAIL sending email: %s", configuration);
+
+      mailPlugin.send(configuration);
+    } catch (MessagingException e) {
+      e.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
 
 }

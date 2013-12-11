@@ -15,31 +15,25 @@
             <fieldset class="form_mailwhat">
                 <div class="controls controls-row">
                     Metric:
-
-                    <!--<select class="input-block-level" ng-model="eventWhen['name']">-->
-                    <!--<option ng-repeat="t in metrics" ng-value="t.name"-->
-                    <!--ng-selected="t.name === eventWhen['name']" ng-change="changeMetric(t)">{{t.name}}-->
-                    <!--</option>-->
-                    <!--</select>-->
-
-
                     <select class="input-block-level" ng-model="eventWhen['name']"
                             ng-options="t for t in metric" ng-change="changeMetric()">
                         <option value=""></option>
                     </select>
-                    Operator:
-                    <select class="input-block-level" ng-model="eventWhen['operator']"
-                            ng-options="f for f in alertValues">
-                        <option value=""></option>
-                    </select>
-                    Value:
-                    <input type="text" class="input-block-level" ng-model="eventWhen['value']">
+
                     Parameter:
                     <select class="input-block-level" ng-model="eventWhen['parameter']"
                             ng-options="p for p in parameters">
                         <option value=""></option>
                     </select>
 
+                    Operator:
+                    <select class="input-block-level" ng-model="eventWhen['operator']"
+                            ng-options="f for f in alertValues">
+                        <option value=""></option>
+                    </select>
+                    
+                    Value:
+                    <input type="text" class="input-block-level" ng-model="eventWhen['value']">
 
                 </div>
 

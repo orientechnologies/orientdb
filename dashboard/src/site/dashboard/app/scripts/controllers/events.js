@@ -271,7 +271,7 @@ dbModule.controller("EventsNotifyController", ['$scope', '$http', '$location', '
 }]);
 dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$routeParams', 'CommandLogApi', 'Monitor', '$modal', '$q', 'Metric', function ($scope, $http, $location, $routeParams, CommandLogApi, Monitor, $modal, $q, Metric) {
 
-    $scope.alertValues = ["Greater then", "Less then"];
+    $scope.alertValues = ["Greater than", "Lesser than"];
     $scope.parameters = ["value", "entries", "min", "max", "average", "total" ];
     Metric.getMetricTypes({}, function (data) {
         $scope.metric = new Array;

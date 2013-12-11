@@ -17,34 +17,37 @@ package com.orientechnologies.workbench.event;
 
 import java.net.MalformedURLException;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
 
 @EventConfig(when = "MetricsWhen", what = "FunctionWhat")
 public class OEventMetricHttpExecutor extends OEventMetricExecutor {
-	private ODatabaseDocumentTx	db;
+  private ODatabaseDocumentTx db;
 
-	public OEventMetricHttpExecutor(ODatabaseDocumentTx database) {
+  public OEventMetricHttpExecutor(ODatabaseDocumentTx database) {
 
-		this.db = database;
-	}
+    this.db = database;
+  }
 
-	@Override
-	public void execute(ODocument source, ODocument when, ODocument what) {
-	
-		// pre-conditions
-		if (canExecute(source, when)) {
-			fillMapResolve(source, when);
-			try {
-				executeHttp(what);
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+  @Override
+  public void execute(ODocument source, ODocument when, ODocument what) {
 
-	private void executeHttp(ODocument what) throws MalformedURLException {
-		EventHelper.executeHttpRequest(what,db);
-	}
+    // pre-conditions
+    if (canExecute(source, when)) {
+      fillMapResolve(source, when);
+      try {
+        executeHttp(what);
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private void executeHttp(ODocument what) throws MalformedURLException {
+    OLogManager.instance().info(this, "HTTP executing: %s", what);
+
+    EventHelper.executeHttpRequest(what, db);
+  }
 }
