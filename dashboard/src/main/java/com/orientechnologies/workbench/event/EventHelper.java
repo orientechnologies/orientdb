@@ -143,10 +143,10 @@ public class EventHelper {
     enterpriseProfile.put("mail.smtp.user", oUserConfiguration.field("user"));
     enterpriseProfile.put("mail.smtp.password", oUserConfiguration.field("password"));
     enterpriseProfile.put("mail.smtp.port", oUserConfiguration.field("port"));
-    enterpriseProfile.put("mail.smtp.auth", oUserConfiguration.field("auth"));
+    enterpriseProfile.put("mail.smtp.auth", oUserConfiguration.field("auth").toString());
     enterpriseProfile.put("mail.smtp.host", oUserConfiguration.field("host"));
     enterpriseProfile.put("enabled", oUserConfiguration.field("enabled"));
-    enterpriseProfile.put("mail.smtp.starttls.enable", oUserConfiguration.field("starttlsEnable"));
+    enterpriseProfile.put("mail.smtp.starttls.enable", oUserConfiguration.field("starttlsEnable").toString());
     enterpriseProfile.put("mail.date.format", oUserConfiguration.field("dateFormat"));
     return enterpriseProfile;
   }
