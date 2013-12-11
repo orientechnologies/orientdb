@@ -24,8 +24,10 @@ public class OServerTest {
       OLogManager.instance().info(this, "Iteration " + i);
       OServer server = OServerMain.create().startup().activate();
       // create database if does not exist
-      ODatabase database = new OObjectDatabaseTx("local:" + System.getProperty("ORIENTDB_HOME") + "/test-db");
+      OObjectDatabaseTx database = new OObjectDatabaseTx("local:" + System.getProperty("ORIENTDB_HOME") + "/test-db");
       if(!database.exists()) database.create();
+      database.open("admin", "admin");
+      database.countClass("ouser");
       database.close();
       server.shutdown();
     }
