@@ -223,27 +223,7 @@ public class OHttpResponse {
     if (iRecords == null)
       return;
 
-    if (accept == null || (accept.contains(OHttpUtils.CONTENT_JSON))) {
-      if (iFormat == null)
-        iFormat = JSON_FORMAT;
-      else
-        iFormat = JSON_FORMAT + "," + iFormat;
-
-      final StringWriter buffer = new StringWriter();
-      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
-      json.beginObject();
-
-      final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
-
-      // WRITE RECORDS
-      json.beginCollection(-1, true, "result");
-      formatMultiValue(iRecords, buffer, format);
-      json.endCollection(-1, true);
-
-      json.endObject();
-      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
-
-    } else if (accept.contains("text/csv")) {
+    if (accept != null && accept.contains("text/csv")) {
       sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "data.csv", new OCallable<Void, OChunkedResponse>() {
 
         @Override
@@ -305,6 +285,26 @@ public class OHttpResponse {
           return null;
         }
       });
+    } else {
+      /// JSON
+      if (iFormat == null)
+        iFormat = JSON_FORMAT;
+      else
+        iFormat = JSON_FORMAT + "," + iFormat;
+
+      final StringWriter buffer = new StringWriter();
+      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
+      json.beginObject();
+
+      final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
+
+      // WRITE RECORDS
+      json.beginCollection(-1, true, "result");
+      formatMultiValue(iRecords, buffer, format);
+      json.endCollection(-1, true);
+
+      json.endObject();
+      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     }
   }
 
