@@ -235,7 +235,7 @@ dbModule.controller("LogWhenController", ['$scope', '$http', '$location', '$rout
     //all server in a map
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
-        for (i in $scope.servers) {
+        for (var i in $scope.servers) {
             $scope.serversName.push($scope.servers[i]['name'])
             if ($scope.name2server[$scope.servers[i]['name']] == undefined) {
                 $scope.name2server[$scope.servers[i]['name']] = $scope.servers[i];
@@ -277,7 +277,7 @@ dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$
         $scope.metric = new Array;
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
-            for (m in $scope.metrics) {
+            for (var m in $scope.metrics) {
                 $scope.metric.push($scope.metrics[m]['name']);
             }
         }
@@ -287,7 +287,7 @@ dbModule.controller("MetricsWhenController", ['$scope', '$http', '$location', '$
     $scope.changeMetric = function () {
 
 
-        for (m in $scope.metrics) {
+        for (var m in $scope.metrics) {
             if ($scope.metrics[m]['name'] == $scope.eventWhen['name']) {
                 if ($scope.metrics[m]['type'] == 'CHRONO') {
                     $scope.parameters = ["entries", "min", "max", "average", "total" ];
