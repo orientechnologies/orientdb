@@ -27,7 +27,9 @@ public class OPageChanges {
 
   public void applyChanges(ODirectMemoryPointer pointer) {
     for (ChangeUnit changeUnit : changeUnits) {
-      pointer.set(changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
+      // some components work in rollback only mode, so we do not have new values.
+      if (changeUnit.newValues != null)
+        pointer.set(changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
     }
   }
 
