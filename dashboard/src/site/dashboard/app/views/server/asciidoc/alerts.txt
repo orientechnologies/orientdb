@@ -4,7 +4,7 @@
 
 link:#/dashboard/help[Back to index]
 
-Alerts
+Events
 ------
 
 You can configure alerts based on certain events that may occur over time (server down, metrics that exceed critical values).
