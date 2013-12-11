@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import com.orientechnologies.agent.OL;
 
-@SuppressWarnings("restriction")
 public class OLicenseManagerConsole {
 
   public static void main(final String args[]) throws IOException {
@@ -15,10 +14,10 @@ public class OLicenseManagerConsole {
       syntaxError();
     else {
       int clientId = Integer.parseInt(args[0]);
-       int serverId = Integer.parseInt(args[1]);
-       int year = Integer.parseInt(args[2].substring(0, 4));
-       int month = Integer.parseInt(args[2].substring(4, 6));
-       int day = Integer.parseInt(args[2].substring(6, 8));
+      int serverId = Integer.parseInt(args[1]);
+      int year = Integer.parseInt(args[2].substring(0, 4));
+      int month = Integer.parseInt(args[2].substring(4, 6));
+      int day = Integer.parseInt(args[2].substring(6, 8));
 
       System.out.format("\n- Client id...: %d", clientId);
       System.out.format("\n- Server id...: %d", serverId);

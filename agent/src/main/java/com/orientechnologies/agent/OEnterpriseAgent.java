@@ -44,7 +44,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.6.1";
+  private static final String ORIENDB_ENTERPRISE_VERSION = "1.6.2";
 
   public OEnterpriseAgent() {
   }
