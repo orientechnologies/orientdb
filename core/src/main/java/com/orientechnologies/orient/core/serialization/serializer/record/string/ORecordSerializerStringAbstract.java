@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -642,7 +643,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case DATE:
       if (iValue instanceof Date) {
         // RESET HOURS, MINUTES, SECONDS AND MILLISECONDS
-        Calendar calendar = Calendar.getInstance();
+        final Calendar calendar = ODateHelper.getDatabaseCalendar();
         calendar.setTime((Date) iValue);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
