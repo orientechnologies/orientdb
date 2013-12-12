@@ -90,9 +90,9 @@ public class WriteAheadLogTest {
     OFuzzyCheckpointStartRecord fuzzyCheckpointStartRecordThree = (OFuzzyCheckpointStartRecord) writeAheadLog
         .read(checkPointThreeLSN);
 
-    Assert.assertNull(fuzzyCheckpointStartRecordOne.getLsn());
-    Assert.assertEquals(checkpointStartRecordTwo.getLsn(), checkPointOneLSN);
-    Assert.assertEquals(fuzzyCheckpointStartRecordThree.getLsn(), checkPointTwoLSN);
+    Assert.assertNull(fuzzyCheckpointStartRecordOne.getPreviousCheckpoint());
+    Assert.assertEquals(checkpointStartRecordTwo.getPreviousCheckpoint(), checkPointOneLSN);
+    Assert.assertEquals(fuzzyCheckpointStartRecordThree.getPreviousCheckpoint(), checkPointTwoLSN);
 
     Assert.assertEquals(writeAheadLog.end(), end);
   }
