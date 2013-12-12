@@ -85,7 +85,7 @@ public class OConsoleApplication {
 
       while (true) {
         out.println();
-        out.print("orientdb> ");
+        out.print(getPrompt());
         consoleInput = reader.readLine();
 
         if (consoleInput == null || consoleInput.length() == 0)
@@ -102,6 +102,14 @@ public class OConsoleApplication {
     onAfter();
 
     return result;
+  }
+
+  protected String getPrompt() {
+    return String.format("%s> ", getContext());
+  }
+
+  protected String getContext() {
+    return "";
   }
 
   protected boolean isInteractiveMode(String[] args) {
@@ -121,7 +129,7 @@ public class OConsoleApplication {
     return executeCommands(scanner, true);
   }
 
-  protected boolean executeCommands(final OCommandStream commandStream, final boolean iExitOnException) {
+  protected boolean executeCommands(final OCommandStream commandStream, final boolean iBatchMode) {
     final StringBuilder commandBuffer = new StringBuilder();
 
     try {
@@ -153,17 +161,31 @@ public class OConsoleApplication {
         }
 
         if (commandLine != null) {
+          if (iBatchMode) {
+            out.println();
+            out.print(getPrompt());
+            out.print(commandLine);
+            out.println();
+          }
+
           final RESULT status = execute(commandLine);
           commandLine = null;
 
-          if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
+          if (status == RESULT.EXIT || status == RESULT.ERROR && iBatchMode)
             return false;
         }
       }
 
       if (commandBuffer.length() > 0) {
+        if (iBatchMode) {
+          out.println();
+          out.print(getPrompt());
+          out.print(commandBuffer);
+          out.println();
+        }
+
         final RESULT status = execute(commandBuffer.toString());
-        if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
+        if (status == RESULT.EXIT || status == RESULT.ERROR && iBatchMode)
           return false;
       }
     } finally {

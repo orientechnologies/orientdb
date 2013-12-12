@@ -1,6 +1,15 @@
 package com.orientechnologies.common.console;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -286,7 +295,7 @@ public class TTYConsoleReader implements OConsoleReader {
         outStream.println();
       }
       outStream.print("\r");
-      outStream.print("orientdb> ");
+      outStream.print(console.getPrompt());
       return readLine();
     } else {
       return consoleInput;
@@ -395,7 +404,7 @@ public class TTYConsoleReader implements OConsoleReader {
 
   private void rewriteConsole(StringBuffer buffer, boolean cleaner) {
     outStream.print("\r");
-    outStream.print("orientdb> ");
+    outStream.print(console.getPrompt());
     if (currentPos < buffer.length() && buffer.length() > 0 && !cleaner) {
       outStream.print("\033[0m" + buffer.substring(0, currentPos) + "\033[0;30;47m" + buffer.substring(currentPos, currentPos + 1)
           + "\033[0m" + buffer.substring(currentPos + 1) + "\033[0m");

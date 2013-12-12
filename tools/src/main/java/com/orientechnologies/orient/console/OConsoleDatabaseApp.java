@@ -1107,7 +1107,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         try {
           message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-9s|", p.getName(), p.getType(),
               p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
-              p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "", p.getCollate() != null ? p.getCollate().getName() : "");
+              p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "", p.getCollate() != null ? p.getCollate()
+                  .getName() : "");
         } catch (Exception e) {
         }
       }
@@ -2001,5 +2002,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentDatabase.getStorage().reload();
     currentDatabase.getMetadata().getSchema().reload();
     currentDatabase.getMetadata().getIndexManager().reload();
+  }
+
+  @Override
+  protected String getContext() {
+    if (currentDatabase != null)
+      return " {" + currentDatabaseName + "}";
+    else if (serverAdmin != null)
+      return " {" + serverAdmin.getURL() + "}";
+    return "";
+  }
+
+  @Override
+  protected String getPrompt() {
+    return String.format("orientdb%s> ", getContext());
   }
 }
