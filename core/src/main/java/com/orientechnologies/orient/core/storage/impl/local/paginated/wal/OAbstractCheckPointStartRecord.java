@@ -22,23 +22,17 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @author Andrey Lomakin
  * @since 14.05.13
  */
-public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
-  private OLogSequenceNumber previousCheckpoint;
-
+public abstract class OAbstractCheckPointStartRecord extends OAbstractWALRecord {
   protected OAbstractCheckPointStartRecord() {
   }
 
-  protected OAbstractCheckPointStartRecord(OLogSequenceNumber previousCheckpoint) {
-    this.previousCheckpoint = previousCheckpoint;
-  }
-
-  public OLogSequenceNumber getPreviousCheckpoint() {
-    return previousCheckpoint;
+  protected OAbstractCheckPointStartRecord(final OLogSequenceNumber lsn) {
+    super(lsn);
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
-    if (previousCheckpoint == null) {
+  public int toStream(final byte[] content, int offset) {
+    if (lsn == null) {
       content[offset] = 0;
       offset++;
       return offset;
@@ -47,10 +41,10 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
     content[offset] = 1;
     offset++;
 
-    OLongSerializer.INSTANCE.serializeNative(previousCheckpoint.getSegment(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(lsn.getSegment(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OLongSerializer.INSTANCE.serializeNative(previousCheckpoint.getPosition(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(lsn.getPosition(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
@@ -71,46 +65,30 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
     long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    previousCheckpoint = new OLogSequenceNumber(segment, position);
+    lsn = new OLogSequenceNumber(segment, position);
 
     return offset;
   }
 
   @Override
   public int serializedSize() {
-    if (previousCheckpoint == null)
+    if (lsn == null)
       return 1;
 
     return 2 * OLongSerializer.LONG_SIZE + 1;
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return true;
-  }
-
-  @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
-
-    OAbstractCheckPointStartRecord that = (OAbstractCheckPointStartRecord) o;
-
-    if (previousCheckpoint != null ? !previousCheckpoint.equals(that.previousCheckpoint) : that.previousCheckpoint != null)
-      return false;
-
     return true;
   }
 
   @Override
-  public int hashCode() {
-    return previousCheckpoint != null ? previousCheckpoint.hashCode() : 0;
-  }
-
-  @Override
-  public String toString() {
-    return "OAbstractCheckPointStartRecord{" + "previousCheckpoint=" + previousCheckpoint + '}';
+  public boolean isUpdateMasterRecord() {
+    return true;
   }
 }

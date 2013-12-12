@@ -321,7 +321,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (!fuzzyCheckPointIsComplete) {
         OLogManager.instance().warn(this, "FUZZY checkpoint is not complete.");
 
-        OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+        OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord).getLsn();
         checkPointRecord = null;
 
         if (previousCheckpoint != null)
@@ -346,7 +346,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (!fullCheckPointIsComplete) {
         OLogManager.instance().warn(this, "FULL checkpoint has not completed.");
 
-        OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+        OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord).getLsn();
         checkPointRecord = null;
         if (previousCheckpoint != null)
           checkPointRecord = writeAheadLog.read(previousCheckpoint);

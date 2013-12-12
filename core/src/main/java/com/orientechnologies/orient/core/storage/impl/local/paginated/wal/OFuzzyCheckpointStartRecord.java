@@ -21,36 +21,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @since 30.04.13
  */
 public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord {
-  private OLogSequenceNumber lsn;
-
   public OFuzzyCheckpointStartRecord() {
   }
 
-  public OFuzzyCheckpointStartRecord(OLogSequenceNumber previousCheckpoint) {
+  public OFuzzyCheckpointStartRecord(final OLogSequenceNumber previousCheckpoint) {
     super(previousCheckpoint);
-  }
-
-  @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    return true;
-  }
-
-  @Override
-  public String toString() {
-    return "OFuzzyCheckpointStartRecord{" + "lsn=" + lsn + "} " + super.toString();
   }
 }

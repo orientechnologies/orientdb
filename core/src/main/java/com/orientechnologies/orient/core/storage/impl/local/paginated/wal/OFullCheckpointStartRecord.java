@@ -20,36 +20,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @since 5/2/13
  */
 public class OFullCheckpointStartRecord extends OAbstractCheckPointStartRecord {
-  private OLogSequenceNumber lsn;
-
   public OFullCheckpointStartRecord() {
   }
 
-  public OFullCheckpointStartRecord(OLogSequenceNumber previousCheckpoint) {
+  public OFullCheckpointStartRecord(final OLogSequenceNumber previousCheckpoint) {
     super(previousCheckpoint);
-  }
-
-  @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    return true;
-  }
-
-  @Override
-  public String toString() {
-    return "OFullCheckpointStartRecord{" + "lsn=" + lsn + "} " + super.toString();
   }
 }
