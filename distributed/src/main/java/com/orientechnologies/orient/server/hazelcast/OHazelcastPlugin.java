@@ -220,6 +220,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
 
+    getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
+
     try {
       hazelcastInstance.shutdown();
     } catch (Exception e) {
@@ -229,8 +231,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     setStatus(STATUS.OFFLINE);
-
-    getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
   }
 
   @Override
