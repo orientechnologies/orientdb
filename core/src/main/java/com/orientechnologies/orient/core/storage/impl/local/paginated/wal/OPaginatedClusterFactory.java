@@ -16,10 +16,9 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.depricated.OPaginatedWithoutRidReuseCluster;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -30,11 +29,8 @@ public class OPaginatedClusterFactory {
 
   public OCluster createCluster(int configurationVersion) {
     if (configurationVersion >= 0 && configurationVersion < 6) {
-      OLogManager.instance().error(
-          this,
-          "You use deprecated version of storage cluster, "
-              + "this version is not supported in current implementation. Please do export/import or recreate database.");
-      return new OPaginatedWithoutRidReuseCluster();
+      throw new OStorageException("You use deprecated version of storage cluster, "
+          + "this version is not supported in current implementation. Please do export/import or recreate database.");
     }
 
     return new OPaginatedCluster();
