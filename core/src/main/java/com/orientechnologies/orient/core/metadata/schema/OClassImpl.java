@@ -834,7 +834,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
-    	  all = false;
+        all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
     }
@@ -895,14 +895,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (iClassName == null)
       return false;
 
-    if (iClassName.equals(name) || iClassName.equals(shortName))
-      // SPEEDUP CHECK IF CLASS NAME ARE THE SAME
-      return true;
+    OClass cls = this;
+    while (cls != null) {
+      if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName()))
+        return true;
 
-    if (superClass == null)
-      return false;
+      cls = cls.getSuperClass();
+    }
 
-    return isSubClassOf(owner.getClass(iClassName));
+    return false;
   }
 
   /**
