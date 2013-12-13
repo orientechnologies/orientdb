@@ -126,22 +126,22 @@
         <fileSet>
             <directory>${basedir}/../server/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>400</fileMode>
+            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>400</fileMode>
+            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../distributed/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>400</fileMode>
+            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>400</fileMode>
+            <fileMode>600</fileMode>
         </fileSet>
 
         <!--
