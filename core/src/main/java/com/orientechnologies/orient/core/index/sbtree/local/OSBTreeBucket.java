@@ -28,7 +28,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * @author Andrey Lomakin

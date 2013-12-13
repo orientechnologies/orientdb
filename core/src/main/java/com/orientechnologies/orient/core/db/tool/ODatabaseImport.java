@@ -219,8 +219,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public void rebuildIndexes() {
+    database.getMetadata().getIndexManager().reload();
+
+    OIndexManagerProxy indexManager = database.getMetadata().getIndexManager();
+
     listener.onMessage("\nRebuild of stale indexes...");
     for (String indexName : indexesToRebuild) {
+
+      if (indexManager.getIndex(indexName) == null) {
+        listener.onMessage("\nIndex " + indexName + " is skipped because it is absent in imported DB.");
+        continue;
+      }
+
       listener.onMessage("\nStart rebuild index " + indexName);
       database.command(new OCommandSQL("rebuild index " + indexName)).execute();
       listener.onMessage("\nRebuild  of index " + indexName + " is completed.");

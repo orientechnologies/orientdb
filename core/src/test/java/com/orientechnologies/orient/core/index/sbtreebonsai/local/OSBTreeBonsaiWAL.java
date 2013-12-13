@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
