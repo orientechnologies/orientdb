@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -82,6 +83,9 @@ public abstract class OAbstractMapCache<T extends Map<ORID, ORecordInternal<?>>>
   @Override
   public ORecordInternal<?> put(final ORecordInternal<?> record) {
     if (!isEnabled())
+      return null;
+
+    if (!Orient.instance().getMemoryWatchDog().isMemoryAvailable())
       return null;
 
     lock.acquireExclusiveLock();

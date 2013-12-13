@@ -40,7 +40,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 	}
 
 	public LocalCreateDocumentMultiThreadSpeedTest() {
-		super(1000000, 200, CreateObjectsThread.class);
+		super(1000000, 20, CreateObjectsThread.class);
 	}
 
 	@Override
