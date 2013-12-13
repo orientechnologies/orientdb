@@ -61,13 +61,22 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
  * 
  */
 public class OSQLHelper {
-  public static final String NAME              = "sql";
+  public static final String                  NAME              = "sql";
 
-  public static final String VALUE_NOT_PARSED  = "_NOT_PARSED_";
-  public static final String NOT_NULL          = "_NOT_NULL_";
-  public static final String DEFINED           = "_DEFINED_";
+  public static final String                  VALUE_NOT_PARSED  = "_NOT_PARSED_";
+  public static final String                  NOT_NULL          = "_NOT_NULL_";
+  public static final String                  DEFINED           = "_DEFINED_";
 
-  private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
+  private static ClassLoader                  orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
+  private static ArrayList<OSQLMethodFactory> CACHED_METHODS;
+
+  static {
+    CACHED_METHODS = new ArrayList<OSQLMethodFactory>();
+
+    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
+    while (ite.hasNext())
+      CACHED_METHODS.add(ite.next());
+  }
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
@@ -355,22 +364,18 @@ public class OSQLHelper {
 
   public static String[] getAllMethodNames() {
     final List<String> methods = new ArrayList<String>();
-    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
-    while (ite.hasNext()) {
-      final OSQLMethodFactory factory = ite.next();
+
+    for (OSQLMethodFactory factory : CACHED_METHODS)
       methods.addAll(factory.getMethodNames());
-    }
+
     return methods.toArray(new String[methods.size()]);
   }
 
   public static OSQLMethod getMethodByName(String name) {
     name = name.toLowerCase();
-    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
-    while (ite.hasNext()) {
-      final OSQLMethodFactory factory = ite.next();
-      if (factory.hasMethod(name)) {
+    for (OSQLMethodFactory factory : CACHED_METHODS) {
+      if (factory.hasMethod(name))
         return factory.createMethod(name);
-      }
     }
     return null;
   }
