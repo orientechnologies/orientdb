@@ -896,12 +896,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return false;
 
     OClass cls = this;
-    while (cls != null) {
+    do {
       if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName()))
         return true;
 
       cls = cls.getSuperClass();
-    }
+    } while (cls != null);
 
     return false;
   }
