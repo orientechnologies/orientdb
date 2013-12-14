@@ -17,10 +17,7 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -233,14 +230,19 @@ public class OSQLFilterCondition {
     return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
   }
 
-  protected Date getDate(final Object iValue) {
-    if (iValue == null)
+  protected Date getDate(final Object value) {
+    if (value == null)
       return null;
 
-    if (iValue instanceof Long)
-      return new Date(((Long) iValue).longValue());
+    final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
 
-    String stringValue = iValue.toString();
+    if (value instanceof Long) {
+      Calendar calendar = Calendar.getInstance(config.getTimeZone());
+      calendar.setTimeInMillis(((Long) value));
+      return calendar.getTime();
+    }
+
+    String stringValue = value.toString();
 
     if (NULL_VALUE.equals(stringValue))
       return null;
@@ -250,8 +252,6 @@ public class OSQLFilterCondition {
 
     if (Pattern.matches("^\\d+$", stringValue))
       return new Date(Long.valueOf(stringValue).longValue());
-
-    final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
 
     SimpleDateFormat formatter = config.getDateFormatInstance();
 
