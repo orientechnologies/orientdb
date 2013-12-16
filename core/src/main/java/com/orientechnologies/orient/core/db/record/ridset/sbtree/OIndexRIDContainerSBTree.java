@@ -189,8 +189,8 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     tree.delete();
   }
 
-  public String getFileName() {
-    return tree.getFileName();
+  public String getName() {
+    return tree.getName();
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
