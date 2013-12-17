@@ -42,15 +42,30 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private int                bottomThreshold      = 60;
 
   public OIndexRIDContainer(String name) {
+    fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+    underlying = new HashSet<OIdentifiable>();
+    isEmbedded = true;
+  }
+
+  public OIndexRIDContainer(String fileName, Set<OIdentifiable> underlying, boolean autoConvert) {
+    this.fileId = resolveFileIdByName(fileName + INDEX_FILE_EXTENSION);
+    this.underlying = underlying;
+    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
+    if (!autoConvert) {
+      assert !isEmbedded;
+      topThreshold = -1;
+      bottomThreshold = -1;
+    }
+  }
+
+  private long resolveFileIdByName(String fileName) {
     final OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
-      fileId = storage.getDiskCache().openFile(name + INDEX_FILE_EXTENSION);
+      return storage.getDiskCache().openFile(fileName);
     } catch (IOException e) {
-      throw new OSBTreeException("Error creation of sbtree with name" + name, e);
+      throw new OSBTreeException("Error creation of sbtree with name" + fileName, e);
     }
-    underlying = new HashSet<OIdentifiable>();
-    isEmbedded = true;
   }
 
   public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying) {
@@ -169,6 +184,14 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     tree.delete();
     underlying = set;
     isEmbedded = true;
+  }
+
+  /**
+   * If set is embedded convert it not embedded representation.
+   */
+  public void checkNotEmbedded() {
+    if (isEmbedded)
+      convertToSbTree();
   }
 
   private void convertToSbTree() {

@@ -91,9 +91,9 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
 
       final long midHashCode = getHashCode(mid);
       final int cmp;
-      if (midHashCode < hashCode)
+      if (lessThanUnsigned(midHashCode, hashCode))
         cmp = -1;
-      else if (midHashCode > hashCode)
+      else if (greaterThanUnsigned(midHashCode, hashCode))
         cmp = 1;
       else {
         final K midVal = getKey(mid);
@@ -108,6 +108,14 @@ public class OHashIndexBucket<K, V> implements Iterable<OHashIndexBucket.Entry<K
         return mid; // key found
     }
     return -(low + 1); // key not found.
+  }
+
+  private static boolean lessThanUnsigned(long longOne, long longTwo) {
+    return (longOne + Long.MIN_VALUE) < (longTwo + Long.MIN_VALUE);
+  }
+
+  private static boolean greaterThanUnsigned(long longOne, long longTwo) {
+    return (longOne + Long.MIN_VALUE) > (longTwo + Long.MIN_VALUE);
   }
 
   public Entry<K, V> getEntry(int index) {
