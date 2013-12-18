@@ -265,7 +265,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    *           if no valid skip has been found
    */
   protected int parseSkip(final String w) throws OCommandSQLParsingException {
-    if (!w.equals(KEYWORD_SKIP))
+    if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET))
       return -1;
 
     parserNextWord(true);
