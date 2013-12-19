@@ -167,7 +167,7 @@ public abstract class OStringSerializerHelper {
 
     if (iSource != null && !iSource.isEmpty()) {
       while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
-          iConsiderBraces, iConsiderSets, iJumpChars)) > -1) {
+          iConsiderBraces, iConsiderSets, -1, iJumpChars)) > -1) {
         parts.add(buffer.toString());
         buffer.setLength(0);
       }
@@ -179,9 +179,45 @@ public abstract class OStringSerializerHelper {
     return parts;
   }
 
+  public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator,
+      final boolean[] iRecordSeparatorInclude, int beginIndex, final int endIndex, final boolean iStringSeparatorExtended,
+      boolean iConsiderBraces, boolean iConsiderSets, final char... iJumpChars) {
+    final StringBuilder buffer = new StringBuilder();
+    final ArrayList<String> parts = new ArrayList<String>();
+
+    int startSeparatorAt = -1;
+    if (iSource != null && !iSource.isEmpty()) {
+      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
+          iConsiderBraces, iConsiderSets, startSeparatorAt, iJumpChars)) > -1) {
+
+        parts.add(buffer.toString());
+        buffer.setLength(0);
+
+        startSeparatorAt = 0;
+
+        if (beginIndex > -1) {
+          final char lastSeparator = iSource.charAt(beginIndex - 1);
+          for (int i = 0; i < iRecordSeparator.length; ++i)
+            if (iRecordSeparator[i] == lastSeparator) {
+              if (iRecordSeparatorInclude[i]) {
+                beginIndex--;
+                startSeparatorAt = 1;
+              }
+              break;
+            }
+        }
+      }
+
+      if (buffer.length() > 0 || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
+        parts.add(buffer.toString());
+    }
+
+    return parts;
+  }
+
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
-      final char... iJumpChars) {
+      final int iMinPosSeparatorAreValid, final char... iJumpChars) {
     char stringBeginChar = ' ';
     boolean encodeMode = false;
     int insideParenthesis = 0;
@@ -211,13 +247,14 @@ public abstract class OStringSerializerHelper {
         // OUTSIDE A STRING
 
         if (iConsiderBraces)
-          if (c == LIST_BEGIN)
-            insideList++;
-          else if (c == LIST_END) {
-            if (!isCharPresent(c, iSeparator)) {
+          if (c == LIST_BEGIN) {
+            if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator))
+              insideList++;
+          } else if (c == LIST_END) {
+            if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
               if (insideList == 0)
-                throw new OSerializationException("Found invalid " + LIST_END
-                    + " character. Ensure it is opened and closed correctly.");
+                throw new OSerializationException("Found invalid " + LIST_END + " character at position " + i + " of text "
+                    + iSource + ". Ensure it is opened and closed correctly.");
               insideList--;
             }
           } else if (c == EMBEDDED_BEGIN) {
@@ -225,18 +262,18 @@ public abstract class OStringSerializerHelper {
           } else if (c == EMBEDDED_END) {
             // if (!isCharPresent(c, iRecordSeparator)) {
             if (insideParenthesis == 0)
-              throw new OSerializationException("Found invalid " + EMBEDDED_END
-                  + " character. Ensure it is opened and closed correctly.");
+              throw new OSerializationException("Found invalid " + EMBEDDED_END + " character at position " + i + " of text "
+                  + iSource + ". Ensure it is opened and closed correctly.");
             // }
             insideParenthesis--;
 
           } else if (c == MAP_BEGIN) {
             insideMap++;
           } else if (c == MAP_END) {
-            if (!isCharPresent(c, iSeparator)) {
+            if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
               if (insideMap == 0)
-                throw new OSerializationException("Found invalid " + MAP_END
-                    + " character. Ensure it is opened and closed correctly.");
+                throw new OSerializationException("Found invalid " + MAP_END + " character at position " + i + " of text "
+                    + iSource + ". Ensure it is opened and closed correctly.");
               insideMap--;
             }
           } else if (c == LINK)
@@ -249,10 +286,10 @@ public abstract class OStringSerializerHelper {
             if (c == SET_BEGIN)
               insideSet++;
             else if (c == SET_END) {
-              if (!isCharPresent(c, iSeparator)) {
+              if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
                 if (insideSet == 0)
-                  throw new OSerializationException("Found invalid " + SET_END
-                      + " character. Ensure it is opened and closed correctly.");
+                  throw new OSerializationException("Found invalid " + SET_END + " character at position " + i + " of text "
+                      + iSource + ". Ensure it is opened and closed correctly.");
                 insideSet--;
               }
             }
@@ -267,14 +304,14 @@ public abstract class OStringSerializerHelper {
 
         if (insideParenthesis == 0 && insideList == 0 && insideSet == 0 && insideMap == 0 && insideLinkPart == 0) {
           // OUTSIDE A PARAMS/COLLECTION/MAP
-          if (isCharPresent(c, iSeparator)) {
+          if (i > iMinPosSeparatorAreValid && isCharPresent(c, iSeparator)) {
             // SEPARATOR (OUTSIDE A STRING): PUSH
             return beginIndex + i + 1;
           }
         }
 
         if (iJumpChars.length > 0) {
-          if (isCharPresent(c, iJumpChars))
+          if (i > iMinPosSeparatorAreValid && isCharPresent(c, iJumpChars))
             continue;
         }
 
@@ -524,7 +561,7 @@ public abstract class OStringSerializerHelper {
       return iBeginPosition;
 
     final StringBuilder buffer = new StringBuilder();
-    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false);
+    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false, -1);
     if (buffer.length() == 0)
       return iBeginPosition;
 
@@ -543,7 +580,7 @@ public abstract class OStringSerializerHelper {
       return iBeginPosition;
 
     final StringBuilder buffer = new StringBuilder();
-    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false);
+    parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false, -1);
     if (buffer.length() == 0)
       return iBeginPosition;
 

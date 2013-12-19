@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodMultiValue;
 
 /**
  * Represents an object field as value in the query condition.
@@ -50,7 +51,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   protected List<OPair<OSQLMethod, Object[]>> operationsChain = null;
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, '.');
+    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' }, new boolean[] { false, true }, 0,
+        -1, false, true, false, new char[] {});
 
     setRoot(iQueryToParse, parts.get(0));
 
@@ -105,6 +107,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
           operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
 
+        } else if (part.charAt(0) == '[') {
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodMultiValue.NAME),
+              new Object[] { part }));
         } else {
           operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME),
               new Object[] { part }));

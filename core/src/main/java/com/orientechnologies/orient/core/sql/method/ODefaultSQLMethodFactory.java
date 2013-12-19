@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodIndexOf;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodKeys;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLeft;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLength;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodNormalize;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodPrefix;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemove;
@@ -64,6 +65,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
 
   public ODefaultSQLMethodFactory() {
     methods.put(OSQLMethodAppend.NAME, new OSQLMethodAppend());
+    methods.put(OSQLMethodMultiValue.NAME, new OSQLMethodMultiValue());
     methods.put(OSQLMethodAsBoolean.NAME, new OSQLMethodAsBoolean());
     methods.put(OSQLMethodAsDate.NAME, new OSQLMethodAsDate());
     methods.put(OSQLMethodAsDateTime.NAME, new OSQLMethodAsDateTime());

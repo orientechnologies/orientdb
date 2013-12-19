@@ -30,6 +30,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 
 /**
@@ -199,6 +200,17 @@ public class OMultiValue {
         }
       } else if (iObject.getClass().isArray())
         return Array.get(iObject, iIndex);
+      else if (iObject instanceof Iterator<?>) {
+        final Iterator<Object> it = (Iterator<Object>) iObject;
+        for (int i = 0; it.hasNext(); ++i) {
+          final Object o = it.next();
+          if (i == iIndex)
+            return o;
+        }
+
+        if (iObject instanceof OResettable)
+          ((OResettable) iObject).reset();
+      }
     } catch (Exception e) {
       // IGNORE IT
       OLogManager.instance().debug(iObject, "Error on reading the first item of the Multi-value field '%s'", iObject);
@@ -521,21 +533,21 @@ public class OMultiValue {
     }
 
     while (it.hasNext()) {
-      Set batch = prepareBatch(it, approximateRemainingSize);
+      Set<?> batch = prepareBatch(it, approximateRemainingSize);
       coll.removeAll(batch);
       approximateRemainingSize -= batch.size();
     }
   }
 
-  private static Set prepareBatch(Iterator<?> it, int approximateRemainingSize) {
-    final HashSet batch;
+  private static Set<?> prepareBatch(Iterator<?> it, int approximateRemainingSize) {
+    final HashSet<Object> batch;
     if (approximateRemainingSize > -1) {
       if (approximateRemainingSize > 10000)
-        batch = new HashSet(13400);
+        batch = new HashSet<Object>(13400);
       else
-        batch = new HashSet((int) (approximateRemainingSize / 0.75));
+        batch = new HashSet<Object>((int) (approximateRemainingSize / 0.75));
     } else {
-      batch = new HashSet();
+      batch = new HashSet<Object>();
     }
 
     int count = 0;
