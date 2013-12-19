@@ -38,10 +38,13 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult, final Object[] iMethodParams) {
 
     final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
     if (v != null) {
+      if (ioResult instanceof Long)
+        ioResult = new Date((Long) ioResult);
+
       if (ioResult instanceof Date) {
         final SimpleDateFormat format = new SimpleDateFormat(v.toString());
         if (iMethodParams.length > 1)
