@@ -493,9 +493,15 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
-        var shallow = params.shallow  ? ',shallow' : '';
+<<<<<<< Updated upstream
+        var shallow = params.shallow != undefined ? '' : ',shallow';
         var contentType = params.contentType || 'application/json';
+//        rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
+=======
+        var shallow = params.shallow  ? ',shallow' : '';
+//        var contentType = params.contentType || 'application/json';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
+>>>>>>> Stashed changes
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
 
 
@@ -526,6 +532,7 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
                     Notification.push({content: data});
                     if (error) error(data);
                 });
+<<<<<<< Updated upstream
             ;
 
         }
@@ -555,7 +562,12 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
                         if (error) error(data);
                     });
             }
+=======
+        } else {
+            callback('ok');
+>>>>>>> Stashed changes
         }
+
     }
 
     resource.getAll = function (database, clazz, callback) {

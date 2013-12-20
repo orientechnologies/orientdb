@@ -330,9 +330,10 @@ Widget.directive('orientdatetime', function (Database) {
                     }
                 });
                 var form = input;
-
+                var n = input.getTimezoneOffset();
                 if (input) {
-                    var form = moment(input).format(formatter.toUpperCase());
+                    //var form = moment(input).format(formatter.toUpperCase());
+                    var form = moment(input).add('m',n).format('YYYY-MM-DD HH:mm:ss');
                 }
                 return form;
             }

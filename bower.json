@@ -14,7 +14,7 @@
     "angular-ui-codemirror": "latest",
     "codemirror": "~3.16.0",
     "font-awesome": "latest",
-    "angular-localstorage" : "latest",
+    "angular-local-storage" : "latest",
     "bootstrap-datepicker" : "1.0.2",
     "moment" : "latest",
     "angular-ui-bootstrap-bower" : "latest",

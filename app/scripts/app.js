@@ -18,7 +18,8 @@ var deps = ['header.controller',
     'LocalStorageModule',
     'filters',
     'rendering',
-    'schema.controller'];
+    'schema.controller',
+    'ngGrid'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);

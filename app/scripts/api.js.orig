@@ -1,0 +1,10 @@
+
+<<<<<<< Updated upstream
+//
+//var API = '/api/';
+var API = '../';
+=======
+
+var API = '/api/';
+//var API = '/';
+>>>>>>> Stashed changes

@@ -16,6 +16,8 @@
                         ng-options="q for q in contentType"></select>
                 <label>Limit</label>
                 <input type="text" class="input-small" ng-model="limit"/>
+                <label>Shallow collection</label>
+                <input type="checkbox" ng-model="shallow"/>
                 <br>
 
                 <div style="margin-top: 5px;">
@@ -120,4 +122,5 @@
             <textarea ng-model='rawData' style="width: 100%; height: 100px;"></textarea>
         </div>
     </div>
+
 </div>
