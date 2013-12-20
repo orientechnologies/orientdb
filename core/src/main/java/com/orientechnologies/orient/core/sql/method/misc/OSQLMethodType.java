@@ -37,6 +37,11 @@ public class OSQLMethodType extends OAbstractSQLMethod {
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
     if (ioResult == null)
       return null;
-    return OType.getTypeByClass(ioResult.getClass());
+    final OType t = OType.getTypeByClass(ioResult.getClass());
+
+    if (t != null)
+      return t.toString();
+
+    return null;
   }
 }
