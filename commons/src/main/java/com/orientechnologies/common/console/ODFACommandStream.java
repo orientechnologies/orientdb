@@ -98,7 +98,7 @@ public class ODFACommandStream implements OCommandStream {
         }
       }
 
-      final String result;
+      String result;
       if (partialResult.length() > 0) {
         if (end > 0) {
           result = partialResult.append(buffer.subSequence(start, end + 1).toString()).toString();
@@ -107,7 +107,11 @@ public class ODFACommandStream implements OCommandStream {
           result = partialResult.toString();
         }
       } else {
-        result = buffer.subSequence(start, end + 1).toString();
+        try {
+          result = buffer.subSequence(start, end + 1).toString();
+        } catch (NoSuchMethodError e) {
+          result = buffer.toString().substring(start, end + 1);
+        }
       }
 
       buffer.position(buffer.position() + position);
