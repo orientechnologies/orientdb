@@ -131,7 +131,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), masterLSN);
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
   }
 
   public void testSecondMasterRecordUpdate() throws Exception {
@@ -151,7 +151,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), checkpointLSN);
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
   }
 
   public void testThirdMasterRecordUpdate() throws Exception {
@@ -176,7 +176,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), checkpointLSN);
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
   }
 
   public void testWriteMultipleRecordsWithDifferentSizes() throws Exception {
@@ -291,7 +291,7 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
 
     Assert.assertEquals(writeAheadLog.size(), logSize);
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
 
     assertLogContent(writeAheadLog, writtenRecords);
   }
@@ -336,7 +336,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords);
   }
 
@@ -382,7 +382,7 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
 
     assertLogContent(writeAheadLog, writtenRecords);
   }
@@ -430,7 +430,7 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
 
     assertLogContent(writeAheadLog, writtenRecords);
   }
@@ -477,7 +477,7 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
 
     assertLogContent(writeAheadLog, writtenRecords);
   }
@@ -525,7 +525,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords);
 
   }
@@ -548,9 +548,18 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
 
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
+
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFlushedLSNOnePageWithLessThanMinRecordSpace() throws Exception {
@@ -573,9 +582,17 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
 
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFlushedLSNOnePageWithMinRecordSpace() throws Exception {
@@ -599,8 +616,17 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
+
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFlushedLSNOnePageWithNoSpace() throws Exception {
@@ -624,8 +650,17 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
+
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFlushedLSNTwoPagesAndThenTwo() throws Exception {
@@ -663,10 +698,17 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
 
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
-    Assert.assertEquals(writeAheadLog.end(), end);
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFlushedLSNTwoPagesOneWithTrail() throws Exception {
@@ -692,8 +734,17 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
+
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFlushedLSNTwoTwoSegments() throws Exception {
@@ -724,8 +775,17 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.getFlushedLSN(), walRecord.getLsn());
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertTrue(writeAheadLog.getFlushedLSN().compareTo(walRecord.getLsn()) >= 0);
+
+    end = writeAheadLog.end();
+
+    walRecord = new TestRecord(ONE_KB, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    Assert.assertEquals(writeAheadLog.getFlushedLSN().compareTo(lsn), -1);
+
+    Assert.assertEquals(end.compareTo(lsn), -1);
   }
 
   public void testFirstMasterRecordIsBrokenSingleRecord() throws Exception {
@@ -746,7 +806,7 @@ public class WriteAheadLogTest {
     mrFile.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     Assert.assertNull(writeAheadLog.getLastCheckpoint());
   }
 
@@ -773,7 +833,7 @@ public class WriteAheadLogTest {
     mrFile.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), checkPointLSN);
   }
 
@@ -804,7 +864,7 @@ public class WriteAheadLogTest {
     mrFile.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), checkPointLSN);
   }
 
@@ -827,7 +887,7 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords);
     assertLogContent(writeAheadLog, writtenRecords.subList(writtenRecords.size() / 2, writtenRecords.size()));
   }
@@ -847,7 +907,7 @@ public class WriteAheadLogTest {
     Assert.assertEquals(writeAheadLog.end(), end);
     writeAheadLog.close();
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
 
     for (int i = 0; i < recordsToWrite; i++) {
       TestRecord testRecord = new TestRecord(30, false);
@@ -863,7 +923,7 @@ public class WriteAheadLogTest {
     writeAheadLog.close();
 
     writeAheadLog = createWAL();
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
 
     assertLogContent(writeAheadLog, writtenRecords);
     assertLogContent(writeAheadLog, writtenRecords.subList(writtenRecords.size() / 2, writtenRecords.size()));
@@ -906,7 +966,7 @@ public class WriteAheadLogTest {
       counter++;
     }
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(firstSegmentIndex + 1, writtenRecords.size()));
 
     Assert.assertNull(writeAheadLog.read(writtenRecords.get(firstSegmentIndex).getLsn()));
@@ -960,7 +1020,7 @@ public class WriteAheadLogTest {
     Assert.assertNull(writeAheadLog.getLastCheckpoint());
     Assert.assertNull(writeAheadLog.read(writtenRecords.get(firstSegmentIndex).getLsn()));
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     Assert.assertEquals(writeAheadLog.begin(), writtenRecords.get(firstSegmentIndex + 1).getLsn());
   }
 
@@ -1014,7 +1074,7 @@ public class WriteAheadLogTest {
     Assert.assertNull(writeAheadLog.getLastCheckpoint());
     Assert.assertNull(writeAheadLog.read(writtenRecords.get(firstSegmentIndex).getLsn()));
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     Assert.assertEquals(writeAheadLog.begin(), writtenRecords.get(firstSegmentIndex + 1).getLsn());
   }
 
@@ -1068,7 +1128,7 @@ public class WriteAheadLogTest {
 
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), walRecord.getLsn());
     Assert.assertEquals(writeAheadLog.begin(), writtenRecords.get(firstSegmentIndex + 1).getLsn());
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
   }
 
   public void testLogThreeCheckPointTruncationAllDropped() throws Exception {
@@ -1185,10 +1245,8 @@ public class WriteAheadLogTest {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(ONE_KB, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
-
-    long logSize = writeAheadLog.size();
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE, false);
     writeAheadLog.log(walRecord);
@@ -1196,6 +1254,9 @@ public class WriteAheadLogTest {
 
     walRecord = new TestRecord(ONE_KB, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = lsn;
+    long logSize = writeAheadLog.size();
+
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1209,20 +1270,24 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.size(), logSize);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
+        + OWALPage.RECORDS_OFFSET);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testPageIsBrokenOnOtherSegment() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(ONE_KB, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
-
-    long logSize = writeAheadLog.size();
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE, false);
     writeAheadLog.log(walRecord);
@@ -1230,7 +1295,10 @@ public class WriteAheadLogTest {
 
     walRecord = new TestRecord(ONE_KB, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = lsn;
     writtenRecords.add(walRecord);
+
+    long logSize = writeAheadLog.size();
 
     writeAheadLog.close();
 
@@ -1243,20 +1311,24 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.size(), logSize);
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
+        + OWALPage.RECORDS_OFFSET);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testPageIsBrokenThreeSegmentsOneRecordIsTwoPageWide() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(ONE_KB, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
-
-    long logSize = writeAheadLog.size();
 
     walRecord = new TestRecord(2 * OWALPage.PAGE_SIZE, false);
     writeAheadLog.log(walRecord);
@@ -1264,6 +1336,8 @@ public class WriteAheadLogTest {
 
     walRecord = new TestRecord(ONE_KB, false);
     OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = lsn;
+    long logSize = writeAheadLog.size();
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1277,27 +1351,32 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.size(), logSize);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
+        + OWALPage.RECORDS_OFFSET);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testPageIsBrokenAndEmpty() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
-    long logSize = writeAheadLog.size();
-
     walRecord = new TestRecord(3 * OWALPage.PAGE_SIZE, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
 
+    long logSize = writeAheadLog.size();
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(writeAheadLog.size() - 1);
     int bt = rndFile.read();
@@ -1307,21 +1386,27 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    Assert.assertEquals(writeAheadLog.size(), logSize);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
+        + OWALPage.RECORDS_OFFSET);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testSecondPageWasTruncated() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(100, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1332,20 +1417,24 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testThirdPageWasTruncated() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(100, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(2 * OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1356,20 +1445,24 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testThirdPageCRCWasIncorrect() throws Exception {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
     OWALRecord walRecord = new TestRecord(100, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(2 * OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1383,9 +1476,13 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testFirstPageInFlushWasBroken() throws Exception {
@@ -1397,7 +1494,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     // second flush
@@ -1406,7 +1503,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1414,14 +1511,19 @@ public class WriteAheadLogTest {
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(2 * OWALPage.PAGE_SIZE);
     int bt = rndFile.read();
+    rndFile.seek(2 * OWALPage.PAGE_SIZE);
     rndFile.write(bt + 1);
     rndFile.close();
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 2));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(2).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(2).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testFirstInCompletePageInFlushWasBroken() throws Exception {
@@ -1429,7 +1531,7 @@ public class WriteAheadLogTest {
 
     // first flush
     OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET + 100, false);
@@ -1442,7 +1544,8 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1450,14 +1553,19 @@ public class WriteAheadLogTest {
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(2 * OWALPage.PAGE_SIZE);
     int bt = rndFile.read();
+    rndFile.seek(2 * OWALPage.PAGE_SIZE);
     rndFile.write(bt + 1);
     rndFile.close();
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testMiddlePageInFlushWasBroken() throws Exception {
@@ -1478,15 +1586,15 @@ public class WriteAheadLogTest {
 
     // second flush
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+    writtenRecords.add(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
-    writtenRecords.add(walRecord);
-
-    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
-    writtenRecords.add(walRecord);
-
-    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1500,9 +1608,13 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 3));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(3).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(3).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testMiddleIncompletePageInFlushWasBroken() throws Exception {
@@ -1517,7 +1629,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
@@ -1531,7 +1643,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1539,14 +1651,19 @@ public class WriteAheadLogTest {
     RandomAccessFile rndFile = new RandomAccessFile(new File(testDir, "WriteAheadLogTest.0.wal"), "rw");
     rndFile.seek(3 * OWALPage.PAGE_SIZE);
     int bt = rndFile.read();
+    rndFile.seek(3 * OWALPage.PAGE_SIZE);
     rndFile.write(bt + 1);
     rndFile.close();
 
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 2));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(2).getLsn()));
+    try {
+      writeAheadLog.read(writtenRecords.get(2).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testFirstPageWasNotFlushedFirstCase() throws Exception {
@@ -1561,7 +1678,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET + 100, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
     writeAheadLog.flush();
 
@@ -1581,7 +1698,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1593,9 +1710,14 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    assertLogContent(writeAheadLog, writtenRecords.subList(0, 2));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(2).getLsn()));
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
+
+    try {
+      writeAheadLog.read(writtenRecords.get(1).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testFirstPageWasNotFlushedSecondCase() throws Exception {
@@ -1606,7 +1728,7 @@ public class WriteAheadLogTest {
 
     // first flush
     OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET - 100, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.flush();
@@ -1627,7 +1749,7 @@ public class WriteAheadLogTest {
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     writeAheadLog.close();
@@ -1639,9 +1761,13 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
 
-    Assert.assertEquals(writeAheadLog.end(), end);
-    assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(1).getLsn()));
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
+
+    try {
+      writeAheadLog.read(writtenRecords.get(0).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   public void testPageWasNotFullyWritten() throws Exception {
@@ -1681,7 +1807,7 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 4));
     Assert.assertNull(writeAheadLog.read(writtenRecords.get(4).getLsn()));
   }
@@ -1704,11 +1830,11 @@ public class WriteAheadLogTest {
 
     // second flush
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
-    OLogSequenceNumber end = writeAheadLog.log(walRecord);
+    writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET + 100, false);
-    writeAheadLog.log(walRecord);
+    OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
     walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET - 200, false);
@@ -1723,9 +1849,14 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL(3, 6 * OWALPage.PAGE_SIZE);
 
-    Assert.assertEquals(writeAheadLog.end(), end);
+    Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 3));
-    Assert.assertNull(writeAheadLog.read(writtenRecords.get(3).getLsn()));
+
+    try {
+      writeAheadLog.read(writtenRecords.get(3).getLsn());
+      Assert.fail();
+    } catch (OWALPageBrokenException e) {
+    }
   }
 
   private void assertLogContent(OWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {
@@ -1745,7 +1876,13 @@ public class WriteAheadLogTest {
       Assert.assertEquals(writtenRecord, readRecord);
     }
 
-    Assert.assertNull(writeAheadLog.next(readRecord.getLsn()));
+    OLogSequenceNumber nextLsn = writeAheadLog.next(readRecord.getLsn());
+    if (nextLsn != null)
+      try {
+        writeAheadLog.read(nextLsn);
+        Assert.fail();
+      } catch (OWALPageBrokenException e) {
+      }
   }
 
   public static final class TestRecord implements OWALRecord {

@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -62,51 +75,38 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
  * together to the listener.
- *
+ * 
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
-  private static final String KEYWORD_AS = " AS ";
-  public static final String KEYWORD_SELECT = "SELECT";
-  public static final String KEYWORD_ASC = "ASC";
-  public static final String KEYWORD_DESC = "DESC";
-  public static final String KEYWORD_ORDER = "ORDER";
-  public static final String KEYWORD_BY = "BY";
-  public static final String KEYWORD_GROUP = "GROUP";
-  public static final String KEYWORD_FETCHPLAN = "FETCHPLAN";
-  private static final int MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
+  private static final String         KEYWORD_AS                        = " AS ";
+  public static final String          KEYWORD_SELECT                    = "SELECT";
+  public static final String          KEYWORD_ASC                       = "ASC";
+  public static final String          KEYWORD_DESC                      = "DESC";
+  public static final String          KEYWORD_ORDER                     = "ORDER";
+  public static final String          KEYWORD_BY                        = "BY";
+  public static final String          KEYWORD_GROUP                     = "GROUP";
+  public static final String          KEYWORD_FETCHPLAN                 = "FETCHPLAN";
+  private static final int            MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
 
-  private Map<String, String> projectionDefinition = null;
-  private Map<String, Object> projections = null;       // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
+  private Map<String, String>         projectionDefinition              = null;
+  private Map<String, Object>         projections                       = null;       // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
   // IT'S
   // USED THE
   // PROJECTIONS IN GROUPED-RESULTS
   private List<OPair<String, String>> orderedFields;
-  private List<String> groupByFields;
+  private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
-  private Object expandTarget;
-  private int fetchLimit = -1;
-  private OIdentifiable lastRecord;
-  private Iterator<OIdentifiable> subIterator;
-  private String fetchPlan;
+  private Object                      expandTarget;
+  private int                         fetchLimit                        = -1;
+  private OIdentifiable               lastRecord;
+  private Iterator<OIdentifiable>     subIterator;
+  private String                      fetchPlan;
 
   /**
    * Compile the filter conditions only the first time.
@@ -157,7 +157,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseOrderBy(w);
           else if (w.equals(KEYWORD_LIMIT))
             parseLimit(w);
-          else if (w.equals(KEYWORD_SKIP))
+          else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET))
             parseSkip(w);
           else if (w.equals(KEYWORD_FETCHPLAN))
             parseFetchplan(w);
@@ -177,7 +177,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Determine clusters that are used in select operation
-   *
+   * 
    * @return set of involved clusters
    */
   public Set<Integer> getInvolvedClusters() {
@@ -209,7 +209,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Add condition so that query will be executed only on the given id range. That is used to verify that query will be executed on
    * the single node
-   *
+   * 
    * @param fromId
    * @param toId
    * @return this
@@ -595,7 +595,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (word.length() == 0)
         // END CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
-      else if (word.equals(KEYWORD_LIMIT) || word.equals(KEYWORD_SKIP)) {
+      else if (word.equals(KEYWORD_LIMIT) || word.equals(KEYWORD_SKIP) || word.equals(KEYWORD_OFFSET)) {
         // NEXT CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
         parserGoBack();
@@ -767,7 +767,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, OSQLFilterCondition iCondition,
-                                                       final List<OIndexSearchResult> iIndexSearchResults) {
+      final List<OIndexSearchResult> iIndexSearchResults) {
     if (iCondition == null)
       return null;
 
@@ -818,9 +818,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   /**
    * Add SQL filter field to the search candidate list.
-   *
-   * @param iCondition Condition item
-   * @param iItem      Value to search
+   * 
+   * @param iCondition
+   *          Condition item
+   * @param iItem
+   *          Value to search
    * @return true if the property was indexed and found, otherwise false
    */
   private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
@@ -1201,7 +1203,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       try {
         // ADD ALL THE ITEMS AS RESULT
-        for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext(); ) {
+        for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
           final Entry<Object, Object> current = it.next();
 
           if (current.getValue() instanceof Collection<?>) {

@@ -15,7 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -679,6 +688,27 @@ public class SQLSelectTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile")).execute();
 
     List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile skip 10 limit 10")).execute();
+    Assert.assertEquals(page.size(), 10);
+
+    for (int i = 0; i < page.size(); ++i) {
+      Assert.assertEquals(page.get(i), result.get(10 + i));
+    }
+  }
+
+  @Test
+  public void queryOffsetOnly() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile")).execute();
+    int total = result.size();
+
+    result = database.command(new OSQLSynchQuery<ODocument>("select from Profile offset 1")).execute();
+    Assert.assertEquals(result.size(), total - 1);
+  }
+
+  @Test
+  public void queryPaginationWithOffsetAndLimit() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile")).execute();
+
+    List<ODocument> page = database.command(new OSQLSynchQuery<ODocument>("select from Profile offset 10 limit 10")).execute();
     Assert.assertEquals(page.size(), 10);
 
     for (int i = 0; i < page.size(); ++i) {

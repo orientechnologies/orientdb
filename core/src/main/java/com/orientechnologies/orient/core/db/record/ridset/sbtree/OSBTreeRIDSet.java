@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializable, ORecordLazyMultiValue {
-  private final long                   fileId;
+  private final long                     fileId;
   private final OBonsaiBucketPointer     rootPointer;
   private ORecordInternal<?>             owner;
   private boolean                        autoConvertToRecord = true;
@@ -256,7 +256,7 @@ public class OSBTreeRIDSet implements Set<OIdentifiable>, OStringBuilderSerializ
     doc.fromString(stream);
     final OBonsaiBucketPointer rootIndex = new OBonsaiBucketPointer((Long) doc.field("rootIndex"),
         (Integer) doc.field("rootOffset"));
-    final long fileId = doc.field("fileId");
+    final long fileId = (Long) doc.field("fileId");
 
     return new OSBTreeRIDSet(owner, fileId, rootIndex);
   }
