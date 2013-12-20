@@ -157,7 +157,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseOrderBy(w);
           else if (w.equals(KEYWORD_LIMIT))
             parseLimit(w);
-          else if (w.equals(KEYWORD_SKIP))
+          else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET))
             parseSkip(w);
           else if (w.equals(KEYWORD_FETCHPLAN))
             parseFetchplan(w);
@@ -595,7 +595,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (word.length() == 0)
         // END CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
-      else if (word.equals(KEYWORD_LIMIT) || word.equals(KEYWORD_SKIP)) {
+      else if (word.equals(KEYWORD_LIMIT) || word.equals(KEYWORD_SKIP) || word.equals(KEYWORD_OFFSET)) {
         // NEXT CLAUSE: SET AS ASC BY DEFAULT
         fieldOrdering = KEYWORD_ASC;
         parserGoBack();

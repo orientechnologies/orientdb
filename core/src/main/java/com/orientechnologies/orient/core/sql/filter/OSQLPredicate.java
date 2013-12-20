@@ -185,8 +185,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
   protected boolean checkForEnd(final String iWord) {
     if (iWord != null
-        && (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT) || iWord
-            .equals(OCommandExecutorSQLSelect.KEYWORD_SKIP))) {
+        && (iWord.equals(OCommandExecutorSQLSelect.KEYWORD_ORDER) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_LIMIT)
+            || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_SKIP) || iWord.equals(OCommandExecutorSQLSelect.KEYWORD_OFFSET))) {
       parserMoveCurrentPosition(iWord.length() * -1);
       return true;
     }

@@ -108,6 +108,7 @@ public class LocalPaginatedStorageMixCrashRestore {
     testDocumentTx.drop();
     baseDocumentTx.drop();
 
+    Assert.assertTrue(new File(buildDir, "plugins").delete());
     Assert.assertTrue(buildDir.delete());
   }
 
@@ -144,7 +145,12 @@ public class LocalPaginatedStorageMixCrashRestore {
     Thread.sleep(600000);
 
     long lastTs = System.currentTimeMillis();
-    process.destroy();
+    System.out.println("Wait for process to destroy");
+    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
+    p.waitFor();
+
+    process.waitFor();
+    System.out.println("Process was destroyed");
 
     for (Future future : futures) {
       try {

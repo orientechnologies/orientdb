@@ -102,11 +102,11 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     parserSkipWhiteSpaces();
 
     if (!parserIsEnded()) {
-      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
+      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
         final String w = parserGetLastWord();
         if (w.equals(KEYWORD_LIMIT))
           parseLimit(w);
-        else if (w.equals(KEYWORD_SKIP))
+        else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET))
           parseSkip(w);
         else if (w.equals(KEYWORD_TIMEOUT))
           parseTimeout(w);
