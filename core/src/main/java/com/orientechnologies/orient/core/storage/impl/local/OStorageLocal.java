@@ -1302,7 +1302,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           try {
             txManager.clearLogEntries(iTx);
             if (writeAheadLog != null)
-              writeAheadLog.shrinkTill(writeAheadLog.end());
+              writeAheadLog.truncate();
           } catch (Exception e) {
             // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
             // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL

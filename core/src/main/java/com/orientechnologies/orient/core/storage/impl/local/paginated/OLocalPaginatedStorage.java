@@ -81,22 +81,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageConfiguratio
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -301,14 +286,26 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
 
-    OLogSequenceNumber lastCheckPoint = writeAheadLog.getLastCheckpoint();
+    OLogSequenceNumber lastCheckPoint;
+    try {
+      lastCheckPoint = writeAheadLog.getLastCheckpoint();
+    } catch (OWALPageBrokenException e) {
+      lastCheckPoint = null;
+    }
+
     if (lastCheckPoint == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
       restoreFromBegging();
       return;
     }
 
-    OWALRecord checkPointRecord = writeAheadLog.read(lastCheckPoint);
+    OWALRecord checkPointRecord;
+    try {
+      checkPointRecord = writeAheadLog.read(lastCheckPoint);
+    } catch (OWALPageBrokenException e) {
+      checkPointRecord = null;
+    }
+
     if (checkPointRecord == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
       restoreFromBegging();
@@ -370,28 +367,36 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private boolean checkFullCheckPointIsComplete(OLogSequenceNumber lastCheckPoint) throws IOException {
-    OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
+    try {
+      OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
 
-    while (lsn != null) {
-      OWALRecord walRecord = writeAheadLog.read(lsn);
-      if (walRecord instanceof OCheckpointEndRecord)
-        return true;
+      while (lsn != null) {
+        OWALRecord walRecord = writeAheadLog.read(lsn);
+        if (walRecord instanceof OCheckpointEndRecord)
+          return true;
 
-      lsn = writeAheadLog.next(lsn);
+        lsn = writeAheadLog.next(lsn);
+      }
+    } catch (OWALPageBrokenException e) {
+      return false;
     }
 
     return false;
   }
 
   private boolean checkFuzzyCheckPointIsComplete(OLogSequenceNumber lastCheckPoint) throws IOException {
-    OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
+    try {
+      OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
 
-    while (lsn != null) {
-      OWALRecord walRecord = writeAheadLog.read(lsn);
-      if (walRecord instanceof OFuzzyCheckpointEndRecord)
-        return true;
+      while (lsn != null) {
+        OWALRecord walRecord = writeAheadLog.read(lsn);
+        if (walRecord instanceof OFuzzyCheckpointEndRecord)
+          return true;
 
-      lsn = writeAheadLog.next(lsn);
+        lsn = writeAheadLog.next(lsn);
+      }
+    } catch (OWALPageBrokenException e) {
+      return false;
     }
 
     return false;
@@ -457,37 +462,50 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
     wereDataRestoredAfterOpen = true;
 
+    long recordsProcessed = 0;
+    int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
+
     Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<OOperationUnitId, List<OWALRecord>>();
-    while (lsn != null) {
-      OWALRecord walRecord = writeAheadLog.read(lsn);
+    try {
+      while (lsn != null) {
+        OWALRecord walRecord = writeAheadLog.read(lsn);
 
-      if (walRecord instanceof OAtomicUnitStartRecord) {
-        List<OWALRecord> operationList = new ArrayList<OWALRecord>();
-        operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
-        operationList.add(walRecord);
-      } else if (walRecord instanceof OOperationUnitRecord) {
-        OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
-        OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
-        List<OWALRecord> records = operationUnits.get(unitId);
+        if (walRecord instanceof OAtomicUnitStartRecord) {
+          List<OWALRecord> operationList = new ArrayList<OWALRecord>();
+          operationUnits.put(((OAtomicUnitStartRecord) walRecord).getOperationUnitId(), operationList);
+          operationList.add(walRecord);
+        } else if (walRecord instanceof OOperationUnitRecord) {
+          OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
+          OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
+          List<OWALRecord> records = operationUnits.get(unitId);
 
-        assert records != null;
+          assert records != null;
 
-        records.add(walRecord);
+          records.add(walRecord);
 
-        if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
-          OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
+          if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
+            OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 
-          if (atomicUnitEndRecord.isRollback())
-            undoOperation(records);
-          else
-            redoOperation(records);
+            if (atomicUnitEndRecord.isRollback())
+              undoOperation(records);
+            else
+              redoOperation(records);
 
-          operationUnits.remove(unitId);
-        }
-      } else
-        OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
+            operationUnits.remove(unitId);
+          }
+        } else
+          OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
 
-      lsn = writeAheadLog.next(lsn);
+        recordsProcessed++;
+        if (reportInterval > 0 && recordsProcessed % reportInterval == 0)
+          OLogManager.instance().info(this, "%d operations were processed, current LSN is %s last LSN is %s", recordsProcessed,
+              lsn, writeAheadLog.end());
+
+        lsn = writeAheadLog.next(lsn);
+      }
+    } catch (OWALPageBrokenException e) {
+      OLogManager.instance().error(this,
+          "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
     }
 
     rollbackAllUnfinishedWALOperations(operationUnits);

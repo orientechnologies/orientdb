@@ -24,24 +24,26 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @since 5/8/13
  */
 public class OWALPage {
-  public static final int            PAGE_SIZE          = 65536;
-  public static final int            MIN_RECORD_SIZE    = OIntegerSerializer.INT_SIZE + 3;
+  public static final long           MAGIC_NUMBER        = 0xFACB03FEL;
+  public static final int            PAGE_SIZE           = 65536;
+  public static final int            MIN_RECORD_SIZE     = OIntegerSerializer.INT_SIZE + 3;
 
-  public static final int            CRC_OFFSET         = 0;
-  public static final int            FLUSH_ID_OFFSET    = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int            FLUSH_INDEX_OFFSET = FLUSH_ID_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int           FREE_SPACE_OFFSET  = FLUSH_INDEX_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int            RECORDS_OFFSET     = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int            CRC_OFFSET          = 0;
+  public static final int            MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int           FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int            RECORDS_OFFSET      = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int           MAX_ENTRY_SIZE     = PAGE_SIZE - RECORDS_OFFSET;
+  private static final int           MAX_ENTRY_SIZE      = PAGE_SIZE - RECORDS_OFFSET;
 
   private final ODirectMemoryPointer pagePointer;
 
   public OWALPage(ODirectMemoryPointer pagePointer, boolean isNew) {
     this.pagePointer = pagePointer;
 
-    if (isNew)
+    if (isNew) {
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(MAX_ENTRY_SIZE, pagePointer, FREE_SPACE_OFFSET);
+      OLongSerializer.INSTANCE.serializeInDirectMemory(MAGIC_NUMBER, pagePointer, MAGIC_NUMBER_OFFSET);
+    }
   }
 
   public ODirectMemoryPointer getPagePointer() {
@@ -110,9 +112,5 @@ public class OWALPage {
 
   public static int calculateRecordSize(int serializedSize) {
     return serializedSize - OIntegerSerializer.INT_SIZE - 2;
-  }
-
-  public void truncateTill(int pageOffset) {
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(OWALPage.PAGE_SIZE - pageOffset, pagePointer, FREE_SPACE_OFFSET);
   }
 }
