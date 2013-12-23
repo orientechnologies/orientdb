@@ -43,7 +43,7 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
     final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
     if (v != null) {
       if (ioResult instanceof Number)
-        ioResult = new Date(((Long) ioResult).longValue());
+        ioResult = new Date(((Number) ioResult).longValue());
 
       if (ioResult instanceof Date) {
         final SimpleDateFormat format = new SimpleDateFormat(v.toString());
