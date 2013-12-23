@@ -195,6 +195,15 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     save();
   }
 
+  @Override
+  public void removeClusterFromIndex(String clusterName, String indexName) {
+    final OIndex<?> index = indexes.get(indexName.toLowerCase());
+    if (index == null)
+      throw new OIndexException("Index with name " + indexName + " does not exist.");
+    index.getInternal().removeCluster(clusterName);
+    save();
+  }
+
   public boolean existsIndex(final String iName) {
     return indexes.containsKey(iName.toLowerCase());
   }

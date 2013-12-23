@@ -123,4 +123,6 @@ public interface OIndexManager {
   public boolean autoRecreateIndexesAfterCrash();
 
   public void addClusterToIndex(String clusterName, String indexName);
+
+  public void removeClusterFromIndex(String clusterName, String indexName);
 }

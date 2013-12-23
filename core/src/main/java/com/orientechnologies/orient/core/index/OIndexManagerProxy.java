@@ -140,4 +140,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public void addClusterToIndex(String clusterName, String indexName) {
     delegate.addClusterToIndex(clusterName, indexName);
   }
+
+  @Override
+  public void removeClusterFromIndex(String clusterName, String indexName) {
+    delegate.removeClusterFromIndex(clusterName, indexName);
+  }
 }
