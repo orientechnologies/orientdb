@@ -85,9 +85,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    * @param iType
    * @param clusterIdsToIndex
    * @param iProgressListener
+   * @param metadata
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, OProgressListener iProgressListener) {
+      final int[] clusterIdsToIndex, OProgressListener iProgressListener, ODocument metadata) {
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
@@ -141,6 +142,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, iProgressListener);
       addIndexInternal(index);
+
+      if (metadata != null) {
+        final ODocument config = index.getConfiguration();
+        config.field("metadata", metadata, OType.EMBEDDED);
+      }
 
       setDirty();
       save();

@@ -76,7 +76,7 @@ public class IndexManagerTest {
 
     try {
       indexManager.createIndex("simple:key", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.INTEGER),
-          null, null);
+          null, null, null);
       fail();
     } catch (Exception e) {
       if (e instanceof OResponseProcessingException)
@@ -94,7 +94,7 @@ public class IndexManagerTest {
     final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
     final OIndex result = indexManager.createIndex("simplekey", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(
-        OType.INTEGER), null, null);
+        OType.INTEGER), null, null, null);
 
     assertEquals(result.getName(), "simplekey");
 
@@ -107,7 +107,7 @@ public class IndexManagerTest {
   public void testCreateNullKeyDefinitionIndexTest() {
     final OIndexManagerProxy indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    final OIndex result = indexManager.createIndex("nullkey", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, null);
+    final OIndex result = indexManager.createIndex("nullkey", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, null, null);
 
     assertEquals(result.getName(), "nullkey");
     indexManager.reload();
@@ -122,7 +122,7 @@ public class IndexManagerTest {
 
     final OIndex result = indexManager.createIndex("propertyone", OClass.INDEX_TYPE.UNIQUE.toString(),
         new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
-        new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, null);
+        new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, null, null);
 
     assertEquals(result.getName(), "propertyone");
 
@@ -142,7 +142,7 @@ public class IndexManagerTest {
         new OCompositeIndexDefinition(CLASS_NAME, Arrays.asList(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER),
             new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING)
 
-        )), new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, null);
+        )), new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, null, null);
 
     assertEquals(result.getName(), "compositeone");
 
@@ -180,7 +180,7 @@ public class IndexManagerTest {
             new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING), new OPropertyIndexDefinition(CLASS_NAME, "fThree",
                 OType.BOOLEAN)
 
-        )), new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, progressListener);
+        )), new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, progressListener, null);
 
     assertEquals(result.getName(), "compositetwo");
     assertEquals(atomicInteger.get(), 2);
@@ -559,7 +559,7 @@ public class IndexManagerTest {
     final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
     indexManager.createIndex("anotherproperty", OClass.INDEX_TYPE.UNIQUE.toString(), new OPropertyIndexDefinition(CLASS_NAME,
-        "fOne", OType.INTEGER), new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, null);
+        "fOne", OType.INTEGER), new int[] { databaseDocument.getClusterIdByName(CLASS_NAME) }, null, null);
 
     assertNotNull(indexManager.getIndex("anotherproperty"));
     assertNotNull(indexManager.getClassIndex(CLASS_NAME, "anotherproperty"));
@@ -574,7 +574,7 @@ public class IndexManagerTest {
   public void testDropSimpleKey() {
     final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
     indexManager.createIndex("simplekeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), new OSimpleKeyIndexDefinition(OType.INTEGER),
-        null, null);
+        null, null, null);
 
     assertNotNull(indexManager.getIndex("simplekeytwo"));
 
@@ -587,7 +587,7 @@ public class IndexManagerTest {
   public void testDropNullKeyDefinition() {
     final OIndexManager indexManager = databaseDocument.getMetadata().getIndexManager();
 
-    indexManager.createIndex("nullkeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, null);
+    indexManager.createIndex("nullkeytwo", OClass.INDEX_TYPE.UNIQUE.toString(), null, null, null, null);
 
     assertNotNull(indexManager.getIndex("nullkeytwo"));
 
@@ -605,7 +605,7 @@ public class IndexManagerTest {
 
     indexManager.createIndex("twoclassproperty", OClass.INDEX_TYPE.UNIQUE.toString(), new OPropertyIndexDefinition(
         "indexManagerTestClassTwo", "fOne", OType.INTEGER), new int[] { databaseDocument
-        .getClusterIdByName("indexManagerTestClassTwo") }, null);
+        .getClusterIdByName("indexManagerTestClassTwo") }, null, null);
 
     assertFalse(indexManager.getClassIndexes("indexManagerTestClassTwo").isEmpty());
 

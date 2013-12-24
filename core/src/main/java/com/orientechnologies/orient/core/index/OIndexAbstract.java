@@ -957,6 +957,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
+  @Override
+  public ODocument getMetadata() {
+    return getConfiguration().field("metadata", OType.EMBEDDED);
+  }
+
   public boolean isAutomatic() {
     acquireSharedLock();
     try {

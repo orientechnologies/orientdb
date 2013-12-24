@@ -33,7 +33,7 @@ class ODirectMemoryFactory {
         localDirectMemory = null;
       else
         localDirectMemory = (ODirectMemory) jnaClass.newInstance();
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // ignore
     }
 
@@ -48,7 +48,7 @@ class ODirectMemoryFactory {
               "Sun Unsafe direct  memory implementation is going to be used, "
                   + "this implementation is not stable so please use JNA version instead.");
         }
-      } catch (Exception e) {
+      } catch (Throwable e) {
         // ignore
       }
     }
