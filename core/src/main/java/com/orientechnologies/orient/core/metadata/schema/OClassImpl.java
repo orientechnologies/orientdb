@@ -834,7 +834,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
-    	  all = false;
+        all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
     }
@@ -1137,15 +1137,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
-    return createIndex(iName, iType, null, fields);
+    return createIndex(iName, iType, null, null, fields);
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
       final String... fields) {
-    return createIndex(iName, iType.name(), iProgressListener, fields);
+    return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
-  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, final String... fields) {
+  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, ODocument metadata,
+      final String... fields) {
     if (iType == null)
       throw new IllegalArgumentException("Index type is null");
 
@@ -1189,7 +1190,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     return getDatabase().getMetadata().getIndexManager()
-        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener);
+        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener, metadata);
   }
 
   private List<OType> extractFieldTypes(String[] fieldNames) {

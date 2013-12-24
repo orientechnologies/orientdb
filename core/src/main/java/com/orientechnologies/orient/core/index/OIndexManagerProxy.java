@@ -64,8 +64,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener);
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
+    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata);
   }
 
   public OIndex<?> getIndexInternal(final String iName) {

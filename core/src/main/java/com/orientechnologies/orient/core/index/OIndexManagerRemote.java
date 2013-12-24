@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class OIndexManagerRemote extends OIndexManagerAbstract {
@@ -43,30 +44,30 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener) {
-    final String createIndexDDL;
-    if (iIndexDefinition != null) {
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
+
+    String createIndexDDL;
+    if (iIndexDefinition != null)
       createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType);
-    } else {
+    else
       createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
-    }
+
+    if (metadata != null)
+      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
 
     acquireExclusiveLock();
     try {
-      if (iProgressListener != null) {
+      if (iProgressListener != null)
         iProgressListener.onBegin(this, 0);
-      }
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
-      if (iProgressListener != null) {
+      if (iProgressListener != null)
         iProgressListener.onCompletition(this, true);
-      }
 
       reload();
-
       return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
     } finally {
       releaseExclusiveLock();

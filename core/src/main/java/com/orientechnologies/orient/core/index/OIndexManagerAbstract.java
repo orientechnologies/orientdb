@@ -156,7 +156,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
       getDatabase().getStorage().getConfiguration().update();
 
-      createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null, null);
+      createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
+          null, null);
     } finally {
       releaseExclusiveLock();
     }
@@ -253,7 +254,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   private OIndex<?> createDictionary() {
     return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
-        null);
+        null, null);
   }
 
   public ODocument getConfiguration() {

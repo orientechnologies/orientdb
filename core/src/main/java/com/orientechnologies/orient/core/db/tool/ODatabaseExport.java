@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected OJSONWriter   writer;
   protected long          recordExported;
-  public static final int VERSION = 6;
+  public static final int VERSION = 7;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -338,6 +338,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
         writer.endObject(4, true);
       }
+
+      ODocument metadata = index.getMetadata();
+      if (metadata != null)
+        writer.writeAttribute(4, true, "metadata", metadata);
 
       writer.endObject(2, true);
       listener.onMessage("OK");

@@ -52,7 +52,7 @@ public class OHashIndexTest {
         .getMetadata()
         .getIndexManager()
         .createIndex("manualHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(OType.STRING), null, null);
+            new OSimpleKeyIndexDefinition(OType.STRING), null, null, null);
 
     Assert.assertNotNull(index);
   }

@@ -46,7 +46,7 @@ public interface OIndexManager {
   public OIndex<?> getIndex(final ORID iRID);
 
   public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener);
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata);
 
   public OIndexManager dropIndex(final String iIndexName);
 
