@@ -34,7 +34,9 @@
 
     <properties>
         <osgi.export>com.orientechnologies.common.*</osgi.export>
-        <osgi.import>javax.imageio.spi.*,sun.misc.*;resolution:=optional</osgi.import>
+        <osgi.import>
+            javax.imageio.spi.*,sun.misc.*;resolution:=optional,com.orientechnologies.nio;resolution:=optional
+        </osgi.import>
     </properties>
 
     <dependencies>
