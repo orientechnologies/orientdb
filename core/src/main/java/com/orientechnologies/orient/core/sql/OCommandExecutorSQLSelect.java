@@ -318,25 +318,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
-    if (iArgs != null)
-      // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
-      for (Entry<Object, Object> arg : iArgs.entrySet())
-        context.setVariable(arg.getKey().toString(), arg.getValue());
+    try {
+      if (iArgs != null)
+        // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
+        for (Entry<Object, Object> arg : iArgs.entrySet())
+          context.setVariable(arg.getKey().toString(), arg.getValue());
 
-    if (timeoutMs > 0)
-      getContext().beginExecution(timeoutMs, timeoutStrategy);
+      if (timeoutMs > 0)
+        getContext().beginExecution(timeoutMs, timeoutStrategy);
 
-    if (!optimizeExecution()) {
-      fetchLimit = getQueryFetchLimit();
+      if (!optimizeExecution()) {
+        fetchLimit = getQueryFetchLimit();
 
-      executeSearch(iArgs);
-      applyExpand();
-      handleNoTarget();
-      handleGroupBy();
-      applyOrderBy();
-      applyLimitAndSkip();
+        executeSearch(iArgs);
+        applyExpand();
+        handleNoTarget();
+        handleGroupBy();
+        applyOrderBy();
+        applyLimitAndSkip();
+      }
+      return getResult();
+    } finally {
+      if (request.getResultListener() != null)
+        request.getResultListener().end();
     }
-    return getResult();
   }
 
   protected void executeSearch(final Map<Object, Object> iArgs) {
@@ -362,9 +367,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     } finally {
       context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
     }
-
-    if (request.getResultListener() != null)
-      request.getResultListener().end();
   }
 
   @Override
@@ -419,7 +421,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     resultCount++;
 
-    addResult(lastRecord);
+    boolean result = addResult(lastRecord);
+    if (!result)
+      return false;
 
     if (orderedFields == null && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit)
       // BREAK THE EXECUTION
@@ -428,16 +432,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  protected void addResult(OIdentifiable iRecord) {
+  protected boolean addResult(OIdentifiable iRecord) {
     if (iRecord == null)
-      return;
+      return true;
 
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
         iRecord = ORuntimeResult.getProjectionResult(resultCount, projections, context, iRecord);
         if (iRecord == null)
-          return;
+          return true;
       } else {
         // AGGREGATION/GROUP BY
         final ODocument doc = (ODocument) iRecord.getRecord();
@@ -466,14 +470,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         getProjectionGroup(fieldValue).applyRecord(iRecord);
-        return;
+        return true;
       }
     }
 
+    boolean result = true;
     if (orderedFields == null && expandTarget == null) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
-        request.getResultListener().result(iRecord);
+        result = request.getResultListener().result(iRecord);
 
     } else {
 
@@ -482,6 +487,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         tempResult = new ArrayList<OIdentifiable>();
       ((Collection<OIdentifiable>) tempResult).add(iRecord);
     }
+
+    return result;
   }
 
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
