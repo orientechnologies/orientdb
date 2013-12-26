@@ -243,76 +243,76 @@ public class OHttpResponse {
 		if (iRecords == null)
 			return;
 
-		if (accept.contains("text/csv")) {
+    if (accept != null && accept.contains("text/csv")) {
 			sendStream(OHttpUtils.STATUS_OK_CODE, "OK",
-					OHttpUtils.CONTENT_JSON, "data.csv",
-					new OCallable<Void, OChunkedResponse>() {
+                    OHttpUtils.CONTENT_JSON, "data.csv",
+                    new OCallable<Void, OChunkedResponse>() {
 
-						@Override
-						public Void call(final OChunkedResponse iArgument) {
-							final LinkedHashSet<String> colNames = new LinkedHashSet<String>();
-							final List<ODocument> records = new ArrayList<ODocument>();
+                        @Override
+                        public Void call(final OChunkedResponse iArgument) {
+                            final LinkedHashSet<String> colNames = new LinkedHashSet<String>();
+                            final List<ODocument> records = new ArrayList<ODocument>();
 
-							// BROWSE ALL THE RECORD TO HAVE THE COMPLETE COLUMN
-							// NAMES LIST
-							while (iRecords.hasNext()) {
-								final OIdentifiable r = iRecords.next();
-								if (r != null) {
-									final ORecord<?> rec = r.getRecord();
-									if (rec != null) {
-										if (rec instanceof ODocument) {
-											final ODocument doc = (ODocument) rec;
-											records.add(doc);
+                            // BROWSE ALL THE RECORD TO HAVE THE COMPLETE COLUMN
+                            // NAMES LIST
+                            while (iRecords.hasNext()) {
+                                final OIdentifiable r = iRecords.next();
+                                if (r != null) {
+                                    final ORecord<?> rec = r.getRecord();
+                                    if (rec != null) {
+                                        if (rec instanceof ODocument) {
+                                            final ODocument doc = (ODocument) rec;
+                                            records.add(doc);
 
-											for (String fieldName : doc
-													.fieldNames())
-												colNames.add(fieldName);
-										}
-									}
-								}
-							}
+                                            for (String fieldName : doc
+                                                    .fieldNames())
+                                                colNames.add(fieldName);
+                                        }
+                                    }
+                                }
+                            }
 
-							final List<String> orderedColumns = new ArrayList<String>(
-									colNames);
+                            final List<String> orderedColumns = new ArrayList<String>(
+                                    colNames);
 
-							try {
-								// WRITE THE HEADER
-								for (int col = 0; col < orderedColumns.size(); ++col) {
-									if (col > 0)
-										iArgument.write(',');
-									iArgument.write(orderedColumns.get(col)
-											.getBytes());
-								}
-								iArgument.write(OHttpUtils.EOL);
+                            try {
+                                // WRITE THE HEADER
+                                for (int col = 0; col < orderedColumns.size(); ++col) {
+                                    if (col > 0)
+                                        iArgument.write(',');
+                                    iArgument.write(orderedColumns.get(col)
+                                            .getBytes());
+                                }
+                                iArgument.write(OHttpUtils.EOL);
 
-								// WRITE EACH RECORD
-								for (ODocument doc : records) {
-									for (int col = 0; col < orderedColumns
-											.size(); ++col) {
-										if (col > 0)
-											iArgument.write(',');
+                                // WRITE EACH RECORD
+                                for (ODocument doc : records) {
+                                    for (int col = 0; col < orderedColumns
+                                            .size(); ++col) {
+                                        if (col > 0)
+                                            iArgument.write(',');
 
-										Object value = doc.field(orderedColumns
-												.get(col));
-										if (value != null) {
-											if (!(value instanceof Number))
-												value = "\"" + value + "\"";
-											iArgument.write(value.toString()
-													.getBytes());
-										}
-									}
-									iArgument.write(OHttpUtils.EOL);
-								}
+                                        Object value = doc.field(orderedColumns
+                                                .get(col));
+                                        if (value != null) {
+                                            if (!(value instanceof Number))
+                                                value = "\"" + value + "\"";
+                                            iArgument.write(value.toString()
+                                                    .getBytes());
+                                        }
+                                    }
+                                    iArgument.write(OHttpUtils.EOL);
+                                }
 
-								iArgument.flush();
+                                iArgument.flush();
 
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-							return null;
-						}
-					});
+                            return null;
+                        }
+                    });
 		} else if (accept == null || (accept.contains(OHttpUtils.CONTENT_JSON))) {
 			if (iFormat == null)
 				iFormat = JSON_FORMAT;
