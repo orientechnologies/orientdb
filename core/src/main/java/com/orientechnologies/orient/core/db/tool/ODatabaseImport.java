@@ -789,7 +789,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         .getMetadata()
         .getIndexManager()
         .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(OType.LINK), null, null);
+            new OSimpleKeyIndexDefinition(OType.LINK), null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -944,6 +944,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       String indexType = null;
       Set<String> clustersToIndex = new HashSet<String>();
       OIndexDefinition indexDefinition = null;
+      ODocument metadata = null;
 
       while (jsonReader.lastChar() != '}') {
         final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
@@ -953,8 +954,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           indexType = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
         else if (fieldName.equals("clustersToIndex"))
           clustersToIndex = importClustersToIndex();
-        else if (fieldName.equals("definition"))
+        else if (fieldName.equals("definition")) {
           indexDefinition = importIndexDefinition();
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (fieldName.equals("metadata")) {
+          String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          metadata = new ODocument().fromJSON(jsonMetadata);
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        }
       }
 
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
@@ -974,7 +981,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           i++;
         }
 
-        indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null);
+        indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata);
         n++;
         listener.onMessage("OK");
 
@@ -1027,7 +1034,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       throw new IOException("Error during deserialization of index definition", e);
     }
 
-    jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+    jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
 
     return indexDefinition;
   }

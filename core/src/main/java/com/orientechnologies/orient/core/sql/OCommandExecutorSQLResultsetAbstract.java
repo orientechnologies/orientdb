@@ -166,7 +166,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
             d = new ODocument().field("value", d);
 
-          request.getResultListener().result(d);
+          if (!request.getResultListener().result(d))
+            break;
         }
     }
 
@@ -184,8 +185,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       if (recordCopy != null)
         // CALL THE LISTENER NOW
-        if (request.getResultListener() != null)
-          request.getResultListener().result(recordCopy);
+        if (request.getResultListener() != null) {
+          final boolean result = request.getResultListener().result(recordCopy);
+          if (!result)
+            return false;
+        }
 
       if (limit > -1 && resultCount >= limit)
         // BREAK THE EXECUTION

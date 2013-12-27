@@ -318,6 +318,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return configuration;
   }
 
+  @Override
+  public ODocument getMetadata() {
+    return configuration.field("metadata", OType.EMBEDDED);
+  }
+
   public ORID getIdentity() {
     return rid;
   }
