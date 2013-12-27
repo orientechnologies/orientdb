@@ -664,8 +664,10 @@ public class ODocumentHelper {
           result = Boolean.TRUE;
       }
     } else if (function.startsWith("ASDATE("))
-      if (currentValue instanceof Long)
-        result = new Date((Long) currentValue);
+      if (currentValue instanceof Date)
+        result = currentValue;
+      else if (currentValue instanceof Number)
+        result = new Date(((Number) currentValue).longValue());
       else
         try {
           result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
@@ -673,8 +675,10 @@ public class ODocumentHelper {
         } catch (ParseException e) {
         }
     else if (function.startsWith("ASDATETIME("))
-      if (currentValue instanceof Long)
-        result = new Date((Long) currentValue);
+      if (currentValue instanceof Date)
+        result = currentValue;
+      else if (currentValue instanceof Number)
+        result = new Date(((Number) currentValue).longValue());
       else
         try {
           result = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()

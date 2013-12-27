@@ -249,8 +249,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.writeBytes(stream, realLength);
     } catch (Exception e) {
       channel.writeBytes(null);
-      OLogManager.instance().error(this, "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")",
-          OSerializationException.class);
+      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      OLogManager.instance().error(this, message, e);
+
+      throw new OSerializationException(message, e);
     }
   }
 
