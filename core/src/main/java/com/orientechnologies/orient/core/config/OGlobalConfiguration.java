@@ -49,6 +49,13 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
+  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
+
+  MEMORY_AUTOFREE_HEAP_THRESHOLD(
+      "memory.autoFreeHeapThreshold",
+      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
+      String.class, "70%"),
+
   DIRECT_MEMORY_UNSAFE_MODE(
       "memory.directMemory.unsafeMode",
       "Indicates whether to do perform range check before each direct memory update, it is false by default, "
@@ -81,9 +88,9 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 64),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 256),
 
-  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 150 * 1024),
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 4 * 1024),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
@@ -92,6 +99,13 @@ public enum OGlobalConfiguration {
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
       Integer.class, 2592000),
+
+  WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE(
+      "storage.wal.reportAfterOperationsDuringRestore",
+      "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
+      Integer.class, 10000),
+
+  WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
       "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),
@@ -138,11 +152,11 @@ public enum OGlobalConfiguration {
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
+  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, false),
+  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 0),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),

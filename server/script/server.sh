@@ -28,7 +28,7 @@ echo "       \`\`        \`.                                                    
 echo "                 \`\`                                         www.orientdb.org "
 echo "                 \`                                    "
 
-cd "$(dirname "$0")"
+cd `dirname $0`
 
 # resolve links - $0 may be a softlink
 PRG="$0"
@@ -66,6 +66,6 @@ export JAVA
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 WWW_PATH=$ORIENTDB_HOME/www
 ORIENTDB_SETTINGS="-Dprofiler.enabled=true -Dcache.level1.enabled=false -Dcache.level2.enabled=false"
-JAVA_OPTS_SCRIPT="-XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8"
+JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 
 $JAVA -server $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain

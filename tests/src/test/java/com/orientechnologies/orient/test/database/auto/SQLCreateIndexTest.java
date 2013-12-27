@@ -2,6 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Arrays;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -40,6 +41,7 @@ public class SQLCreateIndexTest {
     oClass.createProperty("prop5", OType.EMBEDDEDLIST, OType.INTEGER);
     oClass.createProperty("prop6", OType.EMBEDDEDLIST);
     oClass.createProperty("prop7", OType.EMBEDDEDMAP);
+    oClass.createProperty("prop8", OType.INTEGER);
 
     schema.save();
     database.close();
@@ -180,9 +182,9 @@ public class SQLCreateIndexTest {
           .assertTrue(e
               .getMessage()
               .contains(
-											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
-															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
-															+ "--------------------------------------------------------------------------------------------^"));
+                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by ttt'\n"
+                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by ttt) UNIQUE\n"
+                      + "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -206,17 +208,17 @@ public class SQLCreateIndexTest {
           .assertTrue(exception
               .getMessage()
               .contains(
-											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
-															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
-															+ "--------------------------------------------------------------------------------------------^"));
+                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
+                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
+                      + "--------------------------------------------------------------------------------------------^"));
     } catch (OCommandSQLParsingException e) {
       Assert
           .assertTrue(e
               .getMessage()
               .contains(
-											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
-															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
-															+ "--------------------------------------------------------------------------------------------^"));
+                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 b value'\n"
+                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 b value) UNIQUE\n"
+                      + "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -248,9 +250,9 @@ public class SQLCreateIndexTest {
           .assertTrue(e
               .getMessage()
               .contains(
-											"Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
-															+ "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
-															+ "--------------------------------------------------------------------------------------------^"));
+                  "Error on parsing command at position #84: Illegal field name format, should be '<property> [by key|value]' but was 'prop3 by value t'\n"
+                      + "Command: CREATE INDEX sqlCreateIndexEmbeddedMapWrongSpecifierIndex ON sqlCreateIndexTestClass (prop3 by value t) UNIQUE\n"
+                      + "--------------------------------------------------------------------------------------------^"));
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
         .getClassIndex("sqlCreateIndexEmbeddedMapWrongSpecifierIndex");
@@ -442,5 +444,107 @@ public class SQLCreateIndexTest {
         .getClassIndex("sqlCreateIndexCompositeIndex3");
 
     Assert.assertNull(index, "Index created while wrong query was executed");
+  }
+
+  public void testCompositeIndexWithMetadata() {
+    database.command(
+        new OCommandSQL("CREATE INDEX sqlCreateIndexCompositeIndexWithMetadata ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE"
+            + " metadata {v1:23, v2:\"val2\"}")).execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+        .getClassIndex("sqlCreateIndexCompositeIndexWithMetadata");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop1", "prop2"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+
+    ODocument metadata = index.getMetadata();
+
+    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.field("v2"), "val2");
+  }
+
+  public void testOldIndexWithMetadata() {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexTestClass.prop8 NOTUNIQUE  metadata {v1:23, v2:\"val2\"}"))
+        .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+        .getClassIndex("sqlCreateIndexTestClass.prop8");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OPropertyIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop8"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER });
+    Assert.assertEquals(index.getType(), "NOTUNIQUE");
+
+    ODocument metadata = index.getMetadata();
+
+    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.field("v2"), "val2");
+  }
+
+  public void testCreateCompositeIndexWithTypesAndMetadata() throws Exception {
+    final String query = new StringBuilder(
+        "CREATE INDEX sqlCreateIndexCompositeIndex2WithConfig ON sqlCreateIndexTestClass (prop1, prop2) UNIQUE ")
+        .append(EXPECTED_PROP1_TYPE).append(", ").append(EXPECTED_PROP2_TYPE).append(" metadata {v1:23, v2:\"val2\"}").toString();
+
+    database.command(new OCommandSQL(query)).execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+        .getClassIndex("sqlCreateIndexCompositeIndex2WithConfig");
+
+    Assert.assertNotNull(index);
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    Assert.assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop1", "prop2"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { EXPECTED_PROP1_TYPE, EXPECTED_PROP2_TYPE });
+    Assert.assertEquals(index.getType(), "UNIQUE");
+
+    ODocument metadata = index.getMetadata();
+    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.field("v2"), "val2");
+  }
+
+  public void testCreateManualIndexWithMetadata() {
+    database.command(
+        new OCommandSQL("create index sqlCreateIndexManualIndexWithMetadata unique String metadata {v1:23, v2:\"val2\"}"))
+        .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("sqlCreateIndexManualIndexWithMetadata");
+    Assert.assertNotNull(index);
+
+    ODocument metadata = index.getMetadata();
+
+    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.field("v2"), "val2");
+  }
+
+  public void testCreateManualCompositeIndexWithMetadata() {
+    database.command(
+        new OCommandSQL(
+            "create index sqlCreateIndexManualCompositeIndexWithMetadata unique String, Integer metadata {v1:23, v2:\"val2\"}"))
+        .execute();
+    database.getMetadata().getIndexManager().reload();
+
+    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("sqlCreateIndexManualCompositeIndexWithMetadata");
+    Assert.assertNotNull(index);
+
+    ODocument metadata = index.getMetadata();
+    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.field("v2"), "val2");
   }
 }

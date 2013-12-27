@@ -316,7 +316,9 @@ public class ODocumentHelper {
             String from = indexRanges.get(0);
             String to = indexRanges.get(1);
 
-            final String[] fieldNames = ((ODocument) value).fieldNames();
+            final ODocument doc = ((ODocument) ((OIdentifiable) value).getRecord());
+
+            final String[] fieldNames = doc.fieldNames();
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
             final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1)
                 : fieldNames.length - 1;
@@ -324,7 +326,7 @@ public class ODocumentHelper {
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
             for (int i = rangeFrom; i <= rangeTo; ++i)
-              values[i - rangeFrom] = ((ODocument) value).field(fieldNames[i]);
+              values[i - rangeFrom] = doc.field(fieldNames[i]);
 
             value = values;
 
@@ -361,7 +363,7 @@ public class ODocumentHelper {
             }
             value = values;
           }
-        } else if (value instanceof Collection<?> || value.getClass().isArray()) {
+        } else if (OMultiValue.isMultiValue(value)) {
           // MULTI VALUE
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;

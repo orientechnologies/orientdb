@@ -104,34 +104,44 @@ public class TransactionAtomicTest {
 
     db.registerListener(new ODatabaseListener() {
 
+      @Override
       public void onAfterTxCommit(ODatabase iDatabase) {
       }
 
+      @Override
       public void onAfterTxRollback(ODatabase iDatabase) {
       }
 
+      @Override
       public void onBeforeTxBegin(ODatabase iDatabase) {
       }
 
+      @Override
       public void onBeforeTxCommit(ODatabase iDatabase) {
         throw new RuntimeException("Rollback test");
       }
 
+      @Override
       public void onBeforeTxRollback(ODatabase iDatabase) {
       }
 
+      @Override
       public void onClose(ODatabase iDatabase) {
       }
 
+      @Override
       public void onCreate(ODatabase iDatabase) {
       }
 
+      @Override
       public void onDelete(ODatabase iDatabase) {
       }
 
+      @Override
       public void onOpen(ODatabase iDatabase) {
       }
 
+      @Override
       public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
         return true;
       }

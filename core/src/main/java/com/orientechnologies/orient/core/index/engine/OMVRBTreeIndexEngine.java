@@ -64,7 +64,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     acquireExclusiveLock();
     try {
       watchDog = new OMemoryWatchDog.Listener() {
-        public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
+        public void lowMemory(final long iFreeMemory, final long iFreeMemoryPercentage) {
           map.setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
         }
       };

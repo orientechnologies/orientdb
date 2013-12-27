@@ -176,6 +176,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getConfiguration();
   }
 
+  @Override
+  public ODocument getMetadata() {
+    return delegate.getMetadata();
+  }
+
   public ORID getIdentity() {
     return delegate.getIdentity();
   }

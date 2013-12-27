@@ -16,6 +16,14 @@
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.collection.OAlwaysGreaterKey;
 import com.orientechnologies.common.collection.OAlwaysLessKey;
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -30,19 +38,11 @@ import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -220,18 +220,22 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       int insertionIndex;
       int sizeDiff;
       if (bucketSearchResult.itemIndex >= 0) {
-        boolean canBeUpdated = keyBucket.updateValue(bucketSearchResult.itemIndex, treeValue);
+        int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, treeValue);
 
-        if (canBeUpdated) {
+        if (updateResult == 1) {
           logPageChanges(keyBucket, fileId, keyBucketCacheEntry.getPageIndex(), false);
           keyBucketCacheEntry.markDirty();
+        }
 
+        if (updateResult >= 0) {
           keyBucketPointer.releaseExclusiveLock();
           diskCache.release(keyBucketCacheEntry);
 
           endAtomicOperation(false);
           return;
         } else {
+          assert updateResult == -1;
+
           long removedLinkedValue = keyBucket.remove(bucketSearchResult.itemIndex);
           if (removedLinkedValue >= 0)
             removeLinkedValue(removedLinkedValue);
@@ -268,7 +272,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       keyBucketPointer.releaseExclusiveLock();
       diskCache.release(keyBucketCacheEntry);
 
-      setSize(size() + sizeDiff);
+      if (sizeDiff != 0)
+        setSize(size() + sizeDiff);
 
       endAtomicOperation(false);
     } catch (IOException e) {

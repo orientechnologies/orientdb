@@ -22,6 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -380,6 +381,34 @@ public class SQLSelectProjectionsTest {
       Assert.assertFalse(result.isEmpty());
       Assert.assertEquals(result.get(0).field("ifnull"), "b");
 
+    } finally {
+      database.close();
+    }
+  }
+
+  public void filteringArrayInChain() {
+    database.open("admin", "admin");
+
+    try {
+      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0-1] as set from OUser")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(OMultiValue.isMultiValue(d.field("set")));
+        Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0,1] as set from OUser")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(OMultiValue.isMultiValue(d.field("set")));
+        Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0] as unique from OUser")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertFalse(OMultiValue.isMultiValue(d.field("unique")));
+      }
     } finally {
       database.close();
     }

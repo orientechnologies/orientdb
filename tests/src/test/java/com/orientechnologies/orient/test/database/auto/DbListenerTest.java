@@ -57,42 +57,52 @@ public class DbListenerTest {
   protected int                 onAvailableDatabaseChange    = 0;
 
   public class DbListener implements ODatabaseListener {
+    @Override
     public void onAfterTxCommit(ODatabase iDatabase) {
       onAfterTxCommit++;
     }
 
+    @Override
     public void onAfterTxRollback(ODatabase iDatabase) {
       onAfterTxRollback++;
     }
 
+    @Override
     public void onBeforeTxBegin(ODatabase iDatabase) {
       onBeforeTxBegin++;
     }
 
+    @Override
     public void onBeforeTxCommit(ODatabase iDatabase) {
       onBeforeTxCommit++;
     }
 
+    @Override
     public void onBeforeTxRollback(ODatabase iDatabase) {
       onBeforeTxRollback++;
     }
 
+    @Override
     public void onClose(ODatabase iDatabase) {
       onClose++;
     }
 
+    @Override
     public void onCreate(ODatabase iDatabase) {
       onCreate++;
     }
 
+    @Override
     public void onDelete(ODatabase iDatabase) {
       onDelete++;
     }
 
+    @Override
     public void onOpen(ODatabase iDatabase) {
       onOpen++;
     }
 
+    @Override
     public boolean onCorruptionRepairDatabase(ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
       onCorruption++;
       return true;
@@ -186,6 +196,7 @@ public class DbListenerTest {
 
     ((OStorageRemoteThread) database.getStorage()).setRemoteServerEventListener(new ORemoteServerEventListener() {
 
+      @Override
       public void onRequest(byte iRequestCode, Object iObject) {
         switch (iRequestCode) {
         case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:

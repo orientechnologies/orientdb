@@ -393,6 +393,8 @@ public interface OIndex<T> {
    */
   public ORID getIdentity();
 
+  ODocument getMetadata();
+
   public boolean supportsOrderedIterations();
 
   public boolean isRebuiding();

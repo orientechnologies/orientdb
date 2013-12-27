@@ -834,6 +834,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
+        all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
     }
@@ -894,14 +895,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (iClassName == null)
       return false;
 
-    if (iClassName.equals(name) || iClassName.equals(shortName))
-      // SPEEDUP CHECK IF CLASS NAME ARE THE SAME
-      return true;
+    OClass cls = this;
+    do {
+      if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName()))
+        return true;
 
-    if (superClass == null)
-      return false;
+      cls = cls.getSuperClass();
+    } while (cls != null);
 
-    return isSubClassOf(owner.getClass(iClassName));
+    return false;
   }
 
   /**
@@ -1136,15 +1138,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
-    return createIndex(iName, iType, null, fields);
+    return createIndex(iName, iType, null, null, fields);
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
       final String... fields) {
-    return createIndex(iName, iType.name(), iProgressListener, fields);
+    return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
-  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, final String... fields) {
+  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, ODocument metadata,
+      final String... fields) {
     if (iType == null)
       throw new IllegalArgumentException("Index type is null");
 
@@ -1179,8 +1182,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
         extractFieldTypes(fields));
 
+    if (fields.length == 1) {
+      // TRY TO DETERMINE THE COLLATE IF ANY
+      final OProperty p = getProperty(fields[0]);
+      if (p != null) {
+        indexDefinition.setCollate(p.getCollate());
+      }
+    }
+
     return getDatabase().getMetadata().getIndexManager()
-        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener);
+        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener, metadata);
   }
 
   private List<OType> extractFieldTypes(String[] fieldNames) {

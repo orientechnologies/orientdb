@@ -34,41 +34,41 @@
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
-           <echo>   ___   ___  ____    _  </echo>  
-           <echo> .'   `.|_  ||_  _|  | | </echo>
-           <echo>/  .-.  \ | |_/ /    | | </echo>
-           <echo>| |   | | |  __'.    |_| </echo>
-           <echo>\  `-'  /_| |  \ \_   _  </echo>
-           <echo> `.___.'|____||____| (_) </echo>
-    </sequential>
+            <echo>___ ___ ____ _</echo>
+            <echo>.' `.|_ ||_ _| | |</echo>
+            <echo>/ .-. \ | |_/ / | |</echo>
+            <echo>| | | | | __'. |_|</echo>
+            <echo>\ `-' /_| | \ \_ _</echo>
+            <echo>`.___.'|____||____| (_)</echo>
+        </sequential>
 
     </macrodef>
 
     <target name="init">
-     <echo>           .                                          </echo>
-     <echo>          .`        `                                 </echo>
-     <echo>          ,      `:.                                  </echo>
-     <echo>         `,`    ,:`                                   </echo>
-     <echo>         .,.   :,,                                    </echo>
-     <echo>         .,,  ,,,                                     </echo>
-     <echo>    .    .,.:::::  ````                                 :::::::::     :::::::::</echo>
-     <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::</echo>
-     <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::</echo>
-     <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::</echo>
-     <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::</echo>
-     <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::</echo>
-     <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::</echo>
-     <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::</echo>
-     <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::</echo>
-     <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::</echo>
-     <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::</echo>
-     <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::</echo>
-     <echo>           ,,:` `,,.                                  </echo>
-     <echo>          ,,,    .,`                                  </echo>
-     <echo>         ,,.     `,                                          GRAPH DATABASE</echo>
-     <echo>       ``        `.                                        COMMUNITY  EDITION</echo>
-     <echo>                 ``                                         www.orientdb.org</echo>
-     <echo>                 `                                    </echo>
+        <echo>.</echo>
+        <echo>.` `</echo>
+        <echo>, `:.</echo>
+        <echo>`,` ,:`</echo>
+        <echo>.,. :,,</echo>
+        <echo>.,, ,,,</echo>
+        <echo>. .,.::::: ```` ::::::::: :::::::::</echo>
+        <echo>,` .::,,,,::.,,,,,,`;; .: :::::::::: ::: :::</echo>
+        <echo>`,. ::,,,,,,,:.,,.` ` .: ::: ::: ::: :::</echo>
+        <echo>,,:,:,,,,,,,,::. ` ` `` .: ::: ::: ::: :::</echo>
+        <echo>,,:.,,,,,,,,,: `::, ,, ::,::` : :,::` :::: ::: ::: ::: :::</echo>
+        <echo>,:,,,,,,,,,,::,: ,, :. : :: : .: ::: ::: :::::::</echo>
+        <echo>:,,,,,,,,,,:,:: ,, : : : : .: ::: ::: :::::::::</echo>
+        <echo>` :,,,,,,,,,,:,::, ,, .:::::::: : : .: ::: ::: ::: :::</echo>
+        <echo>`,...,,:,,,,,,,,,: .:,. ,, ,, : : .: ::: ::: ::: :::</echo>
+        <echo>.,,,,::,,,,,,,: `: , ,, : ` : : .: ::: ::: ::: :::</echo>
+        <echo>...,::,,,,::.. `: .,, :, : : : .: ::::::::::: ::: :::</echo>
+        <echo>,::::,,,. `: ,, ::::: : : .: ::::::::: ::::::::::</echo>
+        <echo>,,:` `,,.</echo>
+        <echo>,,, .,`</echo>
+        <echo>,,. `, GRAPH DATABASE</echo>
+        <echo>`` `. COMMUNITY EDITION</echo>
+        <echo>`` www.orientdb.org</echo>
+        <echo>`</echo>
 
         <mkdir dir="${community.release}"/>
         <mkdir dir="${community.release}/log"/>
@@ -179,9 +179,9 @@
         </copy>
 
         <delete dir="${community.release}/databases"/>
-    	<java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+        <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
             <classpath>
-            	<fileset dir="${community.release}/lib" includes="*.jar"/>
+                <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>
         </java>
 
@@ -265,7 +265,7 @@
             <tarfileset dir="../releases/orientdb-community-${version}" mode="755">
                 <include name="**/*.sh"/>
             </tarfileset>
-         </tar>
+        </tar>
     </target>
 
 </project>

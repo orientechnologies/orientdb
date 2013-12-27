@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.serialization.compression.impl.OZIPComp
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -199,7 +199,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
           OPageChanges pageChanges = updatePageRecord.getChanges();
           durablePage.revertChanges(pageChanges);
 
-          durablePage.setLsn(updatePageRecord.getPrevLsn());
+          durablePage.setLsn(updatePageRecord.getLsn());
         } finally {
           cachePointer.releaseExclusiveLock();
           diskCache.release(cacheEntry);

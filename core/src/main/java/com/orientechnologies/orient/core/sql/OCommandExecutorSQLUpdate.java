@@ -440,7 +440,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, false, OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
+          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
       fieldValue = buffer.toString();
     }
     return fieldValue;

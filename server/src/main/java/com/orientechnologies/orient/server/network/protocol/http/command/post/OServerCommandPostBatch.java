@@ -94,7 +94,13 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       if (tx == null)
         tx = false;
 
-      final Collection<Map<Object, Object>> operations = batch.field("operations");
+      final Collection<Map<Object, Object>> operations;
+      try {
+        operations = batch.field("operations");
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Expected 'operations' field as a collection of objects");
+      }
+
       if (operations == null || operations.isEmpty())
         throw new IllegalArgumentException("Input JSON has no operations to execute");
 

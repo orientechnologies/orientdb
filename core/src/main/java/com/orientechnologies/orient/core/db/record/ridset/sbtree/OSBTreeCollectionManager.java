@@ -19,7 +19,6 @@ package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 import java.util.Iterator;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,6 +39,7 @@ public class OSBTreeCollectionManager {
   private final int                                                                  shift;
   private final int                                                                  mask;
   private final Object[]                                                             locks;
+  private volatile long                                                              fileId;
 
   public final String                                                                DEFAULT_EXTENSION  = ".sbc";
   private final ConcurrentLinkedHashMap<OBonsaiBucketPointer, SBTreeBonsaiContainer> treeCache          = new ConcurrentLinkedHashMap.Builder<OBonsaiBucketPointer, SBTreeBonsaiContainer>()
@@ -73,6 +73,7 @@ public class OSBTreeCollectionManager {
 
     tree.create(FILE_NAME, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+    fileId = tree.getFileId();
 
     final Object lock = treesSubsetLock(tree.getRootBucketPointer());
     synchronized (lock) {
@@ -97,8 +98,7 @@ public class OSBTreeCollectionManager {
         tree = container.tree;
       } else {
         tree = new OSBTreeBonsai<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
-        tree.load(FILE_NAME, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-            .getUnderlying());
+        tree.load(fileId, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
         assert tree.getRootBucketPointer().equals(rootIndex);
 

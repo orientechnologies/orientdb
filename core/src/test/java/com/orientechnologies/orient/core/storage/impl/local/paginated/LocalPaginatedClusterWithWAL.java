@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.*;
 

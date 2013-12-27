@@ -798,6 +798,7 @@ public class CRUDDocumentPhysicalTest {
 
         database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
+          @Override
           public void call(ORecordId iRID, OClusterPosition iParameter) {
             callBackCalled.incrementAndGet();
           }

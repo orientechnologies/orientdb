@@ -24,7 +24,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "GET|documentbyclass/*" };
+  private static final String[] NAMES = { "GET|documentbyclass/*", "HEAD|documentbyclass/*" };
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
@@ -50,7 +50,11 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
       if (rec == null)
         iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + rid
             + "' was not found.", null);
+      else if (iRequest.httpMethod.equals("HEAD"))
+        // JUST SEND HTTP CODE 200
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
       else
+        // SEND THE DOCUMENT BACK
         iResponse.writeRecord(rec, fetchPlan, null);
 
     } finally {

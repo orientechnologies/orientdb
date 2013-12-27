@@ -46,6 +46,7 @@ public class DbCheckTest implements OCommandOutputListener {
     database.close();
   }
 
+  @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
     System.out.print(iText);

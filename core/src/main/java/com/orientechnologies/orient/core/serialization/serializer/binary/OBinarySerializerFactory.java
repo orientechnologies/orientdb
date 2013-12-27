@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerOldRIDContainer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterPositionSerializer;
@@ -89,6 +90,7 @@ public class OBinarySerializerFactory {
     registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
 
     registerSerializer(OStreamSerializerListRID.INSTANCE, null);
+    registerSerializer(OStreamSerializerOldRIDContainer.INSTANCE, null);
     registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
 
     registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);

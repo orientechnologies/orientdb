@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
@@ -54,20 +55,40 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // LEFT = MULTI
       final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
 
-      if (left.values.length == 0)
+      if (left.getValues().length == 0)
         return false;
 
-      if (left.getDefinition().getRoot().equals(OSQLFilterItemFieldAll.NAME)) {
+      if (left.getDefinition().getRoot().startsWith(OSQLFilterItemFieldAll.NAME)) {
         // ALL VALUES
-        for (final Object v : left.values)
-          if (v == null || !evaluateExpression(iRecord, iCondition, v, iRight, iContext))
+        for (int i = 0; i < left.getValues().length; ++i) {
+          Object v = left.getValues()[i];
+          Object r = iRight;
+
+          final OCollate collate = left.getCollate(i);
+          if (collate != null) {
+            v = collate.transform(v);
+            r = collate.transform(iRight);
+          }
+
+          if (v == null || !evaluateExpression(iRecord, iCondition, v, r, iContext))
             return false;
+        }
         return true;
       } else {
         // ANY VALUES
-        for (final Object v : left.values)
-          if (v != null && evaluateExpression(iRecord, iCondition, v, iRight, iContext))
+        for (int i = 0; i < left.getValues().length; ++i) {
+          Object v = left.getValues()[i];
+          Object r = iRight;
+
+          final OCollate collate = left.getCollate(i);
+          if (collate != null) {
+            v = collate.transform(v);
+            r = collate.transform(iRight);
+          }
+
+          if (v != null && evaluateExpression(iRecord, iCondition, v, r, iContext))
             return true;
+        }
         return false;
       }
 
@@ -75,20 +96,40 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // RIGHT = MULTI
       final OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
 
-      if (right.values.length == 0)
+      if (right.getValues().length == 0)
         return false;
 
-      if (right.getDefinition().getRoot().equals(OSQLFilterItemFieldAll.NAME)) {
+      if (right.getDefinition().getRoot().startsWith(OSQLFilterItemFieldAll.NAME)) {
         // ALL VALUES
-        for (final Object v : right.values)
-          if (v == null || !evaluateExpression(iRecord, iCondition, iLeft, v, iContext))
+        for (int i = 0; i < right.getValues().length; ++i) {
+          Object v = right.getValues()[i];
+          Object l = iLeft;
+
+          final OCollate collate = right.getCollate(i);
+          if (collate != null) {
+            v = collate.transform(v);
+            l = collate.transform(iLeft);
+          }
+
+          if (v == null || !evaluateExpression(iRecord, iCondition, l, v, iContext))
             return false;
+        }
         return true;
       } else {
         // ANY VALUES
-        for (final Object v : right.values)
-          if (v != null && evaluateExpression(iRecord, iCondition, iLeft, v, iContext))
+        for (int i = 0; i < right.getValues().length; ++i) {
+          Object v = right.getValues()[i];
+          Object l = iLeft;
+
+          final OCollate collate = right.getCollate(i);
+          if (collate != null) {
+            v = collate.transform(v);
+            l = collate.transform(iLeft);
+          }
+
+          if (v != null && evaluateExpression(iRecord, iCondition, l, v, iContext))
             return true;
+        }
         return false;
       }
     } else
