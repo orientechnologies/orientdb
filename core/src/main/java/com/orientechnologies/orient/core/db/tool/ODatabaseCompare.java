@@ -308,6 +308,41 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ++differences;
       }
 
+      final ODocument metadataOne = indexOne.getMetadata();
+      final ODocument metadataTwo = indexTwo.getMetadata();
+
+      if (metadataOne == null && metadataTwo != null) {
+        ok = false;
+        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
+        listener.onMessage("\n");
+        ++differences;
+      } else if (metadataOne != null && metadataTwo == null) {
+        ok = false;
+        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
+        listener.onMessage("\n");
+        ++differences;
+      } else if (metadataOne != null && metadataTwo != null
+          && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+        ok = false;
+        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
+        makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+          @Override
+          public Object call() {
+            listener.onMessage("\n--- M1: " + metadataOne);
+            return null;
+          }
+        });
+        makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
+          @Override
+          public Object call() {
+            listener.onMessage("\n--- M2: " + metadataTwo);
+            return null;
+          }
+        });
+        listener.onMessage("\n");
+        ++differences;
+      }
+
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
         final Iterator<Map.Entry<Object, Object>> indexIteratorOne = makeDbCall(databaseDocumentTxOne,
             new ODbRelatedCall<Iterator<Map.Entry<Object, Object>>>() {

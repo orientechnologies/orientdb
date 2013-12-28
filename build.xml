@@ -5,7 +5,7 @@
     <property environment="env"/>
     <property name="vendor" value="NuvolaBase Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="1.6.2"/>
+    <property name="version" value="1.6.3"/>
     <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
                else="../releases/orientdb-community-${version}">
         <isset property="releaseHome"/>
@@ -179,9 +179,9 @@
         </copy>
 
         <delete dir="${community.release}/databases"/>
-    	<java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+        <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
             <classpath>
-            	<fileset dir="${community.release}/lib" includes="*.jar"/>
+                <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>
         </java>
 
@@ -265,7 +265,7 @@
             <tarfileset dir="../releases/orientdb-community-${version}" mode="755">
                 <include name="**/*.sh"/>
             </tarfileset>
-         </tar>
+        </tar>
     </target>
 
 </project>

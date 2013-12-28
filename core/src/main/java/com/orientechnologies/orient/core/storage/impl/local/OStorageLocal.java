@@ -122,16 +122,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     clustersToSyncImmediately.addAll(Arrays.asList(clustersToSync));
 
     installProfilerHooks();
-
-    long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
-    long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
-        * diskCacheSize);
-    long readCacheSize = diskCacheSize - writeCacheSize;
-
-    diskCache = new OReadWriteDiskCache(name, readCacheSize, writeCacheSize,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, null, false, true);
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -151,6 +141,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
       status = STATUS.OPEN;
+
+      init();
 
       // OPEN BASIC SEGMENTS
       int pos;
@@ -268,6 +260,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
 
       status = STATUS.OPEN;
+
+      init();
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
       addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
@@ -1308,7 +1302,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           try {
             txManager.clearLogEntries(iTx);
             if (writeAheadLog != null)
-              writeAheadLog.shrinkTill(writeAheadLog.end());
+              writeAheadLog.truncate();
           } catch (Exception e) {
             // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
             // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
@@ -2044,6 +2038,18 @@ public class OStorageLocal extends OStorageLocalAbstract {
   @Override
   public String getType() {
     return OEngineLocal.NAME;
+  }
+
+  protected void init() {
+    final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+    final long writeCacheSize = (long) Math
+        .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
+    final long readCacheSize = diskCacheSize - writeCacheSize;
+
+    diskCache = new OReadWriteDiskCache(name, readCacheSize, writeCacheSize,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, null, false, true);
   }
 
 }

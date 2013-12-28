@@ -32,6 +32,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String KEYWORD_WHERE     = "WHERE";
   public static final String KEYWORD_LIMIT     = "LIMIT";
   public static final String KEYWORD_SKIP      = "SKIP";
+  public static final String KEYWORD_OFFSET    = "OFFSET";
   public static final String KEYWORD_TIMEOUT   = "TIMEOUT";
   public static final String KEYWORD_KEY       = "key";
   public static final String KEYWORD_RID       = "rid";

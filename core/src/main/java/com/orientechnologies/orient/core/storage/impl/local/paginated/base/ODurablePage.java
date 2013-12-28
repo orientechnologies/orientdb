@@ -1,4 +1,20 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import java.io.IOException;
 
@@ -44,23 +60,23 @@ public class ODurablePage {
     NONE, FULL, ROLLBACK_ONLY
   }
 
-  public int getIntValue(int pageOffset) {
+  protected int getIntValue(int pageOffset) {
     return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset);
   }
 
-  public long getLongValue(int pageOffset) {
+  protected long getLongValue(int pageOffset) {
     return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset);
   }
 
-  public byte[] getBinaryValue(int pageOffset, int valLen) {
+  protected byte[] getBinaryValue(int pageOffset, int valLen) {
     return pagePointer.get(pageOffset, valLen);
   }
 
-  public byte getByteValue(int pageOffset) {
+  protected byte getByteValue(int pageOffset) {
     return pagePointer.getByte(pageOffset);
   }
 
-  public void setIntValue(int pageOffset, int value) throws IOException {
+  protected void setIntValue(int pageOffset, int value) throws IOException {
     if (trackMode.equals(TrackMode.FULL)) {
       byte[] oldValues = pagePointer.get(pageOffset, OIntegerSerializer.INT_SIZE);
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset);
@@ -76,7 +92,7 @@ public class ODurablePage {
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset);
   }
 
-  public void setByteValue(int pageOffset, byte value) {
+  protected void setByteValue(int pageOffset, byte value) {
     if (trackMode.equals(TrackMode.FULL)) {
       byte[] oldValues = new byte[] { pagePointer.getByte(pageOffset) };
       pagePointer.setByte(pageOffset, value);
@@ -92,7 +108,7 @@ public class ODurablePage {
       pagePointer.setByte(pageOffset, value);
   }
 
-  public void setLongValue(int pageOffset, long value) throws IOException {
+  protected void setLongValue(int pageOffset, long value) throws IOException {
     if (trackMode.equals(TrackMode.FULL)) {
       byte[] oldValues = pagePointer.get(pageOffset, OLongSerializer.LONG_SIZE);
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset);
@@ -108,7 +124,7 @@ public class ODurablePage {
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset);
   }
 
-  public void setBinaryValue(int pageOffset, byte[] value) throws IOException {
+  protected void setBinaryValue(int pageOffset, byte[] value) throws IOException {
     if (value.length == 0)
       return;
 
@@ -126,7 +142,7 @@ public class ODurablePage {
       pagePointer.set(pageOffset, value, 0, value.length);
   }
 
-  public void moveData(int from, int to, int len) throws IOException {
+  protected void moveData(int from, int to, int len) throws IOException {
     if (len == 0)
       return;
 

@@ -81,7 +81,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 256),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 256),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 4 * 1024),
 
@@ -92,6 +92,13 @@ public enum OGlobalConfiguration {
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
       Integer.class, 2592000),
+
+  WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE(
+      "storage.wal.reportAfterOperationsDuringRestore",
+      "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
+      Integer.class, 10000),
+
+  WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
       "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),

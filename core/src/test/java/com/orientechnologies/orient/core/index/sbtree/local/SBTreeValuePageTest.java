@@ -6,7 +6,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>

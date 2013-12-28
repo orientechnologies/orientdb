@@ -154,8 +154,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
 
     values.add(value.getIdentity());
-    if (values instanceof OIndexRIDContainer && ((OIndexRIDContainer) values).isEmbedded())
-      snapshot.put(key, values);
+    snapshot.put(key, values);
   }
 
   @Override
