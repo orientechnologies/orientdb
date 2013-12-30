@@ -16,15 +16,17 @@
 
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,7 +36,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -714,6 +721,31 @@ public class OSBTreeRidBagTest {
       Assert.assertTrue(expected.remove(identifiable));
 
     Assert.assertTrue(expected.isEmpty());
+  }
+
+  @Test
+  public void testSaveInBackOrder() throws Exception {
+    ODocument docA = new ODocument().field("name", "A");
+    ODocument docB = new ODocument().field("name", "B").save();
+
+    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+
+    ridBag.add(docA);
+    ridBag.add(docB);
+
+    docA.save();
+    ridBag.remove(docB);
+
+    HashSet<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    for (OIdentifiable oIdentifiable : ridBag) {
+      result.add(oIdentifiable);
+    }
+
+    Assert.assertTrue(result.contains(docA));
+    Assert.assertFalse(result.contains(docB));
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(1, ridBag.size());
   }
 
   public void testMassiveChanges() {
