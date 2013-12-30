@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
-@Test(groups = {"index"})
+@Test(groups = { "index" })
 public class IndexCustomKeyTest {
   private ODatabaseDocumentTx database;
 
@@ -49,6 +49,7 @@ public class IndexCustomKeyTest {
       value = buffer;
     }
 
+    @Override
     public int compareTo(ComparableBinary o) {
       final int size = value.length;
 
@@ -65,10 +66,12 @@ public class IndexCustomKeyTest {
       return value;
     }
 
+    @Override
     public byte[] toStream() throws OSerializationException {
       return value;
     }
 
+    @Override
     public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
       this.value = iStream;
       return this;
@@ -78,43 +81,51 @@ public class IndexCustomKeyTest {
   public static class OHash256Serializer implements OBinarySerializer<ComparableBinary> {
 
     public static final OBinaryTypeSerializer INSTANCE = new OBinaryTypeSerializer();
-    public static final byte ID = 100;
-    public static final int LENGTH = 32;
+    public static final byte                  ID       = 100;
+    public static final int                   LENGTH   = 32;
 
     public int getObjectSize(final int length) {
       return length;
     }
 
+    @Override
     public int getObjectSize(final ComparableBinary object, Object... hints) {
       return object.toByteArray().length;
     }
 
+    @Override
     public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition, Object... hints) {
       final byte[] buffer = object.toByteArray();
       System.arraycopy(buffer, 0, stream, startPosition, buffer.length);
     }
 
+    @Override
     public ComparableBinary deserialize(final byte[] stream, final int startPosition) {
       final byte[] buffer = Arrays.copyOfRange(stream, startPosition, startPosition + LENGTH);
       return new ComparableBinary(buffer);
     }
 
+    @Override
     public int getObjectSize(byte[] stream, int startPosition) {
       return LENGTH;
     }
 
+    @Override
     public byte getId() {
       return ID;
     }
 
+    @Override
     public int getObjectSizeNative(byte[] stream, int startPosition) {
       return LENGTH;
     }
 
+    @Override
     public void serializeNative(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
       serialize(object, stream, startPosition);
     }
 
+    @Override
     public ComparableBinary deserializeNative(byte[] stream, int startPosition) {
       return deserialize(stream, startPosition);
     }
@@ -135,10 +146,12 @@ public class IndexCustomKeyTest {
       return LENGTH;
     }
 
+    @Override
     public boolean isFixedLength() {
       return true;
     }
 
+    @Override
     public int getFixedLength() {
       return LENGTH;
     }
@@ -162,7 +175,7 @@ public class IndexCustomKeyTest {
       OBinarySerializerFactory.INSTANCE.registerSerializer(new OHash256Serializer(), null);
 
       database.getMetadata().getIndexManager()
-          .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null);
+          .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null, null);
     }
   }
 
@@ -184,13 +197,13 @@ public class IndexCustomKeyTest {
 
   public void testUsage() {
     OIndex<?> index = getIndex();
-    ComparableBinary key1 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 1});
+    ComparableBinary key1 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 1 });
     ODocument doc1 = new ODocument().field("k", "key1");
     index.put(key1, doc1);
 
-    ComparableBinary key2 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 2});
+    ComparableBinary key2 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 2 });
     ODocument doc2 = new ODocument().field("k", "key1");
     index.put(key2, doc2);
 
@@ -201,15 +214,15 @@ public class IndexCustomKeyTest {
   public void testTransactionalUsageWorks() {
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     // OIndex<?> index = getManualIndex();
-    ComparableBinary key3 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 3});
+    ComparableBinary key3 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 3 });
     ODocument doc1 = new ODocument().field("k", "key3");
 
     final OIndex index = getIndex();
     index.put(key3, doc1);
 
-    ComparableBinary key4 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 4});
+    ComparableBinary key4 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 4 });
     ODocument doc2 = new ODocument().field("k", "key4");
     index.put(key4, doc2);
 
@@ -219,17 +232,17 @@ public class IndexCustomKeyTest {
     Assert.assertEquals(index.get(key4), doc2);
   }
 
-  @Test(dependsOnMethods = {"testTransactionalUsageWorks"})
+  @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     OIndex<?> index = getIndex();
-    ComparableBinary key5 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 5});
+    ComparableBinary key5 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 5 });
     ODocument doc1 = new ODocument().field("k", "key5");
     index.put(key5, doc1);
 
-    ComparableBinary key6 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 6});
+    ComparableBinary key6 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 6 });
     ODocument doc2 = new ODocument().field("k", "key6");
     index.put(key6, doc2);
 
@@ -239,17 +252,17 @@ public class IndexCustomKeyTest {
     Assert.assertEquals(index.get(key6), doc2);
   }
 
-  @Test(dependsOnMethods = {"testTransactionalUsageWorks"})
+  @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
     OIndex<?> index = getIndex();
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
-    ComparableBinary key7 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 7});
+    ComparableBinary key7 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 7 });
     ODocument doc1 = new ODocument().field("k", "key7");
     index.put(key7, doc1);
 
-    ComparableBinary key8 = new ComparableBinary(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-        3, 4, 5, 6, 7, 8, 9, 0, 8});
+    ComparableBinary key8 = new ComparableBinary(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+        3, 4, 5, 6, 7, 8, 9, 0, 8 });
     ODocument doc2 = new ODocument().field("k", "key8");
     index.put(key8, doc2);
 

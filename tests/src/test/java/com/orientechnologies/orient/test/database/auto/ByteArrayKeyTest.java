@@ -48,8 +48,10 @@ public class ByteArrayKeyTest {
 
     compositeByteArrayKeyTest.createIndex("compositeByteArrayKey", OClass.INDEX_TYPE.UNIQUE, "byteArrayKey", "intKey");
 
-    database.getMetadata().getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null);
+    database
+        .getMetadata()
+        .getIndexManager()
+        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
 
     database.close();
   }
@@ -61,7 +63,7 @@ public class ByteArrayKeyTest {
 
     if (index == null) {
       index = database.getMetadata().getIndexManager()
-          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null);
+          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
       this.manualIndex = index;
     } else {
       index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");

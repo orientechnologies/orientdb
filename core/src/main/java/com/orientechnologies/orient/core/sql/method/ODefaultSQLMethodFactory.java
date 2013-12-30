@@ -32,13 +32,16 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsLong;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsSet;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsString;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodCharAt;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodConvert;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFormat;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodIndexOf;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodJavaType;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodKeys;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLeft;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLength;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodMultiValue;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodNormalize;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodPrefix;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemove;
@@ -51,6 +54,7 @@ import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToJSON;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToLowerCase;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToUpperCase;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodTrim;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodType;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodValues;
 
 /**
@@ -64,6 +68,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
 
   public ODefaultSQLMethodFactory() {
     methods.put(OSQLMethodAppend.NAME, new OSQLMethodAppend());
+    methods.put(OSQLMethodMultiValue.NAME, new OSQLMethodMultiValue());
     methods.put(OSQLMethodAsBoolean.NAME, new OSQLMethodAsBoolean());
     methods.put(OSQLMethodAsDate.NAME, new OSQLMethodAsDate());
     methods.put(OSQLMethodAsDateTime.NAME, new OSQLMethodAsDateTime());
@@ -75,10 +80,12 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     methods.put(OSQLMethodAsSet.NAME, new OSQLMethodAsSet());
     methods.put(OSQLMethodAsString.NAME, new OSQLMethodAsString());
     methods.put(OSQLMethodCharAt.NAME, new OSQLMethodCharAt());
+    methods.put(OSQLMethodConvert.NAME, new OSQLMethodConvert());
     methods.put(OSQLMethodField.NAME, new OSQLMethodField());
     methods.put(OSQLMethodFormat.NAME, new OSQLMethodFormat());
     methods.put(OSQLMethodFunctionDelegate.NAME, OSQLMethodFunctionDelegate.class);
     methods.put(OSQLMethodIndexOf.NAME, new OSQLMethodIndexOf());
+    methods.put(OSQLMethodJavaType.NAME, new OSQLMethodJavaType());
     methods.put(OSQLMethodKeys.NAME, new OSQLMethodKeys());
     methods.put(OSQLMethodLeft.NAME, new OSQLMethodLeft());
     methods.put(OSQLMethodLength.NAME, new OSQLMethodLength());
@@ -94,6 +101,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     methods.put(OSQLMethodToLowerCase.NAME, new OSQLMethodToLowerCase());
     methods.put(OSQLMethodToUpperCase.NAME, new OSQLMethodToUpperCase());
     methods.put(OSQLMethodTrim.NAME, new OSQLMethodTrim());
+    methods.put(OSQLMethodType.NAME, new OSQLMethodType());
     methods.put(OSQLMethodValues.NAME, new OSQLMethodValues());
   }
 

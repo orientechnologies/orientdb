@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,7 +33,7 @@ public class TestLoadGraph {
     dbURL = args.length > 1 ? args[1] : DBURL;
   }
 
-  // @Test
+  @Test
   public void testImport() throws IOException, FileNotFoundException {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 

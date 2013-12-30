@@ -23,27 +23,22 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OPageChanges       pageChanges;
-  private OLogSequenceNumber prevLsn;
+  private OPageChanges pageChanges;
 
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(long pageIndex, long fileId, OOperationUnitId operationUnitId, OPageChanges pageChanges,
-      OLogSequenceNumber prevLsn) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
+      final OPageChanges pageChanges, final OLogSequenceNumber prevLsn) {
     super(pageIndex, fileId, operationUnitId);
     this.pageChanges = pageChanges;
-    this.prevLsn = prevLsn;
+    this.lsn = prevLsn;
 
     assert prevLsn != null;
   }
 
   public OPageChanges getChanges() {
     return pageChanges;
-  }
-
-  public OLogSequenceNumber getPrevLsn() {
-    return prevLsn;
   }
 
   @Override
@@ -57,13 +52,13 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OLongSerializer.INSTANCE.serializeNative(prevLsn.getPosition(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(lsn.getPosition(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OLongSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(lsn.getSegment(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     offset = pageChanges.toStream(content, offset);
@@ -72,16 +67,16 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    final long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    final long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    prevLsn = new OLogSequenceNumber(segment, position);
+    lsn = new OLogSequenceNumber(segment, position);
 
     pageChanges = new OPageChanges();
     offset = pageChanges.fromStream(content, offset);
@@ -95,7 +90,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -103,9 +98,9 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     if (!super.equals(o))
       return false;
 
-    OUpdatePageRecord that = (OUpdatePageRecord) o;
+    final OUpdatePageRecord that = (OUpdatePageRecord) o;
 
-    if (!prevLsn.equals(that.prevLsn))
+    if (!lsn.equals(that.lsn))
       return false;
 
     return true;
@@ -114,12 +109,12 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + prevLsn.hashCode();
+    result = 31 * result + lsn.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
-    return "OUpdatePageRecord{" + "pageChanges=" + pageChanges + ", prevLsn=" + prevLsn + '}';
+    return toString("pageChanges=" + pageChanges);
   }
 }

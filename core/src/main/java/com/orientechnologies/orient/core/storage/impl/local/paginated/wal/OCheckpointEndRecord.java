@@ -19,19 +19,17 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 5/2/13
  */
-public class OCheckpointEndRecord implements OWALRecord {
-  private OLogSequenceNumber lsn;
-
+public class OCheckpointEndRecord extends OAbstractWALRecord {
   public OCheckpointEndRecord() {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, final int offset) {
     return offset;
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, final int offset) {
     return offset;
   }
 
@@ -46,16 +44,6 @@ public class OCheckpointEndRecord implements OWALRecord {
   }
 
   @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -63,10 +51,5 @@ public class OCheckpointEndRecord implements OWALRecord {
       return false;
 
     return true;
-  }
-
-  @Override
-  public String toString() {
-    return "OCheckpointEndRecord{" + "lsn=" + lsn + '}';
   }
 }

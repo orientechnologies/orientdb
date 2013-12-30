@@ -23,7 +23,11 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -172,7 +176,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   private Object convertIndexResult(Object indexResult) {
     Object result;
     if (indexResult instanceof Collection)
-      result = (Collection<OIdentifiable>) indexResult;
+      result = (Collection<?>) indexResult;
     else if (indexResult == null)
       result = Collections.emptyList();
     else if (indexResult instanceof OIdentifiable)

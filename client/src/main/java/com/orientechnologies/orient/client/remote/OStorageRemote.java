@@ -911,10 +911,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     do {
 
       OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
+      final OCommandRequestText aquery = iCommand;
       try {
-
-        final OCommandRequestText aquery = iCommand;
-
         final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
 
         try {
@@ -930,6 +928,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         try {
           beginResponse(network);
 
+          boolean addNextRecord = true;
           if (asynch) {
             byte status;
 
@@ -942,19 +941,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
               switch (status) {
               case 1:
                 // PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
-                try {
-                  if (!aquery.getResultListener().result(record)) {
-                    // EMPTY THE INPUT CHANNEL
-                    while (network.in.available() > 0)
-                      network.in.read();
-
-                    break;
-                  }
-                } catch (Throwable t) {
-                  // ABSORBE ALL THE USER EXCEPTIONS
-                  t.printStackTrace();
+                if (addNextRecord) {
+                  addNextRecord = aquery.getResultListener().result(record);
+                  database.getLevel1Cache().updateRecord(record);
                 }
-                database.getLevel1Cache().updateRecord(record);
                 break;
 
               case 2:
@@ -1010,12 +1000,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           }
           break;
         } finally {
-          if (aquery.getResultListener() != null) {
-            aquery.getResultListener().end();
-          }
           endResponse(network);
         }
-
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
       } catch (Exception e) {
@@ -1023,6 +1009,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       } finally {
         OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = false;
+        if (aquery.getResultListener() != null) {
+          aquery.getResultListener().end();
+        }
       }
     } while (true);
 
@@ -1809,13 +1798,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     // FREE DEAD CONNECTIONS
     int removedDeadConnections = 0;
     for (OChannelBinaryAsynchClient n : new ArrayList<OChannelBinaryAsynchClient>(networkPool)) {
-      if (n != null && !n.isConnected())
+      if (n != null && !n.isConnected()) // Fixed issue with removing of network connections though connection is active.
+      {
         try {
           n.close();
         } catch (Exception e) {
         }
-      networkPool.remove(n);
-      removedDeadConnections++;
+        networkPool.remove(n);
+        removedDeadConnections++;
+      }
     }
 
     OLogManager.instance().debug(this, "Found and removed %d dead connections from the network pool", removedDeadConnections);

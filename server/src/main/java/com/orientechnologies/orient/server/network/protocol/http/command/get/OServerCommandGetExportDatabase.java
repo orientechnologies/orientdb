@@ -52,7 +52,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
       iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
       iResponse.writeLine("Date: " + new Date());
       iResponse.writeLine(null);
-      final ODatabaseExport export = new ODatabaseExport(database, new GZIPOutputStream(iResponse.getOutputStream()), this);
+      final ODatabaseExport export = new ODatabaseExport(database, new GZIPOutputStream(iResponse.getOutputStream(), 16384), this);
       export.exportDatabase();
 
       try {

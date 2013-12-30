@@ -15,11 +15,15 @@
  */
 package com.orientechnologies.orient.core.memory;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -39,6 +43,12 @@ public class OMemoryWatchDog extends Thread {
   private int                                alertTimes   = 0;
   protected final ReferenceQueue<Object>     monitorQueue = new ReferenceQueue<Object>();
   protected SoftReference<Object>            monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
+
+  protected final MemoryUsage                heapMemory;
+  protected final MemoryUsage                nonheapMemory;
+
+  private long                               autoFreeCheckEveryMs;
+  private long                               autoFreeHeapThreshold;
 
   /**
    * we want properties of both IdentityHashMap and WeakHashMap
@@ -68,16 +78,14 @@ public class OMemoryWatchDog extends Thread {
 
   public static interface Listener {
     /**
-     * Execute a soft free of memory resources.
+     * Called when free memory is getting lower.
      * 
-     * @param iType
-     *          OS or JVM
      * @param iFreeMemory
      *          Current used memory
      * @param iFreeMemoryPercentage
      *          Max memory
      */
-    public void memoryUsageLow(long iFreeMemory, long iFreeMemoryPercentage);
+    public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage);
   }
 
   /**
@@ -87,6 +95,13 @@ public class OMemoryWatchDog extends Thread {
    */
   public OMemoryWatchDog() {
     super("OrientDB MemoryWatchDog");
+
+    final MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
+    heapMemory = memBean.getHeapMemoryUsage();
+    nonheapMemory = memBean.getNonHeapMemoryUsage();
+
+    final String size = OGlobalConfiguration.MEMORY_AUTOFREE_HEAP_THRESHOLD.getValueAsString();
+    autoFreeHeapThreshold = OFileUtils.getSizeAsNumber(size);
 
     setDaemon(true);
     start();
@@ -112,6 +127,35 @@ public class OMemoryWatchDog extends Thread {
               }
             });
 
+    autoFreeCheckEveryMs = OGlobalConfiguration.MEMORY_AUTOFREE_CHECK_EVERY.getValueAsLong();
+    Orient.instance().getTimer().schedule(new TimerTask() {
+
+      @Override
+      public void run() {
+        // CHECK MEMORY
+        final long usedHeap = heapMemory.getUsed();
+        final long maxHeap = heapMemory.getMax();
+        final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
+
+        if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().debug(this, "Checking if memory is lower than configured (%s): used %s of %s (%d%%)",
+              OFileUtils.getSizeAsString(autoFreeHeapThreshold), OFileUtils.getSizeAsString(usedHeap),
+              OFileUtils.getSizeAsString(maxHeap), usedMemoryPer);
+
+        if (!isMemoryAvailable())
+          // CALL LISTENER TO FREE MEMORY
+          synchronized (listeners) {
+            for (ListenerWrapper listener : listeners.keySet()) {
+              try {
+                listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+          }
+      }
+    }, autoFreeCheckEveryMs, autoFreeCheckEveryMs);
+
     while (true) {
       try {
         // WAITS FOR THE GC FREE
@@ -122,20 +166,20 @@ public class OMemoryWatchDog extends Thread {
 
         // GC is freeing memory!
         alertTimes++;
-        long maxMemory = Runtime.getRuntime().maxMemory();
-        long freeMemory = Runtime.getRuntime().freeMemory();
-        int freeMemoryPer = (int) (freeMemory * 100 / maxMemory);
+        final long usedHeap = heapMemory.getUsed();
+        final long maxHeap = heapMemory.getMax();
+        final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
 
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
-              OFileUtils.getSizeAsString(freeMemory), OFileUtils.getSizeAsString(maxMemory), freeMemoryPer);
+              OFileUtils.getSizeAsString(maxHeap - usedHeap), OFileUtils.getSizeAsString(maxHeap), 100 - usedMemoryPer);
 
         final long timer = Orient.instance().getProfiler().startChrono();
 
         synchronized (listeners) {
           for (ListenerWrapper listener : listeners.keySet()) {
             try {
-              listener.listener.memoryUsageLow(freeMemory, freeMemoryPer);
+              listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -159,6 +203,12 @@ public class OMemoryWatchDog extends Thread {
       listeners.clear();
     }
     monitorRef = null;
+  }
+
+  public boolean isMemoryAvailable() {
+    if (autoFreeHeapThreshold > 0)
+      return getUsedHeapMemory() < autoFreeHeapThreshold;
+    return getUsedHeapMemoryInPercentage() < autoFreeHeapThreshold * -1;
   }
 
   public Listener addListener(final Listener listener) {
@@ -190,6 +240,14 @@ public class OMemoryWatchDog extends Thread {
 
   public static void freeMemoryForResourceCleanup(final long iDelayTime) {
     freeMemory(iDelayTime, 0);
+  }
+
+  public long getUsedHeapMemory() {
+    return heapMemory.getUsed();
+  }
+
+  public int getUsedHeapMemoryInPercentage() {
+    return (int) (heapMemory.getUsed() * 100 / heapMemory.getMax());
   }
 
   private static void freeMemory(final long iDelayTime, final long minimalTimeAmount) {

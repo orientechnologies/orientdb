@@ -45,7 +45,7 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     databaseDocumentTx.create();
 
     index = (OIndexUnique) databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("mvrbtreeIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null);
+        .createIndex("mvrbtreeIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null, null);
   }
 
   @Override

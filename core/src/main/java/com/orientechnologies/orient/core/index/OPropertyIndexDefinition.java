@@ -18,24 +18,22 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collections;
 import java.util.List;
 
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Index implementation bound to one schema class property.
  * 
  */
-public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
+public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   protected String className;
   protected String field;
   protected OType  keyType;
 
   public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
-    super(new ODocument());
-
     className = iClassName;
     field = iField;
     keyType = iType;
@@ -144,6 +142,7 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
     document.field("className", className);
     document.field("field", field);
     document.field("keyType", keyType.toString());
+    document.field("collate", collate.getName());
   }
 
   protected void serializeFromStream() {
@@ -152,6 +151,8 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 
     final String keyTypeStr = document.field("keyType");
     keyType = OType.valueOf(keyTypeStr);
+
+    setCollate((String) document.field("collate"));
   }
 
   /**
@@ -178,7 +179,10 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
       ddl.append(shortName).append(" ");
     } else {
       ddl.append(indexName).append(" on ");
-      ddl.append(className).append(" ( ").append(field).append(" ) ");
+      ddl.append(className).append(" ( ").append(field);
+      if (!collate.getName().equals(ODefaultCollate.NAME))
+        ddl.append(" COLLATE ").append(collate.getName());
+      ddl.append(" ) ");
     }
     ddl.append(indexType);
 

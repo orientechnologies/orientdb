@@ -4,7 +4,7 @@
 #
 
 #set current working directory
-cd "$(dirname "$0")"
+cd `dirname $0`
 
 # resolve links - $0 may be a softlink
 PRG="$0"

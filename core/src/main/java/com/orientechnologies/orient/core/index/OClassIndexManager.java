@@ -53,6 +53,9 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
+
+  private final Set<String> lockedIndexes = new HashSet<String>();
+
   public OClassIndexManager() {
   }
 
@@ -202,14 +205,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
               ORecordOperation.DELETED);
     }
 
-    acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
+    acquireModificationLock(iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
   public RESULT onRecordBeforeReplicaDelete(ODocument iDocument) {
     checkForLoading(iDocument);
-    acquireModificationLock(iDocument, iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
+    acquireModificationLock(iDocument.getSchemaClass() != null ? iDocument.getSchemaClass().getIndexes() : null);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -516,7 +519,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       default:
         throw new IllegalArgumentException("Invalid hook type: " + hookType);
       }
-      acquireModificationLock(document, indexes);
+      acquireModificationLock(indexes);
     }
   }
 
@@ -535,8 +538,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  private static void acquireModificationLock(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
-    if (iIndexes == null)
+  private void acquireModificationLock(final Collection<OIndex<?>> indexes) {
+    if (indexes == null)
       return;
 
     final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
@@ -545,10 +548,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       }
     });
 
-    indexesToLock.addAll(iIndexes);
+    indexesToLock.addAll(indexes);
+
+    lockedIndexes.clear();
 
     for (final OIndex<?> index : indexesToLock) {
       index.getInternal().acquireModificationLock();
+      lockedIndexes.add(index.getName());
     }
   }
 
@@ -556,7 +562,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
    * Releases the index modification lock. Incurs overhead of index retrieval: if you already have a list of indexes for the schema
    * class of this record, use the overloaded method that takes a collection.
    */
-  private static void releaseModificationLock(final ODocument iRecord) {
+  private void releaseModificationLock(final ODocument iRecord) {
     final OClass cls = iRecord.getSchemaClass();
     if (cls != null) {
       releaseModificationLock(iRecord, cls.getIndexes());
@@ -566,10 +572,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   /**
    * Releases the index modification lock. Avoids overhead of retrieving the schema class' indexes.
    */
-  private static void releaseModificationLock(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
+  private void releaseModificationLock(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
     for (final OIndex<?> index : iIndexes) {
-      index.getInternal().releaseModificationLock();
+      if (lockedIndexes.contains(index.getName()))
+        index.getInternal().releaseModificationLock();
     }
+
+    lockedIndexes.clear();
   }
 
   private static void checkIndexedPropertiesOnUpdate(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {

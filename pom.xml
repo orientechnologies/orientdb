@@ -110,7 +110,7 @@
         <module>tests</module>
         <module>distributed</module>
         <module>graphdb</module>
-        <!--<module>distribution</module>-->
+        <module>distribution</module>
     </modules>
 
     <scm>

@@ -66,8 +66,10 @@ public class OServerConfigurationLoaderXml {
       if (file != null) {
         if (file.exists())
           obj = rootClass.cast(unmarshaller.unmarshal(file));
-        else
+        else {
+          OLogManager.instance().error(this, "File not found: %s", file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
+        }
         obj.location = file.getAbsolutePath();
       } else {
         obj = rootClass.cast(unmarshaller.unmarshal(inputStream));

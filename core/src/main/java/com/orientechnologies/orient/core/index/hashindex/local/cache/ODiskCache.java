@@ -62,4 +62,6 @@ public interface ODiskCache {
   boolean isOpen(long fileId);
 
   boolean exists(String name);
+
+  String fileNameById(long fileId);
 }

@@ -28,7 +28,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * @author Andrey Lomakin
@@ -308,11 +308,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       byte[] serializedKey = new byte[keySize];
       keySerializer.serializeNative(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
 
-      setBinaryValue(freePointer, serializedKey);
-      freePointer += keySize;
-
-      setByteValue(freePointer, treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
-      freePointer += OByteSerializer.BYTE_SIZE;
+      freePointer += setBinaryValue(freePointer, serializedKey);
+      freePointer += setByteValue(freePointer, treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
 
       byte[] serializedValue = new byte[valueSize];
       if (treeEntry.value.isLink())
@@ -322,11 +319,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
       setBinaryValue(freePointer, serializedValue);
     } else {
-      setLongValue(freePointer, treeEntry.leftChild);
-      freePointer += OLongSerializer.LONG_SIZE;
-
-      setLongValue(freePointer, treeEntry.rightChild);
-      freePointer += OLongSerializer.LONG_SIZE;
+      freePointer += setLongValue(freePointer, treeEntry.leftChild);
+      freePointer += setLongValue(freePointer, treeEntry.rightChild);
 
       byte[] serializedKey = new byte[keySize];
       keySerializer.serializeNative(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
@@ -350,20 +344,26 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     return true;
   }
 
-  public boolean updateValue(int index, OSBTreeValue<V> value) throws IOException {
-    if (valueSerializer.isFixedLength()) {
-      int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+  public int updateValue(int index, OSBTreeValue<V> value) throws IOException {
+    int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition) + OByteSerializer.BYTE_SIZE;
 
-      entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition) + OByteSerializer.BYTE_SIZE;
+    final int newSize = valueSerializer.getObjectSize(value.getValue());
+    final int oldSize = valueSerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+    if (newSize != oldSize)
+      return -1;
 
-      byte[] serializedValue = new byte[valueSerializer.getFixedLength()];
-      valueSerializer.serializeNative(value.getValue(), serializedValue, 0);
+    byte[] serializedValue = new byte[newSize];
+    valueSerializer.serializeNative(value.getValue(), serializedValue, 0);
 
-      setBinaryValue(entryPosition, serializedValue);
-      return true;
-    }
+    byte[] oldSerializedValue = pagePointer.get(entryPosition, oldSize);
 
-    return false;
+    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
+      return 0;
+
+    setBinaryValue(entryPosition, serializedValue);
+
+    return 1;
   }
 
   public void setLeftSibling(long pageIndex) throws IOException {

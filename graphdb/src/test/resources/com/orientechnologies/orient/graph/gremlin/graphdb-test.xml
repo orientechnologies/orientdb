@@ -1,11 +1,12 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
-<suite name="GraphDB test suite" verbose="2" parallel="false">
-
-	<test name="Default" preserve-order="true">
-		<classes>
-			<class name="com.orientechnologies.orient.graph.blueprints.TestLoadGraph" />
-			<class name="com.orientechnologies.orient.graph.blueprints.LocalGremlinTest" />
-			<!-- <class name="com.orientechnologies.orient.graph.blueprints.RemoteGremlinTest" />  -->
-		</classes>
-	</test>
+<suite name="GraphDB test suite" verbose="3" parallel="false">
+    <test name="Default">
+        <classes>
+            <class name="com.orientechnologies.orient.graph.blueprints.TestLoadGraph"/>
+            <class
+                    name="com.orientechnologies.orient.graph.blueprints.LocalGremlinTest"/>
+            <!-- <class name="com.orientechnologies.orient.graph.blueprints.RemoteGremlinTest"
+                /> -->
+        </classes>
+    </test>
 </suite>

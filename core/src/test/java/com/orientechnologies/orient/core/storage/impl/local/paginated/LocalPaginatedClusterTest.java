@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -931,9 +932,8 @@ public class LocalPaginatedClusterTest {
 
     OClusterPage page = new OClusterPage(pagePointer.getDataPointer(), false, ODurablePage.TrackMode.NONE);
     int recordIndex = (int) (physicalPosition.clusterPosition.longValue() & 0xFFFF);
-    int recordPageOffset = page.getRecordPageOffset(recordIndex);
 
-    byte[] storedEntity = page.getBinaryValue(recordPageOffset, page.getRecordSize(recordIndex));
+    byte[] storedEntity = page.getRecordBinaryValue(recordIndex, 0, page.getRecordSize(recordIndex));
     byte[] storedRecord = new byte[100];
     System.arraycopy(storedEntity, OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, storedRecord, 0, storedRecord.length);
 
@@ -959,9 +959,8 @@ public class LocalPaginatedClusterTest {
     int recordIndex = (int) (physicalPosition.clusterPosition.longValue() & 0xFFFF);
 
     OClusterPage page = new OClusterPage(pagePointer.getDataPointer(), false, ODurablePage.TrackMode.NONE);
-    int recordPageOffset = page.getRecordPageOffset(recordIndex);
 
-    byte[] storedEntity = page.getBinaryValue(recordPageOffset, page.getRecordSize(recordIndex));
+    byte[] storedEntity = page.getRecordBinaryValue(recordIndex, 0, page.getRecordSize(recordIndex));
     byte[] storedRecord = new byte[record.length];
     System.arraycopy(storedEntity, OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, storedRecord, 0, storedRecord.length);
 

@@ -88,9 +88,9 @@ public class GraphDatabaseTest {
     database.createVertexType("GraphCar", vehicleClass);
     database.createVertexType("GraphMotocycle", "GraphVehicle");
 
-    ODocument carNode = (ODocument) database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe")
-        .field("year", 2003).save();
-    ODocument motoNode = (ODocument) database.createVertex("GraphMotocycle").field("brand", "Yamaha").field("model", "X-City 250")
+    ODocument carNode = database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe").field("year", 2003)
+        .save();
+    ODocument motoNode = database.createVertex("GraphMotocycle").field("brand", "Yamaha").field("model", "X-City 250")
         .field("year", 2009).save();
 
     database.createEdge(carNode, motoNode).save();
@@ -131,10 +131,10 @@ public class GraphDatabaseTest {
 
   @Test(dependsOnMethods = "populate")
   public void testSQLAgainstGraph() {
-    ODocument tom = (ODocument) database.createVertex().field("name", "Tom").save();
-    ODocument ferrari = (ODocument) database.createVertex("GraphCar").field("brand", "Ferrari").save();
-    ODocument maserati = (ODocument) database.createVertex("GraphCar").field("brand", "Maserati").save();
-    ODocument porsche = (ODocument) database.createVertex("GraphCar").field("brand", "Porsche").save();
+    ODocument tom = database.createVertex().field("name", "Tom").save();
+    ODocument ferrari = database.createVertex("GraphCar").field("brand", "Ferrari").save();
+    ODocument maserati = database.createVertex("GraphCar").field("brand", "Maserati").save();
+    ODocument porsche = database.createVertex("GraphCar").field("brand", "Porsche").save();
     database.createEdge(tom, ferrari).field("label", "drives").save();
     database.createEdge(tom, maserati).field("label", "drives").save();
     database.createEdge(tom, porsche).field("label", "owns").save();
@@ -253,10 +253,10 @@ public class GraphDatabaseTest {
     database.createVertexType("vertexBB");
     database.createEdgeType("edgeAB");
 
-    ODocument vertexA = (ODocument) database.createVertex("vertexAA").field("address", "testing").save();
+    ODocument vertexA = database.createVertex("vertexAA").field("address", "testing").save();
 
     for (int i = 0; i < 18; ++i) {
-      ODocument vertexB = (ODocument) database.createVertex("vertexBB").field("address", "test" + i).save();
+      ODocument vertexB = database.createVertex("vertexBB").field("address", "test" + i).save();
       database.begin(OTransaction.TXTYPE.OPTIMISTIC);
       database.createEdge(vertexB.getIdentity(), vertexA.getIdentity(), "edgeAB").save();
       database.commit();
@@ -280,7 +280,7 @@ public class GraphDatabaseTest {
 
     // Step 1
     // create a public cert with some field set
-    ODocument publicCert = (ODocument) database.createVertex("PublicCert").field("address", "drevil@myco.mn.us").save();
+    ODocument publicCert = database.createVertex("PublicCert").field("address", "drevil@myco.mn.us").save();
 
     // Step 2
     // update the public cert field in transaction
