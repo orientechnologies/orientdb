@@ -64,6 +64,7 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -641,6 +642,24 @@ public class OServer {
       // ACTIVATE PLUGINS
       OServerPlugin handler;
       for (OServerHandlerConfiguration h : configuration.handlers) {
+        if (h.parameters != null) {
+          // CHECK IF IT'S ENABLED
+          boolean enabled = true;
+
+          for (OServerParameterConfiguration p : h.parameters) {
+            if (p.name.equals("enabled")) {
+              if (p.name.equals("false")) {
+                enabled = false;
+                break;
+              }
+            }
+          }
+
+          if (!enabled)
+            // SKIP IT
+            continue;
+        }
+
         handler = (OServerPlugin) Class.forName(h.clazz).newInstance();
 
         if (handler instanceof ODistributedServerManager)
