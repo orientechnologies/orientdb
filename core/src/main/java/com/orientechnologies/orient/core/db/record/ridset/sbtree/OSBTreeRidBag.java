@@ -358,22 +358,22 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
   }
 
   private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable {
-    private final NavigableMap<OIdentifiable, OModifiableInteger>        changedValues;
-    private final Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
-    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>>       changedValuesIterator;
-    private final SBTreeMapEntryIterator                                 sbTreeIterator;
+    private final NavigableMap<OIdentifiable, OModifiableInteger>  changedValues;
+    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
+    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> changedValuesIterator;
+    private final SBTreeMapEntryIterator                           sbTreeIterator;
 
-    private Map.Entry<OIdentifiable, OModifiableInteger>                 nextChangedEntry;
-    private Map.Entry<OIdentifiable, Integer>                            nextSBTreeEntry;
+    private Map.Entry<OIdentifiable, OModifiableInteger>           nextChangedEntry;
+    private Map.Entry<OIdentifiable, Integer>                      nextSBTreeEntry;
 
-    private OIdentifiable                                                currentValue;
-    private int                                                          currentFinalCounter;
+    private OIdentifiable                                          currentValue;
+    private int                                                    currentFinalCounter;
 
-    private int                                                          currentCounter;
+    private int                                                    currentCounter;
 
-    private final boolean                                                convertToRecord;
+    private final boolean                                          convertToRecord;
 
-    private boolean                                                      currentRemoved;
+    private boolean                                                currentRemoved;
 
     private RIDBagIterator(IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries,
         NavigableMap<OIdentifiable, OModifiableInteger> changedValues, SBTreeMapEntryIterator sbTreeIterator,
@@ -493,6 +493,8 @@ public class OSBTreeRidBag implements OStringBuilderSerializable, Iterable<OIden
 
     @Override
     public void reset() {
+      newEntryIterator = newEntries.entrySet().iterator();
+
       this.changedValuesIterator = changedValues.entrySet().iterator();
       if (sbTreeIterator != null)
         this.sbTreeIterator.reset();
