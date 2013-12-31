@@ -1095,12 +1095,20 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
             else
               recordVersion = OVersionFactory.instance().createVersion();
 
-            ppos = cluster.createRecord(content, recordVersion, recordType);
-            rid.clusterPosition = ppos.clusterPosition;
+            atomicOperationsManager.startAtomicOperation();
+            try {
+              ppos = cluster.createRecord(content, recordVersion, recordType);
+              rid.clusterPosition = ppos.clusterPosition;
 
-            final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-            if (context != null)
-              context.executeOperations(this);
+              final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+              if (context != null)
+                context.executeOperations(this);
+            } catch (RuntimeException e) {
+              atomicOperationsManager.endAtomicOperation(true);
+              throw e;
+            } finally {
+              atomicOperationsManager.endAtomicOperation(false);
+            }
 
             if (callback != null)
               callback.call(rid, ppos.clusterPosition);
@@ -1251,11 +1259,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               ppos.recordVersion.increment();
             }
 
-            cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+            atomicOperationsManager.startAtomicOperation();
+            try {
+              cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
 
-            final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-            if (context != null)
-              context.executeOperations(this);
+              final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+              if (context != null)
+                context.executeOperations(this);
+            } catch (RuntimeException e) {
+              atomicOperationsManager.endAtomicOperation(true);
+              throw e;
+            } finally {
+              atomicOperationsManager.endAtomicOperation(false);
+            }
 
             if (callback != null)
               callback.call(rid, ppos.recordVersion);
@@ -1315,11 +1331,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               else
                 throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
+            atomicOperationsManager.startAtomicOperation();
+            try {
+              final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+              if (context != null)
+                context.executeOperations(this);
+            } catch (RuntimeException e) {
+              atomicOperationsManager.endAtomicOperation(true);
+            } finally {
+              atomicOperationsManager.endAtomicOperation(false);
+            }
             cluster.deleteRecord(ppos.clusterPosition);
-
-            final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-            if (context != null)
-              context.executeOperations(this);
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
