@@ -101,6 +101,13 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
+
+    Iterator<OIdentifiable> iterator = ridBag.iterator();
+    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
+
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+
   }
 
   public void testAddTwoSavedDocuments() {
@@ -171,6 +178,12 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
+
+    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
+
+    Iterator<OIdentifiable> iterator = ridBag.iterator();
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
   public void testAddInternalDocumentsAndSubDocuments() {
@@ -241,6 +254,14 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     db.rollback();
 
     Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    Iterator<OIdentifiable> iterator = ridBag.iterator();
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
   public void testAddTwoSavedDocumentsWithoutTx() {
