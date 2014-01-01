@@ -38,14 +38,16 @@ public class OSBTreeLinkBagAtomicUpdateTest {
   }
 
   public void testAddTwoNewDocuments() {
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
-
     db.begin();
-
     ODocument rootDoc = new ODocument();
 
     OSBTreeRidBag ridBag = new OSBTreeRidBag();
     rootDoc.field("ridBag", ridBag);
+
+    rootDoc.save();
+    db.commit();
+
+    db.begin();
 
     ODocument docOne = new ODocument();
     ODocument docTwo = new ODocument();
@@ -57,7 +59,10 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     db.rollback();
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    Assert.assertEquals(ridBag.size(), 0);
   }
 
   public void testAddTwoAdditionalNewDocuments() {

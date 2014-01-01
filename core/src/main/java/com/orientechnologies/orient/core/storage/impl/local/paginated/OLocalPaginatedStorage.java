@@ -1103,11 +1103,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
               if (context != null)
                 context.executeOperations(this);
+              atomicOperationsManager.endAtomicOperation(false);
             } catch (RuntimeException e) {
               atomicOperationsManager.endAtomicOperation(true);
               throw e;
-            } finally {
-              atomicOperationsManager.endAtomicOperation(false);
             }
 
             if (callback != null)
@@ -1266,11 +1265,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
               if (context != null)
                 context.executeOperations(this);
+              atomicOperationsManager.endAtomicOperation(false);
             } catch (RuntimeException e) {
               atomicOperationsManager.endAtomicOperation(true);
               throw e;
-            } finally {
-              atomicOperationsManager.endAtomicOperation(false);
             }
 
             if (callback != null)
@@ -1336,11 +1334,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
               if (context != null)
                 context.executeOperations(this);
+              atomicOperationsManager.endAtomicOperation(false);
             } catch (RuntimeException e) {
               atomicOperationsManager.endAtomicOperation(true);
-            } finally {
-              atomicOperationsManager.endAtomicOperation(false);
             }
+
             cluster.deleteRecord(ppos.clusterPosition);
 
             return new OStorageOperationResult<Boolean>(true);

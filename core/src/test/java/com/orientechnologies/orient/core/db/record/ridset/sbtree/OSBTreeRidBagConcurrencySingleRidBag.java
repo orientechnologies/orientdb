@@ -19,7 +19,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Test
-public class OSBTreeRidBagConcurrency {
+public class OSBTreeRidBagConcurrencySingleRidBag {
   private final AtomicInteger               positionCounter = new AtomicInteger();
   private final ConcurrentSkipListSet<ORID> ridTree         = new ConcurrentSkipListSet<ORID>();
   private ORID                              docContainerRid;
@@ -29,7 +29,7 @@ public class OSBTreeRidBagConcurrency {
   private volatile boolean                  cont            = true;
 
   public void testConcurrency() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrency");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -93,7 +93,7 @@ public class OSBTreeRidBagConcurrency {
 
       int addedRecords = 0;
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrency");
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag");
       db.open("admin", "admin");
 
       try {
@@ -146,7 +146,7 @@ public class OSBTreeRidBagConcurrency {
       int deletedRecords = 0;
 
       Random rnd = new Random();
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrency");
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag");
       db.open("admin", "admin");
 
       try {

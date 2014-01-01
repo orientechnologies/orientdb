@@ -305,6 +305,12 @@ public enum OGlobalConfiguration {
       "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0.",
       Integer.class, 2),
 
+  SBTREEBONSAI_LINKBAG_CACHE_SIZE("sbtreebonsai.linkBagCache.size",
+      "Amount of LINKBAG collections are cached to avoid constant reloading of data", Integer.class, 100000),
+
+  SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
+      "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
+
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
