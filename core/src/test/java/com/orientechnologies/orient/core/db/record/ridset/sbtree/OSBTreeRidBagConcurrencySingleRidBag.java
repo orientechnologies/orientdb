@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.record.ridset.sbtree;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -9,6 +10,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Test
 public class OSBTreeRidBagConcurrencySingleRidBag {
+  public static final String                URL             = "plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag";
   private final AtomicInteger               positionCounter = new AtomicInteger();
   private final ConcurrentSkipListSet<ORID> ridTree         = new ConcurrentSkipListSet<ORID>();
   private ORID                              docContainerRid;
@@ -28,8 +32,26 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
   private ExecutorService                   threadExecutor  = Executors.newCachedThreadPool();
   private volatile boolean                  cont            = true;
 
+  private boolean                           firstLevelCache;
+  private boolean                           secondLevelCache;
+
+  @BeforeMethod
+  public void beforeMethod() {
+    firstLevelCache = OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean();
+    secondLevelCache = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
+
+    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
+  }
+
+  @AfterMethod
+  public void afterMethod() {
+    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(firstLevelCache);
+    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(secondLevelCache);
+  }
+
   public void testConcurrency() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -93,8 +115,9 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
 
       int addedRecords = 0;
 
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag");
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
       db.open("admin", "admin");
+      db.declareIntent(new OIntentMassiveInsert());
 
       try {
         while (cont) {
@@ -146,8 +169,9 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
       int deletedRecords = 0;
 
       Random rnd = new Random();
-      ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag");
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
       db.open("admin", "admin");
+      db.declareIntent(new OIntentMassiveInsert());
 
       try {
         while (cont) {

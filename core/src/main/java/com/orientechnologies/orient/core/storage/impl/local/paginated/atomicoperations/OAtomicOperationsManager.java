@@ -30,7 +30,7 @@ public class OAtomicOperationsManager {
   private static final ThreadLocal<OAtomicOperation>           currentOperation = new ThreadLocal<OAtomicOperation>();
   private final OWriteAheadLog                                 writeAheadLog;
   private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
-                                                                                    true, 10000);
+                                                                                    true, 300000);
 
   public OAtomicOperationsManager(OWriteAheadLog writeAheadLog) {
     this.writeAheadLog = writeAheadLog;
