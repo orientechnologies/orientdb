@@ -21,7 +21,9 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeLinkBagAtomicUpdateTest");
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/testdb/OSBTreeLinkBagAtomicUpdateTest");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -58,6 +60,47 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     rootDoc.save();
 
     db.rollback();
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    Assert.assertEquals(ridBag.size(), 0);
+  }
+
+  public void testAddTwoNewDocumentsWithCME() {
+    final ODocument cmeDoc = new ODocument();
+    cmeDoc.save();
+
+    db.begin();
+    ODocument rootDoc = new ODocument();
+
+    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    rootDoc.field("ridBag", ridBag);
+
+    rootDoc.save();
+    db.commit();
+
+    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    Assert.assertNotSame(staleCMEDoc, cmeDoc);
+    cmeDoc.field("v", "v");
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument docOne = new ODocument();
+    ODocument docTwo = new ODocument();
+
+    ridBag.add(docOne);
+    ridBag.add(docTwo);
+
+    staleCMEDoc.field("v", "v1");
+    staleCMEDoc.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
 
     rootDoc = db.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
@@ -112,7 +155,70 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     Assert.assertTrue(addedDocs.remove(iterator.next()));
     Assert.assertTrue(addedDocs.remove(iterator.next()));
+  }
 
+  public void testAddTwoAdditionalNewDocumentsWithCME() {
+    final ODocument cmeDoc = new ODocument();
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument rootDoc = new ODocument();
+
+    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    rootDoc.field("ridBag", ridBag);
+
+    ODocument docOne = new ODocument();
+    ODocument docTwo = new ODocument();
+
+    ridBag.add(docOne);
+    ridBag.add(docTwo);
+
+    rootDoc.save();
+
+    db.commit();
+
+    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    Assert.assertNotSame(staleCMEDoc, cmeDoc);
+    cmeDoc.field("v", "v");
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument docThree = new ODocument();
+    ODocument docFour = new ODocument();
+
+    ridBag.add(docThree);
+    ridBag.add(docFour);
+
+    rootDoc.save();
+
+    staleCMEDoc.field("v", "v1");
+    staleCMEDoc.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
+
+    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    Assert.assertEquals(ridBag.size(), 2);
+
+    Iterator<OIdentifiable> iterator = ridBag.iterator();
+    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
+
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
   public void testAddTwoSavedDocuments() {
@@ -176,6 +282,72 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     rootDoc.save();
 
     db.rollback();
+
+    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    Assert.assertEquals(ridBag.size(), 2);
+
+    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
+
+    Iterator<OIdentifiable> iterator = ridBag.iterator();
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+  }
+
+  public void testAddTwoAdditionalSavedDocumentsWithCME() {
+    final ODocument cmeDoc = new ODocument();
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument rootDoc = new ODocument();
+
+    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    rootDoc.field("ridBag", ridBag);
+
+    ODocument docOne = new ODocument();
+    ODocument docTwo = new ODocument();
+
+    ridBag.add(docOne);
+    ridBag.add(docTwo);
+
+    rootDoc.save();
+
+    db.commit();
+
+    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    Assert.assertNotSame(staleCMEDoc, cmeDoc);
+    cmeDoc.field("v", "v");
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument docThree = new ODocument();
+    docThree.save();
+    ODocument docFour = new ODocument();
+    docFour.save();
+
+    ridBag.add(docThree);
+    ridBag.add(docFour);
+
+    rootDoc.save();
+
+    staleCMEDoc.field("v", "vn");
+    staleCMEDoc.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
 
     Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
 
@@ -257,6 +429,99 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     docFour.save();
 
     db.rollback();
+
+    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    Iterator<OIdentifiable> iterator = ridBag.iterator();
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+    Assert.assertTrue(addedDocs.remove(iterator.next()));
+  }
+
+  public void testAddInternalDocumentsAndSubDocumentsWithCME() {
+    final ODocument cmeDoc = new ODocument();
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument rootDoc = new ODocument();
+
+    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    rootDoc.field("ridBag", ridBag);
+
+    ODocument docOne = new ODocument();
+    docOne.save();
+
+    ODocument docTwo = new ODocument();
+    docTwo.save();
+
+    ridBag.add(docOne);
+    ridBag.add(docTwo);
+
+    rootDoc.save();
+
+    db.commit();
+
+    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+    rootDoc = db.load(rootDoc.getIdentity());
+    ridBag = rootDoc.field("ridBag");
+
+    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    Assert.assertNotSame(staleCMEDoc, cmeDoc);
+    cmeDoc.field("v", "v");
+    cmeDoc.save();
+
+    db.begin();
+
+    ODocument docThree = new ODocument();
+    docThree.save();
+
+    ODocument docFour = new ODocument();
+    docFour.save();
+
+    ridBag.add(docThree);
+    ridBag.add(docFour);
+
+    rootDoc.save();
+
+    ODocument docThreeOne = new ODocument();
+    docThreeOne.save();
+
+    ODocument docThreeTwo = new ODocument();
+    docThreeTwo.save();
+
+    OSBTreeRidBag ridBagThree = new OSBTreeRidBag();
+    ridBagThree.add(docThreeOne);
+    ridBagThree.add(docThreeTwo);
+    docThree.field("ridBag", ridBagThree);
+
+    docThree.save();
+
+    ODocument docFourOne = new ODocument();
+    docFourOne.save();
+
+    ODocument docFourTwo = new ODocument();
+    docFourTwo.save();
+
+    OSBTreeRidBag ridBagFour = new OSBTreeRidBag();
+    ridBagFour.add(docFourOne);
+    ridBagFour.add(docFourTwo);
+
+    docFour.field("ridBag", ridBagFour);
+
+    docFour.save();
+
+    staleCMEDoc.field("v", "vn");
+    staleCMEDoc.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
 
     Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
@@ -486,6 +751,54 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     deleteDocsForLevel(amountOfDeletedDocsPerLevel, 0, levels, rootDoc, rnd);
     addDocsForLevel(amountOfAddedDocsAfterSavePerLevel, 0, levels, rootDoc);
     db.rollback();
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);
+  }
+
+  public void testRandomChangedInTxWithCME() {
+    final ODocument cmeDoc = new ODocument();
+    cmeDoc.save();
+
+    Random rnd = new Random();
+
+    final int levels = rnd.nextInt(2) + 1;
+    final List<Integer> amountOfAddedDocsPerLevel = new ArrayList<Integer>();
+    final List<Integer> amountOfAddedDocsAfterSavePerLevel = new ArrayList<Integer>();
+    final List<Integer> amountOfDeletedDocsPerLevel = new ArrayList<Integer>();
+    Map<LevelKey, List<OIdentifiable>> addedDocPerLevel = new HashMap<LevelKey, List<OIdentifiable>>();
+
+    for (int i = 0; i < levels; i++) {
+      amountOfAddedDocsPerLevel.add(rnd.nextInt(5) + 10);
+      amountOfAddedDocsAfterSavePerLevel.add(rnd.nextInt(5) + 5);
+      amountOfDeletedDocsPerLevel.add(rnd.nextInt(5) + 5);
+    }
+
+    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    Assert.assertNotSame(staleCMEDoc, cmeDoc);
+    cmeDoc.field("v", "v");
+    cmeDoc.save();
+
+    db.begin();
+    ODocument rootDoc = new ODocument();
+    createDocsForLevel(amountOfAddedDocsPerLevel, 0, levels, addedDocPerLevel, rootDoc);
+    db.commit();
+
+    addedDocPerLevel = new HashMap<LevelKey, List<OIdentifiable>>(addedDocPerLevel);
+
+    rootDoc = db.load(rootDoc.getIdentity());
+    db.begin();
+    deleteDocsForLevel(amountOfDeletedDocsPerLevel, 0, levels, rootDoc, rnd);
+    addDocsForLevel(amountOfAddedDocsAfterSavePerLevel, 0, levels, rootDoc);
+
+    staleCMEDoc.field("v", "vn");
+    staleCMEDoc.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
 
     rootDoc = db.load(rootDoc.getIdentity());
     assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);

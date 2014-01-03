@@ -91,8 +91,7 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
     final Object lock = treesSubsetLock(tree.getRootBucketPointer());
     synchronized (lock) {
       SBTreeBonsaiContainer container = new SBTreeBonsaiContainer(tree);
-      SBTreeBonsaiContainer oldContainer = treeCache.put(tree.getRootBucketPointer(), container);
-      assert oldContainer == null;
+      treeCache.put(tree.getRootBucketPointer(), container);
 
       container.usagesCounter++;
     }
@@ -156,10 +155,10 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
 
   private void evict() {
     if (treeCache.size() <= cacheMaxSize)
-     return;
+      return;
 
     for (OBonsaiBucketPointer rootPointer : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
-    final Object treeLock = treesSubsetLock(rootPointer);
+      final Object treeLock = treesSubsetLock(rootPointer);
       synchronized (treeLock) {
         SBTreeBonsaiContainer container = treeCache.get(rootPointer);
         if (container != null && container.usagesCounter == 0)
