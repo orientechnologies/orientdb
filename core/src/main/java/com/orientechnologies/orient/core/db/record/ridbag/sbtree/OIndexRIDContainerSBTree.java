@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import java.io.IOException;
 import java.util.ArrayList;

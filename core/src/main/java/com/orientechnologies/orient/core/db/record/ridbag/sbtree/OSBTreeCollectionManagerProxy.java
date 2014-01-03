@@ -14,16 +14,31 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
-public interface OSBTreeCollectionManager {
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree();
+public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollectionManager> implements OSBTreeCollectionManager {
+  public OSBTreeCollectionManagerProxy(ODatabaseRecord database, OSBTreeCollectionManager delegate) {
+    super(delegate, database);
+  }
 
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex);
+  @Override
+  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree() {
+    return delegate.createSBTree();
+  }
 
-  public void releaseSBTree(OBonsaiBucketPointer rootIndex);
+  @Override
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex) {
+    return delegate.loadSBTree(rootIndex);
+  }
+
+  @Override
+  public void releaseSBTree(OBonsaiBucketPointer rootIndex) {
+    delegate.releaseSBTree(rootIndex);
+  }
 }

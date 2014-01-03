@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
@@ -29,7 +28,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**

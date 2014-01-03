@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;

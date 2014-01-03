@@ -18,7 +18,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * <li>Serialized value presentation.</li>
  * </ol>
  * 
- * !!! This functionality should be removed after new sbtree based ridset will be implemented, because it doest not make any sense
+ * !!! This functionality should be removed after new sbtree based ridbag will be implemented, because it doest not make any sense
  * to keep it, it will provide performance degradation only !!!!!!
  * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>

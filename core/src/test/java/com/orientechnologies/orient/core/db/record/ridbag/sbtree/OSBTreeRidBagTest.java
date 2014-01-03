@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -701,7 +701,7 @@ public class OSBTreeRidBagTest {
     final OSBTreeRidBag ridSet = new OSBTreeRidBag();
     ridSet.addAll(expected);
 
-    doc.field("ridset", ridSet);
+    doc.field("ridbag", ridSet);
     doc.save();
     final ORID id = doc.getIdentity();
 
@@ -714,7 +714,7 @@ public class OSBTreeRidBagTest {
     doc = db.load(id);
     doc.setLazyLoad(false);
 
-    final OSBTreeRidBag loaded = doc.field("ridset");
+    final OSBTreeRidBag loaded = doc.field("ridbag");
 
     Assert.assertEquals(loaded.size(), expected.size());
     for (OIdentifiable identifiable : loaded)

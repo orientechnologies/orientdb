@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
