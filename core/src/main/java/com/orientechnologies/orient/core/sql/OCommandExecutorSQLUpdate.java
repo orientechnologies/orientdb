@@ -138,7 +138,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
             KEYWORD_WHERE);
 
     } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
-        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
+        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
+        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
     else if (additionalStatement != null && !additionalStatement.isEmpty())
