@@ -684,14 +684,12 @@ public class OServer {
         if (db.isDirectory()) {
           final File localFile = new File(db.getAbsolutePath() + "/default.odh");
           final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+          final String dbPath = db.getPath().replace('\\', '/');
+          final int lastBS =  dbPath.lastIndexOf('/',dbPath.length()-1)+1;// -1 of dbPath may be ended with slash
           if (localFile.exists()) {
-            final String dbPath = db.getPath().replace('\\', '/');
             // FOUND DB FOLDER
-            final int lastBS =  dbPath.lastIndexOf('/',dbPath.length()-1)+1;// -1 of dbPath may be ended with slash
             storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
           } else if (plocalFile.exists()) {
-            final String dbPath = db.getPath().replace('\\', '/');
-            final int lastBS =  dbPath.lastIndexOf('/',dbPath.length()-1)+1;// -1 of dbPath may be ended with slash
             storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
           } else
             // TRY TO GO IN DEEP RECURSIVELY
