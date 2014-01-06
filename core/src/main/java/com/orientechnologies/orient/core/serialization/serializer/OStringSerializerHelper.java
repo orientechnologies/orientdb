@@ -54,8 +54,8 @@ public abstract class OStringSerializerHelper {
   public static final char   SET_END                 = '>';
   public static final char   MAP_BEGIN               = '{';
   public static final char   MAP_END                 = '}';
-  public static final char   BAG_BEGIN               = '/';
-  public static final char   BAG_END                 = '~';
+  public static final char   BAG_BEGIN               = '%';
+  public static final char   BAG_END                 = ';';
   public static final char   BINARY_BEGINEND         = '_';
   public static final char   CUSTOM_TYPE             = '^';
   public static final char   ENTRY_SEPARATOR         = ':';
