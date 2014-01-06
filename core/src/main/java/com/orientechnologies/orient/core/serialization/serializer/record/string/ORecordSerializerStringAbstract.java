@@ -501,7 +501,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       } catch (NumberFormatException e) {
         return new Long(iValue);
       }
-    } else
+    } else if ("NaN".equals(iValue) || "Infinity".equals(iValue))
+      // NaN and Infinity CANNOT BE MANAGED BY BIG-DECIMAL TYPE
+      return new Double(iValue);
+    else
       return new BigDecimal(iValue);
   }
 
