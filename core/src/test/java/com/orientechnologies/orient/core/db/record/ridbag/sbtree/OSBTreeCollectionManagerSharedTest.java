@@ -48,39 +48,46 @@ public class OSBTreeCollectionManagerSharedTest {
   public void testEvictionAllReleased() {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
+    final int clusterId = databaseDocumentTx.getDefaultClusterId();
+
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree();
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(clusterId);
       createdTrees.add(tree);
-      sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 10);
 
     for (OSBTreeBonsai<OIdentifiable, Integer> tree : createdTrees) {
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(tree.getRootBucketPointer());
+      OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
       Assert.assertSame(cachedTree, tree);
-      sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree();
-    sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(clusterId);
+    sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 6);
 
     for (int i = 9; i >= 5; i--) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
     for (int i = 4; i >= 0; i--) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertNotSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -88,57 +95,68 @@ public class OSBTreeCollectionManagerSharedTest {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree();
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
       createdTrees.add(tree);
-      sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 10);
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
       Assert.assertSame(cachedTree, createdTree);
 
       if (i > 1)
-        sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+        sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree();
-    sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+    sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 8);
 
     for (int i = 9; i >= 5; i--) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
     for (int i = 4; i >= 2; i--) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertNotSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
     for (int i = 4; i >= 2; i--) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertNotSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
     for (int i = 4; i >= 2; i--) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertNotSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -146,33 +164,37 @@ public class OSBTreeCollectionManagerSharedTest {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree();
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
       createdTrees.add(tree);
-      sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 10);
 
     for (int i = 0; i < 10; i++) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
       Assert.assertSame(cachedTree, createdTree);
 
       if (i > 4)
-        sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+        sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree();
-    sbTreeCollectionManager.releaseSBTree(tree.getRootBucketPointer());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+    sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 11);
 
     for (int i = 0; i >= 10; i++) {
       OSBTreeBonsai<OIdentifiable, Integer> createdTree = createdTrees.get(i);
-      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(createdTree.getRootBucketPointer());
+      final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(createdTree.getFileId(),
+          createdTree.getRootBucketPointer());
+      OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
 
       Assert.assertNotSame(cachedTree, createdTree);
-      sbTreeCollectionManager.releaseSBTree(createdTree.getRootBucketPointer());
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 }

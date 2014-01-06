@@ -2,17 +2,17 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public class ORidBagDeleteSerializationOperation implements ORecordSerializationOperation {
-  private final OBonsaiBucketPointer     rootPointer;
+  private final OBonsaiCollectionPointer collectionPointer;
 
   private final OSBTreeCollectionManager collectionManager;
 
-  public ORidBagDeleteSerializationOperation(OBonsaiBucketPointer rootPointer) {
-    this.rootPointer = rootPointer;
+  public ORidBagDeleteSerializationOperation(OBonsaiCollectionPointer collectionPointer) {
+    this.collectionPointer = collectionPointer;
     collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
   }
 
@@ -25,14 +25,14 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
       releaseTree();
     }
 
-    collectionManager.delete(rootPointer);
+    collectionManager.delete(collectionPointer);
   }
 
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
-    return collectionManager.loadSBTree(rootPointer);
+    return collectionManager.loadSBTree(collectionPointer);
   }
 
   private void releaseTree() {
-    collectionManager.releaseSBTree(rootPointer);
+    collectionManager.releaseSBTree(collectionPointer);
   }
 }

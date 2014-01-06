@@ -82,6 +82,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordId;
   }
 
+  @Override
+  public ORecordElement getOwner() {
+    return null;
+  }
+
   public ORecord<?> getRecord() {
     return this;
   }

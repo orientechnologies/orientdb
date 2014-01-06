@@ -22,6 +22,8 @@ import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -124,6 +126,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
+        delegate.setOwner(oldDelegate.getOwner());
         oldDelegate.delete();
       } else if (delegate.size() <= bottomThreshold && !isEmbedded()) {
         ORidBagDelegate oldDelegate = delegate;
@@ -132,6 +135,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
+        delegate.setOwner(oldDelegate.getOwner());
         oldDelegate.delete();
       }
     }
@@ -180,5 +184,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   @Override
   public Class<?> getGenericClass() {
     return delegate.getGenericClass();
+  }
+
+  public void setOwner(ORecord<?> owner) {
+    delegate.setOwner(owner);
   }
 }

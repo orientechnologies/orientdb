@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
 import java.util.*;
@@ -36,9 +37,25 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
   private NavigableMap<OIdentifiable, OModifiableInteger>              entries         = new ConcurrentSkipListMap<OIdentifiable, OModifiableInteger>();
   private boolean                                                      convertToRecord = true;
   private int                                                          size            = 0;
+  private transient ORecord<?>                                         owner;
 
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners = Collections
                                                                                            .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
+
+  @Override
+  public void setOwner(ORecord<?> owner) {
+    if (this.owner != null && !this.owner.equals(owner)) {
+      throw new IllegalStateException("This data structure is owned by document " + owner
+          + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+    }
+
+    this.owner = owner;
+  }
+
+  @Override
+  public ORecord<?> getOwner() {
+    return owner;
+  }
 
   @Override
   public void addAll(Collection<OIdentifiable> values) {

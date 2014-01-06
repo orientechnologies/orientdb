@@ -23,7 +23,7 @@ import static org.testng.Assert.assertTrue;
 
 @Test
 public abstract class ORidBagTest {
-  private ODatabaseDocumentTx db;
+  protected ODatabaseDocumentTx db;
 
   @BeforeClass
   public void setUp() throws Exception {
@@ -174,7 +174,12 @@ public abstract class ORidBagTest {
       rids.add(identifiable);
 
     doc = new ODocument();
-    doc.field("ridbag", bag);
+    ORidBag otherBag = new ORidBag();
+    for (OIdentifiable id : bag)
+      otherBag.add(id);
+
+    assertEmbedded(otherBag.isEmbedded());
+    doc.field("ridbag", otherBag);
     doc.save();
 
     rid = doc.getIdentity();
@@ -262,7 +267,13 @@ public abstract class ORidBagTest {
 
     assertEmbedded(bag.isEmbedded());
     doc = new ODocument();
-    doc.field("ridbag", bag);
+
+    final ORidBag otherBag = new ORidBag();
+    for (OIdentifiable id : bag)
+      otherBag.add(id);
+
+    assertEmbedded(otherBag.isEmbedded());
+    doc.field("ridbag", otherBag);
     doc.save();
 
     rid = doc.getIdentity();
@@ -487,7 +498,11 @@ public abstract class ORidBagTest {
       rids.add(identifiable);
 
     doc = new ODocument();
-    doc.field("ridbag", bag);
+    final ORidBag otherBag = new ORidBag();
+    for (OIdentifiable id : bag)
+      otherBag.add(id);
+
+    doc.field("ridbag", otherBag);
     doc.save();
 
     rid = doc.getIdentity();
@@ -640,7 +655,14 @@ public abstract class ORidBagTest {
       rids.add(identifiable);
 
     doc = new ODocument();
-    doc.field("ridbag", bag);
+
+    final ORidBag otherBag = new ORidBag();
+    for (OIdentifiable id : bag)
+      otherBag.add(id);
+
+    assertEmbedded(otherBag.isEmbedded());
+
+    doc.field("ridbag", otherBag);
     doc.save();
 
     rid = doc.getIdentity();

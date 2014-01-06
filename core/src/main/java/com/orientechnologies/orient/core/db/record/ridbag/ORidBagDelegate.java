@@ -19,6 +19,8 @@ package com.orientechnologies.orient.core.db.record.ridbag;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 
@@ -41,4 +43,8 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
   public int deserialize(byte[] stream, int offset);
 
   public void delete();
+
+  public void setOwner(ORecord<?> owner);
+
+  public ORecord<?> getOwner();
 }

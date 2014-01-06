@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.record;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
- * Listener, which is called when record identity is changed. Identity is changed if ne record is saved or if transaction is
+ * Listener, which is called when record identity is changed. Identity is changed if new record is saved or if transaction is
  * committed and new record created inside of transaction.
  */
 public interface OIdentityChangeListener {

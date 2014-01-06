@@ -39,14 +39,14 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
@@ -57,7 +57,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpd
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
-  private OBonsaiBucketPointer                                         rootPointer;
+  private OBonsaiCollectionPointer                                     collectionPointer;
   private final OSBTreeCollectionManager                               collectionManager;
 
   private final NavigableMap<OIdentifiable, OModifiableInteger>        changedValues       = new ConcurrentSkipListMap<OIdentifiable, OModifiableInteger>();
@@ -73,36 +73,52 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
                                                                                                .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
+  private transient ORecord<?>                                         owner;
 
   public OSBTreeRidBag() {
-    rootPointer = null;
+    collectionPointer = null;
 
     collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
   }
 
+  @Override
+  public void setOwner(ORecord<?> owner) {
+    if (this.owner != null && !this.owner.equals(owner)) {
+      throw new IllegalStateException("This data structure is owned by document " + owner
+          + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+    }
+
+    this.owner = owner;
+  }
+
+  @Override
+  public ORecord<?> getOwner() {
+    return owner;
+  }
+
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
-    if (rootPointer == null)
+    if (collectionPointer == null)
       return null;
 
-    return collectionManager.loadSBTree(rootPointer);
+    return collectionManager.loadSBTree(collectionPointer);
   }
 
   private void releaseTree() {
-    if (rootPointer == null)
+    if (collectionPointer == null)
       return;
 
-    collectionManager.releaseSBTree(rootPointer);
+    collectionManager.releaseSBTree(collectionPointer);
   }
 
   public Iterator<OIdentifiable> iterator() {
     return new RIDBagIterator(new IdentityHashMap<OIdentifiable, OModifiableInteger>(newEntries), changedValues,
-        rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, autoConvertToRecord);
+        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null, autoConvertToRecord);
   }
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
     return new RIDBagIterator(new IdentityHashMap<OIdentifiable, OModifiableInteger>(newEntries), changedValues,
-        rootPointer != null ? new SBTreeMapEntryIterator(1000) : null, false);
+        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null, false);
   }
 
   @Override
@@ -264,12 +280,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int getSerializedSize() {
-    return OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE;
+    return 2 * OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override
   public int getSerializedSize(byte[] stream, int offset) {
-    return OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE;
+    return 2 * OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -298,24 +314,30 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
 
     // make sure that we really save underlying record.
-    if (rootPointer == null) {
+    if (collectionPointer == null) {
       if (context != null) {
+        final int clusterId = getHighLevelDocClusterId();
+        assert clusterId > -1;
         final OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = ODatabaseRecordThreadLocal.INSTANCE.get()
-            .getSbTreeCollectionManager().createSBTree();
+            .getSbTreeCollectionManager().createSBTree(clusterId);
         try {
-          rootPointer = treeBonsai.getRootBucketPointer();
+          collectionPointer = new OBonsaiCollectionPointer(treeBonsai.getFileId(), treeBonsai.getRootBucketPointer());
         } finally {
           releaseTree();
         }
       }
     }
 
-    OBonsaiBucketPointer rootPointer;
-    if (this.rootPointer != null)
-      rootPointer = this.rootPointer;
+    OBonsaiCollectionPointer collectionPointer;
+    if (this.collectionPointer != null)
+      collectionPointer = this.collectionPointer;
     else
-      rootPointer = new OBonsaiBucketPointer(-1, -1);
+      collectionPointer = new OBonsaiCollectionPointer(-1, new OBonsaiBucketPointer(-1, -1));
 
+    OLongSerializer.INSTANCE.serialize(collectionPointer.getFileId(), stream, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
     OLongSerializer.INSTANCE.serialize(rootPointer.getPageIndex(), stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
@@ -326,18 +348,30 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     offset += OIntegerSerializer.INT_SIZE;
 
     if (context != null)
-      context.push(new ORidBagUpdateSerializationOperation(changedValues, rootPointer));
+      context.push(new ORidBagUpdateSerializationOperation(changedValues, collectionPointer));
 
     return offset;
+  }
+
+  private int getHighLevelDocClusterId() {
+    ORecordElement owner = this.owner;
+    while (owner != null && owner.getOwner() != null) {
+      owner = owner.getOwner();
+    }
+
+    if (owner instanceof OIdentifiable)
+      return ((OIdentifiable) owner).getIdentity().getClusterId();
+
+    return -1;
   }
 
   @Override
   public void delete() {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null && rootPointer != null)
-      context.push(new ORidBagDeleteSerializationOperation(rootPointer));
+    if (context != null && collectionPointer != null)
+      context.push(new ORidBagDeleteSerializationOperation(collectionPointer));
 
-    rootPointer = null;
+    collectionPointer = null;
     changedValues.clear();
     newEntries.clear();
     size = 0;
@@ -346,6 +380,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int deserialize(byte[] stream, int offset) {
+    final long fileId = OLongSerializer.INSTANCE.deserialize(stream, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
     final long pageIndex = OLongSerializer.INSTANCE.deserialize(stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
@@ -355,7 +392,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     final int size = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
+    collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
     this.size = size;
 
     return offset;

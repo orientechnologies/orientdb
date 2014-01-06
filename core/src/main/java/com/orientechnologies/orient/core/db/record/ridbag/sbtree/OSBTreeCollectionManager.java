@@ -21,11 +21,11 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketP
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public interface OSBTreeCollectionManager {
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree();
+  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId);
 
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex);
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer);
 
-  public void releaseSBTree(OBonsaiBucketPointer rootIndex);
+  public void releaseSBTree(OBonsaiCollectionPointer collectionPointer);
 
-  public void delete(OBonsaiBucketPointer rootIndex);
+  public void delete(OBonsaiCollectionPointer collectionPointer);
 }

@@ -19,7 +19,6 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollectionManager> implements OSBTreeCollectionManager {
@@ -28,22 +27,22 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree() {
-    return delegate.createSBTree();
+  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId) {
+    return delegate.createSBTree(clusterId);
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex) {
-    return delegate.loadSBTree(rootIndex);
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
+    return delegate.loadSBTree(collectionPointer);
   }
 
   @Override
-  public void releaseSBTree(OBonsaiBucketPointer rootIndex) {
-    delegate.releaseSBTree(rootIndex);
+  public void releaseSBTree(OBonsaiCollectionPointer collectionPointer) {
+    delegate.releaseSBTree(collectionPointer);
   }
 
   @Override
-  public void delete(OBonsaiBucketPointer rootIndex) {
-    delegate.delete(rootIndex);
+  public void delete(OBonsaiCollectionPointer collectionPointer) {
+    delegate.delete(collectionPointer);
   }
 }

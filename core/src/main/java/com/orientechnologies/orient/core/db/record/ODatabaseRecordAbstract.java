@@ -772,9 +772,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
       final boolean wasNew = iForceCreate || rid.isNew();
-      if (wasNew && rid.clusterId == -1 && iClusterName != null)
+      if (wasNew && rid.clusterId == -1)
         // ASSIGN THE CLUSTER ID
-        rid.clusterId = getClusterIdByName(iClusterName);
+        rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
       byte[] stream;
       final OStorageOperationResult<ORecordVersion> operationResult;

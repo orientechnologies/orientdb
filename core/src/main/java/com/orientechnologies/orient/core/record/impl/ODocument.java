@@ -742,12 +742,30 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         iFieldType = prop.getType();
     }
 
-    if (iPropertyValue != null)
+    if (oldValue instanceof ORidBag) {
+      final ORidBag ridBag = (ORidBag) oldValue;
+      ridBag.setOwner(null);
+    } else if (oldValue instanceof ODocument) {
+      final ODocument doc = (ODocument) oldValue;
+      doc.removeOwner(this);
+    }
+
+    if (iPropertyValue != null) {
       // CHECK FOR CONVERSION
-      if (iFieldType != null)
+      if (iFieldType != null) {
         iPropertyValue = ODocumentHelper.convertField(this, iFieldName, iFieldType.getDefaultJavaType(), iPropertyValue);
-      else if (iPropertyValue instanceof Enum)
+        if (iFieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          embeddedDocument.addOwner(this);
+        }
+      } else if (iPropertyValue instanceof Enum)
         iPropertyValue = iPropertyValue.toString();
+
+      if (iPropertyValue instanceof ORidBag) {
+        final ORidBag ridBag = (ORidBag) iPropertyValue;
+        ridBag.setOwner(this);
+      }
+    }
 
     removeCollectionChangeListener(iFieldName);
     removeCollectionTimeLine(iFieldName);
@@ -1005,8 +1023,34 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument addOwner(final ORecordElement iOwner) {
     if (_owners == null)
       _owners = new ArrayList<WeakReference<ORecordElement>>();
-    this._owners.add(new WeakReference<ORecordElement>(iOwner));
+
+    boolean found = false;
+    for (WeakReference<ORecordElement> _owner : _owners) {
+      final ORecordElement e = _owner.get();
+      if (e == iOwner) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      this._owners.add(new WeakReference<ORecordElement>(iOwner));
+
     return this;
+  }
+
+  @Override
+  public ORecordElement getOwner() {
+    if (_owners == null)
+      return null;
+
+    for (WeakReference<ORecordElement> _owner : _owners) {
+      final ORecordElement e = _owner.get();
+      if (e != null)
+        return e;
+    }
+
+    return null;
   }
 
   public Iterable<ORecordElement> getOwners() {

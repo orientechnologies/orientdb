@@ -19,17 +19,14 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.io.File;
+import java.util.*;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagTest;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.fs.FileClassicTest;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -65,6 +62,71 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   public void afterMethod() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
+  }
+
+  public void testRidBagClusterDistribution() {
+    final int clusterIdOne = db.addCluster("clusterOne", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdTwo = db.addCluster("clusterTwo", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdThree = db.addCluster("clusterThree", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdFour = db.addCluster("clusterFour", OStorage.CLUSTER_TYPE.PHYSICAL);
+
+    ODocument docClusterOne = new ODocument();
+    ORidBag ridBagClusterOne = new ORidBag();
+    docClusterOne.field("ridBag", ridBagClusterOne);
+    docClusterOne.save("clusterOne");
+
+    ODocument docClusterTwo = new ODocument();
+
+    ODocument embeddedDocTwo = new ODocument();
+    final ORidBag ridBagClusterTwo = new ORidBag();
+
+    embeddedDocTwo.field("ridBag", ridBagClusterTwo);
+    List<ODocument> elist = new ArrayList<ODocument>();
+    elist.add(embeddedDocTwo);
+
+    docClusterTwo.field("elist", elist, OType.EMBEDDEDLIST);
+    docClusterTwo.save("clusterTwo");
+
+    ODocument docClusterThree = new ODocument();
+
+    ODocument embeddedDocThree = new ODocument();
+    final ORidBag ridBagClusterThree = new ORidBag();
+
+    embeddedDocThree.field("ridBag", ridBagClusterThree);
+    Set<ODocument> eset = new HashSet<ODocument>();
+    eset.add(embeddedDocThree);
+
+    docClusterThree.field("eset", eset, OType.EMBEDDEDSET);
+    docClusterThree.save("clusterThree");
+
+    ODocument docClusterFour = new ODocument();
+
+    ODocument embeddedDocFour = new ODocument();
+    final ORidBag ridBagClusterFour = new ORidBag();
+
+    embeddedDocFour.field("ridBag", ridBagClusterFour);
+    Map<String, ODocument> emap = new HashMap<String, ODocument>();
+    emap.put("l", embeddedDocFour);
+
+    docClusterFour.field("emap", emap, OType.EMBEDDEDMAP);
+    docClusterFour.save("clusterFour");
+
+    final String directory = db.getStorage().getConfiguration().getDirectory();
+    final File ridBagOneFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagOneFile.exists());
+
+    final File ridBagTwoFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdTwo
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagTwoFile.exists());
+
+    final File ridBagThreeFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdThree
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagThreeFile.exists());
+
+    final File ridBagFourFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagFourFile.exists());
   }
 
   @Override

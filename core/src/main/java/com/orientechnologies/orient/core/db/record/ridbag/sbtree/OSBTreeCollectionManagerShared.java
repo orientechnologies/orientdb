@@ -16,15 +16,12 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.io.IOException;
-
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -34,21 +31,20 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollectionManager {
-  private final int                                                                  evictionThreshold;
-  private final int                                                                  cacheMaxSize;
+  private final int                                                                      evictionThreshold;
+  private final int                                                                      cacheMaxSize;
 
-  private static final String                                                        FILE_NAME         = "sbtreeridbag";
+  public static final String                                                             FILE_NAME_PREFIX  = "sbtreeridbag_";
 
-  private final int                                                                  shift;
-  private final int                                                                  mask;
-  private final Object[]                                                             locks;
-  private volatile long                                                              fileId            = -1;
+  private final int                                                                      shift;
+  private final int                                                                      mask;
+  private final Object[]                                                                 locks;
 
-  public final String                                                                DEFAULT_EXTENSION = ".sbc";
-  private final ConcurrentLinkedHashMap<OBonsaiBucketPointer, SBTreeBonsaiContainer> treeCache         = new ConcurrentLinkedHashMap.Builder<OBonsaiBucketPointer, SBTreeBonsaiContainer>()
-                                                                                                           .maximumWeightedCapacity(
-                                                                                                               Long.MAX_VALUE)
-                                                                                                           .build();
+  public static final String                                                             DEFAULT_EXTENSION = ".sbc";
+  private final ConcurrentLinkedHashMap<OBonsaiCollectionPointer, SBTreeBonsaiContainer> treeCache         = new ConcurrentLinkedHashMap.Builder<OBonsaiCollectionPointer, SBTreeBonsaiContainer>()
+                                                                                                               .maximumWeightedCapacity(
+                                                                                                                   Long.MAX_VALUE)
+                                                                                                               .build();
 
   public OSBTreeCollectionManagerShared() {
     this(OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger(),
@@ -80,57 +76,45 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree() {
+  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId) {
     OSBTreeBonsai<OIdentifiable, Integer> tree = new OSBTreeBonsai<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
 
-    tree.create(FILE_NAME, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE,
+    tree.create(FILE_NAME_PREFIX + clusterId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
-    final Object lock = treesSubsetLock(tree.getRootBucketPointer());
+    final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer());
+    final Object lock = treesSubsetLock(collectionPointer);
     synchronized (lock) {
       SBTreeBonsaiContainer container = new SBTreeBonsaiContainer(tree);
-      treeCache.put(tree.getRootBucketPointer(), container);
+      treeCache.put(collectionPointer, container);
 
       container.usagesCounter++;
     }
-
-    if (fileId == -1)
-      fileId = tree.getFileId();
-
     return tree;
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex) {
-    try {
-      if (fileId == -1) {
-        OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-            .getUnderlying();
-        fileId = storage.getDiskCache().openFile(FILE_NAME + DEFAULT_EXTENSION);
-      }
-    } catch (IOException e) {
-      throw new OStorageException("Can not open file with name '" + FILE_NAME + DEFAULT_EXTENSION + "'", e);
-    }
-
-    final Object lock = treesSubsetLock(rootIndex);
+  public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer) {
+    final Object lock = treesSubsetLock(collectionPointer);
 
     OSBTreeBonsai<OIdentifiable, Integer> tree;
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.remove(rootIndex);
+      SBTreeBonsaiContainer container = treeCache.remove(collectionPointer);
       if (container != null) {
         container.usagesCounter++;
         tree = container.tree;
       } else {
         tree = new OSBTreeBonsai<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
-        tree.load(fileId, rootIndex, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+        tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer(),
+            (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
-        assert tree.getRootBucketPointer().equals(rootIndex);
+        assert tree.getRootBucketPointer().equals(collectionPointer.getRootPointer());
 
         container = new SBTreeBonsaiContainer(tree);
         container.usagesCounter++;
       }
 
-      treeCache.put(rootIndex, container);
+      treeCache.put(collectionPointer, container);
     }
 
     evict();
@@ -139,10 +123,10 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
   }
 
   @Override
-  public void releaseSBTree(OBonsaiBucketPointer rootIndex) {
-    final Object lock = treesSubsetLock(rootIndex);
+  public void releaseSBTree(OBonsaiCollectionPointer collectionPointer) {
+    final Object lock = treesSubsetLock(collectionPointer);
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.get(rootIndex);
+      SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
       assert container != null;
       container.usagesCounter--;
       assert container.usagesCounter >= 0;
@@ -152,16 +136,16 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
   }
 
   @Override
-  public void delete(OBonsaiBucketPointer rootIndex) {
-    final Object lock = treesSubsetLock(rootIndex);
+  public void delete(OBonsaiCollectionPointer collectionPointer) {
+    final Object lock = treesSubsetLock(collectionPointer);
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.get(rootIndex);
+      SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
       assert container != null;
 
       if (container.usagesCounter != 0)
         throw new IllegalStateException("Can not delete SBTreeBonsai instance because it is used in other thread.");
 
-      treeCache.remove(rootIndex);
+      treeCache.remove(collectionPointer);
     }
   }
 
@@ -169,12 +153,12 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
     if (treeCache.size() <= cacheMaxSize)
       return;
 
-    for (OBonsaiBucketPointer rootPointer : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
-      final Object treeLock = treesSubsetLock(rootPointer);
+    for (OBonsaiCollectionPointer collectionPointer : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
+      final Object treeLock = treesSubsetLock(collectionPointer);
       synchronized (treeLock) {
-        SBTreeBonsaiContainer container = treeCache.get(rootPointer);
+        SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
         if (container != null && container.usagesCounter == 0)
-          treeCache.remove(rootPointer);
+          treeCache.remove(collectionPointer);
       }
     }
   }
@@ -188,8 +172,8 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
     return treeCache.size();
   }
 
-  private Object treesSubsetLock(OBonsaiBucketPointer rootIndex) {
-    final int hashCode = rootIndex.hashCode();
+  private Object treesSubsetLock(OBonsaiCollectionPointer collectionPointer) {
+    final int hashCode = collectionPointer.hashCode();
     final int index = (hashCode >>> shift) & mask;
 
     return locks[index];

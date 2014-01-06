@@ -241,8 +241,8 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
   public int getSize();
 
   /**
-   * Adds identity change listener, which is called when record identity is changed. Identity is changed if ne record is saved or if
-   * transaction is committed and new record created inside of transaction.
+   * Adds identity change listener, which is called when record identity is changed. Identity is changed if new record is saved or
+   * if transaction is committed and new record created inside of transaction.
    * 
    * @param identityChangeListener
    *          Listener instance.
@@ -250,12 +250,11 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
   public void addIdentityChangeListener(OIdentityChangeListener identityChangeListener);
 
   /**
-   * Removes identity change listener, which is called when record identity is changed. Identity is changed if ne record is saved or
-   * if transaction is committed and new record created inside of transaction.
+   * Removes identity change listener, which is called when record identity is changed. Identity is changed if new record is saved
+   * or if transaction is committed and new record created inside of transaction.
    * 
    * @param identityChangeListener
    *          Listener instance.
    */
-
   public void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener);
 }

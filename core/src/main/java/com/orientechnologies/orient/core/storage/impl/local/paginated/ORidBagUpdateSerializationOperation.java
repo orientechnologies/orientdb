@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -32,14 +33,14 @@ import java.util.NavigableMap;
 public class ORidBagUpdateSerializationOperation implements ORecordSerializationOperation {
   private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues;
 
-  private final OBonsaiBucketPointer                            rootPointer;
+  private final OBonsaiCollectionPointer                        collectionPointer;
 
   private final OSBTreeCollectionManager                        collectionManager;
 
   public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, OModifiableInteger> changedValues,
-      OBonsaiBucketPointer rootPointer) {
+      OBonsaiCollectionPointer collectionPointer) {
     this.changedValues = changedValues;
-    this.rootPointer = rootPointer;
+    this.collectionPointer = collectionPointer;
 
     collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
   }
@@ -67,11 +68,11 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
   }
 
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
-    return collectionManager.loadSBTree(rootPointer);
+    return collectionManager.loadSBTree(collectionPointer);
   }
 
   private void releaseTree() {
-    collectionManager.releaseSBTree(rootPointer);
+    collectionManager.releaseSBTree(collectionPointer);
   }
 
 }
