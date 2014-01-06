@@ -1,29 +1,31 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.*;
 
 @Test
-public class OSBTreeLinkBagAtomicUpdateTest {
+public class ORidBagAtomicUpdateTest {
   private ODatabaseDocumentTx db;
+  private int                 topThreshold;
+  private int                 bottomThreshold;
 
   @BeforeClass
   public void setUp() throws Exception {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
 
-    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/testdb/OSBTreeLinkBagAtomicUpdateTest");
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/testdb/ORidBagAtomicUpdateTest");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -39,11 +41,26 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     db.drop();
   }
 
+  @BeforeMethod
+  public void beforeMethod() {
+    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+  }
+
+  @AfterMethod
+  public void afterMethod() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
+  }
+
   public void testAddTwoNewDocuments() {
     db.begin();
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     rootDoc.save();
@@ -74,7 +91,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     db.begin();
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     rootDoc.save();
@@ -113,7 +130,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -165,7 +182,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -228,7 +245,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -251,7 +268,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -305,7 +322,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -368,7 +385,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -407,7 +424,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     ODocument docThreeTwo = new ODocument();
     docThreeTwo.save();
 
-    OSBTreeRidBag ridBagThree = new OSBTreeRidBag();
+    ORidBag ridBagThree = new ORidBag();
     ridBagThree.add(docThreeOne);
     ridBagThree.add(docThreeTwo);
     docThree.field("ridBag", ridBagThree);
@@ -420,7 +437,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     ODocument docFourTwo = new ODocument();
     docFourTwo.save();
 
-    OSBTreeRidBag ridBagFour = new OSBTreeRidBag();
+    ORidBag ridBagFour = new ORidBag();
     ridBagFour.add(docFourOne);
     ridBagFour.add(docFourTwo);
 
@@ -449,7 +466,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ODocument docOne = new ODocument();
@@ -493,7 +510,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     ODocument docThreeTwo = new ODocument();
     docThreeTwo.save();
 
-    OSBTreeRidBag ridBagThree = new OSBTreeRidBag();
+    ORidBag ridBagThree = new ORidBag();
     ridBagThree.add(docThreeOne);
     ridBagThree.add(docThreeTwo);
     docThree.field("ridBag", ridBagThree);
@@ -506,7 +523,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     ODocument docFourTwo = new ODocument();
     docFourTwo.save();
 
-    OSBTreeRidBag ridBagFour = new OSBTreeRidBag();
+    ORidBag ridBagFour = new ORidBag();
     ridBagFour.add(docFourOne);
     ridBagFour.add(docFourTwo);
 
@@ -540,13 +557,13 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     rootDoc.save();
 
     ODocument staleRooDoc = db.load(rootDoc.getIdentity());
-    OSBTreeRidBag staleRidBag = staleRooDoc.field("ridBag");
+    ORidBag staleRidBag = staleRooDoc.field("ridBag");
 
     staleRidBag.add(docOne);
     staleRidBag.add(docTwo);
@@ -577,7 +594,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     ODocument rootDoc = new ODocument();
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     ridBag.add(docOne);
@@ -586,7 +603,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     rootDoc.save();
 
     ODocument staleRooDoc = db.load(rootDoc.getIdentity());
-    OSBTreeRidBag staleRidBag = staleRooDoc.field("ridBag");
+    ORidBag staleRidBag = staleRooDoc.field("ridBag");
 
     Iterator<OIdentifiable> iterator = staleRidBag.iterator();
     iterator.next();
@@ -615,7 +632,10 @@ public class OSBTreeLinkBagAtomicUpdateTest {
   }
 
   public void testRandomModificationsNotTx() {
-    final Random rnd = new Random();
+    final long seed = System.currentTimeMillis();
+    System.out.println("testRandomModificationsNotTx seed: " + seed);
+
+    final Random rnd = new Random(seed);
     final int iterations = 20;
     for (int n = 0; n < iterations; n++) {
       final int amountOfAddedDocs = rnd.nextInt(10) + 10;
@@ -625,7 +645,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
       List<OIdentifiable> addedDocuments = new ArrayList<OIdentifiable>();
 
       ODocument document = new ODocument();
-      OSBTreeRidBag ridBag = new OSBTreeRidBag();
+      ORidBag ridBag = new ORidBag();
       document.field("ridBag", ridBag);
 
       for (int i = 0; i < amountOfAddedDocs; i++) {
@@ -638,14 +658,14 @@ public class OSBTreeLinkBagAtomicUpdateTest {
       document.save();
 
       ODocument staleDocument = db.load(document.getIdentity());
-      OSBTreeRidBag staleRidBag = staleDocument.field("ridBag");
+      ORidBag staleRidBag = staleDocument.field("ridBag");
 
       Assert.assertNotSame(document, staleDocument);
       Assert.assertNotSame(ridBag, staleRidBag);
 
       int k = 0;
       Iterator<OIdentifiable> iterator = staleRidBag.iterator();
-      while (k < amountOfDeletedDocs) {
+      while (k < amountOfDeletedDocs && iterator.hasNext()) {
         iterator.next();
         if (rnd.nextBoolean()) {
           iterator.remove();
@@ -687,7 +707,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
   public void testVisibility() {
     ODocument document = new ODocument();
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
 
     document.field("ridBag", ridBag);
     ODocument docOne = new ODocument();
@@ -706,8 +726,8 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     Assert.assertNotSame(copyOne, copyTwo);
 
-    OSBTreeRidBag ridBagOne = copyOne.field("ridBag");
-    OSBTreeRidBag ridBagTwo = copyTwo.field("ridBag");
+    ORidBag ridBagOne = copyOne.field("ridBag");
+    ORidBag ridBagTwo = copyTwo.field("ridBag");
 
     ODocument docTree = new ODocument();
     docTree.save();
@@ -804,6 +824,363 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);
   }
 
+  public void testFromEmbeddedToSBTreeRollback() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    db.begin();
+
+    for (int i = 0; i < 3; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save();
+
+    db.commit();
+
+    Assert.assertEquals(docsToAdd.size(), 3);
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    db.begin();
+    for (int i = 0; i < 3; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    document.save();
+    db.rollback();
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(ridBag.isEmbedded());
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(docsToAdd.remove(identifiable));
+
+    Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  public void testFromEmbeddedToSBTreeTXWithCME() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
+
+    ODocument cmeDocument = new ODocument();
+    cmeDocument.field("v", "v1");
+    cmeDocument.save();
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    db.begin();
+
+    for (int i = 0; i < 3; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save();
+
+    db.commit();
+
+    Assert.assertEquals(docsToAdd.size(), 3);
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    ODocument staleDocument = db.load(cmeDocument.getIdentity());
+    Assert.assertNotSame(staleDocument, cmeDocument);
+
+    cmeDocument.field("v", "v234");
+    cmeDocument.save();
+
+    db.begin();
+    for (int i = 0; i < 3; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    document.save();
+    staleDocument.field("v", "ver");
+    staleDocument.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(ridBag.isEmbedded());
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(docsToAdd.remove(identifiable));
+
+    Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  public void testFromEmbeddedToSBTreeWithCME() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    for (int i = 0; i < 3; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save();
+
+    Assert.assertEquals(docsToAdd.size(), 3);
+    Assert.assertTrue(ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    ODocument cmeDocument = db.load(document.getIdentity());
+    Assert.assertNotSame(cmeDocument, document);
+    cmeDocument.field("v", "v1");
+    cmeDocument.save();
+
+    for (int i = 0; i < 3; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    try {
+      document.save();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(ridBag.isEmbedded());
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(docsToAdd.remove(identifiable));
+
+    Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  public void testFromSBTreeToEmbeddedRollback() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    db.begin();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save();
+
+    db.commit();
+
+    Assert.assertEquals(docsToAdd.size(), 10);
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    db.begin();
+    for (int i = 0; i < 4; i++) {
+      OIdentifiable docToRemove = docsToAdd.get(i);
+      ridBag.remove(docToRemove);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    document.save();
+    db.rollback();
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(docsToAdd.remove(identifiable));
+
+    Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  public void testFromSBTreeToEmbeddedTxWithCME() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
+
+    ODocument cmeDoc = new ODocument();
+    cmeDoc.save();
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    db.begin();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save();
+
+    db.commit();
+
+    Assert.assertEquals(docsToAdd.size(), 10);
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    ODocument staleDoc = db.load(cmeDoc.getIdentity());
+    Assert.assertNotSame(staleDoc, cmeDoc);
+
+    cmeDoc.field("v", "sd");
+    cmeDoc.save();
+
+    db.begin();
+    for (int i = 0; i < 4; i++) {
+      OIdentifiable docToRemove = docsToAdd.get(i);
+      ridBag.remove(docToRemove);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    document.save();
+
+    staleDoc.field("v", "d");
+    staleDoc.save();
+
+    try {
+      db.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(docsToAdd.remove(identifiable));
+
+    Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  public void testFromSBTreeToEmbeddedWithCME() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save();
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save();
+
+    Assert.assertEquals(docsToAdd.size(), 10);
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    ODocument cmeDoc = db.load(document.getIdentity());
+    cmeDoc.field("v", "v1");
+    cmeDoc.save();
+
+    for (int i = 0; i < 4; i++) {
+      OIdentifiable docToRemove = docsToAdd.get(i);
+      ridBag.remove(docToRemove);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    try {
+      document.save();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+    }
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(docsToAdd.remove(identifiable));
+
+    Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
   private void createDocsForLevel(final List<Integer> amountOfAddedDocsPerLevel, int level, int levels,
       Map<LevelKey, List<OIdentifiable>> addedDocPerLevel, ODocument rootDoc) {
 
@@ -812,7 +1189,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>();
     addedDocPerLevel.put(new LevelKey(rootDoc.getIdentity(), level), addedDocs);
 
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     for (int i = 0; i < docs; i++) {
@@ -830,7 +1207,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
   }
 
   private void deleteDocsForLevel(List<Integer> amountOfDeletedDocsPerLevel, int level, int levels, ODocument rootDoc, Random rnd) {
-    OSBTreeRidBag ridBag = rootDoc.field("ridBag");
+    ORidBag ridBag = rootDoc.field("ridBag");
     for (OIdentifiable identifiable : ridBag) {
       ODocument doc = identifiable.getRecord();
       if (level + 1 < levels)
@@ -841,7 +1218,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
 
     int k = 0;
     Iterator<OIdentifiable> iterator = ridBag.iterator();
-    while (k < docs) {
+    while (k < docs && iterator.hasNext()) {
       iterator.next();
 
       if (rnd.nextBoolean()) {
@@ -857,7 +1234,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
   }
 
   private void addDocsForLevel(List<Integer> amountOfAddedDocsAfterSavePerLevel, int level, int levels, ODocument rootDoc) {
-    OSBTreeRidBag ridBag = rootDoc.field("ridBag");
+    ORidBag ridBag = rootDoc.field("ridBag");
 
     for (OIdentifiable identifiable : ridBag) {
       ODocument doc = identifiable.getRecord();
@@ -877,7 +1254,7 @@ public class OSBTreeLinkBagAtomicUpdateTest {
   }
 
   private void assertDocsAfterRollback(int level, int levels, Map<LevelKey, List<OIdentifiable>> addedDocPerLevel, ODocument rootDoc) {
-    OSBTreeRidBag ridBag = rootDoc.field("ridBag");
+    ORidBag ridBag = rootDoc.field("ridBag");
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(addedDocPerLevel.get(new LevelKey(rootDoc.getIdentity(), level)));
 
     Iterator<OIdentifiable> iterator = ridBag.iterator();

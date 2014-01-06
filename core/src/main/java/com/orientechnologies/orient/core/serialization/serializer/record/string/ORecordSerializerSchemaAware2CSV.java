@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -157,7 +158,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             type = OType.DOUBLE;
           else if (fieldValue instanceof BigDecimal)
             type = OType.DECIMAL;
-          else if (fieldValue instanceof OSBTreeRidBag)
+          else if (fieldValue instanceof ORidBag)
             type = OType.LINKBAG;
         }
 

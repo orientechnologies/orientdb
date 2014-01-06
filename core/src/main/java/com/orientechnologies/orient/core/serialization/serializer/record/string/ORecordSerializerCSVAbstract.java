@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -155,7 +156,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case LINKBAG:
       final String value = iValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN ? iValue.substring(1, iValue.length() - 1)
           : iValue;
-      return OSBTreeRidBag.fromStream(value);
+      return ORidBag.fromStream(value);
     default:
       return fieldTypeFromStream((ODocument) iSourceRecord, iType, iValue);
     }
@@ -452,7 +453,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     case LINKBAG: {
       iOutput.append(OStringSerializerHelper.BAG_BEGIN);
-      ((OSBTreeRidBag) iValue).toStream(iOutput);
+      ((ORidBag) iValue).toStream(iOutput);
       iOutput.append(OStringSerializerHelper.BAG_END);
       break;
     }

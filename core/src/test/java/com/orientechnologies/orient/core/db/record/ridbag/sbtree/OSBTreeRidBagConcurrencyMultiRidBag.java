@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -41,12 +42,20 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
   private int                                                        linkbagCacheSize;
   private int                                                        evictionSize;
 
+  private int                                                        topThreshold;
+  private int                                                        bottomThreshold;
+
   @BeforeMethod
   public void beforeMethod() {
     firstLevelCache = OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean();
     secondLevelCache = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
     linkbagCacheSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
     evictionSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger();
+    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
     OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
     OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
@@ -60,6 +69,8 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
     OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(secondLevelCache);
     OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(linkbagCacheSize);
     OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(evictionSize);
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
   }
 
   public void testConcurrency() throws Exception {
@@ -72,7 +83,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
     db.create();
     for (int i = 0; i < 100; i++) {
       ODocument document = new ODocument();
-      OSBTreeRidBag ridBag = new OSBTreeRidBag();
+      ORidBag ridBag = new ORidBag();
       document.field("ridBag", ridBag);
 
       document.save();
@@ -114,7 +125,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
 
       final ConcurrentSkipListSet<ORID> ridTree = ridTreePerDocument.get(rid);
 
-      final OSBTreeRidBag ridBag = document.field("ridBag");
+      final ORidBag ridBag = document.field("ridBag");
 
       for (OIdentifiable identifiable : ridBag)
         Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
@@ -137,7 +148,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
 
       try {
         ODocument document = new ODocument();
-        OSBTreeRidBag ridBag = new OSBTreeRidBag();
+        ORidBag ridBag = new ORidBag();
         document.field("ridBag", ridBag);
 
         document.save();
@@ -193,7 +204,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
             ODocument document = db.load(orid);
             document.setLazyLoad(false);
 
-            OSBTreeRidBag ridBag = document.field("ridBag");
+            ORidBag ridBag = document.field("ridBag");
             for (ORID rid : ridsToAdd)
               ridBag.add(rid);
 
@@ -249,7 +260,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
           while (true) {
             ODocument document = db.load(orid);
             document.setLazyLoad(false);
-            OSBTreeRidBag ridBag = document.field("ridBag");
+            ORidBag ridBag = document.field("ridBag");
             Iterator<OIdentifiable> iterator = ridBag.iterator();
 
             List<ORID> ridsToDelete = new ArrayList<ORID>();

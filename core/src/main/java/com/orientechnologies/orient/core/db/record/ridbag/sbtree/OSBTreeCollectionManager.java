@@ -26,4 +26,6 @@ public interface OSBTreeCollectionManager {
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiBucketPointer rootIndex);
 
   public void releaseSBTree(OBonsaiBucketPointer rootIndex);
+
+  public void delete(OBonsaiBucketPointer rootIndex);
 }

@@ -28,6 +28,7 @@ import java.util.Set;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -88,7 +89,7 @@ public enum OType {
   },
   DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }) {
   },
-  LINKBAG("LinkBag", 22, new Class<?>[] { OSBTreeRidBag.class }, new Class<?>[] { OSBTreeRidBag.class });
+  LINKBAG("LinkBag", 22, new Class<?>[] { ORidBag.class }, new Class<?>[] { ORidBag.class });
 
   protected static final OType[] TYPES = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATETIME, DATE,
       BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL,

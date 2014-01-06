@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
@@ -35,10 +36,18 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
   private boolean                           firstLevelCache;
   private boolean                           secondLevelCache;
 
+  private int                               topThreshold;
+  private int                               bottomThreshold;
+
   @BeforeMethod
   public void beforeMethod() {
     firstLevelCache = OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean();
     secondLevelCache = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
+    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
     OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
     OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
@@ -48,6 +57,8 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
   public void afterMethod() {
     OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(firstLevelCache);
     OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(secondLevelCache);
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
   }
 
   public void testConcurrency() throws Exception {
@@ -61,7 +72,9 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
     db.declareIntent(new OIntentMassiveInsert());
 
     ODocument document = new ODocument();
-    OSBTreeRidBag ridBag = new OSBTreeRidBag();
+    ORidBag ridBag = new ORidBag();
+    ridBag.setAutoConvertToRecord(false);
+
     document.field("ridBag", ridBag);
     for (int i = 0; i < 100; i++) {
       final ORID ridToAdd = new ORecordId(0, OClusterPositionFactory.INSTANCE.valueOf(positionCounter.incrementAndGet()));
@@ -130,7 +143,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
             ODocument document = db.load(docContainerRid);
             document.setLazyLoad(false);
 
-            OSBTreeRidBag ridBag = document.field("ridBag");
+            ORidBag ridBag = document.field("ridBag");
             for (ORID rid : ridsToAdd)
               ridBag.add(rid);
 
@@ -178,7 +191,7 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
           while (true) {
             ODocument document = db.load(docContainerRid);
             document.setLazyLoad(false);
-            OSBTreeRidBag ridBag = document.field("ridBag");
+            ORidBag ridBag = document.field("ridBag");
             Iterator<OIdentifiable> iterator = ridBag.iterator();
 
             List<ORID> ridsToDelete = new ArrayList<ORID>();

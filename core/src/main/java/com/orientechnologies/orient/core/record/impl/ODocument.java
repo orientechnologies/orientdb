@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -1057,6 +1057,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   @Override
   public void onBeforeIdentityChanged(final ORID iRID) {
+    super.onBeforeIdentityChanged(iRID);
     if (_owners != null) {
       final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
@@ -1412,7 +1413,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       fieldType = prop != null ? prop.getType() : null;
     }
 
-    if (fieldValue instanceof OSBTreeRidBag)
+    if (fieldValue instanceof ORidBag)
       fieldType = OType.LINKBAG;
 
     if (fieldType == null

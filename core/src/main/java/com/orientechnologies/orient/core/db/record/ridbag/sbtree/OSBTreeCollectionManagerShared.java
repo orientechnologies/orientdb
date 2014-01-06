@@ -151,6 +151,20 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
     evict();
   }
 
+  @Override
+  public void delete(OBonsaiBucketPointer rootIndex) {
+    final Object lock = treesSubsetLock(rootIndex);
+    synchronized (lock) {
+      SBTreeBonsaiContainer container = treeCache.get(rootIndex);
+      assert container != null;
+
+      if (container.usagesCounter != 0)
+        throw new IllegalStateException("Can not delete SBTreeBonsai instance because it is used in other thread.");
+
+      treeCache.remove(rootIndex);
+    }
+  }
+
   private void evict() {
     if (treeCache.size() <= cacheMaxSize)
       return;

@@ -41,4 +41,9 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
   public void releaseSBTree(OBonsaiBucketPointer rootIndex) {
     delegate.releaseSBTree(rootIndex);
   }
+
+  @Override
+  public void delete(OBonsaiBucketPointer rootIndex) {
+    delegate.delete(rootIndex);
+  }
 }

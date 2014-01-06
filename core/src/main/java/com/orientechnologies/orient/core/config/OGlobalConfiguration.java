@@ -311,6 +311,13 @@ public enum OGlobalConfiguration {
   SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
       "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
 
+  // RIDBAG
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
+
+  RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
+      "Amount of values after which LINKBAG implementation will use embedded values container", Integer.class, 60),
+
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 

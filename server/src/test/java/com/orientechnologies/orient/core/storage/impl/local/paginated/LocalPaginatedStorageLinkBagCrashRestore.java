@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
@@ -50,6 +50,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
     OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
     OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
@@ -166,14 +169,14 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
           if (equals) {
             Set<ORID> baseRids = new HashSet<ORID>();
             ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
-            OSBTreeRidBag baseRidBag = baseDocument.field("ridBag");
+            ORidBag baseRidBag = baseDocument.field("ridBag");
 
             for (OIdentifiable baseIdentifiable : baseRidBag)
               baseRids.add(baseIdentifiable.getIdentity());
 
             Set<ORID> testRids = new HashSet<ORID>();
             ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
-            OSBTreeRidBag testRidBag = testDocument.field("ridBag");
+            ORidBag testRidBag = testDocument.field("ridBag");
 
             for (OIdentifiable testIdentifiable : testRidBag)
               testRids.add(testIdentifiable.getIdentity());
@@ -229,6 +232,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
       OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
       OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
 
+      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
+      OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
+
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-linkbag-crash-config.xml"));
@@ -265,7 +271,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
     private ODocument addDocument(long ts) {
       ODocument document = new ODocument();
-      OSBTreeRidBag ridBag = new OSBTreeRidBag();
+      ORidBag ridBag = new ORidBag();
       document.field("ridBag", ridBag);
       document.field("ts", ts);
       document.save();
@@ -318,7 +324,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
       document.field("ts", ts);
       document.setLazyLoad(false);
 
-      OSBTreeRidBag ridBag = document.field("ridBag");
+      ORidBag ridBag = document.field("ridBag");
       for (ORID rid : ridsToAdd)
         ridBag.add(rid);
 
@@ -346,7 +352,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
             ODocument document = base_db.load(orid);
             document.setLazyLoad(false);
-            OSBTreeRidBag ridBag = document.field("ridBag");
+            ORidBag ridBag = document.field("ridBag");
 
             for (OIdentifiable identifiable : ridBag) {
               if (random.nextBoolean())

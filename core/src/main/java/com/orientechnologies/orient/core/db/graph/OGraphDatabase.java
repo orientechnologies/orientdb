@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -542,7 +543,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   @SuppressWarnings("unchecked")
   protected Set<OIdentifiable> getEdgeSet(final ODocument iVertex, final String iFieldName) {
     final Object value = iVertex.field(iFieldName);
-    if (value != null && (value instanceof OMVRBTreeRIDSet || value instanceof OSBTreeRidBag))
+    if (value != null && (value instanceof OMVRBTreeRIDSet || value instanceof ORidBag))
       return (Set<OIdentifiable>) value;
 
     final Set<OIdentifiable> set = createRIDSet(iVertex);

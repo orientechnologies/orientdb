@@ -444,6 +444,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     acquireExclusiveLock();
     try {
       startAtomicOperation();
+      lockTillAtomicOperationCompletes();
 
       final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
       subTreesToDelete.add(rootBucketPointer);
