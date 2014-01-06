@@ -15,8 +15,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -131,7 +138,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
             KEYWORD_WHERE);
 
     } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
-        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
+        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
+        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET))
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
     else if (additionalStatement != null && !additionalStatement.isEmpty())
@@ -251,6 +259,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         v = ((OSQLFilterItem) v).getValue(record, context);
       else if (v instanceof OSQLFunctionRuntime)
         v = ((OSQLFunctionRuntime) v).execute(record, null, context);
+      else if (v instanceof OCommandRequest)
+        v = ((OCommandRequest) v).execute(record, null, context);
 
       coll.add(v);
       updatedRecords.add(record);
@@ -286,6 +296,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
           v = ((OSQLFilterItem) v).getValue(record, context);
         else if (pair.getValue() instanceof OSQLFunctionRuntime)
           v = ((OSQLFunctionRuntime) v).execute(record, null, context);
+        else if (v instanceof OCommandRequest)
+          v = ((OCommandRequest) v).execute(record, null, context);
 
         map.put(pair.getKey(), v);
         updatedRecords.add(record);

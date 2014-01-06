@@ -285,7 +285,7 @@ public class OHttpResponse {
           return null;
         }
       });
-    } else if (accept == null || (accept.contains(OHttpUtils.CONTENT_JSON))) {
+    } else {
       if (iFormat == null)
         iFormat = JSON_FORMAT;
       else
