@@ -23,13 +23,22 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
+import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -286,7 +295,9 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         break;
       case DATASEGMENT:
         setDataSegmentInternal(stringValue);
-        break;
+        break;        
+      default:
+        throw new IllegalArgumentException("Runtime change of attribute '" + iAttribute + " is not supported");
       }
 
     } finally {
@@ -602,14 +613,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   @Override
   public String toString() {
     return name + " (id=" + id + ")";
-  }
-
-  public void lock() {
-    acquireSharedLock();
-  }
-
-  public void unlock() {
-    releaseSharedLock();
   }
 
   public String getType() {
