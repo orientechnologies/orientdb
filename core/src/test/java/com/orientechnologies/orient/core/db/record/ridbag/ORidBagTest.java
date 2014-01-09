@@ -16,7 +16,14 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -1112,6 +1119,40 @@ public abstract class ORidBagTest {
       Assert.assertTrue(docsToAdd.remove(id));
 
     Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  @Test
+  public void testSizeNotChangeAfterRemoveNotExistentElement() throws Exception {
+    final ODocument bob = new ODocument();
+    final ODocument fred = new ODocument().save();
+    final ODocument jim = new ODocument().save();
+
+    ORidBag teamMates = new ORidBag();
+
+    teamMates.add(bob);
+    teamMates.add(fred);
+
+    Assert.assertEquals(teamMates.size(), 2);
+
+    teamMates.remove(jim);
+
+    Assert.assertEquals(teamMates.size(), 2);
+  }
+
+  @Test
+  public void testRemoveNotExistentElementAndAddIt() throws Exception {
+    ORidBag teamMates = new ORidBag();
+
+    final ODocument bob = new ODocument().save();
+
+    teamMates.remove(bob);
+
+    Assert.assertEquals(teamMates.size(), 0);
+
+    teamMates.add(bob);
+
+    Assert.assertEquals(teamMates.size(), 1);
+    Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
   private void massiveInsertionIteration(Random rnd, List<OIdentifiable> rids, ORidBag bag) {

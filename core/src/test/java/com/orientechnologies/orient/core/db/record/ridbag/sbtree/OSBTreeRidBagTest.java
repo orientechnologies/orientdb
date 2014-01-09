@@ -16,20 +16,26 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.io.File;
-import java.util.*;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagTest;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -120,37 +126,31 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   @Test
-  public void testSizeNotChangeAfterRemoveNotExistentElement() throws Exception {
-    final ODocument bob = new ODocument();
-    final ODocument fred = new ODocument().save();
-    final ODocument jim = new ODocument().save();
+  public void testIteratorOverAfterRemove() {
+    ODocument scuti = new ODocument().field("name", "UY Scuti").save();
+    ODocument cygni = new ODocument().field("name", "NML Cygni").save();
+    ODocument scorpii = new ODocument().field("name", "AH Scorpii").save();
 
-    ORidBag teamMates = new ORidBag();
+    HashSet<ODocument> expectedResult = new HashSet<ODocument>();
+    expectedResult.addAll(Arrays.asList(scuti, scorpii));
 
-    teamMates.add(bob);
-    teamMates.add(fred);
+    ORidBag bag = new ORidBag();
+    bag.add(scuti);
+    bag.add(cygni);
+    bag.add(scorpii);
 
-    Assert.assertEquals(teamMates.size(), 2);
+    ODocument doc = new ODocument();
+    doc.field("ridBag", bag);
+    doc.save();
 
-    teamMates.remove(jim);
+    bag.remove(cygni);
 
-    Assert.assertEquals(teamMates.size(), 2);
-  }
+    Set<ODocument> result = new HashSet<ODocument>();
+    for (OIdentifiable identifiable : bag) {
+      result.add((ODocument) identifiable.getRecord());
+    }
 
-  @Test
-  public void testRemoveNotExistentElementAndAddIt() throws Exception {
-    ORidBag teamMates = new ORidBag();
-
-    final ODocument bob = new ODocument().save();
-
-    teamMates.remove(bob);
-
-    Assert.assertEquals(teamMates.size(), 0);
-
-    teamMates.add(bob);
-
-    Assert.assertEquals(teamMates.size(), 1);
-    Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
+    Assert.assertEquals(result, expectedResult);
   }
 
   @Override
