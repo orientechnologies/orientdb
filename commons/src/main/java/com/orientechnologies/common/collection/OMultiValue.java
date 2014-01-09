@@ -49,8 +49,8 @@ public class OMultiValue {
    * @return true if it's an array, a collection or a map, otherwise false
    */
   public static boolean isMultiValue(final Class<?> iType) {
-    return (iType.isArray() || Collection.class.isAssignableFrom(iType) || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class
-        .isAssignableFrom(iType));
+    return OCollection.class.isAssignableFrom(iType) || Collection.class.isAssignableFrom(iType)
+        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType));
   }
 
   /**
@@ -111,8 +111,8 @@ public class OMultiValue {
     try {
       if (iObject instanceof List<?>)
         return ((List<Object>) iObject).get(0);
-      else if (iObject instanceof Collection<?>)
-        return ((Collection<Object>) iObject).iterator().next();
+      else if (iObject instanceof Iterable<?>)
+        return ((Iterable<Object>) iObject).iterator().next();
       else if (iObject instanceof Map<?, ?>)
         return ((Map<?, Object>) iObject).values().iterator().next();
       else if (iObject.getClass().isArray())
@@ -142,9 +142,9 @@ public class OMultiValue {
     try {
       if (iObject instanceof List<?>)
         return ((List<Object>) iObject).get(((List<Object>) iObject).size() - 1);
-      else if (iObject instanceof Collection<?>) {
+      else if (iObject instanceof Iterable<?>) {
         Object last = null;
-        for (Object o : (Collection<Object>) iObject)
+        for (Object o : (Iterable<Object>) iObject)
           last = o;
         return last;
       } else if (iObject instanceof Map<?, ?>) {
@@ -200,16 +200,18 @@ public class OMultiValue {
         }
       } else if (iObject.getClass().isArray())
         return Array.get(iObject, iIndex);
-      else if (iObject instanceof Iterator<?>) {
-        final Iterator<Object> it = (Iterator<Object>) iObject;
+      else if (iObject instanceof Iterator<?> || iObject instanceof Iterable<?>) {
+
+        final Iterator<Object> it = (iObject instanceof Iterable<?>) ? ((Iterable<Object>) iObject).iterator()
+            : (Iterator<Object>) iObject;
         for (int i = 0; it.hasNext(); ++i) {
           final Object o = it.next();
           if (i == iIndex)
             return o;
         }
 
-        if (iObject instanceof OResettable)
-          ((OResettable) iObject).reset();
+        if (it instanceof OResettable)
+          ((OResettable) it).reset();
       }
     } catch (Exception e) {
       // IGNORE IT
@@ -263,8 +265,8 @@ public class OMultiValue {
     if (!isMultiValue(iObject))
       return null;
 
-    if (iObject instanceof Collection<?>)
-      return ((Collection<Object>) iObject).iterator();
+    if (iObject instanceof Iterable<?>)
+      return ((Iterable<Object>) iObject).iterator();
     if (iObject instanceof Map<?, ?>)
       return ((Map<?, Object>) iObject).values().iterator();
     if (iObject.getClass().isArray())
@@ -284,7 +286,7 @@ public class OMultiValue {
     final StringBuilder sb = new StringBuilder();
 
     if (iObject instanceof Iterable<?>) {
-      final Collection<Object> coll = (Collection<Object>) iObject;
+      final Iterable<Object> coll = (Iterable<Object>) iObject;
 
       sb.append('[');
       for (final Iterator<Object> it = coll.iterator(); it.hasNext();) {
@@ -334,13 +336,38 @@ public class OMultiValue {
    */
   public static Object add(final Object iObject, final Object iToAdd) {
     if (iObject != null) {
-      if (iObject instanceof Collection<?>) {
+      if (iObject instanceof Collection<?> || iObject instanceof OCollection<?>) {
         // COLLECTION - ?
-        final Collection<Object> coll = (Collection<Object>) iObject;
+        final OCollection<Object> coll;
+        if (iObject instanceof Collection<?>) {
+          final Collection<Object> collection = (Collection<Object>) iObject;
+          coll = new OCollection<Object>() {
+            @Override
+            public void add(Object value) {
+              collection.add(value);
+            }
 
-        if (iToAdd instanceof Collection<?>) {
+            @Override
+            public void remove(Object value) {
+              collection.remove(value);
+            }
+
+            @Override
+            public Iterator<Object> iterator() {
+              return collection.iterator();
+            }
+
+            @Override
+            public int size() {
+              return collection.size();
+            }
+          };
+        } else
+          coll = (OCollection<Object>) iObject;
+
+        if (iToAdd instanceof Iterable<?>) {
           // COLLECTION - COLLECTION
-          for (Object o : (Collection<Object>) iToAdd) {
+          for (Object o : (Iterable<Object>) iToAdd) {
             if (isMultiValue(o))
               add(coll, o);
             else
@@ -362,10 +389,6 @@ public class OMultiValue {
           // MAP
           for (Entry<Object, Object> entry : ((Map<Object, Object>) iToAdd).entrySet())
             coll.add(entry.getValue());
-        } else if (iToAdd instanceof Iterable<?>) {
-          // ITERABLE
-          for (Object o : (Iterable<?>) iToAdd)
-            coll.add(o);
         } else if (iToAdd instanceof Iterator<?>) {
           // ITERATOR
           for (Iterator<?> it = (Iterator<?>) iToAdd; it.hasNext();)
@@ -432,9 +455,35 @@ public class OMultiValue {
         iToRemove = set;
       }
 
-      if (iObject instanceof Collection<?>) {
+      if (iObject instanceof Collection<?> || iObject instanceof OCollection<?>) {
         // COLLECTION - ?
-        final Collection<Object> coll = (Collection<Object>) iObject;
+
+        final OCollection<Object> coll;
+        if (iObject instanceof Collection<?>) {
+          final Collection<Object> collection = (Collection<Object>) iObject;
+          coll = new OCollection<Object>() {
+            @Override
+            public void add(Object value) {
+              collection.add(value);
+            }
+
+            @Override
+            public void remove(Object value) {
+              collection.remove(value);
+            }
+
+            @Override
+            public Iterator<Object> iterator() {
+              return collection.iterator();
+            }
+
+            @Override
+            public int size() {
+              return collection.size();
+            }
+          };
+        } else
+          coll = (OCollection<Object>) iObject;
 
         if (iToRemove instanceof Collection<?>) {
           // COLLECTION - COLLECTION
@@ -466,16 +515,17 @@ public class OMultiValue {
             ((OMultiCollectionIterator<?>) iToRemove).reset();
 
           if (iAllOccurrences) {
+            if (iObject instanceof OCollection)
+              throw new IllegalStateException("Mutable collection can not be used to remove all occurrences.");
+
+            final Collection<Object> collection = (Collection) iObject;
             OMultiCollectionIterator<?> it = (OMultiCollectionIterator<?>) iToRemove;
-            batchRemove(coll, it);
+            batchRemove(collection, it);
           } else {
-            for (Iterator<?> it = (Iterator<?>) iToRemove; it.hasNext();) {
+            Iterator<?> it = (Iterator<?>) iToRemove;
+            if (it.hasNext()) {
               final Object itemToRemove = it.next();
-              while (coll.remove(itemToRemove))
-                if (!iAllOccurrences)
-                  // REMOVE ONLY THE FIRST ITEM
-                  break;
-              // REMOVE ALL THE ITEM
+              coll.remove(itemToRemove);
             }
           }
         } else

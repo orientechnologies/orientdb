@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
@@ -165,6 +166,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
         registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
+        registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
       } else
         // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
@@ -213,6 +215,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
         registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
         registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
+        registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
       }
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
@@ -915,48 +918,52 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     setCurrentDatabaseinThreadLocal();
-
+    ORecordSerializationContext.pushContext();
     try {
-      // if cache is switched off record will be unreachable after delete.
-      ORecord<?> rec = iRecord.getRecord();
-      if (iCallTriggers && rec != null)
-        callbackHooks(TYPE.BEFORE_DELETE, rec);
-
-      // CHECK IF ENABLE THE MVCC OR BYPASS IT
-      final ORecordVersion realVersion = mvcc ? iVersion : OVersionFactory.instance().createUntrackedVersion();
-
-      final OStorageOperationResult<Boolean> operationResult;
       try {
-        if (prohibitTombstones)
-          operationResult = new OStorageOperationResult<Boolean>(underlying.cleanOutRecord(rid, realVersion, iRequired,
-              (byte) iMode.ordinal()));
-        else
-          operationResult = underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
+        // if cache is switched off record will be unreachable after delete.
+        ORecord<?> rec = iRecord.getRecord();
+        if (iCallTriggers && rec != null)
+          callbackHooks(TYPE.BEFORE_DELETE, rec);
 
-        if (iCallTriggers) {
-          if (!operationResult.isMoved() && rec != null)
-            callbackHooks(TYPE.AFTER_DELETE, rec);
-          else if (rec != null)
-            callbackHooks(TYPE.DELETE_REPLICATED, rec);
+        // CHECK IF ENABLE THE MVCC OR BYPASS IT
+        final ORecordVersion realVersion = mvcc ? iVersion : OVersionFactory.instance().createUntrackedVersion();
+
+        final OStorageOperationResult<Boolean> operationResult;
+        try {
+          if (prohibitTombstones)
+            operationResult = new OStorageOperationResult<Boolean>(underlying.cleanOutRecord(rid, realVersion, iRequired,
+                (byte) iMode.ordinal()));
+          else
+            operationResult = underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
+
+          if (iCallTriggers) {
+            if (!operationResult.isMoved() && rec != null)
+              callbackHooks(TYPE.AFTER_DELETE, rec);
+            else if (rec != null)
+              callbackHooks(TYPE.DELETE_REPLICATED, rec);
+          }
+        } catch (Throwable t) {
+          if (iCallTriggers)
+            callbackHooks(TYPE.DELETE_FAILED, rec);
+          throw t;
         }
+
+        // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+        if (!operationResult.isMoved()) {
+          getLevel1Cache().deleteRecord(rid);
+        }
+
+      } catch (OException e) {
+        // RE-THROW THE EXCEPTION
+        throw e;
+
       } catch (Throwable t) {
-        if (iCallTriggers)
-          callbackHooks(TYPE.DELETE_FAILED, rec);
-        throw t;
+        // WRAP IT AS ODATABASE EXCEPTION
+        throw new ODatabaseException("Error on deleting record in cluster #" + iRecord.getIdentity().getClusterId(), t);
       }
-
-      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-      if (!operationResult.isMoved()) {
-        getLevel1Cache().deleteRecord(rid);
-      }
-
-    } catch (OException e) {
-      // RE-THROW THE EXCEPTION
-      throw e;
-
-    } catch (Throwable t) {
-      // WRAP IT AS ODATABASE EXCEPTION
-      throw new ODatabaseException("Error on deleting record in cluster #" + iRecord.getIdentity().getClusterId(), t);
+    } finally {
+      ORecordSerializationContext.pullContext();
     }
   }
 

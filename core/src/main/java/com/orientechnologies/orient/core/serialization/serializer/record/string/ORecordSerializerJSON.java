@@ -326,6 +326,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
       }
 
+    if (iType == null && iFieldTypes != null && iFieldTypes.containsKey(iFieldName))
+      iType = ORecordSerializerStringAbstract.getType(iFieldValue, iFieldTypes.get(iFieldName));
+
     if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}")) {
       // OBJECT OR MAP. CHECK THE TYPE ATTRIBUTE TO KNOW IT
       iFieldValueAsString = iFieldValue.substring(1, iFieldValue.length() - 1);

@@ -53,12 +53,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @see OSBTree
  */
 public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInternal<K, V> {
-  private static final int                  PAGE_SIZE  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  private static final OBonsaiBucketPointer SYS_BUCKET = new OBonsaiBucketPointer(0, 0);
+  private static final int                  PAGE_SIZE             = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private final float                       freeSpaceReuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER
+                                                                      .getValueAsFloat();
+  private static final OBonsaiBucketPointer SYS_BUCKET            = new OBonsaiBucketPointer(0, 0);
 
   private OBonsaiBucketPointer              rootBucketPointer;
 
-  private final Comparator<? super K>       comparator = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K>       comparator            = ODefaultComparator.INSTANCE;
 
   private OStorageLocalAbstract             storage;
   private String                            name;
@@ -97,7 +99,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     }
-    create(fileId, keySerializer, valueSerializer, storageLocal);
   }
 
   public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
@@ -1253,7 +1254,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     cachePointer.acquireExclusiveLock();
     try {
       final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
-      if (sysBucket.freeListLength() > diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES / 2) {
+      if ((1.0 * sysBucket.freeListLength())
+          / (diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
         final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
         sysCacheEntry.markDirty();
         return allocationResult;

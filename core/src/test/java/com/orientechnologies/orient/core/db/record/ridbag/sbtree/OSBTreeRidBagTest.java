@@ -153,6 +153,91 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     Assert.assertEquals(result, expectedResult);
   }
 
+  public void testRidBagDelete() {
+    float reuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.getValueAsFloat();
+    OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(Float.MIN_VALUE);
+
+    ODocument realDoc = new ODocument();
+    ORidBag realDocRidBag = new ORidBag();
+    realDoc.field("ridBag", realDocRidBag);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      realDocRidBag.add(docToAdd);
+    }
+
+    assertEmbedded(realDocRidBag.isEmbedded());
+    realDoc.save();
+
+    final int clusterId = db.addCluster("ridBagDeleteTest", OStorage.CLUSTER_TYPE.PHYSICAL);
+
+    ODocument testDocument = crateTestDeleteDoc(realDoc);
+    db.freeze();
+    db.release();
+
+    final String directory = db.getStorage().getConfiguration().getDirectory();
+
+    File testRidBagFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterId
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    long testRidBagSize = testRidBagFile.length();
+
+    for (int i = 0; i < 100; i++) {
+      testDocument.reload();
+
+      testDocument.delete();
+      testDocument = crateTestDeleteDoc(realDoc);
+    }
+
+    db.freeze();
+    db.release();
+
+    OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(reuseTrigger);
+    testRidBagFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterId
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+
+    Assert.assertEquals(testRidBagFile.length(), testRidBagSize);
+
+    realDoc = db.load(realDoc.getIdentity(), "*:*", true);
+    ORidBag ridBag = realDoc.field("ridBag");
+    Assert.assertEquals(ridBag.size(), 10);
+  }
+
+  private ODocument crateTestDeleteDoc(ODocument realDoc) {
+    ODocument testDocument = new ODocument();
+    ORidBag highLevelRidBag = new ORidBag();
+    testDocument.field("ridBag", highLevelRidBag);
+    testDocument.field("realDoc", realDoc);
+
+    final List<ODocument> embeddedList = new ArrayList<ODocument>();
+    ODocument embeddedListDoc = new ODocument();
+    ORidBag embeddedListDocRidBag = new ORidBag();
+    embeddedListDoc.field("ridBag", embeddedListDocRidBag);
+    embeddedListDoc.field("realDoc", realDoc);
+    embeddedList.add(embeddedListDoc);
+
+    Set<ODocument> embeddedSet = new HashSet<ODocument>();
+    ODocument embeddedSetDoc = new ODocument();
+    ORidBag embeddedSetDocRidBag = new ORidBag();
+    embeddedSetDoc.field("ridBag", embeddedSetDocRidBag);
+    embeddedSetDoc.field("realDoc", realDoc);
+    embeddedSet.add(embeddedSetDoc);
+
+    Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
+    ODocument embeddedMapDoc = new ODocument();
+    ORidBag embeddedMapDocRidBag = new ORidBag();
+    embeddedMapDoc.field("ridBag", embeddedMapDocRidBag);
+    embeddedMapDoc.field("realDoc", realDoc);
+    embeddedMap.put("k1", embeddedMapDoc);
+
+    testDocument.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+    testDocument.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
+    testDocument.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
+
+    testDocument.save("ridBagDeleteTest");
+
+    return testDocument;
+  }
+
   @Override
   protected void assertEmbedded(boolean isEmbedded) {
     Assert.assertTrue(!isEmbedded);
