@@ -280,6 +280,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return size;
   }
 
+  @Override
+  public String toString() {
+    return "[size=" + size + "]";
+  }
+
   public boolean isEmpty() {
     return size() == 0;
   }
@@ -421,11 +426,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public void delete() {
+  public void requestDelete() {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null && collectionPointer != null)
-      context.push(new ORidBagDeleteSerializationOperation(collectionPointer));
+      context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
+  }
 
+  public void confirmDelete() {
     collectionPointer = null;
     changes.clear();
     newEntries.clear();

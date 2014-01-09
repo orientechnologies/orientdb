@@ -4,15 +4,18 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public class ORidBagDeleteSerializationOperation implements ORecordSerializationOperation {
   private final OBonsaiCollectionPointer collectionPointer;
 
   private final OSBTreeCollectionManager collectionManager;
+  private final OSBTreeRidBag            ridBag;
 
-  public ORidBagDeleteSerializationOperation(OBonsaiCollectionPointer collectionPointer) {
+  public ORidBagDeleteSerializationOperation(OBonsaiCollectionPointer collectionPointer, OSBTreeRidBag ridBag) {
     this.collectionPointer = collectionPointer;
+    this.ridBag = ridBag;
     collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
   }
 
@@ -26,6 +29,7 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
     }
 
     collectionManager.delete(collectionPointer);
+    ridBag.confirmDelete();
   }
 
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {

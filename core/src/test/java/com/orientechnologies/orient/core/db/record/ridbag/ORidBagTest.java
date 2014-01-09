@@ -34,7 +34,8 @@ public abstract class ORidBagTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    db = new ODatabaseDocumentTx("plocal:target/testdb/OSBTreeRidBagTest");
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/testdb/OSBTreeRidBagTest");
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();

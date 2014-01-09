@@ -1283,6 +1283,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return this == obj || _recordId.isValid();
   }
 
+  @Override
+  public int hashCode() {
+    if (_recordId.isValid())
+      return super.hashCode();
+
+    return System.identityHashCode(this);
+  }
+
   /**
    * Returns the number of fields in memory.
    */

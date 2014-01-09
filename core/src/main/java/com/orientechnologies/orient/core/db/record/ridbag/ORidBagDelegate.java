@@ -42,9 +42,11 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   public int deserialize(byte[] stream, int offset);
 
-  public void delete();
+  public void requestDelete();
 
   public void setOwner(ORecord<?> owner);
 
   public ORecord<?> getOwner();
+
+  public String toString();
 }

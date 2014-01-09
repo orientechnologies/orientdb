@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OResettable;
@@ -198,6 +199,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
     return size;
   }
 
+  @Override
+  public String toString() {
+    if (size < 10)
+      return OMultiValue.toString(this);
+    else
+      return "[size=" + size + "]";
+  }
+
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     changeListeners.add(changeListener);
   }
@@ -307,7 +316,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
   }
 
   @Override
-  public void delete() {
+  public void requestDelete() {
   }
 
   @Override

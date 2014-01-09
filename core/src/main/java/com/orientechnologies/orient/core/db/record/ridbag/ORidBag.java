@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
+import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.*;
@@ -23,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidB
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable> {
+    OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
   private ORidBagDelegate delegate;
 
   private int             topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
@@ -127,7 +127,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
           delegate.add(identifiable);
 
         delegate.setOwner(oldDelegate.getOwner());
-        oldDelegate.delete();
+        oldDelegate.requestDelete();
       } else if (delegate.size() <= bottomThreshold && !isEmbedded()) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OEmbeddedRidBag();
@@ -136,7 +136,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
           delegate.add(identifiable);
 
         delegate.setOwner(oldDelegate.getOwner());
-        oldDelegate.delete();
+        oldDelegate.requestDelete();
       }
     }
 
@@ -147,6 +147,15 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     output.append(OBase64Utils.encodeBytes(stream));
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return delegate.toString();
+  }
+
+  public void delete() {
+    delegate.requestDelete();
   }
 
   @Override
