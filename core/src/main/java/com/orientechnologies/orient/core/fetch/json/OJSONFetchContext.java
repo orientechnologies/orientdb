@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.fetch.json;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 import java.util.Stack;
@@ -26,7 +25,6 @@ import java.util.Stack;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -85,9 +83,9 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void onBeforeCollection(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject,
-      final Collection<?> iCollection) {
+      final Iterable<?> iterable) {
     try {
-      manageTypes(iFieldName, iCollection);
+      manageTypes(iFieldName, iterable);
       jsonWriter.beginCollection(settings.indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
     } catch (IOException e) {

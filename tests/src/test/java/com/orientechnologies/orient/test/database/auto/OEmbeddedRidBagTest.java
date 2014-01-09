@@ -1,16 +1,18 @@
-package com.orientechnologies.orient.core.db.record.ridbag.embedded;
+package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagTest;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 @Test
 public class OEmbeddedRidBagTest extends ORidBagTest {
   private int topThreshold;
   private int bottomThreshold;
+
+  @Parameters(value = "url")
+  public OEmbeddedRidBagTest(@Optional String url) {
+    super(url);
+  }
 
   @BeforeMethod
   public void beforeMethod() {

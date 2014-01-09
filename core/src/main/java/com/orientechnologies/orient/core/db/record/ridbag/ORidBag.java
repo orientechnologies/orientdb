@@ -122,20 +122,27 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       if (delegate.size() >= topThreshold && isEmbedded()) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OSBTreeRidBag();
+        boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
+        oldDelegate.setAutoConvertToRecord(false);
 
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
         delegate.setOwner(oldDelegate.getOwner());
+        oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
+
       } else if (delegate.size() <= bottomThreshold && !isEmbedded()) {
         ORidBagDelegate oldDelegate = delegate;
+        boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
+        oldDelegate.setAutoConvertToRecord(false);
         delegate = new OEmbeddedRidBag();
 
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
         delegate.setOwner(oldDelegate.getOwner());
+        oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
       }
     }

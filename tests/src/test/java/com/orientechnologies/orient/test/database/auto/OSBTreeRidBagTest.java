@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
+package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagTest;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,6 +42,11 @@ import java.util.Set;
 public class OSBTreeRidBagTest extends ORidBagTest {
   private int topThreshold;
   private int bottomThreshold;
+
+  @Parameters(value = "url")
+  public OSBTreeRidBagTest(@Optional String url) {
+    super(url);
+  }
 
   @BeforeMethod
   public void beforeMethod() {

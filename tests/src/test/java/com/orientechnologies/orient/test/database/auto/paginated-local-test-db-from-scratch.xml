@@ -169,6 +169,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
         </classes>
     </test>
     <test name="DbTools">

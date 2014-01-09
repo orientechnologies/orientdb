@@ -45,7 +45,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
   @Override
   public void setOwner(ORecord<?> owner) {
-    if (this.owner != null && !this.owner.equals(owner)) {
+    if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }

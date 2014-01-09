@@ -1,53 +1,35 @@
-package com.orientechnologies.orient.core.db.record.ridbag;
+package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
-public abstract class ORidBagTest {
-  protected ODatabaseDocumentTx db;
+public abstract class ORidBagTest extends BaseTest {
 
-  @BeforeClass
-  public void setUp() throws Exception {
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
-    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/testdb/OSBTreeRidBagTest");
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
-  }
-
-  @AfterClass
-  public void tearDown() throws Exception {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    db.drop();
+  @Parameters(value = "url")
+  public ORidBagTest(@Optional String url) {
+    super(url);
   }
 
   public void testAdd() throws Exception {
@@ -1213,6 +1195,134 @@ public abstract class ORidBagTest {
 
       assertEquals(bagValue, ridValue);
     }
+  }
+
+  public void testDocumentHelper() {
+    ODocument document = new ODocument();
+    ODocument embeddedDocument = new ODocument();
+    List<ODocument> embeddedList = new ArrayList<ODocument>();
+
+    ORidBag highLevelRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      for (int j = 0; j < 2; j++)
+        highLevelRidBag.add(docToAdd);
+    }
+
+    ORidBag embeddedRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      embeddedRidBag.add(docToAdd);
+    }
+
+    document.field("ridBag", highLevelRidBag);
+    embeddedList.add(embeddedDocument);
+    embeddedDocument.field("ridBag", embeddedRidBag);
+    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+
+    document.save();
+
+    document.reload();
+
+    ODocument documentCopy = db.load(document.getIdentity(), "*:-1", true);
+    Assert.assertNotSame(document, documentCopy);
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+
+    Iterator<OIdentifiable> iterator = documentCopy.<ORidBag> field("ridBag").iterator();
+    iterator.next();
+    iterator.remove();
+
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    documentCopy.reload("*:-1", true);
+
+    embeddedList = documentCopy.field("embeddedList");
+    ODocument doc = embeddedList.get(0);
+
+    iterator = doc.<ORidBag> field("ridBag").iterator();
+    iterator.next();
+    iterator.remove();
+
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+
+    documentCopy.reload("*:-1", true);
+    ODocument docToAdd = new ODocument();
+    docToAdd.save();
+
+    iterator = documentCopy.<ORidBag> field("ridBag").iterator();
+    iterator.next();
+    iterator.remove();
+
+    documentCopy.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+
+    documentCopy.reload("*:-1", true);
+    embeddedList = documentCopy.field("embeddedList");
+    doc = embeddedList.get(0);
+
+    iterator = doc.<ORidBag> field("ridBag").iterator();
+    OIdentifiable remvedItem = iterator.next();
+    iterator.remove();
+    doc.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
+
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    doc.<ORidBag> field("ridBag").remove(docToAdd.getIdentity());
+    doc.<ORidBag> field("ridBag").add(remvedItem);
+
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+  }
+
+  public void testJsonSerialization() {
+    ODocument externalDoc = new ODocument();
+    ODocument testDocument = new ODocument();
+    ORidBag highLevelRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++)
+      highLevelRidBag.add(new ODocument());
+
+    testDocument.field("ridBag", highLevelRidBag);
+    testDocument.field("externalDoc", externalDoc);
+
+    final List<ODocument> embeddedList = new ArrayList<ODocument>();
+    ODocument embeddedListDoc = new ODocument();
+    ORidBag embeddedListDocRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++)
+      embeddedListDocRidBag.add(new ODocument());
+
+    embeddedListDoc.field("ridBag", embeddedListDocRidBag);
+    embeddedListDoc.field("externalDoc", externalDoc);
+    embeddedList.add(embeddedListDoc);
+
+    Set<ODocument> embeddedSet = new HashSet<ODocument>();
+    ODocument embeddedSetDoc = new ODocument();
+    ORidBag embeddedSetDocRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++)
+      embeddedSetDocRidBag.add(new ODocument());
+
+    embeddedSetDoc.field("ridBag", embeddedSetDocRidBag);
+    embeddedSetDoc.field("externalDoc", externalDoc);
+    embeddedSet.add(embeddedSetDoc);
+
+    Map<String, ODocument> embeddedMap = new HashMap<String, ODocument>();
+    ODocument embeddedMapDoc = new ODocument();
+    ORidBag embeddedMapDocRidBag = new ORidBag();
+    for (int i = 0; i < 10; i++)
+      embeddedMapDocRidBag.add(new ODocument());
+    embeddedMapDoc.field("ridBag", embeddedMapDocRidBag);
+    embeddedMapDoc.field("externalDoc", externalDoc);
+    embeddedMap.put("k1", embeddedMapDoc);
+
+    testDocument.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+    testDocument.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
+    testDocument.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
+
+    testDocument.save();
+    testDocument.reload();
+
+    final String json = testDocument.toJSON();
+
+    ODocument doc = new ODocument();
+    doc.fromJSON(json);
+
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(doc, db, testDocument, db, null));
   }
 
   protected abstract void assertEmbedded(boolean isEmbedded);
