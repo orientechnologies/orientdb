@@ -191,7 +191,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         counter.increment();
     }
 
-    size++;
+    if (size >= 0)
+      size++;
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
         identifiable, identifiable));
@@ -215,26 +216,67 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   public void remove(OIdentifiable identifiable) {
-    if (!removeFromNewEntries(identifiable)) {
-      Change counter = changes.get(identifiable);
+    if (removeFromNewEntries(identifiable)) {
+      if (size >= 0)
+        size--;
+    } else {
+      final Change counter = changes.get(identifiable);
       if (counter == null) {
         // Not persistent keys can only be in changes or newEntries
-        if (identifiable.getIdentity().isPersistent())
+        if (identifiable.getIdentity().isPersistent()) {
           changes.put(identifiable, new DiffChange(-1));
-        else
+          size = -1;
+        } else
           // Return immediately to prevent firing of event
           return;
-      } else
+      } else {
         counter.decrement();
-    }
 
-    size--;
+        if (size >= 0)
+          if (counter.isUndefined())
+            size = -1;
+          else
+            size--;
+      }
+    }
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
         identifiable, null, identifiable));
   }
 
   public int size() {
+    if (size >= 0)
+      return size;
+    else {
+      return updateSize();
+    }
+  }
+
+  /**
+   * Recalculates real bag size.
+   * 
+   * @return real size
+   */
+  private int updateSize() {
+    int size = 0;
+    if (collectionPointer != null) {
+      final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
+      try {
+        size = tree.getRealBagSize(changes);
+      } finally {
+        releaseTree();
+      }
+    } else {
+      for (Change change : changes.values()) {
+        size += change.applyTo(0);
+      }
+    }
+
+    for (OModifiableInteger diff : newEntries.values()) {
+      size += diff.getValue();
+    }
+
+    this.size = size;
     return size;
   }
 
@@ -533,21 +575,30 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       if (currentValue == null)
         throw new IllegalStateException("Next method was not called for given iterator");
 
-      if (!removeFromNewEntries(currentValue)) {
+      if (removeFromNewEntries(currentValue)) {
+        if (size >= 0)
+          size--;
+      } else {
         Change counter = changedValues.get(currentValue);
-        if (counter != null)
+        if (counter != null) {
           counter.decrement();
-        else {
+          if (size >= 0)
+            if (counter.isUndefined())
+              size = -1;
+            else
+              size--;
+        } else {
           if (nextChange != null) {
             changedValues.put(currentValue, new DiffChange(-1));
             changedValuesIterator = changedValues.tailMap(nextChange.getKey(), false).entrySet().iterator();
           } else {
             changedValues.put(currentValue, new DiffChange(-1));
           }
+
+          size = -1;
         }
       }
 
-      size--;
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue));
       currentRemoved = true;

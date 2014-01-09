@@ -17,18 +17,14 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -37,10 +33,10 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
@@ -697,6 +693,16 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     return result;
   }
 
+  /**
+   * Load all entries with key greater then specified key.
+   * 
+   * @param key
+   *          defines
+   * @param inclusive
+   *          if true entry with given key is included
+   * @param listener
+   *          callback that is executed for each entry
+   */
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
@@ -1299,6 +1305,42 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       pointer.releaseExclusiveLock();
     }
     return new AllocationResult(oldFreeListHead, cacheEntry, false);
+  }
+
+  /**
+   * Hardcoded method for Bag to avoid creation of extra layer.
+   * 
+   * Don't make any changes to tree.
+   * 
+   * @param changes
+   *          Bag changes
+   * @return real bag size
+   */
+  public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
+    final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
+    final OModifiableInteger size = new OModifiableInteger(0);
+    loadEntriesMajor(firstKey(), true, new RangeResultListener<K, V>() {
+      @Override
+      public boolean addResult(Map.Entry<K, V> entry) {
+        final OSBTreeRidBag.Change change = notAppliedChanges.remove(entry.getKey());
+        final int result;
+
+        final Integer treeValue = (Integer) entry.getValue();
+        if (change == null)
+          result = treeValue;
+        else
+          result = change.applyTo(treeValue);
+
+        size.increment(result);
+        return true;
+      }
+    });
+
+    for (OSBTreeRidBag.Change change : notAppliedChanges.values()) {
+      size.increment(change.applyTo(0));
+    }
+
+    return size.intValue();
   }
 
   private static class AllocationResult {

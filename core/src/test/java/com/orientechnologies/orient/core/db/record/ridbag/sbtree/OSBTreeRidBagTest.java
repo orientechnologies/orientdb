@@ -145,11 +145,11 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
     teamMates.remove(bob);
 
-    // Assert.assertEquals(teamMates.size(), 0);
+    Assert.assertEquals(teamMates.size(), 0);
 
     teamMates.add(bob);
 
-    // Assert.assertEquals(teamMates.size(), 1);
+    Assert.assertEquals(teamMates.size(), 1);
     Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
