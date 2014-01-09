@@ -15,29 +15,28 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.types.OModifiableInteger;
+import java.util.Map;
+import java.util.NavigableMap;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-
-import java.util.Map;
-import java.util.NavigableMap;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 11/26/13
  */
 public class ORidBagUpdateSerializationOperation implements ORecordSerializationOperation {
-  private final NavigableMap<OIdentifiable, OModifiableInteger> changedValues;
+  private final NavigableMap<OIdentifiable, OSBTreeRidBag.Change> changedValues;
 
-  private final OBonsaiCollectionPointer                        collectionPointer;
+  private final OBonsaiCollectionPointer                          collectionPointer;
 
-  private final OSBTreeCollectionManager                        collectionManager;
+  private final OSBTreeCollectionManager                          collectionManager;
 
-  public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, OModifiableInteger> changedValues,
+  public ORidBagUpdateSerializationOperation(final NavigableMap<OIdentifiable, OSBTreeRidBag.Change> changedValues,
       OBonsaiCollectionPointer collectionPointer) {
     this.changedValues = changedValues;
     this.collectionPointer = collectionPointer;
@@ -49,12 +48,10 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
   public void execute(OLocalPaginatedStorage paginatedStorage) {
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
-      for (Map.Entry<OIdentifiable, OModifiableInteger> entry : changedValues.entrySet()) {
+      for (Map.Entry<OIdentifiable, OSBTreeRidBag.Change> entry : changedValues.entrySet()) {
         Integer storedCounter = tree.get(entry.getKey());
-        if (storedCounter == null)
-          storedCounter = 0;
 
-        storedCounter += entry.getValue().intValue();
+        storedCounter = entry.getValue().applyTo(storedCounter);
         if (storedCounter <= 0)
           tree.remove(entry.getKey());
         else

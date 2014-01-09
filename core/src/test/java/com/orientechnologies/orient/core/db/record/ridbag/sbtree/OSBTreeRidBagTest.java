@@ -16,28 +16,18 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 import java.io.File;
 import java.util.*;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagTest;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.fs.FileClassicTest;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -127,6 +117,40 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     final File ridBagFourFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour
         + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
     Assert.assertTrue(ridBagFourFile.exists());
+  }
+
+  @Test
+  public void testSizeNotChangeAfterRemoveNotExistentElement() throws Exception {
+    final ODocument bob = new ODocument();
+    final ODocument fred = new ODocument().save();
+    final ODocument jim = new ODocument().save();
+
+    ORidBag teamMates = new ORidBag();
+
+    teamMates.add(bob);
+    teamMates.add(fred);
+
+    Assert.assertEquals(teamMates.size(), 2);
+
+    teamMates.remove(jim);
+
+    Assert.assertEquals(teamMates.size(), 2);
+  }
+
+  @Test
+  public void testRemoveNotExistentElementAndAddIt() throws Exception {
+    ORidBag teamMates = new ORidBag();
+
+    final ODocument bob = new ODocument().save();
+
+    teamMates.remove(bob);
+
+    // Assert.assertEquals(teamMates.size(), 0);
+
+    teamMates.add(bob);
+
+    // Assert.assertEquals(teamMates.size(), 1);
+    Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
   @Override
