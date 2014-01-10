@@ -45,48 +45,6 @@ public class ClusterMetadataTest {
     databaseDocumentTx.close();
   }
 
-  public void testUseWal() throws Exception {
-    final int clusterId = databaseDocumentTx.addCluster("clusterTest", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final OCluster cluster = databaseDocumentTx.getStorage().getClusterById(clusterId);
-
-    Assert.assertTrue(cluster.useWal());
-    OWriteAheadLog wal = ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getWALInstance();
-    ODocument document = new ODocument();
-    databaseDocumentTx.save(document, "clusterTest");
-
-    OLogSequenceNumber end = wal.end();
-
-    document = new ODocument();
-    databaseDocumentTx.save(document, "clusterTest");
-
-    Assert.assertTrue(wal.end().compareTo(end) > 0);
-    databaseDocumentTx.command(new OCommandSQL("alter cluster clusterTest use_wal false")).execute();
-    Assert.assertFalse(cluster.useWal());
-
-    end = wal.end();
-
-    document = new ODocument();
-    databaseDocumentTx.save(document, "clusterTest");
-
-    Assert.assertEquals(wal.end(), end);
-
-    databaseDocumentTx.command(new OCommandSQL("alter cluster clusterTest use_wal true")).execute();
-    Assert.assertTrue(cluster.useWal());
-
-    document = new ODocument();
-    databaseDocumentTx.save(document, "clusterTest");
-
-    Assert.assertTrue(wal.end().compareTo(end) > 0);
-
-    try {
-      databaseDocumentTx.command(new OCommandSQL("alter cluster clusterTest use_wal truef")).execute();
-      Assert.fail();
-    } catch (OException e) {
-    }
-
-    databaseDocumentTx.dropCluster(clusterId, false);
-  }
-
   public void testMetadataStore() throws Exception {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:clusterMetadataTest");
     db.create();

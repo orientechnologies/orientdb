@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -156,6 +158,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             type = OType.DOUBLE;
           else if (fieldValue instanceof BigDecimal)
             type = OType.DECIMAL;
+          else if (fieldValue instanceof ORidBag)
+            type = OType.LINKBAG;
         }
 
         if (fieldValue instanceof OMultiCollectionIterator<?>) {
@@ -383,7 +387,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD
       return iRecord;
 
-    final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true);
+    final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true, true);
 
     String fieldName = null;
     String fieldValue;
@@ -487,6 +491,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   type = OType.LINKSET;
                 else
                   type = OType.EMBEDDED;
+              } else if (fieldValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN) {
+                type = OType.LINKBAG;
               } else if (fieldValue.equals("true") || fieldValue.equals("false"))
                 type = OType.BOOLEAN;
               else

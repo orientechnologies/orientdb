@@ -88,8 +88,8 @@ public class GraphDatabaseTest {
     database.createVertexType("GraphCar", vehicleClass);
     database.createVertexType("GraphMotocycle", "GraphVehicle");
 
-    ODocument carNode = database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe")
-        .field("year", 2003).save();
+    ODocument carNode = database.createVertex("GraphCar").field("brand", "Hyundai").field("model", "Coupe").field("year", 2003)
+        .save();
     ODocument motoNode = database.createVertex("GraphMotocycle").field("brand", "Yamaha").field("model", "X-City 250")
         .field("year", 2009).save();
 

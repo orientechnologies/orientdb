@@ -17,21 +17,14 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
-import com.orientechnologies.common.collection.OAlwaysGreaterKey;
-import com.orientechnologies.common.collection.OAlwaysLessKey;
-import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -40,9 +33,10 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
@@ -59,14 +53,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @see OSBTree
  */
 public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInternal<K, V> {
-  private static final OAlwaysLessKey       ALWAYS_LESS_KEY    = new OAlwaysLessKey();
-  private static final OAlwaysGreaterKey    ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
-  private static final int                  PAGE_SIZE          = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  private static final OBonsaiBucketPointer SYS_BUCKET         = new OBonsaiBucketPointer(0, 0);
+  private static final int                  PAGE_SIZE             = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private final float                       freeSpaceReuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER
+                                                                      .getValueAsFloat();
+  private static final OBonsaiBucketPointer SYS_BUCKET            = new OBonsaiBucketPointer(0, 0);
 
   private OBonsaiBucketPointer              rootBucketPointer;
 
-  private final Comparator<? super K>       comparator         = ODefaultComparator.INSTANCE;
+  private final Comparator<? super K>       comparator            = ODefaultComparator.INSTANCE;
 
   private OStorageLocalAbstract             storage;
   private String                            name;
@@ -77,17 +71,14 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   private long                              fileId;
 
-  private int                               keySize;
-
   private OBinarySerializer<K>              keySerializer;
   private OBinarySerializer<V>              valueSerializer;
 
   private final boolean                     durableInNonTxMode;
 
-  public OSBTreeBonsai(String dataFileExtension, int keySize, boolean durableInNonTxMode) {
+  public OSBTreeBonsai(String dataFileExtension, boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     this.dataFileExtension = dataFileExtension;
-    this.keySize = keySize;
     this.durableInNonTxMode = durableInNonTxMode;
   }
 
@@ -108,7 +99,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     } catch (IOException e) {
       throw new OSBTreeException("Error creation of sbtree with name" + name, e);
     }
-    create(fileId, keySerializer, valueSerializer, storageLocal);
   }
 
   public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
@@ -140,7 +130,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     try {
       initSysBucket();
 
-      super.startDurableOperation(null);
+      super.startAtomicOperation();
 
       final AllocationResult allocationResult = allocateBucket();
       OCacheEntry rootCacheEntry = allocationResult.getCacheEntry();
@@ -163,10 +153,10 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         diskCache.release(rootCacheEntry);
       }
 
-      super.endDurableOperation(null, false);
+      super.endAtomicOperation(false);
     } catch (IOException e) {
       try {
-        super.endDurableOperation(null, true);
+        super.endAtomicOperation(true);
       } catch (IOException e1) {
         OLogManager.instance().error(this, "Error during sbtree data rollback", e1);
       }
@@ -175,8 +165,10 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   }
 
   private void initDurableComponent(OStorageLocalAbstract storageLocal) {
-    OWriteAheadLog writeAheadLog = storageLocal.getWALInstance();
-    init(writeAheadLog);
+    final OWriteAheadLog writeAheadLog = storageLocal.getWALInstance();
+    final OAtomicOperationsManager atomicOperationsManager = storageLocal.getAtomicOperationsManager();
+
+    init(atomicOperationsManager, writeAheadLog);
   }
 
   public String getName() {
@@ -209,7 +201,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   public V get(K key) {
     acquireSharedLock();
     try {
-      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
+      BucketSearchResult bucketSearchResult = findBucket(key);
       if (bucketSearchResult.itemIndex < 0)
         return null;
 
@@ -234,11 +226,11 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public boolean put(K key, V value) {
     acquireExclusiveLock();
-    final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      startDurableOperation(transaction);
+      startAtomicOperation();
+      lockTillAtomicOperationCompletes();
 
-      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
+      BucketSearchResult bucketSearchResult = findBucket(key);
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
       OCacheEntry keyBucketCacheEntry = diskCache.load(fileId, bucketPointer.getPageIndex(), false);
@@ -292,19 +284,19 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
       if (!itemFound)
         setSize(size() + 1);
 
-      endDurableOperation(transaction, false);
+      endAtomicOperation(false);
       return result;
     } catch (IOException e) {
-      rollback(transaction);
+      rollback();
       throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  private void rollback(OStorageTransaction transaction) {
+  private void rollback() {
     try {
-      endDurableOperation(transaction, true);
+      endAtomicOperation(true);
     } catch (IOException e1) {
       OLogManager.instance().error(this, "Error during sbtree operation  rollback", e1);
     }
@@ -327,9 +319,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public void clear() {
     acquireExclusiveLock();
-    OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      startDurableOperation(transaction);
+      startAtomicOperation();
 
       final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
 
@@ -357,9 +348,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       recycleSubTrees(subTreesToDelete);
 
-      endDurableOperation(transaction, false);
+      endAtomicOperation(false);
     } catch (IOException e) {
-      rollback(transaction);
+      rollback();
 
       throw new OSBTreeException("Error during clear of sbtree with name " + name, e);
     } finally {
@@ -448,17 +439,17 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public void delete() {
     acquireExclusiveLock();
-    OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      startDurableOperation(transaction);
+      startAtomicOperation();
+      lockTillAtomicOperationCompletes();
 
       final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<OBonsaiBucketPointer>();
       subTreesToDelete.add(rootBucketPointer);
       recycleSubTrees(subTreesToDelete);
 
-      endDurableOperation(transaction, false);
+      endAtomicOperation(false);
     } catch (IOException e) {
-      rollback(transaction);
+      rollback();
 
       throw new OSBTreeException("Error during delete of sbtree with name " + name, e);
     } finally {
@@ -480,6 +471,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       OCacheEntry rootCacheEntry = diskCache.load(this.fileId, this.rootBucketPointer.getPageIndex(), false);
       OCachePointer rootPointer = rootCacheEntry.getCachePointer();
+
+      rootPointer.acquireSharedLock();
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
             this.rootBucketPointer.getPageOffset(), keySerializer, valueSerializer, ODurablePage.TrackMode.NONE);
@@ -488,6 +481,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(rootBucket
             .getValueSerializerId());
       } finally {
+        rootPointer.releaseSharedLock();
         diskCache.release(rootCacheEntry);
       }
 
@@ -544,10 +538,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
   public V remove(K key) {
     acquireExclusiveLock();
-    OStorageTransaction transaction = storage.getStorageTransaction();
     try {
 
-      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
+      BucketSearchResult bucketSearchResult = findBucket(key);
       if (bucketSearchResult.itemIndex < 0)
         return null;
 
@@ -560,7 +553,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
 
       keyBucketPointer.acquireExclusiveLock();
       try {
-        startDurableOperation(transaction);
+        startAtomicOperation();
+        lockTillAtomicOperationCompletes();
 
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<K, V>(keyBucketPointer.getDataPointer(),
             bucketPointer.getPageOffset(), keySerializer, valueSerializer, getTrackMode());
@@ -577,11 +571,11 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         diskCache.release(keyBucketCacheEntry);
       }
       setSize(size() - 1);
-      endDurableOperation(transaction, false);
+      endAtomicOperation(false);
       return removed;
 
     } catch (IOException e) {
-      rollback(transaction);
+      rollback();
 
       throw new OSBTreeException("Error during removing key " + key + " from sbtree " + name, e);
     } finally {
@@ -590,19 +584,19 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   }
 
   @Override
-  protected void endDurableOperation(OStorageTransaction transaction, boolean rollback) throws IOException {
-    if (transaction == null && !durableInNonTxMode)
+  protected void endAtomicOperation(boolean rollback) throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.endDurableOperation(transaction, rollback);
+    super.endAtomicOperation(rollback);
   }
 
   @Override
-  protected void startDurableOperation(OStorageTransaction transaction) throws IOException {
-    if (transaction == null && !durableInNonTxMode)
+  protected void startAtomicOperation() throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.startDurableOperation(transaction);
+    super.startAtomicOperation();
   }
 
   @Override
@@ -643,13 +637,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      final PartialSearchMode partialSearchMode;
-      if (inclusive)
-        partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-      else
-        partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-
-      BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+      BucketSearchResult bucketSearchResult = findBucket(key);
 
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
       int index;
@@ -706,16 +694,20 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     return result;
   }
 
+  /**
+   * Load all entries with key greater then specified key.
+   * 
+   * @param key
+   *          defines
+   * @param inclusive
+   *          if true entry with given key is included
+   * @param listener
+   *          callback that is executed for each entry
+   */
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      final PartialSearchMode partialSearchMode;
-      if (inclusive)
-        partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-      else
-        partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-
-      BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+      BucketSearchResult bucketSearchResult = findBucket(key);
       OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
       int index;
@@ -912,13 +904,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener) {
     acquireSharedLock();
     try {
-      PartialSearchMode partialSearchModeFrom;
-      if (fromInclusive)
-        partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-      else
-        partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
-
-      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, partialSearchModeFrom);
+      BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
 
       OBonsaiBucketPointer bucketPointerFrom = bucketSearchResultFrom.getLastPathItem();
 
@@ -929,13 +915,7 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
         indexFrom = -bucketSearchResultFrom.itemIndex - 1;
       }
 
-      PartialSearchMode partialSearchModeTo;
-      if (toInclusive)
-        partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-      else
-        partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
-
-      BucketSearchResult bucketSearchResultTo = findBucket(keyTo, partialSearchModeTo);
+      BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
       OBonsaiBucketPointer bucketPointerTo = bucketSearchResultTo.getLastPathItem();
 
       int indexTo;
@@ -1208,25 +1188,9 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     }
   }
 
-  private BucketSearchResult findBucket(K key, PartialSearchMode partialSearchMode) throws IOException {
+  private BucketSearchResult findBucket(K key) throws IOException {
     OBonsaiBucketPointer bucketPointer = rootBucketPointer;
     final ArrayList<OBonsaiBucketPointer> path = new ArrayList<OBonsaiBucketPointer>();
-
-    if (!(keySize == 1 || ((OCompositeKey) key).getKeys().size() == keySize || partialSearchMode.equals(PartialSearchMode.NONE))) {
-      final OCompositeKey fullKey = new OCompositeKey((Comparable<? super K>) key);
-      int itemsToAdd = keySize - fullKey.getKeys().size();
-
-      final Comparable<?> keyItem;
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
-        keyItem = ALWAYS_GREATER_KEY;
-      else
-        keyItem = ALWAYS_LESS_KEY;
-
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
-
-      key = (K) fullKey;
-    }
 
     while (true) {
       path.add(bucketPointer);
@@ -1270,13 +1234,13 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     try {
       final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
       if (sysBucket.isInitialized()) {
-        super.startDurableOperation(null);
+        super.startAtomicOperation();
 
         sysBucket.init();
         super.logPageChanges(sysBucket, fileId, SYS_BUCKET.getPageIndex(), true);
         sysCacheEntry.markDirty();
 
-        super.endDurableOperation(null, false);
+        super.endAtomicOperation(false);
       }
     } finally {
       cachePointer.releaseExclusiveLock();
@@ -1290,7 +1254,8 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     cachePointer.acquireExclusiveLock();
     try {
       final OSysBucket sysBucket = new OSysBucket(cachePointer.getDataPointer(), getTrackMode());
-      if (sysBucket.freeListLength() > diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES / 2) {
+      if ((1.0 * sysBucket.freeListLength())
+          / (diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
         final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
         sysCacheEntry.markDirty();
         return allocationResult;
@@ -1344,6 +1309,42 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     return new AllocationResult(oldFreeListHead, cacheEntry, false);
   }
 
+  /**
+   * Hardcoded method for Bag to avoid creation of extra layer.
+   * 
+   * Don't make any changes to tree.
+   * 
+   * @param changes
+   *          Bag changes
+   * @return real bag size
+   */
+  public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
+    final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
+    final OModifiableInteger size = new OModifiableInteger(0);
+    loadEntriesMajor(firstKey(), true, new RangeResultListener<K, V>() {
+      @Override
+      public boolean addResult(Map.Entry<K, V> entry) {
+        final OSBTreeRidBag.Change change = notAppliedChanges.remove(entry.getKey());
+        final int result;
+
+        final Integer treeValue = (Integer) entry.getValue();
+        if (change == null)
+          result = treeValue;
+        else
+          result = change.applyTo(treeValue);
+
+        size.increment(result);
+        return true;
+      }
+    });
+
+    for (OSBTreeRidBag.Change change : notAppliedChanges.values()) {
+      size.increment(change.applyTo(0));
+    }
+
+    return size.intValue();
+  }
+
   private static class AllocationResult {
     private final OBonsaiBucketPointer pointer;
     private final OCacheEntry          cacheEntry;
@@ -1380,28 +1381,6 @@ public class OSBTreeBonsai<K, V> extends ODurableComponent implements OTreeInter
     public OBonsaiBucketPointer getLastPathItem() {
       return path.get(path.size() - 1);
     }
-  }
-
-  /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
-   * or highest partially matched key should be used.
-   * 
-   * 
-   */
-  private static enum PartialSearchMode {
-    /**
-     * Any partially matched key will be used as search result.
-     */
-    NONE,
-    /**
-     * The biggest partially matched key will be used as search result.
-     */
-    HIGHEST_BOUNDARY,
-
-    /**
-     * The smallest partially matched key will be used as search result.
-     */
-    LOWEST_BOUNDARY
   }
 
   private static final class PagePathItemUnit {

@@ -165,7 +165,7 @@
             <fileset dir="." includes="tools/config/*"/>
             <fileset dir="." includes="server/config/*"/>
             <fileset dir="." includes="distributed/config/*"/>
-            <fileset dir="graphdb/config" includes="*.xml"/>
+            <fileset dir="graphdb/config" includes="*.xml" erroronmissingdir="false"/>
         </copy>
 
         <copy todir="${community.release}/lib" flatten="true">

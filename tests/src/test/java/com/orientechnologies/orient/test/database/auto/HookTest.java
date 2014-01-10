@@ -40,10 +40,12 @@ public class HookTest extends ORecordHookAbstract {
   public HookTest(String iURL) {
     database = new OObjectDatabaseTx(iURL);
   }
+
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }
+
   @Test
   public void testRegisterHook() throws IOException {
     database.open("admin", "admin");

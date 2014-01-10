@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
@@ -38,8 +39,10 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private final long         fileId;
   private Set<OIdentifiable> underlying;
   private boolean            isEmbedded;
-  private int                topThreshold         = 80;
-  private int                bottomThreshold      = 60;
+  private int                topThreshold         = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+                                                      .getValueAsInteger();
+  private int                bottomThreshold      = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
+                                                      .getValueAsInteger();
 
   public OIndexRIDContainer(String name) {
     fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);

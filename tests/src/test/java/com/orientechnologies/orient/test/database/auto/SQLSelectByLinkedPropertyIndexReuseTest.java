@@ -34,7 +34,7 @@ import static org.testng.Assert.assertTrue;
  * Prefix "lpirt" in class names means "LinkedPropertyIndexReuseTest".
  * </p>
  */
-@Test(groups = {"index"})
+@Test(groups = { "index" })
 public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseTest {
 
   @Parameters(value = "url")

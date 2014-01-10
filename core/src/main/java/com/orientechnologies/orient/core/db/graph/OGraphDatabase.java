@@ -29,7 +29,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeRIDSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -264,13 +265,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
 
       final Object field = iVertex.field(vertexField);
       final Set<OIdentifiable> links;
-      if (field instanceof OMVRBTreeRIDSet || field instanceof OSBTreeRIDSet) {
+      if (field instanceof OMVRBTreeRIDSet) {
         links = (Set<OIdentifiable>) field;
       } else if (field instanceof Collection<?>) {
-        if (preferSBTreeSet)
-          links = new OSBTreeRIDSet(iVertex, (Collection<OIdentifiable>) field);
-        else
-          links = new OMVRBTreeRIDSet(iVertex, (Collection<OIdentifiable>) field);
+        links = new OMVRBTreeRIDSet(iVertex, (Collection<OIdentifiable>) field);
         iVertex.field(vertexField, links);
       } else {
         links = createRIDSet(iVertex);
@@ -545,7 +543,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   @SuppressWarnings("unchecked")
   protected Set<OIdentifiable> getEdgeSet(final ODocument iVertex, final String iFieldName) {
     final Object value = iVertex.field(iFieldName);
-    if (value != null && (value instanceof OMVRBTreeRIDSet || value instanceof OSBTreeRIDSet))
+    if (value != null && (value instanceof OMVRBTreeRIDSet || value instanceof ORidBag))
       return (Set<OIdentifiable>) value;
 
     final Set<OIdentifiable> set = createRIDSet(iVertex);
@@ -560,10 +558,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   private Set<OIdentifiable> createRIDSet(ODocument iVertex) {
-    if (preferSBTreeSet)
-      return new OSBTreeRIDSet(iVertex);
-    else
-      return new OMVRBTreeRIDSet(iVertex);
+    return new OMVRBTreeRIDSet(iVertex);
   }
 
   /**

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
@@ -109,7 +110,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       rootPointer.acquireExclusiveLock();
       try {
-        super.startDurableOperation(null);
+        super.startAtomicOperation();
 
         OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootPointer.getDataPointer(), true, keySerializer, keyTypes,
             valueSerializer, getTrackMode());
@@ -124,10 +125,10 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
         diskCache.release(rootCacheEntry);
       }
 
-      super.endDurableOperation(null, false);
+      super.endAtomicOperation(false);
     } catch (IOException e) {
       try {
-        super.endDurableOperation(null, true);
+        super.endAtomicOperation(true);
       } catch (IOException e1) {
         OLogManager.instance().error(this, "Error during sbtree data rollback", e1);
       }
@@ -138,8 +139,10 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   private void initDurableComponent(OStorageLocalAbstract storageLocal) {
-    OWriteAheadLog writeAheadLog = storageLocal.getWALInstance();
-    init(writeAheadLog);
+    final OWriteAheadLog writeAheadLog = storageLocal.getWALInstance();
+    final OAtomicOperationsManager atomicOperationsManager = storageLocal.getAtomicOperationsManager();
+
+    init(atomicOperationsManager, writeAheadLog);
   }
 
   public String getName() {
@@ -198,7 +201,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-      startDurableOperation(transaction);
+      startAtomicOperation();
 
       long valueLink = -1;
       if (createLinkToTheValue)
@@ -228,7 +231,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
           keyBucketPointer.releaseExclusiveLock();
           diskCache.release(keyBucketCacheEntry);
 
-          endDurableOperation(transaction, false);
+          endAtomicOperation(false);
           return;
         } else {
           assert updateResult == -1;
@@ -272,7 +275,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       if (sizeDiff != 0)
         setSize(size() + sizeDiff);
 
-      endDurableOperation(transaction, false);
+      endAtomicOperation(false);
     } catch (IOException e) {
       rollback(transaction);
       throw new OSBTreeException("Error during index update with key " + key + " and value " + value, e);
@@ -470,7 +473,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   private void rollback(OStorageTransaction transaction) {
     try {
-      endDurableOperation(transaction, true);
+      endAtomicOperation(true);
     } catch (IOException e1) {
       OLogManager.instance().error(this, "Error during sbtree operation  rollback", e1);
     }
@@ -495,7 +498,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     acquireExclusiveLock();
     OStorageTransaction transaction = storage.getStorageTransaction();
     try {
-      startDurableOperation(transaction);
+      startAtomicOperation();
 
       diskCache.truncateFile(fileId);
 
@@ -517,7 +520,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
         diskCache.release(cacheEntry);
       }
 
-      endDurableOperation(transaction, false);
+      endAtomicOperation(false);
     } catch (IOException e) {
       rollback(transaction);
 
@@ -640,7 +643,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       keyBucketPointer.acquireExclusiveLock();
       try {
-        startDurableOperation(transaction);
+        startAtomicOperation();
 
         OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<K, V>(keyBucketPointer.getDataPointer(), keySerializer, keyTypes,
             valueSerializer, getTrackMode());
@@ -656,7 +659,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
         keyBucketCacheEntry.markDirty();
 
         setSize(size() - 1);
-        endDurableOperation(transaction, false);
+        endAtomicOperation(false);
 
         return value;
       } finally {
@@ -674,19 +677,19 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   @Override
-  protected void endDurableOperation(OStorageTransaction transaction, boolean rollback) throws IOException {
-    if (transaction == null && !durableInNonTxMode)
+  protected void endAtomicOperation(boolean rollback) throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.endDurableOperation(transaction, rollback);
+    super.endAtomicOperation(rollback);
   }
 
   @Override
-  protected void startDurableOperation(OStorageTransaction transaction) throws IOException {
-    if (transaction == null && !durableInNonTxMode)
+  protected void startAtomicOperation() throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
       return;
 
-    super.startDurableOperation(transaction);
+    super.startAtomicOperation();
   }
 
   @Override

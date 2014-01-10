@@ -149,10 +149,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int entrySize = keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        entrySize += valueSerializer.getFixedLength();
-      else
-        entrySize += valueSerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition + entrySize);
+      assert valueSerializer.isFixedLength();
+      entrySize += valueSerializer.getFixedLength();
     } else {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
@@ -250,10 +248,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     int entrySize = keySize;
 
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        valueSize = valueSerializer.getFixedLength();
-      else
-        valueSize = valueSerializer.getObjectSize(treeEntry.value);
+      assert valueSerializer.isFixedLength();
+      valueSize = valueSerializer.getFixedLength();
 
       entrySize += valueSize;
 

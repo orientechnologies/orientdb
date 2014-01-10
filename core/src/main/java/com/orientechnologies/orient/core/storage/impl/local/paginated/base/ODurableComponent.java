@@ -19,7 +19,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
@@ -27,10 +28,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  private ThreadLocal<OOperationUnitId>   currentUnitId = new ThreadLocal<OOperationUnitId>();
-  private ThreadLocal<OLogSequenceNumber> startLSN      = new ThreadLocal<OLogSequenceNumber>();
-
-  private OWriteAheadLog                  writeAheadLog;
+  private OWriteAheadLog           writeAheadLog;
+  private OAtomicOperationsManager atomicOperationsManager;
 
   public ODurableComponent() {
   }
@@ -47,61 +46,42 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     super(iConcurrent, iTimeout, ignoreThreadInterruption);
   }
 
-  public OOperationUnitId getCurrentOperationUnitId() {
-    return currentUnitId.get();
-  }
-
-  public OLogSequenceNumber getStartLSN() {
-    return startLSN.get();
-  }
-
-  protected void init(OWriteAheadLog writeAheadLog) {
+  protected void init(final OAtomicOperationsManager atomicOperationsManager, final OWriteAheadLog writeAheadLog) {
+    this.atomicOperationsManager = atomicOperationsManager;
     this.writeAheadLog = writeAheadLog;
   }
 
-  protected void endDurableOperation(OStorageTransaction transaction, boolean rollback) throws IOException {
-    if (transaction == null && writeAheadLog != null) {
-      writeAheadLog.log(new OAtomicUnitEndRecord(currentUnitId.get(), rollback));
-    }
-
-    currentUnitId.set(null);
-    startLSN.set(null);
+  protected void endAtomicOperation(boolean rollback) throws IOException {
+    atomicOperationsManager.endAtomicOperation(rollback);
   }
 
-  protected void startDurableOperation(OStorageTransaction transaction) throws IOException {
-    if (transaction == null) {
-      if (writeAheadLog != null) {
-        OOperationUnitId unitId = OOperationUnitId.generateId();
-
-        OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(true, unitId));
-        startLSN.set(lsn);
-        currentUnitId.set(unitId);
-      }
-    } else {
-      startLSN.set(transaction.getStartLSN());
-      currentUnitId.set(transaction.getOperationUnitId());
-    }
+  protected void startAtomicOperation() throws IOException {
+    atomicOperationsManager.startAtomicOperation();
   }
 
   protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
     if (writeAheadLog != null) {
-      OPageChanges pageChanges = localPage.getPageChanges();
+      final OPageChanges pageChanges = localPage.getPageChanges();
       if (pageChanges.isEmpty())
         return;
 
-      OOperationUnitId unitId = currentUnitId.get();
-      assert unitId != null;
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
 
-      OLogSequenceNumber prevLsn;
+      final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
+      final OLogSequenceNumber prevLsn;
       if (isNewPage)
-        prevLsn = startLSN.get();
+        prevLsn = atomicOperation.getStartLSN();
       else
         prevLsn = localPage.getLsn();
 
-      OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn));
-
+      final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn));
       localPage.setLsn(lsn);
     }
+  }
+
+  protected void lockTillAtomicOperationCompletes() {
+    atomicOperationsManager.lockTillOperationComplete(this);
   }
 
   protected ODurablePage.TrackMode getTrackMode() {

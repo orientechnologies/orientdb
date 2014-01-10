@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -43,11 +44,12 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 @Test
 public class LocalPaginatedClusterTest {
-  private static final int RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
-                                                         + OLongSerializer.LONG_SIZE;
-  public OPaginatedCluster paginatedCluster          = new OPaginatedCluster();
-  protected String         buildDirectory;
-  protected ODiskCache     diskCache;
+  private static final int           RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
+                                                                   + OLongSerializer.LONG_SIZE;
+  public OPaginatedCluster           paginatedCluster          = new OPaginatedCluster();
+  protected String                   buildDirectory;
+  protected ODiskCache               diskCache;
+  protected OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -66,10 +68,12 @@ public class LocalPaginatedClusterTest {
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
+    atomicOperationsManager = new OAtomicOperationsManager(null);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
 
     when(storage.getDiskCache()).thenReturn(diskCache);
+    when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(storage.getVariableParser()).thenReturn(variableParser);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");

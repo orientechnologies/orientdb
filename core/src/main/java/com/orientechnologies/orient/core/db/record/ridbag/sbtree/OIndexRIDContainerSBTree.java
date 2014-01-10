@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.db.record.ridset.sbtree;
+package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,19 +47,19 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   protected static final OProfilerMBean         PROFILER             = Orient.instance().getProfiler();
 
   public OIndexRIDContainerSBTree(long fileId) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
 
     tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE,
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
   public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
     tree.load(fileId, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
   public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, 1, false);
+    tree = new OSBTreeBonsai<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
 
     final OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
@@ -221,5 +221,4 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
       entryIterator.remove();
     }
   }
-
 }

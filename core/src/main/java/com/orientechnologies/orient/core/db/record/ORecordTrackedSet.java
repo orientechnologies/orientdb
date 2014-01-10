@@ -34,116 +34,121 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>, ORecordElement {
-	protected final ORecord<?>		sourceRecord;
-	protected Map<Object, Object>	map						= new HashMap<Object, Object>();
-	private STATUS								status				= STATUS.NOT_LOADED;
-	protected final static Object	ENTRY_REMOVAL	= new Object();
+  protected final ORecord<?>    sourceRecord;
+  protected Map<Object, Object> map           = new HashMap<Object, Object>();
+  private STATUS                status        = STATUS.NOT_LOADED;
+  protected final static Object ENTRY_REMOVAL = new Object();
 
-	public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
-		this.sourceRecord = iSourceRecord;
-		if (iSourceRecord != null)
-			iSourceRecord.setDirty();
-	}
+  public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
+    this.sourceRecord = iSourceRecord;
+    if (iSourceRecord != null)
+      iSourceRecord.setDirty();
+  }
 
-	public Iterator<OIdentifiable> iterator() {
-		return new ORecordTrackedIterator(sourceRecord, map.keySet().iterator());
-	}
+  @Override
+  public ORecordElement getOwner() {
+    return sourceRecord;
+  }
 
-	public boolean add(final OIdentifiable e) {
-		if (map.containsKey(e))
-			return false;
+  public Iterator<OIdentifiable> iterator() {
+    return new ORecordTrackedIterator(sourceRecord, map.keySet().iterator());
+  }
 
-		map.put(e, ENTRY_REMOVAL);
-		setDirty();
+  public boolean add(final OIdentifiable e) {
+    if (map.containsKey(e))
+      return false;
 
-		if (e instanceof ODocument)
-			((ODocument) e).addOwner(this);
-		return true;
-	}
+    map.put(e, ENTRY_REMOVAL);
+    setDirty();
 
-	@Override
-	public boolean contains(Object o) {
-		return map.containsKey(o);
-	}
+    if (e instanceof ODocument)
+      ((ODocument) e).addOwner(this);
+    return true;
+  }
 
-	public boolean remove(Object o) {
-		final Object old = map.remove(o);
-		if (old != null) {
-			if (o instanceof ODocument)
-				((ODocument) o).removeOwner(this);
+  @Override
+  public boolean contains(Object o) {
+    return map.containsKey(o);
+  }
 
-			setDirty();
-			return true;
-		}
-		return false;
-	}
+  public boolean remove(Object o) {
+    final Object old = map.remove(o);
+    if (old != null) {
+      if (o instanceof ODocument)
+        ((ODocument) o).removeOwner(this);
 
-	public void clear() {
-		setDirty();
-		map.clear();
-	}
+      setDirty();
+      return true;
+    }
+    return false;
+  }
 
-	public boolean removeAll(final Collection<?> c) {
-		boolean changed = false;
-		for (Object item : c) {
-			if (map.remove(item) != null)
-				changed = true;
-		}
+  public void clear() {
+    setDirty();
+    map.clear();
+  }
 
-		if (changed)
-			setDirty();
+  public boolean removeAll(final Collection<?> c) {
+    boolean changed = false;
+    for (Object item : c) {
+      if (map.remove(item) != null)
+        changed = true;
+    }
 
-		return changed;
-	}
+    if (changed)
+      setDirty();
 
-	public boolean addAll(final Collection<? extends OIdentifiable> c) {
-		if (c == null || c.size() == 0)
-			return false;
+    return changed;
+  }
 
-		for (OIdentifiable o : c)
-			add(o);
+  public boolean addAll(final Collection<? extends OIdentifiable> c) {
+    if (c == null || c.size() == 0)
+      return false;
 
-		setDirty();
-		return true;
-	}
+    for (OIdentifiable o : c)
+      add(o);
 
-	public boolean retainAll(final Collection<?> c) {
-		if (c == null || c.size() == 0)
-			return false;
+    setDirty();
+    return true;
+  }
 
-		if (super.removeAll(c)) {
-			setDirty();
-			return true;
-		}
-		return false;
-	}
+  public boolean retainAll(final Collection<?> c) {
+    if (c == null || c.size() == 0)
+      return false;
 
-	@Override
-	public int size() {
-		return map.size();
-	}
+    if (super.removeAll(c)) {
+      setDirty();
+      return true;
+    }
+    return false;
+  }
 
-	@SuppressWarnings("unchecked")
-	public ORecordTrackedSet setDirty() {
-		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
-			sourceRecord.setDirty();
-		return this;
-	}
+  @Override
+  public int size() {
+    return map.size();
+  }
 
-	public void onBeforeIdentityChanged(final ORID iRID) {
-		map.remove(iRID);
-		setDirty();
-	}
+  @SuppressWarnings("unchecked")
+  public ORecordTrackedSet setDirty() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+      sourceRecord.setDirty();
+    return this;
+  }
 
-	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
-		map.put(iRecord, ENTRY_REMOVAL);
-	}
+  public void onBeforeIdentityChanged(final ORID iRID) {
+    map.remove(iRID);
+    setDirty();
+  }
 
-	public STATUS getInternalStatus() {
-		return status;
-	}
+  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+    map.put(iRecord, ENTRY_REMOVAL);
+  }
 
-	public void setInternalStatus(final STATUS iStatus) {
-		status = iStatus;
-	}
+  public STATUS getInternalStatus() {
+    return status;
+  }
+
+  public void setInternalStatus(final STATUS iStatus) {
+    status = iStatus;
+  }
 }

@@ -44,8 +44,10 @@ import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -131,13 +133,17 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression);
 
     storageLocal = storage;
-    init(storage.getWALInstance());
+
+    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
+    final OWriteAheadLog writeAheadLog = storage.getWALInstance();
+
+    init(atomicOperationsManager, writeAheadLog);
 
     diskCache = storageLocal.getDiskCache();
     name = config.getName();
     this.id = config.getId();
 
-    clusterPositionMap = new OClusterPositionMap(diskCache, name, storage.getWALInstance());
+    clusterPositionMap = new OClusterPositionMap(diskCache, name, writeAheadLog, atomicOperationsManager, this.config.useWal);
   }
 
   public boolean exists() {
@@ -152,11 +158,11 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       try {
         fileId = diskCache.openFile(name + DEF_EXTENSION);
 
-        startDurableOperation(null);
+        startAtomicOperation();
 
         initCusterState();
 
-        endDurableOperation(null, false);
+        endAtomicOperation(false);
 
         if (config.root.clusters.size() <= config.id)
           config.root.clusters.add(config);
@@ -320,6 +326,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           + stringValue + "].");
 
     config.useWal = Boolean.valueOf(stringValue);
+    clusterPositionMap.setUseWal(config.useWal);
     storageLocal.getConfiguration().update();
   }
 
@@ -385,7 +392,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        final OStorageTransaction transaction = storageLocal.getStorageTransaction();
+
         content = compression.compress(content);
 
         int grownContentSize = (int) (config.recordGrowFactor * content.length);
@@ -393,7 +400,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             + OLongSerializer.LONG_SIZE;
 
         if (entryContentLength < OClusterPage.MAX_RECORD_SIZE) {
-          startDurableOperation(transaction);
+          startAtomicOperation();
+          lockTillAtomicOperationCompletes();
 
           byte[] entryContent = new byte[entryContentLength];
 
@@ -417,14 +425,14 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
           updateClusterState(trackMode, 1, addEntryResult.recordsSizeDiff);
 
-          final OClusterPosition clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition,
-              getCurrentOperationUnitId(), getStartLSN(), trackMode);
+          final OClusterPosition clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition);
 
-          endDurableOperation(transaction, false);
+          endAtomicOperation(false);
 
           return createPhysicalPosition(recordType, clusterPosition, addEntryResult.recordVersion);
         } else {
-          startDurableOperation(transaction);
+          startAtomicOperation();
+          lockTillAtomicOperationCompletes();
 
           final OClusterPage.TrackMode trackMode = getTrackMode();
 
@@ -504,10 +512,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
           updateClusterState(trackMode, 1, recordsSizeDiff);
 
-          OClusterPosition clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition, getCurrentOperationUnitId(),
-              getStartLSN(), trackMode);
+          OClusterPosition clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition);
 
-          endDurableOperation(transaction, false);
+          endAtomicOperation(false);
 
           return createPhysicalPosition(recordType, clusterPosition, version);
         }
@@ -660,8 +667,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        final OStorageTransaction transaction = storageLocal.getStorageTransaction();
-
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
         if (positionEntry == null)
           return false;
@@ -692,7 +697,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               else
                 throw new OStorageException("Content of record " + new ORecordId(id, clusterPosition) + " was broken.");
             } else if (removedContentSize == 0) {
-              startDurableOperation(transaction);
+              startAtomicOperation();
+              lockTillAtomicOperationCompletes();
             }
 
             byte[] content = localPage.getRecordBinaryValue(recordPosition, 0, localPage.getRecordSize(recordPosition));
@@ -719,8 +725,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         updateClusterState(trackMode, -1, -removedContentSize);
 
-        clusterPositionMap.remove(clusterPosition, getCurrentOperationUnitId(), getStartLSN(), trackMode);
-        endDurableOperation(transaction, false);
+        clusterPositionMap.remove(clusterPosition);
+        endAtomicOperation(false);
 
         return true;
       } finally {
@@ -737,8 +743,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        final OStorageTransaction transaction = storageLocal.getStorageTransaction();
-
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
 
         int recordPosition = positionEntry.getRecordPosition();
@@ -764,7 +768,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         final OClusterPage.TrackMode trackMode = getTrackMode();
 
-        startDurableOperation(transaction);
+        startAtomicOperation();
+        lockTillAtomicOperationCompletes();
 
         int entryPosition = 0;
         recordEntry[entryPosition] = recordType;
@@ -902,7 +907,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         updateClusterState(trackMode, 0, recordsSizeDiff);
 
-        endDurableOperation(transaction, false);
+        endAtomicOperation(false);
 
       } finally {
         releaseExclusiveLock();
@@ -1170,7 +1175,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       acquireExclusiveLock();
       try {
         if (config.useWal)
-          startDurableOperation(null);
+          startAtomicOperation();
 
         diskCache.truncateFile(fileId);
         clusterPositionMap.truncate();
@@ -1178,7 +1183,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         initCusterState();
 
         if (config.useWal)
-          endDurableOperation(null, false);
+          endAtomicOperation(false);
 
       } finally {
         releaseExclusiveLock();
@@ -1467,19 +1472,19 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  protected void endDurableOperation(OStorageTransaction transaction, boolean rollback) throws IOException {
+  protected void endAtomicOperation(boolean rollback) throws IOException {
     if (!config.useWal)
       return;
 
-    super.endDurableOperation(transaction, rollback);
+    super.endAtomicOperation(rollback);
   }
 
   @Override
-  protected void startDurableOperation(OStorageTransaction transaction) throws IOException {
+  protected void startAtomicOperation() throws IOException {
     if (!config.useWal)
       return;
 
-    super.startDurableOperation(transaction);
+    super.startAtomicOperation();
   }
 
   @Override

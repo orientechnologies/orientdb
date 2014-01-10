@@ -18,6 +18,13 @@ public interface OTreeInternal<K, V> {
    * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
    */
   interface RangeResultListener<K, V> {
+    /**
+     * Callback method for result entries.
+     * 
+     * @param entry
+     *          result entry
+     * @return true if continue to iterate through entries, false if no more result needed.
+     */
     boolean addResult(Map.Entry<K, V> entry);
   }
 }

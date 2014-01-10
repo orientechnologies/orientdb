@@ -7,5 +7,6 @@ import com.orientechnologies.common.concur.resource.OCloseable;
  */
 public interface OCommandStream extends OCloseable {
   boolean hasNext();
+
   String nextCommand();
 }

@@ -20,49 +20,45 @@ import com.orientechnologies.orient.core.storage.OStorage;
 @Test(groups = { "index" })
 public class IndexClusterTest {
 
-    private ODatabaseDocument database;
+  private ODatabaseDocument database;
 
-    @BeforeMethod
-    public void beforeMethod() {
-      database.open("admin", "admin");
-    }
+  @BeforeMethod
+  public void beforeMethod() {
+    database.open("admin", "admin");
+  }
 
-    @AfterMethod
-    public void afterMethod() {
-      database.close();
-    }
+  @AfterMethod
+  public void afterMethod() {
+    database.close();
+  }
 
-    @Parameters(value = "url")
-    public IndexClusterTest(String iURL) {
-      database = new ODatabaseDocumentTx(iURL);
-    }
+  @Parameters(value = "url")
+  public IndexClusterTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-    @Test
-    public void indexAfterRebuildShouldIncludeAllClusters() {
-        //given
-        OSchema schema = database.getMetadata().getSchema();
-        String className = "IndexClusterTest";
+  @Test
+  public void indexAfterRebuildShouldIncludeAllClusters() {
+    // given
+    OSchema schema = database.getMetadata().getSchema();
+    String className = "IndexClusterTest";
 
-        OClass oclass = schema.createClass(className);
-        oclass.createProperty("key", OType.STRING);
-        oclass.createProperty("value", OType.INTEGER);
-        oclass.createIndex(className+"index1", OClass.INDEX_TYPE.NOTUNIQUE, "key");
+    OClass oclass = schema.createClass(className);
+    oclass.createProperty("key", OType.STRING);
+    oclass.createProperty("value", OType.INTEGER);
+    oclass.createIndex(className + "index1", OClass.INDEX_TYPE.NOTUNIQUE, "key");
 
-        database.<ODocument>newInstance(className).field("key","a").field("value",1).save();
+    database.<ODocument> newInstance(className).field("key", "a").field("value", 1).save();
 
-        int clId = database.addCluster(className+"secondCluster", OStorage.CLUSTER_TYPE.PHYSICAL);
-        oclass.addClusterId(clId);
+    int clId = database.addCluster(className + "secondCluster", OStorage.CLUSTER_TYPE.PHYSICAL);
+    oclass.addClusterId(clId);
 
-        database.<ODocument>newInstance(className).field("key","a").field("value",2)
-                .save(className+"secondCluster");
+    database.<ODocument> newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
 
-        //when
-        database.command(new OCommandSQL("rebuild index "+className+"index1")).execute();
-        assertEquals(
-                database.query(new OSQLSynchQuery<Object>("select from "+className+" where key = 'a'")).size(), 2);
+    // when
+    database.command(new OCommandSQL("rebuild index " + className + "index1")).execute();
+    assertEquals(database.query(new OSQLSynchQuery<Object>("select from " + className + " where key = 'a'")).size(), 2);
 
-
-    }
-
+  }
 
 }

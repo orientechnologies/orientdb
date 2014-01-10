@@ -52,7 +52,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' }, new boolean[] { false, true }, 0,
-        -1, false, true, false, new char[] {});
+        -1, false, true, false, false, new char[] {});
 
     setRoot(iQueryToParse, parts.get(0));
 

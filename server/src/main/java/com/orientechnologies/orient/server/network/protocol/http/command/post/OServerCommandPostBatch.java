@@ -100,7 +100,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       } catch (Exception e) {
         throw new IllegalArgumentException("Expected 'operations' field as a collection of objects");
       }
-      
+
       if (operations == null || operations.isEmpty())
         throw new IllegalArgumentException("Input JSON has no operations to execute");
 

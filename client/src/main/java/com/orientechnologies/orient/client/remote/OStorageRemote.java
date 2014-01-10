@@ -1012,7 +1012,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         if (aquery.getResultListener() != null) {
           aquery.getResultListener().end();
         }
-  }
+      }
     } while (true);
 
     return result;

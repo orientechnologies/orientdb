@@ -29,7 +29,7 @@ public class StringsTest {
   @Test
   public void splitArray() {
     List<String> pieces = OStringSerializerHelper.smartSplit("first, orders : ['this is mine', 'that is your']",
-        new char[] { ',' }, 0, -1, true, true, false, ' ', '\n', '\r', '\t');
+        new char[] { ',' }, 0, -1, true, true, false, false, ' ', '\n', '\r', '\t');
     Assert.assertEquals(pieces.size(), 2);
     Assert.assertTrue(pieces.get(1).contains("this is mine"));
   }

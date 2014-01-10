@@ -138,7 +138,7 @@ public enum OGlobalConfiguration {
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 5000),
+      Integer.class, 300000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -304,6 +304,22 @@ public enum OGlobalConfiguration {
   SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
       "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0.",
       Integer.class, 2),
+
+  SBTREEBONSAI_LINKBAG_CACHE_SIZE("sbtreebonsai.linkBagCache.size",
+      "Amount of LINKBAG collections are cached to avoid constant reloading of data", Integer.class, 100000),
+
+  SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
+      "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
+
+  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeeSpaceReuseTrigger",
+      "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
+
+  // RIDBAG
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
+
+  RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
+      "Amount of values after which LINKBAG implementation will use embedded values container", Integer.class, 60),
 
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
