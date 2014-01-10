@@ -22,7 +22,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public abstract class OClusterMemory extends OSharedResourceAdaptive implements OCluster {
@@ -170,6 +174,9 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
     case DATASEGMENT:
       dataSegmentId = storage.getDataSegmentIdByName(stringValue);
       break;
+
+    default:
+      throw new IllegalArgumentException("Runtime change of attribute '" + iAttribute + " is not supported");
     }
   }
 
@@ -190,14 +197,6 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
   @Override
   public boolean wasSoftlyClosed() throws IOException {
     return true;
-  }
-
-  public void lock() {
-    acquireSharedLock();
-  }
-
-  public void unlock() {
-    releaseSharedLock();
   }
 
   public String getType() {

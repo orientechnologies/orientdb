@@ -269,6 +269,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         case COMPRESSION:
           setCompressionInternal(stringValue);
           break;
+        default:
+          throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
         }
 
       } finally {
@@ -1336,16 +1338,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       releaseSharedLock();
     }
-  }
-
-  @Override
-  public void lock() {
-    throw new UnsupportedOperationException("lock");
-  }
-
-  @Override
-  public void unlock() {
-    throw new UnsupportedOperationException("unlock");
   }
 
   @Override
