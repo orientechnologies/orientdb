@@ -109,8 +109,8 @@ public class ODFACommandStream implements OCommandStream {
       } else {
         // DON'T PUT THIS ON ONE LINE ONLY BECAUSE WITH JDK6 subSequence() RETURNS A CHAR CharSequence while JDK7+ RETURNS
         // CharBuffer
-        final CharSequence cs = buffer.subSequence(start, end + 1);
-        result = cs.toString();
+        final CharSequence cs = buffer;
+        result = cs.subSequence(start, end + 1).toString();
       }
 
       buffer.position(buffer.position() + position);

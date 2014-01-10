@@ -30,9 +30,6 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
@@ -63,11 +60,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   private static final Object                                          NEWMAP_VALUE        = new Object();
   private static final long                                            serialVersionUID    = 1L;
-  private static OSharedResourceAdaptiveExternal                       lock                = new OSharedResourceAdaptiveExternal(
-                                                                                               OGlobalConfiguration.ENVIRONMENT_CONCURRENT
-                                                                                                   .getValueAsBoolean(),
-                                                                                               OGlobalConfiguration.MVRBTREE_TIMEOUT
-                                                                                                   .getValueAsInteger(), true);
 
   public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
     this();
@@ -122,60 +114,46 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public OMVRBTreePersistent<OIdentifiable, OIdentifiable> load() {
-    lock.acquireExclusiveLock();
-    try {
-
-      newEntries = null;
-      super.load();
-      if (root != null)
-        setSize(((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
-            .getTreeSize());
-      else
-        setSize(0);
-      return this;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    newEntries = null;
+    super.load();
+    if (root != null)
+      setSize(((OMVRBTreeRIDEntryProvider) ((OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) root).getProvider())
+          .getTreeSize());
+    else
+      setSize(0);
+    return this;
   }
 
   @Override
   public OIdentifiable internalPut(final OIdentifiable e, final OIdentifiable v) {
-    lock.acquireExclusiveLock();
-    try {
+    if (e == null)
+      return null;
 
-      if (e == null)
-        return null;
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    if (e.getIdentity().isNew()) {
+      final ORecord<?> record = e.getRecord();
 
-      if (e.getIdentity().isNew()) {
-        final ORecord<?> record = e.getRecord();
+      if (record == null)
+        throw new OTransactionException("Cannot insert item in mvrb-tree because the transactional item was not found.");
 
-        if (record == null)
-          throw new OTransactionException("Cannot insert item in mvrb-tree because the transactional item was not found.");
-
-        // ADD IN TEMP LIST
-        if (newEntries == null)
-          newEntries = new IdentityHashMap<ORecord<?>, Object>();
-        else if (newEntries.containsKey(record))
-          return record;
-        newEntries.put(record, NEWMAP_VALUE);
-        setDirty();
-        return null;
-      }
-
-      final OIdentifiable oldValue = super.internalPut(e, null);
-
-      if (oldValue != null)
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-            e, v, oldValue));
-
-      return oldValue;
-
-    } finally {
-      lock.releaseExclusiveLock();
+      // ADD IN TEMP LIST
+      if (newEntries == null)
+        newEntries = new IdentityHashMap<ORecord<?>, Object>();
+      else if (newEntries.containsKey(record))
+        return record;
+      newEntries.put(record, NEWMAP_VALUE);
+      setDirty();
+      return null;
     }
+
+    final OIdentifiable oldValue = super.internalPut(e, null);
+
+    if (oldValue != null)
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+          e, v, oldValue));
+
+    return oldValue;
   }
 
   public void putAll(final Collection<OIdentifiable> coll) {
@@ -193,117 +171,89 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   public OIdentifiable remove(final Object o) {
-    lock.acquireExclusiveLock();
-    try {
+    final OIdentifiable removed;
 
-      final OIdentifiable removed;
-
-      if (hasNewItems() && newEntries.containsKey(o)) {
-        // REMOVE IT INSIDE NEW ITEMS MAP
-        removed = (OIdentifiable) o;
-        newEntries.remove(o);
-        if (newEntries.size() == 0)
-          // EARLY REMOVE THE MAP TO SAVE MEMORY
-          newEntries = null;
+    if (hasNewItems() && newEntries.containsKey(o)) {
+      // REMOVE IT INSIDE NEW ITEMS MAP
+      removed = (OIdentifiable) o;
+      newEntries.remove(o);
+      if (newEntries.size() == 0)
+        // EARLY REMOVE THE MAP TO SAVE MEMORY
+        newEntries = null;
+      setDirty();
+    } else {
+      if (containsKey(o)) {
+        removed = super.remove(o);
         setDirty();
-      } else {
-        if (containsKey(o)) {
-          removed = super.remove(o);
-          setDirty();
-        } else
-          removed = null;
-      }
-
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
-
-      return removed;
-
-    } finally {
-      lock.releaseExclusiveLock();
+      } else
+        removed = null;
     }
+
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
+        (OIdentifiable) o, null, (OIdentifiable) o));
+
+    return removed;
   }
 
   public boolean removeAll(final Collection<?> c) {
-    lock.acquireExclusiveLock();
-    try {
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-
-      if (hasNewItems()) {
-        final Collection<ORecord<?>> v = newEntries.keySet();
-        v.removeAll(c);
-        if (newEntries.size() == 0)
-          newEntries = null;
-      }
-
-      boolean modified = false;
-      for (Object o : c)
-        if (remove(o) != null)
-          modified = true;
-      return modified;
-
-    } finally {
-      lock.releaseExclusiveLock();
+    if (hasNewItems()) {
+      final Collection<ORecord<?>> v = newEntries.keySet();
+      v.removeAll(c);
+      if (newEntries.size() == 0)
+        newEntries = null;
     }
+
+    boolean modified = false;
+    for (Object o : c)
+      if (remove(o) != null)
+        modified = true;
+    return modified;
   }
 
   public boolean retainAll(final Collection<?> c) {
-    lock.acquireExclusiveLock();
-    try {
-
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      if (hasNewItems()) {
-        final Collection<ORecord<?>> v = newEntries.keySet();
-        v.retainAll(c);
-        if (newEntries.size() == 0)
-          newEntries = null;
-      }
-
-      boolean modified = false;
-      final Iterator<?> e = iterator();
-      while (e.hasNext()) {
-        if (!c.contains(e.next())) {
-          e.remove();
-          modified = true;
-        }
-      }
-      return modified;
-
-    } finally {
-      lock.releaseExclusiveLock();
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    if (hasNewItems()) {
+      final Collection<ORecord<?>> v = newEntries.keySet();
+      v.retainAll(c);
+      if (newEntries.size() == 0)
+        newEntries = null;
     }
+
+    boolean modified = false;
+    final Iterator<?> e = iterator();
+    while (e.hasNext()) {
+      if (!c.contains(e.next())) {
+        e.remove();
+        modified = true;
+      }
+    }
+    return modified;
   }
 
   @Override
   public void clear() {
-    lock.acquireExclusiveLock();
-    try {
-
-      if (newEntries != null) {
-        newEntries.clear();
-        newEntries = null;
-      }
-      setDirty();
-
-      final Map<OIdentifiable, OIdentifiable> origValues;
-      if (changeListeners.isEmpty())
-        origValues = null;
-      else
-        origValues = new HashMap<OIdentifiable, OIdentifiable>(this);
-
-      super.clear();
-
-      if (origValues != null) {
-        for (final java.util.Map.Entry<OIdentifiable, OIdentifiable> item : origValues.entrySet())
-          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-              OMultiValueChangeEvent.OChangeType.REMOVE, item.getKey(), null, item.getValue()));
-      } else
-        setDirty();
-
-    } finally {
-      lock.releaseExclusiveLock();
+    if (newEntries != null) {
+      newEntries.clear();
+      newEntries = null;
     }
+    setDirty();
+
+    final Map<OIdentifiable, OIdentifiable> origValues;
+    if (changeListeners.isEmpty())
+      origValues = null;
+    else
+      origValues = new HashMap<OIdentifiable, OIdentifiable>(this);
+
+    super.clear();
+
+    if (origValues != null) {
+      for (final java.util.Map.Entry<OIdentifiable, OIdentifiable> item : origValues.entrySet())
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, item.getKey(), null, item.getValue()));
+    } else
+      setDirty();
   }
 
   public boolean detach() {
@@ -312,168 +262,98 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public int size() {
-    lock.acquireExclusiveLock();
-    try {
-
-      int tot = getTreeSize();
-      if (newEntries != null)
-        tot += newEntries.size();
-      return tot;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    int tot = getTreeSize();
+    if (newEntries != null)
+      tot += newEntries.size();
+    return tot;
   }
 
   public int getTreeSize() {
-    lock.acquireExclusiveLock();
-    try {
-
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      return super.getTreeSize();
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    return super.getTreeSize();
   }
 
   @Override
   public boolean isEmpty() {
-    lock.acquireExclusiveLock();
-    try {
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    boolean empty = super.isEmpty();
 
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      boolean empty = super.isEmpty();
+    if (empty && newEntries != null)
+      empty = newEntries.isEmpty();
 
-      if (empty && newEntries != null)
-        empty = newEntries.isEmpty();
-
-      return empty;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return empty;
   }
 
   @Override
   public boolean containsKey(final Object o) {
-    lock.acquireExclusiveLock();
-    try {
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    boolean found = super.containsKey(o);
 
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      boolean found = super.containsKey(o);
+    if (!found && hasNewItems())
+      // SEARCH INSIDE NEW ITEMS MAP
+      found = newEntries.containsKey(o);
 
-      if (!found && hasNewItems())
-        // SEARCH INSIDE NEW ITEMS MAP
-        found = newEntries.containsKey(o);
-
-      return found;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return found;
   }
 
   public Iterator<OIdentifiable> iterator() {
-    lock.acquireExclusiveLock();
-    try {
-
-      return new OSharedResourceIterator<OIdentifiable>(lock, iterator(autoConvertToRecord));
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return iterator(autoConvertToRecord);
   }
 
   public OLazyIterator<OIdentifiable> iterator(final boolean iAutoConvertToRecord) {
-    lock.acquireExclusiveLock();
-    try {
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    if (hasNewItems()) {
+      if (super.size() == 0)
+        return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord);
 
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      if (hasNewItems()) {
-        if (super.size() == 0)
-          return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord);
-
-        // MIX PERSISTENT AND NEW TOGETHER
-        return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) },
-            iAutoConvertToRecord);
-      }
-
-      return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
-
-    } finally {
-      lock.releaseExclusiveLock();
+      // MIX PERSISTENT AND NEW TOGETHER
+      return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) },
+          iAutoConvertToRecord);
     }
+
+    return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
   }
 
   @Override
   public Set<OIdentifiable> keySet() {
-    lock.acquireExclusiveLock();
-    try {
-
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      return super.keySet();
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    return super.keySet();
   }
 
   @Override
   public Collection<OIdentifiable> values() {
-    lock.acquireExclusiveLock();
-    try {
-
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      return super.values();
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    return super.values();
   }
 
   public Object[] toArray() {
-    lock.acquireExclusiveLock();
-    try {
+    Object[] result = keySet().toArray();
+    if (newEntries != null && !newEntries.isEmpty()) {
+      int start = result.length;
+      result = Arrays.copyOf(result, start + newEntries.size());
 
-      Object[] result = keySet().toArray();
-      if (newEntries != null && !newEntries.isEmpty()) {
-        int start = result.length;
-        result = Arrays.copyOf(result, start + newEntries.size());
-
-        for (ORecord<?> r : newEntries.keySet()) {
-          result[start++] = r;
-        }
+      for (ORecord<?> r : newEntries.keySet()) {
+        result[start++] = r;
       }
-
-      return result;
-
-    } finally {
-      lock.releaseExclusiveLock();
     }
+
+    return result;
   }
 
   @SuppressWarnings("unchecked")
   public <T> T[] toArray(final T[] a) {
-    lock.acquireExclusiveLock();
-    try {
+    T[] result = keySet().toArray(a);
 
-      T[] result = keySet().toArray(a);
+    if (newEntries != null && !newEntries.isEmpty()) {
+      int start = result.length;
+      result = Arrays.copyOf(result, start + newEntries.size());
 
-      if (newEntries != null && !newEntries.isEmpty()) {
-        int start = result.length;
-        result = Arrays.copyOf(result, start + newEntries.size());
-
-        for (ORecord<?> r : newEntries.keySet()) {
-          result[start++] = (T) r;
-        }
+      for (ORecord<?> r : newEntries.keySet()) {
+        result[start++] = (T) r;
       }
-
-      return result;
-
-    } finally {
-      lock.releaseExclusiveLock();
     }
+
+    return result;
   }
 
   @Override
@@ -482,18 +362,11 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public int commitChanges() {
-    lock.acquireExclusiveLock();
-    try {
-
-      if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
-        saveAllNewEntries();
-        return super.commitChanges();
-      }
-      return 0;
-
-    } finally {
-      lock.releaseExclusiveLock();
+    if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
+      saveAllNewEntries();
+      return super.commitChanges();
     }
+    return 0;
   }
 
   /**
@@ -505,56 +378,35 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   protected void setSizeDelta(final int iDelta) {
-    lock.acquireExclusiveLock();
-    try {
-
-      setSize(getTreeSize() + iDelta);
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    setSize(getTreeSize() + iDelta);
   }
 
   /**
    * Notifies to the owner the change
    */
   public void setDirtyOwner() {
-    lock.acquireExclusiveLock();
-    try {
-
-      if (getOwner() != null)
-        getOwner().setDirty();
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    if (getOwner() != null)
+      getOwner().setDirty();
   }
 
   public void onAfterTxCommit() {
-    lock.acquireExclusiveLock();
-    try {
+    final Set<ORID> nodesInMemory = getAllNodesInCache();
 
-      final Set<ORID> nodesInMemory = getAllNodesInCache();
+    if (nodesInMemory.isEmpty())
+      return;
 
-      if (nodesInMemory.isEmpty())
-        return;
+    // FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
+    final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
+    OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> entry;
+    for (ORID rid : keys) {
+      if (rid.getClusterPosition().isTemporary()) {
+        // FIX IT IN CACHE
+        entry = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) searchNodeInCache(rid);
 
-      // FIX THE CACHE CONTENT WITH FINAL RECORD-IDS
-      final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
-      OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> entry;
-      for (ORID rid : keys) {
-        if (rid.getClusterPosition().isTemporary()) {
-          // FIX IT IN CACHE
-          entry = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) searchNodeInCache(rid);
-
-          // OVERWRITE IT WITH THE NEW RID
-          removeNodeFromCache(rid);
-          addNodeInCache(entry);
-        }
+        // OVERWRITE IT WITH THE NEW RID
+        removeNodeFromCache(rid);
+        addNodeInCache(entry);
       }
-
-    } finally {
-      lock.releaseExclusiveLock();
     }
   }
 
@@ -562,103 +414,75 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
    * Returns true if all the new entries are saved as persistent, otherwise false.
    */
   public boolean saveAllNewEntries() {
-    lock.acquireExclusiveLock();
-    try {
+    if (hasNewItems()) {
+      // TRIES TO SAVE THE NEW ENTRIES
+      final Set<ORecord<?>> temp = new HashSet<ORecord<?>>(newEntries.keySet());
 
-      if (hasNewItems()) {
-        // TRIES TO SAVE THE NEW ENTRIES
-        final Set<ORecord<?>> temp = new HashSet<ORecord<?>>(newEntries.keySet());
+      for (ORecord<?> record : temp) {
+        if (record.getIdentity().isNew())
+          record.save();
 
-        for (ORecord<?> record : temp) {
-          if (record.getIdentity().isNew())
-            record.save();
-
-          if (!record.getIdentity().isNew()) {
-            // SAVED CORRECTLY (=NO IN TX): MOVE IT INTO THE PERSISTENT TREE
-            if (newEntries != null) {
-              newEntries.remove(record);
-              if (newEntries.size() == 0)
-                newEntries = null;
-            }
-
-            // PUT THE ITEM INTO THE TREE
-            internalPut(record.getIdentity(), null);
+        if (!record.getIdentity().isNew()) {
+          // SAVED CORRECTLY (=NO IN TX): MOVE IT INTO THE PERSISTENT TREE
+          if (newEntries != null) {
+            newEntries.remove(record);
+            if (newEntries.size() == 0)
+              newEntries = null;
           }
+
+          // PUT THE ITEM INTO THE TREE
+          internalPut(record.getIdentity(), null);
         }
-
-        if (!((OMVRBTreeRIDProvider) dataProvider).isEmbeddedStreaming())
-          // SAVE ALL AT THE END
-          super.commitChanges();
-
-        if (newEntries != null)
-          // SOMETHING IS TEMPORARY YET
-          return false;
       }
-      return true;
 
-    } finally {
-      lock.releaseExclusiveLock();
+      if (!((OMVRBTreeRIDProvider) dataProvider).isEmbeddedStreaming())
+        // SAVE ALL AT THE END
+        super.commitChanges();
+
+      if (newEntries != null)
+        // SOMETHING IS TEMPORARY YET
+        return false;
     }
+    return true;
   }
 
   public boolean hasNewItems() {
-    lock.acquireExclusiveLock();
-    try {
-
-      return newEntries != null && !newEntries.isEmpty();
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return newEntries != null && !newEntries.isEmpty();
   }
 
   @Override
   public String toString() {
-    lock.acquireExclusiveLock();
-    try {
-
-      ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
-      final StringBuilder buffer = new StringBuilder(super.toString());
-      if (hasNewItems()) {
-        buffer.append("{new items (");
-        buffer.append(newEntries.size());
-        buffer.append("): ");
-        boolean first = true;
-        for (ORecord<?> item : newEntries.keySet()) {
-          if (!first) {
-            buffer.append(", ");
-            first = false;
-          }
-
-          if (item != null)
-            buffer.append(item.toString());
+    ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
+    final StringBuilder buffer = new StringBuilder(super.toString());
+    if (hasNewItems()) {
+      buffer.append("{new items (");
+      buffer.append(newEntries.size());
+      buffer.append("): ");
+      boolean first = true;
+      for (ORecord<?> item : newEntries.keySet()) {
+        if (!first) {
+          buffer.append(", ");
+          first = false;
         }
-        buffer.append("}");
-      }
-      return buffer.toString();
 
-    } finally {
-      lock.releaseExclusiveLock();
+        if (item != null)
+          buffer.append(item.toString());
+      }
+      buffer.append("}");
     }
+    return buffer.toString();
   }
 
   @Override
   protected void setRoot(final OMVRBTreeEntry<OIdentifiable, OIdentifiable> iRoot) {
-    lock.acquireExclusiveLock();
-    try {
+    int size = 0;
+    if (iRoot != null)
+      size = getTreeSize();
 
-      int size = 0;
-      if (iRoot != null)
-        size = getTreeSize();
+    super.setRoot(iRoot);
 
-      super.setRoot(iRoot);
-
-      if (iRoot != null)
-        setSize(size);
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    if (iRoot != null)
+      setSize(size);
   }
 
   /**
@@ -666,22 +490,15 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
    */
   @SuppressWarnings("unchecked")
   protected <RET> RET setDirty() {
-    lock.acquireExclusiveLock();
-    try {
+    ((OMVRBTreeRIDProvider) getProvider()).setDirty();
 
-      ((OMVRBTreeRIDProvider) getProvider()).setDirty();
+    if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
+      setDirtyOwner();
+    else if (ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
+      // SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
+      save();
 
-      if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
-        setDirtyOwner();
-      else if (ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
-        // SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
-        save();
-
-      return (RET) this;
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return (RET) this;
   }
 
   public IdentityHashMap<ORecord<?>, Object> getTemporaryEntries() {
@@ -689,76 +506,48 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    lock.acquireExclusiveLock();
-    try {
-
-      setDirty();
-      for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-        if (changeListener != null)
-          changeListener.onAfterRecordChanged(event);
-      }
-
-    } finally {
-      lock.releaseExclusiveLock();
+    setDirty();
+    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
     }
   }
 
   @Override
   public void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    lock.acquireExclusiveLock();
-    try {
-
-      changeListeners.add(changeListener);
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    changeListeners.add(changeListener);
   }
 
   @Override
   public void removeRecordChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    lock.acquireExclusiveLock();
-    try {
-
-      changeListeners.remove(changeListener);
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    changeListeners.remove(changeListener);
   }
 
   @Override
   public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> changeEvents) {
-    lock.acquireExclusiveLock();
-    try {
+    final Map<OIdentifiable, OIdentifiable> reverted = new HashMap<OIdentifiable, OIdentifiable>(this);
 
-      final Map<OIdentifiable, OIdentifiable> reverted = new HashMap<OIdentifiable, OIdentifiable>(this);
+    final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = changeEvents.listIterator(changeEvents
+        .size());
 
-      final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = changeEvents
-          .listIterator(changeEvents.size());
-
-      while (listIterator.hasPrevious()) {
-        final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
-        switch (event.getChangeType()) {
-        case ADD:
-          reverted.remove(event.getKey());
-          break;
-        case REMOVE:
-          reverted.put(event.getKey(), event.getOldValue());
-          break;
-        case UPDATE:
-          reverted.put(event.getKey(), event.getOldValue());
-          break;
-        default:
-          throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
-        }
+    while (listIterator.hasPrevious()) {
+      final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event = listIterator.previous();
+      switch (event.getChangeType()) {
+      case ADD:
+        reverted.remove(event.getKey());
+        break;
+      case REMOVE:
+        reverted.put(event.getKey(), event.getOldValue());
+        break;
+      case UPDATE:
+        reverted.put(event.getKey(), event.getOldValue());
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
       }
-
-      return reverted;
-
-    } finally {
-      lock.releaseExclusiveLock();
     }
+
+    return reverted;
   }
 
   @Override
@@ -768,14 +557,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
-    lock.acquireExclusiveLock();
-    try {
-
-      return new OSharedResourceIterator<OIdentifiable>(lock, iterator(false));
-
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return iterator(false);
   }
 
   @Override
@@ -795,9 +577,5 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   @Override
   public void setAutoConvertToRecord(boolean convertToRecord) {
     autoConvertToRecord = convertToRecord;
-  }
-
-  public static OSharedResourceAdaptiveExternal getLock() {
-    return lock;
   }
 }
