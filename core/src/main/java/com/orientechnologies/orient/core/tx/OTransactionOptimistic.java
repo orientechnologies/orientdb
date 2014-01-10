@@ -214,6 +214,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }
       }
     }
+
+      status = TXSTATUS.COMPLETED;
   }
 
   public void rollback() {
@@ -242,6 +244,12 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       v.getRecord().unload();
 
     indexEntries.clear();
+      temp2persistent.clear();
+      allEntries.clear();
+      recordIndexOperations.clear();
+      recordEntries.clear();
+
+      status = TXSTATUS.COMPLETED;
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,

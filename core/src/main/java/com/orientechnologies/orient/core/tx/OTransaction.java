@@ -29,82 +29,80 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public interface OTransaction {
-  public enum TXTYPE {
-    NOTX, OPTIMISTIC, PESSIMISTIC
-  }
+    public enum TXTYPE {
+        NOTX, OPTIMISTIC, PESSIMISTIC
+    }
 
-  public enum TXSTATUS {
-    INVALID, BEGUN, COMMITTING, ROLLBACKING
-  }
+    public enum TXSTATUS {
+        INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED
+    }
 
-  public void begin();
+    public void begin();
 
-  public void commit();
+    public void commit();
 
-  public void rollback();
+    public void rollback();
 
-  public ODatabaseRecordTx getDatabase();
+    public ODatabaseRecordTx getDatabase();
 
-  public void clearRecordEntries();
+    public void clearRecordEntries();
 
-  public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
-      boolean loadTombstone);
+    public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
+                                         boolean loadTombstone);
 
-  public boolean updateReplica(ORecordInternal<?> iRecord);
+    public boolean updateReplica(ORecordInternal<?> iRecord);
 
-  public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+    public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+                           ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
-  public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
+    public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
 
-  public int getId();
+    public int getId();
 
-  public TXSTATUS getStatus();
+    public TXSTATUS getStatus();
 
-  public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
+    public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
-  public Iterable<? extends ORecordOperation> getAllRecordEntries();
+    public Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-  public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
+    public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
 
-  public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
+    public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 
-  public ORecordInternal<?> getRecord(ORID iRid);
+    public ORecordInternal<?> getRecord(ORID iRid);
 
-  public ORecordOperation getRecordEntry(ORID rid);
+    public ORecordOperation getRecordEntry(ORID rid);
 
-  public List<String> getInvolvedIndexes();
+    public List<String> getInvolvedIndexes();
 
-  public ODocument getIndexChanges();
+    public ODocument getIndexChanges();
 
-  public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
-      final Object iKey, final OIdentifiable iValue);
+    public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
+                              final Object iKey, final OIdentifiable iValue);
 
-  public void clearIndexEntries();
+    public void clearIndexEntries();
 
-  public OTransactionIndexChanges getIndexChanges(String iName);
+    public OTransactionIndexChanges getIndexChanges(String iName);
 
-  /**
-   * Tells if the transaction is active.
-   * 
-   * @return
-   */
-  public boolean isActive();
+    /**
+     * Tells if the transaction is active.
+     *
+     * @return
+     */
+    public boolean isActive();
 
-  public boolean isUsingLog();
+    public boolean isUsingLog();
 
-  public void setUsingLog(boolean useLog);
+    public void setUsingLog(boolean useLog);
 
-  public void close();
+    public void close();
 
-  /**
-   * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
-   * to fix them given method will be called for each entry. This update local transaction maps too.
-   * 
-   * @param oldRid
-   *          Record identity before commit.
-   * @param newRid
-   *          Record identity after commit.
-   */
-  public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+    /**
+     * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
+     * to fix them given method will be called for each entry. This update local transaction maps too.
+     *
+     * @param oldRid Record identity before commit.
+     * @param newRid Record identity after commit.
+     */
+    public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 }
