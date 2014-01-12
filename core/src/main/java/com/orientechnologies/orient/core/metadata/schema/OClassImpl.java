@@ -269,7 +269,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     if (this.shortName != null)
       // UNREGISTER ANY PREVIOUS SHORT NAME
-      owner.classes.remove(this.shortName);
+      owner.classes.remove(this.shortName.toLowerCase());
 
     this.shortName = iShortName;
 

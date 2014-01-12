@@ -1596,7 +1596,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
    * INTERNAL MAPPING</strong>
    */
   public void renameCluster(final String iOldName, final String iNewName) {
-    clusterMap.put(iNewName, clusterMap.remove(iOldName));
+    clusterMap.put(iNewName.toLowerCase(), clusterMap.remove(iOldName.toLowerCase()));
   }
 
   protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
@@ -1643,10 +1643,10 @@ public class OStorageLocal extends OStorageLocalAbstract {
    * @throws IOException
    */
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-    OCluster cluster = clusterMap.get(iConfig.getName());
+    OCluster cluster = clusterMap.get(iConfig.getName().toLowerCase());
 
     if (cluster instanceof OClusterLocal && iConfig instanceof OStorageEHClusterConfiguration)
-      clusterMap.remove(iConfig.getName());
+      clusterMap.remove(iConfig.getName().toLowerCase());
     else if (cluster != null) {
       if (cluster instanceof OClusterLocal) {
         // ALREADY CONFIGURED, JUST OVERWRITE CONFIG
@@ -2034,7 +2034,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public boolean wasClusterSoftlyClosed(String clusterName) {
-    final OCluster indexCluster = clusterMap.get(clusterName);
+    final OCluster indexCluster = clusterMap.get(clusterName.toLowerCase());
     return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
   }
 
