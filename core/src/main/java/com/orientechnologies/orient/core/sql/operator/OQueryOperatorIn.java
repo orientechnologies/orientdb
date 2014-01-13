@@ -109,8 +109,8 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Object result;
 
@@ -144,9 +144,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (containsNotCompatibleKey)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.getValues(inKeys).size();
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValues(inKeys, resultListener);
         result = resultListener.getResult();
       } else

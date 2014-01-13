@@ -203,12 +203,6 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("count");
-  }
-
-  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

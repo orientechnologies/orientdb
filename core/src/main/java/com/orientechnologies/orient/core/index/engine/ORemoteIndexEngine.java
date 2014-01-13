@@ -174,12 +174,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer transformer) {
-    return 0;
-  }
-
-  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

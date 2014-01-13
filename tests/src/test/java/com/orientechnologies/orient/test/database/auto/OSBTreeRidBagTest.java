@@ -64,10 +64,10 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagClusterDistribution() {
-    final int clusterIdOne = db.addCluster("clusterOne", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final int clusterIdTwo = db.addCluster("clusterTwo", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final int clusterIdThree = db.addCluster("clusterThree", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final int clusterIdFour = db.addCluster("clusterFour", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdOne = database.addCluster("clusterOne", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdTwo = database.addCluster("clusterTwo", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdThree = database.addCluster("clusterThree", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdFour = database.addCluster("clusterFour", OStorage.CLUSTER_TYPE.PHYSICAL);
 
     ODocument docClusterOne = new ODocument();
     ORidBag ridBagClusterOne = new ORidBag();
@@ -110,7 +110,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     docClusterFour.field("emap", emap, OType.EMBEDDEDMAP);
     docClusterFour.save("clusterFour");
 
-    final String directory = db.getStorage().getConfiguration().getDirectory();
+    final String directory = database.getStorage().getConfiguration().getDirectory();
     final File ridBagOneFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne
         + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
     Assert.assertTrue(ridBagOneFile.exists());
@@ -172,13 +172,13 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     assertEmbedded(realDocRidBag.isEmbedded());
     realDoc.save();
 
-    final int clusterId = db.addCluster("ridBagDeleteTest", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterId = database.addCluster("ridBagDeleteTest", OStorage.CLUSTER_TYPE.PHYSICAL);
 
     ODocument testDocument = crateTestDeleteDoc(realDoc);
-    db.freeze();
-    db.release();
+    database.freeze();
+    database.release();
 
-    final String directory = db.getStorage().getConfiguration().getDirectory();
+    final String directory = database.getStorage().getConfiguration().getDirectory();
 
     File testRidBagFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterId
         + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
@@ -191,8 +191,8 @@ public class OSBTreeRidBagTest extends ORidBagTest {
       testDocument = crateTestDeleteDoc(realDoc);
     }
 
-    db.freeze();
-    db.release();
+    database.freeze();
+    database.release();
 
     OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(reuseTrigger);
     testRidBagFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterId
@@ -200,7 +200,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
     Assert.assertEquals(testRidBagFile.length(), testRidBagSize);
 
-    realDoc = db.load(realDoc.getIdentity(), "*:*", true);
+    realDoc = database.load(realDoc.getIdentity(), "*:*", true);
     ORidBag ridBag = realDoc.field("ridBag");
     Assert.assertEquals(ridBag.size(), 10);
   }

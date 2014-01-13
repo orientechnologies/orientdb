@@ -5,7 +5,7 @@ import org.testng.annotations.*;
 
 @Test
 public abstract class BaseTest {
-  protected ODatabaseDocumentTx db;
+  protected ODatabaseDocumentTx database;
   private boolean               dropDb = false;
 
   @Parameters(value = "url")
@@ -16,28 +16,28 @@ public abstract class BaseTest {
       dropDb = true;
     }
 
-    db = new ODatabaseDocumentTx(url);
+    database = new ODatabaseDocumentTx(url);
   }
 
   @BeforeClass
-  public void beforeClass() {
+  public void beforeClass() throws Exception {
     if (dropDb) {
-      if (db.exists()) {
-        db.open("admin", "admin");
-        db.drop();
+      if (database.exists()) {
+        database.open("admin", "admin");
+        database.drop();
       }
 
-      db.create();
+      database.create();
     } else
-      db.open("admin", "admin");
+      database.open("admin", "admin");
   }
 
   @AfterClass
-  public void afterClass() {
+  public void afterClass() throws Exception {
     if (dropDb)
-      db.drop();
+      database.drop();
     else
-      db.close();
+      database.close();
   }
 
 }

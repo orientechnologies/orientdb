@@ -54,10 +54,6 @@ public abstract class OQueryOperator {
     EQUAL
   }
 
-  public static enum INDEX_OPERATION_TYPE {
-    GET, COUNT
-  }
-
   /**
    * Default operator order. can be used by additional operator to locate themself relatively to default ones.
    * <p/>
@@ -123,20 +119,19 @@ public abstract class OQueryOperator {
    * 
    * 
    * 
+   * 
    * @param iContext
    *          TODO
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
-   * @param iOperationType
-   *          TODO
    * @param keyParams
    *          Parameters of query is used to calculate query result.
    * @param resultListener
    * @param fetchLimit
    * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
    */
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      final List<Object> keyParams, final IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+      final IndexResultListener resultListener, int fetchLimit) {
     return null;
   }
 

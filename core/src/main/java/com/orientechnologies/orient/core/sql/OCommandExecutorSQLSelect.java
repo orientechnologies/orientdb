@@ -63,7 +63,6 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator.INDEX_OPERATION_TYPE;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
@@ -694,8 +693,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
 
-        INDEX_OPERATION_TYPE opType = null;
-
         if (context.isRecordingMetrics()) {
           Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
           if (idxNames == null) {
@@ -708,28 +705,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames.add(index.getName());
         }
 
-        if (projections != null && projections.size() == 1) {
-          final Object v = projections.values().iterator().next();
-          if (v instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) v).getFunction() instanceof OSQLFunctionCount) {
-            if (!(compiledFilter.getRootCondition().getLeft() instanceof OSQLFilterCondition || compiledFilter.getRootCondition()
-                .getRight() instanceof OSQLFilterCondition))
-              // OPTIMIZATION: JUST COUNT IT
-              opType = INDEX_OPERATION_TYPE.COUNT;
-          }
-        }
-
-        if (opType == null)
-          opType = INDEX_OPERATION_TYPE.GET;
-
         OQueryOperator.IndexResultListener resultListener;
-        if (fetchLimit < 0 || opType == INDEX_OPERATION_TYPE.COUNT)
+        if (fetchLimit < 0)
           resultListener = null;
         else
           resultListener = new IndexResultListener();
 
         Object result;
         try {
-          result = operator.executeIndexQuery(context, index, opType, keyParams, resultListener, fetchLimit);
+          result = operator.executeIndexQuery(context, index, keyParams, resultListener, fetchLimit);
         } catch (Exception e) {
           OLogManager
               .instance()
@@ -744,13 +728,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (result == null)
           continue;
 
-        if (opType == INDEX_OPERATION_TYPE.COUNT) {
-          // OPTIMIZATION: EMBED THE RESULT IN A DOCUMENT AND AVOID THE CLASSIC PATH
-          final String projName = projectionDefinition.keySet().iterator().next();
-          projectionDefinition.clear();
-          getProjectionGroup(null).applyValue(projName, result);
-        } else
-          fillSearchIndexResultSet(result);
+        fillSearchIndexResultSet(result);
 
         return true;
       }
