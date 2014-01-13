@@ -16,9 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
@@ -37,6 +34,21 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -138,7 +150,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
         newChangedValues.put(record, entry.getValue());
       } else
-        // TODO return before updating all changed values
         return false;
     }
 
@@ -534,7 +545,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         return currentValue;
       }
 
-      // TODO when there is some removed entries from tree iterator still iterate thru them
       if (nextChange != null && nextSBTreeEntry != null) {
         if (nextChange.getKey().compareTo(nextSBTreeEntry.getKey()) < 0) {
           currentValue = nextChange.getKey();
@@ -542,9 +552,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           currentCounter = 1;
 
           nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
-
-          // TODO if condition is always true
-        } else if (nextChange.getKey().compareTo(nextSBTreeEntry.getKey()) >= 0) {
+        } else {
           currentValue = nextSBTreeEntry.getKey();
           currentFinalCounter = nextSBTreeEntry.getValue();
           currentCounter = 1;
