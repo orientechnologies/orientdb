@@ -153,7 +153,6 @@ public class OMemoryWatchDog extends Thread {
         if (!isMemoryAvailable())
           // CALL LISTENER TO FREE MEMORY
           synchronized (listeners) {
-            System.out.println("listeners : " + listeners.size());
             for (ListenerWrapper listener : listeners.keySet()) {
               try {
                 listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
