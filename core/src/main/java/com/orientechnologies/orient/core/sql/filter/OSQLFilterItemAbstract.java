@@ -50,6 +50,9 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   protected List<OPair<OSQLMethod, Object[]>> operationsChain = null;
 
+  protected OSQLFilterItemAbstract() {
+  }
+
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' }, new boolean[] { false, true }, 0,
         -1, false, true, false, false, new char[] {});
@@ -94,7 +97,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
             if (f.getMaxParams() == -1 || f.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length > f.getMaxParams()))
+              if (arguments.length + 1 < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length + 1 > f.getMaxParams()))
                 throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: function '" + f.getName() + "' needs "
                     + (f.getMinParams() == f.getMaxParams() ? f.getMinParams() : f.getMinParams() + "-" + f.getMaxParams())
                     + " argument(s) while has been received " + arguments.length, 0);

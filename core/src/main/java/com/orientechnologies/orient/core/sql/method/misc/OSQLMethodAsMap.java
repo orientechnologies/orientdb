@@ -16,56 +16,54 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
 
-import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- * Transforms current value in a Set.
+ * Transforms current value in a Map.
  * 
  * @author Luca Garulli
  */
-public class OSQLMethodAsSet extends OAbstractSQLMethod {
+public class OSQLMethodAsMap extends OAbstractSQLMethod {
 
-  public static final String NAME = "asset";
+  public static final String NAME = "asmap";
 
-  public OSQLMethodAsSet() {
+  public OSQLMethodAsMap() {
     super(NAME);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-    if (ioResult instanceof Set)
-      // ALREADY A SET
+    if (ioResult instanceof Map)
+      // ALREADY A MAP
       return ioResult;
 
     if (ioResult == null)
       // NULL VALUE, RETURN AN EMPTY SET
-      return new HashSet<Object>();
+      return new HashMap<Object, Object>();
 
-    if (ioResult instanceof Collection<?>)
-      return new HashSet<Object>((Collection<Object>) ioResult);
+    Iterator<Object> iter;
+    if (ioResult instanceof Iterator<?>)
+      iter = (Iterator<Object>) ioResult;
     else if (ioResult instanceof Iterable<?>)
-      ioResult = ((Iterable<?>) ioResult).iterator();
+      iter = ((Iterable<Object>) ioResult).iterator();
+    else
+      return null;
 
-    if (ioResult instanceof Iterator<?>) {
-      final Set<Object> set = ioResult instanceof OSizeable ? new HashSet<Object>(((OSizeable) ioResult).size())
-          : new HashSet<Object>();
-
-      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext();)
-        set.add(iter.next());
-      return set;
+    final HashMap<Object, Object> map = new HashMap<Object, Object>();
+    while (iter.hasNext()) {
+      final Object key = iter.next();
+      if (iter.hasNext()) {
+        final Object value = iter.next();
+        map.put(key, value);
+      }
     }
 
-    // SINGLE ITEM: ADD IT AS UNIQUE ITEM
-    final Set<Object> set = new HashSet<Object>();
-    set.add(ioResult);
-    return set;
+    return map;
   }
 }

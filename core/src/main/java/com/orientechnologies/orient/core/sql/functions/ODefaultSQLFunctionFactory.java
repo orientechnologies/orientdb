@@ -42,9 +42,11 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDecode;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionExclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionFormat;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionInclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 
 /**
@@ -76,6 +78,8 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     FUNCTIONS.put(OSQLFunctionMap.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMap.class);
     FUNCTIONS.put(OSQLFunctionEncode.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionEncode());
     FUNCTIONS.put(OSQLFunctionDecode.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDecode());
+    FUNCTIONS.put(OSQLFunctionExclude.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionExclude());
+    FUNCTIONS.put(OSQLFunctionInclude.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionInclude());
 
     // MATH FUNCTIONS
     FUNCTIONS.put(OSQLFunctionMin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMin.class);
