@@ -26,6 +26,5 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public interface OSQLFilterItem {
 
-	public Object getValue(OIdentifiable iRecord, OCommandContext iContetx);
-
+  public Object getValue(OIdentifiable iRecord, OCommandContext iContetx);
 }

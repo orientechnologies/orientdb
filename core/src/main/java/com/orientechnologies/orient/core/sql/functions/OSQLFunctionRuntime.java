@@ -50,6 +50,10 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     super(iQueryToParse, iText);
   }
 
+  public OSQLFunctionRuntime(final OSQLFunction iFunction) {
+    function = iFunction;
+  }
+
   public boolean aggregateResults() {
     return function.aggregateResults();
   }
@@ -149,8 +153,22 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
-    for (int i = 0; i < funcParamsText.size(); ++i) {
-      this.configuredParameters[i] = OSQLHelper.parseValue(null, iQueryToParse, funcParamsText.get(i), null);
+    for (int i = 0; i < funcParamsText.size(); ++i)
+      this.configuredParameters[i] = funcParamsText.get(i);
+
+    setParameters(configuredParameters);
+  }
+
+  public void setParameters(final Object[] iParameters) {
+    this.configuredParameters = new Object[iParameters.length];
+    for (int i = 0; i < iParameters.length; ++i) {
+      if (iParameters[i] != null)
+        if (iParameters[i] instanceof String)
+          this.configuredParameters[i] = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
+        else
+          this.configuredParameters[i] = iParameters[i];
+      else
+        this.configuredParameters[i] = null;
     }
 
     function.config(configuredParameters);
