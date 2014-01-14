@@ -284,6 +284,7 @@ public class OClusterPositionMap extends ODurableComponent {
         if (resultSize <= 0) {
           diskCache.release(cacheEntry);
           pageIndex++;
+          index = 0;
         } else {
           int entriesCount = 0;
           long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
