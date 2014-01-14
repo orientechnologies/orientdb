@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -141,20 +140,19 @@ public class OSQLHelper {
       fieldValue = new ORecordId(iValue.trim());
     else {
 
-      final String upperCase = iValue.toUpperCase(Locale.ENGLISH);
-      if (upperCase.equals("NULL"))
+      if (iValue.equalsIgnoreCase("null"))
         // NULL
         fieldValue = null;
-      else if (upperCase.equals("NOT NULL"))
+      else if (iValue.equalsIgnoreCase("not null"))
         // NULL
         fieldValue = NOT_NULL;
-      else if (upperCase.equals("DEFINED"))
+      else if (iValue.equalsIgnoreCase("defined"))
         // NULL
         fieldValue = DEFINED;
-      else if (upperCase.equals("TRUE"))
+      else if (iValue.equalsIgnoreCase("true"))
         // BOOLEAN, TRUE
         fieldValue = Boolean.TRUE;
-      else if (upperCase.equals("FALSE"))
+      else if (iValue.equalsIgnoreCase("false"))
         // BOOLEAN, FALSE
         fieldValue = Boolean.FALSE;
       else {

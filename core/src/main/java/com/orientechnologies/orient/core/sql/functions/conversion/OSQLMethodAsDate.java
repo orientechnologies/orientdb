@@ -14,39 +14,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.conversion;
+
+import java.text.ParseException;
+import java.util.Date;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import java.text.ParseException;
-import java.util.Date;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodAsDate extends OAbstractSQLMethod {
+public class OSQLMethodAsDate extends OSQLFunctionAbstract {
 
   public static final String NAME = "asdate";
 
   public OSQLMethodAsDate() {
-    super(NAME);
+    super(NAME, 1, 1);
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams)
-      throws ParseException {
+  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
+      final OCommandContext iContext) {
+    final Object value = iFuncParams[0];
 
-    if (ioResult != null) {
-      if (ioResult instanceof Number) {
-        ioResult = new Date(((Number) ioResult).longValue());
-      } else if (!(ioResult instanceof Date)) {
-        ioResult = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
-            .parse(ioResult.toString());
+    if (value != null) {
+      if (value instanceof Number) {
+        return new Date(((Number) value).longValue());
+      } else if (!(value instanceof Date)) {
+        try {
+          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance()
+              .parse(value.toString());
+        } catch (ParseException e) {
+          // IGNORE IT: RETURN NULL
+        }
       }
     }
-    return ioResult;
+    return null;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "asDate(<value|expression|field>)";
   }
 }

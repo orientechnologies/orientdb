@@ -22,8 +22,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAppend;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsBoolean;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsDate;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsDateTime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsDecimal;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsFloat;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsInteger;
@@ -71,8 +69,6 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodAppend.NAME, new OSQLMethodAppend());
     register(OSQLMethodMultiValue.NAME, new OSQLMethodMultiValue());
     register(OSQLMethodAsBoolean.NAME, new OSQLMethodAsBoolean());
-    register(OSQLMethodAsDate.NAME, new OSQLMethodAsDate());
-    register(OSQLMethodAsDateTime.NAME, new OSQLMethodAsDateTime());
     register(OSQLMethodAsDecimal.NAME, new OSQLMethodAsDecimal());
     register(OSQLMethodAsFloat.NAME, new OSQLMethodAsFloat());
     register(OSQLMethodAsInteger.NAME, new OSQLMethodAsInteger());
@@ -113,7 +109,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
 
   @Override
   public boolean hasMethod(final String iName) {
-    return methods.containsKey(iName);
+    return methods.containsKey(iName.toLowerCase());
   }
 
   @Override

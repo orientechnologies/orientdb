@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +30,8 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionList;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMap;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSet;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionUnion;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDate;
+import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodAsDateTime;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
@@ -59,37 +60,43 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     // MISC FUNCTIONS
-    FUNCTIONS.put(OSQLFunctionCoalesce.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionCoalesce());
-    FUNCTIONS.put(OSQLFunctionIf.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIf());
-    FUNCTIONS.put(OSQLFunctionIfNull.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIfNull());
-    FUNCTIONS.put(OSQLFunctionFormat.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionFormat());
-    FUNCTIONS.put(OSQLFunctionDate.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDate.class);
-    FUNCTIONS.put(OSQLFunctionSysdate.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionSysdate.class);
-    FUNCTIONS.put(OSQLFunctionCount.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionCount.class);
-    FUNCTIONS.put(OSQLFunctionDocument.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDocument.class);
-    FUNCTIONS.put(OSQLFunctionDistinct.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDistinct.class);
-    FUNCTIONS.put(OSQLFunctionUnion.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionUnion.class);
-    FUNCTIONS.put(OSQLFunctionIntersect.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionIntersect.class);
-    FUNCTIONS.put(OSQLFunctionDifference.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionDifference.class);
-    FUNCTIONS.put(OSQLFunctionFirst.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionFirst.class);
-    FUNCTIONS.put(OSQLFunctionLast.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionLast.class);
-    FUNCTIONS.put(OSQLFunctionList.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionList.class);
-    FUNCTIONS.put(OSQLFunctionSet.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionSet.class);
-    FUNCTIONS.put(OSQLFunctionMap.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMap.class);
-    FUNCTIONS.put(OSQLFunctionEncode.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionEncode());
-    FUNCTIONS.put(OSQLFunctionDecode.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDecode());
-    FUNCTIONS.put(OSQLFunctionExclude.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionExclude());
-    FUNCTIONS.put(OSQLFunctionInclude.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionInclude());
+    register(OSQLMethodAsDate.NAME, new OSQLMethodAsDate());
+    register(OSQLMethodAsDateTime.NAME, new OSQLMethodAsDateTime());
+    register(OSQLFunctionCoalesce.NAME, new OSQLFunctionCoalesce());
+    register(OSQLFunctionIf.NAME, new OSQLFunctionIf());
+    register(OSQLFunctionIfNull.NAME, new OSQLFunctionIfNull());
+    register(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
+    register(OSQLFunctionDate.NAME, OSQLFunctionDate.class);
+    register(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
+    register(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
+    register(OSQLFunctionDocument.NAME, OSQLFunctionDocument.class);
+    register(OSQLFunctionDistinct.NAME, OSQLFunctionDistinct.class);
+    register(OSQLFunctionUnion.NAME, OSQLFunctionUnion.class);
+    register(OSQLFunctionIntersect.NAME, OSQLFunctionIntersect.class);
+    register(OSQLFunctionDifference.NAME, OSQLFunctionDifference.class);
+    register(OSQLFunctionFirst.NAME, OSQLFunctionFirst.class);
+    register(OSQLFunctionLast.NAME, OSQLFunctionLast.class);
+    register(OSQLFunctionList.NAME, OSQLFunctionList.class);
+    register(OSQLFunctionSet.NAME, OSQLFunctionSet.class);
+    register(OSQLFunctionMap.NAME, OSQLFunctionMap.class);
+    register(OSQLFunctionEncode.NAME, new OSQLFunctionEncode());
+    register(OSQLFunctionDecode.NAME, new OSQLFunctionDecode());
+    register(OSQLFunctionExclude.NAME, new OSQLFunctionExclude());
+    register(OSQLFunctionInclude.NAME, new OSQLFunctionInclude());
 
     // MATH FUNCTIONS
-    FUNCTIONS.put(OSQLFunctionMin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMin.class);
-    FUNCTIONS.put(OSQLFunctionMax.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionMax.class);
-    FUNCTIONS.put(OSQLFunctionSum.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionSum.class);
-    FUNCTIONS.put(OSQLFunctionAverage.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionAverage.class);
-    FUNCTIONS.put(OSQLFunctionEval.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionEval.class);
+    register(OSQLFunctionMin.NAME, OSQLFunctionMin.class);
+    register(OSQLFunctionMax.NAME, OSQLFunctionMax.class);
+    register(OSQLFunctionSum.NAME, OSQLFunctionSum.class);
+    register(OSQLFunctionAverage.NAME, OSQLFunctionAverage.class);
+    register(OSQLFunctionEval.NAME, OSQLFunctionEval.class);
 
     // GEO FUNCTIONS
-    FUNCTIONS.put(OSQLFunctionDistance.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDistance());
+    register(OSQLFunctionDistance.NAME, new OSQLFunctionDistance());
+  }
+
+  public static void register(final String iName, final Object iImplementation) {
+    FUNCTIONS.put(iName.toLowerCase(), iImplementation);
   }
 
   @Override
