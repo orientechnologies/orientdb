@@ -52,11 +52,20 @@ public class OMemoryWatchDog extends Thread {
   /**
    * we want properties of both IdentityHashMap and WeakHashMap
    */
-  private static class ListenerWrapper {
-    final Listener listener;
+  public static class ListenerWrapper implements Listener {
+    protected final Listener listener;
 
     private ListenerWrapper(Listener listener) {
       this.listener = listener;
+    }
+
+    public Listener getListener() {
+      return listener;
+    }
+
+    @Override
+    public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage) {
+      listener.lowMemory(iFreeMemory, iFreeMemoryPercentage);
     }
 
     @Override
@@ -211,11 +220,17 @@ public class OMemoryWatchDog extends Thread {
     return getUsedHeapMemoryInPercentage() < autoFreeHeapThreshold * -1;
   }
 
+  /**
+   * Important : callers <b>must</b> reference (with a strong ref) the returned Listener, otherwise this listener will be discarded.
+   * 
+   * @return The Listener to reference with a strong ref..
+   */
   public Listener addListener(final Listener listener) {
+    ListenerWrapper wrapper = new ListenerWrapper(listener);
     synchronized (listeners) {
-      listeners.put(new ListenerWrapper(listener), listener);
+      listeners.put(wrapper, listener);
     }
-    return listener;
+    return wrapper;
   }
 
   public boolean removeListener(final Listener listener) {
