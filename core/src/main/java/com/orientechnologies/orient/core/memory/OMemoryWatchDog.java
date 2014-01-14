@@ -44,8 +44,7 @@ public class OMemoryWatchDog extends Thread {
   protected final ReferenceQueue<Object>     monitorQueue = new ReferenceQueue<Object>();
   protected SoftReference<Object>            monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
 
-  protected final MemoryUsage                heapMemory;
-  protected final MemoryUsage                nonheapMemory;
+  protected final MemoryMXBean               memBean;
 
   private long                               autoFreeCheckEveryMs;
   private long                               autoFreeHeapThreshold;
@@ -96,9 +95,7 @@ public class OMemoryWatchDog extends Thread {
   public OMemoryWatchDog() {
     super("OrientDB MemoryWatchDog");
 
-    final MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-    heapMemory = memBean.getHeapMemoryUsage();
-    nonheapMemory = memBean.getNonHeapMemoryUsage();
+    memBean = ManagementFactory.getMemoryMXBean();
 
     final String size = OGlobalConfiguration.MEMORY_AUTOFREE_HEAP_THRESHOLD.getValueAsString();
     autoFreeHeapThreshold = OFileUtils.getSizeAsNumber(size);
@@ -107,25 +104,26 @@ public class OMemoryWatchDog extends Thread {
     start();
   }
 
+  @Override
   public void run() {
     Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue("system.memory.alerts", "Number of alerts received by JVM to free memory resources",
-            METRIC_TYPE.COUNTER, new OProfilerHookValue() {
-              public Object getValue() {
-                return alertTimes;
-              }
-            });
+    .instance()
+    .getProfiler()
+    .registerHookValue("system.memory.alerts", "Number of alerts received by JVM to free memory resources",
+        METRIC_TYPE.COUNTER, new OProfilerHookValue() {
+      public Object getValue() {
+        return alertTimes;
+      }
+    });
     Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation", METRIC_TYPE.STAT,
-            new OProfilerHookValue() {
-              public Object getValue() {
-                return lastGC;
-              }
-            });
+    .instance()
+    .getProfiler()
+    .registerHookValue("system.memory.lastGC", "Date of last System.gc() invocation", METRIC_TYPE.STAT,
+        new OProfilerHookValue() {
+      public Object getValue() {
+        return lastGC;
+      }
+    });
 
     autoFreeCheckEveryMs = OGlobalConfiguration.MEMORY_AUTOFREE_CHECK_EVERY.getValueAsLong();
     Orient.instance().getTimer().schedule(new TimerTask() {
@@ -133,6 +131,7 @@ public class OMemoryWatchDog extends Thread {
       @Override
       public void run() {
         // CHECK MEMORY
+        MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
         final long usedHeap = heapMemory.getUsed();
         final long maxHeap = heapMemory.getMax();
         final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
@@ -166,6 +165,7 @@ public class OMemoryWatchDog extends Thread {
 
         // GC is freeing memory!
         alertTimes++;
+        MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
         final long usedHeap = heapMemory.getUsed();
         final long maxHeap = heapMemory.getMax();
         final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
@@ -243,10 +243,12 @@ public class OMemoryWatchDog extends Thread {
   }
 
   public long getUsedHeapMemory() {
+    MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
     return heapMemory.getUsed();
   }
 
   public int getUsedHeapMemoryInPercentage() {
+    MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
     return (int) (heapMemory.getUsed() * 100 / heapMemory.getMax());
   }
 
