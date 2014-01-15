@@ -14,29 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.conversion;
+
+import java.math.BigDecimal;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- *
+ * Transforms a value to decimal. If the conversion is not possible, null is returned.
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodReplace extends OAbstractSQLMethod {
+public class OSQLFunctionAsDecimal extends OSQLFunctionAbstract {
 
-    public static final String NAME = "replace";
+  public static final String NAME = "asdecimal";
 
-    public OSQLMethodReplace() {
-        super(NAME, 2);
-    }
+  public OSQLFunctionAsDecimal() {
+    super(NAME, 1, 1);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        ioResult = ioResult != null ? ioResult.toString().replace(
-                iMethodParams[0].toString(), 
-                iMethodParams[1].toString()) : null;
-        return ioResult;
-    }
+  @Override
+  public String getSyntax() {
+    return "asDecimal(<value|expression|field>)";
+  }
+
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    return iFuncParams[0] != null ? new BigDecimal(iFuncParams[0].toString().trim()) : null;
+  }
 }

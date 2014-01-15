@@ -14,51 +14,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.conversion;
-
-import java.text.ParseException;
-import java.util.Date;
+package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
+ * Returns the first characters from the beginning of the string.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodAsDateTime extends OSQLFunctionAbstract {
+public class OSQLFunctionLeft extends OSQLFunctionAbstract {
 
-  public static final String NAME = "asdatetime";
+  public static final String NAME = "left";
 
-  public OSQLMethodAsDateTime() {
-    super(NAME, 1, 1);
+  public OSQLFunctionLeft() {
+    super(NAME, 2, 2);
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
-      final OCommandContext iContext) {
-    final Object value = iFuncParams[0];
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    if (iFuncParams[0] == null || iFuncParams[1] == null)
+      return null;
 
-    if (value != null) {
-      if (value instanceof Number) {
-        return new Date(((Number) value).longValue());
-      } else if (!(value instanceof Date)) {
-        try {
-          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
-              .parse(value.toString());
-        } catch (ParseException e) {
-          // IGNORE IT: RETURN NULL
-        }
-      }
-    }
-    return null;
+    final Object value = iFuncParams[0];
+    final String valueAsString = value.toString();
+
+    final int len = Integer.parseInt(iFuncParams[1].toString());
+    return valueAsString.substring(0, len <= valueAsString.length() ? len : valueAsString.length());
   }
 
   @Override
   public String getSyntax() {
-    return "asDatetime(<value|expression|field>)";
+    return "left(<value|expression|field>, <characters>)";
   }
 }

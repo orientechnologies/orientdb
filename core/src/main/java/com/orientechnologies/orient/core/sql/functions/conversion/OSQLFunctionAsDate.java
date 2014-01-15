@@ -25,15 +25,16 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
+ * Transforms a value to date. If the conversion is not possible, null is returned.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodAsDate extends OSQLFunctionAbstract {
+public class OSQLFunctionAsDate extends OSQLFunctionAbstract {
 
   public static final String NAME = "asdate";
 
-  public OSQLMethodAsDate() {
+  public OSQLFunctionAsDate() {
     super(NAME, 1, 1);
   }
 

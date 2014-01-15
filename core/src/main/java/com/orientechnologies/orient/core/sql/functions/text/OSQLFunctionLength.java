@@ -14,29 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Works against multi value objects like collections, maps and arrays.
+ * Returns the string length.
  * 
+ * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodMultiValue extends OAbstractSQLMethod {
+public class OSQLFunctionLength extends OSQLFunctionAbstract {
 
-  public static final String NAME = "multivalue";
+  public static final String NAME = "length";
 
-  public OSQLMethodMultiValue() {
-    super(NAME, 0, 0);
+  public OSQLFunctionLength() {
+    super(NAME, 1, 1);
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult,
-      final Object[] iMethodParams) {
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    if (iFuncParams[0] == null)
+      return 0;
 
-    return ODocumentHelper.getFieldValue(ioResult, iMethodParams[0].toString(), iContext);
+    return iFuncParams[0].toString().length();
+  }
+
+  @Override
+  public String getSyntax() {
+    return "length(<value|expression|field>)";
   }
 }

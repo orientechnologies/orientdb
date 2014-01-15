@@ -417,9 +417,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         buffer.append(first ? '{' : ',');
         buffer.append(f.getKey());
         buffer.append(':');
-        if (f.getValue() instanceof Collection<?>) {
+        if (f.getValue() == null)
+          buffer.append("null");
+        else if (f.getValue() instanceof Collection<?> || f.getValue().getClass().isArray()) {
           buffer.append('[');
-          buffer.append(((Collection<?>) f.getValue()).size());
+          buffer.append(OMultiValue.getSize(f.getValue()));
           buffer.append(']');
         } else if (f.getValue() instanceof ORecord<?>) {
           record = (ORecord<?>) f.getValue();

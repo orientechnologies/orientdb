@@ -14,28 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import java.math.BigDecimal;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- *
+ * Replaces all the occurrences.
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodAsDecimal extends OAbstractSQLMethod {
+public class OSQLFunctionReplace extends OSQLFunctionAbstract {
 
-    public static final String NAME = "asdecimal";
+  public static final String NAME = "replace";
 
-    public OSQLMethodAsDecimal() {
-        super(NAME);
-    }
+  public OSQLFunctionReplace() {
+    super(NAME, 3, 3);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        ioResult = ioResult != null ? new BigDecimal(ioResult.toString().trim()) : null;
-        return ioResult;
-    }
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    if (iFuncParams[0] == null || iFuncParams[1] == null || iFuncParams[2] == null)
+      return iFuncParams[0];
+
+    return iFuncParams[0].toString().replace(iFuncParams[1].toString(), iFuncParams[2].toString());
+  }
+
+  @Override
+  public String getSyntax() {
+    return "replace(<value|expression|field>, <to-find>, <to-replace>)";
+  }
 }

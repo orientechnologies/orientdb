@@ -14,41 +14,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.conversion;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * Converts a value to another type in Java or OrientDB's supported types.
  * 
  * @author Luca Garulli
  */
-public class OSQLMethodConvert extends OAbstractSQLMethod {
+public class OSQLFunctionConvert extends OSQLFunctionAbstract {
 
   public static final String NAME = "convert";
 
-  public OSQLMethodConvert() {
-    super(NAME, 1, 1);
+  public OSQLFunctionConvert() {
+    super(NAME, 2, 2);
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-    if (ioResult == null)
+  public String getSyntax() {
+    return "convert(<value|expression|field>, <type>)";
+  }
+
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    if (iFuncParams[0] == null || iFuncParams[1] == null)
       return null;
 
-    final String destType = iMethodParams[0].toString();
+    final String destType = iFuncParams[1].toString();
 
     if (destType.contains("."))
       try {
-        return OType.convert(ioResult, Class.forName(destType));
+        return OType.convert(iFuncParams[0], Class.forName(destType));
       } catch (ClassNotFoundException e) {
       }
     else {
       final OType orientType = OType.valueOf(destType.toUpperCase());
       if (orientType != null)
-        return OType.convert(ioResult, orientType.getDefaultJavaType());
+        return OType.convert(iFuncParams[0], orientType.getDefaultJavaType());
     }
 
     return null;

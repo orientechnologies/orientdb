@@ -14,29 +14,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- *
+ * Returns a character in a string.
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodRight extends OAbstractSQLMethod {
+public class OSQLFunctionCharAt extends OSQLFunctionAbstract {
 
-    public static final String NAME = "right";
+  public static final String NAME = "charat";
 
-    public OSQLMethodRight() {
-        super(NAME, 1);
-    }
+  public OSQLFunctionCharAt() {
+    super(NAME, 2, 2);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        final int offset = Integer.parseInt(iMethodParams[0].toString());
-        ioResult = ioResult != null ? ioResult.toString().substring(
-                offset < ioResult.toString().length() ? ioResult.toString().length() - offset : 0) : null;
-        return ioResult;
-    }
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    if (iFuncParams[0] == null)
+      return null;
+
+    int index = Integer.parseInt(iFuncParams[1].toString());
+    return "" + iFuncParams[0].toString().charAt(index);
+  }
+
+  @Override
+  public String getSyntax() {
+    return "charAt(<value|expression|field>, <position>)";
+  }
 }

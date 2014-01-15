@@ -49,9 +49,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 
 /**
  * SQL Helper class
@@ -375,6 +377,11 @@ public class OSQLHelper {
       if (factory.hasMethod(name))
         return factory.createMethod(name);
     }
+
+    final OSQLFunction f = OSQLEngine.INSTANCE.getFunction(name);
+    if (f != null)
+      return new OSQLMethodFunctionDelegate(f);
+
     return null;
   }
 }

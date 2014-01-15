@@ -14,31 +14,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- *
+ * Converts a document in JSON string.
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodToJSON extends OAbstractSQLMethod {
+public class OSQLFunctionToJSON extends OSQLFunctionAbstract {
 
-    public static final String NAME = "tojson";
+  public static final String NAME = "tojson";
 
-    public OSQLMethodToJSON() {
-        super(NAME,0,1);
+  public OSQLFunctionToJSON() {
+    super(NAME, 1, 2);
+  }
+
+  @Override
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+    if (iFuncParams[0] == null)
+      return null;
+
+    final Object value = iFuncParams[0];
+
+    if (value instanceof ODocument) {
+      final ODocument doc = (ODocument) value;
+      return iFuncParams.length == 2 ? doc.toJSON(((String) iFuncParams[1]).replace("\"", "")) : doc.toJSON();
     }
+    return null;
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        ioResult = 
-        		ioResult != null && ioResult instanceof ODocument ? 
-        				iMethodParams.length==1 ? ((ODocument) ioResult).toJSON(((String)iMethodParams[0]).replace("\"","")) : ((ODocument) ioResult).toJSON()  
-        		: null;
-        return ioResult;
-    }
+  @Override
+  public String getSyntax() {
+    return "toJSON(<value|expression|field> [,<format>])";
+  }
 }

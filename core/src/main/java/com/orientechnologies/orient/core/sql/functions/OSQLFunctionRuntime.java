@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.functions;
 
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
@@ -75,6 +76,8 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
   public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final OCommandContext iContext) {
     // RESOLVE VALUES USING THE CURRENT RECORD
     for (int i = 0; i < configuredParameters.length; ++i) {
+      runtimeParameters[i] = configuredParameters[i];
+
       if (configuredParameters[i] instanceof OSQLFilterItemField) {
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iContext);
         if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
@@ -101,12 +104,12 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           configuredParameters[i] = pred;
 
         }
-      } else if (configuredParameters[i] instanceof OSQLPredicate) {
+      } else if (configuredParameters[i] instanceof OSQLPredicate)
         runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
             (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
-      } else {
-        // plain value
-        runtimeParameters[i] = configuredParameters[i];
+      else if (configuredParameters[i] instanceof String) {
+        if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
+          runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
       }
     }
 
@@ -146,29 +149,31 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     if (function == null)
       throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
 
-    // STRICT CHECK ON PARAMETERS
-    // if (function.getMinParams() > -1 && funcParamsText.size() < function.getMinParams() || function.getMaxParams() > -1
-    // && funcParamsText.size() > function.getMaxParams())
-    // throw new IllegalArgumentException("Syntax error. Expected: " + function.getSyntax());
-
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
     for (int i = 0; i < funcParamsText.size(); ++i)
       this.configuredParameters[i] = funcParamsText.get(i);
 
-    setParameters(configuredParameters);
+    setParameters(configuredParameters, true);
   }
 
-  public void setParameters(final Object[] iParameters) {
+  public void setParameters(final Object[] iParameters, final boolean iEvaluate) {
     this.configuredParameters = new Object[iParameters.length];
     for (int i = 0; i < iParameters.length; ++i) {
-      if (iParameters[i] != null)
-        if (iParameters[i] instanceof String)
-          this.configuredParameters[i] = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
-        else
-          this.configuredParameters[i] = iParameters[i];
-      else
-        this.configuredParameters[i] = null;
+      this.configuredParameters[i] = iParameters[i];
+
+      if (i > 0 || iEvaluate)
+        if (iParameters[i] != null) {
+          if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
+            final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
+            if (v == OSQLHelper.VALUE_NOT_PARSED
+                || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))
+              continue;
+
+            configuredParameters[i] = v;
+          }
+        } else
+          this.configuredParameters[i] = null;
     }
 
     function.config(configuredParameters);

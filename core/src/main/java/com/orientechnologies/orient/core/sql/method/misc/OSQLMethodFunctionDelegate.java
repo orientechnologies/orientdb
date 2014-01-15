@@ -37,15 +37,36 @@ public class OSQLMethodFunctionDelegate extends OAbstractSQLMethod {
   }
 
   @Override
+  public int getMinParams() {
+    final int min = func.getFunction().getMinParams();
+    return min == -1 ? -1 : min - 1;
+  }
+
+  @Override
+  public int getMaxParams() {
+    final int max = func.getFunction().getMaxParams();
+    return max == -1 ? -1 : max - 1;
+  }
+
+  @Override
   public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult,
       final Object[] iMethodParams) {
 
-    final Object[] newParams = new Object[iMethodParams.length + 1];
-    newParams[0] = ioResult;
-    System.arraycopy(iMethodParams, 0, newParams, 1, iMethodParams.length);
+    final Object[] newParams;
+    if (iMethodParams != null) {
+      newParams = new Object[iMethodParams.length + 1];
+      newParams[0] = ioResult;
+      System.arraycopy(iMethodParams, 0, newParams, 1, iMethodParams.length);
+    } else
+      newParams = new Object[] { ioResult };
 
-    func.setParameters(newParams);
+    func.setParameters(newParams, false);
 
-    return func.execute(null, ioResult, iContext);
+    return func.execute(iCurrentRecord, ioResult, iContext);
+  }
+
+  @Override
+  public String toString() {
+    return "function " + func;
   }
 }
