@@ -47,30 +47,35 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
 
   public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    try {
 
-    final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
+      final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    Object source = iParameters[0];
-    if (OMultiValue.isMultiValue(source)) {
-      if (OMultiValue.getSize(source) > 1)
-        throw new IllegalArgumentException("Only one sourceVertex is allowed");
-      source = OMultiValue.getFirstValue(source);
+      Object source = iParameters[0];
+      if (OMultiValue.isMultiValue(source)) {
+        if (OMultiValue.getSize(source) > 1)
+          throw new IllegalArgumentException("Only one sourceVertex is allowed");
+        source = OMultiValue.getFirstValue(source);
+      }
+      paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+
+      Object dest = iParameters[1];
+      if (OMultiValue.isMultiValue(dest)) {
+        if (OMultiValue.getSize(dest) > 1)
+          throw new IllegalArgumentException("Only one destinationVertex is allowed");
+        dest = OMultiValue.getFirstValue(dest);
+      }
+      paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+
+      paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], record, iContext);
+      if (iParameters.length > 3)
+        paramDirection = Direction.valueOf(iParameters[3].toString().toUpperCase());
+
+      return super.execute(iParameters, iContext);
+
+    } finally {
+      graph.shutdown();
     }
-    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
-
-    Object dest = iParameters[1];
-    if (OMultiValue.isMultiValue(dest)) {
-      if (OMultiValue.getSize(dest) > 1)
-        throw new IllegalArgumentException("Only one destinationVertex is allowed");
-      dest = OMultiValue.getFirstValue(dest);
-    }
-    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
-
-    paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], record, iContext);
-    if (iParameters.length > 3)
-      paramDirection = Direction.valueOf(iParameters[3].toString().toUpperCase());
-
-    return super.execute(iParameters, iContext);
   }
 
   public String getSyntax() {

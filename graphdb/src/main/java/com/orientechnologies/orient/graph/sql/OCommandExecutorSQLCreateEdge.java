@@ -109,57 +109,62 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    try {
+      
+      final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
+      final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
 
-    final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
-    final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
+      // CREATE EDGES
+      final List<Object> edges = new ArrayList<Object>();
+      for (ORID from : fromIds) {
+        final OrientVertex fromVertex = graph.getVertex(from);
+        if (fromVertex == null)
+          throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
 
-    // CREATE EDGES
-    final List<Object> edges = new ArrayList<Object>();
-    for (ORID from : fromIds) {
-      final OrientVertex fromVertex = graph.getVertex(from);
-      if (fromVertex == null)
-        throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
-
-      for (ORID to : toIds) {
-        final OrientVertex toVertex;
-        if (from.equals(to)) {
-          toVertex = fromVertex;
-        } else {
-          toVertex = graph.getVertex(to);
-        }
-
-        final String clsName = clazz.getName();
-
-        if (fields != null)
-          // EVALUATE FIELDS
-          for (Entry<String, Object> f : fields.entrySet()) {
-            if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
+        for (ORID to : toIds) {
+          final OrientVertex toVertex;
+          if (from.equals(to)) {
+            toVertex = fromVertex;
+          } else {
+            toVertex = graph.getVertex(to);
           }
 
-        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+          final String clsName = clazz.getName();
 
-        if (fields != null && !fields.isEmpty()) {
-          if (!edge.getRecord().getIdentity().isValid())
-            edge.convertToDocument();
+          if (fields != null)
+            // EVALUATE FIELDS
+            for (Entry<String, Object> f : fields.entrySet()) {
+              if (f.getValue() instanceof OSQLFunctionRuntime)
+                fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
+            }
 
-          OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+          final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+
+          if (fields != null && !fields.isEmpty()) {
+            if (!edge.getRecord().getIdentity().isValid())
+              edge.convertToDocument();
+
+            OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+          }
+
+          if (content != null) {
+            if (!edge.getRecord().getIdentity().isValid())
+              // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
+              edge.convertToDocument();
+            edge.getRecord().merge(content, true, false);
+          }
+
+          edge.save(clusterName);
+
+          edges.add(edge);
         }
-
-        if (content != null) {
-          if (!edge.getRecord().getIdentity().isValid())
-            // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
-            edge.convertToDocument();
-          edge.getRecord().merge(content, true, false);
-        }
-
-        edge.save(clusterName);
-
-        edges.add(edge);
       }
-    }
 
-    return edges;
+      return edges;
+
+    } finally {
+      graph.shutdown();
+    }
   }
 
   @Override

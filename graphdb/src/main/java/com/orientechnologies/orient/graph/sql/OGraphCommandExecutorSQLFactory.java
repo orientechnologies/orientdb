@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 /**
@@ -78,11 +79,24 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   }
 
   /**
-   * Returns a OrientBaseGraph implementation from the current database in thread local.
+   * Returns a Transactional OrientGraph implementation from the current database in thread local.
    * 
    * @return
    */
   public static OrientBaseGraph getGraph() {
+    ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (!(database instanceof ODatabaseDocumentTx))
+      database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
+
+    return new OrientGraph((ODatabaseDocumentTx) database);
+  }
+
+  /**
+   * Returns a Non Transactional OrientGraph implementation from the current database in thread local.
+   * 
+   * @return
+   */
+  public static OrientBaseGraph getNoTxGraph() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof ODatabaseDocumentTx))
       database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);

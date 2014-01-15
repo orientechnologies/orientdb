@@ -98,21 +98,26 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    try {
 
-    if (rid != null) {
-      // REMOVE PUNCTUAL RID
-      final OrientVertex v = graph.getVertex(rid);
-      if (v != null) {
-        v.remove();
-        removed = 1;
-      }
-    } else if (query != null)
-      // TARGET IS A CLASS + OPTIONAL CONDITION
-      query.execute(iArgs);
-    else
-      throw new OCommandExecutionException("Invalid target");
+      if (rid != null) {
+        // REMOVE PUNCTUAL RID
+        final OrientVertex v = graph.getVertex(rid);
+        if (v != null) {
+          v.remove();
+          removed = 1;
+        }
+      } else if (query != null)
+        // TARGET IS A CLASS + OPTIONAL CONDITION
+        query.execute(iArgs);
+      else
+        throw new OCommandExecutionException("Invalid target");
 
-    return removed;
+      return removed;
+      
+    } finally {
+      graph.shutdown();
+    }
   }
 
   /**
@@ -123,12 +128,18 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (id.getIdentity().isValid()) {
 
       final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
-      final OrientVertex v = graph.getVertex(id);
-      if (v != null) {
-        v.remove();
-        removed++;
-        return true;
+
+      try {
+        final OrientVertex v = graph.getVertex(id);
+        if (v != null) {
+          v.remove();
+          removed++;
+          return true;
+        }
+      } finally {
+        graph.shutdown();
       }
+
     }
 
     return false;

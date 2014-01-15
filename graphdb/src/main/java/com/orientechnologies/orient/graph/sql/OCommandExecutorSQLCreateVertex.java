@@ -96,26 +96,30 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
+    try {
+      final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
 
-    if (fields != null)
-      // EVALUATE FIELDS
-      for (Entry<String, Object> f : fields.entrySet()) {
-        if (f.getValue() instanceof OSQLFunctionRuntime)
-          fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), context));
-      }
+      if (fields != null)
+        // EVALUATE FIELDS
+        for (Entry<String, Object> f : fields.entrySet()) {
+          if (f.getValue() instanceof OSQLFunctionRuntime)
+            fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), context));
+        }
 
-    OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+      OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-    if (content != null)
-      vertex.getRecord().merge(content, true, false);
+      if (content != null)
+        vertex.getRecord().merge(content, true, false);
 
-    if (clusterName != null)
-      vertex.save(clusterName);
-    else
-      vertex.save();
+      if (clusterName != null)
+        vertex.save(clusterName);
+      else
+        vertex.save();
 
-    return vertex.getRecord();
+      return vertex.getRecord();
+    } finally {
+      graph.shutdown();
+    }
   }
 
   @Override

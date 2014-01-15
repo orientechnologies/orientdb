@@ -43,16 +43,21 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    try {
 
-    if (iCurrentRecord == null) {
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return getLabel(graph, iArgument);
-        }
-      }, iCurrentResult, iContext);
-    } else
-      return getLabel(graph, iCurrentRecord);
+      if (iCurrentRecord == null) {
+        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
+          @Override
+          public Object call(final OIdentifiable iArgument) {
+            return getLabel(graph, iArgument);
+          }
+        }, iCurrentResult, iContext);
+      } else
+        return getLabel(graph, iCurrentRecord);
+
+    } finally {
+      graph.shutdown();
+    }
   }
 
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {

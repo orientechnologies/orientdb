@@ -56,28 +56,33 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    try {
 
-    final String[] labels;
-    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+      final String[] labels;
+      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+        labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
 
-        @Override
-        public Object call(final Object iArgument) {
-          return OStringSerializerHelper.getStringContent(iArgument);
-        }
-      });
-    else
-      labels = null;
+          @Override
+          public Object call(final Object iArgument) {
+            return OStringSerializerHelper.getStringContent(iArgument);
+          }
+        });
+      else
+        labels = null;
 
-    if (iCurrentRecord == null) {
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, labels);
-        }
-      }, iCurrentResult, iContext);
-    } else
-      return move(graph, iCurrentRecord.getRecord(), labels);
+      if (iCurrentRecord == null) {
+        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
+          @Override
+          public Object call(final OIdentifiable iArgument) {
+            return move(graph, iArgument, labels);
+          }
+        }, iCurrentResult, iContext);
+      } else
+        return move(graph, iCurrentRecord.getRecord(), labels);
+
+    } finally {
+      graph.shutdown();
+    }
   }
 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
