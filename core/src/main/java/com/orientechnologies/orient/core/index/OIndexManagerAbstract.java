@@ -272,18 +272,31 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
     acquireExclusiveLock();
     try {
-      flush();
-      for (final OIndex<?> idx : indexes.values()) {
-        OIndexInternal<?> indexInternal = idx.getInternal();
-        if (indexInternal != null) {
-          indexInternal.close();
+      if (!onDelete) {
+        flush();
+        for (final OIndex<?> idx : indexes.values()) {
+          OIndexInternal<?> indexInternal = idx.getInternal();
+          if (indexInternal != null) {
+            indexInternal.close();
 
-          final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          if (databaseRecord != null)
-            databaseRecord.unregisterListener(indexInternal);
+            final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+            if (databaseRecord != null)
+              databaseRecord.unregisterListener(indexInternal);
+          }
+        }
+      } else {
+        for (final OIndex<?> idx : indexes.values()) {
+          OIndexInternal<?> indexInternal = idx.getInternal();
+          if (indexInternal != null) {
+            indexInternal.delete();
+
+            final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+            if (databaseRecord != null)
+              databaseRecord.unregisterListener(indexInternal);
+          }
         }
       }
 

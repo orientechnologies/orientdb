@@ -72,10 +72,15 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
+  STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
+      "Should we perform force sync of storage configuration for each update", Boolean.class, true),
+
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
+
+  WAL_SYNС_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Should we perform force sync during WAL page flush", Boolean.class, true),
 
   WAL_CACHE_SIZE("storage.wal.cacheSize",
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",

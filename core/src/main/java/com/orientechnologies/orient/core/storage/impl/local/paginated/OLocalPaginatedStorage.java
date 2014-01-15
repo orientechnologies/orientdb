@@ -223,7 +223,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       restoreIfNeeded();
     } catch (Exception e) {
-      close(true);
+      close(true, false);
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       lock.releaseExclusiveLock();
@@ -612,11 +612,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   @Override
-  public void close(final boolean force) {
-    doClose(force, true);
+  public void close(final boolean force, boolean onDelete) {
+    doClose(force, onDelete);
   }
 
-  private void doClose(boolean force, boolean flush) {
+  private void doClose(boolean force, boolean onDelete) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
@@ -627,7 +627,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       status = STATUS.CLOSING;
 
-      makeFullCheckpoint();
+      if (!onDelete)
+        makeFullCheckpoint();
+
       if (writeAheadLog != null) {
         fuzzyCheckpointExecutor.shutdown();
         if (!fuzzyCheckpointExecutor.awaitTermination(
@@ -642,7 +644,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       for (OCluster cluster : clusters)
         if (cluster != null)
-          cluster.close(flush);
+          cluster.close(!onDelete);
 
       clusters = new OCluster[0];
       clusterMap.clear();
@@ -652,9 +654,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       level2Cache.shutdown();
 
-      super.close(force);
+      super.close(force, onDelete);
 
-      diskCache.close();
+      if (!onDelete)
+        diskCache.close();
+      else
+        diskCache.delete();
 
       if (writeAheadLog != null)
         writeAheadLog.delete();
@@ -682,7 +687,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       }
     }
 
-    doClose(true, false);
+    doClose(true, true);
 
     try {
       Orient.instance().unregisterStorage(this);
@@ -708,7 +713,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       // RETRIES
       for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
-        if (dbDir.exists() && dbDir.isDirectory()) {
+        if (dbDir != null && dbDir.exists() && dbDir.isDirectory()) {
           int notDeletedFiles = 0;
 
           // TRY TO DELETE ALL THE FILES

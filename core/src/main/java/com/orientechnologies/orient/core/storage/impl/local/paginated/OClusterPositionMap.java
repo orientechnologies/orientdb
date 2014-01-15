@@ -80,10 +80,10 @@ public class OClusterPositionMap extends OSharedResourceAdaptive {
     }
   }
 
-  public void close() throws IOException {
+  public void close(boolean flush) throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.closeFile(fileId);
+      diskCache.closeFile(fileId, flush);
     } finally {
       releaseExclusiveLock();
     }

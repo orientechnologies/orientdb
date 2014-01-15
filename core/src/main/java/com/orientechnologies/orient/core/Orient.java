@@ -160,7 +160,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
         for (OStorage stg : storagesCopy) {
           OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
-          stg.close(true);
+          stg.close(true, false);
         }
       }
 

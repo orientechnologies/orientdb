@@ -239,7 +239,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       // FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
       if (stg != null)
-        stg.close(true);
+        stg.close(true, false);
 
       currentDatabase = null;
       currentDatabaseName = null;
@@ -1107,7 +1107,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         try {
           message("\n %-30s| %-12s| %-30s| %-10s| %-9s| %-9s| %-10s| %-10s| %-9s|", p.getName(), p.getType(),
               p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType(), p.isMandatory(), p.isReadonly(), p.isNotNull(),
-              p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "", p.getCollate() != null ? p.getCollate().getName() : "");
+              p.getMin() != null ? p.getMin() : "", p.getMax() != null ? p.getMax() : "", p.getCollate() != null ? p.getCollate()
+                  .getName() : "");
         } catch (Exception e) {
         }
       }

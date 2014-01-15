@@ -167,7 +167,7 @@ public class OConsoleApplication {
           return false;
       }
     } finally {
-      commandStream.close();
+      commandStream.close(false);
     }
     return true;
   }

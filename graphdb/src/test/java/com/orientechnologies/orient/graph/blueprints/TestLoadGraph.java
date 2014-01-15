@@ -4,7 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,13 +28,14 @@ public class TestLoadGraph {
     dbURL = DBURL;
   }
 
-  public TestLoadGraph(final String[] args) {
+  private TestLoadGraph(final String[] args) {
     inputFile = args.length > 0 ? args[0] : INPUT_FILE;
     dbURL = args.length > 1 ? args[1] : DBURL;
   }
 
   @Test
   public void testImport() throws IOException, FileNotFoundException {
+    final boolean oldKeepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(DBURL);
@@ -50,6 +51,7 @@ public class TestLoadGraph {
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 
-    g.shutdown();
+    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldKeepOpen);
+    g.drop();
   }
 }

@@ -229,7 +229,7 @@ public class ODFACommandStream implements OCommandStream {
   }
 
   @Override
-  public void close() {
+  public void close(boolean onDelete) {
     try {
       reader.close();
     } catch (IOException e) {

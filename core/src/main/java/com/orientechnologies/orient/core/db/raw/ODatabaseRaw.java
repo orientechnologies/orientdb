@@ -140,7 +140,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   public void drop() {
     final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
-    close();
+    closeOnDelete();
 
     try {
       if (storage == null)
@@ -507,6 +507,24 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     if (storage != null)
       storage.close();
+
+    storage = null;
+    status = STATUS.CLOSED;
+  }
+
+  public void closeOnDelete() {
+    if (status != STATUS.OPEN)
+      return;
+
+    if (currentIntent != null) {
+      currentIntent.end(this);
+      currentIntent = null;
+    }
+
+    resetListeners();
+
+    if (storage != null)
+      storage.close(true, true);
 
     storage = null;
     status = STATUS.CLOSED;

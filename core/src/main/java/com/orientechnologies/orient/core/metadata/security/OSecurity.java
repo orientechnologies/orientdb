@@ -72,7 +72,7 @@ public interface OSecurity {
 
   public OUser repair();
 
-  public void close();
-  
+  public void close(boolean onDelete);
+
   public void createClassTrigger();
 }

@@ -74,9 +74,9 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     delegate.load();
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
     if (delegate != null)
-      delegate.close();
+      delegate.close(false);
   }
 
   public OUser authenticate(final String iUsername, final String iUserPassword) {
@@ -134,7 +134,7 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
   public boolean dropRole(final String iRoleName) {
     return delegate.dropRole(iRoleName);
   }
-  
+
   public void createClassTrigger() {
     delegate.createClassTrigger();
   }
