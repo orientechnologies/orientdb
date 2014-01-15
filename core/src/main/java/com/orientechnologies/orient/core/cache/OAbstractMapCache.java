@@ -16,20 +16,19 @@
 
 package com.orientechnologies.orient.core.cache;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.id.ORID;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public abstract class OAbstractMapCache<T extends Map<ORID, ORecordInternal<?>>> implements OCache {
+public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCache {
   protected final OSharedResourceAdaptiveExternal lock    = new OSharedResourceAdaptiveExternal(
                                                               OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0,
                                                               true);
@@ -64,45 +63,6 @@ public abstract class OAbstractMapCache<T extends Map<ORID, ORecordInternal<?>>>
   public boolean disable() {
     clear();
     return enabled.compareAndSet(true, false);
-  }
-
-  @Override
-  public ORecordInternal<?> get(final ORID id) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.get(id);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public ORecordInternal<?> put(final ORecordInternal<?> record) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.put(record.getIdentity(), record);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public ORecordInternal<?> remove(final ORID id) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.remove(id);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
   }
 
   @Override
