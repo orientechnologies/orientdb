@@ -77,6 +77,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected volatile Class<? extends OAbstractRemoteTask> waitForTaskType;
   protected AtomicBoolean                                 status                     = new AtomicBoolean(false);
   protected Object                                        waitForOnline              = new Object();
+  protected Thread                                        listenerThread;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -294,9 +295,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
 
-    // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.<db>.request, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING
-    // THE THREAD ID
-    new Thread(new Runnable() {
+    listenerThread = new Thread(new Runnable() {
       @Override
       public void run() {
         while (!Thread.interrupted()) {
@@ -327,7 +326,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           }
         }
       }
-    }).start();
+    });
+    listenerThread.start();
 
     return this;
   }
@@ -454,6 +454,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   public void shutdown() {
+    if (listenerThread != null)
+      listenerThread.interrupt();
+
     try {
       database.close();
     } catch (Exception e) {
