@@ -258,6 +258,7 @@ public class OClusterPositionMap extends OSharedResourceAdaptive {
         if (resultSize <= 0) {
           diskCache.release(cacheEntry);
           pageIndex++;
+          index = 0;
         } else {
           int entriesCount = 0;
           long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
