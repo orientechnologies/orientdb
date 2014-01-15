@@ -14,7 +14,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
-  private static final String INPUT_FILE = "target/test-classes/graph-example-2.xml";
+  private static final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
   private static final String DBURL      = "plocal:target/databases/GratefulDeadConcerts";
   private String              inputFile  = INPUT_FILE;
   private String              dbURL      = DBURL;
@@ -52,6 +52,6 @@ public class TestLoadGraph {
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldKeepOpen);
-    g.drop();
+    //g.drop();
   }
 }
