@@ -617,7 +617,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     db.getStorage().getConfiguration().update();
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
     classes.clear();
     document.clear();
   }

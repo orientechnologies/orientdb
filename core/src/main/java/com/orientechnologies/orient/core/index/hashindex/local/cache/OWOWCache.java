@@ -711,6 +711,19 @@ public class OWOWCache {
           throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
       }
     }
+
+    if (!commitExecutor.isShutdown()) {
+      commitExecutor.shutdown();
+      try {
+        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
+          throw new OException("Background data flush task can not be stopped.");
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "Data flush thread was interrupted");
+
+        Thread.interrupted();
+        throw new OException("Data flush thread was interrupted", e);
+      }
+    }
   }
 
   public String fileNameById(long fileId) {

@@ -17,31 +17,29 @@ package com.orientechnologies.orient.graph.sql;
 
 import java.util.List;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-@Test
+@RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
   private OGraphDatabase database;
   private String         url;
 
   public SQLCreateVertexAndEdgeTest() {
-    this("memory:testgraph");
+    url = "memory:testgraph";
+    database = new OGraphDatabase(url);
   }
 
-  public SQLCreateVertexAndEdgeTest(String iURL) {
-    url = iURL;
-    database = new OGraphDatabase(iURL);
-  }
-
-  @BeforeMethod
+  @Before
   public void init() {
     if (url.startsWith("memory"))
       database.create();
@@ -49,7 +47,7 @@ public class SQLCreateVertexAndEdgeTest {
       database.open("admin", "admin");
   }
 
-  @AfterMethod
+  @After
   public void deinit() {
     database.close();
   }

@@ -195,7 +195,7 @@ public class OMetadataDefault implements OMetadata {
     if (schema != null)
       schema.close();
     if (security != null)
-      security.close();
+      security.close(false);
   }
 
   protected ODatabaseRecord getDatabase() {

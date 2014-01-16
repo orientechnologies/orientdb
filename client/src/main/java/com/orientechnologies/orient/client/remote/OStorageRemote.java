@@ -227,7 +227,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         "Cannot check the existance of a database in a remote server. Please use the console or the OServerAdmin class.");
   }
 
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     OChannelBinaryAsynchClient network = null;
 
     lock.acquireExclusiveLock();
@@ -261,7 +261,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
 
       level2Cache.shutdown();
-      super.close(iForce);
+      super.close(iForce, onDelete);
       status = STATUS.CLOSED;
 
       Orient.instance().unregisterStorage(this);

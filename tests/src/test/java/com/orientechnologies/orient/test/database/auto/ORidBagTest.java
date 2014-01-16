@@ -130,7 +130,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     OStorage storage = database.getStorage();
     database.close();
-    storage.close(true);
+    storage.close(true, false);
 
     database.open("admin", "admin");
 
@@ -206,7 +206,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     OStorage storage = database.getStorage();
     database.close();
-    storage.close(true);
+    storage.close(true, false);
 
     database.open("admin", "admin");
 
@@ -328,7 +328,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     OStorage storage = database.getStorage();
     database.close();
-    storage.close(true);
+    storage.close(true, false);
 
     database.open("admin", "admin");
 
@@ -446,7 +446,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     OStorage storage = database.getStorage();
     database.close();
-    storage.close(true);
+    storage.close(true, false);
 
     database.open("admin", "admin");
 
@@ -544,7 +544,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     OStorage storage = database.getStorage();
     database.close();
-    storage.close(true);
+    storage.close(true, false);
 
     database.open("admin", "admin");
 
@@ -731,7 +731,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     OStorage storage = database.getStorage();
     database.close();
-    storage.close(true);
+    storage.close(true, false);
 
     database.open("admin", "admin");
 

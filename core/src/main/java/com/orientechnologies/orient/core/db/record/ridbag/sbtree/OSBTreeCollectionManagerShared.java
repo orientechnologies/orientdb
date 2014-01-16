@@ -164,7 +164,7 @@ public class OSBTreeCollectionManagerShared implements OCloseable, OSBTreeCollec
   }
 
   @Override
-  public void close() {
+  public void close(boolean onDelete) {
     treeCache.clear();
   }
 

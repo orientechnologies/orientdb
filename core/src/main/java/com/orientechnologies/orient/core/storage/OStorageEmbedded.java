@@ -64,10 +64,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
    * Closes the storage freeing the lock manager first.
    */
   @Override
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     if (checkForClose(iForce))
       lockManager.clear();
-    super.close(iForce);
+    super.close(iForce, onDelete);
   }
 
   /**
