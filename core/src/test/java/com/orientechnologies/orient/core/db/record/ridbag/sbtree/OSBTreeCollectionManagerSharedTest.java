@@ -37,7 +37,7 @@ public class OSBTreeCollectionManagerSharedTest {
 
   @AfterMethod
   public void afterMethod() {
-    sbTreeCollectionManager.close();
+    sbTreeCollectionManager.close(false);
   }
 
   @AfterClass

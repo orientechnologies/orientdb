@@ -71,45 +71,6 @@ public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCach
   }
 
   @Override
-  public ORecordInternal<?> get(final ORID id) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.get(id);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public ORecordInternal<?> put(final ORecordInternal<?> record) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.put(record.getIdentity(), record);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public ORecordInternal<?> remove(final ORID id) {
-    if (!isEnabled())
-      return null;
-
-    lock.acquireExclusiveLock();
-    try {
-      return cache.remove(id);
-    } finally {
-      lock.releaseExclusiveLock();
-    }
-  }
-
-  @Override
   public void clear() {
     if (!isEnabled())
       return;

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -94,32 +95,31 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<ODocument>() {
+      @Override
+      public ODocument call(OrientBaseGraph graph) {
+        final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
 
-    try {
-      final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
+        if (fields != null)
+          // EVALUATE FIELDS
+          for (Entry<String, Object> f : fields.entrySet()) {
+            if (f.getValue() instanceof OSQLFunctionRuntime)
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), context));
+          }
 
-      if (fields != null)
-        // EVALUATE FIELDS
-        for (Entry<String, Object> f : fields.entrySet()) {
-          if (f.getValue() instanceof OSQLFunctionRuntime)
-            fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), context));
-        }
+        OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-      OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+        if (content != null)
+          vertex.getRecord().merge(content, true, false);
 
-      if (content != null)
-        vertex.getRecord().merge(content, true, false);
+        if (clusterName != null)
+          vertex.save(clusterName);
+        else
+          vertex.save();
 
-      if (clusterName != null)
-        vertex.save(clusterName);
-      else
-        vertex.save();
-
-      return vertex.getRecord();
-    } finally {
-      graph.shutdown();
-    }
+        return vertex.getRecord();
+      }
+    });
   }
 
   @Override
