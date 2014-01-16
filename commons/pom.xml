@@ -37,6 +37,7 @@
         <osgi.import>
             javax.imageio.spi.*,sun.misc.*;resolution:=optional,com.orientechnologies.nio;resolution:=optional
         </osgi.import>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>

@@ -36,6 +36,7 @@
     <properties>
         <VERSION>${project.version}</VERSION>
         <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
