@@ -68,7 +68,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   public void close();
 
-  public void close(boolean iForce);
+  public void close(boolean iForce, boolean onDelete);
 
   public boolean isClosed();
 

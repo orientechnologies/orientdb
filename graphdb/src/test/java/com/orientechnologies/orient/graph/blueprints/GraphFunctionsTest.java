@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.*;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Edge;
@@ -11,20 +8,20 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 public class GraphFunctionsTest {
-  private static String DB_URL = "local:target/databases/tinkerpop";
-  private OrientGraph   graph;
+  private static String      DB_URL = "plocal:target/databases/tinkerpop";
+  private static OrientGraph graph;
 
-  private Vertex        v1;
-  private Vertex        v2;
-  private Vertex        v3;
-  private Edge          e1;
-  private Edge          e2;
+  private static Vertex      v1;
+  private static Vertex      v2;
+  private static Vertex      v3;
+  private static Edge        e1;
+  private static Edge        e2;
 
   public GraphFunctionsTest() {
   }
 
   @BeforeClass
-  public void before() {
+  public static void before() {
     graph = new OrientGraph(DB_URL);
 
     if (graph.getEdgeType("SubEdge") == null)
@@ -37,13 +34,20 @@ public class GraphFunctionsTest {
     v3 = graph.addVertex(null);
 
     e1 = graph.addEdge("class:SubEdge", v1, v2, null);
-    e2 = graph.addEdge(null, v1, v3, null);
+    e2 = graph.addEdge(null, v1, v3, "contains");
     graph.commit();
   }
 
   @AfterClass
-  public void after() {
-    graph.shutdown();
+  public static void after() {
+    graph.drop();
+    graph = null;
+    v1 = null;
+    v2 = null;
+    v3 = null;
+
+    e1 = null;
+    e2 = null;
   }
 
   @Test

@@ -9,13 +9,9 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
  * @author Andrey Lomakin
@@ -69,7 +65,7 @@ public class ClusterMetadataTest {
 
     OStorage storage = db.getStorage();
     db.close();
-    storage.close(true);
+    storage.close(true, false);
 
     db = new ODatabaseDocumentTx("plocal:clusterMetadataTest");
     db.open("admin", "admin");

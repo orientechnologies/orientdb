@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -93,7 +94,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
       f.writeInt(0, buffer.length);
       f.write(OBinaryProtocol.SIZE_INT, buffer);
-      f.synch();
+      if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
+        f.synch();
 
     } catch (Exception e) {
       throw new OSerializationException("Error on update storage configuration", e);

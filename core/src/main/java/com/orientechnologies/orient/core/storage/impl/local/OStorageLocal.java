@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -90,7 +91,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
       ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION };
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION };
 
   private long                          positionGenerator         = 1;
   private OModificationLock             modificationLock          = new OModificationLock();
@@ -215,7 +216,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       txManager.open();
 
     } catch (Exception e) {
-      close(true);
+      close(true, false);
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       lock.releaseExclusiveLock();
@@ -313,7 +314,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   @Override
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
@@ -344,7 +345,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       OMMapManagerLocator.getInstance().flush();
 
-      super.close(iForce);
+      super.close(iForce, onDelete);
       uninstallProfilerHooks();
 
       if (diskCache != null)
@@ -377,7 +378,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           ;
       }
     }
-    close(true);
+    close(true, true);
 
     try {
       Orient.instance().unregisterStorage(this);

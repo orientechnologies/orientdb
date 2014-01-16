@@ -239,7 +239,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       // FORCE CLOSING OF STORAGE: THIS CLEAN UP REMOTE CONNECTIONS
       if (stg != null)
-        stg.close(true);
+        stg.close(true, false);
 
       currentDatabase = null;
       currentDatabaseName = null;

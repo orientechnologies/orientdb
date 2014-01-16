@@ -40,7 +40,7 @@
     <target name="test-memory" depends="test-init">
         <echo>EXECUTING TESTS USING MEMORY DATABASE: memory:demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
+            <jvmarg value="-Xmx2G"/>
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -56,7 +56,7 @@
     <target name="test-local" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
+            <jvmarg value="-Xmx2G"/>
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -72,8 +72,13 @@
     <target name="test-plocal" depends="test-init">
         <echo>EXECUTING TESTS USING PAGINATED LOCAL DATABASE: plocal:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
+            <jvmarg value="-Xmx2G"/>
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
+            <jvmarg value="-Dstorage.makeFullCheckpointAfterCreate=false"/>
+            <jvmarg value="-Dstorage.makeFullCheckpointAfterClusterCreate=false"/>
+            <jvmarg value="-Dstorage.wal.syncOnPageFlush=false"/>
+            <jvmarg value="-Dstorage.configuration.syncOnUpdate=false"/>
+
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -89,7 +94,7 @@
     <target name="test-local-lh" depends="test-init">
         <echo>EXECUTING TESTS USING LOCAL DATABASE and LH data cluster: local:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
+            <jvmarg value="-Xmx2G"/>
             <jvmarg value="-Dfile.cluster.useLHPEPS=true"/>
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -107,14 +112,14 @@
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
-                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
-                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
         </exec>
@@ -124,7 +129,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-            <jvmarg value="-Xmx2G" />
+            <jvmarg value="-Xmx2G"/>
             <jvmarg line="-Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <classpath>
                 <pathelement location="${project.build}"/>

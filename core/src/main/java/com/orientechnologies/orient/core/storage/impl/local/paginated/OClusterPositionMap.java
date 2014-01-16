@@ -93,10 +93,10 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public void close() throws IOException {
+  public void close(boolean flush) throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.closeFile(fileId);
+      diskCache.closeFile(fileId, flush);
     } finally {
       releaseExclusiveLock();
     }

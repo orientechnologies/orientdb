@@ -141,7 +141,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     lock.acquireExclusiveLock();
     try {
 
@@ -149,6 +149,8 @@ public class OStorageMemory extends OStorageEmbedded {
         return;
 
       status = STATUS.CLOSING;
+
+      super.close(iForce, onDelete);
 
       // CLOSE ALL THE CLUSTERS
       for (OClusterMemory c : clusters)
@@ -165,8 +167,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
       level2Cache.shutdown();
 
-      super.close(iForce);
-
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
 
@@ -176,7 +176,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public void delete() {
-    close(true);
+    close(true, false);
   }
 
   @Override

@@ -86,10 +86,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void close(boolean iForce) {
+  public void close(boolean iForce, boolean onDelete) {
     pushSession();
     try {
-      delegate.close(iForce);
+      delegate.close(iForce, false);
       Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
