@@ -1834,7 +1834,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    * INTERNAL MAPPING</strong>
    */
   public void renameCluster(final String iOldName, final String iNewName) {
-    clusterMap.put(iNewName, clusterMap.remove(iOldName));
+    clusterMap.put(iNewName.toLowerCase(), clusterMap.remove(iOldName.toLowerCase()));
   }
 
   @Override
@@ -1874,7 +1874,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   public boolean wasClusterSoftlyClosed(String clusterName) {
     lock.acquireSharedLock();
     try {
-      final OCluster indexCluster = clusterMap.get(clusterName);
+      final OCluster indexCluster = clusterMap.get(clusterName.toLowerCase());
       return indexCluster.wasSoftlyClosed();
     } catch (IOException ioe) {
       throw new OStorageException("Error during index consistency check", ioe);
@@ -1951,7 +1951,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-    OCluster cluster = clusterMap.get(iConfig.getName());
+    OCluster cluster = clusterMap.get(iConfig.getName().toLowerCase());
 
     if (cluster != null) {
       cluster.configure(this, iConfig);
