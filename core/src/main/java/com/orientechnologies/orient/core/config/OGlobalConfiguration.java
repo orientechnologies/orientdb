@@ -290,9 +290,9 @@ public enum OGlobalConfiguration {
   MVRBTREE_RID_BINARY_THRESHOLD(
       "mvrbtree.ridBinaryThreshold",
       "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-          Integer.class, -1),
+      Integer.class, -1),
 
-    MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
+  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
 
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
