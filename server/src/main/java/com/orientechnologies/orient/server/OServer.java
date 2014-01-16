@@ -76,8 +76,10 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 
 public class OServer {
+  private static ThreadGroup                               threadGroup;
+  private static Map<String, OServer>                      distributedServers = new ConcurrentHashMap<String, OServer>();
+  private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
   protected ReentrantLock                                  lock               = new ReentrantLock();
-
   protected volatile boolean                               running            = true;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
@@ -90,13 +92,9 @@ public class OServer {
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private ODatabaseDocumentPool                            dbPool;
-  private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
   private Random                                           random             = new Random();
   private Map<String, Object>                              variables          = new HashMap<String, Object>();
   private String                                           databaseDirectory;
-
-  private static ThreadGroup                               threadGroup;
-  private static Map<String, OServer>                      distributedServers = new ConcurrentHashMap<String, OServer>();
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -125,7 +123,7 @@ public class OServer {
 
     Orient.instance().startup();
 
-    startup(new File(config));
+    startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 
     Orient
         .instance()
@@ -229,7 +227,7 @@ public class OServer {
       loadStorages();
       loadUsers();
     } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
+      OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
     }
 
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
@@ -685,7 +683,7 @@ public class OServer {
           final File localFile = new File(db.getAbsolutePath() + "/default.odh");
           final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
           final String dbPath = db.getPath().replace('\\', '/');
-          final int lastBS =  dbPath.lastIndexOf('/',dbPath.length()-1)+1;// -1 of dbPath may be ended with slash
+          final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
           if (localFile.exists()) {
             // FOUND DB FOLDER
             storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
