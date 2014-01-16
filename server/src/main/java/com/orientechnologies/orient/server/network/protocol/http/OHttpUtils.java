@@ -39,6 +39,7 @@ public class OHttpUtils {
   public static final String METHOD_PUT                          = "PUT";
   public static final String METHOD_DELETE                       = "DELETE";
   public static final String METHOD_POST                         = "POST";
+  public static final String METHOD_PATCH                        = "PATCH";
 
   public static final String HEADER_CONTENT_LENGTH               = "Content-Length: ";
   public static final String HEADER_CONTENT_TYPE                 = "Content-Type: ";
