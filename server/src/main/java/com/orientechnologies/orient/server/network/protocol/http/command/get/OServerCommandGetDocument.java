@@ -50,10 +50,19 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
             + "' was not found.", null);
       else if (iRequest.httpMethod.equals("HEAD"))
         // JUST SEND HTTP CODE 200
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
-      else
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null,
+            OHttpUtils.HEADER_ETAG + rec.getVersion());
+      else {
+        final String ifNoneMatch = iRequest.getHeader("If-None-Match");
+        if (ifNoneMatch != null && rec.getRecordVersion().toString().equals(ifNoneMatch)) {
+          // SAME CONTENT, DON'T SEND BACK RECORD
+          iResponse.send(OHttpUtils.STATUS_OK_NOMODIFIED_CODE, OHttpUtils.STATUS_OK_NOMODIFIED_DESCRIPTION, null, null,
+              OHttpUtils.HEADER_ETAG + rec.getVersion());
+        }
+
         // SEND THE DOCUMENT BACK
         iResponse.writeRecord(rec, fetchPlan, null);
+      }
 
     } finally {
       if (db != null)
