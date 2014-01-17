@@ -69,8 +69,8 @@ public class OSQLFunctionInclude extends OSQLFunctionAbstract {
         // ACT ON MULTIPLE DOCUMENTS
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(iFuncParams[0]));
         for (Object o : OMultiValue.getMultiValueIterable(iFuncParams[0]))
-          if (o instanceof ODocument)
-            result.add(copy((ODocument) o, iFuncParams, 1));
+          if (o instanceof OIdentifiable)
+            result.add(copy((ODocument) ((OIdentifiable) o).getRecord(), iFuncParams, 1));
         return result;
       }
 
