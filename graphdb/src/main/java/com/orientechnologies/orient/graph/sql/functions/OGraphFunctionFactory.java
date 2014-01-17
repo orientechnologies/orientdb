@@ -51,7 +51,7 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   }
 
   public static void register(final String iName, final Object iImplementation) {
-	  FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iImplementation);
+    FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iImplementation);
   }
 
   public Set<String> getFunctionNames() {
@@ -66,7 +66,7 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
     final Object obj = FUNCTIONS.get(name.toLowerCase());
 
     if (obj == null)
-      throw new OCommandExecutionException("Unknowned function name :" + name);
+      throw new OCommandExecutionException("Unknown function name :" + name);
 
     if (obj instanceof OSQLFunction)
       return (OSQLFunction) obj;
