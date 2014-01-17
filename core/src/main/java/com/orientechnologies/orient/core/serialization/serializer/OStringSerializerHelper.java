@@ -196,7 +196,7 @@ public abstract class OStringSerializerHelper {
         parts.add(buffer.toString());
         buffer.setLength(0);
 
-        startSeparatorAt = 0;
+        startSeparatorAt = -1;
 
         if (beginIndex > -1) {
           final char lastSeparator = iSource.charAt(beginIndex - 1);
@@ -204,7 +204,7 @@ public abstract class OStringSerializerHelper {
             if (iRecordSeparator[i] == lastSeparator) {
               if (iRecordSeparatorInclude[i]) {
                 beginIndex--;
-                startSeparatorAt = 1;
+                startSeparatorAt = 0;
               }
               break;
             }

@@ -29,7 +29,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -348,7 +347,7 @@ public enum OType {
         if (iValue instanceof BigDecimal)
           return iValue;
         else if (iValue instanceof String)
-          return new BigDecimal((String) iValue);
+          return new BigDecimal((((String) iValue).isEmpty() ? "0" : (String) iValue));
         else if (iValue instanceof Number)
           return new BigDecimal(iValue.toString());
 
