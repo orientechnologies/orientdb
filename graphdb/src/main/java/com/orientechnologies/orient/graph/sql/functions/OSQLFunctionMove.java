@@ -69,7 +69,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     else
       labels = null;
 
-    if (iCurrentRecord == null) {
+    if (iCurrentResult != null) {
       return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
         public Object call(final OIdentifiable iArgument) {
