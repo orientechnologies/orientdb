@@ -3,7 +3,10 @@ package com.tinkerpop.blueprints.impls.orient;
 import static org.junit.Assert.*;
 
 import java.util.Iterator;
+import java.util.Set;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,10 +23,7 @@ public class OrientDeleteVertexTest {
   @After
   public void tearDown() {
     OrientGraph g = createGraph();
-    for (Iterator<Vertex> it = g.getVertices().iterator(); it.hasNext();) {
-      it.next().remove();
-    }
-    g.shutdown();
+    g.drop();
   }
 
   @Test
@@ -48,8 +48,14 @@ public class OrientDeleteVertexTest {
     // the v1 out_edgeType1 property should not contain a reference to
     // deleted node v2
     // OK INSIDE THE TRANSACTION
-    OMVRBTreeRIDSet out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
-    assertFalse(out_edge.contains(v2.getId()));
+    ORidBag out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
+
+    boolean contains = false;
+    for (OIdentifiable id : out_edge)
+      if (id.equals(v2.getId()))
+        contains = true;
+
+    assertFalse(contains);
     g.shutdown();
 
     // the v1 node should only have one edge left
@@ -65,7 +71,13 @@ public class OrientDeleteVertexTest {
     // deleted v2
     // FAILS HERE OUTSIDE OF THE TRANSACTION
     out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
-    assertFalse(out_edge.contains(v2.getId()));
+
+		contains = false;
+		for (OIdentifiable id : out_edge)
+			if (id.equals(v2.getId()))
+				contains = true;
+
+    assertFalse(contains);
   }
 
   int getEdgeCount(Object vid) {

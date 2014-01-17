@@ -1,11 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Element;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
