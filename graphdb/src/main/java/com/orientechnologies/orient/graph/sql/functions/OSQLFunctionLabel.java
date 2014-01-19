@@ -50,7 +50,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
         public Object call(final OIdentifiable iArgument) {
           return getLabel(graph, iArgument);
         }
-      }, iCurrentResult, iContext);
+      }, iCurrentRecord, iContext);
     } else
       return getLabel(graph, iCurrentRecord);
   }
