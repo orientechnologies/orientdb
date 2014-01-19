@@ -69,13 +69,13 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     else
       labels = null;
 
-    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+    if (iCurrentResult != null)
       return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
         public Object call(final OIdentifiable iArgument) {
           return move(graph, iArgument, labels);
         }
-      }, iParameters[0], iContext);
+      }, iCurrentResult, iContext);
     else
       return move(graph, iCurrentRecord.getRecord(), labels);
   }

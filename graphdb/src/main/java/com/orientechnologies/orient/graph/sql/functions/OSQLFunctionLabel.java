@@ -44,13 +44,13 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
-    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null) {
+    if (iCurrentResult != null) {
       return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
         public Object call(final OIdentifiable iArgument) {
           return getLabel(graph, iArgument);
         }
-      }, iParameters[0], iContext);
+      }, iCurrentResult, iContext);
     } else
       return getLabel(graph, iCurrentRecord);
   }
