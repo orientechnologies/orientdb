@@ -57,8 +57,8 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -76,9 +76,7 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(null, false, key, true, fetchLimit);
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValuesMinor(key, true, resultListener);
         result = resultListener.getResult();
       } else
@@ -101,9 +99,7 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
         result = resultListener.getResult();
       } else

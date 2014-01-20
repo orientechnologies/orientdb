@@ -180,7 +180,7 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select max(name.append('.')).prefix('Mr. ') as name from Profile where name is not null"))
+        new OSQLSynchQuery<ODocument>("select name.append('.').prefix('Mr. ') as name from Profile where name is not null"))
         .execute();
 
     Assert.assertTrue(result.size() != 0);

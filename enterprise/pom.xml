@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>orientdb-enterprise</artifactId>
@@ -34,6 +34,7 @@
     <properties>
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.enterprise.*</osgi.export>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>

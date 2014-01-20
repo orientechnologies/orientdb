@@ -216,7 +216,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           synch();
 
         diskCache.closeFile(fileId, flush);
-        clusterPositionMap.close();
+        clusterPositionMap.close(flush);
       } finally {
         releaseExclusiveLock();
       }

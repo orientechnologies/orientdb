@@ -85,9 +85,6 @@ public interface OIndexEngine<V> {
 
   long size(ValuesTransformer<V> transformer);
 
-  long count(Object rangeFrom, final boolean fromInclusive, Object rangeTo, final boolean toInclusive, final int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
-
   boolean hasRangeQuerySupport();
 
   interface ValuesTransformer<V> {

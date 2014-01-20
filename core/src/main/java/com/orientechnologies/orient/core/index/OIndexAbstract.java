@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -581,7 +582,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
             // END OF CLUSTER REACHED, IGNORE IT
           }
 
-        flush();
+        if (indexEngine instanceof OMVRBTreeIndexEngine)
+          flush();
+
         unload();
 
         if (iProgressListener != null)

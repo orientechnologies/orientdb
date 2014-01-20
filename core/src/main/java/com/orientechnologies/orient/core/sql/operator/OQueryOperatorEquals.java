@@ -107,8 +107,8 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, final INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -128,10 +128,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
         return null;
 
       final Object indexResult;
-      if (iOperationType == INDEX_OPERATION_TYPE.GET)
-        indexResult = index.get(key);
-      else
-        indexResult = index.count(key);
+      indexResult = index.get(key);
 
       result = convertIndexResult(indexResult);
     } else {
@@ -148,9 +145,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (internalIndex.hasRangeQuerySupport()) {
-        if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType)) {
-          result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-        } else if (resultListener != null) {
+        if (resultListener != null) {
           index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
           result = resultListener.getResult();
         } else
@@ -158,10 +153,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult;
-          if (iOperationType == INDEX_OPERATION_TYPE.GET)
-            indexResult = index.get(keyOne);
-          else
-            indexResult = index.count(keyOne);
+          indexResult = index.get(keyOne);
 
           result = convertIndexResult(indexResult);
         } else

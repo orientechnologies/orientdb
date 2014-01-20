@@ -1,9 +1,15 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.*;
+
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -13,22 +19,13 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import java.lang.reflect.Array;
-import java.util.*;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 @Test
 public abstract class ORidBagTest extends BaseTest {
 
   @Parameters(value = "url")
-  public ORidBagTest(@Optional String url) {
+  public ORidBagTest(@org.testng.annotations.Optional String url) {
     super(url);
   }
 
@@ -98,7 +95,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     ORID rid = doc.getIdentity();
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -131,13 +128,13 @@ public abstract class ORidBagTest extends BaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
+    OStorage storage = database.getStorage();
+    database.close();
+    storage.close(true, false);
 
-    db.open("admin", "admin");
+    database.open("admin", "admin");
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -174,7 +171,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     rid = doc.getIdentity();
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -207,13 +204,13 @@ public abstract class ORidBagTest extends BaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
+    OStorage storage = database.getStorage();
+    database.close();
+    storage.close(true, false);
 
-    db.open("admin", "admin");
+    database.open("admin", "admin");
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -268,7 +265,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     rid = doc.getIdentity();
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -329,13 +326,13 @@ public abstract class ORidBagTest extends BaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
+    OStorage storage = database.getStorage();
+    database.close();
+    storage.close(true, false);
 
-    db.open("admin", "admin");
+    database.open("admin", "admin");
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -380,7 +377,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     doc.save();
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -447,13 +444,13 @@ public abstract class ORidBagTest extends BaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
+    OStorage storage = database.getStorage();
+    database.close();
+    storage.close(true, false);
 
-    db.open("admin", "admin");
+    database.open("admin", "admin");
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -497,7 +494,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     rid = doc.getIdentity();
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -545,13 +542,13 @@ public abstract class ORidBagTest extends BaseTest {
 
     ORID rid = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
+    OStorage storage = database.getStorage();
+    database.close();
+    storage.close(true, false);
 
-    db.open("admin", "admin");
+    database.open("admin", "admin");
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -657,7 +654,7 @@ public abstract class ORidBagTest extends BaseTest {
 
     rid = doc.getIdentity();
 
-    doc = db.load(rid);
+    doc = database.load(rid);
     doc.setLazyLoad(false);
 
     bag = doc.field("ridbag");
@@ -732,13 +729,13 @@ public abstract class ORidBagTest extends BaseTest {
     doc.save();
     final ORID id = doc.getIdentity();
 
-    OStorage storage = db.getStorage();
-    db.close();
-    storage.close(true);
+    OStorage storage = database.getStorage();
+    database.close();
+    storage.close(true, false);
 
-    db.open("admin", "admin");
+    database.open("admin", "admin");
 
-    doc = db.load(id);
+    doc = database.load(id);
     doc.setLazyLoad(false);
 
     final ORidBag loaded = doc.field("ridbag");
@@ -789,7 +786,7 @@ public abstract class ORidBagTest extends BaseTest {
     ORID rid = document.getIdentity();
 
     for (int i = 0; i < 10; i++) {
-      document = db.load(rid);
+      document = database.load(rid);
       document.setLazyLoad(false);
 
       bag = document.field("bag");
@@ -826,7 +823,7 @@ public abstract class ORidBagTest extends BaseTest {
     for (OIdentifiable id : ridBag)
       docs.add(id);
 
-    db.begin();
+    database.begin();
     ridBag = document.field("ridBag");
     assertEmbedded(ridBag.isEmbedded());
 
@@ -864,7 +861,7 @@ public abstract class ORidBagTest extends BaseTest {
     }
 
     document.save();
-    db.commit();
+    database.commit();
 
     Assert.assertEquals(ridBag.size(), 0);
     document.reload();
@@ -920,7 +917,7 @@ public abstract class ORidBagTest extends BaseTest {
     document.reload();
     ridBag = document.field("ridBag");
 
-    db.begin();
+    database.begin();
 
     for (int i = 0; i < 10; i++) {
       ODocument docToAdd = new ODocument();
@@ -940,7 +937,7 @@ public abstract class ORidBagTest extends BaseTest {
     assertEmbedded(ridBag.isEmbedded());
     document.save();
 
-    db.commit();
+    database.commit();
     assertEmbedded(ridBag.isEmbedded());
 
     Assert.assertEquals(ridBag.size(), itemsToAdd.size());
@@ -1061,7 +1058,7 @@ public abstract class ORidBagTest extends BaseTest {
     ridBag = document.field("ridBag");
     assertEmbedded(ridBag.isEmbedded());
 
-    db.begin();
+    database.begin();
 
     for (int i = 0; i < 5; i++) {
       ODocument docToAdd = new ODocument();
@@ -1083,7 +1080,7 @@ public abstract class ORidBagTest extends BaseTest {
     }
 
     document.save();
-    db.commit();
+    database.commit();
 
     assertEmbedded(ridBag.isEmbedded());
 
@@ -1224,15 +1221,15 @@ public abstract class ORidBagTest extends BaseTest {
 
     document.reload();
 
-    ODocument documentCopy = db.load(document.getIdentity(), "*:-1", true);
+    ODocument documentCopy = database.load(document.getIdentity(), "*:-1", true);
     Assert.assertNotSame(document, documentCopy);
-    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     Iterator<OIdentifiable> iterator = documentCopy.<ORidBag> field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
     documentCopy.reload("*:-1", true);
 
     embeddedList = documentCopy.field("embeddedList");
@@ -1242,7 +1239,7 @@ public abstract class ORidBagTest extends BaseTest {
     iterator.next();
     iterator.remove();
 
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     ODocument docToAdd = new ODocument();
@@ -1253,7 +1250,7 @@ public abstract class ORidBagTest extends BaseTest {
     iterator.remove();
 
     documentCopy.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     embeddedList = documentCopy.field("embeddedList");
@@ -1264,11 +1261,11 @@ public abstract class ORidBagTest extends BaseTest {
     iterator.remove();
     doc.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
 
-    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
     doc.<ORidBag> field("ridBag").remove(docToAdd.getIdentity());
     doc.<ORidBag> field("ridBag").add(remvedItem);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, db, documentCopy, db, null));
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
   }
 
   public void testJsonSerialization() {
@@ -1322,7 +1319,7 @@ public abstract class ORidBagTest extends BaseTest {
     ODocument doc = new ODocument();
     doc.fromJSON(json);
 
-    Assert.assertTrue(ODocumentHelper.hasSameContentOf(doc, db, testDocument, db, null));
+    Assert.assertTrue(ODocumentHelper.hasSameContentOf(doc, database, testDocument, database, null));
   }
 
   protected abstract void assertEmbedded(boolean isEmbedded);

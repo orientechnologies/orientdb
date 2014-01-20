@@ -468,7 +468,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     return adminUser;
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
   }
 
   public void load() {

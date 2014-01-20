@@ -16,17 +16,8 @@
 package com.orientechnologies.orient.core;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Timer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
@@ -160,7 +151,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
         for (OStorage stg : storagesCopy) {
           OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
-          stg.close(true);
+          stg.close(true, false);
         }
       }
 

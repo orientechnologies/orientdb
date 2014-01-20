@@ -605,64 +605,6 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    acquireExclusiveLock();
-    try {
-      final OMVRBTreeEntry<Object, V> firstEntry;
-
-      if (rangeFrom == null)
-        firstEntry = (OMVRBTreeEntry<Object, V>) map.firstEntry();
-      else if (fromInclusive)
-        firstEntry = map.getCeilingEntry(rangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
-      else
-        firstEntry = map.getHigherEntry(rangeFrom);
-
-      if (firstEntry == null)
-        return 0;
-
-      long count = 0;
-      final int firstEntryIndex = map.getPageIndex();
-
-      final OMVRBTreeEntry<Object, V> lastEntry;
-
-      if (rangeFrom == null)
-        lastEntry = (OMVRBTreeEntry<Object, V>) map.lastEntry();
-      else if (toInclusive)
-        lastEntry = map.getHigherEntry(rangeTo);
-      else
-        lastEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
-
-      final int lastEntryIndex;
-
-      if (lastEntry != null)
-        lastEntryIndex = map.getPageIndex();
-      else
-        lastEntryIndex = -1;
-
-      OMVRBTreeEntry<Object, V> entry = firstEntry;
-      map.setPageIndex(firstEntryIndex);
-
-      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
-        final V value = entry.getValue();
-        if (transformer != null)
-          count += transformer.transformFromValue(value).size();
-        else
-          count++;
-
-        if (maxValuesToFetch > -1 && maxValuesToFetch == count)
-          return maxValuesToFetch;
-
-        entry = OMVRBTree.next(entry);
-      }
-
-      return count;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  @Override
   public Iterator<V> valuesIterator() {
     acquireExclusiveLock();
     try {

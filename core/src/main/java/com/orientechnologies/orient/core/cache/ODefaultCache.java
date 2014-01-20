@@ -16,15 +16,15 @@
 
 package com.orientechnologies.orient.core.cache;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OLimitedMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Default implementation of generic {@link OCache} interface that uses plain {@link LinkedHashMap} to store records
@@ -66,6 +66,45 @@ public class ODefaultCache extends OAbstractMapCache<ODefaultCache.OLinkedHashMa
   @Override
   public int limit() {
     return limit;
+  }
+
+  @Override
+  public ORecordInternal<?> get(final ORID id) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return cache.get(id);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public ORecordInternal<?> put(final ORecordInternal<?> record) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return cache.put(record.getIdentity(), record);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public ORecordInternal<?> remove(final ORID id) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return cache.remove(id);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   /**

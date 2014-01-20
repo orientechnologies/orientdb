@@ -27,51 +27,51 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * Encode a string in various format (only base64 for now)
- *
+ * 
  * @author Johann Sorel (Geomatys)
  */
 public class OSQLFunctionEncode extends OSQLFunctionAbstract {
 
-    public static final String NAME = "encode";
-    public static final String FORMAT_BASE64 = "base64";
+  public static final String NAME          = "encode";
+  public static final String FORMAT_BASE64 = "base64";
 
-    /**
-     * Get the date at construction to have the same date for all the iteration.
-     */
-    public OSQLFunctionEncode() {
-        super(NAME, 2, 2);
+  /**
+   * Get the date at construction to have the same date for all the iteration.
+   */
+  public OSQLFunctionEncode() {
+    super(NAME, 2, 2);
+  }
+
+  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+
+    final Object candidate = iParameters[0];
+    final String format = iParameters[1].toString();
+
+    byte[] data = null;
+    if (candidate instanceof byte[]) {
+      data = (byte[]) candidate;
+    } else if (candidate instanceof ORecordId) {
+      final ORecord<?> rec = ((ORecordId) candidate).getRecord();
+      if (rec instanceof ORecordBytes) {
+        data = ((ORecordBytes) rec).toStream();
+      }
+    } else if (candidate instanceof OSerializableStream) {
+      data = ((OSerializableStream) candidate).toStream();
     }
 
-    public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-
-        final Object candidate = iParameters[0];
-        final String format = iParameters[1].toString();
-
-        byte[] data = null;
-        if (candidate instanceof byte[]) {
-            data = (byte[]) candidate;
-        } else if (candidate instanceof ORecordId) {
-            final ORecord rec = ((ORecordId) candidate).getRecord();
-            if (rec instanceof ORecordBytes) {
-                data = ((ORecordBytes) rec).toStream();
-            }
-        } else if (candidate instanceof OSerializableStream) {
-            data = ((OSerializableStream) candidate).toStream();
-        }
-
-        if(data == null){
-            return null;
-        }
-        
-        if(FORMAT_BASE64.equalsIgnoreCase(format)){
-            return OBase64Utils.encodeBytes(data);
-        }else{
-            throw new OException("unknowned format :"+format);
-        }
+    if (data == null) {
+      return null;
     }
 
-    @Override
-    public String getSyntax() {
-        return "Syntax error: encode(<binaryfield>, <format>)";
+    if (FORMAT_BASE64.equalsIgnoreCase(format)) {
+      return OBase64Utils.encodeBytes(data);
+    } else {
+      throw new OException("unknowned format :" + format);
     }
+  }
+
+  @Override
+  public String getSyntax() {
+    return "Syntax error: encode(<binaryfield>, <format>)";
+  }
 }

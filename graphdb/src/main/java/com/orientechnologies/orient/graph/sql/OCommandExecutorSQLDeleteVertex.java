@@ -97,15 +97,20 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     if (rid == null && query == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
-
     if (rid != null) {
       // REMOVE PUNCTUAL RID
-      final OrientVertex v = graph.getVertex(rid);
-      if (v != null) {
-        v.remove();
-        removed = 1;
-      }
+      OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+        @Override
+        public Object call(OrientBaseGraph graph) {
+          final OrientVertex v = graph.getVertex(rid);
+          if (v != null) {
+            v.remove();
+            removed = 1;
+          }
+
+          return null;
+        }
+      });
     } else if (query != null)
       // TARGET IS A CLASS + OPTIONAL CONDITION
       query.execute(iArgs);
@@ -121,14 +126,19 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
     if (id.getIdentity().isValid()) {
+      return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Boolean>() {
+        @Override
+        public Boolean call(OrientBaseGraph graph) {
+          final OrientVertex v = graph.getVertex(id);
+          if (v != null) {
+            v.remove();
+            removed++;
+            return true;
+          }
 
-      final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
-      final OrientVertex v = graph.getVertex(id);
-      if (v != null) {
-        v.remove();
-        removed++;
-        return true;
-      }
+          return false;
+        }
+      });
     }
 
     return false;

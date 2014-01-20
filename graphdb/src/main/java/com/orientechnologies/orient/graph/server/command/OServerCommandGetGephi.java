@@ -64,8 +64,8 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     iRequest.data.commandDetail = text;
 
     final ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
     try {
 
       final Iterable<OrientVertex> vertices;

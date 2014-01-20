@@ -114,8 +114,8 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -135,14 +135,8 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         return null;
 
       final Object indexResult;
-      if (iOperationType == INDEX_OPERATION_TYPE.GET)
-        indexResult = index.get(key);
-      else {
-        if (internalIndex.hasRangeQuerySupport())
-          return index.count(key);
-        else
-          return null;
-      }
+
+      indexResult = index.get(key);
 
       result = convertIndexResult(indexResult);
     } else {
@@ -167,14 +161,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {
           final Object indexResult;
-          if (iOperationType == INDEX_OPERATION_TYPE.GET)
-            indexResult = index.get(keyOne);
-          else {
-            if (internalIndex.hasRangeQuerySupport())
-              return index.count(keyOne);
-            else
-              return null;
-          }
+          indexResult = index.get(keyOne);
 
           result = convertIndexResult(indexResult);
         } else

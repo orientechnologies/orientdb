@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -50,9 +49,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 
 /**
  * SQL Helper class
@@ -141,20 +142,19 @@ public class OSQLHelper {
       fieldValue = new ORecordId(iValue.trim());
     else {
 
-      final String upperCase = iValue.toUpperCase(Locale.ENGLISH);
-      if (upperCase.equals("NULL"))
+      if (iValue.equalsIgnoreCase("null"))
         // NULL
         fieldValue = null;
-      else if (upperCase.equals("NOT NULL"))
+      else if (iValue.equalsIgnoreCase("not null"))
         // NULL
         fieldValue = NOT_NULL;
-      else if (upperCase.equals("DEFINED"))
+      else if (iValue.equalsIgnoreCase("defined"))
         // NULL
         fieldValue = DEFINED;
-      else if (upperCase.equals("TRUE"))
+      else if (iValue.equalsIgnoreCase("true"))
         // BOOLEAN, TRUE
         fieldValue = Boolean.TRUE;
-      else if (upperCase.equals("FALSE"))
+      else if (iValue.equalsIgnoreCase("false"))
         // BOOLEAN, FALSE
         fieldValue = Boolean.FALSE;
       else {
@@ -377,6 +377,11 @@ public class OSQLHelper {
       if (factory.hasMethod(name))
         return factory.createMethod(name);
     }
+
+    final OSQLFunction f = OSQLEngine.INSTANCE.getFunction(name);
+    if (f != null)
+      return new OSQLMethodFunctionDelegate(f);
+
     return null;
   }
 }

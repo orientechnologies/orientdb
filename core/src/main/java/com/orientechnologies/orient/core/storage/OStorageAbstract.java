@@ -100,10 +100,10 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public void close() {
-    close(false);
+    close(false, false);
   }
 
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     if (!checkForClose(iForce))
       return;
 
@@ -114,7 +114,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
           ((OSharedResource) resource).releaseExclusiveLock();
 
         if (resource instanceof OCloseable)
-          ((OCloseable) resource).close();
+          ((OCloseable) resource).close(onDelete);
       }
       sharedResources.clear();
 

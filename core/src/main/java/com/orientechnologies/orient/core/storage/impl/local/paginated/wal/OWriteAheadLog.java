@@ -1057,7 +1057,8 @@ public class OWriteAheadLog {
             filePointer += OWALPage.PAGE_SIZE;
           }
 
-          rndFile.getFD().sync();
+          if (OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.getValueAsBoolean())
+            rndFile.getFD().sync();
         }
 
         nextPositionToFlush = filePointer - OWALPage.PAGE_SIZE;

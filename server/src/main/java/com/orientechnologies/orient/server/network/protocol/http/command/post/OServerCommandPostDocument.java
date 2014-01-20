@@ -35,7 +35,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
     ODatabaseDocumentTx db = null;
 
-    ODocument doc = null;
+    ODocument doc;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
@@ -48,7 +48,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
       doc.save();
 
       iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          doc.toJSON(), null, true);
+          doc.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion(), true);
 
     } finally {
       if (db != null)

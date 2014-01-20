@@ -102,7 +102,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -134,7 +134,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return (Map<String, String>) result.field("databases");
   }
@@ -204,7 +204,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -238,7 +238,7 @@ public class OServerAdmin {
     } catch (Exception e) {
       OLogManager.instance().exception("Error on checking existence of the remote storage: " + storage.getName(), e,
           OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return false;
   }
@@ -475,7 +475,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return config;
   }
@@ -496,7 +496,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return null;
   }
@@ -513,7 +513,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -526,7 +526,7 @@ public class OServerAdmin {
   }
 
   public synchronized void close(boolean iForce) {
-    storage.close(iForce);
+    storage.close(iForce, false);
   }
 
   public synchronized String getURL() {

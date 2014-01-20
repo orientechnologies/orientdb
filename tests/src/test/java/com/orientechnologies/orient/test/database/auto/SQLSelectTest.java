@@ -27,16 +27,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.server.network.protocol.binary.OAsyncCommandResultListener;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -50,8 +47,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
@@ -1055,6 +1054,30 @@ public class SQLSelectTest extends AbstractSelectTest {
     final ORID firstRidSecondQueryQuery = resultset.get(0).getIdentity();
 
     Assert.assertEquals(firstRidFirstQuery, firstRidSecondQueryQuery);
+  }
+
+  @Test
+  public void includeFields() {
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.include('name') ) from OUser");
+
+    List<ODocument> resultset = database.query(query);
+
+    for (ODocument d : resultset) {
+      Assert.assertTrue(d.fields() <= 1);
+      if (d.fields() == 1)
+        Assert.assertTrue(d.containsField("name"));
+    }
+  }
+
+  @Test
+  public void excludeFields() {
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.exclude('rules') ) from OUser");
+
+    List<ODocument> resultset = database.query(query);
+
+    for (ODocument d : resultset) {
+      Assert.assertFalse(d.containsField("rules"));
+    }
   }
 
   @Test

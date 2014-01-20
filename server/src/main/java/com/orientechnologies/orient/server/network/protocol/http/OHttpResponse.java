@@ -346,7 +346,8 @@ public class OHttpResponse {
 
     final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
     if (iRecord != null)
-      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
+      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format),
+          OHttpUtils.HEADER_ETAG + iRecord.getVersion());
   }
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)

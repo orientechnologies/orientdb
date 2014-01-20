@@ -248,26 +248,37 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     OSchema schema = database.getMetadata().getSchema();
     Collection<OClass> classes = schema.getClasses();
-
-    final AbstractList<String> classesSortedByInheritance = new ArrayList<String>();
+    
+    final Map<String, OClass> classesToDrop = new HashMap<String, OClass>();
     for (OClass dbClass : classes) {
-      classesSortedByInheritance.add(dbClass.getName());
-    }
-
-    for (OClass dbClass : classes) {
-      OClass parentClass = dbClass.getSuperClass();
-      if (parentClass != null) {
-        classesSortedByInheritance.remove(dbClass.getName());
-        final int parentIndex = classesSortedByInheritance.indexOf(parentClass.getName());
-        classesSortedByInheritance.add(parentIndex, dbClass.getName());
-      }
-    }
-
-    int removedClasses = 0;
-    for (String className : classesSortedByInheritance) {
+      String className = dbClass.getName();
       if (!className.equalsIgnoreCase(ORole.CLASS_NAME) && !className.equalsIgnoreCase(OUser.CLASS_NAME)
           && !className.equalsIgnoreCase(OSecurityShared.IDENTITY_CLASSNAME)) {
+        classesToDrop.put(className, dbClass);
+      }
+    }
+    
+    int removedClasses = 0;
+    while (!classesToDrop.isEmpty()) {
+      final AbstractList<String> classesReadyToDrop = new ArrayList<String>();
+      for (String className : classesToDrop.keySet()) {
+        boolean isSuperClass = false;
+        for (OClass dbClass : classesToDrop.values()) {
+          OClass parentClass = dbClass.getSuperClass();
+          if (parentClass != null) {
+            if (className.equalsIgnoreCase(parentClass.getName())) {
+              isSuperClass = true;
+              break;
+            }
+          }
+        }
+        if (!isSuperClass) {
+          classesReadyToDrop.add(className);
+        }
+      }
+      for (String className : classesReadyToDrop) {
         schema.dropClass(className);
+        classesToDrop.remove(className);
         removedClasses++;
         listener.onMessage("\n- Class " + className + " was removed.");
       }

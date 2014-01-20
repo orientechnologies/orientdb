@@ -235,8 +235,8 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     wrapped.close();
   }
 
-  public void close(final boolean iForce) {
-    wrapped.close(iForce);
+  public void close(final boolean iForce, boolean onDelete) {
+    wrapped.close(iForce, false);
   }
 
   public boolean isClosed() {

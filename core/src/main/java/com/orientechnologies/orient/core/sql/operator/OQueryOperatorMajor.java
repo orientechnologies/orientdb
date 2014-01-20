@@ -58,8 +58,8 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -78,9 +78,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(key, false, null, false, fetchLimit);
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValuesMajor(key, false, resultListener);
         result = resultListener.getResult();
       } else
@@ -103,9 +101,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(keyOne, false, keyTwo, true, fetchLimit);
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValuesBetween(keyOne, false, keyTwo, true, resultListener);
         result = resultListener.getResult();
       } else
