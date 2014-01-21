@@ -20,17 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDifference;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDocument;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionFirst;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionIntersect;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionLast;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionList;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMap;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMultiValue;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSet;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionUnion;
+import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionAsDate;
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionAsDateTime;
 import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionAsDecimal;
@@ -41,16 +31,7 @@ import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMax;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMin;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionSum;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCoalesce;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDecode;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionExclude;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionInclude;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
+import com.orientechnologies.orient.core.sql.functions.misc.*;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionAppend;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionCharAt;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
@@ -132,7 +113,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     final Object obj = FUNCTIONS.get(name);
 
     if (obj == null)
-      throw new OCommandExecutionException("Unknowned function name :" + name);
+      throw new OCommandExecutionException("Unknown function name :" + name);
 
     if (obj instanceof OSQLFunction)
       return (OSQLFunction) obj;

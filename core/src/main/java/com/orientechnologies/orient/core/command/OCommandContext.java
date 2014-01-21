@@ -32,7 +32,9 @@ public interface OCommandContext {
 
   public Object getVariable(String iName, Object iDefaultValue);
 
-  public OCommandContext setVariable(final String iName, final Object iValue);
+  public OCommandContext setVariable(String iName, Object iValue);
+
+  public OCommandContext incrementVariable(String getNeighbors);
 
   public Map<String, Object> getVariables();
 

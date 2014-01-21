@@ -183,7 +183,6 @@ public class GraphFunctionsTest {
   }
 
   @Test
-	@Ignore
   public void testOutV() {
     Iterable<Vertex> vertices;
 
