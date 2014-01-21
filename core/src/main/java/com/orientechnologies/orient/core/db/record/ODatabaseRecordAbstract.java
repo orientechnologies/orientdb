@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerRemote;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -132,7 +133,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
-              return new OSBTreeCollectionManagerShared();
+              if (getStorage() instanceof OStorageProxy)
+                return new OSBTreeCollectionManagerRemote();
+              else
+                return new OSBTreeCollectionManagerShared();
             }
           }));
 

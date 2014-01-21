@@ -1,6 +1,13 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -24,11 +31,11 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  */
 @Test
 public class OSBTreeBonsaiTest {
-  private static final int                        KEYS_COUNT = 500000;
+  private static final int                             KEYS_COUNT = 500000;
 
-  private ODatabaseDocumentTx                     databaseDocumentTx;
+  private ODatabaseDocumentTx                          databaseDocumentTx;
 
-  protected OSBTreeBonsai<Integer, OIdentifiable> sbTree;
+  protected OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
 
   @BeforeClass
   public void beforeClass() {
@@ -44,7 +51,7 @@ public class OSBTreeBonsaiTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".irs", false);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".irs", false);
     sbTree.create("OSBTreeBonsaiTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
         (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
