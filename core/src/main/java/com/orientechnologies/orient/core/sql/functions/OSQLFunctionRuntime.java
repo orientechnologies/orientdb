@@ -127,7 +127,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
                 + function.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
     }
 
-    final Object functionResult = function.execute(iCurrentRecord, iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
+    final Object functionResult = function.execute(iThis, iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
 
     return transformValue(iCurrentRecord, iContext, functionResult);
   }
