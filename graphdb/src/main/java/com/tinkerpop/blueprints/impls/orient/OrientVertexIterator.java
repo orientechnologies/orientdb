@@ -1,13 +1,14 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
+
+import java.util.Iterator;
 
 public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   private final OrientVertex             vertex;
@@ -27,7 +28,13 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     if (iObject instanceof OrientVertex)
       return (OrientVertex) iObject;
 
-    final ODocument value = ((OIdentifiable) iObject).getRecord();
+    final ORecord<?> rec = ((OIdentifiable) iObject).getRecord();
+
+    if (rec == null || !(rec instanceof ODocument))
+      return null;
+
+    final ODocument value = (ODocument) rec;
+
     final OrientVertex v;
     if (value.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
       // DIRECT VERTEX
