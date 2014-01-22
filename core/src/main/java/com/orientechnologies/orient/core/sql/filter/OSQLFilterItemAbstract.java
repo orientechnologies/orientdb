@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
@@ -39,6 +33,12 @@ import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMultiVal
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Represents an object field as value in the query condition.
@@ -135,7 +135,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           operator = op.getKey();
 
           // DON'T PASS THE CURRENT RECORD TO FORCE EVALUATING TEMPORARY RESULT
-          ioResult = operator.execute(iRecord, iContext, ioResult, op.getValue());
+          ioResult = operator.execute(ioResult, iRecord, iContext, ioResult, op.getValue());
         }
       } catch (ParseException e) {
         OLogManager.instance().exception("Error on conversion of value '%s' using field operator %s", e,

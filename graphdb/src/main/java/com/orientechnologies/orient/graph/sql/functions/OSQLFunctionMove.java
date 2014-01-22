@@ -53,8 +53,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     return "Syntax error: " + name + "([<labels>])";
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
-      final OCommandContext iContext) {
+  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+      final Object[] iParameters, final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     final String[] labels;
@@ -69,15 +69,12 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     else
       labels = null;
 
-    if (iCurrentResult != null)
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, labels);
-        }
-      }, iCurrentResult, iContext);
-    else
-      return move(graph, iCurrentRecord.getRecord(), labels);
+    return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
+      @Override
+      public Object call(final OIdentifiable iArgument) {
+        return move(graph, iArgument, labels);
+      }
+    }, iThis, iContext);
   }
 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {

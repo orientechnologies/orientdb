@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -32,6 +28,10 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * SQL CREATE VERTEX command.
@@ -104,7 +104,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
           // EVALUATE FIELDS
           for (Entry<String, Object> f : fields.entrySet()) {
             if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), context));
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
           }
 
         OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);

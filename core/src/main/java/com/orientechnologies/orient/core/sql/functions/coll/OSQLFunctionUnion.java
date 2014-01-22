@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns, a
@@ -40,7 +40,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Collection
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     if (iParameters.length == 1) {
       // AGGREGATION MODE (STATEFULL)
@@ -48,7 +48,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Collection
       if (value != null) {
 
         if (value instanceof OSQLFilterItemVariable)
-          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
         if (context == null)
           context = new ArrayList<Object>();
@@ -63,7 +63,7 @@ public class OSQLFunctionUnion extends OSQLFunctionMultiValueAbstract<Collection
       for (Object value : iParameters) {
         if (value != null) {
           if (value instanceof OSQLFilterItemVariable)
-            value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+            value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
           result.add(value);
         }
