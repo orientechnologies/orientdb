@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -25,9 +23,10 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.Iterator;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
@@ -35,9 +34,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
+public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   public static final String NAME = "dijkstra";
-  private static final Float MIN  = new Float(0f);
 
   private String             paramWeightFieldName;
 
@@ -45,7 +43,8 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
     super(NAME, 3, 4);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
@@ -77,22 +76,8 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
     return "Syntax error: dijkstra(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<direction>])";
   }
 
-  @Override
-  protected Float getShortestDistance(final Vertex destination) {
-    if (destination == null)
-      return Float.MAX_VALUE;
-
-    final Float d = distance.get(destination);
-    return d == null ? Float.MAX_VALUE : d;
-  }
-
-  @Override
-  protected Float getMinimumDistance() {
-    return MIN;
-  }
-
-  protected Float getDistance(final Vertex node, final Vertex target) {
-    final Iterator<Edge> edges = ((OrientVertex) node).getEdges((OrientVertex) target, paramDirection).iterator();
+  protected float getDistance(final OrientVertex node, final OrientVertex target) {
+    final Iterator<Edge> edges = node.getEdges(target, paramDirection).iterator();
     if (edges.hasNext()) {
       final Edge e = edges.next();
       if (e != null) {
@@ -108,7 +93,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder<Float> {
   }
 
   @Override
-  protected Float sumDistances(final Float iDistance1, final Float iDistance2) {
-    return iDistance1.floatValue() + iDistance2.floatValue();
+  protected boolean isVariableEdgeWeight() {
+    return true;
   }
 }

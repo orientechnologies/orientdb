@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
@@ -31,16 +30,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
-  public static final String   NAME     = "shortestPath";
-  private static final Integer MIN      = new Integer(0);
-  private static final Integer DISTANCE = new Integer(1);
+public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
+  public static final String NAME     = "shortestPath";
 
   public OSQLFunctionShortestPath() {
     super(NAME, 2, 3);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+      final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
@@ -69,28 +67,5 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
 
   public String getSyntax() {
     return "Syntax error: shortestPath(<sourceVertex>, <destinationVertex>, [<direction>])";
-  }
-
-  @Override
-  protected Integer getShortestDistance(final Vertex destination) {
-    if (destination == null)
-      return Integer.MAX_VALUE;
-
-    final Integer d = distance.get(destination);
-    return d == null ? Integer.MAX_VALUE : d;
-  }
-
-  @Override
-  protected Integer getMinimumDistance() {
-    return MIN;
-  }
-
-  protected Integer getDistance(final Vertex node, final Vertex target) {
-    return DISTANCE;
-  }
-
-  @Override
-  protected Integer sumDistances(final Integer iDistance1, final Integer iDistance2) {
-    return iDistance1.intValue() + iDistance2.intValue();
   }
 }

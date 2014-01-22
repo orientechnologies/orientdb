@@ -851,6 +851,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // UP TO THE END
       upperBound = parserText.length();
 
+    int lastRealPositionProjection = -1;
+
     final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound).trim();
     if (projectionString.length() > 0) {
       // EXTRACT PROJECTIONS
@@ -867,6 +869,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (projectionDefinition == null)
           throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
+
+        final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
+        if (words.size() > 1)
+          lastRealPositionProjection = words.get(0).length();
 
         fieldName = null;
         endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
@@ -940,6 +946,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     if (upperBound < parserText.length() - 1)
       parserSetCurrentPosition(upperBound);
+    else if (lastRealPositionProjection > -1)
+      parserMoveCurrentPosition(lastRealPositionProjection+1);
     else
       parserSetEndOfText();
 
