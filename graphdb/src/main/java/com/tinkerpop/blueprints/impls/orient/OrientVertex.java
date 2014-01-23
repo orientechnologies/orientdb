@@ -1,8 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.*;
-
-import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -13,9 +10,20 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -265,8 +273,8 @@ public class OrientVertex extends OrientElement implements Vertex {
             new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
-        } else if (field instanceof OMVRBTreeRIDSet)
-          if (((OMVRBTreeRIDSet) field).contains(iToVertex)) {
+        } else if (field instanceof Collection<?>)
+          if (((Collection<Object>) field).contains(iToVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
             new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
@@ -282,8 +290,8 @@ public class OrientVertex extends OrientElement implements Vertex {
             new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
-        } else if (field instanceof OMVRBTreeRIDSet)
-          if (((OMVRBTreeRIDSet) field).contains(iFromVertex)) {
+        } else if (field instanceof Collection<?>)
+          if (((Collection<Object>) field).contains(iFromVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
             new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
@@ -515,10 +523,13 @@ public class OrientVertex extends OrientElement implements Vertex {
       out = null;
       ((OMVRBTreeRIDSet) found).add(iTo);
     } else if (found instanceof Collection<?>) {
-      // CONVERT IT IN SET
-      out = new OMVRBTreeRIDSet(((Collection<?>) found).size());
-      ((OMVRBTreeRIDSet) out).addAll((Collection<? extends OIdentifiable>) found);
-      ((OMVRBTreeRIDSet) out).add(iTo);
+      // // CONVERT IT IN SET
+      // out = new OMVRBTreeRIDSet(((Collection<?>) found).size());
+      // ((OMVRBTreeRIDSet) out).addAll((Collection<? extends OIdentifiable>) found);
+
+      // USE THE FOUND COLLECTION
+      out = null;
+      ((Collection<Object>) found).add(iTo);
 
     } else
       throw new IllegalStateException("Relationship content is invalid on field " + iFieldName + ". Found: " + found);
@@ -625,16 +636,16 @@ public class OrientVertex extends OrientElement implements Vertex {
 
       deleteEdgeIfAny((OIdentifiable) fieldValue);
 
-    } else if (fieldValue instanceof OMVRBTreeRIDSet) {
+    } else if (fieldValue instanceof Collection<?>) {
       // COLLECTION OF RECORDS: REMOVE THE ENTRY
-      final OMVRBTreeRIDSet set = (OMVRBTreeRIDSet) fieldValue;
+      final Collection<Object> set = (Collection<Object>) fieldValue;
 
       if (iVertexToRemove != null) {
         if (!set.remove(iVertexToRemove)) {
           // SEARCH SEQUENTIALLY (SLOWER)
           boolean found = false;
-          for (OLazyIterator<OIdentifiable> it = set.iterator(false); it.hasNext();) {
-            final ODocument curr = it.next().getRecord();
+          for (Iterator<Object> it = set.iterator(); it.hasNext();) {
+            final ODocument curr = ((OIdentifiable) it.next()).getRecord();
 
             if (iVertexToRemove.equals(curr)) {
               // FOUND AS VERTEX
@@ -671,8 +682,8 @@ public class OrientVertex extends OrientElement implements Vertex {
       } else {
 
         // DELETE ALL THE EDGES
-        for (OLazyIterator<OIdentifiable> it = set.iterator(false); it.hasNext();) {
-          final OIdentifiable edge = it.next();
+        for (Iterator<Object> it = set.iterator(); it.hasNext();) {
+          final OIdentifiable edge = (OIdentifiable) it.next();
 
           if (iAlsoInverse)
             removeInverseEdge(iVertex, iFieldName, null, edge, useVertexFieldsForEdgeLabels);

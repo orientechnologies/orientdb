@@ -1,20 +1,19 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -392,25 +391,18 @@ public class OrientEdge extends OrientElement implements Edge {
         OLogManager.instance().warn(this, "Edge not found in vertex's property %s.%s link while removing the edge %s",
             iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
 
-    } else if (iFieldValue instanceof OMVRBTreeRIDSet) {
+    } else if (iFieldValue instanceof Collection<?>) {
       // ALREADY A SET: JUST REMOVE THE NEW EDGE
-      if (!((OMVRBTreeRIDSet) iFieldValue).remove(iEdge))
+      final Collection<Object> coll = (Collection<Object>) iFieldValue;
+
+      if (!coll.remove(iEdge))
         OLogManager.instance().warn(this, "Edge not found in vertex's property %s.%s set while removing the edge %s",
             iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
 
-      if (((OMVRBTreeRIDSet) iFieldValue).size() == 1)
-        iVertex.field(iFieldName, ((OMVRBTreeRIDSet) iFieldValue).iterator().next());
-      else if (((OMVRBTreeRIDSet) iFieldValue).size() == 0)
+      if (coll.size() == 1)
+        iVertex.field(iFieldName, coll.iterator().next());
+      else if (coll.size() == 0)
         iVertex.removeField(iFieldName);
-
-    } else if (iFieldValue instanceof Collection<?>) {
-      // CONVERT COLLECTION IN TREE-SET AND REMOVE THE EDGE
-      final OMVRBTreeRIDSet out = new OMVRBTreeRIDSet(iVertex, (Collection<OIdentifiable>) iFieldValue);
-      if (!out.remove(iEdge))
-        OLogManager.instance().warn(this, "Edge not found in vertex's property %s.%s collection while removing the edge %s",
-            iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
-      else
-        iVertex.field(iFieldName, out);
     } else
       throw new IllegalStateException("Wrong type found in the field '" + iFieldName + "': " + iFieldValue.getClass());
   }
