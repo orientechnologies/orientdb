@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -268,4 +269,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OStorage getUnderlying();
 
   public boolean isDistributed();
+
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass();
 }

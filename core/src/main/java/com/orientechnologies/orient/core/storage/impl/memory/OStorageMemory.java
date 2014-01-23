@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
@@ -994,6 +995,11 @@ public class OStorageMemory extends OStorageEmbedded {
   @Override
   public String getType() {
     return OEngineMemory.NAME;
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return null;
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {

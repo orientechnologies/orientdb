@@ -1,14 +1,22 @@
-package com.orientechnologies.orient.core.index.sbtreebonsai.local;
+package com.orientechnologies.orient.client.remote;
 
 import java.util.Collection;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
+  private final OBonsaiCollectionPointer treePointer;
+
+  public OSBTreeBonsaiRemote(OBonsaiCollectionPointer treePointer) {
+    this.treePointer = treePointer;
+  }
 
   @Override
   public String getName() {
@@ -17,12 +25,12 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public long getFileId() {
-    return 0;
+    return treePointer.getFileId();
   }
 
   @Override
   public OBonsaiBucketPointer getRootBucketPointer() {
-    return null;
+    return treePointer.getRootPointer();
   }
 
   @Override

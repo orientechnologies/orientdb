@@ -36,19 +36,35 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.task.OTxTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -69,6 +85,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   @Override
   public boolean isDistributed() {
     return true;
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return null;
   }
 
   public Object command(final OCommandRequestText iCommand) {

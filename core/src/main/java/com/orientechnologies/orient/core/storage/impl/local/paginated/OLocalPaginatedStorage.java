@@ -83,7 +83,23 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -1953,6 +1969,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   @Override
   public String getType() {
     return OEngineLocalPaginated.NAME;
+  }
+
+  @Override
+  public Class<OSBTreeCollectionManagerShared> getCollectionManagerClass() {
+    return OSBTreeCollectionManagerShared.class;
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {

@@ -15,7 +15,18 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
@@ -40,7 +51,6 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerRemote;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -74,7 +84,12 @@ import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
@@ -125,10 +140,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
-              if (getStorage() instanceof OStorageProxy)
-                return new OSBTreeCollectionManagerRemote();
-              else
-                return new OSBTreeCollectionManagerShared();
+              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+
+              if (managerClass == null) {
+                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+                return null;
+              } else {
+                return managerClass.newInstance();
+              }
             }
           }));
 
@@ -768,12 +787,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
-
-		final Set<String> lockedIndexes = new HashSet<String>();
+    final Set<String> lockedIndexes = new HashSet<String>();
     record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
-			if(record instanceof ODocument)
-				acquireIndexModificationLock((ODocument) record, lockedIndexes);
+      if (record instanceof ODocument)
+        acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
       final boolean wasNew = iForceCreate || rid.isNew();
       if (wasNew && rid.clusterId == -1)
@@ -885,7 +903,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
     } finally {
-			releaseIndexModificationLock(lockedIndexes);
+      releaseIndexModificationLock(lockedIndexes);
       record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
@@ -919,14 +937,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
-		final Set<String> lockedIndexes = new HashSet<String>();
+    final Set<String> lockedIndexes = new HashSet<String>();
     setCurrentDatabaseinThreadLocal();
     ORecordSerializationContext.pushContext();
     try {
-			if(record instanceof ODocument)
-				acquireIndexModificationLock((ODocument) record, lockedIndexes);
+      if (record instanceof ODocument)
+        acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
-			try {
+      try {
         // if cache is switched off record will be unreachable after delete.
         ORecord<?> rec = record.getRecord();
         if (iCallTriggers && rec != null)
@@ -969,7 +987,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         throw new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId(), t);
       }
     } finally {
-			releaseIndexModificationLock(lockedIndexes);
+      releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
     }
   }
@@ -1283,41 +1301,41 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
-	private void releaseIndexModificationLock(Set<String> lockedIndexes) {
-		final OMetadataDefault metadata = getMetadata();
-		if (metadata == null)
-			return;
+  private void releaseIndexModificationLock(Set<String> lockedIndexes) {
+    final OMetadataDefault metadata = getMetadata();
+    if (metadata == null)
+      return;
 
-		final OIndexManager indexManager = metadata.getIndexManager();
-		if(indexManager == null)
-			return;
+    final OIndexManager indexManager = metadata.getIndexManager();
+    if (indexManager == null)
+      return;
 
-		for (String indexName : lockedIndexes) {
-			OIndex index = indexManager.getIndex(indexName);
-			index.getInternal().releaseModificationLock();
-		}
-	}
+    for (String indexName : lockedIndexes) {
+      OIndex index = indexManager.getIndex(indexName);
+      index.getInternal().releaseModificationLock();
+    }
+  }
 
-	private void acquireIndexModificationLock(ODocument doc, Set<String> lockedIndexes) {
-		if (getStorage() instanceof OStorageEmbedded) {
-			final OClass cls = doc.getSchemaClass();
-			if (cls != null) {
-				final Collection<OIndex<?>> indexes = cls.getIndexes();
-				if (indexes != null) {
-					final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
-						public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
-							return indexOne.getName().compareTo(indexTwo.getName());
-						}
-					});
+  private void acquireIndexModificationLock(ODocument doc, Set<String> lockedIndexes) {
+    if (getStorage() instanceof OStorageEmbedded) {
+      final OClass cls = doc.getSchemaClass();
+      if (cls != null) {
+        final Collection<OIndex<?>> indexes = cls.getIndexes();
+        if (indexes != null) {
+          final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
+            public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
+              return indexOne.getName().compareTo(indexTwo.getName());
+            }
+          });
 
-					indexesToLock.addAll(indexes);
+          indexesToLock.addAll(indexes);
 
-					for (final OIndex<?> index : indexesToLock) {
-						index.getInternal().acquireModificationLock();
-						lockedIndexes.add(index.getName());
-					}
-				}
-			}
-		}
-	}
+          for (final OIndex<?> index : indexesToLock) {
+            index.getInternal().acquireModificationLock();
+            lockedIndexes.add(index.getName());
+          }
+        }
+      }
+    }
+  }
 }

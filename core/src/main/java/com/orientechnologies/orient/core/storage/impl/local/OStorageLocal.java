@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -2042,6 +2043,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
   @Override
   public String getType() {
     return OEngineLocal.NAME;
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    throw null;
   }
 
   protected void init() {
