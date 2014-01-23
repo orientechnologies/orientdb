@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,6 +29,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+
+import java.io.IOException;
 
 /**
  * Interface for embedded storage.
@@ -96,7 +96,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       return executor.execute(iCommand.getParameters());
 
     } catch (OException e) {
-      // PASS THROUGHT
+      // PASS THROUGH
       throw e;
     } catch (Exception e) {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
