@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,12 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
  * Abstract class to find paths between nodes.
@@ -46,6 +46,7 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
   protected Vertex              paramSourceVertex;
   protected Vertex              paramDestinationVertex;
   protected Direction           paramDirection = Direction.OUT;
+  protected OCommandContext     context;
 
   public OSQLFunctionPathFinder(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
@@ -60,6 +61,7 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
   protected abstract T sumDistances(T iDistance1, T iDistance2);
 
   public Object execute(final Object[] iParameters, final OCommandContext iContext) {
+    context = iContext;
     settledNodes = new HashSet<Vertex>();
     unSettledNodes = new HashSet<Vertex>();
     distance = new HashMap<Vertex, T>();
@@ -67,12 +69,31 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
     distance.put(paramSourceVertex, getMinimumDistance());
     unSettledNodes.add(paramSourceVertex);
 
+    int maxDistances = 0;
+    int maxSettled = 0;
+    int maxUnSettled = 0;
+    int maxPredecessors = 0;
+
     while (continueTraversing()) {
       final Vertex node = getMinimum(unSettledNodes);
       settledNodes.add(node);
       unSettledNodes.remove(node);
       findMinimalDistances(node);
+
+      if (distance.size() > maxDistances)
+        maxDistances = distance.size();
+      if (settledNodes.size() > maxSettled)
+        maxSettled = settledNodes.size();
+      if (unSettledNodes.size() > maxUnSettled)
+        maxUnSettled = unSettledNodes.size();
+      if (predecessors.size() > maxPredecessors)
+        maxPredecessors = predecessors.size();
     }
+
+    context.setVariable("maxDistances", maxDistances);
+    context.setVariable("maxSettled", maxSettled);
+    context.setVariable("maxUnSettled", maxUnSettled);
+    context.setVariable("maxPredecessors", maxPredecessors);
 
     return getPath();
   }
@@ -121,6 +142,8 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
   }
 
   protected List<Vertex> getNeighbors(final Vertex node) {
+    context.incrementVariable("getNeighbors");
+
     final List<Vertex> neighbors = new ArrayList<Vertex>();
     if (node != null) {
       for (Vertex v : node.getVertices(paramDirection))
