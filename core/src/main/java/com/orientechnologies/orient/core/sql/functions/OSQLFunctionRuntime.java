@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,6 +33,8 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+
+import java.util.List;
 
 /**
  * Wraps functions managing the binding of parameters.
@@ -111,6 +112,16 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
         if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
           runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
       }
+    }
+
+    if (function.getMaxParams() == -1 || function.getMaxParams() > 0) {
+      if (runtimeParameters.length < function.getMinParams()
+          || (function.getMaxParams() > -1 && runtimeParameters.length > function.getMaxParams()))
+        throw new OCommandExecutionException("Syntax error: function '"
+            + function.getName()
+            + "' needs "
+            + (function.getMinParams() == function.getMaxParams() ? function.getMinParams() : function.getMinParams() + "-"
+                + function.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
     }
 
     final Object functionResult = function.execute(iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
