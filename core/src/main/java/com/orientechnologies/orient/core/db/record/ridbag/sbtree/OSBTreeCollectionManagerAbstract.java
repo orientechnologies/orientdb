@@ -2,13 +2,9 @@ package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -57,9 +53,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
   @Override
   public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId) {
-    OSBTreeBonsai<OIdentifiable, Integer> tree = createTree(DEFAULT_EXTENSION);
-
-    tree.create(FILE_NAME_PREFIX + clusterId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = createTree(clusterId);
 
     final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer());
     final Object lock = treesSubsetLock(collectionPointer);
@@ -83,9 +77,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
         container.usagesCounter++;
         tree = container.tree;
       } else {
-        tree = createTree(DEFAULT_EXTENSION);
-        tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer(),
-            (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+        tree = loadTree(collectionPointer);
 
         assert tree.getRootBucketPointer().equals(collectionPointer.getRootPointer());
 
@@ -147,7 +139,9 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     treeCache.clear();
   }
 
-  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(String extension);
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId);
+
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer);
 
   int size() {
     return treeCache.size();

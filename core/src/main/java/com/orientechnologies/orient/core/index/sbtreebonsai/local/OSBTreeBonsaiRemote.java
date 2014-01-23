@@ -3,24 +3,12 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 import java.util.Collection;
 import java.util.Map;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
-
-  @Override
-  public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
-
-  }
-
-  @Override
-  public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
-
-  }
 
   @Override
   public String getName() {
@@ -64,11 +52,6 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public void delete() {
-
-  }
-
-  @Override
-  public void load(long fileId, OBonsaiBucketPointer rootBucketPointer, OStorageLocalAbstract storageLocal) {
 
   }
 

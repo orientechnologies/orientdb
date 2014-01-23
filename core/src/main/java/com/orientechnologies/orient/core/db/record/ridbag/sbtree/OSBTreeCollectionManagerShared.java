@@ -16,8 +16,13 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -33,7 +38,20 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(String extension) {
-    return new OSBTreeBonsaiLocal<OIdentifiable, Integer>(extension, true);
+  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
+    tree.create(FILE_NAME_PREFIX + clusterId, OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
+
+    return tree;
+  }
+
+  @Override
+  protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
+    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
+
+    tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer(),
+        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+
+    return tree;
   }
 }
