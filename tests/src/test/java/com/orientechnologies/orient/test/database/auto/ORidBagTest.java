@@ -1268,6 +1268,88 @@ public abstract class ORidBagTest extends BaseTest {
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
   }
 
+  public void testAddNewItemsAndRemoveThem() {
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    ORidBag ridBag = new ORidBag();
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+
+      for (int k = 0; k < 2; k++) {
+        ridBag.add(docToAdd);
+        rids.add(docToAdd);
+      }
+
+    }
+
+    Assert.assertEquals(ridBag.size(), 20);
+    ODocument document = new ODocument();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    document = database.load(document.getIdentity(), "*:-1", true);
+    ridBag = document.field("ridBag");
+    Assert.assertEquals(ridBag.size(), 20);
+
+    final List<OIdentifiable> newDocs = new ArrayList<OIdentifiable>();
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+
+      for (int k = 0; k < 2; k++) {
+        ridBag.add(docToAdd);
+        rids.add(docToAdd);
+        newDocs.add(docToAdd);
+      }
+    }
+
+    Assert.assertEquals(ridBag.size(), 40);
+
+    Random rnd = new Random();
+
+    int size = 40;
+
+    for (int i = 0; i < 10; i++) {
+      if (rnd.nextBoolean()) {
+        OIdentifiable newDoc = newDocs.get(i);
+        rids.remove(newDoc);
+        ridBag.remove(newDoc);
+        newDocs.remove(newDoc);
+
+        size--;
+      }
+    }
+
+    for (OIdentifiable identifiable : ridBag) {
+      if (newDocs.contains(identifiable) && rnd.nextBoolean()) {
+        ridBag.remove(identifiable);
+        rids.remove(identifiable);
+
+        size--;
+      }
+    }
+
+    Assert.assertEquals(ridBag.size(), size);
+		List<OIdentifiable> ridsCopy = new ArrayList<OIdentifiable>(rids);
+
+		for (OIdentifiable identifiable : ridBag) {
+			Assert.assertTrue(rids.remove(identifiable));
+		}
+
+		Assert.assertTrue(rids.isEmpty());
+
+		document.save();
+
+		document = database.load(document.getIdentity(), "*:-1", false);
+		ridBag = document.field("ridBag");
+
+		rids.addAll(ridsCopy);
+		for (OIdentifiable identifiable : ridBag) {
+			Assert.assertTrue(rids.remove(identifiable));
+		}
+
+		Assert.assertTrue(rids.isEmpty());
+		Assert.assertEquals(ridBag.size(), size);
+  }
+
   public void testJsonSerialization() {
     ODocument externalDoc = new ODocument();
     ODocument testDocument = new ODocument();
