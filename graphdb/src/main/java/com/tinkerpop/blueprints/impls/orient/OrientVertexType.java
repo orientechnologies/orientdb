@@ -81,6 +81,11 @@ public class OrientVertexType extends OClassAbstractDelegate {
     return new OrientVertexProperty(graph, delegate.createProperty(fieldName, OType.ANY));
   }
 
+  @Override
+  public OrientVertexType getSuperClass() {
+    return new OrientVertexType(graph, super.getSuperClass());
+  }
+
   protected static final void checkType(final OClass iType) {
     if (iType == null)
       throw new IllegalArgumentException("Vertex class is null");

@@ -457,6 +457,17 @@ public class OrientVertex extends OrientElement implements Vertex {
 
             if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
               return new OPair<Direction, String>(Direction.OUT, clsName);
+
+            // GO DOWN THROUGH THE INHERITANCE TREE
+            OrientEdgeType type = graph.getEdgeType(clsName);
+            if (type != null) {
+              for (OClass subType : type.getAllBaseClasses()) {
+                clsName = subType.getName();
+
+                if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
+                  return new OPair<Direction, String>(Direction.OUT, clsName);
+              }
+            }
           }
         }
       } else if (iFieldName.equals(OrientBaseGraph.CONNECTION_OUT))
@@ -473,8 +484,20 @@ public class OrientVertex extends OrientElement implements Vertex {
 
           // CHECK AGAINST ALL THE CLASS NAMES
           for (String clsName : iClassNames) {
+
             if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
               return new OPair<Direction, String>(Direction.IN, clsName);
+
+            // GO DOWN THROUGH THE INHERITANCE TREE
+            OrientEdgeType type = graph.getEdgeType(clsName);
+            if (type != null) {
+              for (OClass subType : type.getAllBaseClasses()) {
+                clsName = subType.getName();
+
+                if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))
+                  return new OPair<Direction, String>(Direction.IN, clsName);
+              }
+            }
           }
         }
       } else if (iFieldName.equals(OrientBaseGraph.CONNECTION_IN))

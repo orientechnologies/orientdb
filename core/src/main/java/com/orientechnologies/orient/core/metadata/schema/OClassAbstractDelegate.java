@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -159,8 +158,13 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public Iterator<OClass> getBaseClasses() {
+  public Collection<OClass> getBaseClasses() {
     return delegate.getBaseClasses();
+  }
+
+  @Override
+  public Collection<OClass> getAllBaseClasses() {
+    return delegate.getAllBaseClasses();
   }
 
   @Override

@@ -53,24 +53,24 @@ import java.util.concurrent.Callable;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long              serialVersionUID = 1L;
+  private static final long               serialVersionUID = 1L;
 
-  protected OSchemaShared                owner;
-  protected String                       name;
-  protected Class<?>                     javaClass;
-  protected final Map<String, OProperty> properties       = new LinkedHashMap<String, OProperty>();
+  protected OSchemaShared                 owner;
+  protected String                        name;
+  protected Class<?>                      javaClass;
+  protected final Map<String, OProperty>  properties       = new LinkedHashMap<String, OProperty>();
 
-  protected int[]                        clusterIds;
-  protected int                          defaultClusterId = -1;
-  protected OClassImpl                   superClass;
-  protected int[]                        polymorphicClusterIds;
-  protected List<OClass>                 baseClasses;
-  protected float                        overSize         = 0f;
-  protected String                       shortName;
-  protected boolean                      strictMode       = false;                                 // @SINCE v1.0rc8
-  protected boolean                      abstractClass    = false;                                 // @SINCE v1.2.0
-  protected Map<String, String>          customFields;
-  private static final Iterator<OClass>  EMPTY_CLASSES    = new ArrayList<OClass>().iterator();
+  protected int[]                         clusterIds;
+  protected int                           defaultClusterId = -1;
+  protected OClassImpl                    superClass;
+  protected int[]                         polymorphicClusterIds;
+  protected List<OClass>                  baseClasses;
+  protected float                         overSize         = 0f;
+  protected String                        shortName;
+  protected boolean                       strictMode       = false;                                 // @SINCE v1.0rc8
+  protected boolean                       abstractClass    = false;                                 // @SINCE v1.2.0
+  protected Map<String, String>           customFields;
+  private static final Collection<OClass> EMPTY_CLASSES    = new ArrayList<OClass>();
 
   /**
    * Constructor used in unmarshalling.
@@ -621,11 +621,22 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public Iterator<OClass> getBaseClasses() {
+  public Collection<OClass> getBaseClasses() {
     if (baseClasses == null || baseClasses.size() == 0)
       return EMPTY_CLASSES;
 
-    return baseClasses.iterator();
+    return Collections.unmodifiableCollection(baseClasses);
+  }
+
+  public Collection<OClass> getAllBaseClasses() {
+    final Set<OClass> set = new HashSet<OClass>();
+    if (baseClasses != null) {
+      set.addAll(baseClasses);
+
+      for (OClass c : baseClasses)
+        set.addAll(c.getAllBaseClasses());
+    }
+    return set;
   }
 
   /**

@@ -38,6 +38,11 @@ public class OrientEdgeType extends OClassAbstractDelegate {
     this.graph = graph;
   }
 
+  @Override
+  public OrientEdgeType getSuperClass() {
+    return new OrientEdgeType(graph, super.getSuperClass());
+  }
+
   protected static final void checkType(final OClass iType) {
     if (iType == null)
       throw new IllegalArgumentException("Edge class is null");
