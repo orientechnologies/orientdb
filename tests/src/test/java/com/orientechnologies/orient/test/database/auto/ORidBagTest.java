@@ -1136,17 +1136,14 @@ public abstract class ORidBagTest extends BaseTest {
   }
 
   private void massiveInsertionIteration(Random rnd, List<OIdentifiable> rids, ORidBag bag) {
-    Iterator<OIdentifiable> ridsIterator = rids.iterator();
     Iterator<OIdentifiable> bagIterator = bag.iterator();
 
-    while (ridsIterator.hasNext()) {
-      assertTrue(bagIterator.hasNext());
-
-      OIdentifiable ridValue = ridsIterator.next();
+    while (bagIterator.hasNext()) {
       OIdentifiable bagValue = bagIterator.next();
-
-      assertEquals(bagValue, ridValue);
+			Assert.assertTrue(rids.contains(bagValue));
     }
+
+		Assert.assertEquals(bag.size(), rids.size());
 
     for (int i = 0; i < 100; i++) {
       if (rnd.nextDouble() < 0.2 & rids.size() > 5) {
@@ -1163,34 +1160,24 @@ public abstract class ORidBagTest extends BaseTest {
       }
     }
 
-    Collections.sort(rids);
-    ridsIterator = rids.iterator();
     bagIterator = bag.iterator();
 
-    while (ridsIterator.hasNext()) {
-      assertTrue(bagIterator.hasNext());
-
-      OIdentifiable ridValue = ridsIterator.next();
-      OIdentifiable bagValue = bagIterator.next();
-
-      assertEquals(bagValue, ridValue);
+    while (bagIterator.hasNext()) {
+      final OIdentifiable bagValue = bagIterator.next();
+			Assert.assertTrue(rids.contains(bagValue));
 
       if (rnd.nextDouble() < 0.05) {
-        ridsIterator.remove();
         bagIterator.remove();
+				Assert.assertTrue(rids.remove(bagValue));
       }
     }
 
-    ridsIterator = rids.iterator();
+		Assert.assertEquals(bag.size(), rids.size());
     bagIterator = bag.iterator();
 
-    while (ridsIterator.hasNext()) {
-      assertTrue(bagIterator.hasNext());
-
-      OIdentifiable ridValue = ridsIterator.next();
-      OIdentifiable bagValue = bagIterator.next();
-
-      assertEquals(bagValue, ridValue);
+    while (bagIterator.hasNext()) {
+			final OIdentifiable bagValue = bagIterator.next();
+			Assert.assertTrue(rids.contains(bagValue));
     }
   }
 
