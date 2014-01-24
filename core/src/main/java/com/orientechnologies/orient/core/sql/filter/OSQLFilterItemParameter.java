@@ -34,7 +34,7 @@ public class OSQLFilterItemParameter implements OSQLFilterItem {
 		this.name = iName;
 	}
 
-	public Object getValue(final OIdentifiable iRecord, OCommandContext iContetx) {
+	public Object getValue(final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContetx) {
 		return value;
 	}
 

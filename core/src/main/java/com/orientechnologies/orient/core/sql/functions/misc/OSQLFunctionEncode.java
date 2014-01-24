@@ -42,7 +42,7 @@ public class OSQLFunctionEncode extends OSQLFunctionAbstract {
     super(NAME, 2, 2);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
 
     final Object candidate = iParameters[0];
     final String format = iParameters[1].toString();

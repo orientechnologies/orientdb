@@ -25,6 +25,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
@@ -275,7 +282,13 @@ public class OrientVertex extends OrientElement implements Vertex {
             new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
-        }
+        } else if (field instanceof Collection<?>)
+          if (((Collection<Object>) field).contains(iToVertex)) {
+            // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
+            // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
+            new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
+            return false;
+          }
 
       field = iToVertex.field(iInFieldName);
       if (field != null)
@@ -286,7 +299,13 @@ public class OrientVertex extends OrientElement implements Vertex {
             new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
             return false;
           }
-        }
+        } else if (field instanceof Collection<?>)
+          if (((Collection<Object>) field).contains(iFromVertex)) {
+            // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
+            // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
+            new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
+            return false;
+          }
 
       if (graph.isUseClassForEdgeLabel()) {
         // CHECK IF THE EDGE CLASS HAS SPECIAL CONSTRAINTS
@@ -517,11 +536,10 @@ public class OrientVertex extends OrientElement implements Vertex {
       out = null;
       ((ORidBag) found).add(iTo);
     } else if (found instanceof Collection<?>) {
-      // CONVERT IT TO BAG
-      final ORidBag bag = new ORidBag();
-      bag.addAll((Collection<OIdentifiable>) found);
-      bag.add(iTo);
-      out = bag;
+
+      // USE THE FOUND COLLECTION
+      out = null;
+      ((Collection<Object>) found).add(iTo);
 
     } else
       throw new IllegalStateException("Relationship content is invalid on field " + iFieldName + ". Found: " + found);
@@ -666,7 +684,50 @@ public class OrientVertex extends OrientElement implements Vertex {
 
         deleteEdgeIfAny(iVertexToRemove);
 
-      } else {
+      }  else if (fieldValue instanceof Collection<?>) {
+				// COLLECTION OF RECORDS: REMOVE THE ENTRY
+				final Collection<Object> set = (Collection<Object>) fieldValue;
+
+				if (iVertexToRemove != null) {
+					if (!set.remove(iVertexToRemove)) {
+						// SEARCH SEQUENTIALLY (SLOWER)
+						boolean found = false;
+						for (Iterator<Object> it = set.iterator(); it.hasNext();) {
+							final ODocument curr = ((OIdentifiable) it.next()).getRecord();
+
+							if (iVertexToRemove.equals(curr)) {
+								// FOUND AS VERTEX
+								it.remove();
+								if (iAlsoInverse)
+									removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+								found = true;
+								break;
+
+							} else if (curr.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+								// EDGE
+								if (curr.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+									final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
+
+									// EDGE, REMOVE THE EDGE
+									if (iVertexToRemove.equals(OrientEdge.getConnection(curr, direction.opposite()))) {
+										it.remove();
+										if (iAlsoInverse)
+											removeInverseEdge(iVertex, iFieldName, iVertexToRemove, curr, useVertexFieldsForEdgeLabels);
+										found = true;
+										break;
+									}
+								}
+							}
+						}
+
+						if (!found)
+							OLogManager.instance().warn(null, "[OrientVertex.removeEdges] edge %s not found in field %s", iVertexToRemove,
+											iFieldName);
+					}
+
+					deleteEdgeIfAny(iVertexToRemove);
+
+				} else {
 
         // DELETE ALL THE EDGES
         for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {

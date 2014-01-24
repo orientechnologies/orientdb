@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Filter the content by including only some fields. If the content is a document, then creates a copy with only the included
@@ -58,8 +58,7 @@ public class OSQLFunctionInclude extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
-      final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
 
     if (iFuncParams[0] != null)
       if (iFuncParams[0] instanceof ODocument) {

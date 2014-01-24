@@ -32,7 +32,7 @@ public class OSQLFunctionFormat extends OSQLFunctionAbstract {
     super(NAME, 2, -1);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
     final Object[] args = new Object[iParameters.length - 1];
 
     for (int i = 0; i < args.length; ++i)

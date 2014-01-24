@@ -37,7 +37,7 @@ public class OSQLMethodRemove extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
     if (iMethodParams != null && iMethodParams.length > 0 && iMethodParams[0] != null)
       iMethodParams = OMultiValue.array(iMethodParams, Object.class, new OCallable<Object, Object>() {
 
