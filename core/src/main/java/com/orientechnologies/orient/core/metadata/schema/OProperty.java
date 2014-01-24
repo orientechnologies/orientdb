@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Contains the description of a persistent class property.
@@ -203,6 +203,8 @@ public interface OProperty extends Comparable<OProperty> {
   public void clearCustom();
 
   public Set<String> getCustomKeys();
+
+  public OClass getOwnerClass();
 
   public Object get(ATTRIBUTES iAttribute);
 }

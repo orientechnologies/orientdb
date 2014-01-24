@@ -20,13 +20,11 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OrientEdge extends OrientElement implements Edge {
-  private static final long  serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  public static final String CLASS_NAME       = "E";
-
-  protected OIdentifiable    vOut;
-  protected OIdentifiable    vIn;
-  protected String           label;
+  protected OIdentifiable   vOut;
+  protected OIdentifiable   vIn;
+  protected String          label;
 
   public OrientEdge(final OrientBaseGraph rawGraph, final OIdentifiable rawEdge) {
     super(rawGraph, rawEdge);
@@ -105,7 +103,7 @@ public class OrientEdge extends OrientElement implements Edge {
     else if (rawElement != null) {
       if (graph.isUseClassForEdgeLabel()) {
         final String clsName = getRecord().getClassName();
-        if (!CLASS_NAME.equals(clsName) && !"OGraphEdge".equals(clsName))
+        if (!OrientEdgeType.CLASS_NAME.equals(clsName) && !"OGraphEdge".equals(clsName))
           // RETURN THE CLASS NAME
           return OrientBaseGraph.decodeClassName(clsName);
       }
@@ -153,6 +151,10 @@ public class OrientEdge extends OrientElement implements Edge {
       return null;
 
     return super.getProperty(key);
+  }
+
+  public boolean isLightweight() {
+    return rawElement == null;
   }
 
   @Override
@@ -233,7 +235,7 @@ public class OrientEdge extends OrientElement implements Edge {
   }
 
   public final String getBaseClassName() {
-    return CLASS_NAME;
+    return OrientEdgeType.CLASS_NAME;
   }
 
   @Override
@@ -371,7 +373,7 @@ public class OrientEdge extends OrientElement implements Edge {
       // USE THE LABEL AS DOCUMENT CLASS
       return checkForClassInSchema(iLabel);
 
-    return CLASS_NAME;
+    return OrientEdgeType.CLASS_NAME;
   }
 
   protected void dropEdgeFromVertex(final OIdentifiable iEdge, final ODocument iVertex, final String iFieldName,

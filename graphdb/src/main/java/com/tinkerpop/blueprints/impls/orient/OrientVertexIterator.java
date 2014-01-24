@@ -36,10 +36,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final ODocument value = (ODocument) rec;
 
     final OrientVertex v;
-    if (value.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+    if (value.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX
       v = new OrientVertex(vertex.graph, value);
-    } else if (value.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+    } else if (value.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       if (vertex.graph.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = new OrientVertex(vertex.graph, OrientEdge.getConnection(value, connection.getKey().opposite()));

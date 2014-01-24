@@ -27,7 +27,9 @@ import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Hi-level function to move inside a graph. Return the incoming connections. If the current element is a vertex, then will be
@@ -81,7 +83,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -95,7 +97,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -109,7 +111,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+      if (rec.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
         // EDGE
         final OrientEdge edge = graph.getEdge(rec);
         if (edge != null) {

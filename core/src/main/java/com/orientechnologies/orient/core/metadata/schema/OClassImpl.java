@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -55,6 +40,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Schema Class implementation.
@@ -405,7 +394,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   protected OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
     if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot create a new property inside a transaction");
+      throw new OSchemaException("Cannot create a new property inside a transaction");
 
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -798,13 +787,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return true;
     if (obj == null)
       return false;
-    if (getClass() != obj.getClass())
+    if (!OClass.class.isAssignableFrom(obj.getClass()))
       return false;
-    final OClassImpl other = (OClassImpl) obj;
+    final OClass other = (OClass) obj;
     if (name == null) {
-      if (other.name != null)
+      if (other.getName() != null)
         return false;
-    } else if (!name.equals(other.name))
+    } else if (!name.equals(other.getName()))
       return false;
     return true;
   }
