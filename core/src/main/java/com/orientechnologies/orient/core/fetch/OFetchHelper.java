@@ -501,7 +501,7 @@ public class OFetchHelper {
     final Iterable<?> linked;
     if (fieldValue instanceof ODocument)
       linked = new OMVRBTreeRIDSet().fromDocument((ODocument) fieldValue);
-    else if (fieldValue instanceof Collection<?> || fieldValue instanceof ORidBag) {
+    else if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag) {
       linked = (Iterable<OIdentifiable>) fieldValue;
       iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, (Iterable) linked);
     } else if (fieldValue instanceof Map<?, ?>) {
