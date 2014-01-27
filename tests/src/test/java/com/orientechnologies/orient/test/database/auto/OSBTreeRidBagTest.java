@@ -16,16 +16,6 @@
 
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +24,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -110,22 +116,24 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     docClusterFour.field("emap", emap, OType.EMBEDDEDMAP);
     docClusterFour.save("clusterFour");
 
-    final String directory = database.getStorage().getConfiguration().getDirectory();
-    final File ridBagOneFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne
-        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-    Assert.assertTrue(ridBagOneFile.exists());
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      final String directory = database.getStorage().getConfiguration().getDirectory();
+      final File ridBagOneFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne
+          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+      Assert.assertTrue(ridBagOneFile.exists());
 
-    final File ridBagTwoFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdTwo
-        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-    Assert.assertTrue(ridBagTwoFile.exists());
+      final File ridBagTwoFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdTwo
+          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+      Assert.assertTrue(ridBagTwoFile.exists());
 
-    final File ridBagThreeFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdThree
-        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-    Assert.assertTrue(ridBagThreeFile.exists());
+      final File ridBagThreeFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdThree
+          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+      Assert.assertTrue(ridBagThreeFile.exists());
 
-    final File ridBagFourFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour
-        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-    Assert.assertTrue(ridBagFourFile.exists());
+      final File ridBagFourFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour
+          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+      Assert.assertTrue(ridBagFourFile.exists());
+    }
   }
 
   @Test

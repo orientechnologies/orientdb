@@ -48,71 +48,73 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public boolean put(K key, V value) {
-    return false;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public V remove(K key) {
-    return null;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public void clear() {
-
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public void delete() {
-
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public long size() {
-    return 0;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public Collection<V> getValuesMinor(K key, boolean inclusive, int maxValuesToFetch) {
-    return null;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
-
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public Collection<V> getValuesMajor(K key, boolean inclusive, int maxValuesToFetch) {
-    return null;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
-
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public Collection<V> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, int maxValuesToFetch) {
-    return null;
+
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public K firstKey() {
-    return null;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public K lastKey() {
-    return null;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener) {
 
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override
   public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
-    return 0;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 }
