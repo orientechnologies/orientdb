@@ -550,23 +550,22 @@ public class OrientVertex extends OrientElement implements Vertex {
       out = iTo;
     else if (found instanceof OIdentifiable) {
       // DOUBLE: SCALE UP THE LINK INTO A COLLECTION
-
-	  if (found.equals(iTo))
-		// SAME LINK, SKIP IT
-	    return found;
+      if (found.equals(iTo))
+        // SAME LINK, SKIP IT
+        return found;
 
       final OProperty prop = iFromVertex.getSchemaClass().getProperty(iFieldName);
-	  if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
-	   	final Collection coll = new OTrackedList<Object>(iFromVertex);
-	 	coll.add(found);
-		coll.add(iTo);
-		out = coll;
-	  } else {
-		final ORidBag bag = new ORidBag();
-		bag.add((OIdentifiable) found);
-	 	bag.add(iTo);
-		out = bag;
-	  }
+      if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
+        final Collection coll = new OTrackedList<Object>(iFromVertex);
+        coll.add(found);
+        coll.add(iTo);
+        out = coll;
+      } else {
+        final ORidBag bag = new ORidBag();
+        bag.add((OIdentifiable) found);
+        bag.add(iTo);
+        out = bag;
+      }
     } else if (found instanceof ORidBag) {
       // ADD THE LINK TO THE COLLECTION
       out = null;
@@ -700,7 +699,7 @@ public class OrientVertex extends OrientElement implements Vertex {
             found = true;
             break;
 
-          } else if (curr.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+          } else if (curr.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
             final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
 
             // EDGE, REMOVE THE EDGE
@@ -753,7 +752,7 @@ public class OrientVertex extends OrientElement implements Vertex {
             found = true;
             break;
 
-          } else if (curr.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+          } else if (curr.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
             final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
 
             // EDGE, REMOVE THE EDGE
