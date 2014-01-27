@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.fetch;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -35,6 +28,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class for fetching.
@@ -553,7 +553,7 @@ public class OFetchHelper {
         }
       }
     } finally {
-      if (fieldValue instanceof Collection<?> || fieldValue instanceof ORidBag)
+      if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag)
         iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
       else if (fieldValue instanceof Map<?, ?>)
         iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
