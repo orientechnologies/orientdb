@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.EntryEvent;
@@ -72,6 +57,21 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -502,10 +502,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final String key = iEvent.getKey();
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       final String nName = getNodeName(iEvent.getMember());
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "removed node configuration id=%s name=%s",
-          iEvent.getMember(), nName);
-
-      cachedClusterNodes.remove(nName);
+      if (nName != null) {
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "removed node configuration id=%s name=%s",
+            iEvent.getMember(), nName);
+        cachedClusterNodes.remove(nName);
+      }
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       synchronized (cachedDatabaseConfiguration) {
@@ -646,20 +647,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class);
             distrDatabase.configureDatabase(null, false, false);
 
-            final Map<String, OBuffer> results = (Map<String, OBuffer>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
+            final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
                 EXECUTION_MODE.RESPONSE);
 
             // EXTRACT THE REAL RESULT
             OBuffer result = null;
-            for (Entry<String, OBuffer> r : results.entrySet())
-              if (r.getValue().getBuffer() != null && r.getValue().getBuffer().length > 0) {
-                result = r.getValue();
+            for (Entry<String, Object> r : results.entrySet()) {
+              if (r.getValue() instanceof Exception)
+                ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
+                    "error on installing database %s in %s", (Exception) r.getValue(), databaseName, dbPath);
+              else {
+                final OBuffer buffer = (OBuffer) r.getValue();
 
-                ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "installing database %s in %s...",
-                    databaseName, dbPath);
-
-                break;
+                if (buffer.getBuffer() != null && buffer.getBuffer().length > 0) {
+                  // FOUND
+                  result = buffer;
+                  ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "installing database %s in %s...",
+                      databaseName, dbPath);
+                  break;
+                }
               }
+            }
 
             if (result == null)
               throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
