@@ -188,7 +188,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     init(atomicOperationsManager, writeAheadLog);
   }
 
-  @Override
   public String getName() {
     acquireSharedLock();
     try {
@@ -324,7 +323,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public void close(boolean flush) {
     acquireExclusiveLock();
     try {
@@ -336,7 +334,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public void close() {
     close(true);
   }
@@ -1003,7 +1000,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  @Override
   public void flush() {
     acquireSharedLock();
     try {

@@ -19,11 +19,6 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public String getName() {
-    return null;
-  }
-
-  @Override
   public long getFileId() {
     return treePointer.getFileId();
   }
@@ -44,13 +39,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public void close(boolean flush) {
-
-  }
-
-  @Override
-  public void close() {
-
+  public V remove(K key) {
+    return null;
   }
 
   @Override
@@ -66,11 +56,6 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public long size() {
     return 0;
-  }
-
-  @Override
-  public V remove(K key) {
-    return null;
   }
 
   @Override
@@ -110,11 +95,6 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener) {
-
-  }
-
-  @Override
-  public void flush() {
 
   }
 

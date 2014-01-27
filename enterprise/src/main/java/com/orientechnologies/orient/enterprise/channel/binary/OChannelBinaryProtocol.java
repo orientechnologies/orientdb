@@ -91,6 +91,10 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DATACLUSTER_FREEZE             = 96;
   public static final byte  REQUEST_DATACLUSTER_RELEASE            = 97;
 
+  // REMOTE SB-TREE COLLECTIONS
+  public static final byte  REQUEST_CREATE_SBTREE_BONSAI           = 110;
+  public static final byte  REQUEST_LOAD_SBTREE_BONSAI             = 111;
+
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                     = 0;
   public static final byte  RESPONSE_STATUS_ERROR                  = 1;
@@ -101,7 +105,7 @@ public class OChannelBinaryProtocol {
   public static final short RECORD_RID                             = -3;
 
   // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
-  public static final int   CURRENT_PROTOCOL_VERSION               = 19; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   CURRENT_PROTOCOL_VERSION               = 20; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();

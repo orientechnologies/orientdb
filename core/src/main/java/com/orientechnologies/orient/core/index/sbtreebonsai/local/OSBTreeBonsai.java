@@ -10,8 +10,6 @@ import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
-  String getName();
-
   long getFileId();
 
   OBonsaiBucketPointer getRootBucketPointer();
@@ -19,10 +17,6 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
   V get(K key);
 
   boolean put(K key, V value);
-
-  void close(boolean flush);
-
-  void close();
 
   void clear();
 
@@ -47,8 +41,6 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
   K lastKey();
 
   void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener);
-
-  void flush();
 
   int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes);
 }
