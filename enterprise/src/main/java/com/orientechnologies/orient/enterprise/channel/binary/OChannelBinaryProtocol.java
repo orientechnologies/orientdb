@@ -93,7 +93,10 @@ public class OChannelBinaryProtocol {
 
   // REMOTE SB-TREE COLLECTIONS
   public static final byte  REQUEST_CREATE_SBTREE_BONSAI           = 110;
-  public static final byte  REQUEST_LOAD_SBTREE_BONSAI             = 111;
+  public static final byte  REQUEST_SBTREE_BONSAI_GET              = 115;
+  public static final byte  REQUEST_SBTREE_BONSAI_PUT              = 116;
+  public static final byte  REQUEST_SBTREE_BONSAI_REMOVE           = 117;
+  public static final byte  REQUEST_SBTREE_BONSAI_CLEAR            = 118;
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                     = 0;

@@ -32,6 +32,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
@@ -212,6 +213,16 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     acquireSharedLock();
     try {
       return rootBucketPointer;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OBonsaiCollectionPointer getCollectionPointer() {
+    acquireSharedLock();
+    try {
+      return new OBonsaiCollectionPointer(fileId, rootBucketPointer);
     } finally {
       releaseSharedLock();
     }

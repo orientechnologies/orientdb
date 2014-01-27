@@ -3,19 +3,27 @@ package com.orientechnologies.orient.client.remote;
 import java.util.Collection;
 import java.util.Map;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 /**
+ * Implementation of {@link OSBTreeBonsai} for remote storage.
+ * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   private final OBonsaiCollectionPointer treePointer;
+  private final OBinarySerializer<K>     keySerializer;
+  private final OBinarySerializer<V>     valueSerializer;
 
-  public OSBTreeBonsaiRemote(OBonsaiCollectionPointer treePointer) {
+  public OSBTreeBonsaiRemote(OBonsaiCollectionPointer treePointer, OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer) {
     this.treePointer = treePointer;
+    this.keySerializer = keySerializer;
+    this.valueSerializer = valueSerializer;
   }
 
   @Override
@@ -29,8 +37,13 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
+  public OBonsaiCollectionPointer getCollectionPointer() {
+    return treePointer;
+  }
+
+  @Override
   public V get(K key) {
-    return null;
+    throw new UnsupportedOperationException("Not implemented yet.");
   }
 
   @Override

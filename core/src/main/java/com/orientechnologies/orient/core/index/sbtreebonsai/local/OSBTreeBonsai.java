@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 import java.util.Collection;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 
@@ -13,6 +14,8 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
   long getFileId();
 
   OBonsaiBucketPointer getRootBucketPointer();
+
+  OBonsaiCollectionPointer getCollectionPointer();
 
   V get(K key);
 

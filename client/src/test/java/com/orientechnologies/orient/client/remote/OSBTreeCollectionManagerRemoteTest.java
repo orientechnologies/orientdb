@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.client.remote;
 
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -69,10 +69,10 @@ public class OSBTreeCollectionManagerRemoteTest {
     verify(storageMock).getUnderlying();
     verify(storageMock).beginRequest(eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI));
     verify(clientMock).writeInt(eq(EXPECTED_CLUSTER_ID));
-    verify(storageMock).endRequest(same(clientMock));
-    verify(storageMock).beginResponse(same(clientMock));
-    verify(networkSerializerMock).readCollectionPointer(same(clientMock));
-    verify(storageMock).endResponse(same(clientMock));
+    verify(storageMock).endRequest(Matchers.same(clientMock));
+    verify(storageMock).beginResponse(Matchers.same(clientMock));
+    verify(networkSerializerMock).readCollectionPointer(Matchers.same(clientMock));
+    verify(storageMock).endResponse(Matchers.same(clientMock));
     verifyNoMoreInteractions(storageMock);
   }
 
