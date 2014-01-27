@@ -58,8 +58,7 @@ public class OSQLFunctionExclude extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
-      final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
 
     if (iFuncParams[0] != null)
       if (iFuncParams[0] instanceof ODocument) {

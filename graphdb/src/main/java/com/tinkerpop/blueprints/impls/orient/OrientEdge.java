@@ -1,9 +1,15 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
@@ -21,13 +27,11 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OrientEdge extends OrientElement implements Edge {
-  private static final long  serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  public static final String CLASS_NAME       = "E";
-
-  protected OIdentifiable    vOut;
-  protected OIdentifiable    vIn;
-  protected String           label;
+  protected OIdentifiable   vOut;
+  protected OIdentifiable   vIn;
+  protected String          label;
 
   public OrientEdge(final OrientBaseGraph rawGraph, final OIdentifiable rawEdge) {
     super(rawGraph, rawEdge);
@@ -106,7 +110,7 @@ public class OrientEdge extends OrientElement implements Edge {
     else if (rawElement != null) {
       if (graph.isUseClassForEdgeLabel()) {
         final String clsName = getRecord().getClassName();
-        if (!CLASS_NAME.equals(clsName) && !"OGraphEdge".equals(clsName))
+        if (!OrientEdgeType.CLASS_NAME.equals(clsName) && !"OGraphEdge".equals(clsName))
           // RETURN THE CLASS NAME
           return OrientBaseGraph.decodeClassName(clsName);
       }
@@ -154,6 +158,10 @@ public class OrientEdge extends OrientElement implements Edge {
       return null;
 
     return super.getProperty(key);
+  }
+
+  public boolean isLightweight() {
+    return rawElement == null;
   }
 
   @Override
@@ -234,7 +242,7 @@ public class OrientEdge extends OrientElement implements Edge {
   }
 
   public final String getBaseClassName() {
-    return CLASS_NAME;
+    return OrientEdgeType.CLASS_NAME;
   }
 
   @Override
@@ -398,7 +406,7 @@ public class OrientEdge extends OrientElement implements Edge {
       // USE THE LABEL AS DOCUMENT CLASS
       return checkForClassInSchema(iLabel);
 
-    return CLASS_NAME;
+    return OrientEdgeType.CLASS_NAME;
   }
 
   protected void dropEdgeFromVertex(final OIdentifiable iEdge, final ODocument iVertex, final String iFieldName,
@@ -424,11 +432,16 @@ public class OrientEdge extends OrientElement implements Edge {
       bag.remove(iEdge);
     } else if (iFieldValue instanceof Collection<?>) {
       // CONVERT COLLECTION IN TREE-SET AND REMOVE THE EDGE
-      final ORidBag out = new ORidBag();
-      out.addAll((Collection<OIdentifiable>) iFieldValue);
+			final Collection<Object> coll = (Collection<Object>) iFieldValue;
 
-      out.remove(iEdge);
-      iVertex.field(iFieldName, out);
+			if (!coll.remove(iEdge))
+				OLogManager.instance().warn(this, "Edge not found in vertex's property %s.%s set while removing the edge %s",
+								iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
+
+			if (coll.size() == 1)
+				iVertex.field(iFieldName, coll.iterator().next());
+			else if (coll.size() == 0)
+				iVertex.removeField(iFieldName);
     } else
       throw new IllegalStateException("Wrong type found in the field '" + iFieldName + "': " + iFieldValue.getClass());
   }

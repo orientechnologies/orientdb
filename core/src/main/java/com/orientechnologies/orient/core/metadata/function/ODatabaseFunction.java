@@ -35,7 +35,7 @@ public class ODatabaseFunction implements OSQLFunction {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
     return f.executeInContext(iContext, iFuncParams);
   }
 

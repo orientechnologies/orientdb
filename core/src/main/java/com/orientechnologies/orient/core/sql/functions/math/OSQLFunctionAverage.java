@@ -42,7 +42,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
     super(NAME, 1, -1);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
     if (iParameters.length == 1) {
       if (iParameters[0] instanceof Number)
         sum((Number) iParameters[0]);

@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -38,6 +33,15 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Run-time query condition evaluator.
@@ -283,12 +287,12 @@ public class OSQLFilterCondition {
 
     if (iValue instanceof OSQLFilterItem) {
       if (iCurrentResult != null) {
-        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iContext);
+        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
         if (v != null)
           return v;
       }
 
-      return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iContext);
+      return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iCurrentResult, iContext);
     }
 
     if (iValue instanceof OSQLFilterCondition)
@@ -298,7 +302,7 @@ public class OSQLFilterCondition {
     if (iValue instanceof OSQLFunctionRuntime) {
       // STATELESS FUNCTION: EXECUTE IT
       final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
-      return f.execute(iCurrentRecord, iCurrentResult, iContext);
+      return f.execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
     }
 
     final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
@@ -309,7 +313,7 @@ public class OSQLFilterCondition {
 
       for (final Object value : multiValue) {
         if (value instanceof OSQLFilterItem)
-          result.add(((OSQLFilterItem) value).getValue(iCurrentRecord, iContext));
+          result.add(((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext));
         else
           result.add(value);
       }

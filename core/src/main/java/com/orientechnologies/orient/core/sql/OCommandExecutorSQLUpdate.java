@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -41,6 +31,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL UPDATE command.
@@ -256,9 +256,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       v = entry.getValue();
 
       if (v instanceof OSQLFilterItem)
-        v = ((OSQLFilterItem) v).getValue(record, context);
+        v = ((OSQLFilterItem) v).getValue(record, null, context);
       else if (v instanceof OSQLFunctionRuntime)
-        v = ((OSQLFunctionRuntime) v).execute(record, null, context);
+        v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
       else if (v instanceof OCommandRequest)
         v = ((OCommandRequest) v).execute(record, null, context);
 
@@ -293,9 +293,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         v = pair.getValue();
 
         if (v instanceof OSQLFilterItem)
-          v = ((OSQLFilterItem) v).getValue(record, context);
+          v = ((OSQLFilterItem) v).getValue(record, null, context);
         else if (pair.getValue() instanceof OSQLFunctionRuntime)
-          v = ((OSQLFunctionRuntime) v).execute(record, null, context);
+          v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
         else if (v instanceof OCommandRequest)
           v = ((OCommandRequest) v).execute(record, null, context);
 

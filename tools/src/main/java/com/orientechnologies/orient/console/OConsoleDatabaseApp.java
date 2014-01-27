@@ -24,17 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
@@ -1085,13 +1076,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         + cls.getDefaultClusterId() + ")");
     message("\nSupported cluster ids: " + Arrays.toString(cls.getClusterIds()));
 
-    if (cls.getBaseClasses().hasNext()) {
+    if (!cls.getBaseClasses().isEmpty()) {
       message("Base classes.........: ");
       int i = 0;
-      for (Iterator<OClass> it = cls.getBaseClasses(); it.hasNext();) {
+      for (OClass c : cls.getBaseClasses()) {
         if (i > 0)
           message(", ");
-        message(it.next().getName());
+        message(c.getName());
         ++i;
       }
       out.println();

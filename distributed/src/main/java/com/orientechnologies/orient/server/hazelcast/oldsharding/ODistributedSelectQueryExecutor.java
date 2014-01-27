@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast.oldsharding;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.hazelcast.core.ITopic;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
@@ -46,6 +37,15 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.OHazelcastResultListener;
 import com.orientechnologies.orient.server.hazelcast.oldsharding.hazelcast.ServerInstance;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Executor for distributed select command and its result merge
@@ -183,7 +183,7 @@ public class ODistributedSelectQueryExecutor extends OAbstractDistributedQueryEx
       result.clear();
       for (OIdentifiable record : resultToMerge) {
         Object ret = distinct.getValue()
-            .execute(record, null, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
+            .execute(record, record, null, new Object[] { ((ODocument) record).field(distinct.getKey()) }, null);
         if (ret != null) {
           final ODocument resultItem = new ODocument().setOrdered(true); // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
           ((ORecordId) resultItem.getIdentity()).clusterId = -2;
