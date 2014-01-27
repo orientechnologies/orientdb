@@ -3,12 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.configuration.Configuration;
 
@@ -45,6 +40,17 @@ import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -418,11 +424,11 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public Iterable<Vertex> getVertices() {
-    return getVerticesOfClass(OrientVertex.CLASS_NAME, true);
+    return getVerticesOfClass(OrientVertexType.CLASS_NAME, true);
   }
 
   public Iterable<Vertex> getVertices(final boolean iPolymorphic) {
-    return getVerticesOfClass(OrientVertex.CLASS_NAME, iPolymorphic);
+    return getVerticesOfClass(OrientVertexType.CLASS_NAME, iPolymorphic);
   }
 
   public Iterable<Vertex> getVerticesOfClass(final String iClassName) {
@@ -461,7 +467,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       }
 
     } else {
-      indexName = OrientVertex.CLASS_NAME + "." + iKey;
+      indexName = OrientVertexType.CLASS_NAME + "." + iKey;
       key = iKey;
     }
 
@@ -481,11 +487,11 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public Iterable<Edge> getEdges() {
-    return getEdgesOfClass(OrientEdge.CLASS_NAME, true);
+    return getEdgesOfClass(OrientEdgeType.CLASS_NAME, true);
   }
 
   public Iterable<Edge> getEdges(final boolean iPolymorphic) {
-    return getEdgesOfClass(OrientEdge.CLASS_NAME, iPolymorphic);
+    return getEdgesOfClass(OrientEdgeType.CLASS_NAME, iPolymorphic);
   }
 
   public Iterable<Edge> getEdgesOfClass(final String iClassName) {
@@ -508,7 +514,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       indexName = iKey;
       key = iKey.substring(iKey.indexOf('.') + 1);
     } else {
-      indexName = OrientEdge.CLASS_NAME + "." + iKey;
+      indexName = OrientEdgeType.CLASS_NAME + "." + iKey;
       key = iKey;
     }
 
@@ -599,22 +605,22 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
     schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-    final OClass vertexBaseClass = schema.getClass(OrientVertex.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdge.CLASS_NAME);
+    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
+    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
 
     if (vertexBaseClass == null)
       // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertex.CLASS_NAME).setOverSize(2);
+      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
 
     if (edgeBaseClass == null)
-      schema.createClass(OrientEdge.CLASS_NAME);
+      schema.createClass(OrientEdgeType.CLASS_NAME);
 
     // @COMPATIBILITY < 1.4.0:
     boolean warn = false;
     final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
 
     if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertex.CLASS_NAME)) {
+      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
         OLogManager.instance().warn(this, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
         warn = true;
       }
@@ -626,7 +632,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
 
     if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdge.CLASS_NAME)) {
+      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
         OLogManager.instance().warn(this, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
         warn = true;
       }
@@ -668,32 +674,35 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   public void rollback() {
   }
 
-  public OClass getVertexBaseType() {
-    return getRawGraph().getMetadata().getSchema().getClass(OrientVertex.CLASS_NAME);
+  public OrientVertexType getVertexBaseType() {
+    return new OrientVertexType(this, getRawGraph().getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME));
   }
 
-  public final OClass getVertexType(final String iTypeName) {
+  public final OrientVertexType getVertexType(final String iTypeName) {
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
-    if (cls != null)
-      checkVertexType(cls);
-    return cls;
+    if (cls == null)
+      return null;
+
+    OrientVertexType.checkType(cls);
+    return new OrientVertexType(this, cls);
+
   }
 
-  public OClass createVertexType(final String iClassName) {
+  public OrientVertexType createVertexType(final String iClassName) {
     return createVertexType(iClassName, (String) null);
   }
 
-  public OClass createVertexType(final String iClassName, final String iSuperClassName) {
+  public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
     return createVertexType(iClassName, iSuperClassName == null ? getVertexBaseType() : getVertexType(iSuperClassName));
   }
 
-  public OClass createVertexType(final String iClassName, final OClass iSuperClass) {
-    checkVertexType(iSuperClass);
+  public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
+    OrientVertexType.checkType(iSuperClass);
 
-    return executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
+    return executeOutsideTx(new OCallable<OrientVertexType, OrientBaseGraph>() {
       @Override
-      public OClass call(final OrientBaseGraph g) {
-        return getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass);
+      public OrientVertexType call(final OrientBaseGraph g) {
+        return new OrientVertexType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass));
       }
     }, "create vertex type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
   }
@@ -708,31 +717,33 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop vertex type '", iTypeName, "'");
   }
 
-  public OClass getEdgeBaseType() {
-    return getRawGraph().getMetadata().getSchema().getClass(OrientEdge.CLASS_NAME);
+  public OrientEdgeType getEdgeBaseType() {
+    return new OrientEdgeType(this);
   }
 
-  public final OClass getEdgeType(final String iTypeName) {
+  public final OrientEdgeType getEdgeType(final String iTypeName) {
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
-    if (cls != null)
-      checkEdgeType(cls);
-    return cls;
+    if (cls == null)
+      return null;
+
+    OrientEdgeType.checkType(cls);
+    return new OrientEdgeType(this, cls);
   }
 
-  public OClass createEdgeType(final String iClassName) {
+  public OrientEdgeType createEdgeType(final String iClassName) {
     return createEdgeType(iClassName, (String) null);
   }
 
-  public OClass createEdgeType(final String iClassName, final String iSuperClassName) {
+  public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
     return createEdgeType(iClassName, iSuperClassName == null ? getEdgeBaseType() : getEdgeType(iSuperClassName));
   }
 
-  public OClass createEdgeType(final String iClassName, final OClass iSuperClass) {
-    checkEdgeType(iSuperClass);
-    return executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
+  public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass) {
+    OrientEdgeType.checkType(iSuperClass);
+    return executeOutsideTx(new OCallable<OrientEdgeType, OrientBaseGraph>() {
       @Override
-      public OClass call(final OrientBaseGraph g) {
-        return getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass);
+      public OrientEdgeType call(final OrientBaseGraph g) {
+        return new OrientEdgeType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass));
       }
     }, "create edge type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
   }
@@ -745,24 +756,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         return null;
       }
     }, "drop edge type '", iTypeName, "'");
-  }
-
-  protected final void checkVertexType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Vertex class is null");
-
-    if (!iType.isSubClassOf(OrientVertex.CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + OrientVertex.CLASS_NAME
-          + "' and therefore cannot be considered a Vertex");
-  }
-
-  protected final void checkEdgeType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Edge class is null");
-
-    if (!iType.isSubClassOf(OrientEdge.CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + OrientEdge.CLASS_NAME
-          + "' and therefore cannot be considered an Edge");
   }
 
   /**
@@ -795,13 +788,13 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     final ODocument doc = rec.getRecord();
     if (doc != null) {
       final OClass schemaClass = doc.getSchemaClass();
-      if (schemaClass.isSubClassOf(OrientVertex.CLASS_NAME)) {
+      if (schemaClass.isSubClassOf(OrientVertexType.CLASS_NAME)) {
         return new OrientVertex(this, doc);
-      } else if (schemaClass.isSubClassOf(OrientEdge.CLASS_NAME)) {
+      } else if (schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME)) {
         return new OrientEdge(this, doc);
       } else
         throw new IllegalArgumentException("Type error. The class " + schemaClass + " does not extend class neither '"
-            + OrientVertex.CLASS_NAME + "' nor '" + OrientEdge.CLASS_NAME + "'");
+            + OrientVertexType.CLASS_NAME + "' nor '" + OrientEdgeType.CLASS_NAME + "'");
     }
 
     return null;
@@ -1040,7 +1033,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public long countVertices() {
-    return getRawGraph().countClass(OrientVertex.CLASS_NAME);
+    return getRawGraph().countClass(OrientVertexType.CLASS_NAME);
   }
 
   public long countVertices(final String iClassName) {
@@ -1051,7 +1044,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     if (useLightweightEdges)
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
-    return getRawGraph().countClass(OrientEdge.CLASS_NAME);
+    return getRawGraph().countClass(OrientEdgeType.CLASS_NAME);
   }
 
   public long countEdges(final String iClassName) {
@@ -1140,9 +1133,9 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   protected <T> String getClassName(final Class<T> elementClass) {
     if (elementClass.isAssignableFrom(Vertex.class))
-      return OrientVertex.CLASS_NAME;
+      return OrientVertexType.CLASS_NAME;
     else if (elementClass.isAssignableFrom(Edge.class))
-      return OrientEdge.CLASS_NAME;
+      return OrientEdgeType.CLASS_NAME;
     throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
   }
 

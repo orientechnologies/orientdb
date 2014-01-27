@@ -110,10 +110,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
+      if (type == OType.ANY)
+        type = null;
+
       linkedClass = null;
       linkedType = null;
 
-      if (prop != null) {
+      if (prop != null && prop.getType() != OType.ANY) {
         // RECOGNIZED PROPERTY
         type = prop.getType();
         linkedClass = prop.getLinkedClass();
@@ -427,7 +430,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
           // SEARCH FOR A CONFIGURED PROPERTY
           prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
-          if (prop != null) {
+          if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
             linkedClass = prop.getLinkedClass();
@@ -436,6 +439,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           } else {
             // SCHEMA PROPERTY NOT FOUND FOR THIS FIELD: TRY TO AUTODETERMINE THE BEST TYPE
             type = record.fieldType(fieldName);
+            if (type == OType.ANY)
+              type = null;
             if (type != null)
               setFieldType = true;
             linkedClass = null;
