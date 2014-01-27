@@ -37,8 +37,7 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParameters,
-      OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
     if (predicate == null)
       predicate = new OSQLPredicate((String) iParameters[0].toString());
 

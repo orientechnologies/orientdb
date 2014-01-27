@@ -81,12 +81,12 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     try {
       timeoutMs = Long.parseLong(word);
     } catch (Exception e) {
-      throwParsingException("Invalid " + KEYWORD_TIMEOUT + " value setted to '" + word
-          + "' but it should be a valid long. Example: " + KEYWORD_TIMEOUT + " 3000");
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + " value set to '" + word + "' but it should be a valid long. Example: "
+          + KEYWORD_TIMEOUT + " 3000");
     }
 
     if (timeoutMs < 0)
-      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value setted to less than ZERO. Example: " + timeoutMs + " 10");
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + timeoutMs + " 10000");
 
     parserNextWord(true);
     word = parserGetLastWord();

@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -212,6 +213,21 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         }
         json.endCollection();
       }
+
+      final OIndexManagerProxy idxManager = db.getMetadata().getIndexManager();
+      json.beginCollection("indexes");
+      for (OIndex<?> index : idxManager.getIndexes()) {
+        json.beginObject();
+        try {
+          json.writeAttribute("name", index.getName());
+          json.writeAttribute("configuration", index.getConfiguration());
+          json.writeAttribute("size", index.getSize());
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Cannot serialize index configuration", e);
+        }
+        json.endObject();
+      }
+      json.endCollection();
 
       json.beginObject("config");
 

@@ -35,7 +35,7 @@ public class OSQLFunctionRight extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
     if (iFuncParams[0] == null || iFuncParams[1] == null)
       return null;
 

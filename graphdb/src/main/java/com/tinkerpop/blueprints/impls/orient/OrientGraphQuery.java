@@ -118,7 +118,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         return new OrientGraphQueryIterable<Vertex>(true);
       }
     } else
-      text.append(OrientVertex.CLASS_NAME);
+      text.append(OrientVertexType.CLASS_NAME);
 
     // APPEND ALWAYS WHERE
     text.append(QUERY_WHERE);
@@ -177,7 +177,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         return new OrientGraphQueryIterable<Edge>(false);
       }
     } else
-      text.append(OrientEdge.CLASS_NAME);
+      text.append(OrientEdgeType.CLASS_NAME);
 
     // APPEND ALWAYS WHERE 1=1 TO MAKE CONCATENATING EASIER
     text.append(QUERY_WHERE);

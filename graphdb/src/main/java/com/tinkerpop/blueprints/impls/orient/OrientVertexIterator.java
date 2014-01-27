@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
@@ -27,12 +28,18 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     if (iObject instanceof OrientVertex)
       return (OrientVertex) iObject;
 
-    final ODocument value = ((OIdentifiable) iObject).getRecord();
+    final ORecord<?> rec = ((OIdentifiable) iObject).getRecord();
+
+    if (rec == null || !(rec instanceof ODocument))
+      return null;
+
+    final ODocument value = (ODocument) rec;
+
     final OrientVertex v;
-    if (value.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+    if (value.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX
       v = new OrientVertex(vertex.graph, value);
-    } else if (value.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+    } else if (value.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       if (vertex.graph.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = new OrientVertex(vertex.graph, OrientEdge.getConnection(value, connection.getKey().opposite()));

@@ -42,7 +42,7 @@ public class OSQLFunctionAsDecimal extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
     return iFuncParams[0] != null ? new BigDecimal(iFuncParams[0].toString().trim()) : null;
   }
 }

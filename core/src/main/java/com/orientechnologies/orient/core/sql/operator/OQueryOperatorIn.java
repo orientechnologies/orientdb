@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -124,7 +128,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       if (inKeyValue instanceof List<?>)
         inParams = (List<Object>) inKeyValue;
       else if (inKeyValue instanceof OSQLFilterItem)
-        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, iContext);
+        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
       else
         throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
 
@@ -162,14 +166,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
       if (iLeft instanceof OSQLFilterItem)
-        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null);
+        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
 
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
       if (iRight instanceof OSQLFilterItem)
-        iRight = ((OSQLFilterItem) iRight).getValue(null, null);
+        iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
       ridSize = OMultiValue.getSize(iRight);
     } else
@@ -186,14 +190,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
       if (iLeft instanceof OSQLFilterItem)
-        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null);
+        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
 
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
       if (iRight instanceof OSQLFilterItem)
-        iRight = ((OSQLFilterItem) iRight).getValue(null, null);
+        iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
 
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
       ridSize = OMultiValue.getSize(iRight);
@@ -212,7 +216,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     List<ORID> rids = null;
     for (Object rid : ridCollection) {
       if (rid instanceof OSQLFilterItemParameter)
-        rid = ((OSQLFilterItemParameter) rid).getValue(null, null);
+        rid = ((OSQLFilterItemParameter) rid).getValue(null, null, null);
 
       if (rid instanceof OIdentifiable) {
         final ORID r = ((OIdentifiable) rid).getIdentity();

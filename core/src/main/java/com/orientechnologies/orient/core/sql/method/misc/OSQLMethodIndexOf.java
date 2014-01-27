@@ -33,7 +33,7 @@ public class OSQLMethodIndexOf extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
         final String param0 = iMethodParams[0].toString();
         if (param0.length() > 2) {
             String toFind = param0.substring(1, param0.length() - 1);

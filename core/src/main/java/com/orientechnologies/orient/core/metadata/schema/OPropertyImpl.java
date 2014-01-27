@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -48,6 +36,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * Contains the description of a persistent class property.
@@ -665,13 +656,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return true;
     if (!super.equals(obj))
       return false;
-    if (getClass() != obj.getClass())
+    if (!OProperty.class.isAssignableFrom(obj.getClass()))
       return false;
-    OPropertyImpl other = (OPropertyImpl) obj;
+    OProperty other = (OProperty) obj;
     if (owner == null) {
-      if (other.owner != null)
+      if (other.getOwnerClass() != null)
         return false;
-    } else if (!owner.equals(other.owner))
+    } else if (!owner.equals(other.getOwnerClass()))
       return false;
     return true;
   }

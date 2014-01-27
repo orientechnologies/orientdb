@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * SQL DELETE VERTEX command.
@@ -64,7 +65,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       } else if (temp.equals(KEYWORD_WHERE)) {
         if (clazz == null)
           // ASSIGN DEFAULT CLASS
-          clazz = database.getMetadata().getSchema().getClass(OrientVertex.CLASS_NAME);
+          clazz = database.getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME);
 
         final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + condition, this));

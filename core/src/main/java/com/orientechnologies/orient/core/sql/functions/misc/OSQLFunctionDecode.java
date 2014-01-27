@@ -38,7 +38,7 @@ public class OSQLFunctionDecode extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
 
     final String candidate = iParameters[0].toString();
     final String format = iParameters[1].toString();

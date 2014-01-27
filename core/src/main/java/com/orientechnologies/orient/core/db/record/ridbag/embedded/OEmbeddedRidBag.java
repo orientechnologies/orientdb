@@ -22,26 +22,29 @@ import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 
-public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener {
-  private Map<OIdentifiable, OModifiableInteger>                       newEntries      = new IdentityHashMap<OIdentifiable, OModifiableInteger>();
-  private NavigableMap<OIdentifiable, OModifiableInteger>              entries         = new ConcurrentSkipListMap<OIdentifiable, OModifiableInteger>();
-  private boolean                                                      convertToRecord = true;
-  private int                                                          size            = 0;
+public class OEmbeddedRidBag implements ORidBagDelegate {
+  private byte[]                                                       serializedContent = null;
+
+  private boolean                                                      contentWasChanged = false;
+  private boolean                                                      deserialized      = true;
+
+  private Object[]                                                     entries           = {};
+  private int                                                          entriesLength     = 0;
+
+  private boolean                                                      convertToRecord   = true;
+  private int                                                          size              = 0;
+
   private transient ORecord<?>                                         owner;
 
-  private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners = Collections
-                                                                                           .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
+  private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners   = Collections
+                                                                                             .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
 
   @Override
   public void setOwner(ORecord<?> owner) {
@@ -60,62 +63,60 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
   @Override
   public void addAll(Collection<OIdentifiable> values) {
-    for (OIdentifiable value : values) {
+    for (OIdentifiable value : values)
       add(value);
-    }
   }
 
   @Override
   public void add(OIdentifiable identifiable) {
-    if (identifiable.getIdentity().isValid()) {
-      final OModifiableInteger counter = entries.get(identifiable);
-      if (counter == null)
-        entries.put(identifiable, new OModifiableInteger(1));
-      else
-        counter.increment();
-    } else
-      newEntries.put(identifiable, new OModifiableInteger(1));
+    addEntry(identifiable);
 
-    if (identifiable instanceof ORecord) {
-      ORecord record = (ORecord) identifiable;
-      record.addIdentityChangeListener(this);
-    }
     size++;
+    contentWasChanged = true;
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
         identifiable, identifiable));
   }
 
+  private void addEntry(OIdentifiable identifiable) {
+    if (entries.length == entriesLength) {
+      if (entriesLength == 0)
+        entries = new Object[4];
+      else {
+        final Object[] oldEntries = entries;
+        entries = new Object[entries.length << 1];
+        System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);
+      }
+    }
+
+    entries[entriesLength] = identifiable;
+    entriesLength++;
+  }
+
   @Override
   public void remove(OIdentifiable identifiable) {
-    if (identifiable.getIdentity().isValid()) {
-      final OModifiableInteger counter = entries.get(identifiable);
-      if (counter == null)
-        return;
+    doDeserialization();
 
-      counter.decrement();
-      if (counter.intValue() < 1) {
-        entries.remove(identifiable);
-        if (identifiable instanceof ORecord) {
-          ORecord record = (ORecord) identifiable;
-          record.removeIdentityChangeListener(this);
-        }
-      }
-
+    if (removeEntry(identifiable)) {
       size--;
+      contentWasChanged = true;
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
-    } else if (newEntries.remove(identifiable) != null) {
-      size--;
-      if (identifiable instanceof ORecord) {
-        ORecord record = (ORecord) identifiable;
-        record.removeIdentityChangeListener(this);
-      }
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
     }
+  }
 
+  private boolean removeEntry(OIdentifiable identifiable) {
+    int i = 0;
+    for (; i < entriesLength; i++) {
+      final Object entry = entries[i];
+      if (entry.equals(identifiable)) {
+        entries[i] = Tombstone.TOMBSTONE;
+        break;
+      }
+    }
+
+    return i < entriesLength;
   }
 
   @Override
@@ -125,56 +126,49 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
   @Override
   public Iterator<OIdentifiable> iterator() {
+    doDeserialization();
+
     return new EntriesIterator(convertToRecord);
   }
 
   @Override
   public Iterator<OIdentifiable> rawIterator() {
+    doDeserialization();
+
     return new EntriesIterator(false);
   }
 
   @Override
   public void convertLinks2Records() {
-    final Map<OIdentifiable, OModifiableInteger> convertedEntries = new HashMap<OIdentifiable, OModifiableInteger>();
+    doDeserialization();
 
-    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : entries.entrySet()) {
-      ORecord record = entry.getKey().getRecord();
-      if (record != null)
-        convertedEntries.put(record, entry.getValue());
-      else
-        convertedEntries.put(entry.getKey(), entry.getValue());
+    for (int i = 0; i < entriesLength; i++) {
+      final Object entry = entries[i];
+
+      if (entry instanceof OIdentifiable) {
+        final OIdentifiable identifiable = (OIdentifiable) entry;
+        entries[i] = identifiable.getRecord();
+      }
     }
-
-    entries.clear();
-    entries.putAll(convertedEntries);
   }
 
   @Override
   public boolean convertRecords2Links() {
-    final Map<OIdentifiable, OModifiableInteger> convertedEntries = new HashMap<OIdentifiable, OModifiableInteger>();
-    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : entries.entrySet()) {
-      if (entry.getKey() instanceof ORecord) {
-        final ORecord record = (ORecord) entry.getKey();
-        if (record.isDirty() || entry.getKey().getIdentity().isNew()) {
-          record.save();
-          convertedEntries.put(record.getIdentity(), entry.getValue());
+    for (int i = 0; i < entriesLength; i++) {
+      final Object entry = entries[i];
+
+      if (entry instanceof OIdentifiable) {
+        final OIdentifiable identifiable = (OIdentifiable) entry;
+        if (identifiable instanceof ORecord) {
+          final ORecord record = (ORecord) identifiable;
+          if (record.isDirty() || record.getIdentity().isNew()) {
+            record.save();
+          }
+
+          entries[i] = record.getIdentity();
         }
-      } else
-        convertedEntries.put(entry.getKey().getIdentity(), entry.getValue());
+      }
     }
-
-    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : entries.entrySet()) {
-      if (entry.getKey() instanceof ORecord) {
-        final ORecord record = (ORecord) entry.getKey();
-        record.save();
-        convertedEntries.put(record.getIdentity(), entry.getValue());
-      } else
-        convertedEntries.put(entry.getKey().getIdentity(), entry.getValue());
-    }
-
-    newEntries.clear();
-    entries.clear();
-    entries.putAll(convertedEntries);
 
     return true;
   }
@@ -201,6 +195,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
   @Override
   public String toString() {
+    if (!deserialized)
+      return "[size=" + size + "]";
+
     if (size < 10)
       return OMultiValue.toString(this);
     else
@@ -243,51 +240,48 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
   @Override
   public int getSerializedSize() {
-    int size = OIntegerSerializer.INT_SIZE;
-    size += newEntries.size() * (OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE);
-    size += entries.size() * (OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE);
+    int size;
+
+    if (!deserialized)
+      size = serializedContent.length;
+    else
+      size = OIntegerSerializer.INT_SIZE;
+
+    size += this.size * OLinkSerializer.RID_SIZE;
 
     return size;
   }
 
   @Override
   public int getSerializedSize(byte[] stream, int offset) {
-    return OIntegerSerializer.INSTANCE.deserialize(stream, offset) * (OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE);
+    return OIntegerSerializer.INSTANCE.deserialize(stream, offset) * OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
   public int serialize(byte[] stream, int offset) {
-    for (OIdentifiable identifiable : entries.keySet()) {
-      if (identifiable instanceof ORecord) {
-        ORecord record = (ORecord) identifiable;
-        if (record.getIdentity().isNew() || record.isDirty()) {
-          record.save();
-        }
+    convertRecords2Links();
+
+    if (!deserialized) {
+      System.arraycopy(serializedContent, 0, stream, offset, serializedContent.length);
+
+      if (contentWasChanged) {
+        OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
+        offset += serializedContent.length;
+      } else {
+        offset += serializedContent.length;
+        return offset;
       }
-    }
 
-    for (OIdentifiable identifiable : newEntries.keySet()) {
-      if (identifiable instanceof ORecord) {
-        ORecord record = (ORecord) identifiable;
-        record.removeIdentityChangeListener(this);
-        record.save();
-        record.addIdentityChangeListener(this);
-        entries.put(identifiable, new OModifiableInteger(1));
-      } else
-        entries.put(identifiable, new OModifiableInteger(1));
-    }
-
-    newEntries.clear();
-
-    OIntegerSerializer.INSTANCE.serialize(entries.size(), stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : entries.entrySet()) {
-      OLinkSerializer.INSTANCE.serialize(entry.getKey(), stream, offset);
-      offset += OLinkSerializer.RID_SIZE;
-
-      OIntegerSerializer.INSTANCE.serialize(entry.getValue().intValue(), stream, offset);
+    } else {
+      OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
       offset += OIntegerSerializer.INT_SIZE;
+    }
+
+    for (Object entry : entries) {
+      if (entry instanceof OIdentifiable) {
+        OLinkSerializer.INSTANCE.serialize((OIdentifiable) entry, stream, offset);
+        offset += OLinkSerializer.RID_SIZE;
+      }
     }
 
     return offset;
@@ -295,41 +289,36 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
   @Override
   public int deserialize(byte[] stream, int offset) {
-    int entriesSize = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+    final int contentSize = getSerializedSize(stream, offset);
+
+    this.size = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+
+    this.serializedContent = new byte[contentSize];
+    System.arraycopy(stream, offset, this.serializedContent, 0, contentSize);
+    deserialized = false;
+
+    return offset + contentSize;
+  }
+
+  private void doDeserialization() {
+    if (deserialized)
+      return;
+
+    int offset = 0;
+    int entriesSize = OIntegerSerializer.INSTANCE.deserialize(serializedContent, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     for (int i = 0; i < entriesSize; i++) {
-      ORID rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
+      ORID rid = OLinkSerializer.INSTANCE.deserialize(serializedContent, offset);
       offset += OLinkSerializer.RID_SIZE;
-
-      int counter = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
-      offset += OIntegerSerializer.INT_SIZE;
-
-      assert counter > 0;
-
-      size += counter;
-
-      entries.put(rid, new OModifiableInteger(counter));
+			addEntry(rid);
     }
 
-    return offset;
+    deserialized = true;
   }
 
   @Override
   public void requestDelete() {
-  }
-
-  @Override
-  public void onIdentityChanged(ORID prevRid, ORecord<?> record) {
-    if (!prevRid.isValid()) {
-      final OModifiableInteger counter = newEntries.remove(record);
-      if (counter != null)
-        entries.put(record, counter);
-    } else {
-      final OModifiableInteger counter = entries.remove(prevRid);
-      if (counter != null)
-        entries.put(record, counter);
-    }
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
@@ -345,19 +334,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
   }
 
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable {
-    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntriesIterator;
-    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> entriesIterator;
+    private int           currentIndex = -1;
+    private int           nextIndex    = -1;
 
-    private Map<OIdentifiable, OModifiableInteger>                 newEntries;
-
-    private final boolean                                          convertToRecord;
-
-    private OIdentifiable                                          currentValue = null;
-
-    private int                                                    currentFinalCounter;
-    private int                                                    currentCounter;
-
-    private boolean                                                currentRemoved;
+    private boolean       currentRemoved;
+    private final boolean convertToRecord;
 
     private EntriesIterator(boolean convertToRecord) {
       reset();
@@ -366,33 +347,24 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
 
     @Override
     public boolean hasNext() {
-      return (currentValue != null && currentCounter < currentFinalCounter) || newEntriesIterator.hasNext()
-          || entriesIterator.hasNext();
+      return nextIndex > -1;
     }
 
     @Override
     public OIdentifiable next() {
       currentRemoved = false;
 
-      if (currentCounter < currentFinalCounter) {
-        currentCounter++;
-        return currentValue;
-      }
+      currentIndex = nextIndex;
+      if (currentIndex == -1)
+        throw new NoSuchElementException();
 
-      Map.Entry<OIdentifiable, OModifiableInteger> nextEntry;
-      if (newEntriesIterator.hasNext())
-        nextEntry = newEntriesIterator.next();
-      else
-        nextEntry = entriesIterator.next();
-
-      currentCounter = 1;
-      currentFinalCounter = nextEntry.getValue().intValue();
-      currentValue = nextEntry.getKey();
+      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
+      nextIndex = nextIndex();
 
       if (convertToRecord)
-        return currentValue.getRecord();
+        return nextValue.getRecord();
 
-      return currentValue;
+      return nextValue;
     }
 
     @Override
@@ -400,48 +372,43 @@ public class OEmbeddedRidBag implements ORidBagDelegate, OIdentityChangeListener
       if (currentRemoved)
         throw new IllegalStateException("Current element has already been removed");
 
-      if (currentValue == null)
+      if (currentIndex == -1)
         throw new IllegalStateException("Next method was not called for given iterator");
 
       currentRemoved = true;
 
-      if (currentValue.getIdentity().isValid()) {
-        OModifiableInteger counter = entries.get(currentValue);
-        counter.decrement();
-        if (counter.intValue() < 1) {
-          entries.remove(currentValue);
-          if (currentValue instanceof ORecord) {
-            ORecord record = (ORecord) currentValue;
-            record.removeIdentityChangeListener(OEmbeddedRidBag.this);
-          }
-          entriesIterator = entries.tailMap(currentValue, false).entrySet().iterator();
-        }
-      } else {
-        newEntries.remove(currentValue);
-        if (currentValue instanceof ORecord) {
-          ORecord record = (ORecord) currentValue;
-          record.removeIdentityChangeListener(OEmbeddedRidBag.this);
-        }
-      }
+      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
+      entries[currentIndex] = Tombstone.TOMBSTONE;
 
       size--;
+      contentWasChanged = true;
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue));
+          OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
+
     }
 
     @Override
     public void reset() {
-      this.newEntriesIterator = new IdentityHashMap<OIdentifiable, OModifiableInteger>(OEmbeddedRidBag.this.newEntries).entrySet()
-          .iterator();
-      this.entriesIterator = OEmbeddedRidBag.this.entries.entrySet().iterator();
-      this.newEntries = OEmbeddedRidBag.this.newEntries;
+      currentIndex = -1;
+      nextIndex = -1;
+			currentRemoved = false;
 
-      currentFinalCounter = 0;
-      currentCounter = 0;
-      currentValue = null;
-      currentRemoved = false;
-
+      nextIndex = nextIndex();
     }
+
+    private int nextIndex() {
+      for (int i = currentIndex + 1; i < entriesLength; i++) {
+        Object entry = entries[i];
+        if (entry instanceof OIdentifiable)
+          return i;
+      }
+
+      return -1;
+    }
+  }
+
+  private static enum Tombstone {
+    TOMBSTONE
   }
 }

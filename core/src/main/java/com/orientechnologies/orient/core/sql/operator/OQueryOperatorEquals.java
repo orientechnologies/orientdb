@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -35,6 +31,10 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * EQUALS operator.
@@ -184,16 +184,18 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null);
+        if (iRight instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot()))
       if (iLeft instanceof ORID)
         return (ORID) iLeft;
       else {
-        if (iLeft instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iLeft).getValue(null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null, null);
+        if (iLeft instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iLeft).getValue(null, null, null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null, null, null);
       }
 
     return null;

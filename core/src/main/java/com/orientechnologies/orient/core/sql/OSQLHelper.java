@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -55,6 +43,18 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
+
 /**
  * SQL Helper class
  * 
@@ -82,7 +82,6 @@ public class OSQLHelper {
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
    * 
-   * @param iDatabase
    * @param iValue
    *          Value to convert.
    * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
@@ -243,7 +242,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(null, null);
+      return ((OSQLFilterItem) iObject).getValue(null, null, null);
 
     return iObject;
   }
@@ -253,7 +252,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, null);
+      return ((OSQLFilterItem) iObject).getValue(iRecord, null, null);
 
     return iObject;
   }
@@ -263,7 +262,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, iContext);
+      return ((OSQLFilterItem) iObject).getValue(iRecord, null, iContext);
     else if (iObject instanceof String) {
       final String s = ((String) iObject).trim();
       if (!s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
