@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Edge;
@@ -199,5 +202,17 @@ public class GraphFunctionsTest {
 
     vertices = (Iterable<Vertex>) graph.command(new OCommandSQL("select expand( inE().outV() ) from " + v2.getId())).execute();
     Assert.assertEquals(vertices.iterator().next(), v1);
+  }
+
+  @Test
+  public void testOutEPolymorphic() {
+    int found;
+
+    // V1
+    found = 0;
+    for (Edge v : (Iterable<Edge>) graph.command(new OCommandSQL("select expand( outE('E') ) from " + v1.getId())).execute())
+      found++;
+    Assert.assertEquals(found, 2);
+
   }
 }

@@ -69,7 +69,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
 
     String temp = parseOptionalWord(true);
 
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
     while (temp != null) {
 
       if (temp.equals("FROM")) {

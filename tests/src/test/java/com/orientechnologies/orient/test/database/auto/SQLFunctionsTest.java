@@ -16,7 +16,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
@@ -139,7 +144,7 @@ public class SQLFunctionsTest {
 
     Set<String> cities = new HashSet<String>();
     for (ODocument city : result) {
-      String cityName = (String) city.field("name");
+      String cityName = city.field("name");
       Assert.assertFalse(cities.contains(cityName));
       cities.add(cityName);
     }
@@ -157,23 +162,22 @@ public class SQLFunctionsTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void queryUnionAsAggregationNotRemoveDuplicates() {
+  public void queryUnionAllAsAggregationNotRemoveDuplicates() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from City")).execute();
     int count = result.size();
 
-    result = database.command(new OSQLSynchQuery<ODocument>("select union(name) as name from City")).execute();
-    Collection<Object> citiesFound = (Collection<Object>) result.get(0).field("name");
+    result = database.command(new OSQLSynchQuery<ODocument>("select unionAll(name) as name from City")).execute();
+    Collection<Object> citiesFound = result.get(0).field("name");
     Assert.assertEquals(citiesFound.size(), count);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void querySetNotDuplicates() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select set(name) as name from City")).execute();
 
     Assert.assertTrue(result.size() == 1);
 
-    Collection<Object> citiesFound = (Collection<Object>) result.get(0).field("name");
+    Collection<Object> citiesFound = result.get(0).field("name");
     Assert.assertTrue(citiesFound.size() > 1);
 
     Set<String> cities = new HashSet<String>();
@@ -221,8 +225,8 @@ public class SQLFunctionsTest {
   }
 
   @Test
-  public void queryUnionAsInline() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from V")).execute();
+  public void queryUnionAllAsInline() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select unionAll(out, in) as edges from V")).execute();
 
     Assert.assertTrue(result.size() > 1);
     for (ODocument d : result) {
@@ -332,8 +336,7 @@ public class SQLFunctionsTest {
       }
 
       @Override
-      public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
-          OCommandContext iContext) {
+      public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
         if (iParameters[0] == null || iParameters[1] == null)
           // CHECK BOTH EXPECTED PARAMETERS
           return null;

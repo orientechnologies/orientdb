@@ -84,7 +84,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    * 
    * @return
    */
-  public static OrientBaseGraph getGraph() {
+  public static OrientGraph getGraph() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof ODatabaseDocumentTx))
       database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
@@ -109,7 +109,11 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final ODatabaseRecord databaseRecord = getDatabase();
     final boolean txWasActive = databaseRecord.getTransaction().isActive();
 
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+		graph.setAutoStartTx(false);
+		if(!txWasActive)
+			graph.getRawGraph().begin();
+
     try {
       final T result = callBack.call(graph);
 

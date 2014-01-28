@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,7 +26,6 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -42,6 +37,15 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   private static final long                            serialVersionUID = 1L;
@@ -106,10 +110,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
+      if (type == OType.ANY)
+        type = null;
+
       linkedClass = null;
       linkedType = null;
 
-      if (prop != null) {
+      if (prop != null && prop.getType() != OType.ANY) {
         // RECOGNIZED PROPERTY
         type = prop.getType();
         linkedClass = prop.getLinkedClass();
@@ -423,7 +430,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
           // SEARCH FOR A CONFIGURED PROPERTY
           prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
-          if (prop != null) {
+          if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
             linkedClass = prop.getLinkedClass();
@@ -432,6 +439,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           } else {
             // SCHEMA PROPERTY NOT FOUND FOR THIS FIELD: TRY TO AUTODETERMINE THE BEST TYPE
             type = record.fieldType(fieldName);
+            if (type == OType.ANY)
+              type = null;
             if (type != null)
               setFieldType = true;
             linkedClass = null;
@@ -456,13 +465,20 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   if (value.charAt(0) == OStringSerializerHelper.LINK) {
                     // TODO replace with regex
                     // ASSURE ALL THE ITEMS ARE RID
-                    final List<String> items = OStringSerializerHelper.smartSplit(value, ',');
+                    int max = value.length();
                     boolean allLinks = true;
-                    for (String it : items)
-                      if (!it.startsWith("#")) {
-                        allLinks = false;
-                        break;
-                      }
+                    boolean checkRid = true;
+                    for (int i = 0; i < max; ++i) {
+                      char c = value.charAt(i);
+                      if (checkRid) {
+                        if (c != '#') {
+                          allLinks = false;
+                          break;
+                        }
+                        checkRid = false;
+                      } else if (c == ',')
+                        checkRid = true;
+                    }
 
                     if (allLinks) {
                       type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;

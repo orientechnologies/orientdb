@@ -35,8 +35,7 @@ public class OSQLMethodSize extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult,
-      final Object[] iMethodParams) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult, final Object[] iMethodParams) {
     
     final Number size;
     if (ioResult != null) {

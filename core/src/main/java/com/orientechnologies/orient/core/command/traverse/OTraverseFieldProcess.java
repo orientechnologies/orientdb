@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+
+import java.util.Iterator;
 
 public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Object>> {
   protected Object field;
@@ -35,7 +35,8 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Obj
 
       final Object fieldValue;
       if (field instanceof OSQLFilterItem)
-        fieldValue = ((OSQLFilterItem) field).getValue(((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget(), null);
+        fieldValue = ((OSQLFilterItem) field).getValue(((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget(), null,
+            null);
       else
         fieldValue = ((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget().rawField(field.toString());
 
