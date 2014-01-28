@@ -509,6 +509,7 @@ public class OServerAdmin {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
       network.writeString(iConfig.getKey());
       network.writeString(iValue != null ? iValue.toString() : "");
+      storage.endRequest(network);
       storage.getResponse(network);
 
     } catch (Exception e) {
