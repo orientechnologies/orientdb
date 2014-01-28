@@ -31,6 +31,7 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
@@ -60,6 +61,7 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -356,12 +358,64 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sbTreeBonsaiFirstKey();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+      sbTreeBonsaiGetEntriesMajor();
+      break;
+
     default:
       setDataCommandInfo("Command not supported");
       return false;
     }
 
     return true;
+  }
+
+  private void sbTreeBonsaiGetEntriesMajor() throws IOException {
+    setDataCommandInfo("SB-Tree bonsai get values major");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    byte[] keyStream = channel.readBytes();
+    boolean inclusive = channel.readBoolean();
+
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+
+    final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
+    OIdentifiable key = keySerializer.deserialize(keyStream, 0);
+
+    final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
+
+    OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
+        5);
+    tree.loadEntriesMajor(key, inclusive, listener);
+    List<Entry<OIdentifiable, Integer>> result = listener.getResult();
+    byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private byte[] serializeSBTreeEntryCollection(List<Entry<OIdentifiable, Integer>> collection,
+      OBinarySerializer<OIdentifiable> keySerializer, OBinarySerializer<Integer> valueSerializer) {
+    byte[] stream = new byte[OIntegerSerializer.INT_SIZE + collection.size()
+        * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
+    int offset = 0;
+
+    OIntegerSerializer.INSTANCE.serialize(collection.size(), stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    for (Entry<OIdentifiable, Integer> entry : collection) {
+      keySerializer.serialize(entry.getKey(), stream, offset);
+      offset += keySerializer.getObjectSize(entry.getKey());
+
+      valueSerializer.serialize(entry.getValue(), stream, offset);
+      offset += valueSerializer.getObjectSize(entry.getValue());
+    }
+    return stream;
   }
 
   private void sbTreeBonsaiFirstKey() throws IOException {

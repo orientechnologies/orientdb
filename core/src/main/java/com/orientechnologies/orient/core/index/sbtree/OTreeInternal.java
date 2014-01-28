@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.index.sbtree;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,5 +28,26 @@ public interface OTreeInternal<K, V> {
      * @return true if continue to iterate through entries, false if no more result needed.
      */
     boolean addResult(Map.Entry<K, V> entry);
+  }
+
+  public class AccumulativeListener<K, V> implements RangeResultListener<K, V> {
+    private final int             limit;
+    private List<Map.Entry<K, V>> entries;
+
+    public AccumulativeListener(int limit) {
+      entries = new ArrayList<Map.Entry<K, V>>(limit);
+      this.limit = limit;
+    }
+
+    @Override
+    public boolean addResult(Map.Entry<K, V> entry) {
+      entries.add(entry);
+
+      return limit < entries.size();
+    }
+
+    public List<Map.Entry<K, V>> getResult() {
+      return entries;
+    }
   }
 }

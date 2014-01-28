@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
@@ -93,7 +96,85 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    List<Map.Entry<K, V>> entries = fetchEntriesMajor(key, inclusive);
+
+    while (pushEntriesToListener(listener, entries)) {
+      final K nextKey = entries.get(entries.size() - 1).getKey();
+      entries = fetchEntriesMajor(nextKey, false);
+    }
+  }
+
+  private boolean pushEntriesToListener(RangeResultListener<K, V> listener, List<Map.Entry<K, V>> entries) {
+    boolean more = false;
+    for (Map.Entry<K, V> entry : entries) {
+      more = listener.addResult(entry);
+
+      if (!more)
+        return false;
+    }
+    return more;
+  }
+
+  private List<Map.Entry<K, V>> fetchEntriesMajor(K key, boolean inclusive) {
+    byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
+    keySerializer.serialize(key, keyStream, 0);
+
+    OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+    try {
+      OChannelBinaryAsynchClient client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR);
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
+      client.writeBytes(keyStream);
+      client.writeBoolean(inclusive);
+
+      storage.endRequest(client);
+
+      storage.beginResponse(client);
+      byte[] stream = client.readBytes();
+      int offset = 0;
+      final int count = OIntegerSerializer.INSTANCE.deserialize(stream, 0);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>(count);
+      for (int i = 0; i < count; i++) {
+        final K resultKey = keySerializer.deserialize(stream, offset);
+        offset += keySerializer.getObjectSize(stream, offset);
+        final V resultValue = valueSerializer.deserialize(stream, offset);
+        offset += valueSerializer.getObjectSize(stream, offset);
+
+        list.add(new TreeEntry<K, V>(resultKey, resultValue));
+      }
+
+      storage.endResponse(client);
+
+      return list;
+    } catch (IOException e) {
+      throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
+    }
+  }
+
+  class TreeEntry<K, V> implements Map.Entry<K, V> {
+    private final K key;
+    private final V value;
+
+    TreeEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   @Override
