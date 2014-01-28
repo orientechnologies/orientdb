@@ -1,13 +1,18 @@
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
  * Implementation of {@link OSBTreeBonsai} for remote storage.
@@ -99,7 +104,21 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public K firstKey() {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+
+    try {
+      OChannelBinaryAsynchClient client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY);
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
+      storage.endRequest(client);
+
+      storage.beginResponse(client);
+      byte[] stream = client.readBytes();
+      storage.endResponse(client);
+
+      return keySerializer.deserialize(stream, 0);
+    } catch (IOException e) {
+      throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
+    }
   }
 
   @Override
@@ -116,5 +135,15 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
     throw new UnsupportedOperationException("Not implemented yet.");
+  }
+
+  @Override
+  public OBinarySerializer<K> getKeySerializer() {
+    return keySerializer;
+  }
+
+  @Override
+  public OBinarySerializer<V> getValueSerializer() {
+    return valueSerializer;
   }
 }

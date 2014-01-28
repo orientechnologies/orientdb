@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
  * @author Andrey Lomakin
  * @since 8/27/13
  */
-public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
+public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
   private String                                     buildDirectory;
 
   private String                                     actualStorageDir;

@@ -96,7 +96,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_SBTREE_BONSAI_GET              = 115;
   public static final byte  REQUEST_SBTREE_BONSAI_PUT              = 116;
   public static final byte  REQUEST_SBTREE_BONSAI_REMOVE           = 117;
-  public static final byte  REQUEST_SBTREE_BONSAI_CLEAR            = 118;
+  public static final byte  REQUEST_SBTREE_BONSAI_FIRST_KEY        = 118;
 
   // INCOMING
   public static final byte  RESPONSE_STATUS_OK                     = 0;

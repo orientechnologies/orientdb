@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 import java.util.Collection;
 import java.util.Map;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
@@ -45,5 +46,18 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
 
   void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, RangeResultListener<K, V> listener);
 
+  /**
+   * Hardcoded method for Bag to avoid creation of extra layer.
+   * <p/>
+   * Don't make any changes to tree.
+   * 
+   * @param changes
+   *          Bag changes
+   * @return real bag size
+   */
   int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes);
+
+  OBinarySerializer<K> getKeySerializer();
+
+  OBinarySerializer<V> getValueSerializer();
 }

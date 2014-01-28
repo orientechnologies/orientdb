@@ -30,6 +30,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
@@ -44,6 +45,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -350,12 +352,36 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       createSBTreeBonsai();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+      sbTreeBonsaiFirstKey();
+      break;
+
     default:
       setDataCommandInfo("Command not supported");
       return false;
     }
 
     return true;
+  }
+
+  private void sbTreeBonsaiFirstKey() throws IOException {
+    setDataCommandInfo("SB-Tree bonsai get first key");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+
+    OIdentifiable result = tree.firstKey();
+    OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
+    byte[] stream = new byte[keySerializer.getObjectSize(result)];
+    keySerializer.serialize(result, stream, 0);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
   }
 
   private void createSBTreeBonsai() throws IOException {

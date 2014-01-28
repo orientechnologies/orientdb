@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 12.08.13
  */
 @Test
-public class OSBTreeBonsaiTest {
+public class OSBTreeBonsaiLocalTest {
   private static final int                             KEYS_COUNT = 500000;
 
   private ODatabaseDocumentTx                          databaseDocumentTx;
@@ -52,7 +52,7 @@ public class OSBTreeBonsaiTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".irs", false);
-    sbTree.create("OSBTreeBonsaiTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
+    sbTree.create("OSBTreeBonsaiLocalTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
         (OStorageLocalAbstract) databaseDocumentTx.getStorage());
   }
 
@@ -66,6 +66,13 @@ public class OSBTreeBonsaiTest {
     sbTree.clear();
     sbTree.delete();
     databaseDocumentTx.drop();
+  }
+
+  @Test
+  public void testGetFisrtKeyInEmptyTree() throws Exception {
+    Integer result = sbTree.firstKey();
+
+    Assert.assertNull(result);
   }
 
   public void testKeyPut() throws Exception {

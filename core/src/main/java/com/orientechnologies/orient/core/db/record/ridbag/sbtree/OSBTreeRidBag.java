@@ -823,14 +823,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     private void init() {
       OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
       try {
-        if (tree.size() == 0) {
-          this.preFetchedValues = null;
-          return;
-        }
-
         firstKey = tree.firstKey();
       } finally {
         releaseTree();
+      }
+
+      if (firstKey == null) {
+        this.preFetchedValues = null;
+        return;
       }
 
       this.preFetchedValues = new LinkedList<Map.Entry<OIdentifiable, Integer>>();

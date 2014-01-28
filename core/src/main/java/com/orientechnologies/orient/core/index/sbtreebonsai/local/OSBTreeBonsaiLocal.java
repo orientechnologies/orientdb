@@ -1353,15 +1353,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     return new AllocationResult(oldFreeListHead, cacheEntry, false);
   }
 
-  /**
-   * Hardcoded method for Bag to avoid creation of extra layer.
-   * <p/>
-   * Don't make any changes to tree.
-   * 
-   * @param changes
-   *          Bag changes
-   * @return real bag size
-   */
   @Override
   public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
     final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
@@ -1388,6 +1379,26 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
 
     return size.intValue();
+  }
+
+  @Override
+  public OBinarySerializer<K> getKeySerializer() {
+    acquireSharedLock();
+    try {
+      return keySerializer;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OBinarySerializer<V> getValueSerializer() {
+    acquireSharedLock();
+    try {
+      return valueSerializer;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   private static class AllocationResult {
