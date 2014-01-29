@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -62,7 +63,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpd
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
   private OBonsaiCollectionPointer                                     collectionPointer;
-  private final OSBTreeCollectionManager                               collectionManager;
+  private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
+                                                                                               .get().getSbTreeCollectionManager();
 
   private final NavigableMap<OIdentifiable, Change>                    changes             = new ConcurrentSkipListMap<OIdentifiable, Change>();
 
@@ -81,8 +83,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public OSBTreeRidBag() {
     collectionPointer = null;
+  }
 
-    collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+  public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
+    this.collectionPointer = collectionPointer;
   }
 
   @Override
@@ -366,7 +370,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public int serialize(byte[] stream, int offset) {
+  public int serialize(byte[] stream, int offset, UUID ownerUuid) {
     for (OIdentifiable identifiable : changes.keySet()) {
       if (identifiable instanceof ORecord) {
         final ORID identity = identifiable.getIdentity();
@@ -403,13 +407,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       if (context != null) {
         final int clusterId = getHighLevelDocClusterId();
         assert clusterId > -1;
-        final OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = ODatabaseRecordThreadLocal.INSTANCE.get()
-            .getSbTreeCollectionManager().createSBTree(clusterId);
-        try {
-          collectionPointer = new OBonsaiCollectionPointer(treeBonsai.getFileId(), treeBonsai.getRootBucketPointer());
-        } finally {
-          releaseTree();
-        }
+        collectionPointer = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager()
+            .createSBTree(clusterId, ownerUuid);
       }
     }
 
@@ -417,7 +416,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (this.collectionPointer != null)
       collectionPointer = this.collectionPointer;
     else {
-      collectionPointer = new OBonsaiCollectionPointer(-1, new OBonsaiBucketPointer(-1, -1));
+      collectionPointer = OBonsaiCollectionPointer.INVALID;
     }
 
     OLongSerializer.INSTANCE.serialize(collectionPointer.getFileId(), stream, offset);

@@ -23,7 +23,9 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public interface OSBTreeCollectionManager {
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId);
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId);
+
+  OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID);
 
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer);
 

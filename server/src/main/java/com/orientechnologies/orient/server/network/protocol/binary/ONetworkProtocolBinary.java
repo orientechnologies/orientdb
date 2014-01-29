@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -443,10 +445,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     int clusterId = channel.readInt();
 
-    OBonsaiCollectionPointer collectionPointer;
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().createSBTree(clusterId);
-    collectionPointer = tree.getCollectionPointer();
-    connection.database.getSbTreeCollectionManager().releaseSBTree(collectionPointer);
+    OBonsaiCollectionPointer collectionPointer = connection.database.getSbTreeCollectionManager().createSBTree(clusterId, null);
 
     beginResponse();
     try {
@@ -1183,6 +1182,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getRecordVersion());
           }
+
+          if (connection.data.protocolVersion >= 20)
+            sendCollectionChanges();
         } finally {
           endResponse();
         }
@@ -1377,6 +1379,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       try {
         sendOk(clientTxId);
         channel.writeVersion(newVersion);
+
+        if (connection.data.protocolVersion >= 20)
+          sendCollectionChanges();
       } finally {
         endResponse();
       }
@@ -1404,10 +1409,32 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeClusterPosition(record.getIdentity().getClusterPosition());
         if (connection.data.protocolVersion >= 11)
           channel.writeVersion(record.getRecordVersion());
+
+        if (connection.data.protocolVersion >= 20)
+          sendCollectionChanges();
       } finally {
         endResponse();
       }
     }
+  }
+
+  private void sendCollectionChanges() throws IOException {
+    OSBTreeCollectionManagerShared collectionManager = (OSBTreeCollectionManagerShared) connection.database
+        .getSbTreeCollectionManager();
+
+    Map<UUID, OBonsaiCollectionPointer> changedIds = collectionManager.changedIds();
+
+    channel.writeInt(changedIds.size());
+
+    for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
+      UUID id = entry.getKey();
+      channel.writeLong(id.getMostSignificantBits());
+      channel.writeLong(id.getLeastSignificantBits());
+
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, entry.getValue());
+    }
+
+    collectionManager.clearChangedIds();
   }
 
   protected void readRecordMetadata() throws IOException {

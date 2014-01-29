@@ -30,8 +30,13 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId) {
-    return delegate.createSBTree(clusterId);
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) {
+    return delegate.createAndLoadTree(clusterId);
+  }
+
+  @Override
+  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) {
+    return delegate.createSBTree(clusterId, ownerUUID);
   }
 
   @Override

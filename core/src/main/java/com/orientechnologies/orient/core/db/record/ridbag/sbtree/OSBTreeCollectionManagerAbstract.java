@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.UUID;
+
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -52,18 +54,14 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId) {
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) {
+    return loadSBTree(createSBTree(clusterId, null));
+  }
+
+  @Override
+  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) {
     OSBTreeBonsai<OIdentifiable, Integer> tree = createTree(clusterId);
-
-    final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer());
-    final Object lock = treesSubsetLock(collectionPointer);
-    synchronized (lock) {
-      SBTreeBonsaiContainer container = new SBTreeBonsaiContainer(tree);
-      treeCache.put(collectionPointer, container);
-
-      container.usagesCounter++;
-    }
-    return tree;
+    return tree.getCollectionPointer();
   }
 
   @Override

@@ -1,13 +1,18 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Test
 public class OSBTreeCollectionManagerSharedTest {
@@ -51,7 +56,7 @@ public class OSBTreeCollectionManagerSharedTest {
     final int clusterId = databaseDocumentTx.getDefaultClusterId();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(clusterId);
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(clusterId);
       createdTrees.add(tree);
       sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
@@ -65,7 +70,7 @@ public class OSBTreeCollectionManagerSharedTest {
       sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(clusterId);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(clusterId);
     sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 6);
@@ -95,7 +100,8 @@ public class OSBTreeCollectionManagerSharedTest {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(databaseDocumentTx
+          .getDefaultClusterId());
       createdTrees.add(tree);
       sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
@@ -114,7 +120,8 @@ public class OSBTreeCollectionManagerSharedTest {
         sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager
+        .createAndLoadTree(databaseDocumentTx.getDefaultClusterId());
     sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 8);
@@ -164,7 +171,8 @@ public class OSBTreeCollectionManagerSharedTest {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(databaseDocumentTx
+          .getDefaultClusterId());
       createdTrees.add(tree);
       sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
@@ -182,7 +190,8 @@ public class OSBTreeCollectionManagerSharedTest {
         sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager
+        .createAndLoadTree(databaseDocumentTx.getDefaultClusterId());
     sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 11);

@@ -28,6 +28,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -61,6 +62,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -356,6 +358,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
               ppos.recordVersion = network.readVersion();
             } else
               ppos.recordVersion = OVersionFactory.instance().createVersion();
+
+            if (network.getSrvProtocolVersion() >= 20)
+              readCollectionChanges(network);
+
             return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
             endResponse(network);
@@ -375,6 +381,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
                   result = network.readClusterPosition();
                   if (network.getSrvProtocolVersion() >= 11)
                     network.readVersion();
+
+                  if (network.getSrvProtocolVersion() >= 20)
+                    readCollectionChanges(network);
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
@@ -522,7 +531,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            return new OStorageOperationResult<ORecordVersion>(network.readVersion());
+            OStorageOperationResult<ORecordVersion> r = new OStorageOperationResult<ORecordVersion>(network.readVersion());
+            readCollectionChanges(network);
+            return r;
           } finally {
             endResponse(network);
           }
@@ -539,6 +550,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
                   beginResponse(network);
                   result = network.readVersion();
+
+                  if (network.getSrvProtocolVersion() >= 20)
+                    readCollectionChanges(network);
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
@@ -1111,6 +1125,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           }
 
           committedEntries.clear();
+
+          if (network.getSrvProtocolVersion() >= 20)
+            readCollectionChanges(network);
+
         } finally {
           endResponse(network);
         }
@@ -1135,6 +1153,26 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       }
     } while (true);
+  }
+
+  private void readCollectionChanges(OChannelBinaryAsynchClient network) throws IOException {
+    int count = network.readInt();
+
+    final HashMap<UUID, OBonsaiCollectionPointer> changes = new HashMap<UUID, OBonsaiCollectionPointer>();
+
+    final OSBTreeCollectionManagerRemote collectionManager = (OSBTreeCollectionManagerRemote) ODatabaseRecordThreadLocal.INSTANCE
+        .get().getSbTreeCollectionManager();
+
+    for (int i = 0; i < count; i++) {
+      final long mBitsOfId = network.readLong();
+      final long lBitsOfId = network.readLong();
+
+      final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
+
+      collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
+    }
+
+    collectionManager.clearPendingCollections();
   }
 
   public void rollback(OTransaction iTx) {

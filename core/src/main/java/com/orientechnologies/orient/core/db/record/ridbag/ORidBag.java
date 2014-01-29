@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -156,6 +157,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       }
     }
 
+    final UUID oldUuid = uuid;
     uuid = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager().listenForChanges(this);
     boolean hasUuid = uuid != null;
 
@@ -178,7 +180,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       offset += OUUIDSerializer.UUID_SIZE;
     }
 
-    delegate.serialize(stream, offset);
+    delegate.serialize(stream, offset, oldUuid);
 
     output.append(OBase64Utils.encodeBytes(stream));
     return this;
@@ -238,5 +240,47 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public void setOwner(ORecord<?> owner) {
     delegate.setOwner(owner);
+  }
+
+  /**
+   * Temporary id of collection to track changes in remote mode.
+   * 
+   * WARNING! Method is for internal usage.
+   * 
+   * @return UUID
+   */
+  public UUID getTemporaryId() {
+    return uuid;
+  }
+
+  /**
+   * Updates collection pointer. Converts to non embedded implementation if needed.
+   * 
+   * WARNING! Method is for internal usage.
+   * 
+   * @param pointer
+   *          new collection pointer
+   */
+  public void updatePointer(OBonsaiCollectionPointer pointer) {
+    if (pointer.isValid()) {
+      if (isEmbedded()) {
+        replaceWithSBTree(pointer);
+      } else {
+        ((OSBTreeRidBag) delegate).setCollectionPointer(pointer);
+      }
+    }
+  }
+
+  /**
+   * Silently replace delegate by tree implementation.
+   * 
+   * @param pointer
+   *          new collection pointer
+   */
+  private void replaceWithSBTree(OBonsaiCollectionPointer pointer) {
+    delegate.requestDelete();
+    final OSBTreeRidBag treeBag = new OSBTreeRidBag();
+    treeBag.setCollectionPointer(pointer);
+    delegate = treeBag;
   }
 }

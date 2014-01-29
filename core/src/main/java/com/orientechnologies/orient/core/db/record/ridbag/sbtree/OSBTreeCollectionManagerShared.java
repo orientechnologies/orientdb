@@ -16,9 +16,14 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -28,6 +33,12 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract {
+  private ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new ThreadLocal<Map<UUID, OBonsaiCollectionPointer>>() {
+                                                                                      @Override
+                                                                                      protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
+                                                                                        return new HashMap<UUID, OBonsaiCollectionPointer>();
+                                                                                      }
+                                                                                    };
 
   public OSBTreeCollectionManagerShared() {
     super();
@@ -35,6 +46,18 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
 
   public OSBTreeCollectionManagerShared(int evictionThreshold, int cacheMaxSize) {
     super(evictionThreshold, cacheMaxSize);
+  }
+
+  @Override
+  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) {
+    final OBonsaiCollectionPointer pointer = super.createSBTree(clusterId, ownerUUID);
+
+    if (ownerUUID != null) {
+      Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
+      changedPointers.put(ownerUUID, pointer);
+    }
+
+    return pointer;
   }
 
   @Override
@@ -53,5 +76,18 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
         (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
     return tree;
+  }
+
+  @Override
+  public UUID listenForChanges(ORidBag collection) {
+    return null;
+  }
+
+  public Map<UUID, OBonsaiCollectionPointer> changedIds() {
+    return collectionPointerChanges.get();
+  }
+
+  public void clearChangedIds() {
+    collectionPointerChanges.get().clear();
   }
 }

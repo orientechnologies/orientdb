@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -216,7 +215,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
-              return new OSBTreeCollectionManagerShared();
+              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+
+              if (managerClass == null) {
+                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+                return null;
+              } else {
+                return managerClass.newInstance();
+              }
             }
           }));
       level1Cache.startup();
