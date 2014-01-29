@@ -1,9 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -20,6 +16,10 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -70,7 +70,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
     graph.autoStartTransaction();
     underlying.put(keyTemp, doc);
-    recordKeyValueIndex.put(new OCompositeKey(element.getIdentity(), keyTemp), element.getIdentity());
+    recordKeyValueIndex.put(new OCompositeKey(element.getIdentity(), keyTemp), doc.getIdentity());
   }
 
   @SuppressWarnings("rawtypes")

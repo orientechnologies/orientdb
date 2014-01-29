@@ -25,4 +25,5 @@ public interface ODistributedDatabase {
 
   void send2Node(ODistributedRequest iRequest, String iTargetNode);
 
+  void setOnline();
 }
