@@ -16,9 +16,12 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.UUID;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollectionManager> implements OSBTreeCollectionManager {
@@ -44,5 +47,10 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
   @Override
   public void delete(OBonsaiCollectionPointer collectionPointer) {
     delegate.delete(collectionPointer);
+  }
+
+  @Override
+  public UUID listenForChanges(ORidBag oIdentifiables) {
+    return delegate.listenForChanges(oIdentifiables);
   }
 }

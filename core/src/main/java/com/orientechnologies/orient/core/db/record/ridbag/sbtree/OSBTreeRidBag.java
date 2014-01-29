@@ -392,9 +392,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     newEntries.clear();
 
     final ORecordSerializationContext context;
-    if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy)
+    boolean remoteMode = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy;
+    if (remoteMode) {
       context = null;
-    else
+    } else
       context = ORecordSerializationContext.getContext();
 
     // make sure that we really save underlying record.
@@ -415,8 +416,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     OBonsaiCollectionPointer collectionPointer;
     if (this.collectionPointer != null)
       collectionPointer = this.collectionPointer;
-    else
+    else {
       collectionPointer = new OBonsaiCollectionPointer(-1, new OBonsaiBucketPointer(-1, -1));
+    }
 
     OLongSerializer.INSTANCE.serialize(collectionPointer.getFileId(), stream, offset);
     offset += OLongSerializer.LONG_SIZE;
@@ -454,6 +456,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
       offset += entry.getValue().serialize(stream, offset);
     }
+
+    changes.clear();
   }
 
   private int getChangesSerializedSize() {
@@ -525,7 +529,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       Change change = deserializeChange(stream, offset);
       offset += Change.SIZE;
 
-      changes.put(rid, change);
+      final OIdentifiable identifiable;
+      if (rid.isTemporary())
+        identifiable = rid.getRecord();
+      else
+        identifiable = rid;
+
+      changes.put(identifiable, change);
     }
   }
 
