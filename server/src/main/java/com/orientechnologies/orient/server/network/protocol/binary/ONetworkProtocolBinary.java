@@ -443,12 +443,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     int clusterId = channel.readInt();
 
+    OBonsaiCollectionPointer collectionPointer;
     OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().createSBTree(clusterId);
+    collectionPointer = tree.getCollectionPointer();
+    connection.database.getSbTreeCollectionManager().releaseSBTree(collectionPointer);
 
     beginResponse();
     try {
       sendOk(clientTxId);
-      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, tree.getCollectionPointer());
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, collectionPointer);
     } finally {
       endResponse();
     }
