@@ -14,10 +14,10 @@ public class OrientGraph extends OrientTransactionalGraph {
   protected final Features FEATURES = new Features();
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);

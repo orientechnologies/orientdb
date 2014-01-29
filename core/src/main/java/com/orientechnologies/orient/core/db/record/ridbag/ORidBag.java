@@ -39,6 +39,13 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   private int             topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
   private int             bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
+  public ORidBag(ORidBag ridBag) {
+    this();
+
+    for (OIdentifiable identifiable : ridBag)
+      add(identifiable);
+  }
+
   public ORidBag() {
     if (topThreshold < 0)
       delegate = new OSBTreeRidBag();

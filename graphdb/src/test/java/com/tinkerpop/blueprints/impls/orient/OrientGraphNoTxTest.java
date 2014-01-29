@@ -3,15 +3,11 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.File;
 import java.lang.reflect.Method;
 
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
-import org.hamcrest.core.AnyOf;
-import org.hamcrest.core.IsEqual;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

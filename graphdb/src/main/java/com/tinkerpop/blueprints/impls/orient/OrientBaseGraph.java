@@ -86,10 +86,10 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   private static final List<OrientGraphContext>        contexts                     = new ArrayList<OrientGraphContext>();
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientBaseGraph(final ODatabaseDocumentTx iDatabase) {
     reuse(iDatabase);
@@ -582,7 +582,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * Reuses the underlying database avoiding to create and open it every time.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object
+   *          Underlying database object
    */
   public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
     this.url = iDatabase.getURL();
@@ -867,7 +867,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return index;
   }
 
-  private void removeContext() {
+  public void removeContext() {
     final OrientGraphContext context = getContext(false);
 
     if (context != null) {

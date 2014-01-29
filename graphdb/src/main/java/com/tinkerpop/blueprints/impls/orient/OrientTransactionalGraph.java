@@ -16,10 +16,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected boolean autoStartTx = true;
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
