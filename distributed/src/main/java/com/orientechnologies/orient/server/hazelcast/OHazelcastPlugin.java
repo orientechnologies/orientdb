@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -46,6 +45,7 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -55,12 +55,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -607,7 +609,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @Override
+  public OHazelcastDistributedMessageService getMessageService() {
+    return messageService;
+  }
+
   protected void installNewDatabases(final boolean iStartup) {
     if (cachedClusterNodes.size() <= 1)
       // NO OTHER NODES WHERE ALIGN
@@ -643,60 +649,104 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
-            // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY
+            // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY MSG ARRIVES
             distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class);
-            distrDatabase.configureDatabase(null, false, false);
+            try {
 
-            final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
-                EXECUTION_MODE.RESPONSE);
+              distrDatabase.configureDatabase(null, false, false);
 
-            // EXTRACT THE REAL RESULT
-            OBuffer result = null;
-            for (Entry<String, Object> r : results.entrySet()) {
-              if (r.getValue() instanceof Exception)
-                ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
-                    "error on installing database %s in %s", (Exception) r.getValue(), databaseName, dbPath);
-              else {
-                final OBuffer buffer = (OBuffer) r.getValue();
+              final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
+                  EXECUTION_MODE.RESPONSE);
 
-                if (buffer.getBuffer() != null && buffer.getBuffer().length > 0) {
-                  // FOUND
-                  result = buffer;
-                  ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "installing database %s in %s...",
-                      databaseName, dbPath);
-                  break;
-                }
+              // EXTRACT THE REAL RESULT
+              for (Entry<String, Object> r : results.entrySet()) {
+                final Object value = r.getValue();
+
+                if (value instanceof Boolean) {
+                  continue;
+                } else if (value instanceof Exception) {
+                  ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
+                      "error on installing database %s in %s", (Exception) value, databaseName, dbPath);
+                } else if (value instanceof ODistributedDatabaseChunk) {
+                  ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
+
+                  final String fileName = System.getProperty("java.io.tmpdir") + "/orientdb/install_" + databaseName + ".zip";
+                  final File file = new File(fileName);
+                  if (file.exists())
+                    file.delete();
+
+                  try {
+                    final FileOutputStream out = new FileOutputStream(fileName, false);
+
+                    out.write(chunk.buffer);
+                    for (int chunkNum = 1; !chunk.last; chunkNum++) {
+                      distrDatabase.setWaitForTaskType(OCopyDatabaseChunkTask.class);
+
+                      final Map<String, Object> result = (Map<String, Object>) sendRequest(databaseName, null,
+                          new OCopyDatabaseChunkTask(r.getKey(), chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length),
+                          EXECUTION_MODE.RESPONSE);
+
+                      for (Entry<String, Object> res : result.entrySet()) {
+                        if (res.getValue() instanceof Boolean)
+                          continue;
+                        else {
+                          chunk = (ODistributedDatabaseChunk) res.getValue();
+                          out.write(chunk.buffer);
+                        }
+                      }
+                    }
+
+                  } catch (Exception e) {
+                    ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+                        "error on transferring database '%s' to '%s'", e, databaseName, fileName);
+                  }
+
+                  installDatabase(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
+                  return;
+
+                } else
+                  throw new IllegalArgumentException("Type " + value + " not supported");
               }
-            }
 
-            if (result == null)
               throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
 
-            new File(dbPath).mkdirs();
-            final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
-
-            final ByteArrayInputStream in = new ByteArrayInputStream(result.getBuffer());
-            try {
-              db.restore(in, null, null);
-              in.close();
-
-              db.close();
-              Orient.instance().unregisterStorageByName(db.getName());
-
-              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-                  "installed database %s in %s, setting it online...", databaseName, dbPath);
-
-              distrDatabase.setOnline();
-
-              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database %s is online", databaseName);
-
-            } catch (IOException e) {
-              ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-                  "error on copying database '%s' on local server", e, databaseName);
+            } finally {
+              // AVOID THE NODE CANCEL ALL THE FURTHER REQUESTS
+              distrDatabase.setWaitForTaskType(null);
             }
           }
         }
       }
+    }
+  }
+
+  private void installDatabase(final OHazelcastDistributedDatabase distrDatabase, final String databaseName, final String dbPath,
+      final String iNode, final String iDatabaseCompressedFile) {
+    ODistributedServerLog.warn(this, getLocalNodeName(), iNode, DIRECTION.IN, "installing database %s in %s...", databaseName,
+        dbPath);
+
+    try {
+      final FileInputStream in = new FileInputStream(iDatabaseCompressedFile);
+
+      new File(dbPath).mkdirs();
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+
+      db.restore(in, null, null);
+      in.close();
+
+      db.close();
+      Orient.instance().unregisterStorageByName(db.getName());
+
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "installed database %s in %s, setting it online...", databaseName, dbPath);
+
+      distrDatabase.setOnline();
+
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database %s is online", databaseName);
+
+    } catch (IOException e) {
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN, "error on copying database '%s' on local server", e,
+          databaseName);
     }
   }
 

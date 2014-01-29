@@ -98,6 +98,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final IQueue<ODistributedRequest> queue = msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(
         iTargetNode, iRequest.getDatabaseName()));
 
+    iRequest.setSenderNodeName(manager.getLocalNodeName());
+
     try {
       queue.offer(iRequest, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS);
 
@@ -323,6 +325,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return this;
   }
 
+  @Override
   public void setOnline() {
     if (database == null) {
       // OPEN IT
