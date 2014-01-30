@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -14,6 +15,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -196,7 +198,10 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       byte[] stream = client.readBytes();
       storage.endResponse(client);
 
-      return keySerializer.deserialize(stream, 0);
+      final byte serializerId = OByteSerializer.INSTANCE.deserialize(stream, 0);
+      final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE
+          .getObjectSerializer(serializerId);
+      return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
     } catch (IOException e) {
       throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
     }

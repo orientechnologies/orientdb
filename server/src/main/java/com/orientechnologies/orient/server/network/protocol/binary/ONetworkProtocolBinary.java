@@ -32,10 +32,11 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -453,9 +454,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
 
     OIdentifiable result = tree.firstKey();
-    OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
-    byte[] stream = new byte[keySerializer.getObjectSize(result)];
-    keySerializer.serialize(result, stream, 0);
+    final OBinarySerializer<? super OIdentifiable> keySerializer;
+    if (result == null) {
+      keySerializer = ONullSerializer.INSTANCE;
+    } else {
+      keySerializer = tree.getKeySerializer();
+    }
+
+    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
+    OByteSerializer.INSTANCE.serialize(keySerializer.getId(), stream, 0);
+    keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
 
     beginResponse();
     try {
@@ -1260,9 +1268,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         return;
 
       // ASSIGNED THE PARSED FETCHPLAN
-      listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
+      listener.setFetchPlan(connection.database.command(command).getFetchPlan());
 
-      final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
+      final Object result = connection.database.command(command).execute();
 
       if (asynch) {
         // ASYNCHRONOUS
