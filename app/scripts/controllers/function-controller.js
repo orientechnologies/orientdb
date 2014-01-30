@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -100,7 +100,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
     $scope.
         executeFunction = function () {
-
+        $scope.resultExecute = '';
 
         if ($scope.functionToExecute != undefined) {
             var functionNamee = $scope.nameFunction;
@@ -178,6 +178,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             if ($scope.isNewFunction == true) {
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
+                        var message = 'Function saved successfully. Server respond ' + JSON.stringify(data);
+                        Notification.push({content: message });
                     }
                 );
 
@@ -185,6 +187,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             else {
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                     $scope.getListFunction();
+                    var message = 'Function saved successfully. Server respond ' + JSON.stringify(data);
+                    Notification.push({content: message });
                 });
             }
         }
