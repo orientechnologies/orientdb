@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -533,9 +532,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     if (dirty) {
-      final ODocument doc = cfg.serialize();
-      manager.updateCachedDatabaseConfiguration(databaseName, doc);
-      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, doc);
+      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
     }
   }
 
@@ -573,9 +570,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     if (dirty) {
-      final ODocument doc = cfg.serialize();
-      manager.updateCachedDatabaseConfiguration(databaseName, doc);
-      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, doc);
+      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
     }
   }
 

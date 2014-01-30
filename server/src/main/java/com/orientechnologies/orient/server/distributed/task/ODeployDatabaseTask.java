@@ -60,10 +60,15 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
 
-          final File f = new File(BACKUP_DIRECTORY + "/" + database.getName());
+          final File f = new File(BACKUP_DIRECTORY + "/backup_" + database.getName() + ".zip");
           if (f.exists())
             f.delete();
+          else
+            f.getParentFile().mkdirs();
           f.createNewFile();
+
+          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
 
           database.backup(new FileOutputStream(f), null, null);
 
@@ -71,7 +76,12 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
               "sending the compressed database '%s' over the network to node '%s', size=%s...", databaseName, getNodeSource(),
               OFileUtils.getSizeAsString(f.length()));
 
-          return new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
+          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
+
+          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+              "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+
+          return chunk;
 
         } finally {
           lock.unlock();
