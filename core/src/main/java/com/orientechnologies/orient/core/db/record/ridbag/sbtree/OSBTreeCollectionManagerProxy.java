@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -57,5 +58,25 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
   @Override
   public UUID listenForChanges(ORidBag oIdentifiables) {
     return delegate.listenForChanges(oIdentifiables);
+  }
+
+  @Override
+  public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
+    delegate.updateCollectionPointer(uuid, pointer);
+  }
+
+  @Override
+  public void clearPendingCollections() {
+    delegate.clearPendingCollections();
+  }
+
+  @Override
+  public Map<UUID, OBonsaiCollectionPointer> changedIds() {
+    return delegate.changedIds();
+  }
+
+  @Override
+  public void clearChangedIds() {
+    delegate.clearChangedIds();
   }
 }

@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -1158,10 +1159,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private void readCollectionChanges(OChannelBinaryAsynchClient network) throws IOException {
     int count = network.readInt();
 
-    final HashMap<UUID, OBonsaiCollectionPointer> changes = new HashMap<UUID, OBonsaiCollectionPointer>();
-
-    final OSBTreeCollectionManagerRemote collectionManager = (OSBTreeCollectionManagerRemote) ODatabaseRecordThreadLocal.INSTANCE
-        .get().getSbTreeCollectionManager();
+    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
 
     for (int i = 0; i < count; i++) {
       final long mBitsOfId = network.readLong();

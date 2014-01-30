@@ -85,6 +85,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
     return id;
   }
 
+  @Override
   public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
     final WeakReference<ORidBag> reference = pendingCollections.get(uuid);
     if (reference == null) {
@@ -95,11 +96,22 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
     final ORidBag collection = reference.get();
 
     if (collection != null) {
-      collection.updatePointer(pointer);
+      collection.notifySaved(pointer);
     }
   }
 
+  @Override
   public void clearPendingCollections() {
     pendingCollections.clear();
+  }
+
+  @Override
+  public Map<UUID, OBonsaiCollectionPointer> changedIds() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clearChangedIds() {
+    throw new UnsupportedOperationException();
   }
 }

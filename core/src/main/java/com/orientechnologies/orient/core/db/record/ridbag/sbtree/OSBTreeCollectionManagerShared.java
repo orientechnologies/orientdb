@@ -83,6 +83,14 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     return null;
   }
 
+  @Override
+  public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
+  }
+
+  @Override
+  public void clearPendingCollections() {
+  }
+
   public Map<UUID, OBonsaiCollectionPointer> changedIds() {
     return collectionPointerChanges.get();
   }

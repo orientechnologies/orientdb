@@ -48,7 +48,8 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -364,12 +365,37 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sbTreeBonsaiGetEntriesMajor();
       break;
 
+    case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+      ridBagSize();
+      break;
+
     default:
       setDataCommandInfo("Command not supported");
       return false;
     }
 
     return true;
+  }
+
+  private void ridBagSize() throws IOException {
+    setDataCommandInfo("RidBag get size");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    final byte[] changeStream = channel.readBytes();
+
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+    final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
+        changeStream, 0);
+
+    int realSize = tree.getRealBagSize(changes);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeInt(realSize);
+    } finally {
+      endResponse();
+    }
   }
 
   private void sbTreeBonsaiGetEntriesMajor() throws IOException {
@@ -1419,8 +1445,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   private void sendCollectionChanges() throws IOException {
-    OSBTreeCollectionManagerShared collectionManager = (OSBTreeCollectionManagerShared) connection.database
-        .getSbTreeCollectionManager();
+    OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
 
     Map<UUID, OBonsaiCollectionPointer> changedIds = collectionManager.changedIds();
 

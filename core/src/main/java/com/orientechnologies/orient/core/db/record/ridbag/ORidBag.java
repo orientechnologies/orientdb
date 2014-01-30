@@ -47,7 +47,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   private int             topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
   private int             bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
-  private UUID           uuid;
+  private UUID            uuid;
 
   public ORidBag() {
     if (topThreshold < 0)
@@ -57,12 +57,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   private ORidBag(byte[] stream) {
-    if (stream[0] == 1)
-      delegate = new OEmbeddedRidBag();
-    else
-      delegate = new OSBTreeRidBag();
-
-    delegate.deserialize(stream, 1);
+    fromStream(stream);
   }
 
   public void addAll(Collection<OIdentifiable> values) {
@@ -198,6 +193,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   @Override
   public OStringBuilderSerializable fromStream(StringBuilder input) throws OSerializationException {
     final byte[] stream = OBase64Utils.decode(input.toString());
+    fromStream(stream);
+    return this;
+  }
+
+  private void fromStream(byte[] stream) {
     if ((stream[0] & 1) == 1)
       delegate = new OEmbeddedRidBag();
     else
@@ -210,7 +210,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
 
     delegate.deserialize(stream, offset);
-    return this;
   }
 
   public static ORidBag fromStream(String value) {
@@ -254,19 +253,20 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   /**
-   * Updates collection pointer. Converts to non embedded implementation if needed.
+   * Notify collection that changes has been saved. Converts to non embedded implementation if needed.
    * 
    * WARNING! Method is for internal usage.
    * 
-   * @param pointer
+   * @param newPointer
    *          new collection pointer
    */
-  public void updatePointer(OBonsaiCollectionPointer pointer) {
-    if (pointer.isValid()) {
+  public void notifySaved(OBonsaiCollectionPointer newPointer) {
+    if (newPointer.isValid()) {
       if (isEmbedded()) {
-        replaceWithSBTree(pointer);
+        replaceWithSBTree(newPointer);
       } else {
-        ((OSBTreeRidBag) delegate).setCollectionPointer(pointer);
+        ((OSBTreeRidBag) delegate).setCollectionPointer(newPointer);
+        ((OSBTreeRidBag) delegate).clearChanges();
       }
     }
   }

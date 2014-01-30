@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -433,7 +434,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     offset += OIntegerSerializer.INT_SIZE;
 
     if (context == null) {
-      serializeChanges(stream, offset);
+      ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
     } else {
       context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
 
@@ -445,24 +446,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return offset;
   }
 
-  private void serializeChanges(byte[] stream, int offset) {
-    OIntegerSerializer.INSTANCE.serialize(changes.size(), stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    for (Map.Entry<OIdentifiable, Change> entry : changes.entrySet()) {
-      OLinkSerializer.INSTANCE.serialize(entry.getKey(), stream, offset);
-      offset += OLinkSerializer.RID_SIZE;
-
-      offset += entry.getValue().serialize(stream, offset);
-    }
-
+  public void clearChanges() {
     changes.clear();
   }
 
   private int getChangesSerializedSize() {
     Set<OIdentifiable> changedIds = new HashSet<OIdentifiable>(changes.keySet());
     changedIds.addAll(newEntries.keySet());
-    return changedIds.size() * (OLinkSerializer.RID_SIZE + Change.SIZE);
+    return ChangeSerializationHelper.INSTANCE.getChangesSerializedSize(changedIds.size());
   }
 
   private int getHighLevelDocClusterId() {
@@ -513,41 +504,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     this.size = size;
 
-    deserializeChanges(stream, offset);
+    ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset);
 
     return offset;
-  }
-
-  private void deserializeChanges(byte[] stream, int offset) {
-    Integer count = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    for (int i = 0; i < count; i++) {
-      ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
-      offset += OLinkSerializer.RID_SIZE;
-      Change change = deserializeChange(stream, offset);
-      offset += Change.SIZE;
-
-      final OIdentifiable identifiable;
-      if (rid.isTemporary())
-        identifiable = rid.getRecord();
-      else
-        identifiable = rid;
-
-      changes.put(identifiable, change);
-    }
-  }
-
-  private Change deserializeChange(byte[] stream, int offset) {
-    Integer value = OIntegerSerializer.INSTANCE.deserialize(stream, offset + OByteSerializer.BYTE_SIZE);
-    switch (OByteSerializer.INSTANCE.deserialize(stream, offset)) {
-    case AbsoluteChange.TYPE:
-      return new AbsoluteChange(value);
-    case DiffChange.TYPE:
-      return new DiffChange(value);
-    default:
-      throw new IllegalArgumentException("Change type is incorrect");
-    }
   }
 
   /**
@@ -967,6 +926,61 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     private void checkPositive() {
       if (value < 0)
         value = 0;
+    }
+  }
+
+  public static class ChangeSerializationHelper {
+    public static final ChangeSerializationHelper INSTANCE = new ChangeSerializationHelper();
+
+    public Change deserializeChange(byte[] stream, int offset) {
+      Integer value = OIntegerSerializer.INSTANCE.deserialize(stream, offset + OByteSerializer.BYTE_SIZE);
+      switch (OByteSerializer.INSTANCE.deserialize(stream, offset)) {
+      case AbsoluteChange.TYPE:
+        return new AbsoluteChange(value);
+      case DiffChange.TYPE:
+        return new DiffChange(value);
+      default:
+        throw new IllegalArgumentException("Change type is incorrect");
+      }
+    }
+
+    public Map<OIdentifiable, Change> deserializeChanges(byte[] stream, int offset) {
+      Integer count = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      final HashMap<OIdentifiable, Change> res = new HashMap<OIdentifiable, Change>();
+      for (int i = 0; i < count; i++) {
+        ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
+        offset += OLinkSerializer.RID_SIZE;
+        Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, offset);
+        offset += Change.SIZE;
+
+        final OIdentifiable identifiable;
+        if (rid.isTemporary())
+          identifiable = rid.getRecord();
+        else
+          identifiable = rid;
+
+        res.put(identifiable, change);
+      }
+
+      return res;
+    }
+
+    public <K> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
+      OIntegerSerializer.INSTANCE.serialize(changes.size(), stream, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      for (Map.Entry<K, Change> entry : changes.entrySet()) {
+        keySerializer.serialize(entry.getKey(), stream, offset);
+        offset += keySerializer.getObjectSize(entry.getKey());
+
+        offset += entry.getValue().serialize(stream, offset);
+      }
+    }
+
+    public int getChangesSerializedSize(int changesCount) {
+      return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
     }
   }
 }

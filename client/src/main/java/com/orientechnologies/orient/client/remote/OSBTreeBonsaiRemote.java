@@ -215,7 +215,28 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+
+    try {
+      OChannelBinaryAsynchClient client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE);
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
+
+      final OSBTreeRidBag.ChangeSerializationHelper changeSerializer = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE;
+      final byte[] stream = new byte[OIntegerSerializer.INT_SIZE + changeSerializer.getChangesSerializedSize(changes.size())];
+      changeSerializer.serializeChanges(changes, keySerializer, stream, 0);
+
+      client.writeBytes(stream);
+
+      storage.endRequest(client);
+
+      storage.beginResponse(client);
+      int result = client.readInt();
+      storage.endResponse(client);
+
+      return result;
+    } catch (IOException e) {
+      throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
+    }
   }
 
   @Override
