@@ -94,14 +94,16 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     if (!isDetached())
       graph.autoStartTransaction();
     getRecord().field(key, value);
-    save();
+    if (!isDetached())
+      save();
   }
 
   public <T> T removeProperty(final String key) {
     if (!isDetached())
       graph.autoStartTransaction();
     final Object oldValue = getRecord().removeField(key);
-    save();
+    if (!isDetached())
+      save();
     return (T) oldValue;
   }
 
