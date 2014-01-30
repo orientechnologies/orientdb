@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -275,14 +276,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (graph.isUseLightweightEdges() && (fields == null || fields.length == 0 || fields[0] == null)) {
       Object field = iFromVertex.field(iOutFieldName);
       if (field != null)
-        if (field instanceof OIdentifiable) {
-          if (field.equals(iToVertex)) {
-            // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
-            // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
-            new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
-            return false;
-          }
-        } else if (field instanceof Collection<?>)
+        if (field instanceof Collection<?>)
           if (((Collection<Object>) field).contains(iToVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
@@ -292,14 +286,7 @@ public class OrientVertex extends OrientElement implements Vertex {
 
       field = iToVertex.field(iInFieldName);
       if (field != null)
-        if (field instanceof OIdentifiable) {
-          if (field.equals(iFromVertex)) {
-            // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
-            // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
-            new OrientEdge(graph, iFromVertex, iToVertex, label).convertToDocument();
-            return false;
-          }
-        } else if (field instanceof Collection<?>)
+        if (field instanceof Collection<?>)
           if (((Collection<Object>) field).contains(iFromVertex)) {
             // ALREADY EXISTS, FORCE THE EDGE-DOCUMENT TO AVOID
             // MULTIPLE DYN-EDGES AGAINST THE SAME VERTICES
@@ -545,16 +532,34 @@ public class OrientVertex extends OrientElement implements Vertex {
   public static Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
     final Object out;
     Object found = iFromVertex.field(iFieldName);
-    if (found == null)
+    final OProperty prop = iFromVertex.getSchemaClass().getProperty(iFieldName);
+    if (found == null) {
       // CREATE ONLY ONE LINK
-      out = iTo;
-    else if (found instanceof OIdentifiable) {
+      if (prop == null || prop.getType().equals(OType.LINK) || "true".equalsIgnoreCase(prop.getCustom("ordered")))
+        out = iTo;
+      else if (prop.getType().equals(OType.LINKBAG)) {
+        final ORidBag bag = new ORidBag();
+        bag.add(iTo);
+        out = bag;
+      } else if (prop.getType().equals(OType.LINKLIST)) {
+        final Collection coll = new OTrackedList<Object>(iFromVertex);
+        coll.add(iTo);
+        out = coll;
+      } else
+        throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
+            + " can not be used for link creation.");
+
+    } else if (found instanceof OIdentifiable) {
+
       // DOUBLE: SCALE UP THE LINK INTO A COLLECTION
       if (found.equals(iTo))
         // SAME LINK, SKIP IT
         return found;
 
-      final OProperty prop = iFromVertex.getSchemaClass().getProperty(iFieldName);
+      if (prop != null && prop.getType().equals(OType.LINK))
+        throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
+            + " can not be used for creation to hold several links.");
+
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
         final Collection coll = new OTrackedList<Object>(iFromVertex);
         coll.add(found);

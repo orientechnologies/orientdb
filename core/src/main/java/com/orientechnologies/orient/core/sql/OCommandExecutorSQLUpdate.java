@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -226,7 +227,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     Object v;
 
     // BIND VALUES TO ADD
-    Collection<Object> coll;
+    Collection<Object> coll = null;
+    ORidBag bag = null;
     Object fieldValue;
     for (OPair<String, Object> entry : addEntries) {
       coll = null;
@@ -249,6 +251,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
         if (fieldValue instanceof Collection<?>)
           coll = (Collection<Object>) fieldValue;
+        else if (fieldValue instanceof ORidBag)
+          bag = (ORidBag) fieldValue;
         else
           continue;
       }
@@ -262,7 +266,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       else if (v instanceof OCommandRequest)
         v = ((OCommandRequest) v).execute(record, null, context);
 
-      coll.add(v);
+      if (coll != null)
+        coll.add(v);
+      else {
+        if (!(v instanceof OIdentifiable))
+          throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
+
+        bag.add((OIdentifiable) v);
+      }
+
       updatedRecords.add(record);
     }
 
@@ -320,6 +332,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         } else if (fieldValue instanceof Map<?, ?>) {
           map = (Map<String, Object>) fieldValue;
           if (map.remove(v) != null)
+            updatedRecords.add(record);
+        } else if (fieldValue instanceof ORidBag) {
+          bag = (ORidBag) fieldValue;
+
+          if (!(v instanceof OIdentifiable))
+            throw new OCommandExecutionException("Only links or records can be removed from LINKBAG");
+
+          bag.remove((OIdentifiable) v);
+          if (record.isDirty())
             updatedRecords.add(record);
         }
       }
