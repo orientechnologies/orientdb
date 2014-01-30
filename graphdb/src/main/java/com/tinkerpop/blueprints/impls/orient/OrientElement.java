@@ -28,14 +28,14 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public abstract class OrientElement implements Element, OSerializableStream, OIdentifiable {
-  private static final long       serialVersionUID          = 1L;
+  private static final long serialVersionUID = 1L;
 
-  public static final String      LABEL_FIELD_NAME          = "label";
-  public static final Object      DEF_ORIGINAL_ID_FIELDNAME = "origId";
+  public static final String LABEL_FIELD_NAME          = "label";
+  public static final Object DEF_ORIGINAL_ID_FIELDNAME = "origId";
 
   // TODO: CAN REMOVE THIS REF IN FAVOR OF CONTEXT INSTANCE?
-  protected final OrientBaseGraph graph;
-  protected OIdentifiable         rawElement;
+  protected OrientBaseGraph graph;
+  protected OIdentifiable   rawElement;
 
   protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
     graph = rawGraph;
@@ -65,7 +65,7 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
   }
 
   public <T extends OrientElement> T setProperties(final Object... fields) {
-    if (fields != null && fields.length > 0 && fields[0] != null) {
+    if (fields != null && fields.length>0 && fields[0] != null) {
       graph.autoStartTransaction();
       if (fields.length == 1) {
         Object f = fields[0];
@@ -74,8 +74,7 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
             setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
 
         } else
-          throw new IllegalArgumentException(
-              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
+          throw new IllegalArgumentException("Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
       } else
         // SET THE FIELDS
         for (int i = 0; i < fields.length; i += 2)
@@ -181,6 +180,18 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     // CHANGE THE RID -> DOCUMENT
     rawElement = doc;
     return doc;
+  }
+
+  /**
+   * Replaces current graph instance with new one. Use this method to pass elements between graphs or to switch between Tx and NoTx
+   * instances.
+   * 
+   * @param iNewGraph
+   * @return
+   */
+  public OrientElement attach(final OrientBaseGraph iNewGraph) {
+    graph = iNewGraph;
+    return this;
   }
 
   public boolean equals(final Object object) {

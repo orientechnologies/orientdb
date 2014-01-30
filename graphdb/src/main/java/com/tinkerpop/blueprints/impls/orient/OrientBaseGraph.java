@@ -754,6 +754,16 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop edge type '", iTypeName, "'");
   }
 
+  public OrientElement detach( final OrientElement iElement ){
+    iElement.getRecord().detach();
+    iElement.attach( null );
+    return iElement;
+  }
+
+  public OrientElement attach( final OrientElement iElement ){
+    return iElement.attach( this );
+  }
+
   /**
    * Returns a graph element, vertex or edge, starting from an ID.
    * 
