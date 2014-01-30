@@ -53,7 +53,28 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public V get(K key) {
-    throw new UnsupportedOperationException("Not implemented yet.");
+    OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
+
+    final byte[] keyStream = new byte[keySerializer.getObjectSize(key)];
+    keySerializer.serialize(key, keyStream, 0);
+    try {
+      OChannelBinaryAsynchClient client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET);
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(client, getCollectionPointer());
+      client.writeBytes(keyStream);
+
+      storage.endRequest(client);
+
+      storage.beginResponse(client);
+      byte[] stream = client.readBytes();
+      storage.endResponse(client);
+
+      final byte serializerId = OByteSerializer.INSTANCE.deserialize(stream, 0);
+      final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.INSTANCE
+          .getObjectSerializer(serializerId);
+      return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
+    } catch (IOException e) {
+      throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
+    }
   }
 
   @Override
@@ -154,31 +175,6 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     }
   }
 
-  class TreeEntry<K, V> implements Map.Entry<K, V> {
-    private final K key;
-    private final V value;
-
-    TreeEntry(K key, V value) {
-      this.key = key;
-      this.value = value;
-    }
-
-    @Override
-    public K getKey() {
-      return key;
-    }
-
-    @Override
-    public V getValue() {
-      return value;
-    }
-
-    @Override
-    public V setValue(V value) {
-      throw new UnsupportedOperationException();
-    }
-  }
-
   @Override
   public Collection<V> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, int maxValuesToFetch) {
 
@@ -252,5 +248,30 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   @Override
   public OBinarySerializer<V> getValueSerializer() {
     return valueSerializer;
+  }
+
+  class TreeEntry<K, V> implements Map.Entry<K, V> {
+    private final K key;
+    private final V value;
+
+    TreeEntry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException();
+    }
   }
 }
