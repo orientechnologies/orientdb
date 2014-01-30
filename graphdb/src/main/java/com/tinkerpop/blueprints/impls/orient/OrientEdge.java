@@ -200,6 +200,7 @@ public class OrientEdge extends OrientElement implements Edge {
   public void remove() {
     checkClass();
 
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     for (final Index<? extends Element> index : graph.getManualIndices()) {
       if (Edge.class.isAssignableFrom(index.getIndexClass())) {
@@ -322,6 +323,7 @@ public class OrientEdge extends OrientElement implements Edge {
       // ALREADY CONVERTED
       return;
 
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     final ODocument vOutRecord = vOut.getRecord();

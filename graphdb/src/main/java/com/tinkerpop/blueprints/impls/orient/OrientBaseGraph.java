@@ -322,7 +322,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         fields = new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id };
     }
 
-    this.autoStartTransaction();
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, className, fields);
     vertex.setProperties(prop);
@@ -336,7 +337,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public OrientVertex addVertex(final String iClassName, final String iClusterName) {
-    this.autoStartTransaction();
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, iClassName);
 
@@ -358,7 +360,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * @return
    */
   public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
-    this.autoStartTransaction();
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, iClassName);
     vertex.setProperties(prop);
@@ -794,7 +797,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   protected void autoStartTransaction() {
-    setCurrentGraphInThreadLocal();
   }
 
   protected void saveIndexConfiguration() {

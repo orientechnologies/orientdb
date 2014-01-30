@@ -134,6 +134,7 @@ public class OrientVertex extends OrientElement implements Vertex {
   public void remove() {
     checkClass();
 
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     final ODocument doc = getRecord();
@@ -193,6 +194,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID

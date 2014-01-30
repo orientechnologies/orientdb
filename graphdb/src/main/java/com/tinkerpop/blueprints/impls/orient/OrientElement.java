@@ -1,7 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Map;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -20,6 +18,8 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -48,6 +48,7 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
 
   @Override
   public void remove() {
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     final ORecordOperation oper = graph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
@@ -161,6 +162,7 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     final ORID rid = rawElement.getIdentity();
     if (!rid.isValid()) {
       // SAVE THE RECORD TO OBTAIN A VALID RID
+      graph.setCurrentGraphInThreadLocal();
       graph.autoStartTransaction();
       save();
     }
