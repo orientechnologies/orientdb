@@ -78,8 +78,22 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     return tree;
   }
 
+  /**
+   * Change UUID to null to prevent its serialization to disk.
+   * 
+   * @param collection
+   * @return
+   */
   @Override
   public UUID listenForChanges(ORidBag collection) {
+    UUID ownerUUID = collection.getTemporaryId();
+    if (ownerUUID != null) {
+      final OBonsaiCollectionPointer pointer = collection.getPointer();
+
+      Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
+      changedPointers.put(ownerUUID, pointer);
+    }
+
     return null;
   }
 

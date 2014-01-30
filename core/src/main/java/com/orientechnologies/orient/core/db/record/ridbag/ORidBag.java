@@ -283,4 +283,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
   }
+
+  public OBonsaiCollectionPointer getPointer() {
+    if (isEmbedded()) {
+      return OBonsaiCollectionPointer.INVALID;
+    } else {
+      return ((OSBTreeRidBag) delegate).getCollectionPointer();
+    }
+  }
 }

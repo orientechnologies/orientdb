@@ -504,7 +504,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     this.size = size;
 
-    ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset);
+    changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
 
     return offset;
   }
@@ -527,6 +527,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         counter.decrement();
       return true;
     }
+  }
+
+  public OBonsaiCollectionPointer getCollectionPointer() {
+    return collectionPointer;
   }
 
   private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable {
