@@ -68,9 +68,10 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     if (!doc.getIdentity().isValid())
       doc.save();
 
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     underlying.put(keyTemp, doc);
-    recordKeyValueIndex.put(new OCompositeKey(element.getIdentity(), keyTemp), doc.getIdentity());
+    recordKeyValueIndex.put(new OCompositeKey(doc.getIdentity(), keyTemp), doc.getIdentity());
   }
 
   @SuppressWarnings("rawtypes")
@@ -96,6 +97,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
   public void remove(final String key, final Object value, final T element) {
     final String keyTemp = key + SEPARATOR + value;
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     try {
       underlying.remove(keyTemp, element.getRecord());
@@ -110,6 +112,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   }
 
   protected void removeElement(final T element) {
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     Collection<ODocument> entries = recordKeyValueIndex.getEntriesBetween(new OCompositeKey(element.getIdentity()),
         new OCompositeKey(element.getIdentity()));

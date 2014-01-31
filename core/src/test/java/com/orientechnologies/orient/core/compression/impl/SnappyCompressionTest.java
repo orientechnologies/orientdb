@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.serialization.compression.impl;
+package com.orientechnologies.orient.core.compression.impl;
 
 import org.testng.annotations.Test;
 

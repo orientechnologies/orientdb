@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.io.OFileUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,7 +42,6 @@ public class ODistributedDatabaseChunk implements Externalizable {
       throw new IllegalArgumentException("Offset " + iOffset + " cannot be bigger then the file itself: "
           + OFileUtils.getSizeAsString(fileSize));
 
-    final ByteArrayOutputStream out = new ByteArrayOutputStream(iMaxSize);
     final FileInputStream in = new FileInputStream(iFile);
 
     final int toRead = (int) Math.min(iMaxSize, fileSize - offset);
@@ -59,11 +57,12 @@ public class ODistributedDatabaseChunk implements Externalizable {
         in.close();
       } catch (IOException e) {
       }
-      try {
-        out.close();
-      } catch (IOException e) {
-      }
     }
+  }
+
+  @Override
+  public String toString() {
+    return filePath + "[" + offset + "-" + buffer.length + "] (last=" + last + ")";
   }
 
   @Override

@@ -23,16 +23,19 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    */
   public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
   public OrientTransactionalGraph(final String url) {
     super(url, ADMIN, ADMIN);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
   public OrientTransactionalGraph(final String url, final String username, final String password) {
     super(url, username, password);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
@@ -80,8 +83,6 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
   @Override
   protected void autoStartTransaction() {
-    super.autoStartTransaction();
-
     if (!autoStartTx)
       return;
 

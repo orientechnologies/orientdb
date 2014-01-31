@@ -1,7 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Map;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -21,6 +19,8 @@ import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
+import java.util.Map;
+
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
  * 
@@ -28,18 +28,20 @@ import com.tinkerpop.blueprints.util.StringFactory;
  */
 @SuppressWarnings("unchecked")
 public abstract class OrientElement implements Element, OSerializableStream, OIdentifiable {
-  private static final long       serialVersionUID          = 1L;
+  private static final long          serialVersionUID          = 1L;
 
-  public static final String      LABEL_FIELD_NAME          = "label";
-  public static final Object      DEF_ORIGINAL_ID_FIELDNAME = "origId";
+  public static final String         LABEL_FIELD_NAME          = "label";
+  public static final Object         DEF_ORIGINAL_ID_FIELDNAME = "origId";
 
   // TODO: CAN REMOVE THIS REF IN FAVOR OF CONTEXT INSTANCE?
-  protected final OrientBaseGraph graph;
-  protected OIdentifiable         rawElement;
+  protected OrientBaseGraph          graph;
+  protected OIdentifiable            rawElement;
+  protected OrientBaseGraph.Settings settings;
 
   protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
     graph = rawGraph;
     rawElement = iRawElement;
+    settings = graph.settings;
   }
 
   public abstract String getBaseClassName();
@@ -48,6 +50,8 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
 
   @Override
   public void remove() {
+    checkIfAttached();
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     final ORecordOperation oper = graph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
@@ -65,7 +69,9 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
 
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (fields != null && fields.length > 0 && fields[0] != null) {
-      graph.autoStartTransaction();
+      if (!isDetached())
+        graph.autoStartTransaction();
+
       if (fields.length == 1) {
         Object f = fields[0];
         if (f instanceof Map<?, ?>) {
@@ -85,15 +91,19 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
 
   public void setProperty(final String key, final Object value) {
     validateProperty(this, key, value);
-    graph.autoStartTransaction();
+    if (!isDetached())
+      graph.autoStartTransaction();
     getRecord().field(key, value);
-    save();
+    if (!isDetached())
+      save();
   }
 
   public <T> T removeProperty(final String key) {
-    graph.autoStartTransaction();
+    if (!isDetached())
+      graph.autoStartTransaction();
     final Object oldValue = getRecord().removeField(key);
-    save();
+    if (!isDetached())
+      save();
     return (T) oldValue;
   }
 
@@ -129,6 +139,9 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
    *          Cluster name or null to use the default "E"
    */
   public void save(final String iClusterName) {
+    checkIfAttached();
+    graph.setCurrentGraphInThreadLocal();
+
     if (rawElement instanceof ODocument)
       if (iClusterName != null)
         ((ODocument) rawElement).save(iClusterName);
@@ -159,8 +172,9 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
       return ORecordId.EMPTY_RECORD_ID;
 
     final ORID rid = rawElement.getIdentity();
-    if (!rid.isValid()) {
+    if (!rid.isValid() && !isDetached()) {
       // SAVE THE RECORD TO OBTAIN A VALID RID
+      graph.setCurrentGraphInThreadLocal();
       graph.autoStartTransaction();
       save();
     }
@@ -179,6 +193,41 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     // CHANGE THE RID -> DOCUMENT
     rawElement = doc;
     return doc;
+  }
+
+  /**
+   * Removes the reference to the current graph instance to let working offline.
+   * 
+   * @return Current object to allow chained calls.
+   */
+  public OrientElement detach() {
+    // EARLY UNMARSHALL FIELDS
+    getRecord().fieldNames();
+    // COPY GRAPH SETTINGS TO WORK OFFLINE
+    settings = graph.settings.copy();
+    graph = null;
+    return this;
+  }
+
+  /**
+   * Replaces current graph instance with new one. Use this method to pass elements between graphs or to switch between Tx and NoTx
+   * instances.
+   * 
+   * @param iNewGraph
+   *          The new Graph instance to use.
+   * @return Current object to allow chained calls.
+   */
+  public OrientElement attach(final OrientBaseGraph iNewGraph) {
+    if (iNewGraph == null)
+      throw new IllegalArgumentException("Graph is null");
+    graph = iNewGraph;
+    // LINK THE GRAPHS SETTINGS
+    settings = graph.settings;
+    return this;
+  }
+
+  public boolean isDetached() {
+    return graph == null;
   }
 
   public boolean equals(final Object object) {
@@ -226,6 +275,8 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     if (iClassName == null)
       return null;
 
+    checkIfAttached();
+
     final OSchema schema = graph.getRawGraph().getMetadata().getSchema();
 
     if (!schema.existsClass(iClassName)) {
@@ -266,16 +317,26 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
   }
 
   public final void validateProperty(final Element element, final String key, final Object value) throws IllegalArgumentException {
-    if (graph.isStandardElementConstraints() && null == value)
+    if (settings.standardElementConstraints && null == value)
       throw ExceptionFactory.propertyValueCanNotBeNull();
     if (null == key)
       throw ExceptionFactory.propertyKeyCanNotBeNull();
-    if (graph.isStandardElementConstraints() && key.equals(StringFactory.ID))
+    if (settings.standardElementConstraints && key.equals(StringFactory.ID))
       throw ExceptionFactory.propertyKeyIdIsReserved();
     if (element instanceof Edge && key.equals(StringFactory.LABEL))
       throw ExceptionFactory.propertyKeyLabelIsReservedForEdges();
     if (key.isEmpty())
       throw ExceptionFactory.propertyKeyCanNotBeEmpty();
+  }
+
+  protected void setCurrentGraphInThreadLocal() {
+    if (!isDetached())
+      graph.setCurrentGraphInThreadLocal();
+  }
+
+  protected void checkIfAttached() {
+    if (graph == null)
+      throw new IllegalStateException("Graph element has been detached. Attach it before");
   }
 
 }

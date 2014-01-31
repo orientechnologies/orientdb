@@ -15,14 +15,13 @@
  */
 package com.orientechnologies.orient.server.hazelcast.sharding.strategy;
 
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 import com.orientechnologies.orient.server.distributed.ODistributedPartitioningStrategy;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Interface that represents the replication strategy.
@@ -37,8 +36,7 @@ public class ORoundRobinPartitioninStrategy implements ODistributedPartitioningS
   public ODistributedPartition getPartition(final ODistributedServerManager iManager, final String iDatabaseName,
       final String iClusterName) {
 
-    final ODistributedConfiguration cfg = iManager.getDatabaseConfiguration(iDatabaseName);
-    final List<List<String>> partitions = cfg.getPartitions(iClusterName);
+    final List<List<String>> partitions = iManager.getDatabaseConfiguration(iDatabaseName).getPartitions(iClusterName);
 
     final List<String> partition;
     if (partitions.size() > 1) {

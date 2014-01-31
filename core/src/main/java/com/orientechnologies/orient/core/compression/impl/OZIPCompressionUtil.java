@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.serialization.compression.impl;
+package com.orientechnologies.orient.core.compression.impl;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

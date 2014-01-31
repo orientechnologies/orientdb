@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.serialization.compression.impl;
+package com.orientechnologies.orient.core.compression.impl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,7 +23,7 @@ import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.compression.OCompression;
+import com.orientechnologies.orient.core.compression.OCompression;
 
 /**
  * @author Andrey Lomakin

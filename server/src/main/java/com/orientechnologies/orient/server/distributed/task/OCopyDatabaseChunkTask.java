@@ -38,7 +38,6 @@ import java.io.ObjectOutput;
 public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
-  private String            targetNode;
   private String            fileName;
   private int               chunkNum;
   private long              offset;
@@ -46,8 +45,7 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   public OCopyDatabaseChunkTask() {
   }
 
-  public OCopyDatabaseChunkTask(final String iTargetNode, final String iFileName, final int iChunkNum, final long iOffset) {
-    targetNode = iTargetNode;
+  public OCopyDatabaseChunkTask(final String iFileName, final int iChunkNum, final long iOffset) {
     fileName = iFileName;
     chunkNum = iChunkNum;
     offset = iOffset;
@@ -56,10 +54,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    if (!targetNode.equals(iManager.getLocalNodeName()))
-      // IGNORE IT
-      return Boolean.FALSE;
-
     final File f = new File(fileName);
     if (!f.exists())
       throw new IllegalArgumentException("File name '" + fileName + "' not found");
@@ -73,13 +67,18 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   }
 
   @Override
+  public boolean isRequireNodeOnline() {
+    return false;
+  }
+
+  @Override
   public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.UNION;
+    return RESULT_STRATEGY.ANY;
   }
 
   @Override
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.NONE;
+    return QUORUM_TYPE.ALL;
   }
 
   @Override
@@ -100,7 +99,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(targetNode);
     out.writeUTF(fileName);
     out.writeInt(chunkNum);
     out.writeLong(offset);
@@ -108,7 +106,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    targetNode = in.readUTF();
     fileName = in.readUTF();
     chunkNum = in.readInt();
     offset = in.readLong();

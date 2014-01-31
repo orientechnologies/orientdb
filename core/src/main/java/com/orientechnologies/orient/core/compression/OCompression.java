@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.serialization.compression;
+package com.orientechnologies.orient.core.compression;
 
 /**
  * @author Andrey Lomakin
