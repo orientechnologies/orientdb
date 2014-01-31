@@ -34,6 +34,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -85,6 +86,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagClusterDistribution() {
+    if (database.getStorage().getType().equals(OEngineRemote.NAME))
+      return;
+
     final int clusterIdOne = database.addCluster("clusterOne", OStorage.CLUSTER_TYPE.PHYSICAL);
     final int clusterIdTwo = database.addCluster("clusterTwo", OStorage.CLUSTER_TYPE.PHYSICAL);
     final int clusterIdThree = database.addCluster("clusterThree", OStorage.CLUSTER_TYPE.PHYSICAL);
@@ -131,24 +135,22 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     docClusterFour.field("emap", emap, OType.EMBEDDEDMAP);
     docClusterFour.save("clusterFour");
 
-    if (!(database.getStorage() instanceof OStorageProxy)) {
-      final String directory = database.getStorage().getConfiguration().getDirectory();
-      final File ridBagOneFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne
-          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-      Assert.assertTrue(ridBagOneFile.exists());
+    final String directory = database.getStorage().getConfiguration().getDirectory();
+    final File ridBagOneFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdOne
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagOneFile.exists());
 
-      final File ridBagTwoFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdTwo
-          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-      Assert.assertTrue(ridBagTwoFile.exists());
+    final File ridBagTwoFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdTwo
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagTwoFile.exists());
 
-      final File ridBagThreeFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdThree
-          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-      Assert.assertTrue(ridBagThreeFile.exists());
+    final File ridBagThreeFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdThree
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagThreeFile.exists());
 
-      final File ridBagFourFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour
-          + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
-      Assert.assertTrue(ridBagFourFile.exists());
-    }
+    final File ridBagFourFile = new File(directory, OSBTreeCollectionManagerShared.FILE_NAME_PREFIX + clusterIdFour
+        + OSBTreeCollectionManagerShared.DEFAULT_EXTENSION);
+    Assert.assertTrue(ridBagFourFile.exists());
   }
 
   @Test
@@ -180,6 +182,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagDelete() {
+    if (database.getStorage().getType().equals(OEngineRemote.NAME))
+      return;
+
     float reuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.getValueAsFloat();
     OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(Float.MIN_VALUE);
 

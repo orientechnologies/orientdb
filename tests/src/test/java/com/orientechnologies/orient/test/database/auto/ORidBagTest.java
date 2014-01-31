@@ -1278,7 +1278,7 @@ public abstract class ORidBagTest extends BaseTest {
     final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
     ORidBag ridBag = new ORidBag();
     int size = 0;
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < 10; i++) {
       ODocument docToAdd = new ODocument();
 
       for (int k = 0; k < 2; k++) {
@@ -1298,7 +1298,7 @@ public abstract class ORidBagTest extends BaseTest {
     Assert.assertEquals(ridBag.size(), size);
 
     final List<OIdentifiable> newDocs = new ArrayList<OIdentifiable>();
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 10; i++) {
       ODocument docToAdd = new ODocument();
 
       for (int k = 0; k < 2; k++) {
@@ -1313,25 +1313,25 @@ public abstract class ORidBagTest extends BaseTest {
 
     Random rnd = new Random();
 
-    // for (int i = 0; i < newDocs.size(); i++) {
-    // if (rnd.nextBoolean()) {
-    // OIdentifiable newDoc = newDocs.get(i);
-    // rids.remove(newDoc);
-    // ridBag.remove(newDoc);
-    // newDocs.remove(newDoc);
-    //
-    // size--;
-    // }
-    // }
-    //
-    // for (OIdentifiable identifiable : ridBag) {
-    // if (newDocs.contains(identifiable) && rnd.nextBoolean()) {
-    // ridBag.remove(identifiable);
-    // rids.remove(identifiable);
-    //
-    // size--;
-    // }
-    // }
+    for (int i = 0; i < newDocs.size(); i++) {
+      if (rnd.nextBoolean()) {
+        OIdentifiable newDoc = newDocs.get(i);
+        rids.remove(newDoc);
+        ridBag.remove(newDoc);
+        newDocs.remove(newDoc);
+
+        size--;
+      }
+    }
+
+    for (OIdentifiable identifiable : ridBag) {
+      if (newDocs.contains(identifiable) && rnd.nextBoolean()) {
+        ridBag.remove(identifiable);
+        rids.remove(identifiable);
+
+        size--;
+      }
+    }
 
     Assert.assertEquals(ridBag.size(), size);
     List<OIdentifiable> ridsCopy = new ArrayList<OIdentifiable>(rids);
