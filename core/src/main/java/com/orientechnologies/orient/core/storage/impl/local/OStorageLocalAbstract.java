@@ -134,11 +134,11 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
     assert atomicOperationsManager.getCurrentOperation() == null;
 
-    final List<OWALRecord> operationUnit = readOperationUnit(operation.getStartLSN(), operation.getOperationUnitId());
+    final List<OLogSequenceNumber> operationUnit = readOperationUnit(operation.getStartLSN(), operation.getOperationUnitId());
     undoOperation(operationUnit);
   }
 
-  private List<OWALRecord> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
+  private List<OLogSequenceNumber> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
     final OLogSequenceNumber beginSequence = writeAheadLog.begin();
 
     if (startLSN == null)
@@ -147,7 +147,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
     if (startLSN.compareTo(beginSequence) < 0)
       startLSN = beginSequence;
 
-    List<OWALRecord> operationUnit = new ArrayList<OWALRecord>();
+    List<OLogSequenceNumber> operationUnit = new ArrayList<OLogSequenceNumber>();
 
     OLogSequenceNumber lsn = startLSN;
     while (lsn != null) {
@@ -159,7 +159,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
       OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
       if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
-        operationUnit.add(record);
+        operationUnit.add(lsn);
         if (record instanceof OAtomicUnitEndRecord)
           break;
       }
@@ -169,9 +169,9 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
     return operationUnit;
   }
 
-  protected void undoOperation(List<OWALRecord> operationUnit) throws IOException {
+  protected void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
     for (int i = operationUnit.size() - 1; i >= 0; i--) {
-      OWALRecord record = operationUnit.get(i);
+      OWALRecord record = writeAheadLog.read(operationUnit.get(i));
       if (checkFirstAtomicUnitRecord(i, record)) {
         assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
         continue;
