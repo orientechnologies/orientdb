@@ -1395,6 +1395,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void endResponse() throws IOException {
+    // reseting transaction state. Commands are stateless and connection should be cleared
+    // otherwise reused connection (connections pool) may lead to unpredicted errors
+    if (connection.database!=null && connection.database.getTransaction()!=null)
+            connection.database.getTransaction().close();
     channel.flush();
     channel.releaseWriteLock();
   }
