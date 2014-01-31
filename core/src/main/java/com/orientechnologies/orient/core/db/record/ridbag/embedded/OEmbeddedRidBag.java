@@ -266,7 +266,19 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
-    convertRecords2Links();
+    for (int i = 0; i < entriesLength; i++) {
+      final Object entry = entries[i];
+
+      if (entry instanceof OIdentifiable) {
+        final OIdentifiable identifiable = (OIdentifiable) entry;
+        if (identifiable instanceof ORecord) {
+          final ORecord record = (ORecord) identifiable;
+          if (record.isDirty() || record.getIdentity().isNew()) {
+            record.save();
+          }
+        }
+      }
+    }
 
     if (!deserialized) {
       System.arraycopy(serializedContent, 0, stream, offset, serializedContent.length);
@@ -318,7 +330,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     for (int i = 0; i < entriesSize; i++) {
       ORID rid = OLinkSerializer.INSTANCE.deserialize(serializedContent, offset);
       offset += OLinkSerializer.RID_SIZE;
-			addEntry(rid);
+
+      OIdentifiable identifiable;
+      if (rid.isTemporary())
+        identifiable = rid.getRecord();
+      else
+        identifiable = rid;
+
+      addEntry(identifiable);
     }
 
     deserialized = true;
