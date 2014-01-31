@@ -132,6 +132,13 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
           if (iAllowOperation != null && iAllowOperation.contains(r.getDocument().getIdentity()))
             return true;
+		  // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's inheritance
+		  ORole parentRole = r.getParentRole();
+		  while (parentRole!=null){
+		   if (iAllowAll.contains(parentRole.getDocument().getIdentity())) return true;
+		   if (iAllowOperation != null && iAllowOperation.contains(parentRole.getDocument().getIdentity())) return true;
+		   parentRole=parentRole.getParentRole();
+		  }
         }
         return false;
       }
