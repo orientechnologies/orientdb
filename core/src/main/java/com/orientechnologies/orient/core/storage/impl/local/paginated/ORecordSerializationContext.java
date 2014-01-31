@@ -31,6 +31,10 @@ public class ORecordSerializationContext {
                                                                                                      }
                                                                                                    };
 
+  public static int getDepth() {
+    return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();
+  }
+
   public static ORecordSerializationContext pushContext() {
     final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
     final ORecordSerializationContext context = new ORecordSerializationContext();

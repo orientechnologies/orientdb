@@ -85,6 +85,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -1170,7 +1171,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
     }
 
-    collectionManager.clearPendingCollections();
+    if (ORecordSerializationContext.getDepth() <= 1)
+      collectionManager.clearPendingCollections();
   }
 
   public void rollback(OTransaction iTx) {
