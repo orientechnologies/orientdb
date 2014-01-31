@@ -46,7 +46,7 @@ public class OSBTreeCollectionManagerRemoteTest {
     MockitoAnnotations.initMocks(this);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testCreateTree() throws Exception {
     OSBTreeCollectionManagerRemote remoteManager = new OSBTreeCollectionManagerRemote(networkSerializerMock);
     ODatabaseRecordThreadLocal.INSTANCE.set(dbMock);

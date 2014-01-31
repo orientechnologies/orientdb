@@ -260,9 +260,6 @@ public class SQLSelectProjectionsTest {
 
   @Test
   public void queryProjectionContentCollection() {
-		if (url.startsWith("remote:"))
-			return;
-
 		database.open("admin", "admin");
 
     List<ODocument> result = database.command(
@@ -350,9 +347,6 @@ public class SQLSelectProjectionsTest {
 
   @SuppressWarnings("unchecked")
   public void queryProjectionContextArray() {
-		if (url.startsWith("remote:"))
-			return;
-
 		database.open("admin", "admin");
 
     try {

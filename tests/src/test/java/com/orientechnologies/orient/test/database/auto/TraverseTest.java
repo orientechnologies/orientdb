@@ -51,9 +51,6 @@ public class TraverseTest {
 
   @BeforeClass
   public void init() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
     if ("memory:test".equals(database.getURL()))
       database.create();
     else
@@ -103,27 +100,18 @@ public class TraverseTest {
   }
 
   public void traverseSQLAllFromActorNoWhere() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from " + tomCruise.getIdentity()))
         .execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   public void traverseAPIAllFromActorNoWhere() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<OIdentifiable> result1 = new OTraverse().fields("*").target(tomCruise.getIdentity()).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseSQLOutFromActor1Depth() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse out_ from " + tomCruise.getIdentity() + " while $depth <= 1")).execute();
 
@@ -133,9 +121,6 @@ public class TraverseTest {
 
   @Test
   public void traverseSQLMoviesOnly() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
     List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse any() from Movie ) where @class = 'Movie'")).execute();
     Assert.assertTrue(result1.size() > 0);
@@ -146,9 +131,6 @@ public class TraverseTest {
 
   @Test
   public void traverseSQLPerClassFields() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse out() from " + tomCruise.getIdentity()
             + ") where @class = 'Movie'")).execute();
@@ -160,9 +142,6 @@ public class TraverseTest {
 
   @Test
   public void traverseSQLMoviesOnlyDepth() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 1 ) where @class = 'Movie'")).execute();
@@ -188,18 +167,12 @@ public class TraverseTest {
 
   @Test
   public void traverseSelect() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse * from ( select from Movie )")).execute();
     Assert.assertEquals(result1.size(), totalElements);
   }
 
   @Test
   public void traverseSQLSelectAndTraverseNested() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
@@ -208,9 +181,6 @@ public class TraverseTest {
 
   @Test
   public void traverseAPISelectAndTraverseNested() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 ) where @class = 'Movie' )")).execute();
@@ -219,9 +189,6 @@ public class TraverseTest {
 
   @Test
   public void traverseAPISelectAndTraverseNestedDepthFirst() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 strategy depth_first ) where @class = 'Movie' )")).execute();
@@ -230,9 +197,6 @@ public class TraverseTest {
 
   @Test
   public void traverseAPISelectAndTraverseNestedBreadthFirst() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(
         new OSQLSynchQuery<ODocument>("traverse * from ( select from ( traverse * from " + tomCruise.getIdentity()
             + " while $depth <= 2 strategy breadth_first ) where @class = 'Movie' )")).execute();
@@ -241,8 +205,6 @@ public class TraverseTest {
 
   @Test
   public void traverseSQLIterating() {
-		if (database.getURL().startsWith("remote:"))
-			return;
     int cycles = 0;
     for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from Movie while $depth < 2")) {
       cycles++;
@@ -252,9 +214,6 @@ public class TraverseTest {
 
   @Test
   public void traverseAPIIterating() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
     int cycles = 0;
     for (OIdentifiable id : new OTraverse().target(database.browseClass("Movie").iterator()).predicate(new OCommandPredicate() {
       @Override
@@ -269,9 +228,6 @@ public class TraverseTest {
 
   @Test
   public void traverseAPIandSQLIterating() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		int cycles = 0;
     for (OIdentifiable id : new OTraverse().target(database.browseClass("Movie").iterator()).predicate(
         new OSQLPredicate("$depth <= 2"))) {
@@ -282,9 +238,6 @@ public class TraverseTest {
 
   @Test
   public void traverseSelectIterable() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		int cycles = 0;
     for (OIdentifiable id : new OSQLSynchQuery<ODocument>("select from ( traverse * from Movie while $depth < 2 )")) {
       cycles++;
@@ -294,9 +247,6 @@ public class TraverseTest {
 
   @Test
   public void traverseSelectNoInfluence() {
-		if (database.getURL().startsWith("remote:"))
-			return;
-
 		List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie while $depth < 2"))
         .execute();
     List<ODocument> result2 = database.command(

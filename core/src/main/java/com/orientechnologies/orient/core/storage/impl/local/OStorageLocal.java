@@ -2047,7 +2047,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   @Override
   public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
-    throw null;
+    return null;
   }
 
   protected void init() {

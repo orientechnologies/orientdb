@@ -1197,9 +1197,6 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testTraverse() {
-		if (url.startsWith("remote:"))
-			return;
-
 		OrientGraph graph = new OrientGraph(url);
 		graph.setAutoStartTx(false);
 		graph.commit();

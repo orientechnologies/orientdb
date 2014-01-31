@@ -63,9 +63,6 @@ public class GraphDatabaseTest {
 
   @Test
   public void populate() {
-		if (url.startsWith("remote:"))
-			return;
-
 		OClass vehicleClass = database.createVertexType("GraphVehicle");
     database.createVertexType("GraphCar", vehicleClass);
     database.createVertexType("GraphMotocycle", "GraphVehicle");
@@ -113,9 +110,6 @@ public class GraphDatabaseTest {
 
   @Test(dependsOnMethods = "populate")
   public void testSQLAgainstGraph() {
-		if (url.startsWith("remote:"))
-			return;
-
 		Vertex tom = database.addVertex(null, "name", "Tom");
     Vertex ferrari = database.addVertex("class:GraphCar", "brand", "Ferrari");
     Vertex maserati = database.addVertex("class:GraphCar", "brand", "Maserati");
@@ -142,9 +136,6 @@ public class GraphDatabaseTest {
   }
 
   public void testNotDuplicatedIndexTxChanges() throws IOException {
-		if (url.startsWith("remote:"))
-			return;
-
 		database.setAutoStartTx(false);
     database.commit();
     OClass oc = database.getVertexType("vertexA");
@@ -169,9 +160,6 @@ public class GraphDatabaseTest {
   }
 
   public void testNewVertexAndEdgesWithFieldsInOneShoot() throws IOException {
-		if (url.startsWith("remote:"))
-			return;
-
 		OrientVertex vertexA = database.addVertex(null, "field1", "value1", "field2", "value2");
 
     Map<String, Object> map = new HashMap<String, Object>();
@@ -195,9 +183,6 @@ public class GraphDatabaseTest {
 
   @Test
   public void sqlNestedQueries() {
-		if (url.startsWith("remote:"))
-			return;
-
     Vertex vertex1 = database.addVertex(null, "driver", "John");
     Vertex vertex2 = database.addVertex(null, "car", "ford");
 
@@ -232,9 +217,6 @@ public class GraphDatabaseTest {
 
   @SuppressWarnings("unchecked")
   public void nestedQuery() {
-		if (url.startsWith("remote:"))
-			return;
-
 		Vertex countryVertex1 = database.addVertex(null, "name", "UK", "area", "Europe", "code", "2");
     Vertex cityVertex1 = database.addVertex(null, "name", "leicester", "lat", "52.64640", "long", "-1.13159");
     Vertex cityVertex2 = database.addVertex(null, "name", "manchester", "lat", "53.47497", "long", "-2.25769");

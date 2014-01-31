@@ -70,7 +70,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
     OSBTreeBonsai<OIdentifiable, Integer> tree;
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.remove(collectionPointer);
+      SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
       if (container != null) {
         container.usagesCounter++;
         tree = container.tree;
@@ -81,9 +81,11 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
 
         container = new SBTreeBonsaiContainer(tree);
         container.usagesCounter++;
+
+				treeCache.put(collectionPointer, container);
       }
 
-      treeCache.put(collectionPointer, container);
+
     }
 
     evict();
@@ -95,7 +97,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
   public void releaseSBTree(OBonsaiCollectionPointer collectionPointer) {
     final Object lock = treesSubsetLock(collectionPointer);
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
+      SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
       assert container != null;
       container.usagesCounter--;
       assert container.usagesCounter >= 0;
@@ -108,7 +110,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
   public void delete(OBonsaiCollectionPointer collectionPointer) {
     final Object lock = treesSubsetLock(collectionPointer);
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
+      SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
       assert container != null;
 
       if (container.usagesCounter != 0)
@@ -125,7 +127,7 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
     for (OBonsaiCollectionPointer collectionPointer : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
       final Object treeLock = treesSubsetLock(collectionPointer);
       synchronized (treeLock) {
-        SBTreeBonsaiContainer container = treeCache.get(collectionPointer);
+        SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
         if (container != null && container.usagesCounter == 0)
           treeCache.remove(collectionPointer);
       }

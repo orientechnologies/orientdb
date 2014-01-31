@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -160,7 +161,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
 
     final UUID oldUuid = uuid;
-    uuid = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager().listenForChanges(this);
+		final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+		if (sbTreeCollectionManager != null)
+			uuid = sbTreeCollectionManager.listenForChanges(this);
+		else
+		  uuid = null;
+
     boolean hasUuid = uuid != null;
 
     final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
