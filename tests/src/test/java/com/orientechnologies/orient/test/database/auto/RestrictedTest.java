@@ -42,9 +42,7 @@ public class RestrictedTest {
   private ODatabaseDocumentTx database;
   private ODocument           adminRecord;
   private ODocument           writerRecord;
-  private final String 		  inheritedRole = "testInheritedRole";
-  private final String 		  inheritedUser = "testInheritedUser";
-  
+
   @Parameters(value = "url")
   public RestrictedTest(String iURL) {
     database = new ODatabaseDocumentTx(iURL);
