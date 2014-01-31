@@ -21,7 +21,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;

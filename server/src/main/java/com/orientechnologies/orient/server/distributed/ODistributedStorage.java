@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -42,13 +34,36 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.task.OTxTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -76,8 +91,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
-    final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-    if (!dConfig.isReplicationActive(null))
+    if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(null))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
@@ -136,8 +150,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ASSIGN DESTINATION NODE
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
@@ -172,7 +185,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
 
@@ -211,8 +224,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
@@ -252,8 +264,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
@@ -349,8 +360,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       wrapped.commit(iTx, callback);
     else {
       try {
-        final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-        if (!dConfig.isReplicationActive(null))
+        if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(null))
           // DON'T REPLICATE
           wrapped.commit(iTx, callback);
         else {

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
@@ -39,9 +40,7 @@ import java.util.concurrent.locks.Lock;
  * 
  */
 public class ODeployDatabaseTask extends OAbstractReplicatedTask {
-  private static final String BACKUP_DIRECTORY = System.getProperty("java.io.tmpdir") + "/orientdb";
-
-  public final static int     CHUNK_MAX_SIZE   = 1048576;                                           // 1MB
+  public final static int CHUNK_MAX_SIZE = 1048576; // 1MB
 
   public ODeployDatabaseTask() {
   }
@@ -60,7 +59,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
 
-          final File f = new File(BACKUP_DIRECTORY + "/backup_" + database.getName() + ".zip");
+          final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
           if (f.exists())
             f.delete();
           else
@@ -105,6 +104,11 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
+  }
+
+  @Override
+  public boolean isRequireNodeOnline() {
+    return false;
   }
 
   @Override
