@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.serialization.compression;
+package com.orientechnologies.orient.core.compression;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.serialization.compression.impl.OGZIPCompression;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.serialization.compression.impl.OSnappyCompression;
+import com.orientechnologies.orient.core.compression.impl.OGZIPCompression;
+import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 
 /**
  * @author Andrey Lomakin
