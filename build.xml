@@ -31,6 +31,7 @@
                 <fileset dir="server" includes="build.xml"/>
                 <fileset dir="distributed" includes="build.xml"/>
                 <fileset dir="tools" includes="build.xml"/>
+                <fileset dir="graphdb" includes="build.xml"/>
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
@@ -128,12 +129,6 @@
 
     <target name="install" depends="init">
         <delegate target="install"/>
-        <subant target="install">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="version" value="${version}"/>
-
-            <fileset dir="graphdb" includes="build.xml"/>
-        </subant>
 
         <copy todir="${community.release}/" flatten="true">
             <fileset dir="." includes="*.txt"/>

@@ -16,23 +16,26 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected boolean autoStartTx = true;
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
   public OrientTransactionalGraph(final String url) {
     super(url, ADMIN, ADMIN);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
   public OrientTransactionalGraph(final String url, final String username, final String password) {
     super(url, username, password);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
@@ -80,8 +83,6 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
   @Override
   protected void autoStartTransaction() {
-    super.autoStartTransaction();
-
     if (!autoStartTx)
       return;
 

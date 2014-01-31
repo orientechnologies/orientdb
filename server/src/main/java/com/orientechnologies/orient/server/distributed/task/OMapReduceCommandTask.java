@@ -38,7 +38,7 @@ public class OMapReduceCommandTask extends OSQLCommandTask {
   }
 
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.NONE;
+    return QUORUM_TYPE.ALL;
   }
 
   @Override

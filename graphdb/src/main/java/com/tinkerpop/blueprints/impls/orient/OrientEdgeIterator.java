@@ -1,12 +1,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
+
+import java.util.Iterator;
 
 /**
  * Lazy iterator of edges.
@@ -52,7 +52,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     } else
       throw new IllegalStateException("Invalid content found between connections:" + value);
 
-    if (this.sourceVertex.graph.isUseVertexFieldsForEdgeLabels() || edge.isLabeled(labels))
+    if (this.sourceVertex.settings.useVertexFieldsForEdgeLabels || edge.isLabeled(labels))
       return edge;
 
     return null;
@@ -62,6 +62,6 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
       return false;
 
-    return this.sourceVertex.graph.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
+    return this.sourceVertex.settings.useVertexFieldsForEdgeLabels || iObject.isLabeled(labels);
   }
 }
