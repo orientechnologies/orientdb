@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -40,7 +42,9 @@ public class RestrictedTest {
   private ODatabaseDocumentTx database;
   private ODocument           adminRecord;
   private ODocument           writerRecord;
-
+  private final String 		  inheritedRole = "testInheritedRole";
+  private final String 		  inheritedUser = "testInheritedUser";
+  
   @Parameters(value = "url")
   public RestrictedTest(String iURL) {
     database = new ODatabaseDocumentTx(iURL);
@@ -201,7 +205,51 @@ public class RestrictedTest {
     Assert.assertNotNull(database.load(writerRecord.getIdentity()));
   }
 
-  @Test(dependsOnMethods = "testWriterAddReaderUserOnlyForRead")
+  /***** TESTS FOR #1980: Record Level Security: permissions don't follow role's inheritance *****/
+  @Test(dependsOnMethods = "testReaderCanSeeWriterDocument")
+  public void testWriterRemoveReaderUserOnlyForRead() throws IOException {
+    database.open("writer", "writer");
+    database.getMetadata().getSecurity().disallowUser(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "reader");
+    writerRecord.save();
+  }
+
+  @Test(dependsOnMethods = "testWriterRemoveReaderUserOnlyForRead")
+  public void testReaderCannotSeeWriterDocumentAgain() throws IOException {
+    database.open("reader", "reader");
+    Assert.assertNull(database.load(writerRecord.getIdentity()));
+  }
+  
+  @Test(dependsOnMethods = "testReaderCannotSeeWriterDocumentAgain")
+  public void testReaderRoleInheritsFromWriterRole() throws IOException {
+    database.open("admin", "admin");
+	ORole reader= database.getMetadata().getSecurity().getRole("reader");
+	reader.setParentRole(database.getMetadata().getSecurity().getRole("writer"));
+	reader.save();
+  }
+  
+  @Test(dependsOnMethods = "testReaderRoleInheritsFromWriterRole")
+  public void testWriterRoleCanSeeWriterDocument() throws IOException {
+    database.open("writer", "writer");
+	database.getMetadata().getSecurity().allowRole(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "writer");
+    writerRecord.save();
+  }
+  
+  @Test(dependsOnMethods = "testWriterRoleCanSeeWriterDocument")
+  public void testReaderRoleCanSeeInheritedDocument() {
+	database.open("reader", "reader");
+	Assert.assertNotNull(database.load(writerRecord.getIdentity()));
+  }
+  
+  @Test(dependsOnMethods = "testReaderRoleCanSeeInheritedDocument")
+  public void testReaderRoleDesntInheritsFromWriterRole() throws IOException {
+    database.open("admin", "admin");
+	ORole reader= database.getMetadata().getSecurity().getRole("reader");
+	reader.setParentRole(null);
+	reader.save();
+  }
+  /**** END TEST FOR #1980: Record Level Security: permissions don't follow role's inheritance ****/
+  
+  @Test(dependsOnMethods = "testReaderRoleDesntInheritsFromWriterRole")
   public void testTruncateClass() {
     database.open("admin", "admin");
     try {
