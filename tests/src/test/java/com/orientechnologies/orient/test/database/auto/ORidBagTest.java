@@ -519,6 +519,31 @@ public abstract class ORidBagTest extends BaseTest {
     assertTrue(rids.isEmpty());
   }
 
+  public void testCycle() {
+    ODocument docOne = new ODocument();
+    ORidBag ridBagOne = new ORidBag();
+
+    ODocument docTwo = new ODocument();
+    ORidBag ridBagTwo = new ORidBag();
+
+    docOne.field("ridBag", ridBagOne);
+    docTwo.field("ridBag", ridBagTwo);
+
+    ridBagOne.add(docTwo);
+    ridBagTwo.add(docOne);
+
+    docOne.save();
+
+    docOne = database.load(docOne.getIdentity(), "*:-1", false);
+    ridBagOne = docOne.field("ridBag");
+
+    docTwo = database.load(docTwo.getIdentity(), "*:-1", false);
+    ridBagTwo = docTwo.field("ridBag");
+
+    Assert.assertEquals(ridBagOne.iterator().next(), docTwo);
+    Assert.assertEquals(ridBagTwo.iterator().next(), docOne);
+  }
+
   public void testAddSBTreeAddInMemoryIterateAndRemove() {
     List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
 

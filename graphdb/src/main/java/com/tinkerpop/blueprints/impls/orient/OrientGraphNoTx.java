@@ -14,10 +14,10 @@ public class OrientGraphNoTx extends OrientBaseGraph {
   private final Features FEATURES = new Features();
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
@@ -41,10 +41,10 @@ public class OrientGraphNoTx extends OrientBaseGraph {
 
   public Features getFeatures() {
     // DYNAMIC FEATURES BASED ON CONFIGURATION
-    FEATURES.supportsEdgeIndex = !useLightweightEdges;
-    FEATURES.supportsEdgeKeyIndex = !useLightweightEdges;
-    FEATURES.supportsEdgeIteration = !useLightweightEdges;
-    FEATURES.supportsEdgeRetrieval = !useLightweightEdges;
+    FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
     return FEATURES;
   }
 

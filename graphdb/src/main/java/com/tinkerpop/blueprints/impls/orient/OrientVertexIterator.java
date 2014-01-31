@@ -41,7 +41,7 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
       v = new OrientVertex(vertex.graph, value);
     } else if (value.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
-      if (vertex.graph.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
+      if (vertex.settings.useVertexFieldsForEdgeLabels || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = new OrientVertex(vertex.graph, OrientEdge.getConnection(value, connection.getKey().opposite()));
       else
         v = null;

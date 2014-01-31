@@ -14,10 +14,10 @@ public class OrientGraph extends OrientTransactionalGraph {
   protected final Features FEATURES = new Features();
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
@@ -105,10 +105,10 @@ public class OrientGraph extends OrientTransactionalGraph {
 
   public Features getFeatures() {
     // DYNAMIC FEATURES BASED ON CONFIGURATION
-    FEATURES.supportsEdgeIndex = !useLightweightEdges;
-    FEATURES.supportsEdgeKeyIndex = !useLightweightEdges;
-    FEATURES.supportsEdgeIteration = !useLightweightEdges;
-    FEATURES.supportsEdgeRetrieval = !useLightweightEdges;
+    FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
     return FEATURES;
   }
 

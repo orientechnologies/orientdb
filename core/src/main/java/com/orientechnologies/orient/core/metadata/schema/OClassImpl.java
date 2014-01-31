@@ -1146,20 +1146,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
-  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, ODocument metadata,
+  public OIndex<?> createIndex(final String name, String type, final OProgressListener progressListener, ODocument metadata,
       final String... fields) {
-    if (iType == null)
+    if (type == null)
       throw new IllegalArgumentException("Index type is null");
 
-    iType = iType.toUpperCase();
-
-    try {
-      final INDEX_TYPE recognizedIdxType = INDEX_TYPE.valueOf(iType);
-      if (!recognizedIdxType.isAutomaticIndexable())
-        throw new IllegalArgumentException("Index type '" + iType + "' cannot be used as automatic index against properties");
-    } catch (IllegalArgumentException e) {
-      // IGNORE IT
-    }
+    type = type.toUpperCase();
 
     if (fields.length == 0) {
       throw new OIndexException("List of fields to index cannot be empty.");
@@ -1175,7 +1167,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     for (final String fieldToIndex : fields) {
       final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
       if (!existingFieldNames.contains(fieldName.toLowerCase()))
-        throw new OIndexException("Index with name : '" + iName + "' cannot be created on class : '" + name + "' because field: '"
+        throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name + "' because field: '"
             + fieldName + "' is absent in class definition.");
     }
 
@@ -1191,7 +1183,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     return getDatabase().getMetadata().getIndexManager()
-        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener, metadata);
+        .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata);
   }
 
   private List<OType> extractFieldTypes(String[] fieldNames) {

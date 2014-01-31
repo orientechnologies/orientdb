@@ -49,6 +49,13 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   private UUID            uuid;
 
+  public ORidBag(ORidBag ridBag) {
+    this();
+
+    for (OIdentifiable identifiable : ridBag)
+      add(identifiable);
+  }
+
   public ORidBag() {
     if (topThreshold < 0)
       delegate = new OSBTreeRidBag();
