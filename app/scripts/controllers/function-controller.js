@@ -36,7 +36,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.getListFunction = function () {
         $scope.functions = new Array;
         $scope.functionsrid = new Array;
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: sqlText, limit: $scope.limit, shallow: true}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: sqlText, limit: $scope.limit, shallow: false}, function (data) {
             if (data.result) {
                 for (i in data.result) {
                     $scope.functions.push(data.result[i]);
@@ -45,7 +45,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
                 if ($scope.functions.length > 0 && $scope.functionToExecute != undefined) {
                     var index = $scope.functionsrid.indexOf($scope.functionToExecute['name']);
-                    $scope.showInConsole($scope.functions[index]);
+                    $scope.showInConsoleAfterSave($scope.functions[index]);
                 }
             }
         });
@@ -81,11 +81,18 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         }
     }
     $scope.addParam = function () {
+
+
         if ($scope.functionToExecute['parameters'] == undefined) {
             $scope.functionToExecute['parameters'] = new Array;
         }
 
+
+        var app = JSON.parse(JSON.stringify($scope.parametersToExecute));
+
+        $scope.functionToExecute['parameters'].push('');
         $scope.inParams = $scope.functionToExecute['parameters'];
+
         $scope.$watch('inParams.length', function (data) {
             if (data) {
                 $scope.parametersToExecute = new Array(data);
@@ -94,9 +101,13 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
                 $scope.parametersToExecute = null;
             }
-        });
+            var i;
+            for (i in app) {
+                $scope.parametersToExecute[i] = app[i];
+            }
 
-        $scope.functionToExecute['parameters'].push('');
+
+        });
     }
     $scope.
         executeFunction = function () {
@@ -140,12 +151,23 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
 
     //when click on a function in list of functions
+
+    $scope.showInConsoleAfterSave = function (selectedFunction) {
+        $scope.consoleValue = selectedFunction['code'];
+        $scope.nameFunction = selectedFunction['name'];
+        $scope.selectedLanguage = selectedFunction['language'];
+        $scope.functionToExecute = selectedFunction;
+        $scope.inParams = $scope.functionToExecute['parameters'];
+    }
+
+
     $scope.showInConsole = function (selectedFunction) {
         $scope.consoleValue = selectedFunction['code'];
         $scope.nameFunction = selectedFunction['name'];
         $scope.selectedLanguage = selectedFunction['language'];
         $scope.functionToExecute = selectedFunction;
         $scope.inParams = $scope.functionToExecute['parameters'];
+//        $scope.inParams = new Array();
         $scope.parametersToExecute = new Array;
 
 
@@ -174,11 +196,12 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     }
     $scope.saveFunction = function () {
+        $scope.resultExecute = '';
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
             if ($scope.isNewFunction == true) {
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
-                        var message = 'Function saved successfully. Server respond ' + JSON.stringify(data);
+                        var message = 'Function saved successfully. Server returns ' + JSON.stringify(data);
                         Notification.push({content: message });
                     }
                 );
@@ -187,7 +210,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             else {
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                     $scope.getListFunction();
-                    var message = 'Function saved successfully. Server respond ' + JSON.stringify(data);
+                    var message = 'Function saved successfully. Server returns ' + JSON.stringify(data);
                     Notification.push({content: message });
                 });
             }
