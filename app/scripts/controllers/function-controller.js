@@ -160,23 +160,16 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.inParams = $scope.functionToExecute['parameters'];
     }
 
-
     $scope.showInConsole = function (selectedFunction) {
-        $scope.consoleValue = selectedFunction['code'];
-        $scope.nameFunction = selectedFunction['name'];
-        $scope.selectedLanguage = selectedFunction['language'];
-        $scope.functionToExecute = selectedFunction;
-        $scope.inParams = $scope.functionToExecute['parameters'];
-//        $scope.inParams = new Array();
-        $scope.parametersToExecute = new Array;
 
+        $scope.showInConsoleAfterSave(selectedFunction);
+        $scope.parametersToExecute = new Array;
 
         $scope.$watch('inParams.length', function (data) {
             if (data) {
                 $scope.parametersToExecute = new Array(data);
             }
             else {
-
                 $scope.parametersToExecute = null;
             }
         });
@@ -185,7 +178,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.isNewFunction = false;
     }
 
-    $scope.modificataLang = function (lang) {
+    $scope.modifiedLanguage = function (lang) {
         $scope.functionToExecute['language'] = lang;
     }
     $scope.createNewFunction = function () {
