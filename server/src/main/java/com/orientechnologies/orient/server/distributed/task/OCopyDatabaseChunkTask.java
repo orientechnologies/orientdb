@@ -60,7 +60,7 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
     final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
 
-    ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
 
     return result;
