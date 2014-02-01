@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.EntryEvent;
@@ -58,23 +75,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -685,7 +685,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
                   final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 
-                  ODistributedServerLog.warn(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
+                  ODistributedServerLog.info(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
                       "copying remote database '%s' to: %s", databaseName, fileName);
 
                   final File file = new File(fileName);
@@ -711,7 +711,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                       }
                     }
 
-                    ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+                    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
                         "database copied correctly, size=%s", OFileUtils.getSizeAsString(fileSize));
 
                   } catch (Exception e) {
@@ -785,7 +785,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       db.close();
       Orient.instance().unregisterStorageByName(db.getName());
 
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s', setting it online...",
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s', setting it online...",
           databaseName);
 
       distrDatabase.setOnline();
