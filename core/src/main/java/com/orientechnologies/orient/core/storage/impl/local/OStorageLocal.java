@@ -15,18 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -76,6 +65,18 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class OStorageLocal extends OStorageLocalAbstract {
   private final int                     DELETE_MAX_RETRIES;
@@ -1137,9 +1138,10 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      ORecordCallback<ORawBuffer> iCallback, final boolean loadTombstones, final LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones));
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones,
+        iLockingStrategy));
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
@@ -1758,7 +1760,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   @Override
-  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock, boolean loadTombstones) {
+  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
+      final boolean loadTombstones, final LOCKING_STRATEGY iLockingStrategy) {
     if (!iRid.isPersistent())
       throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in database '" + name
           + '\'');
@@ -1774,7 +1777,19 @@ public class OStorageLocal extends OStorageLocalAbstract {
       lock.acquireSharedLock();
 
     try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+      switch (iLockingStrategy) {
+      case DEFAULT:
+      case KEEP_SHARED_LOCK:
+        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        break;
+      case NONE:
+        // DO NOTHING
+        break;
+      case KEEP_EXCLUSIVE_LOCK:
+        throw new IllegalStateException("Exclusive locking not supported on read() in 'local' storage. Use plocal instead.");
+        // lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      }
+
       try {
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
@@ -1789,7 +1804,16 @@ public class OStorageLocal extends OStorageLocalAbstract {
         return new ORawBuffer(data.getRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        switch (iLockingStrategy) {
+        case DEFAULT:
+          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          break;
+        case NONE:
+        case KEEP_SHARED_LOCK:
+        case KEEP_EXCLUSIVE_LOCK:
+          // DO NOTHING
+          break;
+        }
       }
 
     } catch (IOException e) {

@@ -16,22 +16,6 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -65,6 +49,13 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -234,14 +225,14 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public OStorageOperationResult<ORawBuffer> read(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      boolean loadTombstones) {
+      final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (!iRid.isValid())
       return new OStorageOperationResult<ORawBuffer>(null);
 
     OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
     try {
-      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy);
 
     } catch (Throwable t) {
       if (iRid.isTemporary())
