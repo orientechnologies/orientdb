@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -25,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -33,17 +32,22 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * SQL DELETE VERTEX command.
  * 
  * @author Luca Garulli
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandResultListener {
-  public static final String NAME    = "DELETE VERTEX";
+  public static final String NAME      = "DELETE VERTEX";
   private ORecordId          rid;
-  private int                removed = 0;
+  private int                removed   = 0;
   private ODatabaseRecord    database;
   private OCommandRequest    query;
+  private String             returning = "COUNT";
+  private List<ORecord<?>>   allDeletedRecords;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -56,13 +60,13 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
     OClass clazz = null;
 
-    String temp = parseOptionalWord(true);
-    while (temp != null) {
+    String word = parseOptionalWord(true);
+    while (word != null) {
 
-      if (temp.startsWith("#")) {
-        rid = new ORecordId(temp);
+      if (word.startsWith("#")) {
+        rid = new ORecordId(word);
 
-      } else if (temp.equals(KEYWORD_WHERE)) {
+      } else if (word.equals(KEYWORD_WHERE)) {
         if (clazz == null)
           // ASSIGN DEFAULT CLASS
           clazz = database.getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME);
@@ -71,19 +75,18 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + condition, this));
         break;
 
-      } else if (temp.length() > 0) {
+      } else if (word.length() > 0) {
         // GET/CHECK CLASS NAME
-        clazz = database.getMetadata().getSchema().getClass(temp);
+        clazz = database.getMetadata().getSchema().getClass(word);
         if (clazz == null)
-          throw new OCommandSQLParsingException("Class '" + temp + " was not found");
-
+          throw new OCommandSQLParsingException("Class '" + word + " was not found");
       }
 
       if (rid == null && clazz == null)
         // DELETE ALL VERTEXES
         query = database.command(new OSQLAsynchQuery<ODocument>("select from V", this));
 
-      temp = parseOptionalWord(true);
+      word = parseOptionalWord(true);
       if (parserIsEnded())
         break;
     }

@@ -128,7 +128,7 @@ public class ConcurrentUpdatesTest {
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
           String cmd = "update " + rid + " increment total = 1";
           if (lock)
-            cmd += " strategy lock";
+            cmd += " lock record";
 
           for (int retry = 0; retry < MAX_RETRIES; ++retry) {
             try {
