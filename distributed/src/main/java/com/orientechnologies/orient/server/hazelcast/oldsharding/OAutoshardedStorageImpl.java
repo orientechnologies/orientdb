@@ -124,16 +124,15 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     if (undistributedClusters.contains(iRid.getClusterId())) {
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     }
 
     final ODHTNode node = serverInstance.findSuccessor(iRid.clusterPosition.longValue());
 
     if (node.isLocal())
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     else
       return new OStorageOperationResult<ORawBuffer>(node.readRecord(wrapped.getName(), iRid), true);
   }
