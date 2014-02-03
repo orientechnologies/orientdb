@@ -182,24 +182,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     }
   }
 
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan, final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
       if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
-        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
       final ODistributedPartitioningStrategy strategy = dManager.getPartitioningStrategy(dConfig.getPartitionStrategy(clusterName));
       final ODistributedPartition partition = strategy.getPartition(dManager, getName(), clusterName);
       if (partition.getNodes().contains(dManager.getLocalNodeName()))
         // LOCAL NODE OWNS THE DATA: GET IT LOCALLY BECAUSE IT'S FASTER
-        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
       // DISTRIBUTE IT
       final Object result = dManager.sendRequest(getName(), clusterName, new OReadRecordTask(iRecordId), EXECUTION_MODE.RESPONSE);

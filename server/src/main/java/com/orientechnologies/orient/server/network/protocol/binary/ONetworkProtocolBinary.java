@@ -79,6 +79,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -92,6 +93,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1432,9 +1444,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    if (!isConnectionAlive())
-      return;
-
     final ORecordId rid = channel.readRID();
     final byte[] buffer = channel.readBytes();
     final ORecordVersion version = channel.readVersion();
@@ -1555,7 +1564,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones);
+      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+          OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
       try {

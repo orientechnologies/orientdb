@@ -504,7 +504,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Update records in the database")
   public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("update", iCommandText, "\nUpdated %d record(s) in %f sec(s).\n", true);
+    sqlCommand("update", iCommandText, "\nUpdated record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
     currentDatabase.getLevel1Cache().invalidate();
     currentDatabase.getLevel2Cache().clear();
@@ -512,7 +512,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Delete records from the database")
   public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("delete", iCommandText, "\nDelete %d record(s) in %f sec(s).\n", true);
+    sqlCommand("delete", iCommandText, "\nDelete record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
     currentDatabase.getLevel1Cache().invalidate();
     currentDatabase.getLevel2Cache().clear();
@@ -973,7 +973,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     ORecordId rid = new ORecordId(iRecordId);
-    final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, false, null, false).getResult();
+    final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
 
     if (buffer == null)
       throw new OException("The record has been deleted");
@@ -1732,7 +1732,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     currentRecord = ((ODatabaseRecordAbstract) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
-        iFetchPlan, true, false);
+        iFetchPlan, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
     displayRecord(null);
 
     message("\nOK");

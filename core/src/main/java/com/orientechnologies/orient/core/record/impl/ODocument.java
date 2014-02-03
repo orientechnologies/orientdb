@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
@@ -335,7 +336,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     Object result = null;
     try {
-      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone);
+      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
     }

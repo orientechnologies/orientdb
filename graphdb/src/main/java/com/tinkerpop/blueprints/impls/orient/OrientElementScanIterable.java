@@ -1,13 +1,13 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Iterator;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Element;
+
+import java.util.Iterator;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)

@@ -368,7 +368,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!context.checkTimeout())
       return false;
 
-    final ORecordInternal<?> record = id.getRecord();
+    final OStorage.LOCKING_STRATEGY lockingStrategy = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
+
+    final ORecordInternal<?> record = id instanceof ORecordInternal<?> ? (ORecordInternal<?>) id : getDatabase().load(
+        id.getIdentity(), null, false, false, lockingStrategy);
 
     context.updateMetric("recordReads", +1);
 

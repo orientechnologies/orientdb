@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -86,6 +87,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -94,6 +96,9 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -334,50 +339,56 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
-    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false);
+    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**
    * Loads a record using a fetch plan.
    */
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan,
       final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache,
-      boolean loadTombstone) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone);
+      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone,
+        iLockingStrategy);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone);
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   /**
@@ -487,27 +498,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   @Override
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
-      OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones) {
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+      final Class<REC> iRecordClass, final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition,
+      final boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     setCurrentDatabaseinThreadLocal();
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName,
-      OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones) {
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+      final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     setCurrentDatabaseinThreadLocal();
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
@@ -705,10 +719,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
-      final String iFetchPlan, final boolean iIgnoreCache, boolean loadTombstones) {
+      final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
-
-    // setCurrentDatabaseinThreadLocal();
 
     try {
       checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
@@ -741,7 +754,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones).getResult();
+      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
       if (recordBuffer == null)
         return null;
 
@@ -1215,7 +1228,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           replicaToUpdate = mergeWithRecord(rid);
           callbackHooks(TYPE.BEFORE_REPLICA_UPDATE, replicaToUpdate);
         } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
-          replicaToUpdate = load(rid, "*:0", false, true);
+          replicaToUpdate = load(rid, "*:0", false, true, OStorage.LOCKING_STRATEGY.DEFAULT);
           replicaToUpdate.getRecordVersion().copyFrom(replicaVersion);
 
           callbackHooks(TYPE.BEFORE_REPLICA_DELETE, replicaToUpdate);
@@ -1294,7 +1307,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (rid == null)
           replicaToAdd = new ODocument();
         else
-          replicaToAdd = load(rid, "*:0", false, true);
+          replicaToAdd = load(rid, "*:0", false, true, OStorage.LOCKING_STRATEGY.DEFAULT);
 
         ((ODocument) replicaToAdd).merge((ODocument) record, false, false);
 

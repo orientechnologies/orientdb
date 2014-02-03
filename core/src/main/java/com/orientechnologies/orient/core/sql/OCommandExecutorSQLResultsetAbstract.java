@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -359,9 +360,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
+
+    OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
+
     final ORID[] range = getRange();
     target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true,
-        request.isUseCache(), false).setRange(range[0], range[1]);
+        request.isUseCache(), false, locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -400,8 +405,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, database, clIds, request.isUseCache(), false).setRange(
-        range[0], range[1]);
+    final OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
+
+    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, database, clIds, request.isUseCache(), false, locking)
+        .setRange(range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {

@@ -34,6 +34,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String KEYWORD_SKIP      = "SKIP";
   public static final String KEYWORD_OFFSET    = "OFFSET";
   public static final String KEYWORD_TIMEOUT   = "TIMEOUT";
+  public static final String KEYWORD_LOCK      = "LOCK";
+  public static final String KEYWORD_RETURN    = "RETURN";
   public static final String KEYWORD_KEY       = "key";
   public static final String KEYWORD_RID       = "rid";
   public static final String CLUSTER_PREFIX    = "CLUSTER:";
@@ -99,5 +101,33 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       parserGoBack();
 
     return true;
+  }
+
+  /**
+   * Parses the lock keyword if found.
+   */
+  protected String parseLock() throws OCommandSQLParsingException {
+    parserNextWord(true);
+    final String lockStrategy = parserGetLastWord();
+
+    if (!lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
+      throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
+          + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
+
+    return lockStrategy;
+  }
+
+  /**
+   * Parses the returning keyword if found.
+   */
+  protected String parseReturn() throws OCommandSQLParsingException {
+    parserNextWord(true);
+    final String returning = parserGetLastWord();
+
+    if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE") && !returning.equalsIgnoreCase("AFTER"))
+      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
+          + "' but it should be COUNT (default), BEFORE or AFTER. Example: " + KEYWORD_RETURN + " BEFORE");
+
+    return returning;
   }
 }

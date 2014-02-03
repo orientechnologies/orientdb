@@ -15,19 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -59,6 +47,19 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -366,18 +367,30 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones));
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones,
+        iLockingStrategy));
   }
 
   @Override
   protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
-      boolean loadTombstones) {
+      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
     try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+      switch (iLockingStrategy) {
+      case DEFAULT:
+      case KEEP_SHARED_LOCK:
+        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        break;
+      case NONE:
+        // DO NOTHING
+        break;
+      case KEEP_EXCLUSIVE_LOCK:
+        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      }
+
       try {
         final OClusterPosition lastPos = iClusterSegment.getLastPosition();
 
@@ -398,7 +411,16 @@ public class OStorageMemory extends OStorageEmbedded {
         return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        switch (iLockingStrategy) {
+        case DEFAULT:
+          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          break;
+        case NONE:
+        case KEEP_SHARED_LOCK:
+        case KEEP_EXCLUSIVE_LOCK:
+          // DO NOTHING
+          break;
+        }
       }
     } catch (IOException e) {
       throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
