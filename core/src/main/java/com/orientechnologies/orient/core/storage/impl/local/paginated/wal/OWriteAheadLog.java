@@ -784,16 +784,12 @@ public class OWriteAheadLog {
 
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
       assert lsn.getSegment() == order;
-
       if (lsn.getPosition() >= filledUpTo)
         return null;
 
-      long pageIndex = lsn.getPosition() / OWALPage.PAGE_SIZE;
+      flush();
 
-      if (flushedLsn == null || flushedLsn.getSegment() < order
-          || (flushedLsn.getSegment() == order && flushedLsn.getPosition() / OWALPage.PAGE_SIZE <= pageIndex)) {
-        flush();
-      }
+      long pageIndex = lsn.getPosition() / OWALPage.PAGE_SIZE;
 
       byte[] record = null;
       int pageOffset = (int) (lsn.getPosition() % OWALPage.PAGE_SIZE);
