@@ -257,74 +257,61 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       Object v;
 
       // BIND VALUES TO ADD
-      Collection<Object> coll;
+      Collection<Object> coll = null;
+      ORidBag bag = null;
       Object fieldValue;
-      if (!addEntries.isEmpty()) {
-        for (OPair<String, Object> entry : addEntries) {
-          coll = null;
-          if (!record.containsField(entry.getKey())) {
-            // GET THE TYPE IF ANY
-            if (record.getSchemaClass() != null) {
-              OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
-              if (prop != null && prop.getType() == OType.LINKSET)
-                // SET TYPE
-                coll = new HashSet<Object>();
-            }
+      for (OPair<String, Object> entry : addEntries) {
+        coll = null;
+        if (!record.containsField(entry.getKey())) {
+          // GET THE TYPE IF ANY
+          if (record.getSchemaClass() != null) {
+            OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
+            if (prop != null && prop.getType() == OType.LINKSET)
+              // SET TYPE
+              coll = new HashSet<Object>();
+          }
 
-						// BIND VALUES TO ADD
-						Collection<Object> coll = null;
-						ORidBag bag = null;
-						Object fieldValue;
-						for (OPair<String, Object> entry : addEntries) {
-							coll = null;
-							if (!record.containsField(entry.getKey())) {
-								// GET THE TYPE IF ANY
-								if (record.getSchemaClass() != null) {
-									OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
-									if (prop != null && prop.getType() == OType.LINKSET)
-										// SET TYPE
-										coll = new HashSet<Object>();
-								}
+          if (coll == null)
+            // IN ALL OTHER CASES USE A LIST
+            coll = new ArrayList<Object>();
 
-								if (coll == null)
-									// IN ALL OTHER CASES USE A LIST
-									coll = new ArrayList<Object>();
+          record.field(entry.getKey(), coll);
+        } else {
+          fieldValue = record.field(entry.getKey());
 
-								record.field(entry.getKey(), coll);
-							} else {
-								fieldValue = record.field(entry.getKey());
+          if (fieldValue instanceof Collection<?>)
+            coll = (Collection<Object>) fieldValue;
+          else if (fieldValue instanceof ORidBag)
+            bag = (ORidBag) fieldValue;
+          else
+            continue;
+        }
 
-								if (fieldValue instanceof Collection<?>)
-									coll = (Collection<Object>) fieldValue;
-								else if (fieldValue instanceof ORidBag)
-									bag = (ORidBag) fieldValue;
-								else
-									continue;
-							}
+        v = entry.getValue();
 
-							v = entry.getValue();
+        if (v instanceof OSQLFilterItem)
+          v = ((OSQLFilterItem) v).getValue(record, null, context);
+        else if (v instanceof OSQLFunctionRuntime)
+          v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
+        else if (v instanceof OCommandRequest)
+          v = ((OCommandRequest) v).execute(record, null, context);
 
-							if (v instanceof OSQLFilterItem)
-								v = ((OSQLFilterItem) v).getValue(record, null, context);
-							else if (v instanceof OSQLFunctionRuntime)
-								v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
-							else if (v instanceof OCommandRequest)
-								v = ((OCommandRequest) v).execute(record, null, context);
+        if (coll != null)
+          coll.add(v);
+        else {
+          if (!(v instanceof OIdentifiable))
+            throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
 
-							if (coll != null)
-								coll.add(v);
-							else {
-								if (!(v instanceof OIdentifiable))
-									throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
+          bag.add((OIdentifiable) v);
+        }
 
-								bag.add((OIdentifiable) v);
-							}
+        updatedRecords.add(record);
+      }
 
-							updatedRecords.add(record);
-						}
+			Map<String, Object> map;
+			OPair<String, Object> pair;
 
-
-						if (!putEntries.isEmpty()) {
+      if (!putEntries.isEmpty()) {
         // BIND VALUES TO PUT (AS MAP)
         for (Entry<String, OPair<String, Object>> entry : putEntries.entrySet()) {
           fieldValue = record.field(entry.getKey());
@@ -381,15 +368,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
               if (map.remove(v) != null)
                 updatedRecords.add(record);
             } else if (fieldValue instanceof ORidBag) {
-							bag = (ORidBag) fieldValue;
+              bag = (ORidBag) fieldValue;
 
-							if (!(v instanceof OIdentifiable))
-								throw new OCommandExecutionException("Only links or records can be removed from LINKBAG");
+              if (!(v instanceof OIdentifiable))
+                throw new OCommandExecutionException("Only links or records can be removed from LINKBAG");
 
-							bag.remove((OIdentifiable) v);
-							if (record.isDirty())
-								updatedRecords.add(record);
-						}
+              bag.remove((OIdentifiable) v);
+              if (record.isDirty())
+                updatedRecords.add(record);
+            }
           }
         }
       }

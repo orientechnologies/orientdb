@@ -7,12 +7,14 @@ import org.junit.runners.JUnit4;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @RunWith(JUnit4.class)
-public class OrientGraphFactoryTest extends OrientGraphTest {
+public class OrientGraphFactoryTest  {
   @Test
   public void createTx() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
