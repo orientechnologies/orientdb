@@ -362,7 +362,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
               ppos.recordVersion = OVersionFactory.instance().createVersion();
 
             if (network.getSrvProtocolVersion() >= 20)
-              readCollectionChanges(network);
+              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
 
             return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
@@ -373,6 +373,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           // ASYNCHRONOUS
           if (iCallback != null) {
             final int sessionId = getSessionId();
+            final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get()
+                .getSbTreeCollectionManager();
             Callable<Object> response = new Callable<Object>() {
               public Object call() throws Exception {
                 final OClusterPosition result;
@@ -385,7 +387,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
                     network.readVersion();
 
                   if (network.getSrvProtocolVersion() >= 20)
-                    readCollectionChanges(network);
+                    readCollectionChanges(network, collectionManager);
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
@@ -534,7 +536,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           try {
             beginResponse(network);
             OStorageOperationResult<ORecordVersion> r = new OStorageOperationResult<ORecordVersion>(network.readVersion());
-            readCollectionChanges(network);
+            readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
             return r;
           } finally {
             endResponse(network);
@@ -542,31 +544,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
         case 1:
           // ASYNCHRONOUS
-          if (iCallback != null) {
-            final int sessionId = getSessionId();
-            Callable<Object> response = new Callable<Object>() {
-              public Object call() throws Exception {
-                ORecordVersion result;
+          final int sessionId = getSessionId();
+          final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+          Callable<Object> response = new Callable<Object>() {
+            public Object call() throws Exception {
+              ORecordVersion result;
 
-                try {
-                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
-                  beginResponse(network);
-                  result = network.readVersion();
+              try {
+                OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                beginResponse(network);
+                result = network.readVersion();
 
-                  if (network.getSrvProtocolVersion() >= 20)
-                    readCollectionChanges(network);
-                } finally {
-                  endResponse(network);
-                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
-                }
-
-                iCallback.call(iRid, result);
-                return null;
+                if (network.getSrvProtocolVersion() >= 20)
+                  readCollectionChanges(network, collectionManager);
+              } finally {
+                endResponse(network);
+                OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
               }
 
-            };
-            asynchExecutor.submit(new FutureTask<Object>(response));
-          }
+              iCallback.call(iRid, result);
+              return null;
+            }
+
+          };
+          asynchExecutor.submit(new FutureTask<Object>(response));
         }
         return new OStorageOperationResult<ORecordVersion>(iVersion);
 
@@ -1129,7 +1130,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           committedEntries.clear();
 
           if (network.getSrvProtocolVersion() >= 20)
-            readCollectionChanges(network);
+            readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
 
         } finally {
           endResponse(network);
@@ -1157,10 +1158,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
-  private void readCollectionChanges(OChannelBinaryAsynchClient network) throws IOException {
+  private void readCollectionChanges(OChannelBinaryAsynchClient network, OSBTreeCollectionManager collectionManager)
+      throws IOException {
     int count = network.readInt();
-
-    final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
 
     for (int i = 0; i < count; i++) {
       final long mBitsOfId = network.readLong();
