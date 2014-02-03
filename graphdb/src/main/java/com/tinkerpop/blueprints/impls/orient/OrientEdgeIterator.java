@@ -37,7 +37,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     final OIdentifiable rec = (OIdentifiable) iObject;
 
     final ORecord<?> record = rec.getRecord();
-    if (record instanceof ODocument)
+    if (!(record instanceof ODocument))
       // SKIP IT
       return null;
 
