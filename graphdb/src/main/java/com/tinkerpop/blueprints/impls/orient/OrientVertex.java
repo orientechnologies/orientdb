@@ -13,8 +13,8 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -26,13 +26,6 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -555,12 +548,6 @@ public class OrientVertex extends OrientElement implements Vertex {
             + " can not be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
-
-      // DOUBLE: SCALE UP THE LINK INTO A COLLECTION
-      if (found.equals(iTo))
-        // SAME LINK, SKIP IT
-        return found;
-
       if (prop != null && prop.getType().equals(OType.LINK))
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + " can not be used for creation to hold several links.");
