@@ -144,7 +144,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
       final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 
-      return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
+      return iForce || (!(OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && this instanceof OStorageEmbedded) && remainingUsers == 0);
     } finally {
       lock.releaseSharedLock();
     }
