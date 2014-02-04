@@ -227,7 +227,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (clzName == null || methodName == null)
       return null;
     try {
-      Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
+      //Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
+      Class clz = Class.forName(clzName);
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] { clz, method };
     } catch (Exception ex) {
