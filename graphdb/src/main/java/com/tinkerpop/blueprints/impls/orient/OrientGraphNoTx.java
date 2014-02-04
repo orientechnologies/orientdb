@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -24,7 +25,12 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     config();
   }
 
-  public OrientGraphNoTx(final String url) {
+	public OrientGraphNoTx(ODatabaseDocumentPool pool) {
+		super(pool);
+		config();
+	}
+
+	public OrientGraphNoTx(final String url) {
     super(url, ADMIN, ADMIN);
     config();
   }

@@ -3,8 +3,8 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.*;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -40,11 +40,7 @@ import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
-import org.apache.commons.configuration.Configuration;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -104,6 +100,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   private static final ThreadLocal<OrientGraphContext> threadContext = new ThreadLocal<OrientGraphContext>();
   private static final List<OrientGraphContext>        contexts      = new ArrayList<OrientGraphContext>();
 
+  private final ODatabaseDocumentPool                  pool;
+
   /**
    * Constructs a new object using an existent database instance.
    * 
@@ -111,7 +109,16 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    *          Underlying database object to attach
    */
   public OrientBaseGraph(final ODatabaseDocumentTx iDatabase) {
+    this.pool = null;
+
     reuse(iDatabase);
+    readDatabaseConfiguration();
+  }
+
+  public OrientBaseGraph(ODatabaseDocumentPool pool) {
+    this.pool = pool;
+
+    reuse(pool.acquire());
     readDatabaseConfiguration();
   }
 
@@ -120,6 +127,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public OrientBaseGraph(final String url, final String username, final String password) {
+    this.pool = null;
     this.url = OFileUtils.getPath(url);
     this.username = username;
     this.password = password;
@@ -864,24 +872,26 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         contexts.add(context);
       }
 
-      context.rawGraph = new ODatabaseDocumentTx(url);
+			if (pool == null)  {
+				context.rawGraph = new ODatabaseDocumentTx(url);
+				if (url.startsWith("remote:") || context.rawGraph.exists()) {
+					context.rawGraph.open(username, password);
 
-      if (url.startsWith("remote:") || context.rawGraph.exists()) {
-        context.rawGraph.open(username, password);
+					// LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
+					// final ODocument indexConfiguration =
+					// context.rawGraph.getMetadata().getIndexManager().getConfiguration();
 
-        // LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
-        // final ODocument indexConfiguration =
-        // context.rawGraph.getMetadata().getIndexManager().getConfiguration();
+					loadManualIndexes(context);
 
-        for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
-          ODocument metadata = idx.getMetadata();
-          if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
-            // LOAD THE INDEXES
-            loadIndex(idx);
-        }
+				} else
+					context.rawGraph.create();
+			}	else {
+				context.rawGraph = pool.acquire();
 
-      } else
-        context.rawGraph.create();
+				loadManualIndexes(context);
+			}
+
+
 
       checkForGraphSchema(context.rawGraph);
 
@@ -889,7 +899,16 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+	private void loadManualIndexes(OrientGraphContext context) {
+		for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
+			ODocument metadata = idx.getMetadata();
+			if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
+				// LOAD THE INDEXES
+				loadIndex(idx);
+		}
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
   private OrientIndex<?> loadIndex(final OIndex<?> rawIndex) {
     final OrientIndex<?> index = new OrientIndex(this, rawIndex);
 

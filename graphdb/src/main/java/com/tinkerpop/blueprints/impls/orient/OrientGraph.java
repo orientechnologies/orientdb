@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,7 +35,12 @@ public class OrientGraph extends OrientTransactionalGraph {
     config();
   }
 
-  /**
+	public OrientGraph(ODatabaseDocumentPool pool) {
+		super(pool);
+		config();
+	}
+
+	/**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
    * <table>
    * <tr>

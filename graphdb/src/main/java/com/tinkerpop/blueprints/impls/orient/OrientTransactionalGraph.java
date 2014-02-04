@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -23,6 +24,12 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    */
   public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
+  }
+
+  protected OrientTransactionalGraph(ODatabaseDocumentPool pool) {
+    super(pool);
     setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }

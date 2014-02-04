@@ -43,11 +43,17 @@ public class OrientGraphFactory {
   }
 
   public OrientGraph getTx() {
-    return new OrientGraph(getDatabase());
+    if (pool == null)
+      return new OrientGraph(getDatabase());
+    else
+      return new OrientGraph(pool);
   }
 
   public OrientGraphNoTx getNoTx() {
-    return new OrientGraphNoTx(getDatabase());
+    if (pool == null)
+      return new OrientGraphNoTx(getDatabase());
+    else
+      return new OrientGraphNoTx(pool);
   }
 
   public ODatabaseDocumentTx getDatabase() {
@@ -75,6 +81,9 @@ public class OrientGraphFactory {
     // ASSURE THE DB IS CREATED THE FIRST TIME
     final ODatabaseDocumentTx db = getDatabase();
     db.close();
+
+		if (pool != null)
+			pool.close();
 
     pool = new ODatabaseDocumentPool(url, user, password);
     pool.setup(iMin, iMax);
