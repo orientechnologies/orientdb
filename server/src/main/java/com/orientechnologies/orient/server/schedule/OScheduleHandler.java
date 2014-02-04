@@ -116,7 +116,7 @@ public class OScheduleHandler extends OServerPluginAbstract {
         db = new ODatabaseDocumentTx("local:" + url).open(this.user, this.pass);
       } else {
         db = null;
-        OLogManager.instance().error(this, "database " + this.databaseName + " not exist");
+        OLogManager.instance().error(this, "database " + this.databaseName + " does not exist");
       }
     } catch (Exception ex) {
       ex.printStackTrace();
