@@ -15,29 +15,31 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OrientCommitMT {
-  public static final String  DB_URL           = "plocal:target/avltreetest";
-  public static final String  DB_USER          = "admin";
-  public static final String  DB_PASSWORD      = "admin";
-  private static final String TEST_CLASS       = "ORIENT_COMMIT_TEST";
-  private static final String THREAD_ID        = "ThreadId";
-  private static final String ID               = "IdField";
+  public static final String              DB_URL           = "remote:localhost/avltreetest";
+  public static final String              DB_USER          = "admin";
+  public static final String              DB_PASSWORD      = "admin";
+  private static final String             TEST_CLASS       = "ORIENT_COMMIT_TEST";
+  private static final String             THREAD_ID        = "ThreadId";
+  private static final String             ID               = "IdField";
 
-  private String              failureMessage   = "";
-  private boolean             isValidData;
-  private TestExecutor[]      threads;
+  private String                          failureMessage   = "";
+  private boolean                         isValidData;
+  private TestExecutor[]                  threads;
 
-  final int                   threadCount      = 5;
-  final int                   maxSleepTime     = 100;
-  final int                   maxOpCount       = 6;
-  final int                   initialCacheSize = 10;
-  final AtomicInteger         idGenerator      = new AtomicInteger(1);
+  final int                               threadCount      = 5;
+  final int                               maxSleepTime     = 100;
+  final int                               maxOpCount       = 6;
+  final int                               initialCacheSize = 10;
+  final AtomicInteger                     idGenerator      = new AtomicInteger(1);
 
-  private static Random       random           = new Random();
+  private static Random                   random           = new Random();
+  private static final OrientGraphFactory factory          = new OrientGraphFactory(DB_URL);
 
   @BeforeClass
   public static void beforeClass() {
-    OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-    graph.drop();
+    factory.setupPool(5, 10);
+    // OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+    // graph.drop();
   }
 
   @Before
@@ -48,8 +50,8 @@ public class OrientCommitMT {
 
   @AfterClass
   public static void afterClass() {
-    OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-    graph.drop();
+    // OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+    // graph.drop();
   }
 
   @Test
@@ -218,7 +220,7 @@ public class OrientCommitMT {
      * Perform a set of insert or delete operations (picked at random) with variable transaction flag
      */
     private void commitOperations() {
-      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+      OrientGraph graph = factory.getTx();// new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
       try {
         List<TempCacheObject> tempCache = new ArrayList<TempCacheObject>();
         try {
@@ -236,7 +238,7 @@ public class OrientCommitMT {
               tempCache.add(new TempCacheObject(operation, insertId, insertedNode.getCustomId()));
             } else if (Operation.DELETE.equals(operation)) {
               // get delete id
-              ORID deleteId = getRandomIdForThread();
+              ORID deleteId = getRandomIdForThread(graph);
               if (deleteId != null) {
                 System.out.println("ThreadId: " + this.threadId + " Deleting " + deleteId);
                 // perform delete operation
@@ -263,8 +265,8 @@ public class OrientCommitMT {
         // update permanent cache from temp cache
         updateCache(tempCache);
 
-        validateCustomIdsAgainstDatabase();
-        validateDatabase(this.cache);
+        validateCustomIdsAgainstDatabase(graph);
+        validateDatabase(this.cache, graph);
       } catch (Exception e) {
         System.out.println("ThreadId: " + this.threadId + " threw a validation exception: " + e.getMessage());
         e.printStackTrace(System.out);
@@ -276,28 +278,23 @@ public class OrientCommitMT {
       }
     }
 
-    private void validateCustomIdsAgainstDatabase() throws Exception {
+    private void validateCustomIdsAgainstDatabase(OrientGraph graph) throws Exception {
       List<Vertex> recordsInDb = new ArrayList<Vertex>();
-      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-      try {
-        for (Vertex v : graph.getVerticesOfClass(TEST_CLASS))
-          recordsInDb.add(v);
+      for (Vertex v : graph.getVerticesOfClass(TEST_CLASS))
+        recordsInDb.add(v);
 
-        for (IdPair cacheInstance : this.cache) {
-          Integer customId = cacheInstance.getCustomId();
-          boolean found = false;
-          for (Vertex vertex : recordsInDb) {
-            if (vertex.getProperty(ID).equals(customId)) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            throw new Exception("Custom id: " + customId + " exists in cache but was not found in db.");
+      for (IdPair cacheInstance : this.cache) {
+        Integer customId = cacheInstance.getCustomId();
+        boolean found = false;
+        for (Vertex vertex : recordsInDb) {
+          if (vertex.getProperty(ID).equals(customId)) {
+            found = true;
+            break;
           }
         }
-      } finally {
-        graph.shutdown();
+        if (!found) {
+          throw new Exception("Custom id: " + customId + " exists in cache but was not found in db.");
+        }
       }
     }
 
@@ -309,11 +306,10 @@ public class OrientCommitMT {
      * Verify that all ids in the permanent cache are in the db. Verify that all ids (for a given thread) in the db are in the
      * permanent cache.
      */
-    private void validateDatabase(final List<IdPair> cache) throws Exception {
-      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+    private void validateDatabase(final List<IdPair> cache, OrientGraph graph) throws Exception {
       for (IdPair idPair : cache) {
         ORID id = idPair.getOrid();
-        if (!isInDatabase(id)) {
+        if (!isInDatabase(id, graph)) {
           throw new Exception("Insert issue: expected record " + id + " was not found in database.");
         }
       }
@@ -331,20 +327,14 @@ public class OrientCommitMT {
     /**
      * Checks to see if an id for a given thread exist in the db.
      */
-    private boolean isInDatabase(final ORID id) throws Exception {
-      OrientGraph orientGraph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-      try {
-        final OrientVertex vertex = orientGraph.getVertex(id);
-        if (vertex != null) {
-          if (!Integer.valueOf(this.threadId).equals(vertex.getProperty(THREAD_ID))) {
-            return false;
-          }
+    private boolean isInDatabase(final ORID id, OrientGraph orientGraph) throws Exception {
+      final OrientVertex vertex = orientGraph.getVertex(id);
+      if (vertex != null) {
+        if (!Integer.valueOf(this.threadId).equals(vertex.getProperty(THREAD_ID))) {
+          return false;
         }
-        return vertex != null;
-
-      } finally {
-        orientGraph.shutdown();
       }
+      return vertex != null;
     }
 
     /**
@@ -372,7 +362,7 @@ public class OrientCommitMT {
     private IdPair insertNewNode(OrientGraph graph) {
       boolean closeDb = false;
       if (graph == null) {
-        graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+        graph = factory.getTx();
         closeDb = true;
       }
 
@@ -380,7 +370,7 @@ public class OrientCommitMT {
         Integer id = OrientCommitMT.this.idGenerator.getAndIncrement();
         OrientVertex vertex = graph.addVertex("class:" + TEST_CLASS, THREAD_ID, Integer.valueOf(this.threadId), ID, id);
 
-        ORID randomId = getRandomIdForThread();
+        ORID randomId = getRandomIdForThread(graph);
         if (randomId != null) {
           OrientVertex v = graph.getVertex(randomId);
           graph.addEdge(null, vertex, v, "contains");
@@ -407,21 +397,32 @@ public class OrientCommitMT {
     /**
      * Get all of the ids from the db for that class for a given thread id. Return id from the list at random.
      */
-    private ORID getRandomIdForThread() {
-      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-      List<ORID> idsInDb = new ArrayList<ORID>();
+    private ORID getRandomIdForThread(OrientGraph graph) {
+      boolean closeDb = false;
+      if (graph == null) {
+        graph = factory.getTx();
+        closeDb = true;
+      }
 
-      for (Vertex v : graph.getVerticesOfClass(TEST_CLASS)) {
-        if (Integer.valueOf(this.threadId).equals(v.getProperty(THREAD_ID))) {
-          idsInDb.add(((OrientVertex) v).getIdentity());
+      try {
+        List<ORID> idsInDb = new ArrayList<ORID>();
+
+        for (Vertex v : graph.getVerticesOfClass(TEST_CLASS)) {
+          if (Integer.valueOf(this.threadId).equals(v.getProperty(THREAD_ID))) {
+            idsInDb.add(((OrientVertex) v).getIdentity());
+          }
         }
+        int size = idsInDb.size();
+        if (size == 0) {
+          return null;
+        }
+        int index = random.nextInt(size);
+        return idsInDb.get(index);
+      } finally {
+        if (closeDb)
+          graph.shutdown();
       }
-      int size = idsInDb.size();
-      if (size == 0) {
-        return null;
-      }
-      int index = random.nextInt(size);
-      return idsInDb.get(index);
+
     }
 
     private List<Operation> generateOperations(final int maxOpCount) {
@@ -528,7 +529,7 @@ public class OrientCommitMT {
    * Create schema that has one class and one field
    */
   public void buildSchemaAndSeed() {
-    OrientGraphNoTx graph = new OrientGraphNoTx(DB_URL, DB_USER, DB_PASSWORD);
+    OrientGraphNoTx graph = factory.getNoTx();
     try {
       OClass nodeClass = graph.createVertexType(TEST_CLASS);
       nodeClass.createProperty(THREAD_ID, OType.INTEGER).setMandatory(true).setNotNull(true);
