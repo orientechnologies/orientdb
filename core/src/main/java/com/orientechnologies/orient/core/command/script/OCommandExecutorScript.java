@@ -67,6 +67,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     if (compiledScript == null) {
       ScriptEngine scriptEngine = scriptManager.getEngine(language);
+      scriptEngine.put("engine", scriptEngine);
       // COMPILE FUNCTION LIBRARY
       String lib = scriptManager.getLibrary(db, language);
       if (lib == null)

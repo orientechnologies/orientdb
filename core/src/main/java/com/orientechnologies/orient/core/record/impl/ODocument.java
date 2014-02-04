@@ -1649,4 +1649,17 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     this._allowChainedAccess = _allowChainedAccess;
     return this;
   }
+  
+  /**
+   * convert ODocument to map
+   * @return
+   */
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<String, Object>();
+    String[] fields = this.fieldNames();
+    for(String field : fields) {
+      map.put(field, this.field(field));
+    }
+    return map;
+  }
 }
