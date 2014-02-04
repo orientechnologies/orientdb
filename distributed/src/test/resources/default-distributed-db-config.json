@@ -10,9 +10,6 @@
         "index": {
             "replication": false
         },
-        "ODistributedConflict": {
-            "replication": false
-        },
         "*": {
             "replication": true,
             "readQuorum": 1,

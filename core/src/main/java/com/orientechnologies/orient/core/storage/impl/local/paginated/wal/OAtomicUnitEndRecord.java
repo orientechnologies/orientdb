@@ -23,9 +23,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
  * @since 24.05.13
  */
 public class OAtomicUnitEndRecord extends OOperationUnitRecord {
-  private OLogSequenceNumber lsn;
-
-  private boolean            rollback;
+  private boolean rollback;
 
   public OAtomicUnitEndRecord() {
   }
@@ -41,7 +39,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     content[offset] = rollback ? (byte) 1 : 0;
@@ -51,7 +49,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     rollback = content[offset] > 0;
@@ -70,17 +68,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
   public String toString() {
-    return "OAtomicUnitEndRecord{" + "lsn=" + lsn + "} " + super.toString();
+    return toString("rollback=" + rollback);
   }
 }

@@ -15,16 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -40,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -54,7 +47,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
@@ -96,7 +91,9 @@ public class IndexTest {
       // IT SHOULD GIVE ERROR ON DUPLICATED KEY
       Assert.assertTrue(false);
 
-    } catch (OIndexException e) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+    } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
     }
   }
@@ -279,6 +276,8 @@ public class IndexTest {
       database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
       database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
       Assert.assertTrue(false);
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OIndexException);
     } catch (OIndexException e) {
       Assert.assertTrue(true);
     }
@@ -1075,6 +1074,8 @@ public class IndexTest {
       db.getMetadata().getSchema().save();
     }
 
+    long expectedIndexSize = 0;
+
     final int passCount = 10;
     final int chunkSize = 1000;
     for (int pass = 0; pass < passCount; pass++) {
@@ -1089,12 +1090,20 @@ public class IndexTest {
       }
       db.commit();
 
+      expectedIndexSize += chunkSize;
+      Assert.assertEquals(db.getMetadata().getIndexManager().getClassIndex("MyFruit", "MyFruit.color").getSize(),
+          expectedIndexSize, "After add");
+
       // do delete
       db.begin();
       for (final ODocument recordToDelete : recordsToDelete) {
         Assert.assertNotNull(db.delete(recordToDelete));
       }
       db.commit();
+
+      expectedIndexSize -= recordsToDelete.size();
+      Assert.assertEquals(db.getMetadata().getIndexManager().getClassIndex("MyFruit", "MyFruit.color").getSize(),
+          expectedIndexSize, "After delete");
     }
 
     db.close();
@@ -1148,7 +1157,9 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+    } catch (ORecordDuplicatedException oie) {
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1185,7 +1196,9 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+    } catch (ORecordDuplicatedException oie) {
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1220,7 +1233,9 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+    } catch (ORecordDuplicatedException oie) {
     }
 
     Assert.assertEquals(
@@ -1260,7 +1275,9 @@ public class IndexTest {
 
       db.commit();
       Assert.fail();
-    } catch (OIndexException oie) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+    } catch (ORecordDuplicatedException oie) {
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1325,8 +1342,8 @@ public class IndexTest {
       anotherChildClassDocument.field("testParentProperty", 11L);
       anotherChildClassDocument.save();
 
-      Assert.assertFalse(new ORecordId(-1, ORecordId.CLUSTER_POS_INVALID).equals(childClassDocument.getIdentity()));
-      Assert.assertFalse(new ORecordId(-1, ORecordId.CLUSTER_POS_INVALID).equals(anotherChildClassDocument.getIdentity()));
+      Assert.assertFalse(new ORecordId(-1, ORID.CLUSTER_POS_INVALID).equals(childClassDocument.getIdentity()));
+      Assert.assertFalse(new ORecordId(-1, ORID.CLUSTER_POS_INVALID).equals(anotherChildClassDocument.getIdentity()));
     } finally {
       db.close();
     }
@@ -1359,7 +1376,7 @@ public class IndexTest {
     database.getMetadata().getSchema().createClass("ManualIndexTxClass");
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
-    idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    idxManager.createIndex("manualTxIndexTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexTest");
 
     ODocument v0 = new ODocument("ManualIndexTxClass");
@@ -1399,7 +1416,8 @@ public class IndexTest {
     database.getMetadata().getSchema().createClass("ManualIndexTxRecursiveStoreClass");
 
     OIndexManager idxManager = db.getMetadata().getIndexManager();
-    idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    idxManager.createIndex("manualTxIndexRecursiveStoreTest", "UNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null,
+        null);
 
     OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("manualTxIndexRecursiveStoreTest");
 
@@ -1443,7 +1461,7 @@ public class IndexTest {
 
   public void testIndexCountPlusCondition() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    idxManager.createIndex("IndexCountPlusCondition", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexCountPlusCondition");
 
@@ -1471,7 +1489,8 @@ public class IndexTest {
 
   public void testNotUniqueIndexKeySize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    idxManager.createIndex("IndexNotUniqueIndexKeySize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null,
+        null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexKeySize");
 
@@ -1492,7 +1511,7 @@ public class IndexTest {
 
   public void testNotUniqueIndexSize() {
     OIndexManager idxManager = database.getMetadata().getIndexManager();
-    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    idxManager.createIndex("IndexNotUniqueIndexSize", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null, null);
 
     final OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) idxManager.getIndex("IndexNotUniqueIndexSize");
 
@@ -1544,6 +1563,32 @@ public class IndexTest {
   public void testRestoreUniqueIndex() {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
+  }
+
+  @Test
+  public void testIndexInCompositeQuery() {
+    OClass classOne = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest1");
+    OClass classTwo = database.getMetadata().getSchema().createClass("CompoundSQLIndexTest2");
+
+    classTwo.createProperty("address", OType.LINK, classOne);
+
+    classTwo.createIndex("CompoundSQLIndexTestIndex", INDEX_TYPE.UNIQUE, "address");
+
+    ODocument docOne = new ODocument("CompoundSQLIndexTest1");
+    docOne.field("city", "Montreal");
+
+    docOne.save();
+
+    ODocument docTwo = new ODocument("CompoundSQLIndexTest2");
+    docTwo.field("address", docOne);
+    docTwo.save();
+
+    List<ODocument> result = database.getUnderlying().query(
+        new OSQLSynchQuery<ODocument>(
+            "select from CompoundSQLIndexTest2 where address in (select from CompoundSQLIndexTest1 where city='Montreal')"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).getIdentity(), docTwo.getIdentity());
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

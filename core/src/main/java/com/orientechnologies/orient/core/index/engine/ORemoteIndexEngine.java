@@ -15,15 +15,12 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -42,6 +39,10 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public void create(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
       OStreamSerializer valueSerializer, boolean isAutomatic) {
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
   }
 
   @Override
@@ -138,54 +139,37 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public int removeValue(OIdentifiable value, ValuesTransformer transformer) {
-    return 0;
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer transformer, ValuesResultListener resultListener) {
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer transformer) {
-    return null;
+  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
+      ValuesResultListener valuesResultListener) {
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer transformer) {
-    return null;
+  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
+      ValuesResultListener valuesResultListener) {
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer transformer) {
-    return null;
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
+      EntriesResultListener entriesResultListener) {
   }
 
   @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer transformer) {
-    return null;
+  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
+      EntriesResultListener entriesResultListener) {
   }
 
   @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer transformer) {
-    return null;
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer transformer) {
-    return null;
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer transformer,
+      EntriesResultListener entriesResultListener) {
   }
 
   @Override
   public long size(ValuesTransformer transformer) {
-    return 0;
-  }
-
-  @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer transformer) {
     return 0;
   }
 

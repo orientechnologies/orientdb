@@ -145,7 +145,7 @@ public class OEntityManager {
    */
   public synchronized void registerEntityClasses(final Collection<String> iClassNames, final ClassLoader iClassLoader) {
     OLogManager.instance().debug(this, "Discovering entity classes for class names: %s", iClassNames);
-    
+
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iClassNames, iClassLoader));
     } catch (ClassNotFoundException e) {
@@ -172,19 +172,19 @@ public class OEntityManager {
    */
   public synchronized void registerEntityClasses(final String iPackageName, final ClassLoader iClassLoader) {
     OLogManager.instance().debug(this, "Discovering entity classes inside package: %s", iPackageName);
-    
+
     try {
       registerEntityClasses(OReflectionHelper.getClassesFor(iPackageName, iClassLoader));
     } catch (ClassNotFoundException e) {
       throw new OException(e);
     }
   }
-  
+
   protected synchronized void registerEntityClasses(final List<Class<?>> classes) {
     for (Class<?> c : classes) {
       if (!classHandler.containsEntityClass(c)) {
         if (c.isAnonymousClass()) {
-          OLogManager.instance().warn(this, "Trying to register an anonymous class '%s'.", c.getName());
+          OLogManager.instance().debug(this, "Skip registration of anonymous class '%s'.", c.getName());
           continue;
         }
         classHandler.registerEntityClass(c);

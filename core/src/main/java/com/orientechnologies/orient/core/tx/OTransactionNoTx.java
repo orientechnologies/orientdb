@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -29,8 +26,12 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * No operation transaction.
@@ -56,11 +57,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
-      boolean ignonreCache, boolean loadTombstone) {
+      final boolean ignonreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignonreCache, loadTombstone);
+    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignonreCache, loadTombstone, iLockingStrategy);
   }
 
   /**
@@ -170,22 +171,20 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OPERATION iStatus, final Object iKey,
-      final OIdentifiable iValue) {
-    switch (iStatus) {
+  public void addIndexEntry(final OIndex<?> delegate, final String indexName, final OPERATION status, final Object key,
+      final OIdentifiable value) {
+    switch (status) {
     case CLEAR:
       delegate.clear();
       break;
 
     case PUT:
-      delegate.put(iKey, iValue);
+      delegate.put(key, value);
       break;
 
     case REMOVE:
-      if (iKey == null)
-        delegate.remove(iValue);
-      else
-        delegate.remove(iKey, iValue);
+      assert key != null;
+      delegate.remove(key, value);
       break;
     }
   }

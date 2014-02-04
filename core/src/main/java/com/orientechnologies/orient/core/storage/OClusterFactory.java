@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 
 public interface OClusterFactory {
-  OCluster createCluster(String iType, boolean forceListBasedCluster);
+  OCluster createCluster(String iType);
 
   OCluster createCluster(OStorageClusterConfiguration iConfig);
 

@@ -1,13 +1,6 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -53,7 +46,7 @@ public class SBTreeTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, (OStorageLocalAbstract) databaseDocumentTx
         .getStorage().getUnderlying());
   }
 
@@ -307,6 +300,100 @@ public class SBTreeTest {
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
+  }
+
+  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
+    for (int i = 0; i < 5167; i++)
+      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 0; i < 3500; i++)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.firstKey(), 3500);
+
+    for (int i = 0; i < 3500; i++)
+      Assert.assertNull(sbTree.get(i));
+
+    for (int i = 3500; i < 5167; i++)
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+  }
+
+  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
+    for (int i = 0; i < 5167; i++)
+      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 5166; i > 1700; i--)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.lastKey(), 1700);
+
+    for (int i = 5166; i > 1700; i--)
+      Assert.assertNull(sbTree.get(i));
+
+    for (int i = 1700; i >= 0; i--)
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+  }
+
+  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
+    for (int i = 0; i < 12055; i++)
+      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 0; i < 1730; i++)
+      sbTree.remove(i);
+
+    for (int i = 3440; i < 6900; i++)
+      sbTree.remove(i);
+
+    for (int i = 8600; i < 12055; i++)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.firstKey(), 1730);
+    Assert.assertEquals((int) sbTree.lastKey(), 8599);
+
+    Collection<OIdentifiable> result = sbTree.getValuesMinor(7200, true, -1);
+
+    Set<OIdentifiable> identifiables = new HashSet<OIdentifiable>(result);
+    for (int i = 7200; i >= 6900; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 3439; i >= 1730; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesMajor(1740, true, -1);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 1740; i < 3440; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 6900; i < 8600; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesBetween(1740, true, 7200, true, -1);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 1740; i < 3440; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 6900; i <= 7200; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
   }
 
   private void assertMajorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {

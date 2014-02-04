@@ -28,12 +28,13 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: document/<database>[/<record-id>]");
+    final String[] urlParts = checkSyntax(iRequest.url, 2,
+        "Syntax error: document/<database>[/<record-id>][?updateMode=full|partial]");
 
     iRequest.data.commandInfo = "Edit Document";
 
     ODatabaseDocumentTx db = null;
-    ORecordId recordId = null;
+    ORecordId recordId;
     final ODocument doc;
 
     try {
@@ -54,6 +55,10 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       doc = new ODocument();
       doc.fromJSON(iRequest.content);
 
+      if (iRequest.ifMatch != null)
+        // USE THE IF-MATCH HTTP HEADER AS VERSION
+        doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+
       if (!recordId.isValid())
         recordId = (ORecordId) doc.getIdentity();
       else
@@ -70,18 +75,27 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
         return false;
       }
 
-      currentDocument.merge(doc, false, false);
+      boolean partialUpdateMode = false;
+      String mode = iRequest.getParameter("updateMode");
+      if (mode != null && mode.equalsIgnoreCase("partial"))
+        partialUpdateMode = true;
+
+      mode = iRequest.getHeader("updateMode");
+      if (mode != null && mode.equalsIgnoreCase("partial"))
+        partialUpdateMode = true;
+
+      currentDocument.merge(doc, partialUpdateMode, false);
       currentDocument.getRecordVersion().copyFrom(doc.getRecordVersion());
 
       currentDocument.save();
+
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          currentDocument.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion(), true);
 
     } finally {
       if (db != null)
         db.close();
     }
-
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + recordId + " updated successfully.",
-        null);
     return false;
   }
 

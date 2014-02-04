@@ -32,8 +32,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -63,10 +61,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
   private boolean             inverse        = false;
 
   public OCommandExecutorSQLCreateLink parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 
@@ -177,12 +172,12 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
 
     Object value;
-    
+
     String cmd = "select from ";
     if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField)) {
-    	cmd = "select from " + destClassName + " where " + destField + " = ";
+      cmd = "select from " + destClassName + " where " + destField + " = ";
     }
-    
+
     List<ODocument> result;
     ODocument target;
     Object oldValue;

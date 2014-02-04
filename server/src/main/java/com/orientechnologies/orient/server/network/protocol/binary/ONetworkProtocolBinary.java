@@ -15,12 +15,8 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -36,7 +32,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -51,11 +52,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -69,6 +72,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -155,7 +169,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     if (connection != null) {
       if (connection.database != null)
-        connection.database.getLevel1Cache().clear();
+        if (!connection.database.isClosed())
+          connection.database.getLevel1Cache().clear();
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -241,10 +256,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
       rangeCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED:
-      isLHClustersAreUsed();
       break;
 
     case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
@@ -627,23 +638,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
       channel.writeClusterPosition(pos[0]);
       channel.writeClusterPosition(pos[1]);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void isLHClustersAreUsed() throws IOException {
-    setDataCommandInfo("Determinate whether clusters are presented as persistent list or hash map ");
-
-    if (!isConnectionAlive())
-      return;
-
-    final boolean isLHClustersAreUsed = connection.database.getStorage().isHashClustersAreUsed();
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeByte(isLHClustersAreUsed ? (byte) 1 : 0);
     } finally {
       endResponse();
     }
@@ -1263,9 +1257,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    if (!isConnectionAlive())
-      return;
-
     final ORecordId rid = channel.readRID();
     final byte[] buffer = channel.readBytes();
     final ORecordVersion version = channel.readVersion();
@@ -1362,7 +1353,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones);
+      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+          OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
       try {
@@ -1411,6 +1403,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void endResponse() throws IOException {
+    // reseting transaction state. Commands are stateless and connection should be cleared
+    // otherwise reused connection (connections pool) may lead to unpredicted errors
+    if (connection.database!=null && connection.database.getTransaction()!=null)
+            connection.database.getTransaction().close();
     channel.flush();
     channel.releaseWriteLock();
   }
@@ -1488,6 +1484,63 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeBytes(result.toStream());
     } finally {
       endResponse();
+    }
+  }
+
+  protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
+    channel.acquireWriteLock();
+    try {
+
+      channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
+      channel.writeInt(iClientTxId);
+
+      Throwable current;
+      if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
+        // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
+        current = t.getCause();
+      else
+        current = t;
+
+      final Throwable original = current;
+      while (current != null) {
+        // MORE DETAILS ARE COMING AS EXCEPTION
+        channel.writeByte((byte) 1);
+
+        channel.writeString(current.getClass().getName());
+        channel.writeString(current != null ? current.getMessage() : null);
+
+        current = current.getCause();
+      }
+      channel.writeByte((byte) 0);
+
+      if (connection != null && connection.data.protocolVersion >= 19) {
+        final OMemoryStream memoryStream = new OMemoryStream();
+        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
+
+        objectOutputStream.writeObject(original);
+        objectOutputStream.flush();
+
+        final byte[] result = memoryStream.toByteArray();
+        objectOutputStream.close();
+
+        channel.writeBytes(result);
+      }
+
+      channel.flush();
+
+      if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
+        if (logClientFullStackTrace)
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+        else
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+      }
+    } catch (Exception e) {
+      if (e instanceof SocketException)
+        shutdown();
+    } finally {
+      channel.releaseWriteLock();
     }
   }
 

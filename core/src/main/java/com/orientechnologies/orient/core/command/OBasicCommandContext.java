@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
@@ -48,8 +49,14 @@ public class OBasicCommandContext implements OCommandContext {
   }
 
   public Object getVariable(String iName) {
+    return getVariable(iName, null);
+  }
+
+  public Object getVariable(String iName, final Object iDefault) {
     if (iName == null)
-      return null;
+      return iDefault;
+
+    Object result = null;
 
     if (iName.startsWith("$"))
       iName = iName.substring(1);
@@ -66,33 +73,38 @@ public class OBasicCommandContext implements OCommandContext {
       if (firstPart.equalsIgnoreCase("PARENT") && parent != null) {
         // UP TO THE PARENT
         if (lastPart.startsWith("$"))
-          return parent.getVariable(lastPart.substring(1));
+          result = parent.getVariable(lastPart.substring(1));
         else
-          return ODocumentHelper.getFieldValue(parent, lastPart);
+          result = ODocumentHelper.getFieldValue(parent, lastPart);
+
+        return result != null ? result : iDefault;
+
       } else if (firstPart.equalsIgnoreCase("ROOT")) {
         OCommandContext p = this;
         while (p.getParent() != null)
           p = p.getParent();
+
         if (lastPart.startsWith("$"))
-          return p.getVariable(lastPart.substring(1));
+          result = p.getVariable(lastPart.substring(1));
         else
-          return ODocumentHelper.getFieldValue(p, lastPart, this);
+          result = ODocumentHelper.getFieldValue(p, lastPart, this);
+
+        return result != null ? result : iDefault;
       }
     } else {
       firstPart = iName;
       lastPart = null;
     }
 
-    Object result = null;
     if (firstPart.equalsIgnoreCase("CONTEXT"))
       result = getVariables();
     else if (firstPart.equalsIgnoreCase("PARENT"))
-      return parent;
+      result = parent;
     else if (firstPart.equalsIgnoreCase("ROOT")) {
       OCommandContext p = this;
       while (p.getParent() != null)
         p = p.getParent();
-      return p;
+      result = p;
     } else {
       if (variables != null && variables.containsKey(firstPart))
         result = variables.get(firstPart);
@@ -103,7 +115,7 @@ public class OBasicCommandContext implements OCommandContext {
     if (pos > -1)
       result = ODocumentHelper.getFieldValue(result, lastPart, this);
 
-    return result;
+    return result != null ? result : iDefault;
   }
 
   public OCommandContext setVariable(String iName, final Object iValue) {
@@ -122,6 +134,32 @@ public class OBasicCommandContext implements OCommandContext {
         ((OCommandContext) nested).setVariable(iName.substring(pos + 1), iValue);
     } else
       variables.put(iName, iValue);
+    return this;
+  }
+
+  @Override
+  public OCommandContext incrementVariable(String iName) {
+    if (iName != null) {
+      if (iName.startsWith("$"))
+        iName = iName.substring(1);
+
+      init();
+
+      int pos = OStringSerializerHelper.getHigherIndexOf(iName, 0, ".", "[");
+      if (pos > -1) {
+        Object nested = getVariable(iName.substring(0, pos));
+        if (nested != null && nested instanceof OCommandContext)
+          ((OCommandContext) nested).incrementVariable(iName.substring(pos + 1));
+      } else {
+        final Object v = variables.get(iName);
+        if (v == null)
+          variables.put(iName, 1);
+        else if (v instanceof Number)
+          variables.put(iName, OType.increment((Number) v, 1));
+        else
+          throw new IllegalArgumentException("Variable '" + iName + "' is not a number, but: " + v.getClass());
+      }
+    }
     return this;
   }
 

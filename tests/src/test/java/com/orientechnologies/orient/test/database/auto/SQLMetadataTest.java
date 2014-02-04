@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 /**
  * SQL test against metadata.
@@ -76,8 +77,15 @@ public class SQLMetadataTest {
     Assert.assertTrue(result.size() != 0);
   }
 
-  @Test(expectedExceptions = OQueryParsingException.class)
+  @Test
   public void queryMetadataNotSupported() {
-    database.command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:blaaa")).execute();
+    try {
+      database.command(new OSQLSynchQuery<ODocument>("select expand(indexes) from metadata:blaaa")).execute();
+      Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
+    } catch (OQueryParsingException e) {
+    }
+
   }
 }

@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
@@ -28,7 +29,6 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -85,12 +85,18 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
     identity = identityRecord.getIdentity();
 
     hashFunction.setValueSerializer(keySerializer);
-    hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer, storageLocalAbstract);
+    hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
+        indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
   }
 
   @Override
   public void flush() {
     hashTable.flush();
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
+    hashTable.deleteWithoutLoad(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
   }
 
   @Override
@@ -101,7 +107,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OStorageLocalAbstract) getDatabase()
+        .getStorage().getUnderlying());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 
@@ -141,42 +148,6 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void put(Object key, V value) {
     hashTable.put(key, value);
-  }
-
-  @Override
-  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
-    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
-    OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
-    if (firstEntry == null)
-      return 0;
-
-    OHashIndexBucket.Entry<Object, V>[] entries = hashTable.ceilingEntries(firstEntry.key);
-
-    while (entries.length > 0) {
-      for (OHashIndexBucket.Entry<Object, V> entry : entries)
-        if (transformer != null) {
-          Collection<OIdentifiable> rids = transformer.transformFromValue(entry.value);
-          if (rids.remove(valueToRemove))
-            entriesToUpdate.put(entry.key, transformer.transformToValue(rids));
-        } else if (entry.value.equals(valueToRemove))
-          entriesToUpdate.put(entry.key, entry.value);
-
-      entries = hashTable.higherEntries(entries[entries.length - 1].key);
-    }
-
-    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
-      V value = entry.getValue();
-      if (value instanceof Collection) {
-        Collection col = (Collection) value;
-        if (col.isEmpty())
-          hashTable.remove(entry.getKey());
-        else
-          hashTable.put(entry.getKey(), value);
-      } else
-        hashTable.remove(entry.getKey());
-    }
-
-    return entriesToUpdate.size();
   }
 
   @Override
@@ -223,45 +194,39 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer) {
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMinor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesBetween");
-  }
-
-  @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("count");
   }
 
   @Override
@@ -304,6 +269,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   private final class EntriesIterator implements Iterator<Map.Entry<Object, V>> {
+    private int                                 size = 0;
     private int                                 nextEntriesIndex;
     private OHashIndexBucket.Entry<Object, V>[] entries;
 
@@ -313,6 +279,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
         entries = new OHashIndexBucket.Entry[0];
       else
         entries = hashTable.ceilingEntries(firstEntry.key);
+
+      size += entries.length;
     }
 
     @Override
@@ -330,6 +298,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       if (nextEntriesIndex >= entries.length) {
         entries = hashTable.higherEntries(entries[entries.length - 1].key);
+        size += entries.length;
+
         nextEntriesIndex = 0;
       }
 

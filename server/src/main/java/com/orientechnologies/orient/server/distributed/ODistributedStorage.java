@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -91,8 +92,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
-    final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-    if (!dConfig.isReplicationActive(null))
+    if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(null))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
@@ -151,8 +151,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ASSIGN DESTINATION NODE
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
@@ -179,23 +178,24 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
-      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones,
+      LOCKING_STRATEGY iLockingStrategy) {
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
       final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
-        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
       final ODistributedPartitioningStrategy strategy = dManager.getPartitioningStrategy(dConfig.getPartitionStrategy(clusterName));
       final ODistributedPartition partition = strategy.getPartition(dManager, getName(), clusterName);
       if (partition.getNodes().contains(dManager.getLocalNodeName()))
         // LOCAL NODE OWNS THE DATA: GET IT LOCALLY BECAUSE IT'S FASTER
-        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+        return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
       // DISTRIBUTE IT
       final Object result = dManager.sendRequest(getName(), clusterName, new OReadRecordTask(iRecordId), EXECUTION_MODE.RESPONSE);
@@ -226,8 +226,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
@@ -267,8 +266,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dConfig.isReplicationActive(clusterName))
+      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
         // DON'T REPLICATE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
@@ -346,8 +344,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     wrapped.close();
   }
 
-  public void close(final boolean iForce) {
-    wrapped.close(iForce);
+  public void close(final boolean iForce, boolean onDelete) {
+    wrapped.close(iForce, false);
   }
 
   public boolean isClosed() {
@@ -364,14 +362,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       wrapped.commit(iTx, callback);
     else {
       try {
-        final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-        if (!dConfig.isReplicationActive(null))
+        if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(null))
           // DON'T REPLICATE
           wrapped.commit(iTx, callback);
         else {
           final OTxTask txTask = new OTxTask();
 
-         
           for (ORecordOperation op : iTx.getCurrentRecordEntries()) {
             final OAbstractRecordReplicatedTask task;
 
@@ -568,11 +564,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   }
 
   @Override
-  public boolean isHashClustersAreUsed() {
-    return wrapped.isHashClustersAreUsed();
-  }
-
-  @Override
   public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition entry) {
     return wrapped.higherPhysicalPositions(currentClusterId, entry);
   }
@@ -629,13 +620,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    wrapped.backup(out, options);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
+    wrapped.backup(out, options, callable, iListener);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    wrapped.restore(in, options);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
+    wrapped.restore(in, options, callable, iListener);
   }
 
   private OFreezableStorage getFreezableStorage() {

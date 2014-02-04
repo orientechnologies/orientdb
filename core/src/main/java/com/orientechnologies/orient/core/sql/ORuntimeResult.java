@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -26,6 +23,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Handles runtime results.
@@ -97,12 +97,12 @@ public class ORuntimeResult {
           projectionValue = null;
         } else if (v instanceof OSQLFilterItemVariable) {
           // RETURN A VARIABLE FROM THE CONTEXT
-          projectionValue = ((OSQLFilterItemVariable) v).getValue(inputDocument, iContext);
+          projectionValue = ((OSQLFilterItemVariable) v).getValue(inputDocument, iValue, iContext);
         } else if (v instanceof OSQLFilterItemField)
-          projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iContext);
+          projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iValue, iContext);
         else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
-          projectionValue = f.execute(inputDocument, iValue, iContext);
+          projectionValue = f.execute(inputDocument, inputDocument, iValue, iContext);
         } else
           projectionValue = v;
 

@@ -4,16 +4,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.junit.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 
 public class TestLoadGraph {
-  private static final String INPUT_FILE = "target/test-classes/graph-example-2.xml";
-  private static final String DBURL      = "local:target/databases/tinkerpop";
+  private static final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
+  private static final String DBURL      = "plocal:target/databases/GratefulDeadConcerts";
   private String              inputFile  = INPUT_FILE;
   private String              dbURL      = DBURL;
 
@@ -26,16 +28,17 @@ public class TestLoadGraph {
     dbURL = DBURL;
   }
 
-  public TestLoadGraph(final String[] args) {
+  private TestLoadGraph(final String[] args) {
     inputFile = args.length > 0 ? args[0] : INPUT_FILE;
     dbURL = args.length > 1 ? args[1] : DBURL;
   }
 
-  // @Test
+  @Test
   public void testImport() throws IOException, FileNotFoundException {
+    final boolean oldKeepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
-    OGraphDatabase db = new OGraphDatabase(DBURL);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DBURL);
     ODatabaseHelper.deleteDatabase(db, "plocal");
 
     OrientBaseGraph g = new OrientGraphNoTx(dbURL);
@@ -48,6 +51,7 @@ public class TestLoadGraph {
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 
-    g.shutdown();
+    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldKeepOpen);
+    //g.drop();
   }
 }

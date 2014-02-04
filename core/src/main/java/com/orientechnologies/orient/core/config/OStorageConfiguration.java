@@ -93,7 +93,7 @@ public class OStorageConfiguration implements OSerializableStream {
    * @throws OSerializationException
    */
   public OStorageConfiguration load() throws OSerializationException {
-    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null, false).getResult().buffer;
+    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult().buffer;
 
     if (record == null)
       throw new OStorageException("Cannot load database's configuration. The database seems to be corrupted.");
@@ -216,9 +216,7 @@ public class OStorageConfiguration implements OSerializableStream {
       } else if (clusterType.equals("m"))
         // MEMORY CLUSTER
         currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
-      else if (clusterType.equals("h")) {
-        currentCluster = new OStorageEHClusterConfiguration(this, clusterId, clusterName, null, targetDataSegmentId);
-      } else if (clusterType.equals("d")) {
+      else if (clusterType.equals("d")) {
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null,
             Boolean.valueOf(read(values[index++])), Float.valueOf(read(values[index++])), Float.valueOf(read(values[index++])),
             read(values[index++]));

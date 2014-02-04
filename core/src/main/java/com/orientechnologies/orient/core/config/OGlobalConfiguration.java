@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -30,6 +22,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+
+import java.io.PrintStream;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -49,6 +49,19 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
+  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
+
+  MEMORY_AUTOFREE_HEAP_THRESHOLD(
+      "memory.autoFreeHeapThreshold",
+      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
+      String.class, "70%"),
+
+  DIRECT_MEMORY_UNSAFE_MODE(
+      "memory.directMemory.unsafeMode",
+      "Indicates whether to do perform range check before each direct memory update, it is false by default, "
+          + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, false),
+
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
 
@@ -64,20 +77,25 @@ public enum OGlobalConfiguration {
       "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
-      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, 300000),
+      "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
+
+  STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
+      "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
+  WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Should we perform force sync during WAL page flush", Boolean.class, true),
+
   WAL_CACHE_SIZE("storage.wal.cacheSize",
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment in megabytes.", Integer.class, 64),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 256),
 
-  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 150 * 1024),
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 4 * 1024),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
@@ -86,6 +104,13 @@ public enum OGlobalConfiguration {
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
       Integer.class, 2592000),
+
+  WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE(
+      "storage.wal.reportAfterOperationsDuringRestore",
+      "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
+      Integer.class, 10000),
+
+  WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
       "Interval which we should wait till shutdown (in seconds)", Integer.class, 60 * 10),
@@ -118,7 +143,7 @@ public enum OGlobalConfiguration {
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 5000),
+      Integer.class, 300000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -132,11 +157,11 @@ public enum OGlobalConfiguration {
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
+  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, false),
+  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 0),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -159,6 +184,10 @@ public enum OGlobalConfiguration {
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
+
+  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
+
+  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Default database pool maximum size", Integer.class, 0),
 
   @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
@@ -188,7 +217,7 @@ public enum OGlobalConfiguration {
 
   TX_AUTO_RETRY("tx.autoRetry",
       "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
-      Integer.class, 10),
+      Integer.class, 1),
 
   TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
@@ -206,6 +235,9 @@ public enum OGlobalConfiguration {
 
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
+
+  INDEX_SYNCHRONOUS_AUTO_REBUILD("index.auto.synchronousAutoRebuild",
+      "Synchronous execution of auto rebuilding of indexes in case of db crash.", Boolean.class, Boolean.TRUE),
 
   INDEX_AUTO_LAZY_UPDATES(
       "index.auto.lazyUpdates",
@@ -226,6 +258,9 @@ public enum OGlobalConfiguration {
 
   INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
       "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
+
+  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
+      "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -255,7 +290,7 @@ public enum OGlobalConfiguration {
   MVRBTREE_RID_BINARY_THRESHOLD(
       "mvrbtree.ridBinaryThreshold",
       "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-      Integer.class, 8),
+      Integer.class, -1),
 
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
@@ -271,8 +306,30 @@ public enum OGlobalConfiguration {
       "Maximum size of value which can be put in SBTree without creation link to standalone page in bytes (40960 by default)",
       Integer.class, 40960),
 
+  SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
+      "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0.",
+      Integer.class, 2),
+
+  SBTREEBONSAI_LINKBAG_CACHE_SIZE("sbtreebonsai.linkBagCache.size",
+      "Amount of LINKBAG collections are cached to avoid constant reloading of data", Integer.class, 100000),
+
+  SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
+      "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
+
+  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeeSpaceReuseTrigger",
+      "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
+
+  // RIDBAG
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
+
+  RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
+      "Amount of values after which LINKBAG implementation will use embedded values container", Integer.class, 60),
+
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
+
+  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
   FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
@@ -339,13 +396,6 @@ public enum OGlobalConfiguration {
 
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
-
-  USE_LHPEPS_CLUSTER("file.cluster.useLHPEPS", "Indicates whether cluster file should be saved as simple persistent"
-      + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
-
-  USE_LHPEPS_MEMORY_CLUSTER("file.cluster.useMemoryLHCluster",
-      "Indicates whether cluster file should be saved as simple persistent"
-          + " list or as hash map. Persistent list is used by default.", Boolean.class, Boolean.FALSE),
 
   // NETWORK
   NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000),
@@ -457,9 +507,6 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
 
   // DISTRIBUTED
-  DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
-      10000),
-
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
@@ -650,5 +697,6 @@ public enum OGlobalConfiguration {
     }
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
+    System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
   }
 }

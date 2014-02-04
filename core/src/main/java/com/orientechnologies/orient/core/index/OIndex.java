@@ -71,17 +71,6 @@ public interface OIndex<T> {
   T get(Object iKey);
 
   /**
-   * Counts the elements associated with the passed key, if any.
-   * 
-   * @param iKey
-   *          The key to count
-   * @return The size of found records, otherwise 0 if the key is not found
-   */
-  long count(Object iKey);
-
-  public long count(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch);
-
-  /**
    * Tells if a key is contained in the index.
    * 
    * @param iKey
@@ -104,20 +93,11 @@ public interface OIndex<T> {
   /**
    * Removes an entry by its key.
    * 
-   * @param iKey
+   * @param key
    *          The entry's key to remove
    * @return True if the entry has been found and removed, otherwise false
    */
-  boolean remove(Object iKey);
-
-  /**
-   * Removes a value in all the index entries.
-   * 
-   * @param iRID
-   *          Record id to search
-   * @return Times the record was found, 0 if not found at all
-   */
-  int remove(OIdentifiable iRID);
+  boolean remove(Object key);
 
   /**
    * Removes an entry by its key and value.
@@ -164,6 +144,8 @@ public interface OIndex<T> {
    * @return The index instance itself to allow in chain calls
    */
   OIndex<T> delete();
+
+  void deleteWithoutIndexLoad(String indexName);
 
   /**
    * Returns the index name.
@@ -219,7 +201,7 @@ public interface OIndex<T> {
    */
   Collection<OIdentifiable> getValues(Collection<?> iKeys);
 
-  Collection<OIdentifiable> getValues(Collection<?> iKeys, int maxValuesToFetch);
+  void getValues(Collection<?> iKeys, IndexValuesResultListener resultListener);
 
   /**
    * Returns a set of documents with keys in specific set
@@ -230,7 +212,7 @@ public interface OIndex<T> {
    */
   Collection<ODocument> getEntries(Collection<?> iKeys);
 
-  Collection<ODocument> getEntries(Collection<?> iKeys, int maxEntriesToFetch);
+  void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener);
 
   OIndexDefinition getDefinition();
 
@@ -240,14 +222,6 @@ public interface OIndex<T> {
    * @return Names of clusters that will be indexed.
    */
   Set<String> getClusters();
-
-  /**
-   * Commits changes as atomic. It's called during the transaction's commit.
-   * 
-   * @param iDocument
-   *          Collection of entries to commit
-   */
-  void commit(ODocument iDocument);
 
   /**
    * Returns an iterator to walk across all the index items from the first to the latest one.
@@ -321,8 +295,8 @@ public interface OIndex<T> {
    */
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive);
 
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
-      boolean iToInclusive, int maxValuesToFetch);
+  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
+      IndexValuesResultListener resultListener);
 
   /**
    * Returns a set of records with keys greater than passed parameter.
@@ -336,7 +310,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch);
+  public abstract void getValuesMajor(Object fromKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
 
   /**
    * Returns a set of records with keys less than passed parameter.
@@ -350,7 +324,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
 
-  public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch);
+  public abstract void getValuesMinor(Object toKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -365,7 +339,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch);
+  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -380,7 +354,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
 
-  public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch);
+  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents with key between the range passed as parameter.
@@ -396,8 +370,8 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
 
-  public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      final int maxEntriesToFetch);
+  public abstract void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
+      IndexEntriesResultListener entriesResultListener);
 
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 
@@ -408,7 +382,17 @@ public interface OIndex<T> {
    */
   public ORID getIdentity();
 
+  ODocument getMetadata();
+
   public boolean supportsOrderedIterations();
 
   public boolean isRebuiding();
+
+  public interface IndexValuesResultListener {
+    boolean addResult(OIdentifiable value);
+  }
+
+  public interface IndexEntriesResultListener {
+    boolean addResult(ODocument entry);
+  }
 }

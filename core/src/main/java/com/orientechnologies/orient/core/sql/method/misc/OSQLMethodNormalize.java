@@ -35,7 +35,7 @@ public class OSQLMethodNormalize extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
 
         if (ioResult != null) {
             final Normalizer.Form form = iMethodParams != null && iMethodParams.length > 0 ? Normalizer.Form

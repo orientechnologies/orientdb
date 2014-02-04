@@ -18,22 +18,15 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.json.OJSONFetchContext;
@@ -164,8 +157,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           noMap = true;
     }
 
-    final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, ' ',
-        '\n', '\r', '\t');
+    final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, false,
+        ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
       throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
@@ -331,6 +324,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
       }
 
+    if (iType == null && iFieldTypes != null && iFieldTypes.containsKey(iFieldName))
+      iType = ORecordSerializerStringAbstract.getType(iFieldValue, iFieldTypes.get(iFieldName));
+
     if (iFieldValue.startsWith("{") && iFieldValue.endsWith("}")) {
       // OBJECT OR MAP. CHECK THE TYPE ATTRIBUTE TO KNOW IT
       iFieldValueAsString = iFieldValue.substring(1, iFieldValue.length() - 1);
@@ -370,14 +366,24 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       // EMBEDDED VALUES
       final Collection<?> embeddedCollection;
-      if (iType == OType.LINKSET)
+      final ORidBag ridBag;
+
+      if (iType == OType.LINKSET) {
         embeddedCollection = new OMVRBTreeRIDSet(iRecord);
-      else if (iType == OType.EMBEDDEDSET)
+        ridBag = null;
+      } else if (iType == OType.EMBEDDEDSET) {
         embeddedCollection = new OTrackedSet<Object>(iRecord);
-      else if (iType == OType.LINKLIST)
+        ridBag = null;
+      } else if (iType == OType.LINKLIST) {
         embeddedCollection = new ORecordLazyList(iRecord);
-      else
+        ridBag = null;
+      } else if (iType == OType.LINKBAG) {
+        embeddedCollection = null;
+        ridBag = new ORidBag();
+      } else {
         embeddedCollection = new OTrackedList<Object>(iRecord);
+        ridBag = null;
+      }
 
       iFieldValue = iFieldValue.substring(1, iFieldValue.length() - 1);
 
@@ -388,10 +394,18 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         Object collectionItem;
         for (String item : items) {
           iFieldValue = item.trim();
-          iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
+          if (!(iLinkedType == OType.DATE || iLinkedType == OType.BYTE || iLinkedType == OType.INTEGER || iLinkedType == OType.LONG
+              || iLinkedType == OType.DATETIME || iLinkedType == OType.DECIMAL || iLinkedType == OType.DOUBLE || iLinkedType == OType.FLOAT))
+            iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
+          else
+            iFieldValueAsString = iFieldValue;
 
-          collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap,
-              iOptions);
+          if (ridBag != null)
+            collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, OType.LINK, null, iFieldTypes, iNoMap,
+                iOptions);
+          else
+            collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap,
+                iOptions);
 
           if (iType != null && iType.isLink()) {
             // LINK
@@ -402,11 +416,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
             continue;
 
-          ((Collection<Object>) embeddedCollection).add(collectionItem);
+          if (embeddedCollection != null)
+            ((Collection<Object>) embeddedCollection).add(collectionItem);
+          else
+            ridBag.add((OIdentifiable) collectionItem);
         }
       }
 
-      return embeddedCollection;
+      return embeddedCollection != null ? embeddedCollection : ridBag;
     }
 
     if (iType == null)

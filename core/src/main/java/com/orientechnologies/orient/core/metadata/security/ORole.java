@@ -76,7 +76,7 @@ public class ORole extends ODocumentWrapper {
     super(CLASS_NAME);
     document.field("name", iName);
     parentRole = iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
+    document.field("inheritedRole", iParent != null ? iParent.getDocument() : null);
     setMode(iAllowMode);
     document.field("rules", new HashMap<String, Number>());
   }
@@ -119,7 +119,7 @@ public class ORole extends ODocumentWrapper {
 
   public boolean allow(final String iResource, final int iCRUDOperation) {
     // CHECK FOR SECURITY AS DIRECT RESOURCE
-    final Byte access = rules.get(iResource);
+    final Byte access = rules.get(iResource.toLowerCase());
     if (access != null) {
       final byte mask = (byte) iCRUDOperation;
 
@@ -151,7 +151,7 @@ public class ORole extends ODocumentWrapper {
    * @return
    */
   public ORole grant(final String iResource, final int iOperation) {
-    final Byte current = rules.get(iResource);
+    final Byte current = rules.get(iResource.toLowerCase());
     byte currentValue = current == null ? PERMISSION_NONE : current.byteValue();
 
     currentValue |= (byte) iOperation;
@@ -173,7 +173,7 @@ public class ORole extends ODocumentWrapper {
     if (iOperation == PERMISSION_NONE)
       return this;
 
-    final Byte current = rules.get(iResource);
+    final Byte current = rules.get(iResource.toLowerCase());
 
     byte currentValue;
     if (current == null)
@@ -208,7 +208,7 @@ public class ORole extends ODocumentWrapper {
 
   public ORole setParentRole(final ORole iParent) {
     this.parentRole = iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
+    document.field("inheritedRole", parentRole != null ? parentRole.getDocument() : null);
     return this;
   }
 

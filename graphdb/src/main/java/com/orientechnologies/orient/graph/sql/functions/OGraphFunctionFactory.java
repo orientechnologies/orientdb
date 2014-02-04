@@ -33,21 +33,25 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
 
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
-    FUNCTIONS.put(OSQLFunctionGremlin.NAME.toUpperCase(Locale.ENGLISH), OSQLFunctionGremlin.class);
+    register(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
 
-    FUNCTIONS.put(OSQLFunctionLabel.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionLabel());
-    FUNCTIONS.put(OSQLFunctionOut.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionOut());
-    FUNCTIONS.put(OSQLFunctionIn.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionIn());
-    FUNCTIONS.put(OSQLFunctionBoth.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionBoth());
-    FUNCTIONS.put(OSQLFunctionOutE.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionOutE());
-    FUNCTIONS.put(OSQLFunctionInE.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionInE());
-    FUNCTIONS.put(OSQLFunctionBothE.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionBothE());
-    FUNCTIONS.put(OSQLFunctionOutV.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionOutV());
-    FUNCTIONS.put(OSQLFunctionInV.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionInV());
-    FUNCTIONS.put(OSQLFunctionBothV.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionBothV());
+    register(OSQLFunctionLabel.NAME, new OSQLFunctionLabel());
+    register(OSQLFunctionOut.NAME, new OSQLFunctionOut());
+    register(OSQLFunctionIn.NAME, new OSQLFunctionIn());
+    register(OSQLFunctionBoth.NAME, new OSQLFunctionBoth());
+    register(OSQLFunctionOutE.NAME, new OSQLFunctionOutE());
+    register(OSQLFunctionInE.NAME, new OSQLFunctionInE());
+    register(OSQLFunctionBothE.NAME, new OSQLFunctionBothE());
+    register(OSQLFunctionOutV.NAME, new OSQLFunctionOutV());
+    register(OSQLFunctionInV.NAME, new OSQLFunctionInV());
+    register(OSQLFunctionBothV.NAME, new OSQLFunctionBothV());
 
-    FUNCTIONS.put(OSQLFunctionDijkstra.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionDijkstra());
-    FUNCTIONS.put(OSQLFunctionShortestPath.NAME.toUpperCase(Locale.ENGLISH), new OSQLFunctionShortestPath());
+    register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
+    register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
+  }
+
+  public static void register(final String iName, final Object iImplementation) {
+    FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iImplementation);
   }
 
   public Set<String> getFunctionNames() {
@@ -55,14 +59,14 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   }
 
   public boolean hasFunction(final String name) {
-    return FUNCTIONS.containsKey(name);
+    return FUNCTIONS.containsKey(name.toLowerCase());
   }
 
   public OSQLFunction createFunction(final String name) {
-    final Object obj = FUNCTIONS.get(name);
+    final Object obj = FUNCTIONS.get(name.toLowerCase());
 
     if (obj == null)
-      throw new OCommandExecutionException("Unknowned function name :" + name);
+      throw new OCommandExecutionException("Unknown function name :" + name);
 
     if (obj instanceof OSQLFunction)
       return (OSQLFunction) obj;

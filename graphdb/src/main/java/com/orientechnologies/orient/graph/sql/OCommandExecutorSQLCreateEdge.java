@@ -15,21 +15,12 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -39,6 +30,13 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -56,7 +54,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 
@@ -111,58 +108,61 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
+      @Override
+      public List<Object> call(OrientBaseGraph graph) {
+        final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
+        final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
 
-    final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
-    final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
+        // CREATE EDGES
+        final List<Object> edges = new ArrayList<Object>();
+        for (ORID from : fromIds) {
+          final OrientVertex fromVertex = graph.getVertex(from);
+          if (fromVertex == null)
+            throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
 
-    // CREATE EDGES
-    final List<Object> edges = new ArrayList<Object>();
-    for (ORID from : fromIds) {
-      final OrientVertex fromVertex = graph.getVertex(from);
-      if (fromVertex == null)
-        throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
+          for (ORID to : toIds) {
+            final OrientVertex toVertex;
+            if (from.equals(to)) {
+              toVertex = fromVertex;
+            } else {
+              toVertex = graph.getVertex(to);
+            }
 
-      for (ORID to : toIds) {
-        final OrientVertex toVertex;
-        if (from.equals(to)) {
-          toVertex = fromVertex;
-        } else {
-          toVertex = graph.getVertex(to);
-        }
+            final String clsName = clazz.getName();
 
-        final String clsName = clazz.getName();
+            if (fields != null)
+              // EVALUATE FIELDS
+              for (Entry<String, Object> f : fields.entrySet()) {
+                if (f.getValue() instanceof OSQLFunctionRuntime)
+                  fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
+              }
 
-        if (fields != null)
-          // EVALUATE FIELDS
-          for (Entry<String, Object> f : fields.entrySet()) {
-            if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, context));
+            final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+
+            if (fields != null && !fields.isEmpty()) {
+              if (!edge.getRecord().getIdentity().isValid())
+                edge.convertToDocument();
+
+              OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+            }
+
+            if (content != null) {
+              if (!edge.getRecord().getIdentity().isValid())
+                // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
+                edge.convertToDocument();
+              edge.getRecord().merge(content, true, false);
+            }
+
+            edge.save(clusterName);
+
+            edges.add(edge);
           }
-
-        final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName);
-
-        if (fields != null && !fields.isEmpty()) {
-          if (!edge.getRecord().getIdentity().isValid())
-            edge.convertToDocument();
-
-          OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
         }
 
-        if (content != null) {
-          if (!edge.getRecord().getIdentity().isValid())
-            // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
-            edge.convertToDocument();
-          edge.getRecord().merge(content, true, false);
-        }
-
-        edge.save(clusterName);
-
-        edges.add(edge);
+        return edges;
       }
-    }
-
-    return edges;
+    });
   }
 
   @Override

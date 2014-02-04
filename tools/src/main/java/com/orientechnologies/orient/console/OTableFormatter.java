@@ -189,7 +189,7 @@ public class OTableFormatter {
   }
 
   private void printHeaderLine(final Map<String, Integer> iColumns) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder("\n");
 
     if (iColumns.size() > 0) {
       int i = 0;
@@ -227,6 +227,7 @@ public class OTableFormatter {
         columns.put(c, getColumnSize(fetched, rec, c, columns.get(c)));
 
       if (rec instanceof ODocument) {
+        ((ODocument) rec).setLazyLoad(false);
         // PARSE ALL THE DOCUMENT'S FIELDS
         ODocument doc = (ODocument) rec;
         for (String fieldName : doc.fieldNames()) {

@@ -56,7 +56,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     super.beforeExecute(iRequest, iResponse);
-    
+
     final String[] urlParts = iRequest.url.substring(1).split("/");
     if (urlParts.length < 2)
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
@@ -65,10 +65,16 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(iRequest.authorization,
         ':') : null;
 
-    final OHttpSession currentSession;
-    if (iRequest.sessionId != null && iRequest.sessionId.length() > 1)
+    OHttpSession currentSession;
+    if (iRequest.sessionId != null && iRequest.sessionId.length() > 1) {
       currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
-    else
+      if (currentSession != null && authenticationParts != null) {
+        if (!currentSession.getUserName().equals(authenticationParts.get(0))) {
+          // CHANGED USER, INVALIDATE THE SESSION
+          currentSession = null;
+        }
+      }
+    } else
       currentSession = null;
 
     if (currentSession == null) {

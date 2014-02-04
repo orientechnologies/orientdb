@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -27,8 +29,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.serialization.compression.impl.OSnappyCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -42,11 +44,12 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 @Test
 public class LocalPaginatedClusterTest {
-  private static final int RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
-                                                         + OLongSerializer.LONG_SIZE;
-  public OPaginatedCluster paginatedCluster          = new OPaginatedCluster();
-  protected String         buildDirectory;
-  protected ODiskCache     diskCache;
+  private static final int           RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
+                                                                   + OLongSerializer.LONG_SIZE;
+  public OPaginatedCluster           paginatedCluster          = new OPaginatedCluster();
+  protected String                   buildDirectory;
+  protected ODiskCache               diskCache;
+  protected OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -65,10 +68,12 @@ public class LocalPaginatedClusterTest {
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
+    atomicOperationsManager = new OAtomicOperationsManager(null);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
 
     when(storage.getDiskCache()).thenReturn(diskCache);
+    when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(storage.getVariableParser()).thenReturn(variableParser);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
@@ -927,9 +932,8 @@ public class LocalPaginatedClusterTest {
 
     OClusterPage page = new OClusterPage(pagePointer.getDataPointer(), false, ODurablePage.TrackMode.NONE);
     int recordIndex = (int) (physicalPosition.clusterPosition.longValue() & 0xFFFF);
-    int recordPageOffset = page.getRecordPageOffset(recordIndex);
 
-    byte[] storedEntity = page.getBinaryValue(recordPageOffset, page.getRecordSize(recordIndex));
+    byte[] storedEntity = page.getRecordBinaryValue(recordIndex, 0, page.getRecordSize(recordIndex));
     byte[] storedRecord = new byte[100];
     System.arraycopy(storedEntity, OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, storedRecord, 0, storedRecord.length);
 
@@ -955,9 +959,8 @@ public class LocalPaginatedClusterTest {
     int recordIndex = (int) (physicalPosition.clusterPosition.longValue() & 0xFFFF);
 
     OClusterPage page = new OClusterPage(pagePointer.getDataPointer(), false, ODurablePage.TrackMode.NONE);
-    int recordPageOffset = page.getRecordPageOffset(recordIndex);
 
-    byte[] storedEntity = page.getBinaryValue(recordPageOffset, page.getRecordSize(recordIndex));
+    byte[] storedEntity = page.getRecordBinaryValue(recordIndex, 0, page.getRecordSize(recordIndex));
     byte[] storedRecord = new byte[record.length];
     System.arraycopy(storedEntity, OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, storedRecord, 0, storedRecord.length);
 

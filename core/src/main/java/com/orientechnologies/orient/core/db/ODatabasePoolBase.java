@@ -51,10 +51,16 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   protected abstract DB createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs);
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize) {
+    return this.setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
+        OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+  }
+
+  public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize, final long idleTimeout,
+      final long timeBetweenEvictionRunsMillis) {
     if (dbPool == null)
       synchronized (this) {
         if (dbPool == null) {
-          dbPool = new ODatabasePoolAbstract<DB>(this, iMinSize, iMaxSize) {
+          dbPool = new ODatabasePoolAbstract<DB>(this, iMinSize, iMaxSize, idleTimeout, timeBetweenEvictionRunsMillis) {
 
             public void onShutdown() {
               if (owner instanceof ODatabasePoolBase<?>)

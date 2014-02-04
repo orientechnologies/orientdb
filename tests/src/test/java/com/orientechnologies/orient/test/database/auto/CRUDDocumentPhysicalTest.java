@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -47,6 +33,19 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
@@ -405,24 +404,29 @@ public class CRUDDocumentPhysicalTest {
 
     final ORecordId rid = (ORecordId) newDoc.save().getIdentity();
 
-    final ODocument loadedDoc = database.load(rid);
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      final ODocument loadedDoc = database.load(rid);
 
-    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+      Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
-    Assert.assertTrue(loadedDoc.containsField("map1"));
-    Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
-    final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
-    Assert.assertEquals(loadedMap1.size(), 1);
+      Assert.assertTrue(loadedDoc.containsField("map1"));
+      Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
+      final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
+      Assert.assertEquals(loadedMap1.size(), 1);
 
-    Assert.assertTrue(loadedMap1.containsKey("map2"));
-    Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
-    final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
-    Assert.assertEquals(loadedMap2.size(), 1);
+      Assert.assertTrue(loadedMap1.containsKey("map2"));
+      Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
+      final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
+      Assert.assertEquals(loadedMap2.size(), 1);
 
-    Assert.assertTrue(loadedMap2.containsKey("map3"));
-    Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
-    final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
-    Assert.assertEquals(loadedMap3.size(), 0);
+      Assert.assertTrue(loadedMap2.containsKey("map3"));
+      Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
+      final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
+      Assert.assertEquals(loadedMap3.size(), 0);
+    } finally {
+      database.close();
+    }
   }
 
   @Test
@@ -798,6 +802,7 @@ public class CRUDDocumentPhysicalTest {
 
         database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
+          @Override
           public void call(ORecordId iRID, OClusterPosition iParameter) {
             callBackCalled.incrementAndGet();
           }
@@ -827,7 +832,7 @@ public class CRUDDocumentPhysicalTest {
       }
       db.close();
 
-      while (database.countClusterElements("Account") > 0)
+      if (database.countClusterElements("Account") > 0)
         for (ODocument d : database.browseClass("Account")) {
           if (d.field("name").equals("Asynch insertion test"))
             d.delete();

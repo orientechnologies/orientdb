@@ -17,6 +17,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -128,7 +129,12 @@ public class OAutomaticBackup extends OServerPluginAbstract {
 
               final long begin = System.currentTimeMillis();
 
-              db.backup(new FileOutputStream(exportFilePath), null);
+              db.backup(new FileOutputStream(exportFilePath), null, null, new OCommandOutputListener() {
+                @Override
+                public void onMessage(String iText) {
+                  OLogManager.instance().info(this, iText);
+                }
+              });
 
               OLogManager.instance().info(
                   this,

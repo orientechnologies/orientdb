@@ -25,11 +25,15 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * SQL CREATE INDEX command: Create a new index against a property.
@@ -44,9 +48,10 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String KEYWORD_CREATE = "CREATE";
-  public static final String KEYWORD_INDEX  = "INDEX";
-  public static final String KEYWORD_ON     = "ON";
+  public static final String KEYWORD_CREATE   = "CREATE";
+  public static final String KEYWORD_INDEX    = "INDEX";
+  public static final String KEYWORD_ON       = "ON";
+  public static final String KEYWORD_METADATA = "METADATA";
 
   private String             indexName;
   private OClass             oClass;
@@ -54,10 +59,9 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   private OClass.INDEX_TYPE  indexType;
   private OType[]            keyTypes;
   private byte               serializerKeyId;
+  private ODocument          metadataDoc      = null;
 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
@@ -134,9 +138,20 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       throw new OCommandSQLParsingException("Index type is null", parserText, oldPos);
 
     oldPos = pos;
+    final int configPos = parserTextUpperCase.indexOf(KEYWORD_METADATA, oldPos);
+
+    if (configPos > -1) {
+      final String configString = parserText.substring(configPos + KEYWORD_METADATA.length()).trim();
+      metadataDoc = new ODocument().fromJSON(configString);
+    }
+
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos != -1 && !word.toString().equalsIgnoreCase("NULL")) {
-      final String typesString = parserTextUpperCase.substring(oldPos).trim();
+    if (pos != -1 && !word.toString().equalsIgnoreCase("NULL") && !word.toString().equalsIgnoreCase(KEYWORD_METADATA)) {
+      final String typesString;
+      if (configPos > -1)
+        typesString = parserTextUpperCase.substring(oldPos, configPos).trim();
+      else
+        typesString = parserTextUpperCase.substring(oldPos).trim();
 
       if (word.toString().equalsIgnoreCase("RUNTIME")) {
         oldPos = pos;
@@ -153,7 +168,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
         keyTypeList.toArray(keyTypes);
 
         if (fields != null && fields.length != 0 && fields.length != keyTypes.length) {
-          throw new OCommandSQLParsingException("Count of fields doesn't match with count of property types. " + "Fields: "
+          throw new OCommandSQLParsingException("Count of fields does not match with count of property types. " + "Fields: "
               + Arrays.toString(fields) + "; Types: " + Arrays.toString(keyTypes), parserText, oldPos);
         }
       }
@@ -179,21 +194,21 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (fields == null || fields.length == 0) {
       if (keyTypes != null)
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null);
+            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null, metadataDoc);
       else if (serializerKeyId != 0) {
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null);
+            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc);
       } else
-        idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null);
+        idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null, metadataDoc);
     } else {
       if (keyTypes == null || keyTypes.length == 0) {
-        idx = oClass.createIndex(indexName, indexType, fields);
+        idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, fields);
       } else {
         final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields),
             Arrays.asList(keyTypes));
 
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null);
+            .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc);
       }
     }
 
@@ -204,7 +219,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   }
 
   private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
-    String[] fieldNameParts = fieldName.split("\\s+");
+    final String[] fieldNameParts = fieldName.split("\\s+");
     if (fieldNameParts.length == 1)
       return;
 
@@ -228,6 +243,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
   @Override
   public String getSyntax() {
-    return "CREATE INDEX <name> [ON <class-name> (prop-names)] <type> [<key-type>]";
+    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [METADATA {JSON Index Metadata Document}]";
   }
 }

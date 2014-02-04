@@ -65,8 +65,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
-  private final Level            logClientExceptions;
-  private final boolean          logClientFullStackTrace;
+  protected final Level          logClientExceptions;
+  protected final boolean        logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
@@ -249,8 +249,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.writeBytes(stream, realLength);
     } catch (Exception e) {
       channel.writeBytes(null);
-      OLogManager.instance().error(this, "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")",
-          OSerializationException.class);
+      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      OLogManager.instance().error(this, message, e);
+
+      throw new OSerializationException(message, e);
     }
   }
 
@@ -296,8 +298,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     else if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(dbName);
+
       if (path == null)
-        path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
+        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
     } else if (storageType.equals(OEngineMemory.NAME)) {
       path = storageType + ":" + dbName;
     } else

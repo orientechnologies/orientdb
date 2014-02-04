@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.cache;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.common.collection.OLimitedMap;
 import com.orientechnologies.common.log.OLogManager;
@@ -24,6 +22,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Default implementation of generic {@link OCache} interface that uses plain {@link LinkedHashMap} to store records
@@ -67,6 +68,45 @@ public class ODefaultCache extends OAbstractMapCache<ODefaultCache.OLinkedHashMa
     return limit;
   }
 
+  @Override
+  public ORecordInternal<?> get(final ORID id) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return cache.get(id);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public ORecordInternal<?> put(final ORecordInternal<?> record) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return cache.put(record.getIdentity(), record);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public ORecordInternal<?> remove(final ORID id) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return cache.remove(id);
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
   /**
    * Implementation of {@link LinkedHashMap} that will remove eldest entries if size limit will be exceeded.
    * 
@@ -97,19 +137,19 @@ public class ODefaultCache extends OAbstractMapCache<ODefaultCache.OLinkedHashMa
   }
 
   class OLowMemoryListener implements OMemoryWatchDog.Listener {
-    public void memoryUsageLow(final long freeMemory, final long freeMemoryPercentage) {
+    public void lowMemory(final long freeMemory, final long freeMemoryPercentage) {
       try {
         final int oldSize = size();
         if (oldSize == 0)
           return;
 
         if (freeMemoryPercentage < 10) {
-          OLogManager.instance().debug(this, "Low memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
+          OLogManager.instance().warn(this, "Low heap memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
           removeEldest(oldSize);
         } else {
           final int newSize = (int) (oldSize * 0.9f);
           removeEldest(oldSize - newSize);
-          OLogManager.instance().debug(this, "Low memory (%d%%): reducing cached records number from %d to %d",
+          OLogManager.instance().warn(this, "Low heap memory (%d%%): reducing cached records number from %d to %d",
               freeMemoryPercentage, oldSize, newSize);
         }
       } catch (Exception e) {

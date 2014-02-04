@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
@@ -103,6 +104,8 @@ public class TransactionConsistencyTest {
         vDocA_db1.field(NAME, "docA_v3");
         database1.save(vDocA_db1);
         database1.commit();
+      } catch (OResponseProcessingException e) {
+        Assert.fail("Should not failed here...");
       } catch (OConcurrentModificationException e) {
         Assert.fail("Should not failed here...");
       }
@@ -120,6 +123,8 @@ public class TransactionConsistencyTest {
       // Will throw OConcurrentModificationException
       database2.commit();
       Assert.fail("Should throw OConcurrentModificationException");
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
     } catch (OConcurrentModificationException e) {
       database2.rollback();
     }
@@ -176,6 +181,9 @@ public class TransactionConsistencyTest {
       // Will throw OConcurrentModificationException
       database2.commit();
       Assert.fail("Should throw OConcurrentModificationException");
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
+      database2.rollback();
     } catch (OConcurrentModificationException e) {
       database2.rollback();
     }
@@ -228,6 +236,9 @@ public class TransactionConsistencyTest {
       // Will throw OConcurrentModificationException
       database2.commit();
       Assert.fail("Should throw OConcurrentModificationException");
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
+      database2.rollback();
     } catch (OConcurrentModificationException e) {
       database2.rollback();
     }
@@ -541,11 +552,11 @@ public class TransactionConsistencyTest {
 
       // Commenting out the transaction will result in the test succeeding.
       db.begin(TXTYPE.OPTIMISTIC);
-      ODocument foo = (ODocument) db.createVertex("Foo").field("prop", "test1").save();
+      ODocument foo = db.createVertex("Foo").field("prop", "test1").save();
 
       // Comment out these two lines and the test will succeed. The issue appears to be related to an edge
       // connecting a deleted vertex during a transaction
-      ODocument bar = (ODocument) db.createVertex("Bar").field("prop", "test1").save();
+      ODocument bar = db.createVertex("Bar").field("prop", "test1").save();
       ODocument sees = db.createEdge(foo, bar, "Sees");
       db.commit();
 
@@ -650,6 +661,9 @@ public class TransactionConsistencyTest {
       ((ODocument) inserted.elementAt(cnt - 2)).save();
       db.commit();
       Assert.assertTrue(false);
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
+      db.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
       db.rollback();

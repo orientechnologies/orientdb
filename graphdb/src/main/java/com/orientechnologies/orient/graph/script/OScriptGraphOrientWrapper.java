@@ -32,11 +32,13 @@ public class OScriptGraphOrientWrapper extends OScriptOrientWrapper {
   public OScriptGraphOrientWrapper() {
   }
 
-  public OrientGraphNoTx getGraphNoTx() {
-    return new OrientGraphNoTx((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get());
+  public OScriptGraphWrapper getGraphNoTx() {
+    final ODatabaseDocumentTx threadDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    return new OScriptGraphWrapper(new OrientGraphNoTx(threadDatabase));
   }
 
-  public OrientGraph getGraph() {
-    return new OrientGraph((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get());
+  public OScriptGraphWrapper getGraph() {
+    final ODatabaseDocumentTx threadDatabase = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    return new OScriptGraphWrapper(new OrientGraph(threadDatabase));
   }
 }

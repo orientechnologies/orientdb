@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = { "index" })
 public class SQLDropPropertyIndexTest {
@@ -118,6 +119,12 @@ public class SQLDropPropertyIndexTest {
     try {
       database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndexTestClass.prop1")).execute();
       Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OCommandExecutionException);
+
+      OCommandExecutionException exception = (OCommandExecutionException) e.getCause();
+      Assert.assertEquals(exception.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+          + "). Please drop these indexes before removing property or use FORCE parameter.");
     } catch (OCommandExecutionException e) {
       Assert.assertEquals(e.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
           + "). Please drop these indexes before removing property or use FORCE parameter.");
@@ -147,6 +154,11 @@ public class SQLDropPropertyIndexTest {
     try {
       database.command(new OCommandSQL("DROP PROPERTY DropPropertyIndextestclaSS.proP1")).execute();
       Assert.fail();
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OCommandExecutionException);
+      OCommandExecutionException exception = (OCommandExecutionException) e.getCause();
+      Assert.assertEquals(exception.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
+          + "). Please drop these indexes before removing property or use FORCE parameter.");
     } catch (OCommandExecutionException e) {
       Assert.assertEquals(e.getMessage(), "Property used in indexes (" + "DropPropertyIndexCompositeIndex"
           + "). Please drop these indexes before removing property or use FORCE parameter.");

@@ -156,7 +156,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
       getDatabase().getStorage().getConfiguration().update();
 
-      createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null, null);
+      createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
+          null, null);
     } finally {
       releaseExclusiveLock();
     }
@@ -183,6 +184,25 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (index == null)
       return null;
     return preProcessBeforeReturn(index);
+  }
+
+  @Override
+  public void addClusterToIndex(String clusterName, String indexName) {
+    final OIndex<?> index = indexes.get(indexName.toLowerCase());
+    if (index == null)
+      throw new OIndexException("Index with name " + indexName + " does not exist.");
+
+    index.getInternal().addCluster(clusterName);
+    save();
+  }
+
+  @Override
+  public void removeClusterFromIndex(String clusterName, String indexName) {
+    final OIndex<?> index = indexes.get(indexName.toLowerCase());
+    if (index == null)
+      throw new OIndexException("Index with name " + indexName + " does not exist.");
+    index.getInternal().removeCluster(clusterName);
+    save();
   }
 
   public boolean existsIndex(final String iName) {
@@ -234,7 +254,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   private OIndex<?> createDictionary() {
     return createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(), new OSimpleKeyIndexDefinition(OType.STRING), null,
-        null);
+        null, null);
   }
 
   public ODocument getConfiguration() {
@@ -252,18 +272,31 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
     acquireExclusiveLock();
     try {
-      flush();
-      for (final OIndex<?> idx : indexes.values()) {
-        OIndexInternal<?> indexInternal = idx.getInternal();
-        if (indexInternal != null) {
-          indexInternal.close();
+      if (!onDelete) {
+        flush();
+        for (final OIndex<?> idx : indexes.values()) {
+          OIndexInternal<?> indexInternal = idx.getInternal();
+          if (indexInternal != null) {
+            indexInternal.close();
 
-          final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          if (databaseRecord != null)
-            databaseRecord.unregisterListener(indexInternal);
+            final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+            if (databaseRecord != null)
+              databaseRecord.unregisterListener(indexInternal);
+          }
+        }
+      } else {
+        for (final OIndex<?> idx : indexes.values()) {
+          OIndexInternal<?> indexInternal = idx.getInternal();
+          if (indexInternal != null) {
+            indexInternal.delete();
+
+            final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+            if (databaseRecord != null)
+              databaseRecord.unregisterListener(indexInternal);
+          }
         }
       }
 

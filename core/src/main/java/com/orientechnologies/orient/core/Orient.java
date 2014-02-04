@@ -15,24 +15,13 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Timer;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
@@ -44,12 +33,16 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OClusterFactory;
 import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
@@ -72,7 +65,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final AtomicInteger                   serialId               = new AtomicInteger();
 
   protected OMemoryWatchDog                       memoryWatchDog;
-  protected final OJVMProfiler                    profiler               = new OJVMProfiler();                                         ;
+  protected OProfilerMBean                        profiler               = new OProfiler();                                            ;
 
   protected ODatabaseThreadLocalFactory           databaseThreadFactory;
 
@@ -159,7 +152,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
         for (OStorage stg : storagesCopy) {
           OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
-          stg.close(true);
+          stg.close(true, false);
         }
       }
 
@@ -430,14 +423,18 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (v == null)
       v = System.getenv(ORIENTDB_HOME);
 
-    return v;
+    return OFileUtils.getPath(v);
+  }
+
+  public static String getTempPath() {
+    return OFileUtils.getPath(System.getProperty("java.io.tmpdir") + "/orientdb/");
   }
 
   public void setClusterFactory(final OClusterFactory clusterFactory) {
     this.clusterFactory = clusterFactory;
   }
 
-  public OJVMProfiler getProfiler() {
+  public OProfilerMBean getProfiler() {
     return profiler;
   }
 
@@ -468,5 +465,9 @@ public class Orient extends OListenerManger<OOrientListener> {
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
+  }
+
+  public void setProfiler(final OProfilerMBean iProfiler) {
+    profiler = iProfiler;
   }
 }

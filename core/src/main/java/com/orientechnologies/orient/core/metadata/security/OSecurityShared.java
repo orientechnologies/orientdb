@@ -404,7 +404,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       roleClass.setSuperClass(identityClass);
 
     if (!roleClass.existsProperty("name")) {
-      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final Set<OIndex<?>> indexes = roleClass.getInvolvedIndexes("name");
@@ -427,7 +427,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       userClass.setSuperClass(identityClass);
 
     if (!userClass.existsProperty("name")) {
-      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
     if (!userClass.existsProperty("password"))
@@ -468,7 +468,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     return adminUser;
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
   }
 
   public void load() {

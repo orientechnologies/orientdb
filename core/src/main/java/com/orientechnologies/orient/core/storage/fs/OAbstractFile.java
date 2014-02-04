@@ -308,7 +308,7 @@ public abstract class OAbstractFile implements OFile {
         boolean deleted = osFile.delete();
         while (!deleted) {
           OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-          deleted = osFile.delete();
+          deleted = !osFile.exists() || osFile.delete();
         }
       }
     } finally {

@@ -7,8 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -36,6 +37,7 @@ public class BlueprintsConcurrentAddEdgeTest {
   }
 
   @Test
+  @Ignore
   public void test() {
     createGraph();
     try {
@@ -175,8 +177,8 @@ public class BlueprintsConcurrentAddEdgeTest {
 
             } catch (OConcurrentModificationException e) {
               if (retry > 2)
-                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->"
-                    + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
+                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom
+                    + "->" + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
             } catch (Exception e) {
               System.err.println("Exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->" + keyTo
                   + ", retry " + retry + " Thread:" + Thread.currentThread().getName());

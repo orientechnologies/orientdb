@@ -29,6 +29,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -37,17 +38,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -135,15 +126,15 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   @Override
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     if (undistributedClusters.contains(iRid.getClusterId())) {
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     }
 
     final ODHTNode node = serverInstance.findSuccessor(iRid.clusterPosition.longValue());
 
     if (node.isLocal())
-      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones);
+      return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     else
       return new OStorageOperationResult<ORawBuffer>(node.readRecord(wrapped.getName(), iRid), true);
   }
@@ -164,13 +155,15 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    wrapped.backup(out, options);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
+    wrapped.backup(out, options, callable, iListener);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    wrapped.restore(in, options);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
+    wrapped.restore(in, options, callable, iListener);
   }
 
   @Override
@@ -245,8 +238,8 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
     wrapped.close();
   }
 
-  public void close(final boolean iForce) {
-    wrapped.close(iForce);
+  public void close(final boolean iForce, boolean onDelete) {
+    wrapped.close(iForce, false);
   }
 
   public boolean isClosed() {
@@ -416,11 +409,6 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
 
   public STATUS getStatus() {
     return wrapped.getStatus();
-  }
-
-  @Override
-  public boolean isHashClustersAreUsed() {
-    return wrapped.isHashClustersAreUsed();
   }
 
   @Override

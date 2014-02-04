@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -114,7 +114,7 @@ public class OStorageLocalTxExecuter {
       final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     try {
       // READ CURRENT RECORD CONTENT
-      final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true, false);
+      final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
 
       if (buffer == null)
         if (OFastConcurrentModificationException.enabled())
@@ -146,7 +146,7 @@ public class OStorageLocalTxExecuter {
       final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
       // READ CURRENT RECORD CONTENT
-      final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true, false);
+      final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
 
       if (buffer != null) {
         // SAVE INTO THE LOG THE OLD RECORD
@@ -223,7 +223,7 @@ public class OStorageLocalTxExecuter {
       // AVOID TO COMMIT INDEX STUFF
       return;
 
-    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalEH))
+    if (!(cluster instanceof OClusterLocal))
       // ONLY LOCAL CLUSTER ARE INVOLVED IN TX
       return;
 

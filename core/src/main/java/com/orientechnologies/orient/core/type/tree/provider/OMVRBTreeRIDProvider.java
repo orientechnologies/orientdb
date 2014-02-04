@@ -21,6 +21,7 @@ import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
 import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -28,7 +29,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -47,18 +47,18 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRID;
  */
 public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiable, OIdentifiable> implements
     OStringBuilderSerializable {
-  public static final String          PERSISTENT_CLASS_NAME = "ORIDs";
-  private static final long           serialVersionUID      = 1L;
+  public static final String            PERSISTENT_CLASS_NAME = "ORIDs";
+  private static final long             serialVersionUID      = 1L;
 
-  private OMVRBTreeRID                tree;
-  private boolean                     embeddedStreaming     = true;                           // KEEP THE STREAMING MODE
-  private int                         binaryThreshold       = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD
-                                                                .getValueAsInteger();
+  private OMVRBTreeRID                  tree;
+  private boolean                       embeddedStreaming     = true;                           // KEEP THE STREAMING MODE
+  private int                           binaryThreshold       = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD
+                                                                  .getValueAsInteger();
 
-  private final StringBuilder         buffer                = new StringBuilder();
-  private boolean                     marshalling           = true;
+  private final StringBuilder           buffer                = new StringBuilder();
+  private boolean                       marshalling           = true;
 
-  protected static final OJVMProfiler PROFILER              = Orient.instance().getProfiler();
+  protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();
 
   /**
    * Copy constructor

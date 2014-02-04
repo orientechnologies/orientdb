@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.graph;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -25,66 +24,55 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OGraphDatabaseMigration {
-	public static void main(final String[] iArgs) {
-		if (iArgs.length < 1) {
-			System.err.println("Error: wrong parameters. Syntax: <database-url> [<user> <password>]");
-			return;
-		}
+  public static void main(final String[] iArgs) {
+    if (iArgs.length < 1) {
+      System.err.println("Error: wrong parameters. Syntax: <database-url> [<user> <password>]");
+      return;
+    }
 
-		final String dbURL = iArgs[0];
-		final String user = iArgs.length > 1 ? iArgs[1] : null;
-		final String password = iArgs.length > 2 ? iArgs[2] : null;
+    final String dbURL = iArgs[0];
+    final String user = iArgs.length > 1 ? iArgs[1] : null;
+    final String password = iArgs.length > 2 ? iArgs[2] : null;
 
-		migrate(dbURL, user, password);
-	}
+    migrate(dbURL, user, password);
+  }
 
-	public static void migrate(final String dbURL, final String user, final String password) {
-		migrate((OGraphDatabase) new OGraphDatabase(dbURL).open(user, password));
-	}
+  public static void migrate(final String dbURL, final String user, final String password) {
+    migrate((OGraphDatabase) new OGraphDatabase(dbURL).open(user, password));
+  }
 
-	public static void migrate(final OGraphDatabase db) {
-		System.out.println("Migration of database started...");
-		final long start = System.currentTimeMillis();
+  public static void migrate(final OGraphDatabase db) {
+    System.out.println("Migration of database started...");
+    final long start = System.currentTimeMillis();
 
-		try {
-			// CONVERT THE SCHEMA
-			if (db.getVertexBaseClass().existsProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES)) {
-				db.getVertexBaseClass().dropProperty(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
-				db.getVertexBaseClass().createProperty(OGraphDatabase.VERTEX_FIELD_OUT, OType.LINKSET, db.getEdgeBaseClass());
-			}
+    try {
+      // CONVERT ALL THE VERTICES
+      long convertedVertices = 0;
+      for (ODocument doc : db.browseVertices()) {
+        boolean converted = false;
 
-			if (db.getVertexBaseClass().existsProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES)) {
-				db.getVertexBaseClass().dropProperty(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
-				db.getVertexBaseClass().createProperty(OGraphDatabase.VERTEX_FIELD_IN, OType.LINKSET, db.getEdgeBaseClass());
-			}
+        if (doc.containsField(OGraphDatabase.VERTEX_FIELD_IN_OLD)) {
+          doc.field(OGraphDatabase.VERTEX_FIELD_IN, doc.field(OGraphDatabase.VERTEX_FIELD_IN_OLD));
+          doc.removeField(OGraphDatabase.VERTEX_FIELD_IN_OLD);
+          converted = true;
+        }
+        if (doc.containsField(OGraphDatabase.VERTEX_FIELD_OUT_OLD)) {
+          doc.field(OGraphDatabase.VERTEX_FIELD_OUT, doc.field(OGraphDatabase.VERTEX_FIELD_OUT_OLD));
+          doc.removeField(OGraphDatabase.VERTEX_FIELD_OUT_OLD);
+          converted = true;
+        }
 
-			// CONVERT ALL THE VERTICES
-			long convertedVertices = 0;
-			for (ODocument doc : db.browseVertices()) {
-				boolean converted = false;
+        if (converted) {
+          doc.save();
+          convertedVertices++;
+        }
+      }
 
-				if (doc.containsField(OGraphDatabase.VERTEX_FIELD_IN_EDGES)) {
-					doc.field(OGraphDatabase.VERTEX_FIELD_IN, doc.field(OGraphDatabase.VERTEX_FIELD_IN_EDGES));
-					doc.removeField(OGraphDatabase.VERTEX_FIELD_IN_EDGES);
-					converted = true;
-				}
-				if (doc.containsField(OGraphDatabase.VERTEX_FIELD_OUT_EDGES)) {
-					doc.field(OGraphDatabase.VERTEX_FIELD_OUT, doc.field(OGraphDatabase.VERTEX_FIELD_OUT_EDGES));
-					doc.removeField(OGraphDatabase.VERTEX_FIELD_OUT_EDGES);
-					converted = true;
-				}
+      System.out.println(String.format("Migration complete in %d seconds. Vertices converted: %d",
+          (System.currentTimeMillis() - start) / 1000, convertedVertices));
 
-				if (converted) {
-					doc.save();
-					convertedVertices++;
-				}
-			}
-
-			System.out.println(String.format("Migration complete in %d seconds. Vertices converted: %d",
-					(System.currentTimeMillis() - start) / 1000, convertedVertices));
-
-		} finally {
-			db.close();
-		}
-	}
+    } finally {
+      db.close();
+    }
+  }
 }

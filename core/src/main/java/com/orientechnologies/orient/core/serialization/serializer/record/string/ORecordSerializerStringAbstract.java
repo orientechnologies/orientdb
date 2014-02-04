@@ -23,13 +23,13 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,13 +40,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
-  protected static final OJVMProfiler PROFILER              = Orient.instance().getProfiler();
-  private static final char           DECIMAL_SEPARATOR     = '.';
-  private static final String         MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
-  private static final int            MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
+  protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();
+  private static final char             DECIMAL_SEPARATOR     = '.';
+  private static final String           MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
+  private static final int              MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
@@ -398,6 +399,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.SHORT;
     else if (iCharType == 'e')
       return OType.EMBEDDEDSET;
+    else if (iCharType == 'g')
+      return OType.LINKBAG;
 
     return OType.STRING;
   }
@@ -500,7 +503,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       } catch (NumberFormatException e) {
         return new Long(iValue);
       }
-    } else
+    } else if ("NaN".equals(iValue) || "Infinity".equals(iValue))
+      // NaN and Infinity CANNOT BE MANAGED BY BIG-DECIMAL TYPE
+      return new Double(iValue);
+    else
       return new BigDecimal(iValue);
   }
 
@@ -642,7 +648,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case DATE:
       if (iValue instanceof Date) {
         // RESET HOURS, MINUTES, SECONDS AND MILLISECONDS
-        Calendar calendar = Calendar.getInstance();
+        final Calendar calendar = ODateHelper.getDatabaseCalendar();
         calendar.setTime((Date) iValue);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);

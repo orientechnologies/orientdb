@@ -32,6 +32,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * Executes Script Commands.
@@ -65,6 +67,8 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
       db = db.getUnderlying();
 
     final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
+
+    db.checkSecurity(ODatabaseSecurityResources.FUNCTION, ORole.PERMISSION_READ, f.getName());
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());

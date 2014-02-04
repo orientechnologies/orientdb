@@ -36,18 +36,20 @@ public interface OSQLFunction {
 	/**
 	 * Process a record.
 	 * 
-	 * @param iCurrentRecord
-	 *          : current record
-	 * @param iCurrentResult
-	 *          TODO
-	 * @param iFuncParams
-	 *          : function parameters, number is ensured to be within minParams and maxParams.
-	 * @param iContext
-	 *          : object calling this function
-	 * @return function result, can be null. Special cases : can be null if function aggregate results, can be null if function filter
+	 *
+   * @param iThis
+   * @param iCurrentRecord
+   *          : current record
+   * @param iCurrentResult
+   *          TODO
+   * @param iFuncParams
+   *          : function parameters, number is ensured to be within minParams and maxParams.
+   * @param iContext
+   *          : object calling this function
+   * @return function result, can be null. Special cases : can be null if function aggregate results, can be null if function filter
 	 *         results : this mean result is excluded
 	 */
-	public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext);
+	public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext);
 
 	/**
 	 * Configure the function.
@@ -73,7 +75,7 @@ public interface OSQLFunction {
 	 * must return true.
 	 * <p>
 	 * Function should return null for the
-	 * {@linkplain #execute(com.orientechnologies.orient.core.db.record.OIdentifiable, Object, java.lang.Object[], OCommandContext)
+	 * {@linkplain #execute(Object, OIdentifiable, Object, Object[], OCommandContext)
 	 * execute} method if the record must be excluded.
 	 * 
 	 * @return true if the function acts as a record filter.

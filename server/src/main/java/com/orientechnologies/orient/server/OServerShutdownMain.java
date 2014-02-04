@@ -22,8 +22,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClientSynch;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClientSynch;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -41,7 +41,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 public class OServerShutdownMain {
   public String                           networkAddress;
   public int[]                            networkPort;
-  public OChannelBinaryClient             channel;
+  public OChannelBinaryAsynchClient       channel;
   protected OServerConfigurationLoaderXml configurationLoader;
   protected OServerConfiguration          configuration;
 
@@ -100,7 +100,7 @@ public class OServerShutdownMain {
     // TRY TO CONNECT TO THE RIGHT PORT
     for (int port : networkPort)
       try {
-        channel = new OChannelBinaryClientSynch(networkAddress, port, contextConfig);
+        channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, contextConfig);
         break;
       } catch (Exception e) {
         e.printStackTrace();

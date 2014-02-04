@@ -23,11 +23,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,6 +57,8 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  */
 @Deprecated
 public class OGraphDatabase extends ODatabaseDocumentTx {
+  private final boolean preferSBTreeSet = OGlobalConfiguration.PREFER_SBTREE_SET.getValueAsBoolean();
+
   public enum LOCK_MODE {
     NO_LOCKING, DATABASE_LEVEL_LOCKING, RECORD_LEVEL_LOCKING
   }
@@ -63,24 +67,27 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     BOTH, IN, OUT
   }
 
-  public static final String TYPE                   = "graph";
+  public static final String TYPE                 = "graph";
 
-  public static final String VERTEX_CLASS_NAME      = "OGraphVertex";
-  public static final String VERTEX_ALIAS           = "V";
-  public static final String VERTEX_FIELD_IN        = "in";
-  public static final String VERTEX_FIELD_IN_EDGES  = "inEdges";
-  public static final String VERTEX_FIELD_OUT       = "out";
-  public static final String VERTEX_FIELD_OUT_EDGES = "outEdges";
+  public static final String VERTEX_CLASS_NAME    = "OGraphVertex";
+  public static final String VERTEX_ALIAS         = "V";
+  public static final String VERTEX_FIELD_IN      = "in_";
+  public static final String VERTEX_FIELD_OUT     = "out_";
+  public static final String VERTEX_FIELD_IN_OLD  = "in";
+  public static final String VERTEX_FIELD_OUT_OLD = "out";
 
-  public static final String EDGE_CLASS_NAME        = "OGraphEdge";
-  public static final String EDGE_ALIAS             = "E";
-  public static final String EDGE_FIELD_IN          = "in";
-  public static final String EDGE_FIELD_OUT         = "out";
-  public static final String LABEL                  = "label";
+  public static final String EDGE_CLASS_NAME      = "OGraphEdge";
+  public static final String EDGE_ALIAS           = "E";
+  public static final String EDGE_FIELD_IN        = "in";
+  public static final String EDGE_FIELD_OUT       = "out";
+  public static final String LABEL                = "label";
 
-  private boolean            useCustomTypes         = true;
-  private boolean            safeMode               = false;
-  private LOCK_MODE          lockMode               = LOCK_MODE.NO_LOCKING;
+  private String             outV                 = VERTEX_FIELD_OUT;
+  private String             inV                  = VERTEX_FIELD_IN;
+  private boolean            useCustomTypes       = true;
+  private boolean            safeMode             = false;
+  private LOCK_MODE          lockMode             = LOCK_MODE.NO_LOCKING;
+  private boolean            retroCompatibility   = false;
   protected OClass           vertexBaseClass;
   protected OClass           edgeBaseClass;
 
@@ -141,7 +148,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   public Iterable<ODocument> browseElements(final String iClass, final boolean iPolymorphic) {
-    return new ORecordIteratorClass<ODocument>(this, (ODatabaseRecordAbstract) getUnderlying(), iClass, iPolymorphic, true, false);
+    return new ORecordIteratorClass<ODocument>(this, (ODatabaseRecordAbstract) getUnderlying(), iClass, iPolymorphic, true, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public ODocument createVertex() {
@@ -231,46 +239,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
             edge.field(iFields[i].toString(), iFields[i + 1]);
 
       // OUT FIELD
-      acquireWriteLock(iOutVertex);
-      try {
-
-        final Object outField = iOutVertex.field(VERTEX_FIELD_OUT);
-        final OMVRBTreeRIDSet out;
-        if (outField instanceof OMVRBTreeRIDSet) {
-          out = (OMVRBTreeRIDSet) outField;
-        } else if (outField instanceof Collection<?>) {
-          out = new OMVRBTreeRIDSet(iOutVertex, (Collection<OIdentifiable>) outField);
-          iOutVertex.field(VERTEX_FIELD_OUT, out);
-        } else {
-          out = new OMVRBTreeRIDSet(iOutVertex);
-          iOutVertex.field(VERTEX_FIELD_OUT, out);
-        }
-
-        out.add(edge);
-      } finally {
-        releaseWriteLock(iOutVertex);
-      }
+      updateVertexLinks(iOutVertex, edge, outV);
 
       // IN FIELD
-      acquireWriteLock(iInVertex);
-      try {
-
-        final Object inField = iInVertex.field(VERTEX_FIELD_IN);
-        final OMVRBTreeRIDSet in;
-        if (inField instanceof OMVRBTreeRIDSet) {
-          in = (OMVRBTreeRIDSet) inField;
-        } else if (inField instanceof Collection<?>) {
-          in = new OMVRBTreeRIDSet(iInVertex, (Collection<OIdentifiable>) inField);
-          iInVertex.field(VERTEX_FIELD_IN, in);
-        } else {
-          in = new OMVRBTreeRIDSet(iInVertex);
-          iInVertex.field(VERTEX_FIELD_IN, in);
-        }
-        in.add(edge);
-
-      } finally {
-        releaseWriteLock(iInVertex);
-      }
+      updateVertexLinks(iInVertex, edge, inV);
 
       edge.setDirty();
 
@@ -284,6 +256,28 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     } catch (RuntimeException e) {
       rollbackBlock(safeMode);
       throw e;
+    }
+  }
+
+  private void updateVertexLinks(ODocument iVertex, ODocument edge, String vertexField) {
+    acquireWriteLock(iVertex);
+    try {
+
+      final Object field = iVertex.field(vertexField);
+      final Set<OIdentifiable> links;
+      if (field instanceof OMVRBTreeRIDSet) {
+        links = (Set<OIdentifiable>) field;
+      } else if (field instanceof Collection<?>) {
+        links = new OMVRBTreeRIDSet(iVertex, (Collection<OIdentifiable>) field);
+        iVertex.field(vertexField, links);
+      } else {
+        links = createRIDSet(iVertex);
+        iVertex.field(vertexField, links);
+      }
+
+      links.add(edge);
+    } finally {
+      releaseWriteLock(iVertex);
     }
   }
 
@@ -305,7 +299,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       try {
 
         if (outVertex != null) {
-          final Set<OIdentifiable> out = getEdgeSet(outVertex, VERTEX_FIELD_OUT);
+          final Set<OIdentifiable> out = getEdgeSet(outVertex, outV);
           if (out != null)
             out.remove(edge);
           save(outVertex);
@@ -322,7 +316,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       try {
 
         if (inVertex != null) {
-          final Set<OIdentifiable> in = getEdgeSet(inVertex, VERTEX_FIELD_IN);
+          final Set<OIdentifiable> in = getEdgeSet(inVertex, inV);
           if (in != null)
             in.remove(edge);
           save(inVertex);
@@ -361,7 +355,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       acquireWriteLock(vertex);
       try {
 
-        Set<OIdentifiable> edges = getEdgeSet(vertex, VERTEX_FIELD_OUT);
+        Set<OIdentifiable> edges = getEdgeSet(vertex, outV);
         if (edges != null) {
           for (OIdentifiable e : edges) {
             if (e != null) {
@@ -369,7 +363,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
               if (edge != null) {
                 otherVertex = edge.field(EDGE_FIELD_IN);
                 if (otherVertex != null) {
-                  otherEdges = getEdgeSet(otherVertex, VERTEX_FIELD_IN);
+                  otherEdges = getEdgeSet(otherVertex, inV);
                   if (otherEdges != null && otherEdges.remove(edge))
                     save(otherVertex);
                 }
@@ -380,7 +374,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
         }
 
         // REMOVE IN EDGES
-        edges = getEdgeSet(vertex, VERTEX_FIELD_IN);
+        edges = getEdgeSet(vertex, inV);
         if (edges != null) {
           for (OIdentifiable e : edges) {
             if (e != null) {
@@ -388,7 +382,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
                 final ODocument edge = e.getRecord();
                 otherVertex = edge.field(EDGE_FIELD_OUT);
                 if (otherVertex != null) {
-                  otherEdges = getEdgeSet(otherVertex, VERTEX_FIELD_OUT);
+                  otherEdges = getEdgeSet(otherVertex, outV);
                   if (otherEdges != null && otherEdges.remove(edge))
                     save(otherVertex);
                 }
@@ -522,7 +516,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     acquireReadLock(iVertex);
     try {
 
-      final OMVRBTreeRIDSet set = getEdgeSet(vertex, VERTEX_FIELD_OUT);
+      final Set<OIdentifiable> set = getEdgeSet(vertex, outV);
 
       if (iLabel == null)
         // RETURN THE ENTIRE COLLECTION
@@ -547,12 +541,13 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
   }
 
   @SuppressWarnings("unchecked")
-  protected OMVRBTreeRIDSet getEdgeSet(final ODocument iVertex, final String iFieldName) {
+  protected Set<OIdentifiable> getEdgeSet(final ODocument iVertex, final String iFieldName) {
     final Object value = iVertex.field(iFieldName);
-    if (value != null && value instanceof OMVRBTreeRIDSet)
-      return (OMVRBTreeRIDSet) value;
+    if (value != null && (value instanceof OMVRBTreeRIDSet || value instanceof ORidBag))
+      return (Set<OIdentifiable>) value;
 
-    final OMVRBTreeRIDSet set = new OMVRBTreeRIDSet();
+    final Set<OIdentifiable> set = createRIDSet(iVertex);
+
     if (OMultiValue.isMultiValue(value))
       // AUTOCONVERT FROM COLLECTION
       set.addAll((Collection<? extends OIdentifiable>) value);
@@ -560,6 +555,10 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       // AUTOCONVERT FROM SINGLE VALUE
       set.add((OIdentifiable) value);
     return set;
+  }
+
+  private Set<OIdentifiable> createRIDSet(ODocument iVertex) {
+    return new OMVRBTreeRIDSet(iVertex);
   }
 
   /**
@@ -578,7 +577,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    return filterEdgesByProperties(getEdgeSet(vertex, VERTEX_FIELD_OUT), iProperties);
+    return filterEdgesByProperties(getEdgeSet(vertex, outV), iProperties);
   }
 
   /**
@@ -597,7 +596,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    return filterEdgesByProperties(getEdgeSet(vertex, VERTEX_FIELD_OUT), iProperties);
+    return filterEdgesByProperties(getEdgeSet(vertex, outV), iProperties);
   }
 
   public Set<OIdentifiable> getInEdges(final OIdentifiable iVertex) {
@@ -616,7 +615,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     acquireReadLock(iVertex);
     try {
 
-      final OMVRBTreeRIDSet set = getEdgeSet(vertex, VERTEX_FIELD_IN);
+      final Set<OIdentifiable> set = getEdgeSet(vertex, inV);
 
       if (iLabel == null)
         // RETURN THE ENTIRE COLLECTION
@@ -655,7 +654,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     final ODocument vertex = iVertex.getRecord();
     checkVertexClass(vertex);
 
-    return filterEdgesByProperties(getEdgeSet(vertex, VERTEX_FIELD_IN), iProperties);
+    return filterEdgesByProperties(getEdgeSet(vertex, inV), iProperties);
   }
 
   /**
@@ -672,7 +671,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       return null;
 
     checkVertexClass(iVertex);
-    return filterEdgesByProperties(getEdgeSet(iVertex, VERTEX_FIELD_IN), iProperties);
+    return filterEdgesByProperties(getEdgeSet(iVertex, inV), iProperties);
   }
 
   public ODocument getInVertex(final OIdentifiable iEdge) {
@@ -715,7 +714,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     return (ODocument) v;
   }
 
-  public Set<OIdentifiable> filterEdgesByProperties(final OMVRBTreeRIDSet iEdges, final Iterable<String> iPropertyNames) {
+  public Set<OIdentifiable> filterEdgesByProperties(final Set<OIdentifiable> iEdges, final Iterable<String> iPropertyNames) {
     acquireReadLock(null);
     try {
 
@@ -727,7 +726,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           return Collections.emptySet();
 
       // FILTER BY PROPERTY VALUES
-      final OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
+      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
       if (iEdges != null)
         for (OIdentifiable item : iEdges) {
           final ODocument doc = (ODocument) item;
@@ -745,7 +744,7 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
     }
   }
 
-  public Set<OIdentifiable> filterEdgesByProperties(final OMVRBTreeRIDSet iEdges, final Map<String, Object> iProperties) {
+  public Set<OIdentifiable> filterEdgesByProperties(final Set<OIdentifiable> iEdges, final Map<String, Object> iProperties) {
     acquireReadLock(null);
     try {
 
@@ -757,7 +756,8 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
           return Collections.emptySet();
 
       // FILTER BY PROPERTY VALUES
-      final OMVRBTreeRIDSet result = new OMVRBTreeRIDSet();
+      final OMVRBTreeRIDSet result;
+      result = new OMVRBTreeRIDSet();
       if (iEdges != null)
         for (OIdentifiable item : iEdges) {
           final ODocument doc = (ODocument) item;
@@ -1096,5 +1096,20 @@ public class OGraphDatabase extends ODatabaseDocumentTx {
       throw new IllegalArgumentException("Record leve locking is not supported for remote connections");
 
     this.lockMode = lockMode;
+  }
+
+  public boolean isRetroCompatibility() {
+    return retroCompatibility;
+  }
+
+  public void setRetroCompatibility(final boolean retroCompatibility) {
+    this.retroCompatibility = retroCompatibility;
+    if (retroCompatibility) {
+      inV = VERTEX_FIELD_IN_OLD;
+      outV = VERTEX_FIELD_OUT_OLD;
+    } else {
+      inV = VERTEX_FIELD_IN;
+      outV = VERTEX_FIELD_OUT;
+    }
   }
 }

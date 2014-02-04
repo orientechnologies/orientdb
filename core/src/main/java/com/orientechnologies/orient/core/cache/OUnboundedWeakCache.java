@@ -16,22 +16,69 @@
 
 package com.orientechnologies.orient.core.cache;
 
-import java.util.WeakHashMap;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+
+import java.lang.ref.WeakReference;
+import java.util.WeakHashMap;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, ORecordInternal<?>>> implements OCache {
+public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, WeakReference<ORecordInternal<?>>>> implements OCache {
 
   public OUnboundedWeakCache() {
-    super(new WeakHashMap<ORID, ORecordInternal<?>>());
+    super(new WeakHashMap<ORID, WeakReference<ORecordInternal<?>>>());
   }
 
   @Override
   public int limit() {
     return Integer.MAX_VALUE;
+  }
+
+  @Override
+  public ORecordInternal<?> get(final ORID id) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return get(cache.get(id));
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public ORecordInternal<?> put(final ORecordInternal<?> record) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return get(cache.put(record.getIdentity(), new WeakReference<ORecordInternal<?>>(record)));
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public ORecordInternal<?> remove(final ORID id) {
+    if (!isEnabled())
+      return null;
+
+    lock.acquireExclusiveLock();
+    try {
+      return get(cache.remove(id));
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  private ORecordInternal<?> get(WeakReference<ORecordInternal<?>> value) {
+    if (value == null)
+      return null;
+    else
+      return value.get();
   }
 }

@@ -20,37 +20,29 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAppend;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsBoolean;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsDate;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsDateTime;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsDecimal;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsFloat;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsInteger;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsList;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsLong;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsMap;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsSet;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodAsString;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodCharAt;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFormat;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodIndexOf;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodJavaType;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodKeys;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLeft;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodLength;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodNormalize;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodPrefix;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemove;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRemoveAll;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodReplace;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodRight;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodSize;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodSubString;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToJSON;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToLowerCase;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodToUpperCase;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodTrim;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodType;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodValues;
 
 /**
@@ -63,43 +55,39 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
   private final Map<String, Object> methods = new HashMap<String, Object>();
 
   public ODefaultSQLMethodFactory() {
-    methods.put(OSQLMethodAppend.NAME, new OSQLMethodAppend());
-    methods.put(OSQLMethodAsBoolean.NAME, new OSQLMethodAsBoolean());
-    methods.put(OSQLMethodAsDate.NAME, new OSQLMethodAsDate());
-    methods.put(OSQLMethodAsDateTime.NAME, new OSQLMethodAsDateTime());
-    methods.put(OSQLMethodAsDecimal.NAME, new OSQLMethodAsDecimal());
-    methods.put(OSQLMethodAsFloat.NAME, new OSQLMethodAsFloat());
-    methods.put(OSQLMethodAsInteger.NAME, new OSQLMethodAsInteger());
-    methods.put(OSQLMethodAsList.NAME, new OSQLMethodAsList());
-    methods.put(OSQLMethodAsLong.NAME, new OSQLMethodAsLong());
-    methods.put(OSQLMethodAsSet.NAME, new OSQLMethodAsSet());
-    methods.put(OSQLMethodAsString.NAME, new OSQLMethodAsString());
-    methods.put(OSQLMethodCharAt.NAME, new OSQLMethodCharAt());
-    methods.put(OSQLMethodField.NAME, new OSQLMethodField());
-    methods.put(OSQLMethodFormat.NAME, new OSQLMethodFormat());
-    methods.put(OSQLMethodFunctionDelegate.NAME, OSQLMethodFunctionDelegate.class);
-    methods.put(OSQLMethodIndexOf.NAME, new OSQLMethodIndexOf());
-    methods.put(OSQLMethodKeys.NAME, new OSQLMethodKeys());
-    methods.put(OSQLMethodLeft.NAME, new OSQLMethodLeft());
-    methods.put(OSQLMethodLength.NAME, new OSQLMethodLength());
-    methods.put(OSQLMethodNormalize.NAME, new OSQLMethodNormalize());
-    methods.put(OSQLMethodPrefix.NAME, new OSQLMethodPrefix());
-    methods.put(OSQLMethodReplace.NAME, new OSQLMethodReplace());
-    methods.put(OSQLMethodRemove.NAME, new OSQLMethodRemove());
-    methods.put(OSQLMethodRemoveAll.NAME, new OSQLMethodRemoveAll());
-    methods.put(OSQLMethodRight.NAME, new OSQLMethodRight());
-    methods.put(OSQLMethodSize.NAME, new OSQLMethodSize());
-    methods.put(OSQLMethodSubString.NAME, new OSQLMethodSubString());
-    methods.put(OSQLMethodToJSON.NAME, new OSQLMethodToJSON());
-    methods.put(OSQLMethodToLowerCase.NAME, new OSQLMethodToLowerCase());
-    methods.put(OSQLMethodToUpperCase.NAME, new OSQLMethodToUpperCase());
-    methods.put(OSQLMethodTrim.NAME, new OSQLMethodTrim());
-    methods.put(OSQLMethodValues.NAME, new OSQLMethodValues());
+    register(OSQLMethodAsBoolean.NAME, new OSQLMethodAsBoolean());
+    register(OSQLMethodAsFloat.NAME, new OSQLMethodAsFloat());
+    register(OSQLMethodAsInteger.NAME, new OSQLMethodAsInteger());
+    register(OSQLMethodAsList.NAME, new OSQLMethodAsList());
+    register(OSQLMethodAsLong.NAME, new OSQLMethodAsLong());
+    register(OSQLMethodAsMap.NAME, new OSQLMethodAsMap());
+    register(OSQLMethodAsSet.NAME, new OSQLMethodAsSet());
+    register(OSQLMethodAsString.NAME, new OSQLMethodAsString());
+    register(OSQLMethodField.NAME, new OSQLMethodField());
+    register(OSQLMethodFormat.NAME, new OSQLMethodFormat());
+    register(OSQLMethodFunctionDelegate.NAME, OSQLMethodFunctionDelegate.class);
+    register(OSQLMethodIndexOf.NAME, new OSQLMethodIndexOf());
+    register(OSQLMethodJavaType.NAME, new OSQLMethodJavaType());
+    register(OSQLMethodKeys.NAME, new OSQLMethodKeys());
+    register(OSQLMethodNormalize.NAME, new OSQLMethodNormalize());
+    register(OSQLMethodPrefix.NAME, new OSQLMethodPrefix());
+    register(OSQLMethodRemove.NAME, new OSQLMethodRemove());
+    register(OSQLMethodRemoveAll.NAME, new OSQLMethodRemoveAll());
+    register(OSQLMethodSize.NAME, new OSQLMethodSize());
+    register(OSQLMethodToLowerCase.NAME, new OSQLMethodToLowerCase());
+    register(OSQLMethodToUpperCase.NAME, new OSQLMethodToUpperCase());
+    register(OSQLMethodTrim.NAME, new OSQLMethodTrim());
+    register(OSQLMethodType.NAME, new OSQLMethodType());
+    register(OSQLMethodValues.NAME, new OSQLMethodValues());
+  }
+
+  public void register(final String iName, final Object iImplementation) {
+    methods.put(iName.toLowerCase(), iImplementation);
   }
 
   @Override
   public boolean hasMethod(final String iName) {
-    return methods.containsKey(iName);
+    return methods.containsKey(iName.toLowerCase());
   }
 
   @Override

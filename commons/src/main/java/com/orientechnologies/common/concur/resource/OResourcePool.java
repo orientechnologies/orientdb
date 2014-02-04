@@ -89,4 +89,8 @@ public class OResourcePool<K, V> {
   public void close() {
     sem.drainPermits();
   }
+  
+  public void remove(final V res) {
+  	this.resources.remove(res);
+  }
 }

@@ -15,26 +15,30 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OBaseParser;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMultiValue;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OBaseParser;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodFunctionDelegate;
 
 /**
  * Represents an object field as value in the query condition.
@@ -46,8 +50,12 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   protected List<OPair<OSQLMethod, Object[]>> operationsChain = null;
 
+  protected OSQLFilterItemAbstract() {
+  }
+
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, '.');
+    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' }, new boolean[] { false, true }, 0,
+        -1, false, true, false, false, new char[] {});
 
     setRoot(iQueryToParse, parts.get(0));
 
@@ -89,7 +97,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
             if (f.getMaxParams() == -1 || f.getMaxParams() > 0) {
               arguments = OStringSerializerHelper.getParameters(part).toArray();
-              if (arguments.length < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length > f.getMaxParams()))
+              if (arguments.length + 1 < f.getMinParams() || (f.getMaxParams() > -1 && arguments.length + 1 > f.getMaxParams()))
                 throw new OQueryParsingException(iQueryToParse.parserText, "Syntax error: function '" + f.getName() + "' needs "
                     + (f.getMinParams() == f.getMaxParams() ? f.getMinParams() : f.getMinParams() + "-" + f.getMaxParams())
                     + " argument(s) while has been received " + arguments.length, 0);
@@ -102,8 +110,12 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
           operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
 
+        } else if (part.charAt(0) == '[') {
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLFunctionMultiValue.NAME),
+              new Object[] { part }));
         } else {
-          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME), new Object[] { part }));
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME),
+              new Object[] { part }));
         }
       }
     }
@@ -123,7 +135,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           operator = op.getKey();
 
           // DON'T PASS THE CURRENT RECORD TO FORCE EVALUATING TEMPORARY RESULT
-          ioResult = operator.execute(iRecord, iContext, ioResult, op.getValue());
+          ioResult = operator.execute(ioResult, iRecord, iContext, ioResult, op.getValue());
         }
       } catch (ParseException e) {
         OLogManager.instance().exception("Error on conversion of value '%s' using field operator %s", e,
@@ -163,4 +175,14 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     }
     return buffer.toString();
   }
+
+  protected OCollate getCollateForField(final ODocument doc, final String iFieldName) {
+    if (doc.getSchemaClass() != null) {
+      final OProperty p = doc.getSchemaClass().getProperty(iFieldName);
+      if (p != null)
+        return p.getCollate();
+    }
+    return null;
+  }
+
 }

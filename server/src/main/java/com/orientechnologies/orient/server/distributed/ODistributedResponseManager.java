@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.RESULT_STRATEGY;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,13 +32,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.RESULT_STRATEGY;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Asynchronous response manager
@@ -80,7 +80,7 @@ public class ODistributedResponseManager {
 
     if (!responses.containsKey(executorNode)) {
       ODistributedServerLog.warn(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
-          "received response for message %d from unexpected node. Expected are: %s", request.getId(), getExpectedNodes());
+          "received response for request %s from unexpected node. Expected are: %s", request, getExpectedNodes());
 
       Orient.instance().getProfiler()
           .updateCounter("distributed.replication.unexpectedNodeResponse", "Number of responses from unexpected nodes", +1);
@@ -105,6 +105,11 @@ public class ODistributedResponseManager {
 
     if (waitForLocalNode && response.isExecutedOnLocalNode())
       receivedCurrentNode = true;
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
+          "received response '%s' for request %s (receivedCurrentNode=%s receivedResponses=%d)", response, request,
+          receivedCurrentNode, receivedResponses);
 
     boolean foundBucket = false;
     for (int i = 0; i < responseGroups.size(); ++i) {
@@ -185,17 +190,17 @@ public class ODistributedResponseManager {
   }
 
   /**
-   * Returns all the servers in conflict.
+   * Returns all the responses in conflict.
    * 
    * @return
    */
-  public List<String> getConflictServers() {
-    final List<String> servers = new ArrayList<String>();
+  public List<ODistributedResponse> getConflictResponses() {
+    final List<ODistributedResponse> servers = new ArrayList<ODistributedResponse>();
     int bestGroupSoFar = getBestResponsesGroup();
     for (int i = 0; i < responseGroups.size(); ++i) {
       if (i != bestGroupSoFar) {
         for (ODistributedResponse r : responseGroups.get(i))
-          servers.add(r.getExecutorNodeName());
+          servers.add(r);
       }
     }
     return servers;
@@ -257,7 +262,8 @@ public class ODistributedResponseManager {
             final OAbstractRemoteTask fixRequest = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r,
                 goodResponse);
 
-            dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixRequest);
+            dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixRequest,
+                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
           }
         }
       }
@@ -399,8 +405,21 @@ public class ODistributedResponseManager {
       // TODO: UNDO
       request.undo();
 
-      throw new ODistributedException("Quorum " + getQuorum() + " not reached for request=" + request
-          + ". Servers in conflicts are: " + getConflictServers());
+      final StringBuilder msg = new StringBuilder();
+
+      msg.append("Quorum " + getQuorum() + " not reached for request=" + request + ". Servers in conflicts are:");
+      final List<ODistributedResponse> res = getConflictResponses();
+      if (res.isEmpty())
+        msg.append(" no server in conflict");
+      else
+        for (ODistributedResponse r : res) {
+          msg.append("\n- ");
+          msg.append(r.getExecutorNodeName());
+          msg.append(": ");
+          msg.append(r.getPayload());
+        }
+
+      throw new ODistributedException(msg.toString());
     }
 
     switch (resultStrategy) {

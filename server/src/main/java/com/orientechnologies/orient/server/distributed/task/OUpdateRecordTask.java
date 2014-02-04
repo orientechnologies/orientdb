@@ -21,8 +21,10 @@ import java.io.ObjectOutput;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
@@ -59,10 +61,18 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%s",
         database.getName(), rid.toString(), version.toString());
 
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    final ORecordInternal<?> loadedRecord = rid.getRecord();
+    if (loadedRecord == null)
+      throw new ORecordNotFoundException("Record " + rid + " was not found on update");
 
+    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     record.fill(rid, version, content, true);
-    database.save(record);
+
+    if (loadedRecord instanceof ODocument) {
+      ((ODocument) loadedRecord).merge((ODocument) record, false, false);
+      database.save(loadedRecord);
+    } else
+      database.save(record);
 
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
         database.getName(), rid.toString(), record.getRecordVersion().toString());

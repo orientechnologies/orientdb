@@ -85,8 +85,8 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Object result;
 
@@ -103,14 +103,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null || keyTwo == null)
         return null;
 
-      if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
-        result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-      else {
-        if (fetchLimit > -1)
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-        else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
-      }
+      if (resultListener != null) {
+        index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+        result = resultListener.getResult();
+      } else
+        result = index.getValuesBetween(keyOne, true, keyTwo, true);
 
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
@@ -145,14 +142,12 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
-        result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-      else {
-        if (fetchLimit > -1)
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-        else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
-      }
+      if (resultListener != null) {
+        index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+        result = resultListener.getResult();
+      } else
+        result = index.getValuesBetween(keyOne, true, keyTwo, true);
+
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);

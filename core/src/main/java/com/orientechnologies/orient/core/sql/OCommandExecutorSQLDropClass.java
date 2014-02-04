@@ -24,10 +24,9 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
 
 /**
@@ -45,8 +44,6 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   private String             className;
 
   public OCommandExecutorSQLDropClass parse(final OCommandRequest iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
@@ -104,9 +101,10 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     if (superClass == null)
       return true;
 
+    final OIndexManagerProxy indexManagerProxy = getDatabase().getMetadata().getIndexManager();
     for (final OIndex<?> oIndex : superClass.getIndexes()) {
       for (final String clusterName : clusterNames)
-        oIndex.getInternal().removeCluster(clusterName);
+        indexManagerProxy.removeClusterFromIndex(clusterName, oIndex.getName());
 
       OLogManager.instance()
           .info(this, "Index %s is used in super class of %s and should be rebuilt.", oIndex.getName(), className);

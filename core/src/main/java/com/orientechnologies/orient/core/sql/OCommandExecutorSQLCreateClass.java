@@ -25,8 +25,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
@@ -48,8 +46,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
     init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();

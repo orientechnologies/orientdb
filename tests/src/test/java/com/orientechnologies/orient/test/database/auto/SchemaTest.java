@@ -15,11 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Iterator;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -29,11 +27,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.List;
 
 @Test(groups = "schema")
 public class SchemaTest {
@@ -194,6 +196,7 @@ public class SchemaTest {
 
     Thread thread = new Thread(new Runnable() {
 
+      @Override
       public void run() {
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
         ODocument doc = new ODocument("NewClass");
@@ -329,8 +332,8 @@ public class SchemaTest {
 
     Assert.assertNotNull(superClass);
     boolean found = false;
-    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
-      if (it.next().equals(company)) {
+    for (OClass c : superClass.getBaseClasses()) {
+      if (c.equals(company)) {
         found = true;
         break;
       }
@@ -339,8 +342,8 @@ public class SchemaTest {
 
     company.setSuperClass(null);
     Assert.assertNull(company.getSuperClass());
-    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
-      Assert.assertNotSame(it.next(), company);
+    for (OClass c : superClass.getBaseClasses()) {
+      Assert.assertNotSame(c, company);
     }
 
     database.command(new OCommandSQL("alter class " + company.getName() + " superclass " + superClass.getName())).execute();
@@ -351,8 +354,8 @@ public class SchemaTest {
 
     Assert.assertNotNull(company.getSuperClass());
     found = false;
-    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
-      if (it.next().equals(company)) {
+    for (OClass c : superClass.getBaseClasses()) {
+      if (c.equals(company)) {
         found = true;
         break;
       }
@@ -363,39 +366,78 @@ public class SchemaTest {
 
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void invalidClusterWrongClusterId() {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
     try {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
-
+      Assert.fail();
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void invalidClusterWrongClusterName() {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 
     try {
       database.command(new OCommandSQL("create class Antani cluster blaaa")).execute();
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void invalidClusterWrongKeywords() {
     database = new ODatabaseFlat(url);
     database.open("admin", "admin");
 
     try {
       database.command(new OCommandSQL("create class Antani the pen is on the table")).execute();
+      Assert.fail();
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
+  }
+
+  @Test
+  public void testRenameClass() {
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
+    databaseDocumentTx.open("admin", "admin");
+
+    OClass oClass = databaseDocumentTx.getMetadata().getSchema().createClass("RenameClassTest");
+
+    ODocument document = new ODocument("RenameClassTest");
+    document.save();
+
+    document.reset();
+
+    document.setClassName("RenameClassTest");
+    document.save();
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest"));
+    Assert.assertEquals(result.size(), 2);
+
+    oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
+
+    result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
+    Assert.assertEquals(result.size(), 2);
   }
 }

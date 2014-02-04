@@ -15,13 +15,16 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.collection.OMVRBTreeEntry;
-import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -34,7 +37,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -62,7 +64,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     acquireExclusiveLock();
     try {
       watchDog = new OMemoryWatchDog.Listener() {
-        public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
+        public void lowMemory(final long iFreeMemory, final long iFreeMemoryPercentage) {
           map.setOptimization(iFreeMemoryPercentage < 10 ? 2 : 1);
         }
       };
@@ -112,7 +114,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   private void installHooks(String indexName) {
-    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
     final String profilerPrefix = profiler.getDatabaseMetric(getDatabase().getName(), "index." + indexName + '.');
     final String profilerMetadataPrefix = "db.*.index.*.";
 
@@ -155,6 +157,11 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
+    throw new UnsupportedOperationException("deleteWithoutLoad");
   }
 
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
@@ -204,51 +211,6 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     acquireExclusiveLock();
     try {
       return map.remove(key) != null;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
-    acquireExclusiveLock();
-    try {
-      Map<Object, V> entriesToUpdate = new TreeMap<Object, V>(ODefaultComparator.INSTANCE);
-      final OMVRBTreeEntry<Object, V> firstEntry = map.getFirstEntry();
-      if (firstEntry == null)
-        return 0;
-
-      OMVRBTreeEntry<Object, V> entry = firstEntry;
-      while (entry != null) {
-        final Object key = entry.getKey();
-        final V value = entry.getValue();
-
-        if (transformer != null) {
-          Collection<OIdentifiable> rids = transformer.transformFromValue(value);
-          if (rids.remove(valueToRemove)) {
-            entriesToUpdate.put(key, transformer.transformToValue(rids));
-          }
-        } else if (value.equals(valueToRemove)) {
-          entriesToUpdate.put(key, value);
-        }
-
-        entry = OMVRBTree.next(entry);
-      }
-
-      for (Map.Entry<Object, V> entryToUpdate : entriesToUpdate.entrySet()) {
-        V value = entryToUpdate.getValue();
-        if (value instanceof Collection) {
-          Collection col = (Collection) value;
-          if (col.isEmpty())
-            map.remove(entryToUpdate.getKey());
-          else
-            map.put(entryToUpdate.getKey(), value);
-        } else
-          map.remove(entryToUpdate.getKey());
-
-      }
-
-      return entriesToUpdate.size();
     } finally {
       releaseExclusiveLock();
     }
@@ -383,8 +345,8 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer) {
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();
     try {
       final OMVRBTreeEntry<Object, V> firstEntry;
@@ -395,7 +357,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         firstEntry = map.getHigherEntry(rangeFrom);
 
       if (firstEntry == null)
-        return Collections.emptySet();
+        return;
 
       final int firstEntryIndex = map.getPageIndex();
 
@@ -416,29 +378,24 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       OMVRBTreeEntry<Object, V> entry = firstEntry;
       map.setPageIndex(firstEntryIndex);
 
-      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
       while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
         final V value = entry.getValue();
 
-        addToResult(transformer, result, value, maxValuesToFetch);
+        boolean cont = addToResult(transformer, valuesResultListener, value);
 
-        if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
-          return result;
+        if (!cont)
+          return;
 
         entry = OMVRBTree.next(entry);
       }
-
-      return result;
-
     } finally {
       releaseExclusiveLock();
     }
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();
     try {
 
@@ -449,31 +406,26 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         firstEntry = map.getHigherEntry(fromKey);
 
       if (firstEntry == null)
-        return Collections.emptySet();
+        return;
 
       OMVRBTreeEntry<Object, V> entry = firstEntry;
 
-      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
       while (entry != null) {
         final V value = entry.getValue();
-        addToResult(transformer, result, value, maxValuesToFetch);
-
-        if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
-          return result;
+        boolean cont = addToResult(transformer, valuesResultListener, value);
+        if (!cont)
+          return;
 
         entry = OMVRBTree.next(entry);
       }
-
-      return result;
     } finally {
       releaseExclusiveLock();
     }
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();
     try {
       final OMVRBTreeEntry<Object, V> lastEntry;
@@ -484,31 +436,27 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         lastEntry = map.getLowerEntry(toKey);
 
       if (lastEntry == null)
-        return Collections.emptySet();
+        return;
 
       OMVRBTreeEntry<Object, V> entry = lastEntry;
-
-      final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
       while (entry != null) {
         V value = entry.getValue();
-        addToResult(transformer, result, value, maxValuesToFetch);
+        boolean cont = addToResult(transformer, valuesResultListener, value);
 
-        if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
-          return result;
+        if (!cont)
+          return;
 
         entry = OMVRBTree.previous(entry);
       }
-
-      return result;
     } finally {
       releaseExclusiveLock();
     }
   }
 
   @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     acquireExclusiveLock();
 
     try {
@@ -519,32 +467,28 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         firstEntry = map.getHigherEntry(fromKey);
 
       if (firstEntry == null)
-        return Collections.emptySet();
+        return;
 
       OMVRBTreeEntry<Object, V> entry = firstEntry;
-
-      final Set<ODocument> result = new ODocumentFieldsHashSet();
 
       while (entry != null) {
         final Object key = entry.getKey();
         final V value = entry.getValue();
-        addToEntriesResult(transformer, result, key, value, maxEntriesToFetch);
+        boolean cont = addToEntriesResult(transformer, key, value, entriesResultListener);
 
-        if (maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)
-          return result;
+        if (!cont)
+          return;
 
         entry = OMVRBTree.next(entry);
       }
-
-      return result;
     } finally {
       releaseExclusiveLock();
     }
   }
 
   @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     acquireExclusiveLock();
 
     try {
@@ -556,32 +500,28 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         lastEntry = map.getLowerEntry(toKey);
 
       if (lastEntry == null)
-        return Collections.emptySet();
+        return;
 
       OMVRBTreeEntry<Object, V> entry = lastEntry;
-
-      final Set<ODocument> result = new ODocumentFieldsHashSet();
 
       while (entry != null) {
         final Object key = entry.getKey();
         final V value = entry.getValue();
-        addToEntriesResult(transformer, result, key, value, maxEntriesToFetch);
+        boolean cont = addToEntriesResult(transformer, key, value, entriesResultListener);
 
-        if (maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)
-          return result;
+        if (!cont)
+          return;
 
         entry = OMVRBTree.previous(entry);
       }
-
-      return result;
     } finally {
       releaseExclusiveLock();
     }
   }
 
   @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     acquireExclusiveLock();
 
     try {
@@ -593,7 +533,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         firstEntry = map.getHigherEntry(iRangeFrom);
 
       if (firstEntry == null)
-        return Collections.emptySet();
+        return;
 
       final int firstEntryIndex = map.getPageIndex();
 
@@ -619,15 +559,13 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         final Object key = entry.getKey();
         final V value = entry.getValue();
 
-        addToEntriesResult(transformer, result, key, value, maxEntriesToFetch);
+        boolean cont = addToEntriesResult(transformer, key, value, entriesResultListener);
 
-        if (maxEntriesToFetch > -1 && maxEntriesToFetch == result.size())
-          return result;
+        if (!cont)
+          return;
 
         entry = OMVRBTree.next(entry);
       }
-
-      return result;
     } finally {
       releaseExclusiveLock();
     }
@@ -667,64 +605,6 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    acquireExclusiveLock();
-    try {
-      final OMVRBTreeEntry<Object, V> firstEntry;
-
-      if (rangeFrom == null)
-        firstEntry = (OMVRBTreeEntry<Object, V>) map.firstEntry();
-      else if (fromInclusive)
-        firstEntry = map.getCeilingEntry(rangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
-      else
-        firstEntry = map.getHigherEntry(rangeFrom);
-
-      if (firstEntry == null)
-        return 0;
-
-      long count = 0;
-      final int firstEntryIndex = map.getPageIndex();
-
-      final OMVRBTreeEntry<Object, V> lastEntry;
-
-      if (rangeFrom == null)
-        lastEntry = (OMVRBTreeEntry<Object, V>) map.lastEntry();
-      else if (toInclusive)
-        lastEntry = map.getHigherEntry(rangeTo);
-      else
-        lastEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
-
-      final int lastEntryIndex;
-
-      if (lastEntry != null)
-        lastEntryIndex = map.getPageIndex();
-      else
-        lastEntryIndex = -1;
-
-      OMVRBTreeEntry<Object, V> entry = firstEntry;
-      map.setPageIndex(firstEntryIndex);
-
-      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
-        final V value = entry.getValue();
-        if (transformer != null)
-          count += transformer.transformFromValue(value).size();
-        else
-          count++;
-
-        if (maxValuesToFetch > -1 && maxValuesToFetch == count)
-          return maxValuesToFetch;
-
-        entry = OMVRBTree.next(entry);
-      }
-
-      return count;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  @Override
   public Iterator<V> valuesIterator() {
     acquireExclusiveLock();
     try {
@@ -749,21 +629,22 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     return true;
   }
 
-  private void addToResult(ValuesTransformer<V> transformer, Set<OIdentifiable> result, V value, int maxValuesToFetch) {
+  private boolean addToResult(ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener, V value) {
     if (transformer != null) {
       Collection<OIdentifiable> transformResult = transformer.transformFromValue(value);
       for (OIdentifiable transformedValue : transformResult) {
-
-        result.add(transformedValue);
-        if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
-          return;
+        boolean cont = valuesResultListener.addResult(transformedValue);
+        if (!cont)
+          return false;
       }
 
+      return true;
     } else
-      result.add((OIdentifiable) value);
+      return valuesResultListener.addResult((OIdentifiable) value);
   }
 
-  private void addToEntriesResult(ValuesTransformer<V> transformer, Set<ODocument> result, Object key, V value, int maxValuesToFetch) {
+  private boolean addToEntriesResult(ValuesTransformer<V> transformer, Object key, V value,
+      EntriesResultListener entriesResultListener) {
     if (transformer != null) {
       Collection<OIdentifiable> transformResult = transformer.transformFromValue(value);
       for (OIdentifiable transformedValue : transformResult) {
@@ -772,19 +653,20 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         document.field("rid", transformedValue.getIdentity());
         document.unsetDirty();
 
-        result.add(document);
+        boolean cont = entriesResultListener.addResult(document);
 
-        if (maxValuesToFetch > -1 && result.size() == maxValuesToFetch)
-          return;
+        if (!cont)
+          return false;
       }
 
+      return true;
     } else {
       final ODocument document = new ODocument();
       document.field("key", key);
       document.field("rid", ((OIdentifiable) value).getIdentity());
       document.unsetDirty();
 
-      result.add(document);
+      return entriesResultListener.addResult(document);
     }
   }
 

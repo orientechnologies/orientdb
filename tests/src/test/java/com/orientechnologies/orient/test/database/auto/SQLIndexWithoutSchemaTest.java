@@ -35,6 +35,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     super(iURL);
   }
 
+  @Override
   @BeforeClass
   public void setUp() throws Exception {
     super.setUp();

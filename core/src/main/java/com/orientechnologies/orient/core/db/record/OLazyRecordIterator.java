@@ -20,6 +20,7 @@ import java.util.Iterator;
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OResettable;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -65,7 +66,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
     if (value == null)
       return null;
 
-    if (value instanceof ORecordId && autoConvert2Record) {
+    if (value instanceof ORecordId && autoConvert2Record && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       try {
         final ORecord<?> rec = ((ORecordId) value).getRecord();
         if (underlying instanceof OLazyIterator<?>)

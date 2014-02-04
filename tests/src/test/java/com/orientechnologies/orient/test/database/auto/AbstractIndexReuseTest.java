@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 public abstract class AbstractIndexReuseTest {
   protected final ODatabaseDocumentTx database;
   private JMXConnector                jmxConnector;
-  protected OProfilerMBean            profiler;
+  protected OProfilerMBean              profiler;
 
   public AbstractIndexReuseTest(final String iURL) {
     database = new ODatabaseDocumentTx(iURL);

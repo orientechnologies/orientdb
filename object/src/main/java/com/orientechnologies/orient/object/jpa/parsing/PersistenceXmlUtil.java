@@ -28,144 +28,143 @@ import org.xml.sax.helpers.DefaultHandler;
  * Simple handler for persistence.xml files.
  */
 public final class PersistenceXmlUtil {
-	/**
-	 * URI for the JPA persistence namespace
-	 */
-	public static final String						PERSISTENCE_NS_URI				= "http://java.sun.com/xml/ns/persistence";
+  /**
+   * URI for the JPA persistence namespace
+   */
+  public static final String            PERSISTENCE_NS_URI        = "http://java.sun.com/xml/ns/persistence";
 
-	private final static SchemaFactory		schemaFactory							= SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-	private final static SAXParserFactory	parserFactory							= SAXParserFactory.newInstance();
-	static {
-		parserFactory.setNamespaceAware(true);
-	}
-	/** The persistence xml root */
-	public static final String						PERSISTENCE_XML_ROOT			= "META-INF/";
-	public static final String						PERSISTENCE_XML_BASE_NAME	= "persistence.xml";
-	/** The persistence XSD location */
-	public static final String						PERSISTENCE_XSD_DIR				= PERSISTENCE_XML_ROOT + "persistence/";
-	/** The persistence XML location */
-	public static final String						PERSISTENCE_XML						= PERSISTENCE_XML_ROOT + PERSISTENCE_XML_BASE_NAME;
+  private final static SchemaFactory    schemaFactory             = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
+  private final static SAXParserFactory parserFactory             = SAXParserFactory.newInstance();
+  static {
+    parserFactory.setNamespaceAware(true);
+  }
+  /** The persistence xml root */
+  public static final String            PERSISTENCE_XML_ROOT      = "META-INF/";
+  public static final String            PERSISTENCE_XML_BASE_NAME = "persistence.xml";
+  /** The persistence XSD location */
+  public static final String            PERSISTENCE_XSD_DIR       = PERSISTENCE_XML_ROOT + "persistence/";
+  /** The persistence XML location */
+  public static final String            PERSISTENCE_XML           = PERSISTENCE_XML_ROOT + PERSISTENCE_XML_BASE_NAME;
 
-	private PersistenceXmlUtil() {
-	}
+  private PersistenceXmlUtil() {
+  }
 
-	/**
-	 * Parse the persistence.xml files referenced by the URLs in the collection
-	 * 
-	 * @param persistenceXml
-	 * @return A collection of parsed persistence units, or null if nothing has been found
-	 */
-	public static PersistenceUnitInfo findPersistenceUnit(String unitName, Collection<? extends PersistenceUnitInfo> units) {
-		if (units == null || unitName == null) {
-			return null;
-		}
+  /**
+   * Parse the persistence.xml files referenced by the URLs in the collection
+   * 
+   * @param persistenceXml
+   * @return A collection of parsed persistence units, or null if nothing has been found
+   */
+  public static PersistenceUnitInfo findPersistenceUnit(String unitName, Collection<? extends PersistenceUnitInfo> units) {
+    if (units == null || unitName == null) {
+      return null;
+    }
 
-		for (PersistenceUnitInfo unit : units) {
-			if (unitName.equals(unit.getPersistenceUnitName())) {
-				return unit;
-			}
-		}
-		return null;
-	}
+    for (PersistenceUnitInfo unit : units) {
+      if (unitName.equals(unit.getPersistenceUnitName())) {
+        return unit;
+      }
+    }
+    return null;
+  }
 
-	/**
-	 * Parse the persistence.xml files referenced by the URLs in the collection
-	 * 
-	 * @param persistenceXml
-	 * @return A collection of parsed persistence units.
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
-	 */
-	public static Collection<? extends PersistenceUnitInfo> parse(URL persistenceXml) {
+  /**
+   * Parse the persistence.xml files referenced by the URLs in the collection
+   * 
+   * @param persistenceXml
+   * @return A collection of parsed persistence units.
+   * @throws IOException
+   * @throws SAXException
+   * @throws ParserConfigurationException
+   */
+  public static Collection<? extends PersistenceUnitInfo> parse(URL persistenceXml) {
 
-		InputStream is = null;
-		try {
-			// Buffer the InputStream so we can mark it, though we'll be in
-			// trouble if we have to read more than 8192 characters before finding
-			// the schema!
-			is = new BufferedInputStream(persistenceXml.openStream());
-			is.mark(Integer.MAX_VALUE);
+    InputStream is = null;
+    try {
+      // Buffer the InputStream so we can mark it, though we'll be in
+      // trouble if we have to read more than 8192 characters before finding
+      // the schema!
+      is = new BufferedInputStream(persistenceXml.openStream());
 
-			JPAVersion jpaVersion = getSchemaVersion(is);
-			Schema schema = getSchema(jpaVersion);
+      JPAVersion jpaVersion = getSchemaVersion(is);
+      Schema schema = getSchema(jpaVersion);
 
-			if (schema == null) {
-				throw new PersistenceException("Schema is unknown");
-			}
+      if (schema == null) {
+        throw new PersistenceException("Schema is unknown");
+      }
 
-			// Get back to the beginning of the stream
-			is.reset();
+      // Get back to the beginning of the stream
+      is = new BufferedInputStream(persistenceXml.openStream());
 
-			parserFactory.setNamespaceAware(true);
-			
-			int endIndex = persistenceXml.getPath().length() - PERSISTENCE_XML_BASE_NAME.length();
-			URL persistenceXmlRoot = new URL("file://" + persistenceXml.getFile().substring(0, endIndex));
+      parserFactory.setNamespaceAware(true);
 
-			return getPersistenceUnits(is, persistenceXmlRoot, jpaVersion);
-		} catch (Exception e) {
-			throw new PersistenceException("Something goes wrong while parsing persistence.xml", e);
-		} finally {
-			if (is != null)
-				try {
-					is.close();
-				} catch (IOException e) {
-					// No logging necessary, just consume
-				}
-		}
-	}
+      int endIndex = persistenceXml.getPath().length() - PERSISTENCE_XML_BASE_NAME.length();
+      URL persistenceXmlRoot = new URL("file://" + persistenceXml.getFile().substring(0, endIndex));
 
-	public static Schema getSchema(JPAVersion version) throws SAXException {
-		String schemaPath = PERSISTENCE_XSD_DIR + version.getFilename();
-		InputStream inputStream = PersistenceXmlUtil.class.getClassLoader().getResourceAsStream(schemaPath);
-		return schemaFactory.newSchema(new StreamSource(inputStream));
-	}
+      return getPersistenceUnits(is, persistenceXmlRoot, jpaVersion);
+    } catch (Exception e) {
+      throw new PersistenceException("Something goes wrong while parsing persistence.xml", e);
+    } finally {
+      if (is != null)
+        try {
+          is.close();
+        } catch (IOException e) {
+          // No logging necessary, just consume
+        }
+    }
+  }
 
-	public static JPAVersion getSchemaVersion(InputStream is) throws ParserConfigurationException, SAXException, IOException {
-		SchemaLocatingHandler schemaHandler = parse(is, new SchemaLocatingHandler());
-		return JPAVersion.parse(schemaHandler.getVersion());
-	}
+  public static Schema getSchema(JPAVersion version) throws SAXException {
+    String schemaPath = PERSISTENCE_XSD_DIR + version.getFilename();
+    InputStream inputStream = PersistenceXmlUtil.class.getClassLoader().getResourceAsStream(schemaPath);
+    return schemaFactory.newSchema(new StreamSource(inputStream));
+  }
 
-	public static Collection<? extends PersistenceUnitInfo> getPersistenceUnits(InputStream is, URL xmlRoot,
- JPAVersion version) throws ParserConfigurationException, SAXException, IOException {
-		JPAHandler handler = new JPAHandler(xmlRoot, version);
-		return parse(is, handler).getPersistenceUnits();
-	}
+  public static JPAVersion getSchemaVersion(InputStream is) throws ParserConfigurationException, SAXException, IOException {
+    SchemaLocatingHandler schemaHandler = parse(is, new SchemaLocatingHandler());
+    return JPAVersion.parse(schemaHandler.getVersion());
+  }
 
-	/**
-	 * @param is
-	 *          - xml file to be validated
-	 * @param handler
-	 * @return handler for chained calls
-	 * @throws ParserConfigurationException
-	 * @throws SAXException
-	 * @throws IOException
-	 */
-	protected static <T extends DefaultHandler> T parse(InputStream is, T handler) throws ParserConfigurationException, SAXException,
-			IOException {
-		try {
-			SAXParser parser = parserFactory.newSAXParser();
-			parser.parse(is, handler);
-		} catch (StopSAXParser e) {
-			// This is not really an exception, but a way to work out which
-			// version of the persistence schema to use in validation
-		}
-		return handler;
-	}
+  public static Collection<? extends PersistenceUnitInfo> getPersistenceUnits(InputStream is, URL xmlRoot, JPAVersion version)
+      throws ParserConfigurationException, SAXException, IOException {
+    JPAHandler handler = new JPAHandler(xmlRoot, version);
+    return parse(is, handler).getPersistenceUnits();
+  }
 
-	/**
-	 * @param uri
-	 * @param element
-	 * @param attributes
-	 * @return XML Schema Version or null
-	 * @throws SAXException
-	 */
-	public static String parseSchemaVersion(String uri, PersistenceXml element, Attributes attributes) throws SAXException {
-		if (PERSISTENCE_NS_URI.equals(uri) && TAG_PERSISTENCE == element) {
-			return attributes.getValue(ATTR_SCHEMA_VERSION.toString());
-		}
-		return null;
-	}
+  /**
+   * @param is
+   *          - xml file to be validated
+   * @param handler
+   * @return handler for chained calls
+   * @throws ParserConfigurationException
+   * @throws SAXException
+   * @throws IOException
+   */
+  protected static <T extends DefaultHandler> T parse(InputStream is, T handler) throws ParserConfigurationException, SAXException,
+      IOException {
+    try {
+      SAXParser parser = parserFactory.newSAXParser();
+      parser.parse(is, handler);
+    } catch (StopSAXParser e) {
+      // This is not really an exception, but a way to work out which
+      // version of the persistence schema to use in validation
+    }
+    return handler;
+  }
+
+  /**
+   * @param uri
+   * @param element
+   * @param attributes
+   * @return XML Schema Version or null
+   * @throws SAXException
+   */
+  public static String parseSchemaVersion(String uri, PersistenceXml element, Attributes attributes) throws SAXException {
+    if (PERSISTENCE_NS_URI.equals(uri) && TAG_PERSISTENCE == element) {
+      return attributes.getValue(ATTR_SCHEMA_VERSION.toString());
+    }
+    return null;
+  }
 }
 
 /**
@@ -174,48 +173,48 @@ public final class PersistenceXmlUtil {
  */
 class SchemaLocatingHandler extends DefaultHandler {
 
-	/** The value of the version attribute in the xml */
-	private String	schemaVersion	= "";
+  /** The value of the version attribute in the xml */
+  private String schemaVersion = "";
 
-	/**
-	 * Create a new SchemaLocatingHandler
-	 */
-	public SchemaLocatingHandler() {
-	}
+  /**
+   * Create a new SchemaLocatingHandler
+   */
+  public SchemaLocatingHandler() {
+  }
 
-	/**
-	 * Fist tag of 'persistence.xml' (<persistence>) have to have 'version' attribute
-	 * 
-	 * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String,
-	 *      org.xml.sax.Attributes)
-	 */
-	@Override
-	public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
-		PersistenceXml element = PersistenceXml.parse((localName == null || localName.isEmpty()) ? name : localName);
-		schemaVersion = PersistenceXmlUtil.parseSchemaVersion(uri, element, attributes);
-		// found, stop parsing
-		if (schemaVersion != null) {
-			throw new StopSAXParser();
-		}
+  /**
+   * Fist tag of 'persistence.xml' (<persistence>) have to have 'version' attribute
+   * 
+   * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String,
+   *      org.xml.sax.Attributes)
+   */
+  @Override
+  public void startElement(String uri, String localName, String name, Attributes attributes) throws SAXException {
+    PersistenceXml element = PersistenceXml.parse((localName == null || localName.isEmpty()) ? name : localName);
+    schemaVersion = PersistenceXmlUtil.parseSchemaVersion(uri, element, attributes);
+    // found, stop parsing
+    if (schemaVersion != null) {
+      throw new StopSAXParser();
+    }
 
-		// This should never occurs, however check if contain known tag other than TAG_PERSISTENCE
-		if (TAG_PERSISTENCE != element && EnumSet.allOf(PersistenceXml.class).contains(element)) {
-			throw new PersistenceException("Can't find schema version attribute in <persistence> tag");
-		}
-	}
+    // This should never occurs, however check if contain known tag other than TAG_PERSISTENCE
+    if (TAG_PERSISTENCE != element && EnumSet.allOf(PersistenceXml.class).contains(element)) {
+      throw new PersistenceException("Can't find schema version attribute in <persistence> tag");
+    }
+  }
 
-	/**
-	 * @return The version of the JPA schema used
-	 */
-	public String getVersion() {
-		return schemaVersion;
-	}
+  /**
+   * @return The version of the JPA schema used
+   */
+  public String getVersion() {
+    return schemaVersion;
+  }
 }
 
 /**
  * A convenience mechanism for finding the schema to validate with
  */
 class StopSAXParser extends SAXException {
-	/** This class is serializable */
-	private static final long	serialVersionUID	= 6173561761817524327L;
+  /** This class is serializable */
+  private static final long serialVersionUID = 6173561761817524327L;
 }

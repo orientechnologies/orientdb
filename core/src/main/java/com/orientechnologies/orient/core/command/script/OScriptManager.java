@@ -180,9 +180,6 @@ public class OScriptManager {
 
   public Bindings bind(final Bindings binding, final ODatabaseRecordTx db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
-    for (OScriptInjection i : injections)
-      i.bind(binding);
-
     if (db != null) {
       // BIND FIXED VARIABLES
       binding.put("db", new OScriptDocumentDatabaseWrapper(db));
@@ -190,6 +187,9 @@ public class OScriptManager {
       binding.put("orient", new OScriptOrientWrapper(db));
     }
     binding.put("util", new OFunctionUtilWrapper(null));
+
+    for (OScriptInjection i : injections)
+      i.bind(binding);
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
