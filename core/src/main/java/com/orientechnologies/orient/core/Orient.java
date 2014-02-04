@@ -341,12 +341,16 @@ public class Orient extends OListenerManger<OOrientListener> {
         l.onStorageUnregistered(iStorage);
       }
 
+			final List<String> storagesToRemove = new ArrayList<String>();
+
       for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue().equals(iStorage)) {
-          storages.remove(s.getKey());
-          break;
-        }
+        if (s.getValue().equals(iStorage))
+          storagesToRemove.add(s.getKey());
       }
+
+			for (String dbName : storagesToRemove)
+				storages.remove(dbName);
+
     } finally {
       getLock().unlock();
     }

@@ -13,4 +13,5 @@ import java.util.Map;
 class OrientGraphContext {
   public Map<String, OrientIndex<? extends OrientElement>> manualIndices = new HashMap<String, OrientIndex<? extends OrientElement>>();
   public ODatabaseDocumentTx                               rawGraph;
+  public Thread                                            thread        = Thread.currentThread();
 }

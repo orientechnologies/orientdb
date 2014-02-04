@@ -899,22 +899,42 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public void removeContext() {
-    final OrientGraphContext context = getContext(false);
-
-    if (context != null) {
-      context.manualIndices.clear();
-
-      if (!context.rawGraph.isClosed()) {
-        context.rawGraph.commit();
-        context.rawGraph.close();
+    final List<OrientGraphContext> contextsToRemove = new ArrayList<OrientGraphContext>();
+    synchronized (contexts) {
+      for (OrientGraphContext contextItem : contexts) {
+        if (!contextItem.thread.isAlive())
+          contextsToRemove.add(contextItem);
       }
-
-      synchronized (contexts) {
-        contexts.remove(context);
-      }
-
-      threadContext.set(null);
     }
+
+    final OrientGraphContext context = getContext(false);
+    if (context != null)
+      contextsToRemove.add(context);
+
+    for (OrientGraphContext contextItem : contextsToRemove) {
+      try {
+        contextItem.manualIndices.clear();
+
+        if (!contextItem.rawGraph.isClosed())
+          contextItem.rawGraph.commit();
+
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during context close for db " + url, e);
+      } finally {
+        try {
+          contextItem.rawGraph.close();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during context close for db " + url, e);
+        }
+      }
+    }
+
+    synchronized (contexts) {
+      for (OrientGraphContext contextItem : contextsToRemove)
+        contexts.remove(contextItem);
+    }
+
+    threadContext.set(null);
   }
 
   public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
