@@ -137,20 +137,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final int                              maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
-    clientId = iClientId;
-    configuration = null;
-
-    clientConfiguration = new OContextConfiguration();
-    connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
-    connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    asynchEventListener = new OStorageRemoteAsynchEventListener(this);
-    parseServerURLs();
-
-    asynchExecutor = Executors.newSingleThreadScheduledExecutor();
-
-    maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
+    this(iClientId, iURL, iMode, null);
   }
+
+	public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
+		super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
+		if (status != null)
+			this.status = status;
+
+		clientId = iClientId;
+		configuration = null;
+
+		clientConfiguration = new OContextConfiguration();
+		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
+		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
+		asynchEventListener = new OStorageRemoteAsynchEventListener(this);
+		parseServerURLs();
+
+		asynchExecutor = Executors.newSingleThreadScheduledExecutor();
+
+		maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
+	}
 
   public int getSessionId() {
     return OStorageRemoteThreadLocal.INSTANCE.get().sessionId.intValue();

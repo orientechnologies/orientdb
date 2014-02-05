@@ -54,7 +54,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "");
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN);
   }
 
   /**
