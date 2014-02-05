@@ -49,6 +49,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -82,7 +83,8 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
+public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object>,
+    OCommandOutputListener {
 
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
   protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
@@ -777,7 +779,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final FileInputStream in = new FileInputStream(f);
       try {
-        db.restore(in, null, null);
+        db.restore(in, null, null, this);
       } finally {
         in.close();
       }
@@ -814,5 +816,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     // NO NODE IN CLUSTER, LOAD FROM FILE
     return super.loadDatabaseConfiguration(iDatabaseName, file);
+  }
+
+  @Override
+  public void onMessage(String iText) {
+    OLogManager.instance().info(this, iText);
   }
 }

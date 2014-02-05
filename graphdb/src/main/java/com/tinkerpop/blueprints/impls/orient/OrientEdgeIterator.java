@@ -1,12 +1,14 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Iterator;
+
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
-
-import java.util.Iterator;
 
 /**
  * Lazy iterator of edges.
@@ -34,6 +36,14 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       return (OrientEdge) iObject;
 
     final OIdentifiable rec = (OIdentifiable) iObject;
+
+    final ORecord<?> record = rec.getRecord();
+    if (!(record instanceof ODocument)) {
+      // SKIP IT
+      OLogManager.instance().warn(this, "Found a record that is not an edge. Record: " + record);
+      return null;
+    }
+
     final ODocument value = rec.getRecord();
 
     if (value == null || value.getSchemaClass() == null)
