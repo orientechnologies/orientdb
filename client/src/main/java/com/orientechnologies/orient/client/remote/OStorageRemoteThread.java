@@ -184,6 +184,8 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       delegate.close();
+
+			Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
     }
@@ -726,7 +728,13 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public boolean equals(final Object iOther) {
-    return iOther == this || iOther == delegate;
+		if (iOther instanceof OStorageRemoteThread)
+			return iOther == this;
+
+		if (iOther instanceof   OStorageRemote)
+    	return iOther == delegate;
+
+		return false;
   }
 
   protected void pushSession() {

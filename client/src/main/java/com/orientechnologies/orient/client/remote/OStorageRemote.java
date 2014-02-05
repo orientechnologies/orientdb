@@ -1182,32 +1182,42 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    checkConnection();
+    lock.acquireSharedLock();
+    try {
+      checkConnection();
 
-    if (iClusterName == null)
-      return -1;
+      if (iClusterName == null)
+        return -1;
 
-    if (Character.isDigit(iClusterName.charAt(0)))
-      return Integer.parseInt(iClusterName);
+      if (Character.isDigit(iClusterName.charAt(0)))
+        return Integer.parseInt(iClusterName);
 
-    final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-    if (cluster == null)
-      return -1;
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      if (cluster == null)
+        return -1;
 
-    return cluster.getId();
+      return cluster.getId();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public String getClusterTypeByName(final String iClusterName) {
-    checkConnection();
+    lock.acquireSharedLock();
+    try {
+      checkConnection();
 
-    if (iClusterName == null)
-      return null;
+      if (iClusterName == null)
+        return null;
 
-    final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-    if (cluster == null)
-      return null;
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      if (cluster == null)
+        return null;
 
-    return cluster.getType();
+      return cluster.getType();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public int getDefaultClusterId() {
@@ -1225,6 +1235,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OChannelBinaryAsynchClient network = null;
     do {
+      lock.acquireExclusiveLock();
       try {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD);
@@ -1266,6 +1277,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         handleDBFreeze();
       } catch (Exception e) {
         handleException(network, "Error on add new cluster", e);
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } while (true);
   }
@@ -1275,6 +1288,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OChannelBinaryAsynchClient network = null;
     do {
+      lock.acquireExclusiveLock();
       try {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP);
@@ -1311,6 +1325,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } catch (Exception e) {
         handleException(network, "Error on removing of cluster", e);
 
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } while (true);
   }
@@ -1398,7 +1414,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusterMap() {
-    return clusterMap.size();
+    lock.acquireSharedLock();
+    try {
+      return clusterMap.size();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public Collection<OCluster> getClusterInstances() {
@@ -2094,7 +2115,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusters() {
-    return clusterMap.size();
+		lock.acquireSharedLock();
+		try {
+			return clusterMap.size();
+		} finally {
+			lock.releaseSharedLock();
+		}
   }
 
   public void setDefaultClusterId(int defaultClusterId) {
