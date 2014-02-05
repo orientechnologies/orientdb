@@ -1,18 +1,28 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
-import org.junit.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OrientCommitMT {
   public static final String              DB_URL           = "remote:localhost/avltreetest";
@@ -33,25 +43,41 @@ public class OrientCommitMT {
   final AtomicInteger                     idGenerator      = new AtomicInteger(1);
 
   private static Random                   random           = new Random();
-  private static final OrientGraphFactory factory          = new OrientGraphFactory(DB_URL);
-
-  @BeforeClass
-  public static void beforeClass() {
-    factory.setupPool(5, 10);
-    // OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-    // graph.drop();
-  }
+  private static OrientGraphFactory factory;
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
+    if (DB_URL.startsWith("remote:")) {
+      OServerAdmin serverAdmin = new OServerAdmin(DB_URL);
+      serverAdmin.connect("root", ODatabaseHelper.getServerRootPassword());
+
+      if (serverAdmin.existsDatabase("plocal")) {
+        serverAdmin.dropDatabase("plocal");
+      }
+      serverAdmin.createDatabase(DB_URL, "graph", "plocal");
+    } else {
+      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+      graph.drop();
+    }
+    factory = new OrientGraphFactory(DB_URL).setupPool(5, 10);
+
     buildSchemaAndSeed();
     this.isValidData = true;
   }
 
   @AfterClass
-  public static void afterClass() {
-    // OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
-    // graph.drop();
+  public static void afterClass() throws IOException {
+    if (DB_URL.startsWith("remote:")) {
+      OServerAdmin serverAdmin = new OServerAdmin(DB_URL);
+      serverAdmin.connect("root", ODatabaseHelper.getServerRootPassword());
+
+      if (serverAdmin.existsDatabase("plocal")) {
+        serverAdmin.dropDatabase("plocal");
+      }
+    } else {
+      OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
+      graph.drop();
+    }
   }
 
   @Test
@@ -127,14 +153,6 @@ public class OrientCommitMT {
     return this.failureMessage;
   }
 
-  /**
-   * @param threadCount
-   *          - number of thread to run
-   * @param maxSleepTime
-   * @param maxOpCount
-   * @param initialCacheSize
-   * @param runtimeInMin
-   */
   private void executeTest(final int threadCount, final int maxSleepTime, final int maxOpCount, final int initialCacheSize,
       final int runtimeInMin) {
     CountDownLatch endLatch = new CountDownLatch(threadCount);
@@ -342,8 +360,9 @@ public class OrientCommitMT {
      * operation in the temp cache.
      * 
      * @param tempCache
+     *          cached objects
      */
-    private void updateCache(final List<TempCacheObject> tempCache) {
+   private void updateCache(final List<TempCacheObject> tempCache) {
       for (TempCacheObject tempCacheObject : tempCache) {
         ORID id = tempCacheObject.getOrientId();
         Operation operation = tempCacheObject.getOperation();
@@ -463,13 +482,10 @@ public class OrientCommitMT {
       }
 
       public String toString() {
-        StringBuilder stringObject = new StringBuilder();
-        stringObject.append("Operation:").append(this.operation).append(", ORID:").append(this.orientId).append(", CustomId:")
-            .append(this.customId);
-        return stringObject.toString();
+        return "Operation:" + this.operation + ", ORID:" + this.orientId + ", CustomId:" + this.customId;
       }
 
-    }
+   }
   }
 
   /**
