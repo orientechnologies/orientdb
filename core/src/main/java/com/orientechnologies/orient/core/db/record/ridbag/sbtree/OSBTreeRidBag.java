@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -132,7 +133,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void convertLinks2Records() {
-    throw new UnsupportedOperationException();
+    TreeMap<OIdentifiable, Change> newChanges = new TreeMap<OIdentifiable, Change>();
+    for (Map.Entry<OIdentifiable, Change> entry : changes.entrySet()) {
+      final OIdentifiable key = entry.getKey().getRecord();
+      newChanges.put((key == null) ? entry.getKey() : key, entry.getValue());
+    }
+
+    changes.clear();
+    changes.putAll(newChanges);
   }
 
   @Override
@@ -960,7 +968,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         offset += Change.SIZE;
 
         final OIdentifiable identifiable;
-        if (rid.isTemporary())
+        if (rid.isTemporary() && rid.getRecord() != null)
           identifiable = rid.getRecord();
         else
           identifiable = rid;
