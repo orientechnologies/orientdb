@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -22,10 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -120,7 +119,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     else
       traverse.limit(limit);
 
-    ((OCommandRequestText) iRequest).getContext().setChild(traverse.getContext());
+    iRequest.getContext().setChild(traverse.getContext());
 
     return this;
   }
@@ -150,7 +149,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     context.beginExecution(timeoutMs, timeoutStrategy);
 
     // BROWSE ALL THE RECORDS AND COLLECTS RESULT
-    final List<OIdentifiable> result = (List<OIdentifiable>) traverse.execute();
+    final List<OIdentifiable> result = traverse.execute();
     for (OIdentifiable r : result)
       handleResult(r, true);
 
@@ -211,7 +210,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
         final String fieldName = field.trim();
 
         if (fieldName.contains("("))
-          fields.add(OSQLHelper.parseValue((OBaseParser) null, fieldName, context));
+          fields.add(OSQLHelper.parseValue(null, fieldName, context));
         else
           fields.add(fieldName);
       }
@@ -238,7 +237,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));
     } catch (IllegalArgumentException e) {
-      throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + OTraverse.STRATEGY.values());
+      throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + Arrays.toString(OTraverse.STRATEGY.values()));
     }
     return true;
   }

@@ -15,11 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -45,16 +54,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -166,8 +165,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (!(d instanceof OIdentifiable))
             // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
             d = new ODocument().field("value", d);
-					else if(!(d instanceof ORID || d instanceof ORecord))
-					  d = ((OIdentifiable) d).getRecord();
+          else if (!(d instanceof ORID || d instanceof ORecord))
+            d = ((OIdentifiable) d).getRecord();
 
           if (!request.getResultListener().result(d))
             break;
@@ -186,13 +185,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
 
-      if (recordCopy != null)
-        // CALL THE LISTENER NOW
-        if (request.getResultListener() != null) {
-          final boolean result = request.getResultListener().result(recordCopy);
-          if (!result)
-            return false;
-        }
+      // CALL THE LISTENER NOW
+      if (recordCopy != null && request.getResultListener() != null) {
+        final boolean result = request.getResultListener().result(recordCopy);
+        if (!result)
+          return false;
+      }
 
       if (limit > -1 && resultCount >= limit)
         // BREAK THE EXECUTION
@@ -237,7 +235,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * 
    * @param w
    * 
-   * @return
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
    * @throws OCommandSQLParsingException
    *           if no valid limit has been found
@@ -266,7 +263,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * 
    * @param w
    * 
-   * @return
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
    * @throws OCommandSQLParsingException
    *           if no valid skip has been found
@@ -365,8 +361,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
 
     final ORID[] range = getRange();
-    target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true,
-        request.isUseCache(), false, locking).setRange(range[0], range[1]);
+    target = new ORecordIteratorClass<ORecordInternal<?>>(database, database, cls.getName(), true, request.isUseCache(), false,
+        locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -432,8 +428,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Optimizes the condition tree.
-   * 
-   * @return
    */
   protected void optimize() {
     if (compiledFilter != null)
