@@ -98,7 +98,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     OTraverseAbstractProcess<?> toProcess;
     // RESUME THE LAST PROCESS
     while ((toProcess = currentProcess()) != null) {
-      result = (OIdentifiable) toProcess.process();
+      result = toProcess.process();
       if (result != null) {
         resultCount++;
         return result;
