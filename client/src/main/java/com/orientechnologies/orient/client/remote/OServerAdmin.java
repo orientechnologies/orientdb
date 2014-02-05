@@ -486,6 +486,7 @@ public class OServerAdmin {
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
       network.writeString(iConfig.getKey());
+      network.endRequest();
 
       try {
         storage.beginResponse(network);
