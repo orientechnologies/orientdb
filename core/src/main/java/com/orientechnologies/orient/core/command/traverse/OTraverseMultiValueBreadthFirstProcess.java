@@ -50,8 +50,10 @@ public class OTraverseMultiValueBreadthFirstProcess extends OTraverseAbstractPro
                 continue;
             }
 
-            sub.add(rec);
-            return rec;
+            if (!command.getContext().isAlreadyTraversed(rec)) {
+              sub.add(rec);
+              return rec;
+            }
           }
         }
       }
