@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,14 +48,6 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
@@ -226,12 +226,14 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iObject, String iFetchPlan, boolean iIgnoreCache,
+      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) underlying.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
@@ -375,7 +377,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable) throws IOException {
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     underlying.backup(out, options, new Callable<Object>() {
 
       @Override
@@ -388,12 +391,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
           return callable.call();
         return null;
       }
-    });
-  }
-
-  @Override
-  public void restore(final InputStream in, final Map<String, Object> options, final Callable<Object> callable) throws IOException {
-    underlying.restore(in, options, callable);
+    }, iListener);
   }
 
   protected void checkClusterBoundedToClass(final int iClusterId) {

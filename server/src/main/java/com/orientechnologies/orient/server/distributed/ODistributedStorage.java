@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -182,7 +183,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     }
   }
 
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan, final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRecordId, final String iFetchPlan,
+      final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones,
+      LOCKING_STRATEGY iLockingStrategy) {
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
@@ -623,13 +626,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
-    wrapped.backup(out, options, callable);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
+    wrapped.backup(out, options, callable, iListener);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
-    wrapped.restore(in, options, callable);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
+    wrapped.restore(in, options, callable, iListener);
   }
 
   private OFreezableStorage getFreezableStorage() {

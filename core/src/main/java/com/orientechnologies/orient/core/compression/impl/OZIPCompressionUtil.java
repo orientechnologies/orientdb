@@ -28,17 +28,19 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OZIPCompressionUtil {
-  public static int compressDirectory(final String sourceFolderName, final OutputStream output) throws IOException {
+  public static int compressDirectory(final String sourceFolderName, final OutputStream output, final String[] iSkipFileExtensions,
+      final OCommandOutputListener iOutput) throws IOException {
 
     final ZipOutputStream zos = new ZipOutputStream(output);
     try {
       zos.setLevel(9);
-      return addFolder(zos, sourceFolderName, sourceFolderName);
+      return addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput);
     } finally {
       zos.close();
     }
@@ -46,14 +48,9 @@ public class OZIPCompressionUtil {
 
   /***
    * Extract zipfile to outdir with complete directory structure
-   * 
-   * @param zipfile
-   *          Input .zip file
-   * @param outdir
-   *          Output directory
-   * @throws IOException
    */
-  public static void uncompressDirectory(final InputStream in, final String out) throws IOException {
+  public static void uncompressDirectory(final InputStream in, final String out, final OCommandOutputListener iListener)
+      throws IOException {
     final File outdir = new File(out);
     final ZipInputStream zin = new ZipInputStream(in);
     try {
@@ -72,14 +69,18 @@ public class OZIPCompressionUtil {
         if (dir != null)
           mkdirs(outdir, dir);
 
-        extractFile(zin, outdir, name);
+        extractFile(zin, outdir, name, iListener);
       }
     } finally {
       zin.close();
     }
   }
 
-  private static void extractFile(final ZipInputStream in, final File outdir, final String name) throws IOException {
+  private static void extractFile(final ZipInputStream in, final File outdir, final String name,
+      final OCommandOutputListener iListener) throws IOException {
+    if (iListener != null)
+      iListener.onMessage("- Uncompressing file " + name + "...");
+
     final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
     try {
       OIOUtils.copyStream(in, out, -1);
@@ -99,7 +100,8 @@ public class OZIPCompressionUtil {
     return s == -1 ? null : name.substring(0, s);
   }
 
-  private static int addFolder(ZipOutputStream zos, String folderName, String baseFolderName) throws IOException {
+  private static int addFolder(ZipOutputStream zos, String folderName, String baseFolderName, final String[] iSkipFileExtensions,
+      final OCommandOutputListener iOutput) throws IOException {
     int total = 0;
 
     File f = new File(folderName);
@@ -107,12 +109,21 @@ public class OZIPCompressionUtil {
       if (f.isDirectory()) {
         File f2[] = f.listFiles();
         for (int i = 0; i < f2.length; i++) {
-          total += addFolder(zos, f2[i].getAbsolutePath(), baseFolderName);
+          total += addFolder(zos, f2[i].getAbsolutePath(), baseFolderName, iSkipFileExtensions, iOutput);
         }
       } else {
         // add file
         // extract the relative name for entry purpose
         String entryName = folderName.substring(baseFolderName.length() + 1, folderName.length());
+
+        if (iSkipFileExtensions != null)
+          for (String skip : iSkipFileExtensions)
+            if (entryName.endsWith(skip))
+              return 0;
+
+        if (iOutput != null)
+          iOutput.onMessage("- Compressing file " + entryName + "...");
+
         ZipEntry ze = new ZipEntry(entryName);
         zos.putNextEntry(ze);
         try {

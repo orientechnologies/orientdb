@@ -29,6 +29,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExter
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.MersenneTwister;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -140,7 +141,8 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     if (undistributedClusters.contains(iRid.getClusterId())) {
       return wrapped.readRecord(iRid, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     }
@@ -169,13 +171,15 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
-    wrapped.backup(out, options, callable);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
+    wrapped.backup(out, options, callable, iListener);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
-    wrapped.restore(in, options, callable);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
+    wrapped.restore(in, options, callable, iListener);
   }
 
   @Override

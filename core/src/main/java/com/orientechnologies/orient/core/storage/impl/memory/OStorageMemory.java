@@ -15,11 +15,25 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -47,19 +61,6 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -182,12 +183,14 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 

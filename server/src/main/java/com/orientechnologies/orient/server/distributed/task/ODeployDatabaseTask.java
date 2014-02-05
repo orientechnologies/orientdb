@@ -15,8 +15,18 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
@@ -26,20 +36,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Ask for deployment of database from a remote node.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ODeployDatabaseTask extends OAbstractReplicatedTask {
+public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
   public final static int CHUNK_MAX_SIZE = 1048576; // 1MB
 
   public ODeployDatabaseTask() {
@@ -69,18 +72,26 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
               "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
 
-          database.backup(new FileOutputStream(f), null, null);
+          FileOutputStream fileOutputStream = new FileOutputStream(f);
+          final BufferedOutputStream bOutputFile = new BufferedOutputStream(fileOutputStream, 500000);
+          try {
+            database.backup(bOutputFile, null, null, this);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "sending the compressed database '%s' over the network to node '%s', size=%s...", databaseName, getNodeSource(),
-              OFileUtils.getSizeAsString(f.length()));
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "sending the compressed database '%s' over the NETWORK to node '%s', size=%s...", databaseName, getNodeSource(),
+                OFileUtils.getSizeAsString(f.length()));
 
-          final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
+            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-              "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+                "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-          return chunk;
+            return chunk;
+
+          } finally {
+            bOutputFile.close();
+            fileOutputStream.close();
+          }
 
         } finally {
           lock.unlock();
@@ -138,5 +149,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask {
   public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
       ODistributedResponse iGoodResponse) {
     return null;
+  }
+
+  @Override
+  public void onMessage(String iText) {
+    OLogManager.instance().info(this, iText);
   }
 }

@@ -52,6 +52,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OSto
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorRemote;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -450,7 +451,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache, final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+      final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     checkConnection();
 
     if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -624,12 +626,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 
