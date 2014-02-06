@@ -28,4 +28,6 @@ public interface ODistributedDatabase {
   public ODistributedResponse send2Nodes(ODistributedRequest iRequest, Set<String> iTargetNode);
 
   public void setOnline();
+
+  public void checkLocalNodeInConfiguration();
 }

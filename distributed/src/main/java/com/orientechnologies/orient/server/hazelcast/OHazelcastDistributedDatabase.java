@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
@@ -41,6 +30,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
 import com.orientechnologies.orient.server.distributed.task.OResynchTask;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -89,8 +89,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         }
       }, resyncEvery, resyncEvery);
     }
-
-    checkLocalNodeInConfiguration();
   }
 
   @Override
@@ -487,7 +485,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return database;
   }
 
-  protected void checkLocalNodeInConfiguration() {
+  @Override
+  public void checkLocalNodeInConfiguration() {
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     final List<String> foundPartition = cfg.addNewNodeInPartitions(manager.getLocalNodeName());
