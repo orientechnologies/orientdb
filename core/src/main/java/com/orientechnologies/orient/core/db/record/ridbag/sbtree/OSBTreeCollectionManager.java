@@ -16,16 +16,31 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.Map;
+import java.util.UUID;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 
 public interface OSBTreeCollectionManager {
-  public OSBTreeBonsai<OIdentifiable, Integer> createSBTree(int clusterId);
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId);
+
+  OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID);
 
   public OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer);
 
   public void releaseSBTree(OBonsaiCollectionPointer collectionPointer);
 
   public void delete(OBonsaiCollectionPointer collectionPointer);
+
+  UUID listenForChanges(ORidBag collection);
+
+  void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer);
+
+  void clearPendingCollections();
+
+  Map<UUID, OBonsaiCollectionPointer> changedIds();
+
+  void clearChangedIds();
 }

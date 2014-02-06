@@ -16,11 +16,24 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -28,16 +41,21 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
 public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
   private ORidBagDelegate delegate;
 
   private int             topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
   private int             bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+
+  private UUID            uuid;
+
+  public ORidBag(ORidBag ridBag) {
+    this();
+
+    for (OIdentifiable identifiable : ridBag)
+      add(identifiable);
+  }
 
   public ORidBag() {
     if (topThreshold < 0)
@@ -47,12 +65,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   private ORidBag(byte[] stream) {
-    if (stream[0] == 1)
-      delegate = new OEmbeddedRidBag();
-    else
-      delegate = new OSBTreeRidBag();
-
-    delegate.deserialize(stream, 1);
+    fromStream(stream);
   }
 
   public void addAll(Collection<OIdentifiable> values) {
@@ -147,10 +160,35 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       }
     }
 
-    final byte[] stream = new byte[OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()];
+    final UUID oldUuid = uuid;
+		final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+		if (sbTreeCollectionManager != null)
+			uuid = sbTreeCollectionManager.listenForChanges(this);
+		else
+		  uuid = null;
+
+    boolean hasUuid = uuid != null;
+
+    final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
+        + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
+    final byte[] stream = new byte[serializedSize];
+
+    byte configByte = 0;
     if (isEmbedded())
-      stream[0] = 1;
-    delegate.serialize(stream, 1);
+      configByte |= 1;
+
+    if (hasUuid)
+      configByte |= 2;
+
+    stream[0] = configByte;
+
+    int offset = 1;
+    if (hasUuid) {
+      OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
+      offset += OUUIDSerializer.UUID_SIZE;
+    }
+
+    delegate.serialize(stream, offset, oldUuid);
 
     output.append(OBase64Utils.encodeBytes(stream));
     return this;
@@ -168,13 +206,23 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   @Override
   public OStringBuilderSerializable fromStream(StringBuilder input) throws OSerializationException {
     final byte[] stream = OBase64Utils.decode(input.toString());
-    if (stream[0] == 1)
+    fromStream(stream);
+    return this;
+  }
+
+  private void fromStream(byte[] stream) {
+    if ((stream[0] & 1) == 1)
       delegate = new OEmbeddedRidBag();
     else
       delegate = new OSBTreeRidBag();
 
-    delegate.deserialize(stream, 1);
-    return this;
+    int offset = 1;
+    if ((stream[0] & 2) == 2) {
+      uuid = OUUIDSerializer.INSTANCE.deserialize(stream, offset);
+      offset += OUUIDSerializer.UUID_SIZE;
+    }
+
+    delegate.deserialize(stream, offset);
   }
 
   public static ORidBag fromStream(String value) {
@@ -204,5 +252,56 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public void setOwner(ORecord<?> owner) {
     delegate.setOwner(owner);
+  }
+
+  /**
+   * Temporary id of collection to track changes in remote mode.
+   * 
+   * WARNING! Method is for internal usage.
+   * 
+   * @return UUID
+   */
+  public UUID getTemporaryId() {
+    return uuid;
+  }
+
+  /**
+   * Notify collection that changes has been saved. Converts to non embedded implementation if needed.
+   * 
+   * WARNING! Method is for internal usage.
+   * 
+   * @param newPointer
+   *          new collection pointer
+   */
+  public void notifySaved(OBonsaiCollectionPointer newPointer) {
+    if (newPointer.isValid()) {
+      if (isEmbedded()) {
+        replaceWithSBTree(newPointer);
+      } else {
+        ((OSBTreeRidBag) delegate).setCollectionPointer(newPointer);
+        ((OSBTreeRidBag) delegate).clearChanges();
+      }
+    }
+  }
+
+  /**
+   * Silently replace delegate by tree implementation.
+   * 
+   * @param pointer
+   *          new collection pointer
+   */
+  private void replaceWithSBTree(OBonsaiCollectionPointer pointer) {
+    delegate.requestDelete();
+    final OSBTreeRidBag treeBag = new OSBTreeRidBag();
+    treeBag.setCollectionPointer(pointer);
+    delegate = treeBag;
+  }
+
+  public OBonsaiCollectionPointer getPointer() {
+    if (isEmbedded()) {
+      return OBonsaiCollectionPointer.INVALID;
+    } else {
+      return ((OSBTreeRidBag) delegate).getCollectionPointer();
+    }
   }
 }

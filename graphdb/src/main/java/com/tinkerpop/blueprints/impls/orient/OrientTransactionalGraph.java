@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -16,23 +17,47 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected boolean autoStartTx = true;
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
+    this(iDatabase, true);
+  }
+
+  public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
+	super(iDatabase);
+	setCurrentGraphInThreadLocal();
+	this.setAutoStartTx(iAutoStartTx);
+	autoStartTransaction();
+  }
+
+  protected OrientTransactionalGraph(ODatabaseDocumentPool pool) {
+    super(pool);
+    setCurrentGraphInThreadLocal();
     autoStartTransaction();
   }
 
   public OrientTransactionalGraph(final String url) {
-    super(url, ADMIN, ADMIN);
-    autoStartTransaction();
+    this(url, true);
+  }
+
+  public OrientTransactionalGraph(final String url, final boolean iAutoStartTx) {
+	super(url, ADMIN, ADMIN);
+	setCurrentGraphInThreadLocal();
+	this.setAutoStartTx(iAutoStartTx);
+	autoStartTransaction();
   }
 
   public OrientTransactionalGraph(final String url, final String username, final String password) {
+    this(url, username, password, true);
+  }
+
+  public OrientTransactionalGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
     super(url, username, password);
+    setCurrentGraphInThreadLocal();
+	this.setAutoStartTx(iAutoStartTx);
     autoStartTransaction();
   }
 
@@ -80,8 +105,6 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
   @Override
   protected void autoStartTransaction() {
-    super.autoStartTransaction();
-
     if (!autoStartTx)
       return;
 

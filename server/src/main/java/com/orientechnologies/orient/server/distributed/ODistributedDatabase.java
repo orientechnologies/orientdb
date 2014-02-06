@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Set;
+
 /**
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -23,6 +25,9 @@ package com.orientechnologies.orient.server.distributed;
 public interface ODistributedDatabase {
   public ODistributedResponse send(ODistributedRequest iRequest) throws InterruptedException;
 
-  void send2Node(ODistributedRequest iRequest, String iTargetNode);
+  public ODistributedResponse send2Nodes(ODistributedRequest iRequest, Set<String> iTargetNode);
 
+  public void setOnline();
+
+  public void checkLocalNodeInConfiguration();
 }

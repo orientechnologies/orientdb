@@ -21,7 +21,8 @@ public class OrientBatchGraph extends BatchGraph<OrientTransactionalGraph> {
 
   protected <E extends Element> E setProperties(final E element, final Object... properties) {
     ((OrientElement) element).setProperties(properties);
-    ((OrientElement) element).save();
+    if (!((OrientElement) element).isDetached())
+      ((OrientElement) element).save();
     return element;
   }
 }

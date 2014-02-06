@@ -54,7 +54,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "");
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN);
   }
 
   /**
@@ -486,6 +486,7 @@ public class OServerAdmin {
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
       network.writeString(iConfig.getKey());
+      network.endRequest();
 
       try {
         storage.beginResponse(network);
@@ -509,6 +510,7 @@ public class OServerAdmin {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
       network.writeString(iConfig.getKey());
       network.writeString(iValue != null ? iValue.toString() : "");
+      storage.endRequest(network);
       storage.getResponse(network);
 
     } catch (Exception e) {

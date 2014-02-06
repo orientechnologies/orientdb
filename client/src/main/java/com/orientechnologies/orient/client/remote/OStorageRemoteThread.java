@@ -27,13 +27,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -75,6 +85,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   @Override
   public boolean isDistributed() {
     return delegate.isDistributed();
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return delegate.getCollectionManagerClass();
   }
 
   public void create(final Map<String, Object> iOptions) {
@@ -169,6 +184,8 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       delegate.close();
+
+			Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
     }
@@ -199,12 +216,14 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 
@@ -221,10 +240,10 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     pushSession();
     try {
-      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     } finally {
       popSession();
     }
@@ -709,7 +728,13 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public boolean equals(final Object iOther) {
-    return iOther == this || iOther == delegate;
+		if (iOther instanceof OStorageRemoteThread)
+			return iOther == this;
+
+		if (iOther instanceof   OStorageRemote)
+    	return iOther == delegate;
+
+		return false;
   }
 
   protected void pushSession() {

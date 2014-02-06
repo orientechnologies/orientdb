@@ -29,8 +29,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.serialization.compression.impl.OSnappyCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;

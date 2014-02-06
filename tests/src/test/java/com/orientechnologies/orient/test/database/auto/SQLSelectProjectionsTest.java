@@ -260,10 +260,10 @@ public class SQLSelectProjectionsTest {
 
   @Test
   public void queryProjectionContentCollection() {
-    database.open("admin", "admin");
+		database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ) FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')")).execute();
+        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( outE() ) FROM V WHERE outE() TRAVERSE(1,1) (@class = 'E')")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
@@ -347,17 +347,17 @@ public class SQLSelectProjectionsTest {
 
   @SuppressWarnings("unchecked")
   public void queryProjectionContextArray() {
-    database.open("admin", "admin");
+		database.open("admin", "admin");
 
     try {
       List<ODocument> result = database.command(
-          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = out_ where out_.size() > 0")).execute();
+          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = outE() where outE().size() > 0")).execute();
       Assert.assertFalse(result.isEmpty());
 
       for (ODocument d : result) {
         Assert.assertTrue(d.containsField("a"));
         Assert.assertTrue(d.containsField("a0"));
-        Assert.assertEquals(d.field("a0"), ((Collection<OIdentifiable>) d.field("a")).iterator().next());
+        Assert.assertEquals(d.field("a0"), ((Iterable<OIdentifiable>) d.field("a")).iterator().next());
       }
 
     } finally {

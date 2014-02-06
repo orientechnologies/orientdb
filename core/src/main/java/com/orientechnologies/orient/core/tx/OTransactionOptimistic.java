@@ -16,11 +16,6 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -47,8 +42,20 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static final boolean useSBTree   = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
@@ -217,7 +224,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
     }
 
-      status = TXSTATUS.COMPLETED;
+    status = TXSTATUS.COMPLETED;
   }
 
   public void rollback() {
@@ -246,16 +253,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       v.getRecord().unload();
 
     indexEntries.clear();
-      temp2persistent.clear();
-      allEntries.clear();
-      recordIndexOperations.clear();
-      recordEntries.clear();
+    temp2persistent.clear();
+    allEntries.clear();
+    recordIndexOperations.clear();
+    recordEntries.clear();
 
-      status = TXSTATUS.COMPLETED;
+    status = TXSTATUS.COMPLETED;
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
-      boolean ignoreCache, boolean loadTombstone) {
+      final boolean ignoreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkTransaction();
 
     final ORecordInternal<?> txRecord = getRecord(iRid);
@@ -277,7 +284,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecordInternal<?> record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false);
+    final ORecordInternal<?> record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false,
+        iLockingStrategy);
 
     if (record != null)
       addRecord(record, ORecordOperation.LOADED, null);
