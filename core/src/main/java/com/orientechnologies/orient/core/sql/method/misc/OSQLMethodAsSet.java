@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public class OSQLMethodAsSet extends OAbstractSQLMethod {
 
-  public static final String NAME = "asSet";
+  public static final String NAME = "asset";
 
   public OSQLMethodAsSet() {
     super(NAME);
@@ -40,7 +40,7 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
     if (ioResult instanceof Set)
       // ALREADY A SET
       return ioResult;

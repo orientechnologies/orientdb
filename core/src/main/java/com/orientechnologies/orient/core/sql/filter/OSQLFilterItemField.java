@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -27,6 +25,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
+
+import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
@@ -44,7 +44,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     super(iQueryToParse, iName);
   }
 
-  public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
+  public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
     if (iRecord == null)
       throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved");
 
@@ -58,8 +58,11 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     // UNMARSHALL THE SINGLE FIELD
     if (doc.deserializeFields(preLoadedFieldsArray)) {
-      // FIELD FOUND
       Object v = ODocumentHelper.getFieldValue(doc, name);
+
+      if (v == null && iCurrentResult != null)
+        // SEARCH IN CURRENT RESULT FIRST
+        v = ODocumentHelper.getFieldValue(iCurrentResult, name);
 
       collate = getCollateForField(doc, name);
 

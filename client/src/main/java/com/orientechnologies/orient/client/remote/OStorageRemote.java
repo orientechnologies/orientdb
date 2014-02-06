@@ -19,8 +19,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -39,6 +52,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OSto
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorRemote;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -49,6 +63,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -61,13 +77,26 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.ODataSegment;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.channel.binary.*;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -108,20 +137,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final int                              maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
-    super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
-    clientId = iClientId;
-    configuration = null;
-
-    clientConfiguration = new OContextConfiguration();
-    connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
-    connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-    asynchEventListener = new OStorageRemoteAsynchEventListener(this);
-    parseServerURLs();
-
-    asynchExecutor = Executors.newSingleThreadScheduledExecutor();
-
-    maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
+    this(iClientId, iURL, iMode, null);
   }
+
+	public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
+		super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
+		if (status != null)
+			this.status = status;
+
+		clientId = iClientId;
+		configuration = null;
+
+		clientConfiguration = new OContextConfiguration();
+		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
+		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
+		asynchEventListener = new OStorageRemoteAsynchEventListener(this);
+		parseServerURLs();
+
+		asynchExecutor = Executors.newSingleThreadScheduledExecutor();
+
+		maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
+	}
 
   public int getSessionId() {
     return OStorageRemoteThreadLocal.INSTANCE.get().sessionId.intValue();
@@ -332,6 +368,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
               ppos.recordVersion = network.readVersion();
             } else
               ppos.recordVersion = OVersionFactory.instance().createVersion();
+
+            if (network.getSrvProtocolVersion() >= 20)
+              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+
             return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
             endResponse(network);
@@ -341,6 +381,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           // ASYNCHRONOUS
           if (iCallback != null) {
             final int sessionId = getSessionId();
+            final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get()
+                .getSbTreeCollectionManager();
             Callable<Object> response = new Callable<Object>() {
               public Object call() throws Exception {
                 final OClusterPosition result;
@@ -351,6 +393,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
                   result = network.readClusterPosition();
                   if (network.getSrvProtocolVersion() >= 11)
                     network.readVersion();
+
+                  if (network.getSrvProtocolVersion() >= 20)
+                    readCollectionChanges(network, collectionManager);
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
@@ -414,7 +459,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     checkConnection();
 
     if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
@@ -498,35 +543,39 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            return new OStorageOperationResult<ORecordVersion>(network.readVersion());
+            OStorageOperationResult<ORecordVersion> r = new OStorageOperationResult<ORecordVersion>(network.readVersion());
+            readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+            return r;
           } finally {
             endResponse(network);
           }
 
         case 1:
           // ASYNCHRONOUS
-          if (iCallback != null) {
-            final int sessionId = getSessionId();
-            Callable<Object> response = new Callable<Object>() {
-              public Object call() throws Exception {
-                ORecordVersion result;
+          final int sessionId = getSessionId();
+          final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+          Callable<Object> response = new Callable<Object>() {
+            public Object call() throws Exception {
+              ORecordVersion result;
 
-                try {
-                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
-                  beginResponse(network);
-                  result = network.readVersion();
-                } finally {
-                  endResponse(network);
-                  OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
-                }
+              try {
+                OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                beginResponse(network);
+                result = network.readVersion();
 
-                iCallback.call(iRid, result);
-                return null;
+                if (network.getSrvProtocolVersion() >= 20)
+                  readCollectionChanges(network, collectionManager);
+              } finally {
+                endResponse(network);
+                OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
               }
 
-            };
-            asynchExecutor.submit(new FutureTask<Object>(response));
-          }
+              iCallback.call(iRid, result);
+              return null;
+            }
+
+          };
+          asynchExecutor.submit(new FutureTask<Object>(response));
         }
         return new OStorageOperationResult<ORecordVersion>(iVersion);
 
@@ -584,12 +633,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 
@@ -1087,6 +1138,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           }
 
           committedEntries.clear();
+
+          if (network.getSrvProtocolVersion() >= 20)
+            readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+
         } finally {
           endResponse(network);
         }
@@ -1113,36 +1168,63 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
+  private void readCollectionChanges(OChannelBinaryAsynchClient network, OSBTreeCollectionManager collectionManager)
+      throws IOException {
+    int count = network.readInt();
+
+    for (int i = 0; i < count; i++) {
+      final long mBitsOfId = network.readLong();
+      final long lBitsOfId = network.readLong();
+
+      final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
+
+      collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
+    }
+
+    if (ORecordSerializationContext.getDepth() <= 1)
+      collectionManager.clearPendingCollections();
+  }
+
   public void rollback(OTransaction iTx) {
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    checkConnection();
+    lock.acquireSharedLock();
+    try {
+      checkConnection();
 
-    if (iClusterName == null)
-      return -1;
+      if (iClusterName == null)
+        return -1;
 
-    if (Character.isDigit(iClusterName.charAt(0)))
-      return Integer.parseInt(iClusterName);
+      if (Character.isDigit(iClusterName.charAt(0)))
+        return Integer.parseInt(iClusterName);
 
-    final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-    if (cluster == null)
-      return -1;
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      if (cluster == null)
+        return -1;
 
-    return cluster.getId();
+      return cluster.getId();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public String getClusterTypeByName(final String iClusterName) {
-    checkConnection();
+    lock.acquireSharedLock();
+    try {
+      checkConnection();
 
-    if (iClusterName == null)
-      return null;
+      if (iClusterName == null)
+        return null;
 
-    final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-    if (cluster == null)
-      return null;
+      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+      if (cluster == null)
+        return null;
 
-    return cluster.getType();
+      return cluster.getType();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public int getDefaultClusterId() {
@@ -1160,6 +1242,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OChannelBinaryAsynchClient network = null;
     do {
+      lock.acquireExclusiveLock();
       try {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD);
@@ -1201,6 +1284,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         handleDBFreeze();
       } catch (Exception e) {
         handleException(network, "Error on add new cluster", e);
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } while (true);
   }
@@ -1210,6 +1295,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OChannelBinaryAsynchClient network = null;
     do {
+      lock.acquireExclusiveLock();
       try {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP);
@@ -1246,6 +1332,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } catch (Exception e) {
         handleException(network, "Error on removing of cluster", e);
 
+      } finally {
+        lock.releaseExclusiveLock();
       }
     } while (true);
   }
@@ -1333,7 +1421,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusterMap() {
-    return clusterMap.size();
+    lock.acquireSharedLock();
+    try {
+      return clusterMap.size();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public Collection<OCluster> getClusterInstances() {
@@ -2029,7 +2122,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusters() {
-    return clusterMap.size();
+		lock.acquireSharedLock();
+		try {
+			return clusterMap.size();
+		} finally {
+			lock.releaseSharedLock();
+		}
   }
 
   public void setDefaultClusterId(int defaultClusterId) {
@@ -2039,6 +2137,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public String getType() {
     return OEngineRemote.NAME;
+  }
+
+  @Override
+  public Class<OSBTreeCollectionManagerRemote> getCollectionManagerClass() {
+    return OSBTreeCollectionManagerRemote.class;
   }
 
   @Override

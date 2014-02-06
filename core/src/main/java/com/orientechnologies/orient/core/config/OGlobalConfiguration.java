@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -30,6 +22,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+
+import java.io.PrintStream;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -48,6 +48,13 @@ public enum OGlobalConfiguration {
 
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
+
+  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
+
+  MEMORY_AUTOFREE_HEAP_THRESHOLD(
+      "memory.autoFreeHeapThreshold",
+      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
+      String.class, "70%"),
 
   DIRECT_MEMORY_UNSAFE_MODE(
       "memory.directMemory.unsafeMode",
@@ -136,7 +143,7 @@ public enum OGlobalConfiguration {
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 5000),
+      Integer.class, 300000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -150,11 +157,11 @@ public enum OGlobalConfiguration {
   // CACHE
   CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
 
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, 1000),
+  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, false),
+  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
 
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, 0),
+  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
   CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
       .getCanonicalName()),
@@ -283,7 +290,7 @@ public enum OGlobalConfiguration {
   MVRBTREE_RID_BINARY_THRESHOLD(
       "mvrbtree.ridBinaryThreshold",
       "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-      Integer.class, 8),
+      Integer.class, -1),
 
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
@@ -302,6 +309,23 @@ public enum OGlobalConfiguration {
   SBTREEBONSAI_BUCKET_SIZE("sbtreebonsai.bucketSize",
       "Size of bucket in OSBTreeBonsai in kB. Contract: bucketSize < storagePageSize, storagePageSize % bucketSize == 0.",
       Integer.class, 2),
+
+  SBTREEBONSAI_LINKBAG_CACHE_SIZE("sbtreebonsai.linkBagCache.size",
+      "Amount of LINKBAG collections are cached to avoid constant reloading of data", Integer.class, 100000),
+
+  SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE("sbtreebonsai.linkBagCache.evictionSize",
+      "How many items of cached LINKBAG collections will be removed when cache limit is reached", Integer.class, 1000),
+
+  SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeeSpaceReuseTrigger",
+      "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
+
+  // RIDBAG
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
+
+  RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
+      "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
+      Integer.class, -1),
 
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
@@ -484,9 +508,6 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
 
   // DISTRIBUTED
-  DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
-      10000),
-
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
@@ -680,3 +701,4 @@ public enum OGlobalConfiguration {
     System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
   }
 }
+

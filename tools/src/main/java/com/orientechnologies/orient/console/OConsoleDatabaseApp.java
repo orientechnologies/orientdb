@@ -24,17 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
@@ -513,7 +504,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Update records in the database")
   public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("update", iCommandText, "\nUpdated %d record(s) in %f sec(s).\n", true);
+    sqlCommand("update", iCommandText, "\nUpdated record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
     currentDatabase.getLevel1Cache().invalidate();
     currentDatabase.getLevel2Cache().clear();
@@ -521,7 +512,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(splitInWords = false, description = "Delete records from the database")
   public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
-    sqlCommand("delete", iCommandText, "\nDelete %d record(s) in %f sec(s).\n", true);
+    sqlCommand("delete", iCommandText, "\nDelete record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
     currentDatabase.getLevel1Cache().invalidate();
     currentDatabase.getLevel2Cache().clear();
@@ -982,7 +973,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     ORecordId rid = new ORecordId(iRecordId);
-    final ORawBuffer buffer = currentDatabase.getStorage().readRecord(rid, null, false, null, false).getResult();
+    final ORawBuffer buffer = currentDatabase.getStorage()
+        .readRecord(rid, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
 
     if (buffer == null)
       throw new OException("The record has been deleted");
@@ -1085,13 +1077,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         + cls.getDefaultClusterId() + ")");
     message("\nSupported cluster ids: " + Arrays.toString(cls.getClusterIds()));
 
-    if (cls.getBaseClasses().hasNext()) {
+    if (!cls.getBaseClasses().isEmpty()) {
       message("Base classes.........: ");
       int i = 0;
-      for (Iterator<OClass> it = cls.getBaseClasses(); it.hasNext();) {
+      for (OClass c : cls.getBaseClasses()) {
         if (i > 0)
           message(", ");
-        message(it.next().getName());
+        message(c.getName());
         ++i;
       }
       out.println();
@@ -1447,7 +1439,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long startTime = System.currentTimeMillis();
     try {
-      currentDatabase.backup(new FileOutputStream(fileName), null, null);
+      currentDatabase.backup(new FileOutputStream(fileName), null, null, this);
 
       message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
 
@@ -1470,7 +1462,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long startTime = System.currentTimeMillis();
     try {
-      currentDatabase.restore(new FileInputStream(fileName), null, null);
+      final FileInputStream f = new FileInputStream(fileName);
+      try {
+        currentDatabase.restore(f, null, null, this);
+      } finally {
+        f.close();
+      }
 
       message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
 
@@ -1736,7 +1733,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     currentRecord = ((ODatabaseRecordAbstract) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
-        iFetchPlan, true, false);
+        iFetchPlan, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
     displayRecord(null);
 
     message("\nOK");
@@ -2002,5 +1999,19 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentDatabase.getStorage().reload();
     currentDatabase.getMetadata().getSchema().reload();
     currentDatabase.getMetadata().getIndexManager().reload();
+  }
+
+  @Override
+  protected String getContext() {
+    if (currentDatabase != null)
+      return " {" + currentDatabaseName + "}";
+    else if (serverAdmin != null)
+      return " {" + serverAdmin.getURL() + "}";
+    return "";
+  }
+
+  @Override
+  protected String getPrompt() {
+    return String.format("orientdb%s> ", getContext());
   }
 }

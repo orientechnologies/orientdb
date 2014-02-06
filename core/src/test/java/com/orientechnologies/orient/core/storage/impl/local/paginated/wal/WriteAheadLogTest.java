@@ -6,10 +6,18 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -1885,10 +1893,9 @@ public class WriteAheadLogTest {
       }
   }
 
-  public static final class TestRecord implements OWALRecord {
-    private OLogSequenceNumber lsn;
-    private byte[]             data;
-    private boolean            updateMasterRecord;
+  public static final class TestRecord extends OAbstractWALRecord {
+    private byte[]  data;
+    private boolean updateMasterRecord;
 
     public TestRecord() {
     }
@@ -1937,16 +1944,6 @@ public class WriteAheadLogTest {
     @Override
     public boolean isUpdateMasterRecord() {
       return updateMasterRecord;
-    }
-
-    @Override
-    public OLogSequenceNumber getLsn() {
-      return lsn;
-    }
-
-    @Override
-    public void setLsn(OLogSequenceNumber lsn) {
-      this.lsn = lsn;
     }
 
     @Override

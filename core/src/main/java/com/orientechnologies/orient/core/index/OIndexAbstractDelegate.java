@@ -76,10 +76,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.get(iKey);
   }
 
-  public long count(final Object iKey) {
-    return delegate.count(iKey);
-  }
-
   public boolean contains(final Object iKey) {
     return delegate.contains(iKey);
   }
@@ -111,11 +107,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive) {
     return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
-  }
-
-  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
-      final int fetchLimit) {
-    return delegate.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, fetchLimit);
   }
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {

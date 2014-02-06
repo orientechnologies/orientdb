@@ -52,7 +52,7 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
     final Object obj = FUNCTIONS.get(name);
 
     if (obj == null) {
-      throw new OCommandExecutionException("Unknowned function name :" + name);
+      throw new OCommandExecutionException("Unknown function name :" + name);
     }
 
     if (obj instanceof OSQLFunction) {
@@ -77,7 +77,7 @@ public class ODynamicSQLElementFactory implements OCommandExecutorSQLFactory, OQ
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
     if (clazz == null)
-      throw new OCommandExecutionException("Unknowned command name :" + name);
+      throw new OCommandExecutionException("Unknown command name :" + name);
 
     try {
       return clazz.newInstance();

@@ -116,8 +116,8 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
@@ -139,9 +139,6 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
-
-    if (iOperationType == INDEX_OPERATION_TYPE.COUNT)
-      return ((Collection<?>) result).size();
 
     return result;
   }

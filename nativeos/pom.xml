@@ -20,7 +20,7 @@
     <parent>
         <artifactId>orientdb-parent</artifactId>
         <groupId>com.orientechnologies</groupId>
-        <version>1.6.4</version>
+        <version>1.7-rc1</version>
         <relativePath>../</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,6 +38,7 @@
         <jna.version>4.0.0</jna.version>
         <osgi.import>com.sun.jna;resolution:=optional,*</osgi.import>
         <osgi.export>com.orientechnologies.nio.*</osgi.export>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <artifactId>orientdb-nativeos</artifactId>

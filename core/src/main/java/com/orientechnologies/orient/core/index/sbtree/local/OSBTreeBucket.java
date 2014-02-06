@@ -308,11 +308,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       byte[] serializedKey = new byte[keySize];
       keySerializer.serializeNative(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
 
-      setBinaryValue(freePointer, serializedKey);
-      freePointer += keySize;
-
-      setByteValue(freePointer, treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
-      freePointer += OByteSerializer.BYTE_SIZE;
+      freePointer += setBinaryValue(freePointer, serializedKey);
+      freePointer += setByteValue(freePointer, treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
 
       byte[] serializedValue = new byte[valueSize];
       if (treeEntry.value.isLink())
@@ -322,11 +319,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
       setBinaryValue(freePointer, serializedValue);
     } else {
-      setLongValue(freePointer, treeEntry.leftChild);
-      freePointer += OLongSerializer.LONG_SIZE;
-
-      setLongValue(freePointer, treeEntry.rightChild);
-      freePointer += OLongSerializer.LONG_SIZE;
+      freePointer += setLongValue(freePointer, treeEntry.leftChild);
+      freePointer += setLongValue(freePointer, treeEntry.rightChild);
 
       byte[] serializedKey = new byte[keySize];
       keySerializer.serializeNative(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);

@@ -24,7 +24,6 @@ import java.util.HashMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -65,9 +64,12 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         writer = new OJSONWriter(buffer);
         writer.beginObject();
         parse(iRequest, iResponse, new OHttpMultipartContentBaseParser(), new OHttpMultipartFileToRecordContentParser(), database);
-        saveRecord(iRequest, iResponse);
+        boolean ok = saveRecord(iRequest, iResponse);
+        writer.endObject();
         writer.flush();
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+        if (ok) {
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+        }
       } finally {
         if (database != null)
           database.close();
@@ -126,7 +128,7 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
     }
   }
 
-  public void saveRecord(OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException, IOException {
+  public boolean saveRecord(OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException, IOException {
     if (fileDocument != null) {
       if (fileRID != null) {
         if (fileDocument.contains("$now")) {
@@ -147,21 +149,21 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
         writer.beginObject("updatedDocument");
         writer.writeAttribute(1, true, "rid", doc.getIdentity().toString());
         writer.endObject();
-        writer.endObject();
       } else {
         iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", OHttpUtils.CONTENT_TEXT_PLAIN,
             "File cannot be null", null);
+        return false;
       }
 
       fileDocument = null;
     } else {
-      if (fileRID != null) {
-        ORecordBytes file = new ORecordBytes(fileRID);
-        database.delete(file);
+      if (fileRID == null) {
+        iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "File cannot be null", OHttpUtils.CONTENT_TEXT_PLAIN,
+            "File cannot be null", null);
+        return false;
       }
-      iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Document template cannot be null", OHttpUtils.CONTENT_TEXT_PLAIN,
-          "Document template cannot be null", null);
     }
+    return true;
   }
 
   @Override

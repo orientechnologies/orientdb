@@ -102,7 +102,7 @@ public class ODatabaseHelper {
     return getConfigurationFile(null);
   }
 
-  protected static String getServerRootPassword() throws IOException {
+  public static String getServerRootPassword() throws IOException {
     return getServerRootPassword("server");
   }
 

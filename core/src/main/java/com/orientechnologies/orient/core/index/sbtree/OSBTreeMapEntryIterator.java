@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -34,8 +34,16 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private K                           firstKey;
   private Map.Entry<K, V>             currentEntry;
 
+  private final int                   prefetchSize;
+
   public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree) {
+    this(sbTree, 8000);
+  }
+
+  public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree, int prefetchSize) {
     this.sbTree = sbTree;
+    this.prefetchSize = prefetchSize;
+
     if (sbTree.size() == 0) {
       this.preFetchedValues = null;
       return;
@@ -75,7 +83,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
           }
         });
 
-        return preFetchedValues.size() <= 8000;
+        return preFetchedValues.size() <= prefetchSize;
       }
     });
 

@@ -27,19 +27,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.server.network.protocol.binary.OAsyncCommandResultListener;
+
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
@@ -50,8 +49,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
@@ -1058,6 +1059,30 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   @Test
+  public void includeFields() {
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.include('name') ) from OUser");
+
+    List<ODocument> resultset = database.query(query);
+
+    for (ODocument d : resultset) {
+      Assert.assertTrue(d.fields() <= 1);
+      if (d.fields() == 1)
+        Assert.assertTrue(d.containsField("name"));
+    }
+  }
+
+  @Test
+  public void excludeFields() {
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select expand( roles.exclude('rules') ) from OUser");
+
+    List<ODocument> resultset = database.query(query);
+
+    for (ODocument d : resultset) {
+      Assert.assertFalse(d.containsField("rules"));
+    }
+  }
+
+  @Test
   public void queryResetPagination() {
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile LIMIT 3");
 
@@ -1172,58 +1197,58 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testTraverse() {
-    OGraphDatabase db1 = new OGraphDatabase(url);
-    db1 = db1.open("admin", "admin");
+		OrientGraph graph = new OrientGraph(url);
+		graph.setAutoStartTx(false);
+		graph.commit();
 
-    OClass oc = db1.getVertexType("vertexA");
+		OClass oc = graph.getVertexType("vertexA");
     if (oc == null)
-      oc = db1.createVertexType("vertexA");
+      oc = graph.createVertexType("vertexA");
+
     if (!oc.existsProperty("name"))
       oc.createProperty("name", OType.STRING);
+
     if (oc.getClassIndex("vertexA_name_idx") == null)
       oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
 
-    OClass ocb = db1.getVertexType("vertexB");
+    OClass ocb = graph.getVertexType("vertexB");
     if (ocb == null)
-      ocb = db1.createVertexType("vertexB");
+      ocb = graph.createVertexType("vertexB");
 
     ocb.createProperty("name", OType.STRING);
     ocb.createProperty("map", OType.EMBEDDEDMAP);
     ocb.createIndex("vertexB_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+		graph.setAutoStartTx(true);
 
     // FIRST: create a root vertex
-    ODocument docA = db1.createVertex("vertexA");
+    ODocument docA = graph.addVertex("class:vertexA").getRecord();
     docA.field("name", "valueA");
     docA.save();
 
     Map<String, String> map = new HashMap<String, String>();
     map.put("key", "value");
 
-    createAndLink(db1, "valueB1", map, docA);
-    createAndLink(db1, "valueB2", map, docA);
+    createAndLink(graph, "valueB1", map, docA);
+    createAndLink(graph, "valueB2", map, docA);
 
     StringBuilder sb = new StringBuilder("select from vertexB");
     sb.append(" where any() traverse(0, -1) (@class = '");
     sb.append("vertexA");
     sb.append("' AND name = 'valueA')");
 
-    List<ODocument> recordDocs = executeQuery(sb.toString(), db1);
+    List<ODocument> recordDocs = executeQuery(sb.toString(), graph.getRawGraph());
 
     for (ODocument doc : recordDocs) {
       System.out.println(doc);
     }
 
-    db1.close();
+    graph.shutdown();
   }
 
-  private static void createAndLink(OGraphDatabase db1, String name, Map<String, String> map, ODocument root) {
-    ODocument docB = db1.createVertex("vertexB");
-    docB.field("name", name);
-    docB.field("map", map);
-    docB.save();
+  private static void createAndLink(final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
+		OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
 
-    ODocument edge = db1.createEdge(root, docB);
-    edge.save();
+    graph.addEdge(null, graph.getVertex(root), vertex, "E");
   }
 
   @Test
@@ -1263,11 +1288,6 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
   }
 
-  @Test
-  public void testSquareBracketsOnWhere() {
-    List<ODocument> result = executeQuery("select from V where out_.in.label is not null", database);
-    Assert.assertFalse(result.isEmpty());
-  }
 
   public void testParams() {
     OClass test = database.getMetadata().getSchema().getClass("test");

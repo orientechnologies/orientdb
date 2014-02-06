@@ -15,19 +15,26 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.util.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Generic representation of a type.<br/>
@@ -51,7 +58,7 @@ public enum OType {
   },
   DATETIME("Datetime", 6, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
   },
-  STRING("String", 7, new Class<?>[] { String.class }, new Class<?>[] { String.class }) {
+  STRING("String", 7, new Class<?>[] { String.class }, new Class<?>[] { String.class, Enum.class }) {
   },
   BINARY("Binary", 8, new Class<?>[] { byte[].class }, new Class<?>[] { byte[].class }) {
   },
@@ -67,7 +74,7 @@ public enum OType {
   },
   LINKLIST("LinkList", 14, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
   },
-  LINKSET("LinkSet", 15, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
+  LINKSET("LinkSet", 15, new Class<?>[] { OMVRBTreeRIDSet.class }, new Class<?>[] { OMVRBTreeRIDSet.class, Set.class }) {
   },
   LINKMAP("LinkMap", 16, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
   },
@@ -80,10 +87,14 @@ public enum OType {
   CUSTOM("Custom", 20, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
   },
   DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }) {
-  };
+  },
+  LINKBAG("LinkBag", 22, new Class<?>[] { ORidBag.class }, new Class<?>[] { ORidBag.class }),
+
+  ANY("Any", 23, new Class<?>[] {}, new Class<?>[] {});
 
   protected static final OType[] TYPES = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATETIME, DATE,
-      BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL };
+      BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL,
+      LINKBAG, ANY                    };
 
   protected String               name;
   protected int                  id;

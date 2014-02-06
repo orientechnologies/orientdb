@@ -291,24 +291,6 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public long count(Object iRangeFrom, final boolean iFromInclusive, Object iRangeTo, final boolean iToInclusive,
-      final int maxValuesToFetch) {
-    checkForRebuild();
-
-    if (iRangeFrom != null && iRangeTo != null && iRangeFrom.getClass() != iRangeTo.getClass())
-      throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-    iRangeFrom = getCollatingValue(iRangeFrom);
-    iRangeTo = getCollatingValue(iRangeTo);
-
-    acquireSharedLock();
-    try {
-      return indexEngine.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public long getKeySize() {
     checkForRebuild();
 

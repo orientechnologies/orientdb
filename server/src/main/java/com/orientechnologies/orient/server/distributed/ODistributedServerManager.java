@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -42,6 +43,8 @@ public interface ODistributedServerManager {
   public boolean checkStatus(STATUS string);
 
   public void setStatus(STATUS iStatus);
+
+  public ODistributedMessageService getMessageService();
 
   public boolean isNodeAvailable(final String iNodeName);
 
@@ -82,7 +85,11 @@ public interface ODistributedServerManager {
 
   public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
-  public void sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask);
+  public Object sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask,
+      EXECUTION_MODE iExecutionMode);
+
+  public Object sendRequest2Nodes(String iDatabaseName, Set<String> iTargetNodeNames, OAbstractRemoteTask iTask,
+      EXECUTION_MODE iExecutionMode);
 
   public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
 

@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -38,6 +30,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.List;
 
 @Test(groups = "schema")
 public class SchemaTest {
@@ -334,8 +332,8 @@ public class SchemaTest {
 
     Assert.assertNotNull(superClass);
     boolean found = false;
-    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
-      if (it.next().equals(company)) {
+    for (OClass c : superClass.getBaseClasses()) {
+      if (c.equals(company)) {
         found = true;
         break;
       }
@@ -344,8 +342,8 @@ public class SchemaTest {
 
     company.setSuperClass(null);
     Assert.assertNull(company.getSuperClass());
-    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
-      Assert.assertNotSame(it.next(), company);
+    for (OClass c : superClass.getBaseClasses()) {
+      Assert.assertNotSame(c, company);
     }
 
     database.command(new OCommandSQL("alter class " + company.getName() + " superclass " + superClass.getName())).execute();
@@ -356,8 +354,8 @@ public class SchemaTest {
 
     Assert.assertNotNull(company.getSuperClass());
     found = false;
-    for (Iterator<OClass> it = superClass.getBaseClasses(); it.hasNext();) {
-      if (it.next().equals(company)) {
+    for (OClass c : superClass.getBaseClasses()) {
+      if (c.equals(company)) {
         found = true;
         break;
       }

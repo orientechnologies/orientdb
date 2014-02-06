@@ -19,17 +19,8 @@ package com.orientechnologies.orient.core.db.raw;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.lock.ONoLock;
@@ -39,14 +30,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -168,16 +158,19 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
-    getStorage().backup(out, options, callable);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
+    getStorage().backup(out, options, callable, iListener);
+
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
 
-    getStorage().restore(in, options, callable);
+    getStorage().restore(in, options, callable, iListener);
   }
 
   public void reload() {
@@ -234,14 +227,14 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public OStorageOperationResult<ORawBuffer> read(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      boolean loadTombstones) {
+      final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (!iRid.isValid())
       return new OStorageOperationResult<ORawBuffer>(null);
 
     OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
     try {
-      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy);
 
     } catch (Throwable t) {
       if (iRid.isTemporary())
@@ -554,11 +547,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     case DEFAULTCLUSTERID:
       return getDefaultClusterId();
     case TYPE:
-      ODatabaseRecord db;
-      if (getDatabaseOwner() instanceof ODatabaseRecord)
-        db = ((ODatabaseRecord) getDatabaseOwner());
-      else
-        db = new OGraphDatabase(url);
+      final ODatabaseRecord db = ((ODatabaseRecord) getDatabaseOwner());
 
       return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
@@ -607,16 +596,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TYPE:
-      if (stringValue.equalsIgnoreCase("graph")) {
-        if (getDatabaseOwner() instanceof OGraphDatabase)
-          ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
-        else if (getDatabaseOwner() instanceof ODatabaseRecordTx)
-          new OGraphDatabase((ODatabaseRecordTx) getDatabaseOwner()).checkForGraphSchema();
-        else
-          new OGraphDatabase(url).checkForGraphSchema();
-      } else
-        throw new IllegalArgumentException("Database type '" + stringValue + "' is not supported");
-      break;
+      throw new IllegalArgumentException("Database type property is not supported");
 
     case DATEFORMAT:
       storage.getConfiguration().dateFormat = stringValue;

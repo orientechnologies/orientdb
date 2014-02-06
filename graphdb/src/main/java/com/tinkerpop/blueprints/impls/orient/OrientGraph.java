@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -14,14 +15,19 @@ public class OrientGraph extends OrientTransactionalGraph {
   protected final Features FEATURES = new Features();
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientGraph(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
     config();
+  }
+
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
+	super(iDatabase, iAutoStartTx);
+	config();
   }
 
   public OrientGraph(final String url) {
@@ -29,12 +35,27 @@ public class OrientGraph extends OrientTransactionalGraph {
     config();
   }
 
+  public OrientGraph(final String url, final boolean iAutoStartTx) {
+	super(url, ADMIN, ADMIN, iAutoStartTx);
+	config();
+  }
+
   public OrientGraph(final String url, final String username, final String password) {
     super(url, username, password);
     config();
   }
 
-  /**
+  public OrientGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
+    super(url, username, password, iAutoStartTx);
+    config();
+  }
+
+	public OrientGraph(ODatabaseDocumentPool pool) {
+		super(pool);
+		config();
+	}
+
+	/**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
    * <table>
    * <tr>
@@ -105,10 +126,10 @@ public class OrientGraph extends OrientTransactionalGraph {
 
   public Features getFeatures() {
     // DYNAMIC FEATURES BASED ON CONFIGURATION
-    FEATURES.supportsEdgeIndex = !useLightweightEdges;
-    FEATURES.supportsEdgeKeyIndex = !useLightweightEdges;
-    FEATURES.supportsEdgeIteration = !useLightweightEdges;
-    FEATURES.supportsEdgeRetrieval = !useLightweightEdges;
+    FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
     return FEATURES;
   }
 

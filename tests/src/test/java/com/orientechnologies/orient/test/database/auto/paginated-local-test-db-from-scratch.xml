@@ -98,6 +98,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.MapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLSelectByLinkedPropertyIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkListIndexTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.LinkBagIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
@@ -160,7 +161,6 @@
     <test name="misc">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.TruncateTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.OMVRBTreeTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLFindReferencesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateLinkTest"/>
@@ -169,6 +169,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
         </classes>
     </test>
     <test name="DbTools">

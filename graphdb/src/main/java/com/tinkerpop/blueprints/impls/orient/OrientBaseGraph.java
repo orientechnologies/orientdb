@@ -3,8 +3,8 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.*;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -29,9 +29,24 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.IndexableGraph;
+import com.tinkerpop.blueprints.KeyIndexableGraph;
+import com.tinkerpop.blueprints.MetaGraph;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -48,32 +63,62 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
   };
 
-  protected final static String                        ADMIN                        = "admin";
-  protected boolean                                    useLightweightEdges          = true;
-  protected boolean                                    useClassForEdgeLabel         = true;
-  protected boolean                                    useClassForVertexLabel       = true;
-  protected boolean                                    keepInMemoryReferences       = false;
-  protected boolean                                    useVertexFieldsForEdgeLabels = true;
-  protected boolean                                    saveOriginalIds              = false;
-  protected boolean                                    standardElementConstraints   = true;
-  protected boolean                                    warnOnForceClosingTx         = true;
-  protected THREAD_MODE                                threadMode                   = THREAD_MODE.AUTOSET_IFNULL;
+  protected final static String ADMIN = "admin";
+
+  public class Settings {
+    protected boolean     useLightweightEdges          = true;
+    protected boolean     useClassForEdgeLabel         = true;
+    protected boolean     useClassForVertexLabel       = true;
+    protected boolean     keepInMemoryReferences       = false;
+    protected boolean     useVertexFieldsForEdgeLabels = true;
+    protected boolean     saveOriginalIds              = false;
+    protected boolean     standardElementConstraints   = true;
+    protected boolean     warnOnForceClosingTx         = true;
+    protected THREAD_MODE threadMode                   = THREAD_MODE.AUTOSET_IFNULL;
+
+    public Settings copy() {
+      final Settings copy = new Settings();
+      copy.useLightweightEdges = useLightweightEdges;
+      copy.useClassForEdgeLabel = useClassForEdgeLabel;
+      copy.useClassForVertexLabel = useClassForVertexLabel;
+      copy.keepInMemoryReferences = keepInMemoryReferences;
+      copy.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
+      copy.saveOriginalIds = saveOriginalIds;
+      copy.standardElementConstraints = standardElementConstraints;
+      copy.warnOnForceClosingTx = warnOnForceClosingTx;
+      copy.threadMode = threadMode;
+      return copy;
+    }
+  }
+
+  protected Settings                                   settings      = new Settings();
 
   private String                                       url;
   private String                                       username;
   private String                                       password;
 
-  private static final ThreadLocal<OrientGraphContext> threadContext                = new ThreadLocal<OrientGraphContext>();
-  private static final List<OrientGraphContext>        contexts                     = new ArrayList<OrientGraphContext>();
+  private static final ThreadLocal<OrientGraphContext> threadContext = new ThreadLocal<OrientGraphContext>();
+  private static final List<OrientGraphContext>        contexts      = new ArrayList<OrientGraphContext>();
+
+  private final ODatabaseDocumentPool                  pool;
 
   /**
-   * Constructs a new object using an existent OGraphDatabase instance.
+   * Constructs a new object using an existent database instance.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object to attach
+   *          Underlying database object to attach
    */
   public OrientBaseGraph(final ODatabaseDocumentTx iDatabase) {
+    this.pool = null;
+
     reuse(iDatabase);
+    readDatabaseConfiguration();
+  }
+
+  public OrientBaseGraph(ODatabaseDocumentPool pool) {
+    this.pool = pool;
+
+    reuse(pool.acquire());
     readDatabaseConfiguration();
   }
 
@@ -82,6 +127,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public OrientBaseGraph(final String url, final String username, final String password) {
+    this.pool = null;
     this.url = OFileUtils.getPath(url);
     this.username = username;
     this.password = password;
@@ -305,12 +351,13 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         }
       }
 
-      if (saveOriginalIds)
+      if (settings.saveOriginalIds)
         // SAVE THE ID TOO
         fields = new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id };
     }
 
-    this.autoStartTransaction();
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, className, fields);
     vertex.setProperties(prop);
@@ -324,7 +371,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public OrientVertex addVertex(final String iClassName, final String iClusterName) {
-    this.autoStartTransaction();
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, iClassName);
 
@@ -346,7 +394,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * @return
    */
   public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
-    this.autoStartTransaction();
+    setCurrentGraphInThreadLocal();
+    autoStartTransaction();
 
     final OrientVertex vertex = new OrientVertex(this, iClassName);
     vertex.setProperties(prop);
@@ -360,7 +409,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       className = id.toString().substring(CLASS_PREFIX.length());
 
     // SAVE THE ID TOO?
-    final Object[] fields = saveOriginalIds && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id } : null;
+    final Object[] fields = settings.saveOriginalIds && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id }
+        : null;
 
     return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, null, fields);
   }
@@ -405,11 +455,11 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public Iterable<Vertex> getVertices() {
-    return getVerticesOfClass(OrientVertex.CLASS_NAME, true);
+    return getVerticesOfClass(OrientVertexType.CLASS_NAME, true);
   }
 
   public Iterable<Vertex> getVertices(final boolean iPolymorphic) {
-    return getVerticesOfClass(OrientVertex.CLASS_NAME, iPolymorphic);
+    return getVerticesOfClass(OrientVertexType.CLASS_NAME, iPolymorphic);
   }
 
   public Iterable<Vertex> getVerticesOfClass(final String iClassName) {
@@ -448,7 +498,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       }
 
     } else {
-      indexName = OrientVertex.CLASS_NAME + "." + iKey;
+      indexName = OrientVertexType.CLASS_NAME + "." + iKey;
       key = iKey;
     }
 
@@ -468,11 +518,11 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public Iterable<Edge> getEdges() {
-    return getEdgesOfClass(OrientEdge.CLASS_NAME, true);
+    return getEdgesOfClass(OrientEdgeType.CLASS_NAME, true);
   }
 
   public Iterable<Edge> getEdges(final boolean iPolymorphic) {
-    return getEdgesOfClass(OrientEdge.CLASS_NAME, iPolymorphic);
+    return getEdgesOfClass(OrientEdgeType.CLASS_NAME, iPolymorphic);
   }
 
   public Iterable<Edge> getEdgesOfClass(final String iClassName) {
@@ -495,7 +545,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       indexName = iKey;
       key = iKey.substring(iKey.indexOf('.') + 1);
     } else {
-      indexName = OrientEdge.CLASS_NAME + "." + iKey;
+      indexName = OrientEdgeType.CLASS_NAME + "." + iKey;
       key = iKey;
     }
 
@@ -563,7 +613,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * Reuses the underlying database avoiding to create and open it every time.
    * 
    * @param iDatabase
-   *          Underlying OGraphDatabase object
+   *          Underlying database object
    */
   public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
     this.url = iDatabase.getURL();
@@ -586,22 +636,22 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
     schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-    final OClass vertexBaseClass = schema.getClass(OrientVertex.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdge.CLASS_NAME);
+    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
+    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
 
     if (vertexBaseClass == null)
       // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertex.CLASS_NAME).setOverSize(2);
+      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
 
     if (edgeBaseClass == null)
-      schema.createClass(OrientEdge.CLASS_NAME);
+      schema.createClass(OrientEdgeType.CLASS_NAME);
 
     // @COMPATIBILITY < 1.4.0:
     boolean warn = false;
     final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
 
     if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertex.CLASS_NAME)) {
+      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
         OLogManager.instance().warn(this, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
         warn = true;
       }
@@ -613,7 +663,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
 
     if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdge.CLASS_NAME)) {
+      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
         OLogManager.instance().warn(this, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
         warn = true;
       }
@@ -655,32 +705,35 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   public void rollback() {
   }
 
-  public OClass getVertexBaseType() {
-    return getRawGraph().getMetadata().getSchema().getClass(OrientVertex.CLASS_NAME);
+  public OrientVertexType getVertexBaseType() {
+    return new OrientVertexType(this, getRawGraph().getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME));
   }
 
-  public final OClass getVertexType(final String iTypeName) {
+  public final OrientVertexType getVertexType(final String iTypeName) {
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
-    if (cls != null)
-      checkVertexType(cls);
-    return cls;
+    if (cls == null)
+      return null;
+
+    OrientVertexType.checkType(cls);
+    return new OrientVertexType(this, cls);
+
   }
 
-  public OClass createVertexType(final String iClassName) {
+  public OrientVertexType createVertexType(final String iClassName) {
     return createVertexType(iClassName, (String) null);
   }
 
-  public OClass createVertexType(final String iClassName, final String iSuperClassName) {
+  public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
     return createVertexType(iClassName, iSuperClassName == null ? getVertexBaseType() : getVertexType(iSuperClassName));
   }
 
-  public OClass createVertexType(final String iClassName, final OClass iSuperClass) {
-    checkVertexType(iSuperClass);
+  public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
+    OrientVertexType.checkType(iSuperClass);
 
-    return executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
+    return executeOutsideTx(new OCallable<OrientVertexType, OrientBaseGraph>() {
       @Override
-      public OClass call(final OrientBaseGraph g) {
-        return getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass);
+      public OrientVertexType call(final OrientBaseGraph g) {
+        return new OrientVertexType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass));
       }
     }, "create vertex type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
   }
@@ -695,31 +748,33 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop vertex type '", iTypeName, "'");
   }
 
-  public OClass getEdgeBaseType() {
-    return getRawGraph().getMetadata().getSchema().getClass(OrientEdge.CLASS_NAME);
+  public OrientEdgeType getEdgeBaseType() {
+    return new OrientEdgeType(this);
   }
 
-  public final OClass getEdgeType(final String iTypeName) {
+  public final OrientEdgeType getEdgeType(final String iTypeName) {
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
-    if (cls != null)
-      checkEdgeType(cls);
-    return cls;
+    if (cls == null)
+      return null;
+
+    OrientEdgeType.checkType(cls);
+    return new OrientEdgeType(this, cls);
   }
 
-  public OClass createEdgeType(final String iClassName) {
+  public OrientEdgeType createEdgeType(final String iClassName) {
     return createEdgeType(iClassName, (String) null);
   }
 
-  public OClass createEdgeType(final String iClassName, final String iSuperClassName) {
+  public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
     return createEdgeType(iClassName, iSuperClassName == null ? getEdgeBaseType() : getEdgeType(iSuperClassName));
   }
 
-  public OClass createEdgeType(final String iClassName, final OClass iSuperClass) {
-    checkEdgeType(iSuperClass);
-    return executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
+  public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass) {
+    OrientEdgeType.checkType(iSuperClass);
+    return executeOutsideTx(new OCallable<OrientEdgeType, OrientBaseGraph>() {
       @Override
-      public OClass call(final OrientBaseGraph g) {
-        return getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass);
+      public OrientEdgeType call(final OrientBaseGraph g) {
+        return new OrientEdgeType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass));
       }
     }, "create edge type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
   }
@@ -734,22 +789,13 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop edge type '", iTypeName, "'");
   }
 
-  protected final void checkVertexType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Vertex class is null");
-
-    if (!iType.isSubClassOf(OrientVertex.CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + OrientVertex.CLASS_NAME
-          + "' and therefore cannot be considered a Vertex");
+  public OrientElement detach(final OrientElement iElement) {
+    iElement.detach();
+    return iElement;
   }
 
-  protected final void checkEdgeType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Edge class is null");
-
-    if (!iType.isSubClassOf(OrientEdge.CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + OrientEdge.CLASS_NAME
-          + "' and therefore cannot be considered an Edge");
+  public OrientElement attach(final OrientElement iElement) {
+    return iElement.attach(this);
   }
 
   /**
@@ -782,20 +828,19 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     final ODocument doc = rec.getRecord();
     if (doc != null) {
       final OClass schemaClass = doc.getSchemaClass();
-      if (schemaClass.isSubClassOf(OrientVertex.CLASS_NAME)) {
+      if (schemaClass.isSubClassOf(OrientVertexType.CLASS_NAME)) {
         return new OrientVertex(this, doc);
-      } else if (schemaClass.isSubClassOf(OrientEdge.CLASS_NAME)) {
+      } else if (schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME)) {
         return new OrientEdge(this, doc);
       } else
         throw new IllegalArgumentException("Type error. The class " + schemaClass + " does not extend class neither '"
-            + OrientVertex.CLASS_NAME + "' nor '" + OrientEdge.CLASS_NAME + "'");
+            + OrientVertexType.CLASS_NAME + "' nor '" + OrientEdgeType.CLASS_NAME + "'");
     }
 
     return null;
   }
 
   protected void autoStartTransaction() {
-    setCurrentGraphInThreadLocal();
   }
 
   protected void saveIndexConfiguration() {
@@ -827,24 +872,26 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         contexts.add(context);
       }
 
-      context.rawGraph = new ODatabaseDocumentTx(url);
+			if (pool == null)  {
+				context.rawGraph = new ODatabaseDocumentTx(url);
+				if (url.startsWith("remote:") || context.rawGraph.exists()) {
+					context.rawGraph.open(username, password);
 
-      if (url.startsWith("remote:") || context.rawGraph.exists()) {
-        context.rawGraph.open(username, password);
+					// LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
+					// final ODocument indexConfiguration =
+					// context.rawGraph.getMetadata().getIndexManager().getConfiguration();
 
-        // LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
-        // final ODocument indexConfiguration =
-        // context.rawGraph.getMetadata().getIndexManager().getConfiguration();
+					loadManualIndexes(context);
 
-        for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
-          ODocument metadata = idx.getMetadata();
-          if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
-            // LOAD THE INDEXES
-            loadIndex(idx);
-        }
+				} else
+					context.rawGraph.create();
+			}	else {
+				context.rawGraph = pool.acquire();
 
-      } else
-        context.rawGraph.create();
+				loadManualIndexes(context);
+			}
+
+
 
       checkForGraphSchema(context.rawGraph);
 
@@ -852,7 +899,16 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+	private void loadManualIndexes(OrientGraphContext context) {
+		for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
+			ODocument metadata = idx.getMetadata();
+			if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
+				// LOAD THE INDEXES
+				loadIndex(idx);
+		}
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
   private OrientIndex<?> loadIndex(final OIndex<?> rawIndex) {
     final OrientIndex<?> index = new OrientIndex(this, rawIndex);
 
@@ -861,23 +917,43 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return index;
   }
 
-  private void removeContext() {
-    final OrientGraphContext context = getContext(false);
-
-    if (context != null) {
-      context.manualIndices.clear();
-
-      if (!context.rawGraph.isClosed()) {
-        context.rawGraph.commit();
-        context.rawGraph.close();
+  public void removeContext() {
+    final List<OrientGraphContext> contextsToRemove = new ArrayList<OrientGraphContext>();
+    synchronized (contexts) {
+      for (OrientGraphContext contextItem : contexts) {
+        if (!contextItem.thread.isAlive())
+          contextsToRemove.add(contextItem);
       }
-
-      synchronized (contexts) {
-        contexts.remove(context);
-      }
-
-      threadContext.set(null);
     }
+
+    final OrientGraphContext context = getContext(false);
+    if (context != null)
+      contextsToRemove.add(context);
+
+    for (OrientGraphContext contextItem : contextsToRemove) {
+      try {
+        contextItem.manualIndices.clear();
+
+        if (!contextItem.rawGraph.isClosed())
+          contextItem.rawGraph.commit();
+
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during context close for db " + url, e);
+      } finally {
+        try {
+          contextItem.rawGraph.close();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during context close for db " + url, e);
+        }
+      }
+    }
+
+    synchronized (contexts) {
+      for (OrientGraphContext contextItem : contextsToRemove)
+        contexts.remove(contextItem);
+    }
+
+    threadContext.set(null);
   }
 
   public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
@@ -1010,24 +1086,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return new OrientGraphCommand(this, getRawGraph().command(iCommand));
   }
 
-  public boolean isUseLightweightEdges() {
-    return useLightweightEdges;
-  }
-
-  public void setUseLightweightEdges(final boolean useDynamicEdges) {
-    this.useLightweightEdges = useDynamicEdges;
-  }
-
-  public boolean isSaveOriginalIds() {
-    return saveOriginalIds;
-  }
-
-  public void setSaveOriginalIds(final boolean saveIds) {
-    this.saveOriginalIds = saveIds;
-  }
-
   public long countVertices() {
-    return getRawGraph().countClass(OrientVertex.CLASS_NAME);
+    return getRawGraph().countClass(OrientVertexType.CLASS_NAME);
   }
 
   public long countVertices(final String iClassName) {
@@ -1035,57 +1095,82 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   public long countEdges() {
-    if (useLightweightEdges)
+    if (settings.useLightweightEdges)
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
-    return getRawGraph().countClass(OrientEdge.CLASS_NAME);
+    return getRawGraph().countClass(OrientEdgeType.CLASS_NAME);
   }
 
   public long countEdges(final String iClassName) {
-    if (useLightweightEdges)
+    if (settings.useLightweightEdges)
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
     return getRawGraph().countClass(iClassName);
   }
 
+  public boolean isUseLightweightEdges() {
+    return settings.useLightweightEdges;
+  }
+
+  public void setUseLightweightEdges(final boolean useDynamicEdges) {
+    settings.useLightweightEdges = useDynamicEdges;
+  }
+
+  public boolean isSaveOriginalIds() {
+    return settings.saveOriginalIds;
+  }
+
+  public void setSaveOriginalIds(final boolean saveIds) {
+    settings.saveOriginalIds = saveIds;
+  }
+
   public boolean isKeepInMemoryReferences() {
-    return keepInMemoryReferences;
+    return settings.keepInMemoryReferences;
   }
 
   public void setKeepInMemoryReferences(boolean useReferences) {
-    this.keepInMemoryReferences = useReferences;
+    settings.keepInMemoryReferences = useReferences;
   }
 
   public boolean isUseClassForEdgeLabel() {
-    return useClassForEdgeLabel;
+    return settings.useClassForEdgeLabel;
   }
 
   public void setUseClassForEdgeLabel(final boolean useCustomClassesForEdges) {
-    this.useClassForEdgeLabel = useCustomClassesForEdges;
+    settings.useClassForEdgeLabel = useCustomClassesForEdges;
   }
 
   public boolean isUseClassForVertexLabel() {
-    return useClassForVertexLabel;
+    return settings.useClassForVertexLabel;
   }
 
   public void setUseClassForVertexLabel(final boolean useCustomClassesForVertex) {
-    this.useClassForVertexLabel = useCustomClassesForVertex;
+    this.settings.useClassForVertexLabel = useCustomClassesForVertex;
   }
 
   public boolean isUseVertexFieldsForEdgeLabels() {
-    return useVertexFieldsForEdgeLabels;
+    return settings.useVertexFieldsForEdgeLabels;
   }
 
   public void setUseVertexFieldsForEdgeLabels(final boolean useVertexFieldsForEdgeLabels) {
-    this.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
+    this.settings.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
   }
 
   public boolean isStandardElementConstraints() {
-    return standardElementConstraints;
+    return settings.standardElementConstraints;
   }
 
   public void setStandardElementConstraints(final boolean allowsPropertyValueNull) {
-    this.standardElementConstraints = allowsPropertyValueNull;
+    this.settings.standardElementConstraints = allowsPropertyValueNull;
+  }
+
+  public boolean isWarnOnForceClosingTx() {
+    return settings.warnOnForceClosingTx;
+  }
+
+  public OrientBaseGraph setWarnOnForceClosingTx(final boolean warnOnSchemaChangeInTx) {
+    this.settings.warnOnForceClosingTx = warnOnSchemaChangeInTx;
+    return this;
   }
 
   public static void encodeClassNames(final String... iLabels) {
@@ -1127,9 +1212,9 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   protected <T> String getClassName(final Class<T> elementClass) {
     if (elementClass.isAssignableFrom(Vertex.class))
-      return OrientVertex.CLASS_NAME;
+      return OrientVertexType.CLASS_NAME;
     else if (elementClass.isAssignableFrom(Edge.class))
-      return OrientEdge.CLASS_NAME;
+      return OrientEdgeType.CLASS_NAME;
     throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
   }
 
@@ -1137,7 +1222,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     final boolean committed;
     final ODatabaseDocumentTx raw = getRawGraph();
     if (raw.getTransaction().isActive()) {
-      if (warnOnForceClosingTx && OLogManager.instance().isWarnEnabled()) {
+      if (settings.warnOnForceClosingTx && OLogManager.instance().isWarnEnabled()) {
         // COMPOSE THE MESSAGE
         final StringBuilder msg = new StringBuilder();
         for (String s : iOperationStrings)
@@ -1191,7 +1276,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    */
 
   public THREAD_MODE getThreadMode() {
-    return threadMode;
+    return settings.threadMode;
   }
 
   /**
@@ -1210,30 +1295,21 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * @return Current Graph instance to allow calls in chain (fluent interface)
    */
   public OrientBaseGraph setThreadMode(final THREAD_MODE iControl) {
-    this.threadMode = iControl;
+    this.settings.threadMode = iControl;
     return this;
   }
 
   protected void setCurrentGraphInThreadLocal() {
-    if (threadMode == THREAD_MODE.MANUAL)
+    if (settings.threadMode == THREAD_MODE.MANUAL)
       return;
 
     final ODatabaseRecord tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (threadMode == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
+    if (settings.threadMode == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
       final OrientGraphContext ctx = getContext(true);
 
       if (ctx != null && (tlDb == null || tlDb != ctx.rawGraph))
         // SET IT
         ODatabaseRecordThreadLocal.INSTANCE.set(getRawGraph());
     }
-  }
-
-  public boolean isWarnOnForceClosingTx() {
-    return warnOnForceClosingTx;
-  }
-
-  public OrientBaseGraph setWarnOnForceClosingTx(final boolean warnOnSchemaChangeInTx) {
-    this.warnOnForceClosingTx = warnOnSchemaChangeInTx;
-    return this;
   }
 }

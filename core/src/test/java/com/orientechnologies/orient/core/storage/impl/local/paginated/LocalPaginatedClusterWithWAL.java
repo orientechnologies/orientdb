@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.*;
@@ -74,10 +75,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
+    atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(storageDir);
 
     when(storage.getStorageTransaction()).thenReturn(null);
+    when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(storage.getDiskCache()).thenReturn(diskCache);
     when(storage.getWALInstance()).thenReturn(writeAheadLog);
     when(storage.getVariableParser()).thenReturn(variableParser);
@@ -114,8 +117,10 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, testStorage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
+    final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(null);
 
     when(testStorage.getStorageTransaction()).thenReturn(null);
+    when(testStorage.getAtomicOperationsManager()).thenReturn(testAtomicOperationsManager);
     when(testStorage.getDiskCache()).thenReturn(testDiskCache);
     when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getVariableParser()).thenReturn(variableParser);
@@ -131,6 +136,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
   @AfterMethod
   public void afterMethod() throws IOException {
+    Assert.assertNull(atomicOperationsManager.getCurrentOperation());
+
     writeAheadLog.delete();
     paginatedCluster.delete();
     diskCache.delete();

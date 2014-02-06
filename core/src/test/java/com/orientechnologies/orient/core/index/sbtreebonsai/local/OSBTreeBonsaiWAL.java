@@ -10,7 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -26,29 +30,37 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
  * @author Andrey Lomakin
  * @since 8/27/13
  */
-@Test(enabled = false)
-public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
-  private String                                buildDirectory;
+public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
+  private String                                     buildDirectory;
 
-  private String                                actualStorageDir;
-  private String                                expectedStorageDir;
+  private String                                     actualStorageDir;
+  private String                                     expectedStorageDir;
 
-  private OWriteAheadLog                        writeAheadLog;
+  private OWriteAheadLog                             writeAheadLog;
 
-  private ODiskCache                            actualDiskCache;
-  private ODiskCache                            expectedDiskCache;
+  private ODiskCache                                 actualDiskCache;
+  private ODiskCache                                 expectedDiskCache;
 
-  private OLocalPaginatedStorage                actualStorage;
+  private OLocalPaginatedStorage                     actualStorage;
 
-  private OSBTreeBonsai<Integer, OIdentifiable> expectedSBTree;
+  private OSBTreeBonsaiLocal<Integer, OIdentifiable> expectedSBTree;
+
+  private OAtomicOperationsManager                   actualAtomicOperationsManager;
 
   @BeforeClass
   @Override
@@ -73,6 +85,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
   @AfterMethod
   @Override
   public void afterMethod() throws Exception {
+    Assert.assertNull(actualAtomicOperationsManager.getCurrentOperation());
+
     sbTree.delete();
     expectedSBTree.delete();
 
@@ -105,6 +119,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
       actualStorageDirFile.mkdirs();
 
     writeAheadLog = new OWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
+    actualAtomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
@@ -112,6 +127,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
     OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
+    when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     when(actualStorage.getVariableParser()).thenReturn(variableParser);
@@ -120,7 +136,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
   }
 
@@ -146,8 +162,10 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, expectedStorage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(expectedStorageDir);
+    OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(null);
 
     when(expectedStorage.getStorageTransaction()).thenReturn(null);
+    when(expectedStorage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(expectedStorage.getDiskCache()).thenReturn(expectedDiskCache);
     when(expectedStorage.getWALInstance()).thenReturn(null);
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
@@ -156,7 +174,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTreeBonsai<Integer, OIdentifiable>(".sbt", 1, false);
+    expectedSBTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".sbt", true);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
   }
 

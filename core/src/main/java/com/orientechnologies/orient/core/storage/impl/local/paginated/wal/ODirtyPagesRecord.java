@@ -11,15 +11,13 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
  * @author Andrey Lomakin
  * @since 5/1/13
  */
-public class ODirtyPagesRecord implements OWALRecord {
-  private OLogSequenceNumber lsn;
-
-  private Set<ODirtyPage>    dirtyPages;
+public class ODirtyPagesRecord extends OAbstractWALRecord {
+  private Set<ODirtyPage> dirtyPages;
 
   public ODirtyPagesRecord() {
   }
 
-  public ODirtyPagesRecord(Set<ODirtyPage> dirtyPages) {
+  public ODirtyPagesRecord(final Set<ODirtyPage> dirtyPages) {
     this.dirtyPages = dirtyPages;
   }
 
@@ -28,7 +26,7 @@ public class ODirtyPagesRecord implements OWALRecord {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     OIntegerSerializer.INSTANCE.serializeNative(dirtyPages.size(), content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -50,8 +48,8 @@ public class ODirtyPagesRecord implements OWALRecord {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
-    int size = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+  public int fromStream(final byte[] content, int offset) {
+    final int size = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     dirtyPages = new HashSet<ODirtyPage>();
@@ -93,16 +91,6 @@ public class ODirtyPagesRecord implements OWALRecord {
   }
 
   @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -124,6 +112,6 @@ public class ODirtyPagesRecord implements OWALRecord {
 
   @Override
   public String toString() {
-    return "ODirtyPagesRecord{" + "lsn=" + lsn + ", dirtyPages=" + dirtyPages + '}';
+    return toString("dirtyPages=" + dirtyPages);
   }
 }

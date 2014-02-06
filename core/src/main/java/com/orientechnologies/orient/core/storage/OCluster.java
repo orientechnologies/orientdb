@@ -119,20 +119,6 @@ public interface OCluster {
 
   public OClusterPosition getLastPosition() throws IOException;
 
-  /**
-   * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
-   * 
-   * @see #unlock();
-   */
-  public void lock();
-
-  /**
-   * Lets to an external actor to unlock the shared mode lock acquired by the lock().
-   * 
-   * @see #lock();
-   */
-  public void unlock();
-
   public int getId();
 
   public void synch() throws IOException;

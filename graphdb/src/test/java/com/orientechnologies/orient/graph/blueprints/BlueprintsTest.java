@@ -66,7 +66,7 @@ public class BlueprintsTest {
 
     Vertex v1 = graph.addVertex(null);
     Vertex v2 = graph.addVertex(null);
-    OrientEdge e = graph.addEdge(null, v1, v2, "contains");
+    OrientEdge e = graph.addEdge(null, v1, v2, "anyLabel");
     e.setProperty("key", "forceCreationOfDocument");
 
     Iterable<Edge> result = graph.command(new OSQLSynchQuery<Edge>("select from e where key = 'forceCreationOfDocument'"))
@@ -80,4 +80,20 @@ public class BlueprintsTest {
     result = graph.command(new OSQLSynchQuery<Edge>("select from e where key = 'forceCreationOfDocument'")).execute();
     Assert.assertFalse(result.iterator().hasNext());
   }
+
+  @Test
+  public void testQueryWithSpecialCharacters() {
+    graph.setAutoStartTx(false);
+
+    graph.addVertex(null).setProperty("name", "Jay");
+    graph.addVertex(null).setProperty("name", "Smith's");
+    graph.addVertex(null).setProperty("name", "Smith\"s");
+
+    graph.commit(); // transaction not-reopened
+
+    Assert.assertTrue(graph.getVertices("name", "Jay").iterator().hasNext());
+    Assert.assertTrue(graph.getVertices("name", "Smith's").iterator().hasNext());
+    Assert.assertTrue(graph.getVertices("name", "Smith\"s").iterator().hasNext());
+  }
+
 }

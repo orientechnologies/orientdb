@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>1.6.4</version>
+        <version>1.7-rc1</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -36,6 +36,7 @@
     <properties>
         <VERSION>${project.version}</VERSION>
         <BUILD>${implementation.build}; ${maven.build.timestamp}</BUILD>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>

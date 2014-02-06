@@ -40,17 +40,21 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-  protected ORecordId                      _recordId;
-  protected ORecordVersion                 _recordVersion = OVersionFactory.instance().createVersion();
+  protected ORecordId                            _recordId;
+  protected ORecordVersion                       _recordVersion          = OVersionFactory.instance().createVersion();
 
-  protected byte[]                         _source;
-  protected int                            _size;
-  protected String                         _dataSegmentName;
-  protected transient ORecordSerializer    _recordFormat;
-  protected Boolean                        _pinned        = null;
-  protected boolean                        _dirty         = true;
-  protected ORecordElement.STATUS          _status        = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener> _listeners     = null;
+  protected byte[]                               _source;
+  protected int                                  _size;
+  protected String                               _dataSegmentName;
+  protected transient ORecordSerializer          _recordFormat;
+  protected Boolean                              _pinned                 = null;
+  protected boolean                              _dirty                  = true;
+  protected ORecordElement.STATUS                _status                 = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener>       _listeners              = null;
+
+  private ORID                                   prevRid                 = null;
+  private transient Set<OIdentityChangeListener> identityChangeListeners = Collections
+                                                                             .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
 
   public ORecordAbstract() {
   }
@@ -76,6 +80,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   public ORID getIdentity() {
     return _recordId;
+  }
+
+  @Override
+  public ORecordElement getOwner() {
+    return null;
   }
 
   public ORecord<?> getRecord() {
@@ -155,10 +164,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public void onBeforeIdentityChanged(final ORID iRID) {
+    prevRid = _recordId.copy();
   }
 
   public void onAfterIdentityChanged(final ORecord<?> iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
+
+    if (!prevRid.equals(this._recordId)) {
+      for (OIdentityChangeListener changeListener : identityChangeListeners)
+        changeListener.onIdentityChanged(prevRid, this);
+    }
+
+    prevRid = null;
   }
 
   public boolean isDirty() {
@@ -425,5 +442,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected void checkForLoading() {
     if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
       reload(null, true);
+  }
+
+  @Override
+  public void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
+    identityChangeListeners.add(identityChangeListener);
+  }
+
+  @Override
+  public void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
+    identityChangeListeners.remove(identityChangeListener);
   }
 }

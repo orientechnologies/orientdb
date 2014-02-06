@@ -49,14 +49,9 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
     int position = entryPosition(size);
 
-    setByteValue(position, FILLED);
-    position += OByteSerializer.BYTE_SIZE;
-
-    setLongValue(position, pageIndex);
-    position += OLongSerializer.LONG_SIZE;
-
-    setIntValue(position, recordPosition);
-    position += OIntegerSerializer.INT_SIZE;
+    position += setByteValue(position, FILLED);
+    position += setLongValue(position, pageIndex);
+    position += setIntValue(position, recordPosition);
 
     setIntValue(SIZE_OFFSET, size + 1);
 

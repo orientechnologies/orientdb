@@ -30,7 +30,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -391,30 +391,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       releaseSharedLock();
     }
 
-  }
-
-  public long count(Object iRangeFrom, final boolean fromInclusive, Object iRangeTo, final boolean toInclusive,
-      final int maxValuesToFetch) {
-    checkForRebuild();
-
-    iRangeFrom = getCollatingValue(iRangeFrom);
-    iRangeTo = getCollatingValue(iRangeTo);
-
-    final OType[] types = getDefinition().getTypes();
-    if (types.length == 1) {
-      iRangeFrom = OType.convert(iRangeFrom, types[0].getDefaultJavaType());
-      iRangeTo = OType.convert(iRangeTo, types[0].getDefaultJavaType());
-    }
-
-    if (iRangeFrom != null && iRangeTo != null && iRangeFrom.getClass() != iRangeTo.getClass())
-      throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-    acquireSharedLock();
-    try {
-      return indexEngine.count(iRangeFrom, fromInclusive, iRangeTo, toInclusive, maxValuesToFetch, MultiValuesTransformer.INSTANCE);
-    } finally {
-      releaseSharedLock();
-    }
   }
 
   public void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener) {

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -28,6 +24,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed task used for synchronization.
@@ -56,7 +56,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   }
 
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.NONE;
+    return QUORUM_TYPE.ALL;
   }
 
   @Override
@@ -65,7 +65,8 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, ODistributedResponse iGoodResponse) {
+  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
+      ODistributedResponse iGoodResponse) {
     return null;
   }
 

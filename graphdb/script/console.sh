@@ -34,7 +34,7 @@ else
 fi
 export JAVA
 
-ORIENTDB_SETTINGS="-Dcache.level1.enabled=false -Dcache.level2.enabled=false -Djava.util.logging.config.file=$ORIENTDB_HOME/config/orientdb-client-log.properties -Djava.awt.headless=true"
+ORIENTDB_SETTINGS="-Dcache.level1.enabled=false -Dcache.level2.enabled=false -Djava.util.logging.config.file="$ORIENTDB_HOME/config/orientdb-client-log.properties" -Djava.awt.headless=true"
 #JAVA_OPTS=-Xmx1024m
 
 $JAVA -client $JAVA_OPTS $ORIENTDB_SETTINGS -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.graph.console.OGremlinConsole $*

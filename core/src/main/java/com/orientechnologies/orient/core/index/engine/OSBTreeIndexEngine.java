@@ -499,24 +499,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    acquireSharedLock();
-    try {
-      final ItemsCounter<V> itemsCounter = new ItemsCounter<V>(transformer, maxValuesToFetch);
-
-      if (rangeTo != null)
-        sbTree.loadEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, itemsCounter);
-      else
-        sbTree.loadEntriesMajor(rangeFrom, fromInclusive, itemsCounter);
-
-      return itemsCounter.count;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
   public boolean hasRangeQuerySupport() {
     return true;
   }

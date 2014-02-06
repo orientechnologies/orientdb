@@ -15,14 +15,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Schema class
@@ -98,7 +97,9 @@ public interface OClass extends Comparable<OClass> {
 
   public int[] getPolymorphicClusterIds();
 
-  public Iterator<OClass> getBaseClasses();
+  public Collection<OClass> getBaseClasses();
+
+  public Collection<OClass> getAllBaseClasses();
 
   public long getSize();
 

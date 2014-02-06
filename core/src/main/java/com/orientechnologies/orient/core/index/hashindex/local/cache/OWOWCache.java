@@ -876,7 +876,7 @@ public class OWOWCache {
             for (int i = 0; i < 16; i++) {
               final OCachePointer pagePointer = group.pages[i];
               if (pagePointer != null) {
-                if (!pagePointer.tryAcquireExclusiveLock())
+                if (!pagePointer.tryAcquireSharedLock())
                   continue groupsLoop;
 
                 try {
@@ -886,7 +886,7 @@ public class OWOWCache {
                   final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
                   pagePointer.setLastFlushedLsn(flushedLSN);
                 } finally {
-                  pagePointer.releaseExclusiveLock();
+                  pagePointer.releaseSharedLock();
                 }
               }
             }
@@ -939,14 +939,14 @@ public class OWOWCache {
             OCachePointer pagePointer = writeGroup.pages[i];
 
             if (pagePointer != null) {
-              if (!pagePointer.tryAcquireExclusiveLock())
+              if (!pagePointer.tryAcquireSharedLock())
                 continue groupsLoop;
 
               try {
                 flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                 flushedPages++;
               } finally {
-                pagePointer.releaseExclusiveLock();
+                pagePointer.releaseSharedLock();
               }
             }
           }

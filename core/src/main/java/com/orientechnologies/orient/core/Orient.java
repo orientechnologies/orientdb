@@ -15,21 +15,8 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Timer;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -51,6 +38,11 @@ import com.orientechnologies.orient.core.storage.OClusterFactory;
 import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
@@ -349,12 +341,16 @@ public class Orient extends OListenerManger<OOrientListener> {
         l.onStorageUnregistered(iStorage);
       }
 
+			final List<String> storagesToRemove = new ArrayList<String>();
+
       for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue().equals(iStorage)) {
-          storages.remove(s.getKey());
-          break;
-        }
+        if (s.getValue().equals(iStorage))
+          storagesToRemove.add(s.getKey());
       }
+
+			for (String dbName : storagesToRemove)
+				storages.remove(dbName);
+
     } finally {
       getLock().unlock();
     }
@@ -431,7 +427,11 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (v == null)
       v = System.getenv(ORIENTDB_HOME);
 
-    return v;
+    return OFileUtils.getPath(v);
+  }
+
+  public static String getTempPath() {
+    return OFileUtils.getPath(System.getProperty("java.io.tmpdir") + "/orientdb/");
   }
 
   public void setClusterFactory(final OClusterFactory clusterFactory) {

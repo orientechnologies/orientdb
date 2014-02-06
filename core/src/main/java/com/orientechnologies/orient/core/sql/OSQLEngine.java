@@ -134,15 +134,15 @@ public class OSQLEngine {
   }
 
   public void registerFunction(final String iName, final OSQLFunction iFunction) {
-    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunction);
+    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunction);
   }
 
   public void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunctionClass) {
-    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunctionClass);
+    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunctionClass);
   }
 
   public OSQLFunction getFunction(String iFunctionName) {
-    iFunctionName = iFunctionName.toUpperCase(Locale.ENGLISH);
+    iFunctionName = iFunctionName.toLowerCase(Locale.ENGLISH);
 
     if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
       // SPECIAL FUNCTIONS
@@ -161,7 +161,7 @@ public class OSQLEngine {
   }
 
   public void unregisterFunction(String iName) {
-    iName = iName.toUpperCase(Locale.ENGLISH);
+    iName = iName.toLowerCase(Locale.ENGLISH);
     ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
 

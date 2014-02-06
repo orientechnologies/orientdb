@@ -34,7 +34,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
     iRequest.data.commandInfo = "Edit Document";
 
     ODatabaseDocumentTx db = null;
-    ORecordId recordId = null;
+    ORecordId recordId;
     final ODocument doc;
 
     try {
@@ -54,6 +54,10 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
       // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
       doc = new ODocument();
       doc.fromJSON(iRequest.content);
+
+      if (iRequest.ifMatch != null)
+        // USE THE IF-MATCH HTTP HEADER AS VERSION
+        doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
 
       if (!recordId.isValid())
         recordId = (ORecordId) doc.getIdentity();
@@ -85,8 +89,8 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       currentDocument.save();
 
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, currentDocument.toJSON(),
-          null, true);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          currentDocument.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion(), true);
 
     } finally {
       if (db != null)

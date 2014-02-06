@@ -1,9 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -13,9 +9,17 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.CloseableIterable;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -64,9 +68,10 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     if (!doc.getIdentity().isValid())
       doc.save();
 
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     underlying.put(keyTemp, doc);
-    recordKeyValueIndex.put(new OCompositeKey(element.getIdentity(), keyTemp), element.getIdentity());
+    recordKeyValueIndex.put(new OCompositeKey(doc.getIdentity(), keyTemp), doc.getIdentity());
   }
 
   @SuppressWarnings("rawtypes")
@@ -92,6 +97,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
   public void remove(final String key, final Object value, final T element) {
     final String keyTemp = key + SEPARATOR + value;
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     try {
       underlying.remove(keyTemp, element.getRecord());
@@ -106,6 +112,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   }
 
   protected void removeElement(final T element) {
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
     Collection<ODocument> entries = recordKeyValueIndex.getEntriesBetween(new OCompositeKey(element.getIdentity()),
         new OCompositeKey(element.getIdentity()));

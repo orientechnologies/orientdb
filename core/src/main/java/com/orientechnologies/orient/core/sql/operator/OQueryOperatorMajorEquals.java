@@ -15,17 +15,21 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.List;
 
 /**
  * MAJOR EQUALS operator.
@@ -57,8 +61,8 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+      IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -76,9 +80,7 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(key, true, null, false, fetchLimit);
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValuesMajor(key, true, resultListener);
         result = resultListener.getResult();
       } else
@@ -101,9 +103,7 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-      else if (resultListener != null) {
+      if (resultListener != null) {
         index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
         result = resultListener.getResult();
       } else
@@ -120,8 +120,9 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null);
+        if (iRight instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
     return null;

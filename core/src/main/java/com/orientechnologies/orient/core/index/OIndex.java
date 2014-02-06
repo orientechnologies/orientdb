@@ -71,17 +71,6 @@ public interface OIndex<T> {
   T get(Object iKey);
 
   /**
-   * Counts the elements associated with the passed key, if any.
-   * 
-   * @param iKey
-   *          The key to count
-   * @return The size of found records, otherwise 0 if the key is not found
-   */
-  long count(Object iKey);
-
-  public long count(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch);
-
-  /**
    * Tells if a key is contained in the index.
    * 
    * @param iKey

@@ -137,19 +137,19 @@ public class ODefaultCache extends OAbstractMapCache<ODefaultCache.OLinkedHashMa
   }
 
   class OLowMemoryListener implements OMemoryWatchDog.Listener {
-    public void memoryUsageLow(final long freeMemory, final long freeMemoryPercentage) {
+    public void lowMemory(final long freeMemory, final long freeMemoryPercentage) {
       try {
         final int oldSize = size();
         if (oldSize == 0)
           return;
 
         if (freeMemoryPercentage < 10) {
-          OLogManager.instance().debug(this, "Low memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
+          OLogManager.instance().warn(this, "Low heap memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
           removeEldest(oldSize);
         } else {
           final int newSize = (int) (oldSize * 0.9f);
           removeEldest(oldSize - newSize);
-          OLogManager.instance().debug(this, "Low memory (%d%%): reducing cached records number from %d to %d",
+          OLogManager.instance().warn(this, "Low heap memory (%d%%): reducing cached records number from %d to %d",
               freeMemoryPercentage, oldSize, newSize);
         }
       } catch (Exception e) {

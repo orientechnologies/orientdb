@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Wraps the execution of a generic command by assuring to convert the result set in POJO where applicable.
@@ -124,6 +124,5 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
   @Override
   public void setTimeout(long timeout, TIMEOUT_STRATEGY strategy) {
     command.setTimeout(timeout, strategy);
-
   }
 }

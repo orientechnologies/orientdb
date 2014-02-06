@@ -35,10 +35,12 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
@@ -124,38 +126,39 @@ public class OObjectFetchContext implements OFetchContext {
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
-      final Collection<?> iCollection) throws OFetchException {
+      final Iterable<?> iterable) throws OFetchException {
+    if (iterable instanceof ORidBag)
+      throw new IllegalStateException(OType.LINKBAG.name() + " can not be directly mapped to any Java collection.");
+
     final Field f = OObjectEntitySerializer.getField(iFieldName, iUserObject.getClass());
     final boolean customSerialization = OObjectEntitySerializer.isSerializedType(f);
     final Class genericType = OReflectionHelper.getGenericMultivalueType(f);
     Collection target;
-    if (iCollection instanceof ORecordLazyList
-        || (iCollection instanceof OTrackedList<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+    if (iterable instanceof ORecordLazyList
+        || (iterable instanceof OTrackedList<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
             .isEnum())) {
-      target = new OObjectLazyList(iUserObject, (List<OIdentifiable>) iCollection, OObjectEntitySerializer.isCascadeDeleteField(
+      target = new OObjectLazyList(iUserObject, (List<OIdentifiable>) iterable, OObjectEntitySerializer.isCascadeDeleteField(
           iUserObject.getClass(), f.getName()));
-    } else if (iCollection instanceof ORecordLazySet
-        || iCollection instanceof OMVRBTreeRIDSet
-        || (iCollection instanceof OTrackedSet<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
+    } else if (iterable instanceof ORecordLazySet
+        || iterable instanceof OMVRBTreeRIDSet
+        || (iterable instanceof OTrackedSet<?> && !OReflectionHelper.isJavaType(genericType) && !customSerialization && !genericType
             .isEnum())) {
-      target = new OObjectLazySet(iUserObject, (Set) iCollection, OObjectEntitySerializer.isCascadeDeleteField(
-          iUserObject.getClass(), f.getName()));
+      target = new OObjectLazySet(iUserObject, (Set) iterable, OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(),
+          f.getName()));
     } else if (customSerialization) {
-      if (iCollection instanceof List<?>) {
-        target = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), iRootRecord,
-            (List<Object>) iCollection);
+      if (iterable instanceof List<?>) {
+        target = new OObjectCustomSerializerList(OObjectEntitySerializer.getSerializedType(f), iRootRecord, (List<Object>) iterable);
       } else {
-        target = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), iRootRecord,
-            (Set<Object>) iCollection);
+        target = new OObjectCustomSerializerSet(OObjectEntitySerializer.getSerializedType(f), iRootRecord, (Set<Object>) iterable);
       }
     } else if (genericType.isEnum()) {
-      if (iCollection instanceof List<?>) {
-        target = new OObjectEnumLazyList(genericType, iRootRecord, (List<Object>) iCollection);
+      if (iterable instanceof List<?>) {
+        target = new OObjectEnumLazyList(genericType, iRootRecord, (List<Object>) iterable);
       } else {
-        target = new OObjectEnumLazySet(genericType, iRootRecord, (Set<Object>) iCollection);
+        target = new OObjectEnumLazySet(genericType, iRootRecord, (Set<Object>) iterable);
       }
     } else {
-      if (iCollection instanceof List<?>) {
+      if (iterable instanceof List<?>) {
         target = new ArrayList();
       } else {
         target = new HashSet();
