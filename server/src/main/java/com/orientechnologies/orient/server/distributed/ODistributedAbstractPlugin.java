@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -29,13 +36,6 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -196,6 +196,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       f.read(buffer);
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      doc.field("version", 0);
       updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
       return doc;
 
@@ -212,13 +213,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {
     synchronized (cachedDatabaseConfiguration) {
-      // final ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
-      // if (oldCfg != null && oldCfg.field("version").equals(cfg.field("version"))) {
-      // // NO CHANGE, SKIP IT
-      // OLogManager.instance().debug(this, "Skip saving of distributed configuration file for database '%s' because is unchanged",
-      // iDatabaseName);
-      // return false;
-      // }
+      final ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
+      if (oldCfg != null && (Integer) oldCfg.field("version") > (Integer) cfg.field("version")) {
+        // NO CHANGE, SKIP IT
+        OLogManager.instance().debug(this,
+            "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)", iDatabaseName,
+            (Integer) cfg.field("version"));
+        return false;
+      }
 
       // SAVE IN NODE'S LOCAL RAM
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
@@ -268,7 +270,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
           if (cfg == null)
             throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
-          cfg.field("version", 0);
         }
       }
       return new ODistributedConfiguration(cfg);
