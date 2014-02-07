@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -104,6 +92,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1326,6 +1315,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             sendOk(clientTxId);
           } catch (IOException e1) {
           }
+        channel.writeByte((byte) 0); // NO MORE RECORDS
 
       } else {
         // SYNCHRONOUS
@@ -1354,18 +1344,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
           channel.writeString(value.toString());
         }
-      }
 
-      if (asynch || connection.data.protocolVersion >= 17) {
-        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-        for (ODocument doc : listener.getFetchedRecordsToSend()) {
-          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-          // ISN'T PART OF THE
-          // RESULT SET
-          writeIdentifiable(doc);
+        if (connection.data.protocolVersion >= 17) {
+          // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+          for (ORecord<?> rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
+            channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+            // ISN'T PART OF THE
+            // RESULT SET
+            writeIdentifiable(rec);
+          }
+
+          channel.writeByte((byte) 0); // NO MORE RECORDS
         }
-
-        channel.writeByte((byte) 0); // NO MORE RECORDS
       }
 
     } finally {
@@ -1583,14 +1573,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             if (record instanceof ODocument) {
               final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+              final Set<ORecord<?>> recordsToSend = new HashSet<ORecord<?>>();
               final ODocument doc = (ODocument) record;
-              final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
+              final OFetchListener listener = new ORemoteFetchListener() {
+                @Override
+                protected void sendRecord(ORecord<?> iLinked) {
+                  recordsToSend.add(iLinked);
+                }
+              };
               final OFetchContext context = new ORemoteFetchContext();
               OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
               // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ODocument d : recordsToSend) {
+              for (ORecord<?> d : recordsToSend) {
                 if (d.getIdentity().isValid()) {
                   channel.writeByte((byte) 2); // CLIENT CACHE
                   // RECORD. IT ISN'T PART OF THE RESULT SET
@@ -1616,8 +1611,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void endResponse() throws IOException {
     // reseting transaction state. Commands are stateless and connection should be cleared
     // otherwise reused connection (connections pool) may lead to unpredicted errors
-    if (connection != null && connection.database!=null && connection.database.getTransaction()!=null)
-            connection.database.getTransaction().close();
+    if (connection != null && connection.database != null && connection.database.getTransaction() != null)
+      connection.database.getTransaction().close();
     channel.flush();
     channel.releaseWriteLock();
   }

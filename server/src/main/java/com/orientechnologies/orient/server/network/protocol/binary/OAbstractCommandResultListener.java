@@ -15,18 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
-import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Map;
 
 /**
  * Abstract class to manage command results.
@@ -36,17 +32,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public abstract class OAbstractCommandResultListener implements OCommandResultListener {
 
-  private final Set<ODocument> fetchedRecordsToSend = new HashSet<ODocument>();
   private Map<String, Integer> fetchPlan;
 
   public abstract boolean isEmpty();
 
-  protected void fetchRecord(final Object iRecord) {
+  protected void fetchRecord(final Object iRecord, final OFetchListener iFetchListener) {
     if (fetchPlan != null && iRecord instanceof ORecordInternal<?>) {
       final ORecordInternal<?> record = (ORecordInternal<?>) iRecord;
-      final OFetchListener listener = new ORemoteFetchListener(fetchedRecordsToSend);
       final OFetchContext context = new ORemoteFetchContext();
-      OFetchHelper.fetch(record, record, fetchPlan, listener, context, "");
+      OFetchHelper.fetch(record, record, fetchPlan, iFetchListener, context, "");
     }
   }
 
@@ -56,9 +50,5 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
 
   public void setFetchPlan(final String iText) {
     fetchPlan = iText != null ? OFetchHelper.buildFetchPlan(iText) : null;
-  }
-
-  public Set<ODocument> getFetchedRecordsToSend() {
-    return fetchedRecordsToSend;
   }
 }
