@@ -1,0 +1,33 @@
+<orient-server>
+    <network>
+        <protocols>
+            <protocol name="binary"
+                      implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"/>
+        </protocols>
+        <listeners>
+            <listener protocol="binary" ip-address="0.0.0.0" port-range="3080"/>
+        </listeners>
+        <cluster>
+        </cluster>
+    </network>
+    <storages>
+    </storages>
+    <users>
+        <user resources="*" password="root" name="root"/>
+    </users>
+    <properties>
+        <!-- DATABASE POOL: size min/max -->
+        <entry name="db.pool.min" value="1"/>
+        <entry name="db.pool.max" value="20"/>
+
+        <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
+        <entry name="cache.level1.enabled" value="false"/>
+        <entry name="cache.level1.size" value="1000"/>
+        <entry name="cache.level2.enabled" value="false"/>
+        <entry name="cache.level2.size" value="0"/>
+        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info,
+            warning -->
+        <entry name="log.console.level" value="info"/>
+        <entry name="log.file.level" value="fine"/>
+    </properties>
+</orient-server>

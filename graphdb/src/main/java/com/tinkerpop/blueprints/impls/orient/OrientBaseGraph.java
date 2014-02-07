@@ -98,7 +98,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   private String                                       password;
 
   private static final ThreadLocal<OrientGraphContext> threadContext = new ThreadLocal<OrientGraphContext>();
-  private static final List<OrientGraphContext>        contexts      = new ArrayList<OrientGraphContext>();
+  private static final Set<OrientGraphContext>         contexts      = new HashSet<OrientGraphContext>();
 
   private final ODatabaseDocumentPool                  pool;
 
@@ -237,6 +237,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       else if (c.name.equals("useVertexFieldsForEdgeLabels"))
         setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
     }
+
+    loadManualIndexes(threadContext.get());
   }
 
   /**
@@ -626,6 +628,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         context.rawGraph = iDatabase;
         checkForGraphSchema(iDatabase);
         threadContext.set(context);
+        contexts.add(context);
       }
     }
     return this;
@@ -872,26 +875,18 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         contexts.add(context);
       }
 
-			if (pool == null)  {
-				context.rawGraph = new ODatabaseDocumentTx(url);
-				if (url.startsWith("remote:") || context.rawGraph.exists()) {
-					context.rawGraph.open(username, password);
+      if (pool == null) {
+        context.rawGraph = new ODatabaseDocumentTx(url);
+        if (url.startsWith("remote:") || context.rawGraph.exists()) {
+          context.rawGraph.open(username, password);
 
-					// LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
-					// final ODocument indexConfiguration =
-					// context.rawGraph.getMetadata().getIndexManager().getConfiguration();
-
-					loadManualIndexes(context);
-
-				} else
-					context.rawGraph.create();
-			}	else {
-				context.rawGraph = pool.acquire();
-
-				loadManualIndexes(context);
-			}
-
-
+          // LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
+          // final ODocument indexConfiguration =
+          // context.rawGraph.getMetadata().getIndexManager().getConfiguration();
+        } else
+          context.rawGraph.create();
+      } else
+        context.rawGraph = pool.acquire();
 
       checkForGraphSchema(context.rawGraph);
 
@@ -899,16 +894,16 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
   }
 
-	private void loadManualIndexes(OrientGraphContext context) {
-		for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
-			ODocument metadata = idx.getMetadata();
-			if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
-				// LOAD THE INDEXES
-				loadIndex(idx);
-		}
-	}
+  private void loadManualIndexes(OrientGraphContext context) {
+    for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
+      final ODocument metadata = idx.getMetadata();
+      if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
+        // LOAD THE INDEXES
+        loadIndex(idx);
+    }
+  }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private OrientIndex<?> loadIndex(final OIndex<?> rawIndex) {
     final OrientIndex<?> index = new OrientIndex(this, rawIndex);
 
