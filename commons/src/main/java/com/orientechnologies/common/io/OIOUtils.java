@@ -142,14 +142,14 @@ public class OIOUtils {
     return fileData.toString();
   }
 
-  public static int copyStream(final InputStream in, final OutputStream out, int iMax) throws java.io.IOException {
+  public static long copyStream(final InputStream in, final OutputStream out, long iMax) throws java.io.IOException {
     if (iMax < 0)
-      iMax = Integer.MAX_VALUE;
+      iMax = Long.MAX_VALUE;
 
     final byte[] buf = new byte[8192];
     int byteRead = 0;
-    int byteTotal = 0;
-    while ((byteRead = in.read(buf, 0, Math.min(buf.length, iMax - byteTotal))) > 0) {
+    long byteTotal = 0;
+    while ((byteRead = in.read(buf, 0, (int) Math.min(buf.length, iMax - byteTotal))) > 0) {
       out.write(buf, 0, byteRead);
       byteTotal += byteRead;
     }
