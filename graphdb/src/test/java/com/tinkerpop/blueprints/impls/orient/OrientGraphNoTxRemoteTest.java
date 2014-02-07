@@ -42,17 +42,8 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + OrientGraphNoTxRemoteTest.class.getSimpleName();
 
-		File file = new File(serverHome + "/databases");
-		if (file.exists())
-			Assert.assertTrue(file.delete());
-
-		file = new File(serverHome + "/plugins");
-		if (file.exists())
-			Assert.assertTrue(file.delete());
-
-		file = new File(serverHome);
-		if (file.exists())
-			Assert.assertTrue(file.delete());
+		File file = new File(serverHome);
+		deleteDirectory(file);
 
 		file = new File(serverHome);
     Assert.assertTrue(file.mkdir());
@@ -75,17 +66,8 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     else
       System.clearProperty("ORIENTDB_HOME");
 
-    File file = new File(serverHome + "/databases");
-		if (file.exists())
-    	Assert.assertTrue(file.delete());
-
-    file = new File(serverHome + "/plugins");
-		if (file.exists())
-    	Assert.assertTrue(file.delete());
-
-    file = new File(serverHome);
-		if (file.exists())
-    	Assert.assertTrue(file.delete());
+    final File file = new File(serverHome);
+		deleteDirectory(file);
 
 		Orient.instance().startup();
   }
