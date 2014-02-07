@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.EntryEvent;
@@ -59,23 +76,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -371,8 +371,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     distribDatabase.configureDatabase((ODatabaseDocumentTx) ((ODatabaseComplex<?>) iDatabase).getDatabaseOwner(), false, false)
         .setOnline();
     onOpen(iDatabase);
-
-    distribDatabase.checkLocalNodeInConfiguration();
   }
 
   @SuppressWarnings("unchecked")
@@ -621,9 +619,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         final boolean hotAlignment = cfg.isHotAlignment();
 
-        final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
-        distrDatabase.configureDatabase(null, hotAlignment, hotAlignment).setOnline();
-        distrDatabase.checkLocalNodeInConfiguration();
+        messageService.registerDatabase(databaseName).configureDatabase(null, hotAlignment, hotAlignment).setOnline();
       }
     }
   }
@@ -734,9 +730,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                   }
 
                   installDatabase(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
-
-                  distrDatabase.checkLocalNodeInConfiguration();
-
                   return;
 
                 } else
