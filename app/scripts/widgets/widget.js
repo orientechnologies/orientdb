@@ -333,7 +333,7 @@ Widget.directive('orientdatetime', function (Database) {
                 var n = input.getTimezoneOffset();
                 if (input) {
                     //var form = moment(input).format(formatter.toUpperCase());
-                    var form = moment(input).add('m',n).format('YYYY-MM-DD HH:mm:ss');
+                    var form = moment(input).add('m', n).format('YYYY-MM-DD HH:mm:ss');
                 }
                 return form;
             }
@@ -368,6 +368,24 @@ Widget.directive('ridrender', function (Database) {
                     var link = '<a href="#/database/' + dbName + '/browse/edit/' + value.replace('#', '') + '">' + value + '</a>';
                     element.html(link);
                 }
+            }
+            if (value instanceof Array) {
+                var html = "<ul class='arrayrid'>";
+                var i = 0;
+                var dbName = Database.getName();
+
+                value.forEach(function (elem) {
+                    if (typeof elem == 'string' && elem.indexOf('#') == 0) {
+                        var link = '<li><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></li>,';
+                        html += link;
+                        i++;
+                    }
+                });
+                html +="</ul>";
+                if (html != "" && i == value.length) {
+                    element.html(html);
+                }
+
             }
         }
     };

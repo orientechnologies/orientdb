@@ -429,3 +429,17 @@ table.editClass_panel {
 table.editClass_panel>tbody>tr>td a {
     margin-left: 5px;
 }
+ul.arrayrid {
+    list-style-type: none;
+}
+ul.arrayrid > li {
+    display: inline-block;
+}
+
+.hide{
+    display: none;
+}
+
+.showMore{
+    display: none;
+}
