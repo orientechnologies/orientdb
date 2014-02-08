@@ -42,7 +42,7 @@
                         Name : <input type="text" required ng-model="functionToExecute['name']">
                         Language:
                         <select ng-options="lang for lang in languages" ng-model="selectedLanguage"
-                                ng-change="modificataLang(selectedLanguage)">
+                                ng-change="modifiedLanguage(selectedLanguage)">
 
                         </select>
                         Idempotent: <input type="checkbox" ng-model="functionToExecute['idempotent']">

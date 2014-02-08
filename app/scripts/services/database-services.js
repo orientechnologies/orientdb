@@ -653,7 +653,7 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
             var records = data.result ? data.result.length : "";
             if (verbose) {
                 var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
-//                Notification.push({content: noti});
+                Notification.push({content: noti});
             }
             callback(data);
         }).error(function (data) {
