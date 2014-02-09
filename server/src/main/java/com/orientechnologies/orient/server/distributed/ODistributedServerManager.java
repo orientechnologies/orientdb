@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -46,7 +46,7 @@ public interface ODistributedServerManager {
 
   public ODistributedMessageService getMessageService();
 
-  public boolean isNodeAvailable(final String iNodeName);
+  public boolean isNodeAvailable(final String iNodeName, String databaseName);
 
   public boolean isOffline();
 

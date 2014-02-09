@@ -15,23 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.EntryEvent;
@@ -51,7 +34,6 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -77,6 +59,23 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 /**
  * Hazelcast implementation for clustering.
  * 
@@ -87,6 +86,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     OCommandOutputListener {
 
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
+  protected static final String                 CONFIG_STATUS_PREFIX   = "status.";
   protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
 
   protected String                              nodeId;
@@ -308,9 +308,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     status = iStatus;
 
-    // DON'T PUT THE STATUS IN CFG ANYMORE
-    // getConfigurationMap().put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
-
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node status to '%s'", status);
   }
 
@@ -368,8 +365,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void onCreate(final ODatabase iDatabase) {
     final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
-    distribDatabase.configureDatabase((ODatabaseDocumentTx) ((ODatabaseComplex<?>) iDatabase).getDatabaseOwner(), false, false)
-        .setOnline();
+    distribDatabase.configureDatabase(false, false).setOnline();
     onOpen(iDatabase);
   }
 
@@ -477,7 +473,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final ODocument cfg = (ODocument) iEvent.getValue();
         cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
 
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+        ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
             "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
             getNodeName(iEvent.getMember()), cachedClusterNodes.size());
 
@@ -487,6 +483,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       updateCachedDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue(), true, false);
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+    } else if (key.startsWith(CONFIG_STATUS_PREFIX)) {
+      ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN, "added status %s=%s",
+          key.substring(CONFIG_STATUS_PREFIX.length()), iEvent.getValue());
     }
   }
 
@@ -511,6 +510,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         updateCachedDatabaseConfiguration(dbName, (ODocument) iEvent.getValue(), true, false);
         OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
       }
+    } else if (key.startsWith(CONFIG_STATUS_PREFIX)) {
+      ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN, "updated status %s=%s",
+          key.substring(CONFIG_STATUS_PREFIX.length()), iEvent.getValue());
     }
   }
 
@@ -529,6 +531,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       synchronized (cachedDatabaseConfiguration) {
         cachedDatabaseConfiguration.remove(key.substring(CONFIG_DATABASE_PREFIX.length()));
       }
+    } else if (key.startsWith(CONFIG_STATUS_PREFIX)) {
+      ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN, "removed status %s=%s",
+          key.substring(CONFIG_STATUS_PREFIX.length()), iEvent.getValue());
     }
   }
 
@@ -537,8 +542,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public boolean isNodeAvailable(final String iNodeName) {
-    return cachedClusterNodes.containsKey(iNodeName);
+  public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
+    if (cachedClusterNodes.containsKey(iNodeName)) {
+      final Boolean nodeStatus = (Boolean) getConfigurationMap().get(
+          OHazelcastPlugin.CONFIG_STATUS_PREFIX + iNodeName + "." + iDatabaseName);
+      if (nodeStatus != null && nodeStatus)
+        return nodeStatus;
+    }
+    return false;
   }
 
   public boolean isOffline() {
@@ -619,7 +630,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         final boolean hotAlignment = cfg.isHotAlignment();
 
-        messageService.registerDatabase(databaseName).configureDatabase(null, hotAlignment, hotAlignment).setOnline();
+        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(hotAlignment,
+            hotAlignment);
+
+        if (!db.isRestoringMessages())
+          // NO PENDING MESSAGE, SET IT ONLINE
+          db.setOnline();
+        else
+          db.initDatabaseInstance();
       }
     }
   }
@@ -665,10 +683,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
             // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY MSG ARRIVES
-            distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class);
+            distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class, false);
             try {
 
-              distrDatabase.configureDatabase(null, false, false);
+              distrDatabase.configureDatabase(false, false);
 
               final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
                   EXECUTION_MODE.RESPONSE);
@@ -700,7 +718,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
                     long fileSize = writeDatabaseChunk(1, chunk, out);
                     for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                      distrDatabase.setWaitForTaskType(OCopyDatabaseChunkTask.class);
+                      distrDatabase.setWaitForTaskType(OCopyDatabaseChunkTask.class, true);
 
                       final Object result = sendRequest2Node(databaseName, r.getKey(), new OCopyDatabaseChunkTask(chunk.filePath,
                           chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
@@ -740,7 +758,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             } finally {
               // AVOID THE NODE CANCEL ALL THE FURTHER REQUESTS
-              distrDatabase.setWaitForTaskType(null);
+              distrDatabase.setWaitForTaskType(null, false);
             }
           }
         }
