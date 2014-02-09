@@ -59,8 +59,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   private static final String                KEYWORD_REMOVE    = "REMOVE";
   private static final String                KEYWORD_INCREMENT = "INCREMENT";
   private static final String                KEYWORD_MERGE     = "MERGE";
+  private static final String                KEYWORD_UPSERT     = "UPSERT";
 
-  private Map<String, Object>                setEntries        = new LinkedHashMap<String, Object>();
+
+    private Map<String, Object>                setEntries        = new LinkedHashMap<String, Object>();
   private List<OPair<String, Object>>        addEntries        = new ArrayList<OPair<String, Object>>();
   private Map<String, OPair<String, Object>> putEntries        = new LinkedHashMap<String, OPair<String, Object>>();
   private List<OPair<String, Object>>        removeEntries     = new ArrayList<OPair<String, Object>>();
@@ -76,6 +78,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   private String                             subjectName;
   private static final Object                EMPTY_VALUE       = new Object();
   private OCommandParameters                 parameters;
+  private boolean                            upsertMode        = false;
+  private boolean                            isUpsertAllowed   = false;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
@@ -106,11 +110,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     if (parserIsEnded()
         || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
             && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
-            && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN)))
+            && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT) ))
       throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + "," + KEYWORD_MERGE
-          + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or " + KEYWORD_RETURN);
+          + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or " + KEYWORD_RETURN + " or "+ KEYWORD_UPSERT);
 
-    while (!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) {
+    while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)) || parserGetLastWord().equals(KEYWORD_UPSERT))  {
       word = parserGetLastWord();
 
       if (word.equals(KEYWORD_CONTENT))
@@ -129,6 +133,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         parseIncrementFields();
       else if (word.equals(KEYWORD_LOCK))
         lockStrategy = parseLock();
+      else if (word.equals(KEYWORD_UPSERT))
+          upsertMode = true;
       else if (word.equals(KEYWORD_RETURN))
         returning = parseReturn();
       else
@@ -152,12 +158,22 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK))
+    {
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
+        isUpsertAllowed = (getDatabase().getMetadata().getSchema().getClass(subjectName)!=null);
+    }
     else if (additionalStatement != null && !additionalStatement.isEmpty())
       throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
+
+    if (upsertMode && !isUpsertAllowed)
+        throwSyntaxErrorException("Upsert only works with class names ");
+
+    if (upsertMode && !additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
+        throwSyntaxErrorException("Upsert only works with WHERE keyword");
+
 
     return this;
   }
@@ -188,6 +204,17 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
 
     getDatabase().query(query, queryArgs);
+
+      // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
+    if (upsertMode && recordCount==0)
+    {
+        final ODocument doc = subjectName != null ? new ODocument(subjectName) : new ODocument();
+        final String suspendedLockStrategy = lockStrategy;
+        lockStrategy = "NONE";//New record hasn't been created under exlusive lock - just to avoid releasing locks by result(doc)
+        result(doc);
+        lockStrategy = suspendedLockStrategy;
+    }
+
 
     if (returning.equalsIgnoreCase("COUNT"))
       // RETURNS ONLY THE COUNT
@@ -507,7 +534,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
   @Override
   public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]*  [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
   }
 
   @Override
