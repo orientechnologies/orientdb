@@ -275,7 +275,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
             // IN ALL OTHER CASES USE A LIST
             coll = new ArrayList<Object>();
 
-          record.field(entry.getKey(), coll);
+          // containField's condition above does NOT check subdocument's fields so
+          Collection<Object> currColl = record.field(entry.getKey());
+          if (currColl==null)
+               record.field(entry.getKey(), coll);
+            else
+              coll = currColl;
+
         } else {
           fieldValue = record.field(entry.getKey());
 
