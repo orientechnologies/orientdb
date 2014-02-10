@@ -41,7 +41,8 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
   protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
     graph = rawGraph;
     rawElement = iRawElement;
-    settings = graph.settings;
+    if (graph != null)
+      settings = graph.settings;
   }
 
   public abstract String getBaseClassName();
@@ -202,6 +203,7 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
    */
   public OrientElement detach() {
     // EARLY UNMARSHALL FIELDS
+    getRecord().setLazyLoad(false);
     getRecord().fieldNames();
     // COPY GRAPH SETTINGS TO WORK OFFLINE
     settings = graph.settings.copy();
