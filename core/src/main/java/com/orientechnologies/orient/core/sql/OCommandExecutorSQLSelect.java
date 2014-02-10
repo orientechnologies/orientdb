@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -1489,6 +1490,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     @Override
     public boolean addResult(OIdentifiable value) {
+      final ORecord record = value.getRecord();
+
+      if (record instanceof ORecordSchemaAware<?>) {
+        final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
+        final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
+        if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+          for (OClass targetClass : targetClasses.keySet()) {
+            if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+              return true;
+          }
+        }
+      }
+
       if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
         result.add(value);
 

@@ -168,6 +168,22 @@ public class ODistributedResponseManager {
       if (group.size() >= quorum)
         return true;
 
+    final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
+    if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
+      // CHECK IF ANY NODE IS OFFLINE
+      int availableNodes = 0;
+      for (Map.Entry<String, Object> r : responses.entrySet()) {
+        if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
+          availableNodes++;
+      }
+
+      if (availableNodes < quorum) {
+        ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+            "overridden quorum because available nodes are less than quorum, received responses: %s", responses);
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -418,6 +434,9 @@ public class ODistributedResponseManager {
           msg.append(": ");
           msg.append(r.getPayload());
         }
+
+      msg.append(". Received: ");
+      msg.append(responses);
 
       throw new ODistributedException(msg.toString());
     }

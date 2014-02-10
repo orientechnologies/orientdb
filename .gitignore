@@ -3,6 +3,7 @@ build.number
 */target/*
 target
 */test-output
+out
 */databases
 *.gz
 *.patch

@@ -260,22 +260,7 @@ public class OServer {
 
     lock.lock();
     try {
-
-      final String[] plugins = pluginManager.getPluginNames();
-      if (plugins.length > 0) {
-        // SHUTDOWN HANDLERS
-        OLogManager.instance().info(this, "Shutting down plugins:");
-        for (String pluginName : plugins) {
-
-          OLogManager.instance().info(this, "- %s", pluginName);
-          final OServerPluginInfo plugin = pluginManager.getPluginByName(pluginName);
-          try {
-            plugin.shutdown();
-          } catch (Throwable t) {
-            OLogManager.instance().error(this, "Error during server plugin %s shutdown.", t, plugin);
-          }
-        }
-      }
+			pluginManager.shutdown();
 
       if (networkProtocols.size() > 0) {
         // PROTOCOL SHUTDOWN

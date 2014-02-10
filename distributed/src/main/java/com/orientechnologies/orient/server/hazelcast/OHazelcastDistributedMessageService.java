@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -33,6 +24,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -221,17 +221,20 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
   }
 
-  protected void checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
+  protected boolean checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
     final int queueSize = iQueue.size();
     if (queueSize > 0) {
       if (!iUnqueuePendingMessages) {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
         iQueue.clear();
-      } else
+      } else {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
+        return true;
+      }
     }
+    return false;
   }
 
   /**
