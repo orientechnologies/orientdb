@@ -196,9 +196,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
-    checkIfAttached();
-    setCurrentGraphInThreadLocal();
-    graph.autoStartTransaction();
+    if (graph != null) {
+      setCurrentGraphInThreadLocal();
+      graph.autoStartTransaction();
+    }
 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
     final ODocument outDocument = getRecord();
@@ -253,10 +254,11 @@ public class OrientVertex extends OrientElement implements Vertex {
     // IN-VERTEX ---> OUT-VERTEX/EDGE
     createLink(inDocument, from, inFieldName);
 
-    edge.save(iClusterName);
-    inDocument.save();
-    outDocument.save();
-
+    if (graph != null) {
+      edge.save(iClusterName);
+      inDocument.save();
+      outDocument.save();
+    }
     return edge;
 
   }
@@ -422,7 +424,8 @@ public class OrientVertex extends OrientElement implements Vertex {
   }
 
   public String toString() {
-    graph.setCurrentGraphInThreadLocal();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
 
     final String clsName = getRecord().getClassName();
 
