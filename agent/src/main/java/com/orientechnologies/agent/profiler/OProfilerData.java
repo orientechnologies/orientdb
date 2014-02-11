@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.WeakHashMap;
@@ -110,8 +111,8 @@ public class OProfilerData {
 
   public void toJSON(final StringBuilder buffer, final String iFilter) {
     buffer.append("{");
-    buffer.append(String.format("\"from\": %d,", recordingFrom));
-    buffer.append(String.format("\"to\": %d,", recordingTo));
+    buffer.append(String.format(Locale.ENGLISH, "\"from\": %d,", recordingFrom));
+    buffer.append(String.format(Locale.ENGLISH, "\"to\": %d,", recordingTo));
 
     // HOOKS
     buffer.append("\"hookValues\":{ ");
@@ -131,13 +132,13 @@ public class OProfilerData {
         buffer.append(',');
 
       if (value == null)
-        buffer.append(String.format("\"%s\":null", OIOUtils.encode(k)));
+        buffer.append(String.format(Locale.ENGLISH, "\"%s\":null", OIOUtils.encode(k)));
       else if (value instanceof Number)
-        buffer.append(String.format("\"%s\":%d", OIOUtils.encode(k), value));
+        buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(k), value));
       else if (value instanceof Boolean)
-        buffer.append(String.format("\"%s\":%s", OIOUtils.encode(k), value));
+        buffer.append(String.format(Locale.ENGLISH, "\"%s\":%s", OIOUtils.encode(k), value));
       else {
-        buffer.append(String.format("\"%s\":\"%s\"", OIOUtils.encode(k), OIOUtils.encode(value)));
+        buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", OIOUtils.encode(k), OIOUtils.encode(value)));
       }
     }
     buffer.append("}");
@@ -157,7 +158,7 @@ public class OProfilerData {
       else
         buffer.append(',');
 
-      buffer.append(String.format("\"%s\":", OIOUtils.encode(k)));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
       chronos.get(k).toJSON(buffer);
     }
     buffer.append("}");
@@ -194,7 +195,7 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
-      buffer.append(String.format("\"%s\":%d", OIOUtils.encode(k), counters.get(k)));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(k), counters.get(k)));
     }
     buffer.append("}");
 
@@ -248,18 +249,22 @@ public class OProfilerData {
     final StringBuilder buffer = new StringBuilder();
     buffer.append("Dumping COUNTERS:");
 
-    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-    buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    buffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    buffer.append(String.format(Locale.ENGLISH, "\n%50s | Value                                                             |",
+        "Name"));
+    buffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
 
     final List<String> keys = new ArrayList<String>(counters.keySet());
     Collections.sort(keys);
 
     for (String k : keys) {
       final Long stat = counters.get(k);
-      buffer.append(String.format("\n%-50s | %-65d |", k, stat));
+      buffer.append(String.format(Locale.ENGLISH, "\n%-50s | %-65d |", k, stat));
     }
-    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    buffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     return buffer.toString();
   }
 
@@ -288,20 +293,24 @@ public class OProfilerData {
 
       buffer.append("Dumping HOOK VALUES:");
 
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-      buffer.append(String.format("\n%50s | Value                                                             |", "Name"));
-      buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+      buffer.append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+",
+          ""));
+      buffer.append(String.format(Locale.ENGLISH, "\n%50s | Value                                                             |",
+          "Name"));
+      buffer.append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+",
+          ""));
 
       final List<String> names = new ArrayList<String>(hooks.keySet());
       Collections.sort(names);
 
       for (String k : names) {
         final Object hookValue = hooks.get(k);
-        buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+        buffer.append(String.format(Locale.ENGLISH, "\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
       }
     }
 
-    buffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    buffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     return buffer.toString();
   }
 
@@ -389,6 +398,8 @@ public class OProfilerData {
       if (oldValue != null)
         c = oldValue;
     }
+    // else
+    // c.
 
     c.name = iName;
     c.payLoad = iPayload;
@@ -413,10 +424,12 @@ public class OProfilerData {
 
     OProfilerEntry c;
 
-    iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
-    iBuffer.append(String.format("\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max", "average",
-        "items"));
-    iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String
+        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String.format(Locale.ENGLISH, "\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max",
+        "average", "items"));
+    iBuffer.append(String
+        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
 
     final List<String> keys = new ArrayList<String>(iValues.keySet());
     Collections.sort(keys);
@@ -424,10 +437,11 @@ public class OProfilerData {
     for (String k : keys) {
       c = iValues.get(k);
       if (c != null)
-        iBuffer.append(String.format("\n%-50s | %10d %10d %10d %10d %10d %10d |", k, c.last, c.total, c.min, c.max, c.average,
-            c.entries));
+        iBuffer.append(String.format(Locale.ENGLISH, "\n%-50s | %10d %10d %10d %10d %7.2f %10d |", k, c.last, c.total, c.min,
+            c.max, c.average, c.entries));
     }
-    iBuffer.append(String.format("\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer.append(String
+        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     return iBuffer.toString();
 
   }
