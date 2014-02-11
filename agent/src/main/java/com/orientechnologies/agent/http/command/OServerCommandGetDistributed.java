@@ -19,11 +19,14 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.util.List;
 
 public class OServerCommandGetDistributed extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "GET|distributed/*" };
@@ -50,6 +53,18 @@ public class OServerCommandGetDistributed extends OServerCommandAuthenticatedSer
       if (command.equalsIgnoreCase("node")) {
 
         doc = manager.getClusterConfiguration();
+
+      } else if (command.equalsIgnoreCase("queue")) {
+
+        final ODistributedMessageService messageService = manager.getMessageService();
+        if (id == null) {
+          // RETURN QUEUE NAMES
+          final List<String> queues = messageService.getManagedQueueNames();
+          doc = new ODocument();
+          doc.field("queues", queues);
+        } else {
+          doc = messageService.getQueueStats(id);
+        }
 
       } else if (command.equalsIgnoreCase("database")) {
 
