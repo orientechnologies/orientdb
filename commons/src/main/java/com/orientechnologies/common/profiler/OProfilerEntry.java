@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.common.profiler;
 
+import java.util.Locale;
+
 public class OProfilerEntry {
   public String     name    = null;
   public long       entries = 0;
@@ -45,16 +47,16 @@ public class OProfilerEntry {
 
   public void toJSON(final StringBuilder buffer) {
     buffer.append('{');
-    buffer.append(String.format("\"%s\":%d,", "entries", entries));
-    buffer.append(String.format("\"%s\":%d,", "last", last));
-    buffer.append(String.format("\"%s\":%d,", "min", min));
-    buffer.append(String.format("\"%s\":%d,", "max", max));
-    buffer.append(String.format("\"%s\":%.2f,", "average", average));
-    buffer.append(String.format("\"%s\":%d,", "total", total));
-    buffer.append(String.format("\"%s\":%d,", "firstExecution", firstExecution));
-    buffer.append(String.format("\"%s\":%d", "lastExecution", lastExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "entries", entries));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "last", last));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "min", min));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "max", max));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%.2f,", "average", average));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
     if (payLoad != null)
-      buffer.append(String.format("\"%s\":%d", "payload", payLoad));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "payload", payLoad));
     buffer.append('}');
   }
 
