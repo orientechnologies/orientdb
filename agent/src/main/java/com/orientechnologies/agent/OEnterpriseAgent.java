@@ -44,7 +44,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.6.2";
+  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7-rc2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
 
   public OEnterpriseAgent() {
   }
@@ -126,7 +126,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
 
   private boolean checkLicense() {
     try {
-      if (!OConstants.ORIENT_VERSION.equals(ORIENDB_ENTERPRISE_VERSION))
+      if (!OConstants.ORIENT_VERSION.startsWith(ORIENDB_ENTERPRISE_VERSION))
         throw new OLicenseException("enterprise license v." + ORIENDB_ENTERPRISE_VERSION
             + " is different than linked jars with OrientDB v." + OConstants.ORIENT_VERSION);
 
@@ -135,7 +135,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
       System.out.printf("\n\n************************************************");
       System.out.printf("\n*       ORIENTDB  -  ENTERPRISE EDITION        *");
       System.out.printf("\n*                                              *");
-      System.out.printf("\n* Copyrights (c) 2013 Orient Technologies LTD  *");
+      System.out.printf("\n* Copyrights (c) 2014 Orient Technologies LTD  *");
       System.out.printf("\n************************************************");
       System.out.printf("\n* Version...: %-32s *", ORIENDB_ENTERPRISE_VERSION);
       System.out.printf("\n* License...: %-32s *", license);

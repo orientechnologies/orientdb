@@ -37,7 +37,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
     super("database.backup");
   }
 
-  private static final String[] NAMES = { "GET|backup/*","POST|backup/*" };
+  private static final String[] NAMES = { "GET|backup/*", "POST|backup/*" };
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
@@ -55,7 +55,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
         iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
         iResponse.writeLine("Date: " + new Date());
         iResponse.writeLine(null);
-        database.backup(iResponse.getOutputStream(), null, null);
+        database.backup(iResponse.getOutputStream(), null, null, null);
 
         try {
           iResponse.flush();
