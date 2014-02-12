@@ -1303,10 +1303,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (!isConnectionAlive())
         return;
 
-      // ASSIGNED THE PARSED FETCHPLAN
+       // ASSIGNED THE PARSED FETCHPLAN
       listener.setFetchPlan(connection.database.command(command).getFetchPlan());
 
       final Object result = connection.database.command(command).execute();
+
+      // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
+      listener.setFetchPlan(command.getFetchPlan());
+
 
       if (asynch) {
         // ASYNCHRONOUS
