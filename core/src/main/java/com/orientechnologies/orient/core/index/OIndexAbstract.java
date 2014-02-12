@@ -17,17 +17,8 @@ package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -300,18 +291,21 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * <p/>
    * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
    * 
+   * 
+   * 
    * @param iRangeFrom
    *          Starting range
    * @param iRangeTo
    *          Ending range
+   * @param ascSortOrder
    * @return a set of records with key between the range passed as parameter. Range bounds are included.
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-   * @see #getValuesBetween(Object, boolean, Object, boolean)
+   * @see OIndex#getValuesBetween(Object, boolean, Object, boolean, boolean)
    */
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
     checkForRebuild();
 
-    return getValuesBetween(iRangeFrom, true, iRangeTo, true);
+    return getValuesBetween(iRangeFrom, true, iRangeTo, true, ascSortOrder);
   }
 
   /**
@@ -330,12 +324,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return getEntriesBetween(iRangeFrom, iRangeTo, true);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValuesMajor(fromKey, isInclusive, new IndexValuesResultListener() {
+    getValuesMajor(fromKey, isInclusive, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -346,12 +340,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return result;
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValuesMinor(toKey, isInclusive, new IndexValuesResultListener() {
+    getValuesMinor(toKey, isInclusive, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -399,27 +393,29 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * <p/>
    * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
    * 
-   * @param iRangeFrom
+   * 
+   * @param rangeFrom
    *          Starting range
-   * @param iFromInclusive
+   * @param fromInclusive
    *          Indicates whether start range boundary is included in result.
-   * @param iRangeTo
+   * @param rangeTo
    *          Ending range
-   * @param iToInclusive
+   * @param toInclusive
    *          Indicates whether end range boundary is included in result.
+   * @param ascSortOrder
    * @return Returns a set of records with key between the range passed as parameter.
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
    */
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, final boolean iFromInclusive, Object iRangeTo,
-      final boolean iToInclusive) {
+  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, final boolean fromInclusive, Object rangeTo,
+      final boolean toInclusive, boolean ascSortOrder) {
     checkForRebuild();
 
-    iRangeFrom = getCollatingValue(iRangeFrom);
-    iRangeTo = getCollatingValue(iRangeTo);
+    rangeFrom = getCollatingValue(rangeFrom);
+    rangeTo = getCollatingValue(rangeTo);
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, new IndexValuesResultListener() {
+    getValuesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -449,12 +445,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return result;
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValues(iKeys, new IndexValuesResultListener() {
+    getValues(iKeys, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);

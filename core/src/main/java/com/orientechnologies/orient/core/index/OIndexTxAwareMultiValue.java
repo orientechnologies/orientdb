@@ -17,8 +17,10 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.*;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -76,41 +78,66 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifia
   }
 
   @Override
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-    final Collection<?> keys = new ArrayList<Object>(iKeys);
-
-    final Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
-
-    final Set<Object> keysToRemove = new TreeSet<Object>();
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
 
-    if (indexChanges == null) {
-      result.addAll(super.getValues(keys));
-      return result;
-    }
+    if (indexChanges == null)
+      return super.getValues(iKeys, ascSortOrder);
 
+    final Collection<?> keys = new ArrayList<Object>(iKeys);
+
+    final Comparator<Object> comparator;
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    final TreeMap<Object, List<OIdentifiable>> result = new TreeMap<Object, List<OIdentifiable>>(comparator);
+
+    final Set<Object> keysToRemove = new HashSet<Object>();
     for (final Object key : keys) {
-      final Set<OIdentifiable> keyResult;
+      final List<OIdentifiable> keyResult;
       if (!indexChanges.cleared)
         if (indexChanges.containsChangesPerKey(key))
           // BEGIN FROM THE UNDERLYING RESULT SET
-          keyResult = new TreeSet<OIdentifiable>(super.get(key));
+          keyResult = new ArrayList<OIdentifiable>(super.get(key));
         else
           continue;
       else
         // BEGIN FROM EMPTY RESULT SET
-        keyResult = new TreeSet<OIdentifiable>();
+        keyResult = new ArrayList<OIdentifiable>();
 
       keysToRemove.add(key);
+
       filterIndexChanges(indexChanges, key, keyResult);
-      result.addAll(keyResult);
+
+      result.put(key, keyResult);
     }
 
     keys.removeAll(keysToRemove);
 
-    if (!keys.isEmpty())
-      result.addAll(super.getValues(keys));
-    return result;
+    if (!keys.isEmpty()) {
+      Collection<ODocument> entries = super.getEntries(keys);
+
+      for (ODocument entry : entries) {
+        final Object key = entry.field("key");
+        final OIdentifiable identifiable = entry.field("rid", OType.LINK);
+
+        List<OIdentifiable> keyResult = result.get(key);
+        if (keyResult == null) {
+          keyResult = new ArrayList<OIdentifiable>();
+          result.put(key, keyResult);
+        }
+
+        keyResult.add(identifiable);
+      }
+    }
+
+    final List<OIdentifiable> returnedCollection = new ArrayList<OIdentifiable>();
+    for (List<OIdentifiable> values : result.values())
+      returnedCollection.addAll(values);
+
+    return returnedCollection;
   }
 
   @Override

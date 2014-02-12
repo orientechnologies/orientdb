@@ -112,7 +112,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      IndexResultListener resultListener, int fetchLimit) {
+																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -151,10 +151,10 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
         if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
           result = resultListener.getResult();
         } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);

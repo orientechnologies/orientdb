@@ -719,7 +719,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public Collection<V> getValuesMajor(K key, boolean inclusive, final int maxValuesToFetch) {
     final List<V> result = new ArrayList<V>();
 
-    loadEntriesMajor(key, inclusive, new RangeResultListener<K, V>() {
+    loadEntriesMajor(key, inclusive, true, new RangeResultListener<K, V>() {
       @Override
       public boolean addResult(Map.Entry<K, V> entry) {
         result.add(entry.getValue());
@@ -735,16 +735,19 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   /**
    * Load all entries with key greater then specified key.
-   * 
-   * @param key
-   *          defines
-   * @param inclusive
-   *          if true entry with given key is included
-   * @param listener
-   *          callback that is executed for each entry
-   */
+   *
+	 * @param key
+	 *          defines
+	 * @param inclusive
+	 *          if true entry with given key is included
+	 * @param ascSortOrder
+	 * @param listener
+	 */
   @Override
-  public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
+  public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported.");
+
     acquireSharedLock();
     try {
       BucketSearchResult bucketSearchResult = findBucket(key);
@@ -1357,7 +1360,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   public int getRealBagSize(Map<K, OSBTreeRidBag.Change> changes) {
     final Map<K, OSBTreeRidBag.Change> notAppliedChanges = new HashMap<K, OSBTreeRidBag.Change>(changes);
     final OModifiableInteger size = new OModifiableInteger(0);
-    loadEntriesMajor(firstKey(), true, new RangeResultListener<K, V>() {
+    loadEntriesMajor(firstKey(), true, true, new RangeResultListener<K, V>() {
       @Override
       public boolean addResult(Map.Entry<K, V> entry) {
         final OSBTreeRidBag.Change change = notAppliedChanges.remove(entry.getKey());

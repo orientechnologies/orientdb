@@ -420,7 +420,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
         5);
-    tree.loadEntriesMajor(key, inclusive, listener);
+    tree.loadEntriesMajor(key, inclusive, true, listener);
     List<Entry<OIdentifiable, Integer>> result = listener.getResult();
     byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
 

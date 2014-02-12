@@ -297,7 +297,7 @@ public class IndexTest {
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
     final Collection<Long> valuesMajorResults = new ArrayList<Long>(Arrays.asList(4L, 5L));
-    Collection<OIdentifiable> indexCollection = index.getValuesMajor(3, false);
+    Collection<OIdentifiable> indexCollection = index.getValuesMajor(3, false, true);
     Assert.assertEquals(indexCollection.size(), 2);
     for (OIdentifiable identifiable : indexCollection) {
       valuesMajorResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
@@ -305,19 +305,19 @@ public class IndexTest {
     Assert.assertEquals(valuesMajorResults.size(), 0);
 
     final Collection<Long> valuesMajorInclusiveResults = new ArrayList<Long>(Arrays.asList(3L, 4L, 5L));
-    indexCollection = index.getValuesMajor(3, true);
+    indexCollection = index.getValuesMajor(3, true, true);
     Assert.assertEquals(indexCollection.size(), 3);
     for (OIdentifiable identifiable : indexCollection) {
       valuesMajorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
     }
     Assert.assertEquals(valuesMajorInclusiveResults.size(), 0);
 
-    indexCollection = index.getValuesMajor(5, true);
+    indexCollection = index.getValuesMajor(5, true, true);
     Assert.assertEquals(indexCollection.size(), 1);
     Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(),
         OClusterPositionFactory.INSTANCE.valueOf(5));
 
-    indexCollection = index.getValuesMajor(5, false);
+    indexCollection = index.getValuesMajor(5, false, true);
     Assert.assertEquals(indexCollection.size(), 0);
 
     database.command(new OCommandSQL("drop index equalityIdx")).execute();
@@ -382,7 +382,7 @@ public class IndexTest {
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
 
     final Collection<Long> valuesMinorResults = new ArrayList<Long>(Arrays.asList(0L, 1L, 2L));
-    Collection<OIdentifiable> indexCollection = index.getValuesMinor(3, false);
+    Collection<OIdentifiable> indexCollection = index.getValuesMinor(3, false, true);
     Assert.assertEquals(indexCollection.size(), 3);
     for (OIdentifiable identifiable : indexCollection) {
       valuesMinorResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
@@ -390,19 +390,19 @@ public class IndexTest {
     Assert.assertEquals(valuesMinorResults.size(), 0);
 
     final Collection<Long> valuesMinorInclusiveResults = new ArrayList<Long>(Arrays.asList(0L, 1L, 2L, 3L));
-    indexCollection = index.getValuesMinor(3, true);
+    indexCollection = index.getValuesMinor(3, true, true);
     Assert.assertEquals(indexCollection.size(), 4);
     for (OIdentifiable identifiable : indexCollection) {
       valuesMinorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
     }
     Assert.assertEquals(valuesMinorInclusiveResults.size(), 0);
 
-    indexCollection = index.getValuesMinor(0, true);
+    indexCollection = index.getValuesMinor(0, true, true);
     Assert.assertEquals(indexCollection.size(), 1);
     Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(),
         OClusterPositionFactory.INSTANCE.valueOf(0));
 
-    indexCollection = index.getValuesMinor(0, false);
+    indexCollection = index.getValuesMinor(0, false, true);
     Assert.assertEquals(indexCollection.size(), 0);
 
     database.command(new OCommandSQL("drop index equalityIdx")).execute();
@@ -830,7 +830,7 @@ public class IndexTest {
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("inIdx");
     final Collection<Integer> multiGetResults = new ArrayList<Integer>(Arrays.asList(1, 3));
-    final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(1, 3));
+    final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(1, 3), true);
     Assert.assertEquals(indexCollection.size(), 2);
     for (final OIdentifiable identifiable : indexCollection) {
       multiGetResults.remove(identifiable.getIdentity().getClusterPosition().intValue());
@@ -855,7 +855,7 @@ public class IndexTest {
 
     final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("inIdx");
     final Collection<Integer> multiGetResults = new ArrayList<Integer>(Arrays.asList(0, 1, 4, 5));
-    final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(0, 2));
+    final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(0, 2), true);
     Assert.assertEquals(indexCollection.size(), 4);
     for (final OIdentifiable identifiable : indexCollection) {
       multiGetResults.remove(identifiable.getIdentity().getClusterPosition().intValue());

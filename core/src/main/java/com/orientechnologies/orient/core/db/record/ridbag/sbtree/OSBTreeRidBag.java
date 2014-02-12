@@ -743,7 +743,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     private void prefetchData(boolean firstTime) {
       final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
       try {
-        tree.loadEntriesMajor(firstKey, firstTime, new OTreeInternal.RangeResultListener<OIdentifiable, Integer>() {
+        tree.loadEntriesMajor(firstKey, firstTime, true, new OTreeInternal.RangeResultListener<OIdentifiable, Integer>() {
           @Override
           public boolean addResult(final Map.Entry<OIdentifiable, Integer> entry) {
             preFetchedValues.add(new Map.Entry<OIdentifiable, Integer>() {
