@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -35,6 +27,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for deployment of database from a remote node.
@@ -73,9 +72,8 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
               "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
 
           FileOutputStream fileOutputStream = new FileOutputStream(f);
-          final BufferedOutputStream bOutputFile = new BufferedOutputStream(fileOutputStream, 500000);
           try {
-            database.backup(bOutputFile, null, null, this);
+            database.backup(fileOutputStream, null, null, this, 9, 1038336);
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "sending the compressed database '%s' over the NETWORK to node '%s', size=%s...", databaseName, getNodeSource(),
@@ -89,7 +87,6 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
             return chunk;
 
           } finally {
-            bOutputFile.close();
             fileOutputStream.close();
           }
 
