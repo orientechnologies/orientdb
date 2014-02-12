@@ -1451,7 +1451,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         continue;
       }
 
-      final String parName = item.substring(0, sep);
+      final String parName = item.substring(1, sep);
       final String parValue = item.substring(sep + 1);
 
       if (parName.equalsIgnoreCase("bufferSize"))
