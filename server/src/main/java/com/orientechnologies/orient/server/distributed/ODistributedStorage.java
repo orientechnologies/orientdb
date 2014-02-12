@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -66,6 +58,14 @@ import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -627,8 +627,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
-    wrapped.backup(out, options, callable, iListener);
+      final OCommandOutputListener iListener, final int iBufferSze, final int iCompressionLevel) throws IOException {
+    wrapped.backup(out, options, callable, iListener, iBufferSze, iCompressionLevel);
   }
 
   @Override
