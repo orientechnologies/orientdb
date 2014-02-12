@@ -118,14 +118,20 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
-    final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
     return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive) {
-    final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
+																										final boolean iToInclusive, boolean ascSortOrder) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
 
     if (iFromInclusive) {
       query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
@@ -150,8 +156,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
-    final OCommandRequest cmd;
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		final OCommandRequest cmd;
     if (isInclusive)
       cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS, name);
     else
@@ -168,8 +177,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return getDatabase().command(cmd).execute(fromKey);
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
-    final OCommandRequest cmd;
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		final OCommandRequest cmd;
     if (isInclusive)
       cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS, name);
     else
@@ -352,7 +364,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return null;
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
     final StringBuilder params = new StringBuilder();
     if (!iKeys.isEmpty()) {
       params.append("?");
@@ -401,8 +416,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-      IndexValuesResultListener resultListener) {
-    Collection<OIdentifiable> result = getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
+															 boolean ascSortOrder, IndexValuesResultListener resultListener) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		Collection<OIdentifiable> result = getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
 
     addValues(resultListener, result);
   }
@@ -414,15 +432,21 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, IndexValuesResultListener resultListener) {
-    Collection<OIdentifiable> result = getValuesMajor(fromKey, isInclusive);
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener resultListener) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		Collection<OIdentifiable> result = getValuesMajor(fromKey, isInclusive, true);
 
     addValues(resultListener, result);
   }
 
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, IndexValuesResultListener valuesResultListener) {
-    Collection<OIdentifiable> result = getValuesMinor(toKey, isInclusive);
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		Collection<OIdentifiable> result = getValuesMinor(toKey, isInclusive, true);
 
     addValues(valuesResultListener, result);
   }
@@ -458,7 +482,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
+      return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
 
     final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
 
@@ -484,7 +508,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValuesMajor(fromKey, isInclusive);
+      return getValuesMajor(fromKey, isInclusive, true);
 
     final OCommandRequest cmd;
     if (isInclusive)
@@ -497,7 +521,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValuesMinor(toKey, isInclusive);
+      return getValuesMinor(toKey, isInclusive, true);
 
     final OCommandRequest cmd;
 
@@ -543,15 +567,18 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public void getValues(Collection<?> iKeys, IndexValuesResultListener resultListener) {
-    Collection<OIdentifiable> result = getValues(iKeys);
+  public void getValues(Collection<?> iKeys, boolean ascSortOrder, IndexValuesResultListener resultListener) {
+		if (!ascSortOrder)
+			throw new IllegalStateException("Descending sort order is not supported");
+
+		Collection<OIdentifiable> result = getValues(iKeys, ascSortOrder);
 
     addValues(resultListener, result);
   }
 
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValues(iKeys);
+      return getValues(iKeys, true);
 
     final StringBuilder params = new StringBuilder();
     if (!iKeys.isEmpty()) {

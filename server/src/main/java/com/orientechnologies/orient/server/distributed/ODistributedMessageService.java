@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.List;
 
 /**
  * 
@@ -24,8 +27,12 @@ package com.orientechnologies.orient.server.distributed;
 public interface ODistributedMessageService {
   public ODistributedRequest createRequest();
 
+  ODocument getQueueStats(String iQueueName);
+
   public ODistributedDatabase registerDatabase(String iDatabaseName);
 
   public ODistributedDatabase getDatabase(String iDatabaseName);
+
+  public List<String> getManagedQueueNames();
 
 }

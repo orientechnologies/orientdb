@@ -118,7 +118,10 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
+  public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported.");
+
     List<Map.Entry<K, V>> entries = fetchEntriesMajor(key, inclusive);
 
     while (pushEntriesToListener(listener, entries)) {

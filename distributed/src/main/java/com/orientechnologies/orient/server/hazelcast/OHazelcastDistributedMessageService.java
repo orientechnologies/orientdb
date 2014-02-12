@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.IQueue;
+import com.hazelcast.monitor.LocalQueueStats;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -25,6 +27,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -266,6 +269,49 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
     responsesByRequestIds.put(id, currentResponseMgr);
+  }
+
+  @Override
+  public List<String> getManagedQueueNames() {
+    List<String> queueNames = new ArrayList<String>();
+    for (String q : manager.getHazelcastInstance().getConfig().getQueueConfigs().keySet()) {
+      if (q.startsWith(NODE_QUEUE_PREFIX))
+        queueNames.add(q);
+    }
+    return queueNames;
+  }
+
+  @Override
+  public ODocument getQueueStats(final String iQueueName) {
+    final IQueue<Object> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    if (queue == null)
+      throw new IllegalArgumentException("Queue '" + iQueueName + "' not found");
+
+    final ODocument doc = new ODocument();
+
+    doc.field("name", queue.getName());
+    doc.field("partitionKey", queue.getPartitionKey());
+    doc.field("serviceName", queue.getServiceName());
+
+    doc.field("size", queue.size());
+    doc.field("nextElement", queue.peek());
+
+    final LocalQueueStats stats = queue.getLocalQueueStats();
+    doc.field("minAge", stats.getMinAge());
+    doc.field("maxAge", stats.getMaxAge());
+    doc.field("avgAge", stats.getAvgAge());
+
+    doc.field("backupItemCount", stats.getBackupItemCount());
+    doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
+    doc.field("offerOperationCount", stats.getOfferOperationCount());
+    doc.field("eventOperationCount", stats.getEventOperationCount());
+    doc.field("otherOperationsCount", stats.getOtherOperationsCount());
+    doc.field("pollOperationCount", stats.getPollOperationCount());
+    doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
+    doc.field("ownedItemCount", stats.getOwnedItemCount());
+    doc.field("rejectedOfferOperationCount", stats.getRejectedOfferOperationCount());
+
+    return doc;
   }
 
   public OHazelcastDistributedDatabase registerDatabase(final String iDatabaseName) {

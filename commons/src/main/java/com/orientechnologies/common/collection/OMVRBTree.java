@@ -2238,7 +2238,7 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Returns the last Entry in the OMVRBTree (according to the OMVRBTree's key-sort function). Returns null if the OMVRBTree is
    * empty.
    */
-  protected OMVRBTreeEntry<K, V> getLastEntry() {
+  public OMVRBTreeEntry<K, V> getLastEntry() {
     OMVRBTreeEntry<K, V> p = root;
     if (p != null)
       while (p.getRight() != null)

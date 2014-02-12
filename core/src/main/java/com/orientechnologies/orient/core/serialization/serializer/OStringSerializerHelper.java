@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
@@ -40,6 +31,15 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -322,14 +322,14 @@ public abstract class OStringSerializerHelper {
 
         if (insideParenthesis == 0 && insideList == 0 && insideSet == 0 && insideMap == 0 && insideLinkPart == 0 && insideBag == 0) {
           // OUTSIDE A PARAMS/COLLECTION/MAP
-          if (i > iMinPosSeparatorAreValid && isCharPresent(c, iSeparator)) {
+          if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iSeparator)) {
             // SEPARATOR (OUTSIDE A STRING): PUSH
             return beginIndex + i + 1;
           }
         }
 
         if (iJumpChars.length > 0)
-          if (i > iMinPosSeparatorAreValid && isCharPresent(c, iJumpChars))
+          if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iJumpChars))
             continue;
       } else {
         // INSIDE A STRING
