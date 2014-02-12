@@ -36,12 +36,12 @@ import java.util.zip.ZipOutputStream;
  */
 public class OZIPCompressionUtil {
   public static int compressDirectory(final String sourceFolderName, final OutputStream output, final String[] iSkipFileExtensions,
-      final OCommandOutputListener iOutput) throws IOException {
+      final OCommandOutputListener iOutput, int compressionLevel) throws IOException {
 
     final ZipOutputStream zos = new ZipOutputStream(output);
     zos.setComment("OrientDB Backup executed on " + new Date());
     try {
-      zos.setLevel(9);
+      zos.setLevel(compressionLevel);
       return addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput);
     } finally {
       zos.close();
@@ -123,8 +123,10 @@ public class OZIPCompressionUtil {
             if (entryName.endsWith(skip))
               return 0;
 
+        final long begin = System.currentTimeMillis();
+
         if (iOutput != null)
-          iOutput.onMessage("- Compressing file " + entryName + "...");
+          iOutput.onMessage("\n- Compressing file " + entryName + "...");
 
         ZipEntry ze = new ZipEntry(entryName);
         zos.putNextEntry(ze);
@@ -138,6 +140,10 @@ public class OZIPCompressionUtil {
         } finally {
           zos.closeEntry();
         }
+
+        if (iOutput != null)
+          iOutput.onMessage("ok (elapsed: " + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + ")");
+
         total++;
 
       }

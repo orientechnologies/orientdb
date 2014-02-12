@@ -15,19 +15,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -35,6 +22,7 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -83,6 +71,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
@@ -160,7 +160,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("debug", "false");
     properties.put("maxBinaryDisplay", "160");
     properties.put("verbose", "2");
-    properties.put("backupBuffer", "1048576"); // 1MB
+    properties.put("backupCompressionLevel", "9"); // 9 = MAX
+    properties.put("backupBufferSize", "1048576"); // 1MB
 
     OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
   }
@@ -1439,20 +1440,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     // final String options = fileName != null ? iText.substring(
     // ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
 
+    int bufferSize = Integer.parseInt(properties.get("backupBufferSize"));
+    int compressionLevel = Integer.parseInt(properties.get("backupCompressionLevel"));
+
+    for (int i = 1; i < items.size(); ++i) {
+      final String item = items.get(i);
+      final int sep = item.indexOf('=');
+      if (sep == -1) {
+        OLogManager.instance().warn(this, "Unrecognized parameter %s, skipped", item);
+        continue;
+      }
+
+      final String parName = item.substring(0, sep);
+      final String parValue = item.substring(sep + 1);
+
+      if (parName.equalsIgnoreCase("bufferSize"))
+        bufferSize = Integer.parseInt(parValue);
+      else if (parName.equalsIgnoreCase("compressionLevel"))
+        compressionLevel = Integer.parseInt(parValue);
+    }
+
     final long startTime = System.currentTimeMillis();
     try {
       final FileOutputStream fos = new FileOutputStream(fileName);
       try {
-        final int bufferSize = Integer.parseInt(properties.get("backupBuffer"));
-        final BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize);
-        try {
+        currentDatabase.backup(fos, null, null, this, compressionLevel, bufferSize);
 
-          currentDatabase.backup(bos, null, null, this);
-
-        } finally {
-          bos.flush();
-          bos.close();
-        }
         message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
 
       } finally {

@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.server.handler;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -25,13 +14,27 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+
 public class OAutomaticBackup extends OServerPluginAbstract {
+
   public enum VARIABLES {
     DBNAME, DATE
   }
 
   private Date        firstTime        = null;
   private long        delay            = -1;
+  private int         bufferSize       = 1048576;
+  private int         compressionLevel = 9;
   private String      targetDirectory  = "backup";
   private String      targetFileName;
   private Set<String> includeDatabases = new HashSet<String>();
@@ -65,6 +68,10 @@ public class OAutomaticBackup extends OServerPluginAbstract {
           excludeDatabases.add(db);
       else if (param.name.equalsIgnoreCase("target.fileName"))
         targetFileName = param.value;
+      else if (param.name.equalsIgnoreCase("buffer"))
+        bufferSize = Integer.parseInt(param.value);
+      else if (param.name.equalsIgnoreCase("compressionLevel"))
+        compressionLevel = Integer.parseInt(param.value);
     }
 
     if (delay <= 0)
@@ -134,7 +141,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
                 public void onMessage(String iText) {
                   OLogManager.instance().info(this, iText);
                 }
-              });
+              }, compressionLevel, bufferSize);
 
               OLogManager.instance().info(
                   this,
