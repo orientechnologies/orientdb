@@ -377,8 +377,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel) throws IOException {
     underlying.backup(out, options, new Callable<Object>() {
 
       @Override
@@ -391,7 +390,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
           return callable.call();
         return null;
       }
-    }, iListener);
+    }, iListener, compressionLevel);
   }
 
   protected void checkClusterBoundedToClass(final int iClusterId) {

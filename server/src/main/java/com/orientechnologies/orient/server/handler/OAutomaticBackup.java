@@ -134,7 +134,7 @@ public class OAutomaticBackup extends OServerPluginAbstract {
                 public void onMessage(String iText) {
                   OLogManager.instance().info(this, iText);
                 }
-              });
+              }, compressionLevel);
 
               OLogManager.instance().info(
                   this,

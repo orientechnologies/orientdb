@@ -35,6 +35,7 @@ import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -160,6 +161,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("debug", "false");
     properties.put("maxBinaryDisplay", "160");
     properties.put("verbose", "2");
+    properties.put("backupCompressionLevel", "9"); // 9 = MAX
     properties.put("backupBuffer", "1048576"); // 1MB
 
     OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
@@ -1439,15 +1441,34 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     // final String options = fileName != null ? iText.substring(
     // ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
 
+    int bufferSize = Integer.parseInt(properties.get("backupBuffer"));
+    int compressionLevel = Integer.parseInt(properties.get("backupCompressionLevel"));
+
+    for (int i = 1; i < items.size(); ++i) {
+      final String item = items.get(i);
+      final int sep = item.indexOf('=');
+      if (sep == -1) {
+        OLogManager.instance().warn(this, "Unrecognized parameter %s, skipped", item);
+        continue;
+      }
+
+      final String parName = item.substring(0, sep);
+      final String parValue = item.substring(sep + 1);
+
+      if (parName.equalsIgnoreCase("buffer"))
+        bufferSize = Integer.parseInt(parValue);
+      else if (parName.equalsIgnoreCase("compressionLevel"))
+        compressionLevel = Integer.parseInt(parValue);
+    }
+
     final long startTime = System.currentTimeMillis();
     try {
       final FileOutputStream fos = new FileOutputStream(fileName);
       try {
-        final int bufferSize = Integer.parseInt(properties.get("backupBuffer"));
         final BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize);
         try {
 
-          currentDatabase.backup(bos, null, null, this);
+          currentDatabase.backup(bos, null, null, this, compressionLevel);
 
         } finally {
           bos.flush();
