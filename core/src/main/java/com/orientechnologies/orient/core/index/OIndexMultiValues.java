@@ -15,14 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -243,7 +236,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public void getValuesBetween(Object iRangeFrom, final boolean fromInclusive, Object iRangeTo, final boolean toInclusive,
-      final IndexValuesResultListener resultListener) {
+															 boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
@@ -251,7 +244,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesBetween(iRangeFrom, fromInclusive, iRangeTo, toInclusive, MultiValuesTransformer.INSTANCE,
+      indexEngine.getValuesBetween(iRangeFrom, fromInclusive, iRangeTo, toInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE,
           new OIndexEngine.ValuesResultListener() {
             @Override
             public boolean addResult(OIdentifiable identifiable) {
@@ -263,14 +256,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, final IndexValuesResultListener valuesResultListener) {
+  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener valuesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMajor(iRangeFrom, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
+      indexEngine.getValuesMajor(iRangeFrom, isInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
         @Override
         public boolean addResult(OIdentifiable identifiable) {
           return valuesResultListener.addResult(identifiable);
@@ -281,14 +274,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, final IndexValuesResultListener resultListener) {
+  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMinor(iRangeTo, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
+      indexEngine.getValuesMinor(iRangeTo, isInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
         @Override
         public boolean addResult(OIdentifiable identifiable) {
           return resultListener.addResult(identifiable);
@@ -299,11 +292,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public void getValues(final Collection<?> iKeys, final IndexValuesResultListener resultListener) {
+  public void getValues(final Collection<?> keys, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
-    final List<Object> sortedKeys = new ArrayList<Object>(iKeys);
-    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
+    final List<Object> sortedKeys = new ArrayList<Object>(keys);
+		final Comparator<Object> comparator;
+		if (ascSortOrder)
+			comparator = ODefaultComparator.INSTANCE;
+		else
+		  comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    Collections.sort(sortedKeys, comparator);
 
     acquireSharedLock();
     try {

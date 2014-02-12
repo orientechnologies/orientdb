@@ -36,7 +36,7 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
 
   Collection<V> getValuesMajor(K key, boolean inclusive, int maxValuesToFetch);
 
-  void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener);
+  void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener);
 
   Collection<V> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, int maxValuesToFetch);
 

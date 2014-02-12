@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -65,29 +64,31 @@ import java.util.Map.Entry;
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
-  private static final String         KEYWORD_AS                        = " AS ";
-  public static final String          KEYWORD_SELECT                    = "SELECT";
-  public static final String          KEYWORD_ASC                       = "ASC";
-  public static final String          KEYWORD_DESC                      = "DESC";
-  public static final String          KEYWORD_ORDER                     = "ORDER";
-  public static final String          KEYWORD_BY                        = "BY";
-  public static final String          KEYWORD_GROUP                     = "GROUP";
-  public static final String          KEYWORD_FETCHPLAN                 = "FETCHPLAN";
-  private static final int            MIN_THRESHOLD_USE_INDEX_AS_TARGET = 100;
+  private static final String         KEYWORD_AS           = " AS ";
+  public static final String          KEYWORD_SELECT       = "SELECT";
+  public static final String          KEYWORD_ASC          = "ASC";
+  public static final String          KEYWORD_DESC         = "DESC";
+  public static final String          KEYWORD_ORDER        = "ORDER";
+  public static final String          KEYWORD_BY           = "BY";
+  public static final String          KEYWORD_GROUP        = "GROUP";
+  public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
 
-  private Map<String, String>         projectionDefinition              = null;
-  private Map<String, Object>         projections                       = null;       // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT
+  private Map<String, String>         projectionDefinition = null;
+  private Map<String, Object>         projections          = null;                                  // THIS HAS BEEN KEPT FOR
+                                                                                                     // COMPATIBILITY; BUT
   // IT'S
   // USED THE
   // PROJECTIONS IN GROUPED-RESULTS
-  private List<OPair<String, String>> orderedFields;
+  private List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
   private Object                      expandTarget;
-  private int                         fetchLimit                        = -1;
+  private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
   private Iterator<OIdentifiable>     subIterator;
   private String                      fetchPlan;
+
+  private boolean                     fullySortedByIndex   = false;
 
   /**
    * Compile the filter conditions only the first time.
@@ -394,7 +395,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected boolean handleResult(final OIdentifiable iRecord, final boolean iCloneIt) {
     lastRecord = null;
 
-    if (orderedFields == null && skip > 0) {
+    if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
       skip--;
       return true;
     }
@@ -410,7 +411,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!result)
       return false;
 
-    if (orderedFields == null && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit)
+    if ((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1
+        && resultCount >= fetchLimit)
       // BREAK THE EXECUTION
       return false;
 
@@ -460,7 +462,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     boolean result = true;
-    if (orderedFields == null && expandTarget == null) {
+    if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null) {
       // SEND THE RESULT INLINE
       if (request.getResultListener() != null)
         result = request.getResultListener().result(iRecord);
@@ -520,10 +522,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private int getQueryFetchLimit() {
-    if (orderedFields != null) {
-      return -1;
-    }
-
     final int sqlLimit;
     final int requestLimit;
 
@@ -642,7 +640,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // go through all variants to choose which one can be used for index search.
     for (final OIndexSearchResult searchResult : indexSearchResults) {
       final List<OIndex<?>> involvedIndexes = getInvolvedIndexes(iSchemaClass, searchResult);
-      Collections.sort(involvedIndexes, IndexComparator.INSTANCE);
+
+      Collections.sort(involvedIndexes, new IndexComparator());
 
       // go through all possible index for given set of fields.
       for (final OIndex index : involvedIndexes) {
@@ -691,15 +690,26 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames.add(index.getName());
         }
 
-        OQueryOperator.IndexResultListener resultListener;
-        if (fetchLimit < 0)
-          resultListener = null;
-        else
-          resultListener = new IndexResultListener();
-
         Object result;
+        final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(indexDefinition)
+            && !(index.getInternal() instanceof OChainedIndexProxy);
         try {
-          result = operator.executeIndexQuery(context, index, keyParams, resultListener, fetchLimit);
+          boolean ascSortOrder;
+          if (indexIsUsedInOrderBy)
+            ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
+          else
+            ascSortOrder = true;
+
+          if (indexIsUsedInOrderBy)
+            fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size();
+
+          OQueryOperator.IndexResultListener resultListener;
+          if (fetchLimit < 0 && orderedFields.isEmpty())
+            resultListener = null;
+          else
+            resultListener = new IndexResultListener(fullySortedByIndex ? fetchLimit : (orderedFields.isEmpty() ? fetchLimit : -1));
+
+          result = operator.executeIndexQuery(context, index, keyParams, ascSortOrder, resultListener, fetchLimit);
         } catch (Exception e) {
           OLogManager
               .instance()
@@ -708,11 +718,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                   "Error on using index %s in query '%s'. Probably you need to rebuild indexes. Now executing query using cluster scan",
                   e, index.getName(), request != null && request.getText() != null ? request.getText() : "");
 
+          fullySortedByIndex = false;
           return false;
         }
 
         if (result == null)
           continue;
+
+        context.setVariable("indexIsUsedInOrderBy", indexIsUsedInOrderBy);
+        context.setVariable("fullySortedByIndex", fullySortedByIndex);
 
         fillSearchIndexResultSet(result);
 
@@ -720,6 +734,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
     return false;
+  }
+
+  private boolean canBeUsedByOrderBy(OIndexDefinition definition) {
+    if (orderedFields.isEmpty())
+      return false;
+
+    final List<String> fields = definition.getFields();
+    final int endIndex = Math.min(fields.size(), orderedFields.size());
+
+    final String firstOrder = orderedFields.get(0).getValue();
+    for (int i = 0; i < endIndex; i++) {
+      final OPair<String, String> pair = orderedFields.get(i);
+
+      if (!firstOrder.equals(pair.getValue()))
+        return false;
+
+      final String orderFieldName = orderedFields.get(i).getKey().toLowerCase();
+      final String indexFieldName = fields.get(i).toLowerCase();
+
+      if (!orderFieldName.equals(indexFieldName))
+        return false;
+    }
+
+    return true;
   }
 
   private static List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
@@ -998,7 +1036,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void applyOrderBy() {
-    if (orderedFields == null)
+    if (orderedFields.isEmpty() || fullySortedByIndex)
       return;
 
     final long startOrderBy = System.currentTimeMillis();
@@ -1153,7 +1191,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               && ((OCompositeKey) secondKey).getKeys().size() == index.getDefinition().getParamCount())
             res = index.get(keyValue);
           else
-            res = index.getValuesBetween(keyValue, secondKey);
+            res = index.getValuesBetween(keyValue, secondKey, true);
         }
 
         if (res != null)
@@ -1431,57 +1469,38 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    if (orderedFields != null && !orderedFields.isEmpty()) {
-      if (parsedTarget.getTargetClasses() != null) {
-        final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
-        final OPair<String, String> orderByFirstField = orderedFields.iterator().next();
-        final OProperty p = cls.getProperty(orderByFirstField.getKey());
-        if (p != null) {
-          final Set<OIndex<?>> involvedIndexes = cls.getInvolvedIndexes(orderByFirstField.getKey());
-          if (involvedIndexes != null && !involvedIndexes.isEmpty()) {
-            for (OIndex<?> idx : involvedIndexes) {
-              if (idx.getKeyTypes().length == 1 && idx.supportsOrderedIterations()) {
-                if (idx.getType().startsWith("UNIQUE") && idx.getKeySize() < MIN_THRESHOLD_USE_INDEX_AS_TARGET
-                    || compiledFilter == null) {
-                  if (orderByFirstField.getValue().equalsIgnoreCase("asc"))
-                    target = (Iterator<? extends OIdentifiable>) idx.valuesIterator();
-                  else
-                    target = (Iterator<? extends OIdentifiable>) idx.valuesInverseIterator();
-
-                  if (context.isRecordingMetrics()) {
-                    Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-                    if (idxNames == null) {
-                      idxNames = new HashSet<String>();
-                      context.setVariable("involvedIndexes", idxNames);
-                    }
-                    idxNames.add(idx.getName());
-                  }
-
-                  orderedFields = null;
-
-                  fetchLimit = getQueryFetchLimit();
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
     return false;
   }
 
-  private static class IndexComparator implements Comparator<OIndex<?>> {
-    private static final IndexComparator INSTANCE = new IndexComparator();
-
+  private final class IndexComparator implements Comparator<OIndex<?>> {
     public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
-      return indexOne.getDefinition().getParamCount() - indexTwo.getDefinition().getParamCount();
+      final OIndexDefinition definitionOne = indexOne.getDefinition();
+      final OIndexDefinition definitionTwo = indexTwo.getDefinition();
+
+      final int firstParamCount = definitionOne.getParamCount();
+      final int secondParamCount = definitionTwo.getParamCount();
+
+      final int result = firstParamCount - secondParamCount;
+
+      if (result == 0 && !orderedFields.isEmpty()) {
+        if (!(indexOne instanceof OChainedIndexProxy) && canBeUsedByOrderBy(definitionOne))
+          return 1;
+
+        if (!(indexTwo instanceof OChainedIndexProxy) && canBeUsedByOrderBy(definitionTwo))
+          return -1;
+      }
+
+      return result;
     }
   }
 
   private final class IndexResultListener implements OQueryOperator.IndexResultListener {
-    private final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    private final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    private final int                 fetchLimit;
+
+    private IndexResultListener(int fetchLimit) {
+      this.fetchLimit = fetchLimit;
+    }
 
     @Override
     public Object getResult() {
@@ -1506,7 +1525,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
         result.add(value);
 
-      return fetchLimit < 0 || fetchLimit >= result.size();
+      return fetchLimit < 0 || result.size() < fetchLimit;
     }
   }
 }

@@ -37,10 +37,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -159,7 +156,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       if (compiledFilter != null)
         compiledFilter.bindParameters(iArgs);
 
-      final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      final OIndex index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -174,11 +171,27 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           return total;
         } else {
           // RETURNS ALL THE DELETED RECORDS
-          for (Iterator<OIdentifiable> it = index.valuesIterator(); it.hasNext();) {
-            OIdentifiable rec = it.next();
-            if (rec != null)
+          for (Iterator<Map.Entry> it = index.iterator(); it.hasNext();) {
+            final Map.Entry entry = it.next();
+            final Object entryValue = entry.getValue();
+            if (entryValue instanceof OIdentifiable) {
+              OIdentifiable rec = (OIdentifiable) entryValue;
               rec = rec.getRecord();
-            allDeletedRecords.add((ORecord<?>) rec);
+
+              if (rec != null)
+                allDeletedRecords.add((ORecord<?>) rec);
+
+            } else if (entryValue instanceof Collection) {
+              final Collection<OIdentifiable> identifiables = (Collection<OIdentifiable>) entryValue;
+              for (OIdentifiable rec : identifiables) {
+                if (rec != null)
+                  rec = rec.getRecord();
+
+                if (rec != null)
+                  allDeletedRecords.add((ORecord<?>) rec);
+              }
+            } else
+              throw new IllegalStateException("Invalid index value : " + entryValue);
           }
           return allDeletedRecords;
         }

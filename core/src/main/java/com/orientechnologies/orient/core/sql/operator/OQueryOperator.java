@@ -120,18 +120,19 @@ public abstract class OQueryOperator {
    * 
    * 
    * 
-   * @param iContext
-   *          TODO
-   * @param index
-   *          Instance of index that will be used to calculate result of operator execution.
-   * @param keyParams
-   *          Parameters of query is used to calculate query result.
-   * @param resultListener
-   * @param fetchLimit
-   * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
-   */
+   *
+	 * @param iContext
+	 *          TODO
+	 * @param index
+	 *          Instance of index that will be used to calculate result of operator execution.
+	 * @param keyParams
+ *          Parameters of query is used to calculate query result.
+	 * @param ascSortOrder
+	 * @param resultListener
+	 * @param fetchLimit   @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
+	 * */
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
-      final IndexResultListener resultListener, int fetchLimit) {
+																	boolean ascSortOrder, final IndexResultListener resultListener, int fetchLimit) {
     return null;
   }
 

@@ -345,112 +345,228 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
       ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();
     try {
-      final OMVRBTreeEntry<Object, V> firstEntry;
-
-      if (fromInclusive)
-        firstEntry = map.getCeilingEntry(rangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      if (ascSortOrder)
+        getValuesBetweenAscOrder(rangeFrom, fromInclusive, rangeTo, toInclusive, transformer, valuesResultListener);
       else
-        firstEntry = map.getHigherEntry(rangeFrom);
-
-      if (firstEntry == null)
-        return;
-
-      final int firstEntryIndex = map.getPageIndex();
-
-      final OMVRBTreeEntry<Object, V> lastEntry;
-
-      if (toInclusive)
-        lastEntry = map.getHigherEntry(rangeTo);
-      else
-        lastEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
-
-      final int lastEntryIndex;
-
-      if (lastEntry != null)
-        lastEntryIndex = map.getPageIndex();
-      else
-        lastEntryIndex = -1;
-
-      OMVRBTreeEntry<Object, V> entry = firstEntry;
-      map.setPageIndex(firstEntryIndex);
-
-      while (entry != null && !(entry == lastEntry && map.getPageIndex() == lastEntryIndex)) {
-        final V value = entry.getValue();
-
-        boolean cont = addToResult(transformer, valuesResultListener, value);
-
-        if (!cont)
-          return;
-
-        entry = OMVRBTree.next(entry);
-      }
+        getValuesBetweenDescOrder(rangeFrom, fromInclusive, rangeTo, toInclusive, transformer, valuesResultListener);
     } finally {
       releaseExclusiveLock();
     }
   }
 
+  private void getValuesBetweenAscOrder(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
+    final OMVRBTreeEntry<Object, V> firstEntry;
+
+    if (fromInclusive)
+      firstEntry = map.getCeilingEntry(rangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+    else
+      firstEntry = map.getHigherEntry(rangeFrom);
+
+    if (firstEntry == null)
+      return;
+
+    final int firstEntryIndex = map.getPageIndex();
+
+    final OMVRBTreeEntry<Object, V> lastEntry;
+
+    if (toInclusive)
+      lastEntry = map.getHigherEntry(rangeTo);
+    else
+      lastEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+    final int lastEntryIndex;
+
+    if (lastEntry != null)
+      lastEntryIndex = map.getPageIndex();
+    else
+      lastEntryIndex = -1;
+
+    OMVRBTreeEntry<Object, V> entry = firstEntry;
+    map.setPageIndex(firstEntryIndex);
+
+    while (entry != null && !(entry.equals(lastEntry) && map.getPageIndex() == lastEntryIndex)) {
+      final V value = entry.getValue();
+
+      boolean cont = addToResult(transformer, valuesResultListener, value);
+
+      if (!cont)
+        return;
+
+      entry = OMVRBTree.next(entry);
+    }
+  }
+
+  private void getValuesBetweenDescOrder(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
+    final OMVRBTreeEntry<Object, V> lastEntry;
+
+		final OMVRBTreeEntry<Object, V> firstEntry;
+
+		if (toInclusive)
+			firstEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+		else
+			firstEntry = map.getLowerEntry(rangeTo);
+
+		if (firstEntry == null)
+			return;
+
+		final int firstEntryIndex = map.getPageIndex();
+
+		if (fromInclusive)
+      lastEntry = map.getLowerEntry(rangeFrom);
+    else
+      lastEntry = map.getCeilingEntry(rangeFrom, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+
+    final int lastEntryIndex = map.getPageIndex();
+
+    OMVRBTreeEntry<Object, V> entry = firstEntry;
+    map.setPageIndex(firstEntryIndex);
+
+    while (entry != null && !(entry.equals(lastEntry) && map.getPageIndex() == lastEntryIndex)) {
+      final V value = entry.getValue();
+
+      boolean cont = addToResult(transformer, valuesResultListener, value);
+
+      if (!cont)
+        return;
+
+      entry = OMVRBTree.previous(entry);
+    }
+  }
+
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
       ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();
     try {
-
-      final OMVRBTreeEntry<Object, V> firstEntry;
-      if (isInclusive)
-        firstEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      if (ascSortOrder)
+        getValuesMajorAscOrder(fromKey, isInclusive, transformer, valuesResultListener);
       else
-        firstEntry = map.getHigherEntry(fromKey);
-
-      if (firstEntry == null)
-        return;
-
-      OMVRBTreeEntry<Object, V> entry = firstEntry;
-
-      while (entry != null) {
-        final V value = entry.getValue();
-        boolean cont = addToResult(transformer, valuesResultListener, value);
-        if (!cont)
-          return;
-
-        entry = OMVRBTree.next(entry);
-      }
+        getValuesMajorDescOrder(fromKey, isInclusive, transformer, valuesResultListener);
     } finally {
       releaseExclusiveLock();
     }
   }
 
+  private void getValuesMajorAscOrder(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
+    final OMVRBTreeEntry<Object, V> firstEntry;
+    if (isInclusive)
+      firstEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+    else
+      firstEntry = map.getHigherEntry(fromKey);
+
+    if (firstEntry == null)
+      return;
+
+    OMVRBTreeEntry<Object, V> entry = firstEntry;
+
+    while (entry != null) {
+      final V value = entry.getValue();
+      boolean cont = addToResult(transformer, valuesResultListener, value);
+      if (!cont)
+        return;
+
+      entry = OMVRBTree.next(entry);
+    }
+  }
+
+  private void getValuesMajorDescOrder(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
+    final OMVRBTreeEntry<Object, V> firstEntry = map.getLastEntry();
+    if (firstEntry == null)
+      return;
+
+    final OMVRBTreeEntry<Object, V> lastEntry;
+    final int firstEntryIndex = map.getPageIndex();
+
+    if (isInclusive)
+      lastEntry = map.getHigherEntry(fromKey);
+    else
+      lastEntry = map.getCeilingEntry(fromKey, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+
+    OMVRBTreeEntry<Object, V> entry = firstEntry;
+    final int lastEntryIndex = map.getPageIndex();
+
+    map.setPageIndex(firstEntryIndex);
+
+    while (entry != null && !(entry.equals(lastEntry) && map.getPageIndex() == lastEntryIndex)) {
+      final V value = entry.getValue();
+      boolean cont = addToResult(transformer, valuesResultListener, value);
+      if (!cont)
+        return;
+
+      entry = OMVRBTree.previous(entry);
+    }
+  }
+
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
       ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();
     try {
-      final OMVRBTreeEntry<Object, V> lastEntry;
-
-      if (isInclusive)
-        lastEntry = map.getFloorEntry(toKey, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+      if (ascSortOrder)
+        getValuesMinorAscOrder(toKey, isInclusive, transformer, valuesResultListener);
       else
-        lastEntry = map.getLowerEntry(toKey);
-
-      if (lastEntry == null)
-        return;
-
-      OMVRBTreeEntry<Object, V> entry = lastEntry;
-
-      while (entry != null) {
-        V value = entry.getValue();
-        boolean cont = addToResult(transformer, valuesResultListener, value);
-
-        if (!cont)
-          return;
-
-        entry = OMVRBTree.previous(entry);
-      }
+        getValuesMinorDescOrder(toKey, isInclusive, transformer, valuesResultListener);
     } finally {
       releaseExclusiveLock();
+    }
+  }
+
+  private void getValuesMinorAscOrder(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
+
+    final OMVRBTreeEntry<Object, V> firstEntry = map.getFirstEntry();
+    if (firstEntry == null)
+      return;
+
+    final int firstEntryIndex = map.getPageIndex();
+    final OMVRBTreeEntry<Object, V> lastEntry;
+
+    if (isInclusive)
+      lastEntry = map.getHigherEntry(toKey);
+    else
+      lastEntry = map.getCeilingEntry(toKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+    OMVRBTreeEntry<Object, V> entry = firstEntry;
+    final int lastEntryIndex = map.getPageIndex();
+    map.setPageIndex(firstEntryIndex);
+
+    while (entry != null && !(entry.equals(lastEntry) && map.getPageIndex() == lastEntryIndex)) {
+      V value = entry.getValue();
+      boolean cont = addToResult(transformer, valuesResultListener, value);
+
+      if (!cont)
+        return;
+
+      entry = OMVRBTree.next(entry);
+    }
+  }
+
+  private void getValuesMinorDescOrder(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
+    final OMVRBTreeEntry<Object, V> firstEntry;
+    if (isInclusive)
+      firstEntry = map.getCeilingEntry(toKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+    else
+      firstEntry = map.getLowerEntry(toKey);
+
+    OMVRBTreeEntry<Object, V> entry = firstEntry;
+
+    while (entry != null) {
+      V value = entry.getValue();
+      boolean cont = addToResult(transformer, valuesResultListener, value);
+
+      if (!cont)
+        return;
+
+      entry = OMVRBTree.previous(entry);
     }
   }
 
