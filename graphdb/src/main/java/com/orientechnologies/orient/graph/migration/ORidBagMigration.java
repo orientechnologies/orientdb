@@ -2,7 +2,7 @@ package com.orientechnologies.orient.graph.migration;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -16,9 +16,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class ORidBagMigration {
-  private final ODatabaseDocumentTx database;
+  private final ODatabaseDocument database;
 
-  public ORidBagMigration(ODatabaseDocumentTx database) {
+  public ORidBagMigration(ODatabaseDocument database) {
     this.database = database;
   }
 
@@ -38,6 +38,7 @@ public class ORidBagMigration {
           }
         }
       }
+      vertex.save();
     }
   }
 }
