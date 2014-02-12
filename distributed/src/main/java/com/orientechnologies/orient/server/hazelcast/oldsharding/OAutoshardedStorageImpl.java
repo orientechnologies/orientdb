@@ -171,8 +171,8 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel) throws IOException {
-    wrapped.backup(out, options, callable, iListener, compressionLevel);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+    wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override

@@ -623,7 +623,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 

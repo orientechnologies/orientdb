@@ -216,7 +216,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 

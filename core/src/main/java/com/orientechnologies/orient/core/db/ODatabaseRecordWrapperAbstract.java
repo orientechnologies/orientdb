@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -48,6 +41,13 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
@@ -377,7 +377,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel) throws IOException {
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     underlying.backup(out, options, new Callable<Object>() {
 
       @Override
@@ -390,7 +390,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
           return callable.call();
         return null;
       }
-    }, iListener, compressionLevel);
+    }, iListener, compressionLevel, bufferSize);
   }
 
   protected void checkClusterBoundedToClass(final int iClusterId) {
