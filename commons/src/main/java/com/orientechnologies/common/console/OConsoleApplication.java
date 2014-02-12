@@ -279,9 +279,10 @@ public class OConsoleApplication {
       if (ann != null && !ann.splitInWords()) {
         methodArgs = new String[] { iCommand.substring(iCommand.indexOf(' ') + 1) };
       } else {
-        if (m.getParameterTypes().length > commandWords.length - commandWordCount) {
+        final int actualParamCount = commandWords.length - commandWordCount;
+        if (m.getParameterTypes().length > actualParamCount) {
           // METHOD PARAMS AND USED PARAMS MISMATCH: CHECK FOR OPTIONALS
-          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > -1; paramNum--) {
+          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > actualParamCount - 1; paramNum--) {
             final Annotation[] paramAnn = m.getParameterAnnotations()[paramNum];
             if (paramAnn != null)
               for (int annNum = paramAnn.length - 1; annNum > -1; annNum--) {
