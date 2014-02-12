@@ -340,9 +340,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private Set<Comparable> convertResult(Object result, Class<?> targetType) {
     final Set<Comparable> newKeys;
-    if (result instanceof Set) {
+    if (result instanceof Collection) {
       newKeys = new TreeSet<Comparable>();
-      for (Object o : ((Set) result)) {
+      for (Object o : ((Collection) result)) {
         newKeys.add((Comparable) OType.convert(o, targetType));
       }
       return newKeys;
@@ -369,8 +369,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   private void applyMainIndex(Iterable<Comparable> currentKeys, IndexValuesResultListener resultListener) {
     keysLoop: for (Comparable key : currentKeys) {
       final T result = index.get(index.getDefinition().createValue(key));
-      if (result instanceof Set) {
-        for (T o : (Set<T>) result) {
+      if (result instanceof Collection) {
+        for (T o : (Collection<T>) result) {
           if (!resultListener.addResult((OIdentifiable) o))
             break keysLoop;
         }

@@ -522,7 +522,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     }
   }
 
-  private void getValuesMinorDescOrder(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  private void getValuesMinorAscOrder(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
       ValuesResultListener valuesResultListener) {
     final OMVRBTreeEntry<Object, V> lastEntry;
 
@@ -547,7 +547,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     }
   }
 
-  private void getValuesMinorAscOrder(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  private void getValuesMinorDescOrder(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
       ValuesResultListener valuesResultListener) {
     final OMVRBTreeEntry<Object, V> firstEntry = map.getFirstEntry();
     if (firstEntry == null)

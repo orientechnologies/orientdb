@@ -691,7 +691,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         Object result;
-        final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(indexDefinition);
+        final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(indexDefinition)
+            && !(index.getInternal() instanceof OChainedIndexProxy);
         try {
           boolean ascSortOrder;
           if (indexIsUsedInOrderBy)
@@ -706,8 +707,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (fetchLimit < 0 && orderedFields.isEmpty())
             resultListener = null;
           else
-            resultListener = new IndexResultListener(indexIsUsedInOrderBy ? fetchLimit
-                : (orderedFields.isEmpty() ? fetchLimit : -1));
+            resultListener = new IndexResultListener(fullySortedByIndex ? fetchLimit : (orderedFields.isEmpty() ? fetchLimit : -1));
 
           result = operator.executeIndexQuery(context, index, keyParams, ascSortOrder, resultListener, fetchLimit);
         } catch (Exception e) {
@@ -1483,10 +1483,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final int result = firstParamCount - secondParamCount;
 
       if (result == 0 && !orderedFields.isEmpty()) {
-        if (canBeUsedByOrderBy(definitionOne))
+        if (!(indexOne instanceof OChainedIndexProxy) && canBeUsedByOrderBy(definitionOne))
           return 1;
 
-        if (canBeUsedByOrderBy(definitionTwo))
+        if (!(indexTwo instanceof OChainedIndexProxy) && canBeUsedByOrderBy(definitionTwo))
           return -1;
       }
 

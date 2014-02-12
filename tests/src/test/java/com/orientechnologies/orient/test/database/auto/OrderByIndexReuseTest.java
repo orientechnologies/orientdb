@@ -40,6 +40,7 @@ public class OrderByIndexReuseTest extends BaseTest {
     orderByIndexReuse.createProperty("firstProp", OType.INTEGER);
     orderByIndexReuse.createProperty("secondProp", OType.INTEGER);
     orderByIndexReuse.createProperty("thirdProp", OType.STRING);
+    orderByIndexReuse.createProperty("prop4", OType.STRING);
 
     orderByIndexReuse.createIndex("OrderByIndexReuseIndexSecondThirdProp", OClass.INDEX_TYPE.UNIQUE, "secondProp", "thirdProp");
     orderByIndexReuse.createIndex("OrderByIndexReuseIndexFirstPropNotUnique", OClass.INDEX_TYPE.NOTUNIQUE, "firstProp");
@@ -50,6 +51,7 @@ public class OrderByIndexReuseTest extends BaseTest {
       document.field("secondProp", (101 - i) / 2);
       document.field("thirdProp", "prop" + (101 - i));
 
+      document.field("prop4", "prop" + (101 - i));
       document.save();
     }
   }
@@ -516,62 +518,59 @@ public class OrderByIndexReuseTest extends BaseTest {
 
     Assert.assertTrue(explain.<Boolean> field("fullySortedByIndex"));
     Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
-    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
-        new String[] { "OrderByIndexReuseIndexSecondThirdProp" });
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(), new String[] { "OrderByIndexReuseIndexSecondThirdProp" });
   }
 
-	public void testBetweenOrderByDescSecondDescThirdProperty() {
-		final String query = "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp desc, thirdProp desc limit 5";
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+  public void testBetweenOrderByDescSecondDescThirdProperty() {
+    final String query = "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp desc, thirdProp desc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
-		Assert.assertEquals(result.size(), 5);
-		for (int i = 0; i < 5; i++) {
-			ODocument document = result.get(i);
-			Assert.assertEquals((int) document.<Integer> field("secondProp"), 15 - i / 2);
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("secondProp"), 15 - i / 2);
 
-			int thirdPropertyIndex;
-			if (i % 2 == 0)
-				thirdPropertyIndex = document.<Integer> field("secondProp") * 2 + 1;
-			else
-				thirdPropertyIndex = document.<Integer> field("secondProp") * 2;
+      int thirdPropertyIndex;
+      if (i % 2 == 0)
+        thirdPropertyIndex = document.<Integer> field("secondProp") * 2 + 1;
+      else
+        thirdPropertyIndex = document.<Integer> field("secondProp") * 2;
 
-			Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
-		}
+      Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
+    }
 
-		final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
-		Assert.assertTrue(explain.<Boolean> field("fullySortedByIndex"));
-		Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
-		Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
-						new String[] { "OrderByIndexReuseIndexSecondThirdProp" });
-	}
+    Assert.assertTrue(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(), new String[] { "OrderByIndexReuseIndexSecondThirdProp" });
+  }
 
-	public void testBetweenOrderByAscSecondDescThirdProperty() {
-		final String query = "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp asc, thirdProp desc limit 5";
-		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+  public void testBetweenOrderByAscSecondDescThirdProperty() {
+    final String query = "select from OrderByIndexReuse where secondProp between 5 and 15 order by secondProp asc, thirdProp desc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
-		Assert.assertEquals(result.size(), 5);
-		for (int i = 0; i < 5; i++) {
-			ODocument document = result.get(i);
-			Assert.assertEquals((int) document.<Integer> field("secondProp"), i / 2 + 5);
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("secondProp"), i / 2 + 5);
 
-			int thirdPropertyIndex;
-			if (i % 2 == 0)
-				thirdPropertyIndex = document.<Integer> field("secondProp") * 2 + 1;
-			else
-				thirdPropertyIndex = document.<Integer> field("secondProp") * 2;
+      int thirdPropertyIndex;
+      if (i % 2 == 0)
+        thirdPropertyIndex = document.<Integer> field("secondProp") * 2 + 1;
+      else
+        thirdPropertyIndex = document.<Integer> field("secondProp") * 2;
 
-			Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
-		}
+      Assert.assertEquals(document.field("thirdProp"), "prop" + thirdPropertyIndex);
+    }
 
-		final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
 
-		Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
-		Assert.assertFalse(explain.<Boolean> field("indexIsUsedInOrderBy"));
-	}
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertFalse(explain.<Boolean> field("indexIsUsedInOrderBy"));
+  }
 
-
-	public void testBetweenOrderByDescFirstProperty() {
+  public void testBetweenOrderByDescFirstProperty() {
     final String query = "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp desc limit 5";
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
 
@@ -634,4 +633,310 @@ public class OrderByIndexReuseTest extends BaseTest {
     Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
         new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
   }
+
+  public void testGreaterThanOrderByAscFirstAscFourthProperty() {
+    String query = "select from OrderByIndexReuse where firstProp > 5 order by firstProp asc, prop4 asc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), i / 2 + 6);
+      Assert.assertEquals(document.<String> field("prop4"), "prop" + (i + 12));
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testGreaterThanOrderByDescFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp > 5 order by firstProp desc, prop4 asc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), 50 - i / 2);
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testGTEOrderByAscFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp >= 5 order by firstProp asc, prop4 asc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), i / 2 + 5);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testGTEOrderByDescFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp >= 5 order by firstProp desc, prop4 asc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), 50 - i / 2);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testLTOrderByAscFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp < 5 order by firstProp asc, prop4 asc limit 3";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 3);
+    for (int i = 0; i < 3; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), i / 2 + 1);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testLTOrderByDescFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp < 5 order by firstProp desc, prop4 asc limit 3";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 3);
+    for (int i = 0; i < 3; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), 4 - i / 2);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testLTEOrderByAscFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp <= 5 order by firstProp asc, prop4 asc limit 3";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 3);
+    for (int i = 0; i < 3; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), i / 2 + 1);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testLTEOrderByDescFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp <= 5 order by firstProp desc, prop4 asc limit 3";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 3);
+    for (int i = 0; i < 3; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), 5 - i / 2);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+  public void testBetweenOrderByAscFirstPropertyAscFourthProperty() {
+    final String query = "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp asc, prop4 asc limit 5";
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+    Assert.assertEquals(result.size(), 5);
+    for (int i = 0; i < 5; i++) {
+      ODocument document = result.get(i);
+      Assert.assertEquals((int) document.<Integer> field("firstProp"), i / 2 + 5);
+
+      int property4Index;
+      if (i % 2 == 0)
+        property4Index = document.<Integer> field("firstProp") * 2;
+      else
+        property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+      Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+    }
+
+    final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+    Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+    Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+    Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+        new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+  }
+
+	public void testBetweenOrderByDescFirstPropertyAscFourthProperty() {
+		final String query = "select from OrderByIndexReuse where firstProp between 5 and 15 order by firstProp desc, prop4 asc limit 5";
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+		Assert.assertEquals(result.size(), 5);
+		for (int i = 0; i < 5; i++) {
+			ODocument document = result.get(i);
+			Assert.assertEquals((int) document.<Integer> field("firstProp"), 15 - i / 2);
+
+			int property4Index;
+			if (i % 2 == 0)
+				property4Index = document.<Integer> field("firstProp") * 2;
+			else
+				property4Index = document.<Integer> field("firstProp") * 2 + 1;
+
+			Assert.assertEquals(document.field("prop4"), "prop" + property4Index);
+		}
+
+		final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+		Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+		Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+		Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+						new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+	}
+
+	public void testInOrderByAscFirstPropertyAscFourthProperty() {
+		final String query = "select from OrderByIndexReuse where firstProp in [10, 2, 43, 21, 45, 47, 11, 12] order by firstProp asc, prop4 asc limit 3";
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+		Assert.assertEquals(result.size(), 3);
+
+		ODocument document = result.get(0);
+		Assert.assertEquals((int) document.<Integer> field("firstProp"), 2);
+		Assert.assertEquals(document.<String> field("prop4"), "prop4");
+
+		document = result.get(1);
+		Assert.assertEquals((int) document.<Integer> field("firstProp"), 2);
+		Assert.assertEquals(document.<String> field("prop4"), "prop5");
+
+		document = result.get(2);
+		Assert.assertEquals((int) document.<Integer> field("firstProp"), 10);
+		Assert.assertEquals(document.<String> field("prop4"), "prop20");
+
+		final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+		Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+		Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+		Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+						new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+	}
+
+	public void testInOrderByDescFirstPropertyAscFourthProperty() {
+		final String query = "select from OrderByIndexReuse where firstProp in [10, 2, 43, 21, 45, 47, 11, 12] order by firstProp desc, prop4 asc limit 3";
+		List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
+
+		Assert.assertEquals(result.size(), 3);
+
+		ODocument document = result.get(0);
+		Assert.assertEquals((int) document.<Integer> field("firstProp"), 47);
+		Assert.assertEquals(document.<String> field("prop4"), "prop94");
+
+		document = result.get(1);
+		Assert.assertEquals((int) document.<Integer> field("firstProp"), 47);
+		Assert.assertEquals(document.<String> field("prop4"), "prop95");
+
+		document = result.get(2);
+		Assert.assertEquals((int) document.<Integer> field("firstProp"), 45);
+		Assert.assertEquals(document.<String> field("prop4"), "prop90");
+
+
+		final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
+
+		Assert.assertFalse(explain.<Boolean> field("fullySortedByIndex"));
+		Assert.assertTrue(explain.<Boolean> field("indexIsUsedInOrderBy"));
+		Assert.assertEquals(explain.<Set> field("involvedIndexes").toArray(),
+						new String[] { "OrderByIndexReuseIndexFirstPropNotUnique" });
+	}
+
 }
