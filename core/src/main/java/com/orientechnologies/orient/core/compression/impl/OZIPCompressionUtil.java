@@ -141,8 +141,12 @@ public class OZIPCompressionUtil {
           zos.closeEntry();
         }
 
-        if (iOutput != null)
-          iOutput.onMessage("ok (elapsed: " + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + ")");
+        if (iOutput != null) {
+          final long ratio = 100 - (ze.getCompressedSize() * 100 / ze.getSize());
+
+          iOutput.onMessage("ok size=" + ze.getSize() + " compressedSize=" + ze.getCompressedSize() + "ratio=" + ratio
+              + "% elapsed: " + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
+        }
 
         total++;
 
