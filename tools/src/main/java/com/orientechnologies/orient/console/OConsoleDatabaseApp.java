@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -159,6 +160,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("debug", "false");
     properties.put("maxBinaryDisplay", "160");
     properties.put("verbose", "2");
+    properties.put("backupBuffer", "1048576"); // 1MB
 
     OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
   }
@@ -1439,10 +1441,24 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final long startTime = System.currentTimeMillis();
     try {
-      currentDatabase.backup(new FileOutputStream(fileName), null, null, this);
+      final FileOutputStream fos = new FileOutputStream(fileName);
+      try {
+        final int bufferSize = Integer.parseInt(properties.get("backupBuffer"));
+        final BufferedOutputStream bos = new BufferedOutputStream(fos, bufferSize);
+        try {
 
-      message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+          currentDatabase.backup(bos, null, null, this);
 
+        } finally {
+          bos.flush();
+          bos.close();
+        }
+        message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+
+      } finally {
+        fos.flush();
+        fos.close();
+      }
     } catch (ODatabaseExportException e) {
       printError(e);
     }

@@ -16,6 +16,9 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,12 +26,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
 /**
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -38,6 +39,7 @@ public class OZIPCompressionUtil {
       final OCommandOutputListener iOutput) throws IOException {
 
     final ZipOutputStream zos = new ZipOutputStream(output);
+    zos.setComment("OrientDB Backup executed on " + new Date());
     try {
       zos.setLevel(9);
       return addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput);
