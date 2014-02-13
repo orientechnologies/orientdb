@@ -19,8 +19,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -78,17 +76,11 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
   @Override
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.ALL;
+    return QUORUM_TYPE.NONE;
   }
 
   @Override
   public String getPayload() {
-    return null;
-  }
-
-  @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
-      ODistributedResponse iGoodResponse) {
     return null;
   }
 

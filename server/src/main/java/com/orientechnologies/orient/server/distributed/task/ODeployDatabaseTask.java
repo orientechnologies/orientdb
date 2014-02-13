@@ -22,8 +22,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -73,7 +71,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
           FileOutputStream fileOutputStream = new FileOutputStream(f);
           try {
-            database.backup(fileOutputStream, null, null, this, 9, 1038336);
+            database.backup(fileOutputStream, null, null, this, 7, CHUNK_MAX_SIZE);
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "sending the compressed database '%s' over the NETWORK to node '%s', size=%s...", databaseName, getNodeSource(),
@@ -143,13 +141,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
-      ODistributedResponse iGoodResponse) {
-    return null;
-  }
-
-  @Override
   public void onMessage(String iText) {
+    if (iText.startsWith("\n"))
+      iText = iText.substring(1);
+
     OLogManager.instance().info(this, iText);
   }
 }

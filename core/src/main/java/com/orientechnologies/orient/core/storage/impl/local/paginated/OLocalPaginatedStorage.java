@@ -64,23 +64,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -503,30 +487,30 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
           records.add(lsn);
 
-					if (operationUnitRecord instanceof OUpdatePageRecord) {
-						final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) operationUnitRecord;
+          if (operationUnitRecord instanceof OUpdatePageRecord) {
+            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) operationUnitRecord;
 
-						final long fileId = updatePageRecord.getFileId();
-						final long pageIndex = updatePageRecord.getPageIndex();
+            final long fileId = updatePageRecord.getFileId();
+            final long pageIndex = updatePageRecord.getPageIndex();
 
-						if (!diskCache.isOpen(fileId))
-							diskCache.openFile(fileId);
+            if (!diskCache.isOpen(fileId))
+              diskCache.openFile(fileId);
 
-						final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-						final OCachePointer cachePointer = cacheEntry.getCachePointer();
-						cachePointer.acquireExclusiveLock();
-						try {
-							ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
-							durablePage.restoreChanges(updatePageRecord.getChanges());
-							durablePage.setLsn(lsn);
+            final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+            final OCachePointer cachePointer = cacheEntry.getCachePointer();
+            cachePointer.acquireExclusiveLock();
+            try {
+              ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+              durablePage.restoreChanges(updatePageRecord.getChanges());
+              durablePage.setLsn(lsn);
 
-							cacheEntry.markDirty();
-						} finally {
-							cachePointer.releaseExclusiveLock();
-							diskCache.release(cacheEntry);
-						}
+              cacheEntry.markDirty();
+            } finally {
+              cachePointer.releaseExclusiveLock();
+              diskCache.release(cacheEntry);
+            }
 
-					} else  if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
+          } else if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
             final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 
             if (atomicUnitEndRecord.isRollback())
@@ -534,10 +518,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
             operationUnits.remove(unitId);
           } else {
-						OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-										operationUnitRecord.getClass());
-						assert false : "Invalid WAL record type was passed " + operationUnitRecord.getClass().getName();
-					}
+            OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+                operationUnitRecord.getClass());
+            assert false : "Invalid WAL record type was passed " + operationUnitRecord.getClass().getName();
+          }
         } else
           OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
 
@@ -554,7 +538,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
 
     rollbackAllUnfinishedWALOperations(operationUnits);
-		operationUnits.clear();
+    operationUnits.clear();
   }
 
   private void redoOperation(List<OLogSequenceNumber> records) throws IOException {
@@ -597,7 +581,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits) throws IOException {
+  private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits)
+      throws IOException {
     for (List<OLogSequenceNumber> operationUnit : operationUnits.values()) {
       if (operationUnit.isEmpty())
         continue;
