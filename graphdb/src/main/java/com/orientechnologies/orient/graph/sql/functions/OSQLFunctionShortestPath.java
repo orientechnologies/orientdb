@@ -39,7 +39,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       final OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 

@@ -57,7 +57,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParameters, final OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final String[] labels;
     if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
