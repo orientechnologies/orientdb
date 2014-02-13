@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -49,6 +41,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * @author Andrey Lomakin
@@ -93,7 +94,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iOutput) throws IOException {
+      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
     freeze(false);
     try {
       if (callable != null)
@@ -103,7 +104,15 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
           OLogManager.instance().error(this, "Error on callback invocation during backup", e);
         }
 
-      OZIPCompressionUtil.compressDirectory(getStoragePath(), out, new String[] { ".wal" }, iOutput);
+      final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+      try {
+        OZIPCompressionUtil.compressDirectory(getStoragePath(), bo, new String[] { ".wal" }, iOutput, compressionLevel);
+      } finally {
+        if (bufferSize > 0) {
+          bo.flush();
+          bo.close();
+        }
+      }
     } finally {
       release();
     }

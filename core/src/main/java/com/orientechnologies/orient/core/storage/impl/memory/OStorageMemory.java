@@ -183,8 +183,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
