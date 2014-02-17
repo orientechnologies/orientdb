@@ -21,7 +21,11 @@ import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -177,12 +181,6 @@ public class OClusterRemote implements OCluster {
 
   public OClusterPosition getLastPosition() {
     return OClusterPositionFactory.INSTANCE.valueOf(0);
-  }
-
-  public void lock() {
-  }
-
-  public void unlock() {
   }
 
   public int getId() {

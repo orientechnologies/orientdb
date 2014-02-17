@@ -26,6 +26,7 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
@@ -41,6 +42,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   protected Set<OMultiValueChangeListener<Integer, T>> changeListeners = Collections
                                                                            .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Integer, T>, Boolean>());
   protected Class<?>                                   genericClass;
+  private final boolean                                embeddedCollection;
 
   public OTrackedList(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
@@ -51,15 +53,24 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   public OTrackedList(final ORecord<?> iSourceRecord) {
     this.sourceRecord = iSourceRecord;
+    embeddedCollection = this.getClass().equals(OTrackedList.class);
+  }
+
+  @Override
+  public ORecordElement getOwner() {
+    return sourceRecord;
   }
 
   @Override
   public boolean add(T element) {
     final boolean result = super.add(element);
 
-    if (result)
+    if (result) {
+      addOwnerToEmbeddedDoc(element);
+
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, super.size() - 1,
           element));
+    }
 
     return result;
   }
@@ -75,6 +86,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @Override
   public void add(int index, T element) {
     super.add(index, element);
+
+    addOwnerToEmbeddedDoc(element);
+
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.ADD, index, element));
   }
 
@@ -82,16 +96,30 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   public T set(int index, T element) {
     final T oldValue = super.set(index, element);
 
-    if (oldValue != null && !oldValue.equals(element))
+    if (oldValue != null && !oldValue.equals(element)) {
+      if (oldValue instanceof ODocument)
+        ((ODocument) oldValue).removeOwner(this);
+
+      addOwnerToEmbeddedDoc(element);
+
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.UPDATE, index, element,
           oldValue));
+    }
 
     return oldValue;
+  }
+
+  private void addOwnerToEmbeddedDoc(T e) {
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
+      ((ODocument) e).addOwner(this);
   }
 
   @Override
   public T remove(int index) {
     final T oldValue = super.remove(index);
+    if (oldValue instanceof ODocument)
+      ((ODocument) oldValue).removeOwner(this);
+
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
         oldValue));
     return oldValue;
@@ -115,11 +143,23 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     else
       origValues = new ArrayList<T>(this);
 
+    if (origValues == null) {
+      for (final T item : this) {
+        if (item instanceof ODocument)
+          ((ODocument) item).removeOwner(this);
+      }
+    }
+
     super.clear();
     if (origValues != null)
       for (int i = origValues.size() - 1; i >= 0; i--) {
+        final T origValue = origValues.get(i);
+
+        if (origValue instanceof ODocument)
+          ((ODocument) origValue).removeOwner(this);
+
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
-            origValues.get(i)));
+            origValue));
       }
     else
       setDirty();

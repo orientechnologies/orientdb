@@ -7,13 +7,13 @@
 # resolve links - $0 may be a softlink
 PRG="$0"
 
-while [ $# -gt 0 ]; do
+if [ $# -gt 0 ]; then
   case "$1" in
     -w|--wait)
       wait="yes"
       shift 1 ;;
   esac
-done
+fi
 
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`

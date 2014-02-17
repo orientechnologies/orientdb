@@ -27,7 +27,9 @@ import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Hi-level function to move inside a graph. Return the incoming connections. If the current element is a vertex, then will be
@@ -53,9 +55,9 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     return "Syntax error: " + name + "([<labels>])";
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
-      final OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+      final Object[] iParameters, final OCommandContext iContext) {
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final String[] labels;
     if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
@@ -69,22 +71,19 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     else
       labels = null;
 
-    if (iCurrentRecord == null) {
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return move(graph, iArgument, labels);
-        }
-      }, iCurrentResult, iContext);
-    } else
-      return move(graph, iCurrentRecord.getRecord(), labels);
+    return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
+      @Override
+      public Object call(final OIdentifiable iArgument) {
+        return move(graph, iArgument, labels);
+      }
+    }, iThis, iContext);
   }
 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -98,7 +97,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -112,7 +111,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final ODocument rec = iRecord.getRecord();
 
     if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+      if (rec.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
         // EDGE
         final OrientEdge edge = graph.getEdge(rec);
         if (edge != null) {

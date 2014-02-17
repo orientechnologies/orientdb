@@ -173,6 +173,7 @@ public class CRUDObjectPhysicalTest {
       loadedJavaObj.setEnumeration(EnumTest.ENUM2);
       loadedJavaObj.setTestAnonymous(new JavaTestInterface() {
 
+        @Override
         public int getNumber() {
           return 0;
         }
@@ -216,9 +217,9 @@ public class CRUDObjectPhysicalTest {
       for (int i = 0; i < 10; i++) {
         textArray[i] = i + "";
         intArray[i] = i;
-        longArray[i] = (long) i;
-        doubleArray[i] = (double) i;
-        floatArray[i] = (float) i;
+        longArray[i] = i;
+        doubleArray[i] = i;
+        floatArray[i] = i;
         byteArray[i] = (byte) i;
         booleanArray[i] = (i % 2 == 0);
         enumerationArray[i] = (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
@@ -276,7 +277,7 @@ public class CRUDObjectPhysicalTest {
       for (int i = 0; i < 10; i++) {
         Assert.assertEquals(loadedJavaObj.getText()[i], i + "");
         Assert.assertEquals(loadedJavaObj.getNumberSimple()[i], i);
-        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], (long) i);
+        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], i);
         Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) i);
         Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) i);
         Assert.assertEquals(loadedJavaObj.getByteSimple()[i], (byte) i);
@@ -291,9 +292,9 @@ public class CRUDObjectPhysicalTest {
         int j = i + 10;
         textArray[i] = j + "";
         intArray[i] = j;
-        longArray[i] = (long) j;
-        doubleArray[i] = (double) j;
-        floatArray[i] = (float) j;
+        longArray[i] = j;
+        doubleArray[i] = j;
+        floatArray[i] = j;
         byteArray[i] = (byte) j;
         booleanArray[i] = (j % 2 == 0);
         enumerationArray[i] = (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
@@ -351,7 +352,7 @@ public class CRUDObjectPhysicalTest {
         int j = i + 10;
         Assert.assertEquals(loadedJavaObj.getText()[i], j + "");
         Assert.assertEquals(loadedJavaObj.getNumberSimple()[i], j);
-        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], (long) j);
+        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], j);
         Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) j);
         Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) j);
         Assert.assertEquals(loadedJavaObj.getByteSimple()[i], (byte) j);

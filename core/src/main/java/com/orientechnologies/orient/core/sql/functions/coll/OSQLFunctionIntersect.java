@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
@@ -40,12 +40,12 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     Object value = iParameters[0];
 
     if (value instanceof OSQLFilterItemVariable)
-      value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+      value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
     if (value == null)
       return Collections.emptySet();
@@ -73,7 +73,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
         value = iParameters[i];
 
         if (value instanceof OSQLFilterItemVariable)
-          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iContext);
+          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
         if (value != null) {
           if (!(value instanceof Collection<?>))

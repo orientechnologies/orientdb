@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2014 Orient Technologies LTD (info--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundExcepti
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
+import com.orientechnologies.orient.graph.migration.ORidBagMigration;
 
 /**
  * Gremlin specialized console.
@@ -97,5 +98,12 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       if (cause instanceof OCommandExecutorNotFoundException)
         out.printf("\nError: the GREMLIN command executor is not installed, check your configuration");
     }
+  }
+
+  @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
+  public void upgradeGraph() {
+    ORidBagMigration migration = new ORidBagMigration(getCurrentDatabase());
+    migration.execute();
+    message("Graph has been upgraded.");
   }
 }

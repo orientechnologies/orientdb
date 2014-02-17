@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -48,6 +39,15 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -85,9 +85,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    * @param iType
    * @param clusterIdsToIndex
    * @param iProgressListener
+   * @param metadata
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, OProgressListener iProgressListener) {
+      final int[] clusterIdsToIndex, OProgressListener iProgressListener, ODocument metadata) {
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
@@ -141,6 +142,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, iProgressListener);
       addIndexInternal(index);
+
+      if (metadata != null) {
+        final ODocument config = index.getConfiguration();
+        config.field("metadata", metadata, OType.EMBEDDED);
+      }
 
       setDirty();
       save();
@@ -443,7 +449,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
             rebuildCompleted = true;
 
-            newDb.close();
+            //newDb.close();
 
             OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
           } catch (Exception e) {

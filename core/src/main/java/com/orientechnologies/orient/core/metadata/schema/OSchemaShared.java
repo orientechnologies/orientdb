@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -47,6 +40,13 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -323,7 +323,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         if (cls == null)
           throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-        if (cls.getBaseClasses().hasNext())
+        if (!cls.getBaseClasses().isEmpty())
           throw new OSchemaException("Class " + iClassName
               + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
@@ -360,7 +360,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         if (cls == null)
           throw new OSchemaException("Class " + iClassName + " was not found in current database");
 
-        if (cls.getBaseClasses().hasNext())
+        if (!cls.getBaseClasses().isEmpty())
           throw new OSchemaException("Class " + iClassName
               + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
@@ -617,7 +617,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     db.getStorage().getConfiguration().update();
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
     classes.clear();
     document.clear();
   }

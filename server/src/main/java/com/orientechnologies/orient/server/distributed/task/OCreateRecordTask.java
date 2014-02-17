@@ -15,23 +15,22 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed create record task used for synchronization.
@@ -73,7 +72,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
 
-    return new OPhysicalPosition(rid.getClusterPosition(), record.getRecordVersion());
+    // TODO: IMPROVE TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
+    return record;
   }
 
   @Override
@@ -82,12 +82,17 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OFixCreateRecordTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
-      final ODistributedResponse iGoodResponse) {
-    OPhysicalPosition badResult = (OPhysicalPosition) iBadResponse.getPayload();
-    OPhysicalPosition goodResult = (OPhysicalPosition) iGoodResponse.getPayload();
-    return new OFixCreateRecordTask(new ORecordId(rid.getClusterId(), badResult.clusterPosition), content, version, recordType,
-        new ORecordId(rid.getClusterId(), goodResult.clusterPosition));
+  public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+    // TODO: NO ROLLBACK, PUT THE NODE AS OFFLINE
+    OPlaceholder badResult = (OPlaceholder) iBadResponse;
+
+    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion());
+  }
+
+  @Override
+  public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion());
   }
 
   @Override

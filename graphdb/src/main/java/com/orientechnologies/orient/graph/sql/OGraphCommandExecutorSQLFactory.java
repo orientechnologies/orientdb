@@ -25,9 +25,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 /**
@@ -78,15 +80,69 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   }
 
   /**
-   * Returns a OrientBaseGraph implementation from the current database in thread local.
+   * Returns a Transactional OrientGraph implementation from the current database in thread local.
+   * 
+   * @param autoStartTx
+   *          Whether returned graph will start transaction before each operation till commit automatically or user should do it
+   *          explicitly be calling {@link OrientGraph#getRawGraph()} method {@link ODatabaseDocumentTx#begin()}.
+   * 
+   * @return Transactional OrientGraph implementation from the current database in thread local.
+   */
+  public static OrientGraph getGraph(boolean autoStartTx) {
+    ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (!(database instanceof ODatabaseDocumentTx))
+      database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
+
+    final OrientGraph orientGraph = new OrientGraph((ODatabaseDocumentTx) database);
+    if (!autoStartTx) {
+      orientGraph.setAutoStartTx(autoStartTx);
+      orientGraph.commit();
+    }
+
+    return orientGraph;
+  }
+
+  /**
+   * Returns a Non Transactional OrientGraph implementation from the current database in thread local.
    * 
    * @return
    */
-  public static OrientBaseGraph getGraph() {
+  public static OrientBaseGraph getNoTxGraph() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof ODatabaseDocumentTx))
       database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
 
     return new OrientGraphNoTx((ODatabaseDocumentTx) database);
+  }
+
+  public static <T> T runInTx(GraphCallBack<T> callBack) {
+    final ODatabaseRecord databaseRecord = getDatabase();
+    final boolean txWasActive = databaseRecord.getTransaction().isActive();
+
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    if (!txWasActive)
+      graph.getRawGraph().begin();
+
+    try {
+      final T result = callBack.call(graph);
+
+      if (!txWasActive)
+        graph.commit();
+
+      return result;
+    } catch (Exception e) {
+      if (!txWasActive)
+        graph.rollback();
+
+      throw new ODatabaseException("Error during query execution", e);
+    }
+  }
+
+  public interface GraphCallBack<T> {
+    T call(OrientBaseGraph graph);
+  }
+
+  public static ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

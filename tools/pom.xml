@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.0-SNAPSHOT</version>
+        <version>1.7-rc2-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -34,6 +34,7 @@
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.console.*</osgi.export>
         <jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>

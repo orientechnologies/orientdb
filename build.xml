@@ -5,7 +5,7 @@
     <property environment="env"/>
     <property name="vendor" value="NuvolaBase Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="2.0-SNAPSHOT"/>
+    <property name="version" value="1.7-rc2-SNAPSHOT"/>
     <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
                else="../releases/orientdb-community-${version}">
         <isset property="releaseHome"/>
@@ -31,6 +31,7 @@
                 <fileset dir="server" includes="build.xml"/>
                 <fileset dir="distributed" includes="build.xml"/>
                 <fileset dir="tools" includes="build.xml"/>
+                <fileset dir="graphdb" includes="build.xml"/>
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
@@ -128,12 +129,6 @@
 
     <target name="install" depends="init">
         <delegate target="install"/>
-        <subant target="install">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="version" value="${version}"/>
-
-            <fileset dir="graphdb" includes="build.xml"/>
-        </subant>
 
         <copy todir="${community.release}/" flatten="true">
             <fileset dir="." includes="*.txt"/>
@@ -165,7 +160,7 @@
             <fileset dir="." includes="tools/config/*"/>
             <fileset dir="." includes="server/config/*"/>
             <fileset dir="." includes="distributed/config/*"/>
-            <fileset dir="graphdb/config" includes="*.xml"/>
+            <fileset dir="graphdb/config" includes="*.xml" erroronmissingdir="false"/>
         </copy>
 
         <copy todir="${community.release}/lib" flatten="true">
@@ -179,9 +174,9 @@
         </copy>
 
         <delete dir="${community.release}/databases"/>
-    	<java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+        <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
             <classpath>
-            	<fileset dir="${community.release}/lib" includes="*.jar"/>
+                <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>
         </java>
 
@@ -265,7 +260,7 @@
             <tarfileset dir="../releases/orientdb-community-${version}" mode="755">
                 <include name="**/*.sh"/>
             </tarfileset>
-         </tar>
+        </tar>
     </target>
 
 </project>

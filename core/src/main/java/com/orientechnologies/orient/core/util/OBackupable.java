@@ -21,8 +21,12 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public interface OBackupable {
-  void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
-  void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException;
+public interface OBackupable {
+  void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,
+      int compressionLevel, int bufferSize) throws IOException;
+
+  void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
+      throws IOException;
 }

@@ -23,59 +23,59 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseRecordTx database;
-  protected TXSTATUS                status = TXSTATUS.INVALID;
+    protected final ODatabaseRecordTx database;
+    protected TXSTATUS status = TXSTATUS.INVALID;
 
-  protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
-    database = iDatabase;
-  }
-
-  public boolean isActive() {
-    return status != TXSTATUS.INVALID;
-  }
-
-  public TXSTATUS getStatus() {
-    return status;
-  }
-
-  public ODatabaseRecordTx getDatabase() {
-    return database;
-  }
-
-  public static void updateCacheFromEntries(final OTransaction tx, final Iterable<? extends ORecordOperation> entries,
-      final boolean updateStrategy) {
-    final OLevel1RecordCache dbCache = tx.getDatabase().getLevel1Cache();
-
-    for (ORecordOperation txEntry : entries) {
-      if (!updateStrategy)
-        // ALWAYS REMOVE THE RECORD FROM CACHE
-        dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      else if (txEntry.type == ORecordOperation.DELETED)
-        // DELETION
-        dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      else if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.CREATED)
-        // UDPATE OR CREATE
-        dbCache.updateRecord(txEntry.getRecord());
+    protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
+        database = iDatabase;
     }
-  }
 
-  protected void invokeCommitAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxCommit(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
-      }
-  }
+    public boolean isActive() {
+        return status != TXSTATUS.INVALID && status != TXSTATUS.COMPLETED;
+    }
 
-  protected void invokeRollbackAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxRollback(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
-      }
-  }
+    public TXSTATUS getStatus() {
+        return status;
+    }
+
+    public ODatabaseRecordTx getDatabase() {
+        return database;
+    }
+
+    public static void updateCacheFromEntries(final OTransaction tx, final Iterable<? extends ORecordOperation> entries,
+                                              final boolean updateStrategy) {
+        final OLevel1RecordCache dbCache = tx.getDatabase().getLevel1Cache();
+
+        for (ORecordOperation txEntry : entries) {
+            if (!updateStrategy)
+                // ALWAYS REMOVE THE RECORD FROM CACHE
+                dbCache.deleteRecord(txEntry.getRecord().getIdentity());
+            else if (txEntry.type == ORecordOperation.DELETED)
+                // DELETION
+                dbCache.deleteRecord(txEntry.getRecord().getIdentity());
+            else if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.CREATED)
+                // UDPATE OR CREATE
+                dbCache.updateRecord(txEntry.getRecord());
+        }
+    }
+
+    protected void invokeCommitAgainstListeners() {
+        // WAKE UP LISTENERS
+        for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
+            try {
+                listener.onBeforeTxCommit(database.getUnderlying());
+            } catch (Throwable t) {
+                OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
+            }
+    }
+
+    protected void invokeRollbackAgainstListeners() {
+        // WAKE UP LISTENERS
+        for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
+            try {
+                listener.onBeforeTxRollback(database.getUnderlying());
+            } catch (Throwable t) {
+                OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
+            }
+    }
 }

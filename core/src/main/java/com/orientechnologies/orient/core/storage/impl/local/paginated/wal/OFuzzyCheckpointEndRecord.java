@@ -20,9 +20,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin
  * @since 30.04.13
  */
-public class OFuzzyCheckpointEndRecord implements OWALRecord {
-  private OLogSequenceNumber lsn;
-
+public class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
   public OFuzzyCheckpointEndRecord() {
   }
 
@@ -47,16 +45,6 @@ public class OFuzzyCheckpointEndRecord implements OWALRecord {
   }
 
   @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -64,10 +52,5 @@ public class OFuzzyCheckpointEndRecord implements OWALRecord {
       return false;
 
     return true;
-  }
-
-  @Override
-  public String toString() {
-    return "OFuzzyCheckpointEndRecord{" + "lsn=" + lsn + '}';
   }
 }

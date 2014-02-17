@@ -149,10 +149,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int entrySize = keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        entrySize += valueSerializer.getFixedLength();
-      else
-        entrySize += valueSerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition + entrySize);
+      assert valueSerializer.isFixedLength();
+      entrySize += valueSerializer.getFixedLength();
     } else {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
@@ -250,10 +248,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     int entrySize = keySize;
 
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        valueSize = valueSerializer.getFixedLength();
-      else
-        valueSize = valueSerializer.getObjectSize(treeEntry.value);
+      assert valueSerializer.isFixedLength();
+      valueSize = valueSerializer.getFixedLength();
 
       entrySize += valueSize;
 
@@ -263,8 +259,15 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     int size = size();
     int freePointer = getIntValue(offset + FREE_POINTER_OFFSET);
-    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
-      return false;
+    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+      if (size > 1)
+        return false;
+      else
+        throw new OSBTreeException("Entry size ('key + value') is more than is more than allowed "
+            + (freePointer - 2 * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
+            + " bytes, either increase page size using '" + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey()
+            + "' parameter, or decrease 'key + value' size.");
+    }
 
     if (index <= size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, offset + POSITIONS_ARRAY_OFFSET + (index + 1)
@@ -318,29 +321,25 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     return true;
   }
 
-  public boolean updateValue(int index, V value) throws IOException {
-    if (valueSerializer.isFixedLength()) {
-      int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+  public int updateValue(int index, V value) throws IOException {
+    assert valueSerializer.isFixedLength();
 
-      entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
+    int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
 
-      byte[] serializedValue = new byte[valueSerializer.getFixedLength()];
-      valueSerializer.serializeNative(value, serializedValue, 0);
+    final int size = valueSerializer.getFixedLength();
 
-      setBinaryValue(offset + entryPosition, serializedValue);
-      return true;
-    }
+    byte[] serializedValue = new byte[size];
+    valueSerializer.serializeNative(value, serializedValue, 0);
 
-    final int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    byte[] oldSerializedValue = pagePointer.get(offset + entryPosition, size);
 
-    int entreeSize = keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
-    entreeSize += valueSerializer.getObjectSize(value);
+    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
+      return 0;
 
-    checkEntreeSize(entreeSize);
+    setBinaryValue(offset + entryPosition, serializedValue);
 
-    final K key = getKey(index);
-    remove(index);
-    return addEntry(index, new SBTreeEntry<K, V>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value), false);
+    return 1;
   }
 
   private void checkEntreeSize(int entreeSize) {

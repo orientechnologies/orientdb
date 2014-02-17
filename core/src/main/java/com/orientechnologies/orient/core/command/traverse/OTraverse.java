@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.command.traverse;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public enum STRATEGY {
     DEPTH_FIRST, BREADTH_FIRST
-  };
+  }
 
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
@@ -58,7 +59,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OTraverseAbstractProcess<?> currentProcess() {
-    return (OTraverseAbstractProcess<?>) context.peek();
+    return context.peek();
   }
 
   public boolean hasNext() {
@@ -97,7 +98,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     OTraverseAbstractProcess<?> toProcess;
     // RESUME THE LAST PROCESS
     while ((toProcess = currentProcess()) != null) {
-      result = (OIdentifiable) toProcess.process();
+      result = toProcess.process();
       if (result != null) {
         resultCount++;
         return result;
@@ -125,8 +126,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public OTraverse target(final OIdentifiable... iRecords) {
     final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
-    for (OIdentifiable id : iRecords)
-      list.add(id);
+    Collections.addAll(list, iRecords);
     return target(list.iterator());
   }
 

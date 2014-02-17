@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +31,10 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * EQUALS operator.
@@ -103,8 +107,8 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, final INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -124,10 +128,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
         return null;
 
       final Object indexResult;
-      if (iOperationType == INDEX_OPERATION_TYPE.GET)
-        indexResult = index.get(key);
-      else
-        indexResult = index.count(key);
+      indexResult = index.get(key);
 
       result = convertIndexResult(indexResult);
     } else {
@@ -144,20 +145,15 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (internalIndex.hasRangeQuerySupport()) {
-        if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType)) {
-          result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-        } else if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+        if (resultListener != null) {
+          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
           result = resultListener.getResult();
         } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult;
-          if (iOperationType == INDEX_OPERATION_TYPE.GET)
-            indexResult = index.get(keyOne);
-          else
-            indexResult = index.count(keyOne);
+          indexResult = index.get(keyOne);
 
           result = convertIndexResult(indexResult);
         } else
@@ -172,7 +168,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   private Object convertIndexResult(Object indexResult) {
     Object result;
     if (indexResult instanceof Collection)
-      result = (Collection<OIdentifiable>) indexResult;
+      result = (Collection<?>) indexResult;
     else if (indexResult == null)
       result = Collections.emptyList();
     else if (indexResult instanceof OIdentifiable)
@@ -188,16 +184,18 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null);
+        if (iRight instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot()))
       if (iLeft instanceof ORID)
         return (ORID) iLeft;
       else {
-        if (iLeft instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iLeft).getValue(null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null, null);
+        if (iLeft instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iLeft).getValue(null, null, null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null, null, null);
       }
 
     return null;

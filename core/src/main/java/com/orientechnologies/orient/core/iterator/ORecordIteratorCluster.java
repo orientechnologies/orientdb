@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -36,13 +37,13 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final boolean iUseCache) {
     this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, iUseCache,
-        false);
+        false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final OClusterPosition firstClusterEntry, final OClusterPosition lastClusterEntry,
-      final boolean iUseCache, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
@@ -79,7 +80,6 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
       }
 
     begin();
-
   }
 
   @Override

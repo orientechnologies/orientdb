@@ -427,8 +427,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public void deleteWithoutLoad(String name, OStorageLocalAbstract storageLocal) {
     acquireExclusiveLock();
     try {
-      final ODiskCache diskCache = storageLocal.getDiskCache();
+      storage = storageLocal;
 
+      final ODiskCache diskCache = storage.getDiskCache();
       initStores(metadataConfigurationFileExtension, treeStateFileExtension);
 
       metadataStore.open();
@@ -1887,12 +1888,20 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final long hashCodeOne = keyHashFunction.hashCode(keyOne);
       final long hashCodeTwo = keyHashFunction.hashCode(keyTwo);
 
-      if (hashCodeOne > hashCodeTwo)
+      if (greaterThanUnsigned(hashCodeOne, hashCodeTwo))
         return 1;
-      if (hashCodeOne < hashCodeTwo)
+      if (lessThanUnsigned(hashCodeOne, hashCodeTwo))
         return -1;
 
       return comparator.compare(keyOne, keyTwo);
+    }
+
+    private static boolean lessThanUnsigned(long longOne, long longTwo) {
+      return (longOne + Long.MIN_VALUE) < (longTwo + Long.MIN_VALUE);
+    }
+
+    private static boolean greaterThanUnsigned(long longOne, long longTwo) {
+      return (longOne + Long.MIN_VALUE) > (longTwo + Long.MIN_VALUE);
     }
   }
 }

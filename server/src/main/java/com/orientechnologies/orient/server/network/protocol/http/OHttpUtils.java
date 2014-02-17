@@ -39,6 +39,7 @@ public class OHttpUtils {
   public static final String METHOD_PUT                          = "PUT";
   public static final String METHOD_DELETE                       = "DELETE";
   public static final String METHOD_POST                         = "POST";
+  public static final String METHOD_PATCH                        = "PATCH";
 
   public static final String HEADER_CONTENT_LENGTH               = "Content-Length: ";
   public static final String HEADER_CONTENT_TYPE                 = "Content-Type: ";
@@ -48,6 +49,7 @@ public class OHttpUtils {
   public static final String HEADER_X_FORWARDED_FOR              = "X-Forwarded-For: ";
   public static final String HEADER_AUTHENTICATION               = "OAuthentication: ";
   public static final String HEADER_CONTENT_ENCODING             = "Accept-Encoding: ";
+  public static final String HEADER_ETAG                         = "ETag: ";
 
   public static final String AUTHORIZATION_BASIC                 = "Basic";
   public static final String OSESSIONID                          = "OSESSIONID";
@@ -64,6 +66,7 @@ public class OHttpUtils {
   public static final String BOUNDARY                            = "boundary";
 
   public static final String CONTENT_TEXT_PLAIN                  = "text/plain";
+  public static final String CONTENT_CSV                         = "text/csv";
   public static final String CONTENT_JSON                        = "application/json";
   public static final String CONTENT_JAVASCRIPT                  = "text/javascript";
   public static final String CONTENT_GZIP                        = "application/x-gzip";
@@ -77,6 +80,8 @@ public class OHttpUtils {
   public static final String STATUS_OK_DESCRIPTION               = "OK";
   public static final int    STATUS_OK_NOCONTENT_CODE            = 204;
   public static final String STATUS_OK_NOCONTENT_DESCRIPTION     = "OK";
+  public static final int    STATUS_OK_NOMODIFIED_CODE           = 304;
+  public static final String STATUS_OK_NOMODIFIED_DESCRIPTION    = "Not Modified";
   public static final int    STATUS_BADREQ_CODE                  = 400;
   public static final String STATUS_BADREQ_DESCRIPTION           = "Bad request";
   public static final int    STATUS_AUTH_CODE                    = 401;

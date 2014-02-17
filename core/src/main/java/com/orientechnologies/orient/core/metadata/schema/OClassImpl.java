@@ -15,24 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -56,6 +43,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 /**
  * Schema Class implementation.
  * 
@@ -64,24 +55,24 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long              serialVersionUID = 1L;
+  private static final long               serialVersionUID = 1L;
 
-  protected OSchemaShared                owner;
-  protected String                       name;
-  protected Class<?>                     javaClass;
-  protected final Map<String, OProperty> properties       = new LinkedHashMap<String, OProperty>();
+  protected OSchemaShared                 owner;
+  protected String                        name;
+  protected Class<?>                      javaClass;
+  protected final Map<String, OProperty>  properties       = new LinkedHashMap<String, OProperty>();
 
-  protected int[]                        clusterIds;
-  protected int                          defaultClusterId = -1;
-  protected OClassImpl                   superClass;
-  protected int[]                        polymorphicClusterIds;
-  protected List<OClass>                 baseClasses;
-  protected float                        overSize         = 0f;
-  protected String                       shortName;
-  protected boolean                      strictMode       = false;                                 // @SINCE v1.0rc8
-  protected boolean                      abstractClass    = false;                                 // @SINCE v1.2.0
-  protected Map<String, String>          customFields;
-  private static final Iterator<OClass>  EMPTY_CLASSES    = new ArrayList<OClass>().iterator();
+  protected int[]                         clusterIds;
+  protected int                           defaultClusterId = -1;
+  protected OClassImpl                    superClass;
+  protected int[]                         polymorphicClusterIds;
+  protected List<OClass>                  baseClasses;
+  protected float                         overSize         = 0f;
+  protected String                        shortName;
+  protected boolean                       strictMode       = false;                                 // @SINCE v1.0rc8
+  protected boolean                       abstractClass    = false;                                 // @SINCE v1.2.0
+  protected Map<String, String>           customFields;
+  private static final Collection<OClass> EMPTY_CLASSES    = new ArrayList<OClass>();
 
   /**
    * Constructor used in unmarshalling.
@@ -269,7 +260,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     if (this.shortName != null)
       // UNREGISTER ANY PREVIOUS SHORT NAME
-      owner.classes.remove(this.shortName);
+      owner.classes.remove(this.shortName.toLowerCase());
 
     this.shortName = iShortName;
 
@@ -405,7 +396,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   protected OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
     if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot create a new property inside a transaction");
+      throw new OSchemaException("Cannot create a new property inside a transaction");
 
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -632,11 +623,22 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public Iterator<OClass> getBaseClasses() {
+  public Collection<OClass> getBaseClasses() {
     if (baseClasses == null || baseClasses.size() == 0)
       return EMPTY_CLASSES;
 
-    return baseClasses.iterator();
+    return Collections.unmodifiableCollection(baseClasses);
+  }
+
+  public Collection<OClass> getAllBaseClasses() {
+    final Set<OClass> set = new HashSet<OClass>();
+    if (baseClasses != null) {
+      set.addAll(baseClasses);
+
+      for (OClass c : baseClasses)
+        set.addAll(c.getAllBaseClasses());
+    }
+    return set;
   }
 
   /**
@@ -798,13 +800,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return true;
     if (obj == null)
       return false;
-    if (getClass() != obj.getClass())
+    if (!OClass.class.isAssignableFrom(obj.getClass()))
       return false;
-    final OClassImpl other = (OClassImpl) obj;
+    final OClass other = (OClass) obj;
     if (name == null) {
-      if (other.name != null)
+      if (other.getName() != null)
         return false;
-    } else if (!name.equals(other.name))
+    } else if (!name.equals(other.getName()))
       return false;
     return true;
   }
@@ -834,6 +836,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         iDatabase.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName);
         listOfReadableIds.add(clusterId);
       } catch (OSecurityAccessException securityException) {
+        all = false;
         // if the cluster is inaccessible it's simply not processed in the list.add
       }
     }
@@ -894,14 +897,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (iClassName == null)
       return false;
 
-    if (iClassName.equals(name) || iClassName.equals(shortName))
-      // SPEEDUP CHECK IF CLASS NAME ARE THE SAME
-      return true;
+    OClass cls = this;
+    do {
+      if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName()))
+        return true;
 
-    if (superClass == null)
-      return false;
+      cls = cls.getSuperClass();
+    } while (cls != null);
 
-    return isSubClassOf(owner.getClass(iClassName));
+    return false;
   }
 
   /**
@@ -1136,27 +1140,20 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
-    return createIndex(iName, iType, null, fields);
+    return createIndex(iName, iType, null, null, fields);
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
       final String... fields) {
-    return createIndex(iName, iType.name(), iProgressListener, fields);
+    return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
-  public OIndex<?> createIndex(final String iName, String iType, final OProgressListener iProgressListener, final String... fields) {
-    if (iType == null)
+  public OIndex<?> createIndex(final String name, String type, final OProgressListener progressListener, ODocument metadata,
+      final String... fields) {
+    if (type == null)
       throw new IllegalArgumentException("Index type is null");
 
-    iType = iType.toUpperCase();
-
-    try {
-      final INDEX_TYPE recognizedIdxType = INDEX_TYPE.valueOf(iType);
-      if (!recognizedIdxType.isAutomaticIndexable())
-        throw new IllegalArgumentException("Index type '" + iType + "' cannot be used as automatic index against properties");
-    } catch (IllegalArgumentException e) {
-      // IGNORE IT
-    }
+    type = type.toUpperCase();
 
     if (fields.length == 0) {
       throw new OIndexException("List of fields to index cannot be empty.");
@@ -1172,15 +1169,33 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     for (final String fieldToIndex : fields) {
       final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
       if (!existingFieldNames.contains(fieldName.toLowerCase()))
-        throw new OIndexException("Index with name : '" + iName + "' cannot be created on class : '" + name + "' because field: '"
-            + fieldName + "' is absent in class definition.");
+        throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
+            + "' because field: '" + fieldName + "' is absent in class definition.");
     }
 
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
         extractFieldTypes(fields));
 
+    // BROWSE ALL THE FIELDS TO DETERMINE THE COLLATE TO USE ON INDEX
+    OCollate collate = null;
+    for (int i = 0; i < fields.length; ++i) {
+      final OProperty p = getProperty(fields[i]);
+      if (p != null) {
+        if (collate == null)
+          collate = p.getCollate();
+        else if (!collate.equals(p.getCollate())) {
+          collate = null;
+          break;
+        }
+      }
+    }
+
+    if (collate != null && !(collate instanceof ODefaultCollate))
+      // INHERIT THE PROPERTIES COLLATE
+      indexDefinition.setCollate(collate);
+
     return getDatabase().getMetadata().getIndexManager()
-        .createIndex(iName, iType, indexDefinition, polymorphicClusterIds, iProgressListener);
+        .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata);
   }
 
   private List<OType> extractFieldTypes(String[] fieldNames) {

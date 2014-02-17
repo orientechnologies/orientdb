@@ -35,12 +35,12 @@ public class OSQLFunctionLast extends OSQLFunctionConfigurableAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
       final OCommandContext iContext) {
     Object value = iParameters[0];
 
     if (value instanceof OSQLFilterItem)
-      value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iContext);
+      value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext);
 
     if (OMultiValue.isMultiValue(value))
       value = OMultiValue.getLastValue(value);

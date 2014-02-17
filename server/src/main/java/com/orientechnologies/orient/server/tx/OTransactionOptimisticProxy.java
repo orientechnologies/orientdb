@@ -16,7 +16,12 @@
 package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -24,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
@@ -244,8 +250,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       ((ODocument) iRecord).deserializeFields();
 
       for (Entry<String, Object> field : ((ODocument) iRecord)) {
-        if (field.getValue() instanceof ORecordLazyList)
+        final Object value = field.getValue();
+        if (value instanceof ORecordLazyList)
           ((ORecordLazyList) field.getValue()).lazyLoad(true);
+        else if (value instanceof ORidBag)
+          ((ORidBag) value).convertLinks2Records();
       }
     }
   }

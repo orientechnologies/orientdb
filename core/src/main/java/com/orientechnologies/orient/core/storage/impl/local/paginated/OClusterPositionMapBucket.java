@@ -22,6 +22,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -48,14 +49,9 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
     int position = entryPosition(size);
 
-    setByteValue(position, FILLED);
-    position += OByteSerializer.BYTE_SIZE;
-
-    setLongValue(position, pageIndex);
-    position += OLongSerializer.LONG_SIZE;
-
-    setIntValue(position, recordPosition);
-    position += OIntegerSerializer.INT_SIZE;
+    position += setByteValue(position, FILLED);
+    position += setLongValue(position, pageIndex);
+    position += setIntValue(position, recordPosition);
 
     setIntValue(SIZE_OFFSET, size + 1);
 

@@ -22,8 +22,14 @@ import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,13 +85,13 @@ public class OConsoleApplication {
 
       while (true) {
         out.println();
-        out.print("orientdb> ");
+        out.print(getPrompt());
         consoleInput = reader.readLine();
 
         if (consoleInput == null || consoleInput.length() == 0)
           continue;
 
-        if (!executeCommands(new Scanner(consoleInput), false))
+        if (!executeCommands(new ODFACommandStream(consoleInput), false))
           break;
       }
     } else {
@@ -98,6 +104,14 @@ public class OConsoleApplication {
     return result;
   }
 
+  protected String getPrompt() {
+    return String.format("%s> ", getContext());
+  }
+
+  protected String getContext() {
+    return "";
+  }
+
   protected boolean isInteractiveMode(String[] args) {
     return args.length == 0;
   }
@@ -105,28 +119,22 @@ public class OConsoleApplication {
   protected boolean executeBatch(final String commandLine) {
     final File commandFile = new File(commandLine);
 
-    Scanner scanner = null;
-
+    OCommandStream scanner;
     try {
-      scanner = new Scanner(commandFile);
+      scanner = new ODFACommandStream(commandFile);
     } catch (FileNotFoundException e) {
-      scanner = new Scanner(commandLine);
+      scanner = new ODFACommandStream(commandLine);
     }
 
     return executeCommands(scanner, true);
   }
 
-  protected boolean executeCommands(final Scanner iScanner, final boolean iExitOnException) {
+  protected boolean executeCommands(final OCommandStream commandStream, final boolean iBatchMode) {
     final StringBuilder commandBuffer = new StringBuilder();
 
     try {
-      String commandLine = null;
-
-      iScanner.useDelimiter(";(?=([^\"]*\"[^\"]*\")*[^\"]*$)(?=([^']*'[^']*')*[^']*$)|\n");
-
-      while (iScanner.hasNext()) {
-
-        commandLine = iScanner.next().trim();
+      while (commandStream.hasNext()) {
+        String commandLine = commandStream.nextCommand();
 
         if (commandLine.isEmpty())
           // EMPTY LINE
@@ -153,21 +161,35 @@ public class OConsoleApplication {
         }
 
         if (commandLine != null) {
+          if (iBatchMode) {
+            out.println();
+            out.print(getPrompt());
+            out.print(commandLine);
+            out.println();
+          }
+
           final RESULT status = execute(commandLine);
           commandLine = null;
 
-          if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
+          if (status == RESULT.EXIT || status == RESULT.ERROR && iBatchMode)
             return false;
         }
       }
 
       if (commandBuffer.length() > 0) {
+        if (iBatchMode) {
+          out.println();
+          out.print(getPrompt());
+          out.print(commandBuffer);
+          out.println();
+        }
+
         final RESULT status = execute(commandBuffer.toString());
-        if (status == RESULT.EXIT || status == RESULT.ERROR && iExitOnException)
+        if (status == RESULT.EXIT || status == RESULT.ERROR && iBatchMode)
           return false;
       }
     } finally {
-      iScanner.close();
+      commandStream.close(false);
     }
     return true;
   }
@@ -257,9 +279,10 @@ public class OConsoleApplication {
       if (ann != null && !ann.splitInWords()) {
         methodArgs = new String[] { iCommand.substring(iCommand.indexOf(' ') + 1) };
       } else {
-        if (m.getParameterTypes().length > commandWords.length - commandWordCount) {
+        final int actualParamCount = commandWords.length - commandWordCount;
+        if (m.getParameterTypes().length > actualParamCount) {
           // METHOD PARAMS AND USED PARAMS MISMATCH: CHECK FOR OPTIONALS
-          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > -1; paramNum--) {
+          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > actualParamCount - 1; paramNum--) {
             final Annotation[] paramAnn = m.getParameterAnnotations()[paramNum];
             if (paramAnn != null)
               for (int annNum = paramAnn.length - 1; annNum > -1; annNum--) {
@@ -349,7 +372,7 @@ public class OConsoleApplication {
   /**
    * Returns a map of all console method and the object they can be called on.
    * 
-   * @return Map<Method,Object>
+   * @return Map&lt;Method,Object&gt;
    */
   protected Map<Method, Object> getConsoleMethods() {
 

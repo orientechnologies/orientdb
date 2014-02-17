@@ -15,10 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.index.OIndex;
+
 import java.util.Collection;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.index.OIndex;
 
 /**
  * Contains the description of a persistent class property.
@@ -28,8 +29,8 @@ import com.orientechnologies.orient.core.index.OIndex;
  */
 public interface OProperty extends Comparable<OProperty> {
 
-    public static enum ATTRIBUTES {
-    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY
+  public static enum ATTRIBUTES {
+    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE
   }
 
   public String getName();
@@ -58,6 +59,10 @@ public interface OProperty extends Comparable<OProperty> {
 
   public OProperty setNotNull(boolean iNotNull);
 
+  public OCollate getCollate();
+
+  public OProperty setCollate(String iCollateName);
+
   public boolean isMandatory();
 
   public OProperty setMandatory(boolean mandatory);
@@ -65,6 +70,7 @@ public interface OProperty extends Comparable<OProperty> {
   boolean isReadonly();
 
   OPropertyImpl setReadonly(boolean iReadonly);
+
   /**
    * Min behavior depends on the Property OType.
    * <p>
@@ -191,9 +197,14 @@ public interface OProperty extends Comparable<OProperty> {
   public String getCustom(final String iName);
 
   public OPropertyImpl setCustom(final String iName, final String iValue);
+
   public void removeCustom(final String iName);
+
   public void clearCustom();
+
   public Set<String> getCustomKeys();
+
+  public OClass getOwnerClass();
 
   public Object get(ATTRIBUTES iAttribute);
 }

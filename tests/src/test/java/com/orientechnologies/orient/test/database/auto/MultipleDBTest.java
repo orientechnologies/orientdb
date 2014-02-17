@@ -66,6 +66,7 @@ public class MultipleDBTest {
 
       Callable<Void> t = new Callable<Void>() {
 
+        @Override
         public Void call() throws InterruptedException, IOException {
           OObjectDatabaseTx tx = new OObjectDatabaseTx(dbUrl);
 
@@ -158,6 +159,7 @@ public class MultipleDBTest {
 
       Callable<Void> t = new Callable<Void>() {
 
+        @Override
         public Void call() throws InterruptedException, IOException {
           ODatabaseDocumentTx tx = new ODatabaseDocumentTx(dbUrl);
 

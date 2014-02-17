@@ -26,6 +26,7 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -36,130 +37,160 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-	protected final ORecord<?>										sourceRecord;
-	private STATUS																status					= STATUS.NOT_LOADED;
-	private Set<OMultiValueChangeListener<T, T>>	changeListeners	= Collections
-																																		.newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
-	protected Class<?>														genericClass;
+  protected final ORecord<?>                   sourceRecord;
+  private STATUS                               status          = STATUS.NOT_LOADED;
+  private Set<OMultiValueChangeListener<T, T>> changeListeners = Collections
+                                                                   .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
+  protected Class<?>                           genericClass;
+  private final boolean                        embeddedCollection;
 
-	public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
-		this(iRecord);
-		genericClass = cls;
-		if (iOrigin != null && !iOrigin.isEmpty())
-			addAll(iOrigin);
-	}
+  public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
+    this(iRecord);
+    genericClass = cls;
+    if (iOrigin != null && !iOrigin.isEmpty())
+      addAll(iOrigin);
+  }
 
-	public OTrackedSet(final ORecord<?> iSourceRecord) {
-		this.sourceRecord = iSourceRecord;
-	}
+  public OTrackedSet(final ORecord<?> iSourceRecord) {
+    this.sourceRecord = iSourceRecord;
+    embeddedCollection = this.getClass().equals(OTrackedSet.class);
+  }
 
-	public boolean add(final T e) {
-		if (super.add(e)) {
-			fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
-			return true;
-		}
-		return false;
-	}
+  @Override
+  public ORecordElement getOwner() {
+    return sourceRecord;
+  }
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean remove(final Object o) {
-		if (super.remove(o)) {
-			fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
-			return true;
-		}
-		return false;
-	}
+  public boolean add(final T e) {
+    if (super.add(e)) {
+      addOwnerToEmbeddedDoc(e);
 
-	@Override
-	public void clear() {
-		final Set<T> origValues;
-		if (changeListeners.isEmpty())
-			origValues = null;
-		else
-			origValues = new HashSet<T>(this);
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
+      return true;
+    }
 
-		super.clear();
+    return false;
+  }
 
-		if (origValues != null) {
-			for (final T item : origValues)
-				fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
-		} else
-			setDirty();
-	}
+  private void addOwnerToEmbeddedDoc(T e) {
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
+      ((ODocument) e).addOwner(this);
+  }
 
-	@SuppressWarnings("unchecked")
-	public OTrackedSet<T> setDirty() {
-		if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
-			sourceRecord.setDirty();
-		return this;
-	}
+  @SuppressWarnings("unchecked")
+  @Override
+  public boolean remove(final Object o) {
+    if (super.remove(o)) {
+      if (o instanceof ODocument)
+        ((ODocument) o).removeOwner(this);
 
-	public void onBeforeIdentityChanged(ORID iRID) {
-	}
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
+      return true;
+    }
+    return false;
+  }
 
-	public void onAfterIdentityChanged(ORecord<?> iRecord) {
-	}
+  @Override
+  public void clear() {
+    final Set<T> origValues;
+    if (changeListeners.isEmpty())
+      origValues = null;
+    else
+      origValues = new HashSet<T>(this);
 
-	public STATUS getInternalStatus() {
-		return status;
-	}
+    if (origValues == null) {
+      for (final T item : this) {
+        if (item instanceof ODocument)
+          ((ODocument) item).removeOwner(this);
+      }
+    }
 
-	public void setInternalStatus(final STATUS iStatus) {
-		status = iStatus;
-	}
+    super.clear();
 
-	public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-		changeListeners.add(changeListener);
-	}
+    if (origValues != null) {
+      for (final T item : origValues) {
+        if (item instanceof ODocument)
+          ((ODocument) item).removeOwner(this);
 
-	public void removeRecordChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
-		changeListeners.remove(changeListener);
-	}
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
+      }
 
-	public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
-		final Set<T> reverted = new HashSet<T>(this);
+    } else
+      setDirty();
+  }
 
-		final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
-				.size());
+  @SuppressWarnings("unchecked")
+  public OTrackedSet<T> setDirty() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+      sourceRecord.setDirty();
+    return this;
+  }
 
-		while (listIterator.hasPrevious()) {
-			final OMultiValueChangeEvent<T, T> event = listIterator.previous();
-			switch (event.getChangeType()) {
-			case ADD:
-				reverted.remove(event.getKey());
-				break;
-			case REMOVE:
-				reverted.add(event.getOldValue());
-				break;
-			default:
-				throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
-			}
-		}
+  public void onBeforeIdentityChanged(ORID iRID) {
+  }
 
-		return reverted;
-	}
+  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  }
 
-	protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
-		if (status == STATUS.UNMARSHALLING)
-			return;
+  public STATUS getInternalStatus() {
+    return status;
+  }
 
-		setDirty();
-		for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
-			if (changeListener != null)
-				changeListener.onAfterRecordChanged(event);
-		}
-	}
+  public void setInternalStatus(final STATUS iStatus) {
+    status = iStatus;
+  }
 
-	public Class<?> getGenericClass() {
-		return genericClass;
-	}
+  public void addChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
+    changeListeners.add(changeListener);
+  }
 
-	public void setGenericClass(Class<?> genericClass) {
-		this.genericClass = genericClass;
-	}
+  public void removeRecordChangeListener(final OMultiValueChangeListener<T, T> changeListener) {
+    changeListeners.remove(changeListener);
+  }
 
-	private Object writeReplace() {
-		return new HashSet<T>(this);
-	}
+  public Set<T> returnOriginalState(final List<OMultiValueChangeEvent<T, T>> multiValueChangeEvents) {
+    final Set<T> reverted = new HashSet<T>(this);
+
+    final ListIterator<OMultiValueChangeEvent<T, T>> listIterator = multiValueChangeEvents.listIterator(multiValueChangeEvents
+        .size());
+
+    while (listIterator.hasPrevious()) {
+      final OMultiValueChangeEvent<T, T> event = listIterator.previous();
+      switch (event.getChangeType()) {
+      case ADD:
+        reverted.remove(event.getKey());
+        break;
+      case REMOVE:
+        reverted.add(event.getOldValue());
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid change type : " + event.getChangeType());
+      }
+    }
+
+    return reverted;
+  }
+
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
+    if (status == STATUS.UNMARSHALLING)
+      return;
+
+    setDirty();
+    for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
+  }
+
+  public Class<?> getGenericClass() {
+    return genericClass;
+  }
+
+  public void setGenericClass(Class<?> genericClass) {
+    this.genericClass = genericClass;
+  }
+
+  private Object writeReplace() {
+    return new HashSet<T>(this);
+  }
 }

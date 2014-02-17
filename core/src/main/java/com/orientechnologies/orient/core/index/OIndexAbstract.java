@@ -32,11 +32,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -101,6 +102,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  protected Object getCollatingValue(final Object key) {
+    if (key != null && getDefinition() != null)
+      return getDefinition().getCollate().transform(key);
+    return key;
   }
 
   public void flush() {
@@ -266,8 +273,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
-  public boolean contains(final Object key) {
+  public boolean contains(Object key) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
@@ -282,18 +291,21 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * <p/>
    * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
    * 
+   * 
+   * 
    * @param iRangeFrom
    *          Starting range
    * @param iRangeTo
    *          Ending range
+   * @param ascSortOrder
    * @return a set of records with key between the range passed as parameter. Range bounds are included.
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-   * @see #getValuesBetween(Object, boolean, Object, boolean)
+   * @see OIndex#getValuesBetween(Object, boolean, Object, boolean, boolean)
    */
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
     checkForRebuild();
 
-    return getValuesBetween(iRangeFrom, true, iRangeTo, true);
+    return getValuesBetween(iRangeFrom, true, iRangeTo, true, ascSortOrder);
   }
 
   /**
@@ -312,12 +324,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return getEntriesBetween(iRangeFrom, iRangeTo, true);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValuesMajor(fromKey, isInclusive, new IndexValuesResultListener() {
+    getValuesMajor(fromKey, isInclusive, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -328,12 +340,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return result;
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValuesMinor(toKey, isInclusive, new IndexValuesResultListener() {
+    getValuesMinor(toKey, isInclusive, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -381,24 +393,29 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    * <p/>
    * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
    * 
-   * @param iRangeFrom
+   * 
+   * @param rangeFrom
    *          Starting range
-   * @param iFromInclusive
+   * @param fromInclusive
    *          Indicates whether start range boundary is included in result.
-   * @param iRangeTo
+   * @param rangeTo
    *          Ending range
-   * @param iToInclusive
+   * @param toInclusive
    *          Indicates whether end range boundary is included in result.
+   * @param ascSortOrder
    * @return Returns a set of records with key between the range passed as parameter.
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
    */
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive) {
+  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, final boolean fromInclusive, Object rangeTo,
+      final boolean toInclusive, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    rangeFrom = getCollatingValue(rangeFrom);
+    rangeTo = getCollatingValue(rangeTo);
 
-    getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, new IndexValuesResultListener() {
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+
+    getValuesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -409,8 +426,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return result;
   }
 
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
+  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean iInclusive) {
     checkForRebuild();
+
+    iRangeFrom = getCollatingValue(iRangeFrom);
+    iRangeTo = getCollatingValue(iRangeTo);
 
     final Set<ODocument> result = new ODocumentFieldsHashSet();
 
@@ -425,12 +445,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return result;
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
     checkForRebuild();
 
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
 
-    getValues(iKeys, new IndexValuesResultListener() {
+    getValues(iKeys, ascSortOrder, new IndexValuesResultListener() {
       @Override
       public boolean addResult(OIdentifiable value) {
         result.add(value);
@@ -558,7 +578,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
             // END OF CLUSTER REACHED, IGNORE IT
           }
 
-        flush();
+        if (indexEngine instanceof OMVRBTreeIndexEngine)
+          flush();
+
         unload();
 
         if (iProgressListener != null)
@@ -653,7 +675,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
           if (storage instanceof OStorageLocal) {
             final ODiskCache diskCache = ((OStorageLocal) storage).getDiskCache();
             try {
-              final String fileName = getName() + OSBTreeIndexRIDContainer.INDEX_FILE_EXTENSION;
+              final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
               if (diskCache.exists(fileName)) {
                 final long fileId = diskCache.openFile(fileName);
                 diskCache.deleteFile(fileId);
@@ -932,6 +954,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     } finally {
       releaseSharedLock();
     }
+  }
+
+  @Override
+  public ODocument getMetadata() {
+    return getConfiguration().field("metadata", OType.EMBEDDED);
   }
 
   public boolean isAutomatic() {

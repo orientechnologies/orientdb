@@ -15,45 +15,12 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODetachable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -70,6 +37,17 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -84,8 +62,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
   protected Map<String, OType>                                           _fieldTypes;
-  protected Map<String, OSimpleMultiValueChangeListener<String, Object>> _fieldChangeListeners;
-  protected Map<String, OMultiValueChangeTimeLine<String, Object>>       _fieldCollectionChangeTimeLines;
+  protected Map<String, OSimpleMultiValueChangeListener<Object, Object>> _fieldChangeListeners;
+  protected Map<String, OMultiValueChangeTimeLine<Object, Object>>       _fieldCollectionChangeTimeLines;
 
   protected boolean                                                      _trackingChanges    = true;
   protected boolean                                                      _ordered            = true;
@@ -358,7 +336,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     Object result = null;
     try {
-      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone);
+      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
     }
@@ -416,9 +394,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         buffer.append(first ? '{' : ',');
         buffer.append(f.getKey());
         buffer.append(':');
-        if (f.getValue() instanceof Collection<?>) {
+        if (f.getValue() == null)
+          buffer.append("null");
+        else if (f.getValue() instanceof Collection<?> || f.getValue().getClass().isArray()) {
           buffer.append('[');
-          buffer.append(((Collection<?>) f.getValue()).size());
+          buffer.append(OMultiValue.getSize(f.getValue()));
           buffer.append(']');
         } else if (f.getValue() instanceof ORecord<?>) {
           record = (ORecord<?>) f.getValue();
@@ -527,7 +507,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     final OType t = fieldType(iFieldName);
 
-    if (_lazyLoad && value instanceof ORID && t != OType.LINK && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+    if (_lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
+        && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
       if (!iFieldName.contains(".")) {
@@ -741,12 +722,30 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         iFieldType = prop.getType();
     }
 
-    if (iPropertyValue != null)
+    if (oldValue instanceof ORidBag) {
+      final ORidBag ridBag = (ORidBag) oldValue;
+      ridBag.setOwner(null);
+    } else if (oldValue instanceof ODocument) {
+      final ODocument doc = (ODocument) oldValue;
+      doc.removeOwner(this);
+    }
+
+    if (iPropertyValue != null) {
       // CHECK FOR CONVERSION
-      if (iFieldType != null)
+      if (iFieldType != null) {
         iPropertyValue = ODocumentHelper.convertField(this, iFieldName, iFieldType.getDefaultJavaType(), iPropertyValue);
-      else if (iPropertyValue instanceof Enum)
+        if (iFieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          embeddedDocument.addOwner(this);
+        }
+      } else if (iPropertyValue instanceof Enum)
         iPropertyValue = iPropertyValue.toString();
+
+      if (iPropertyValue instanceof ORidBag) {
+        final ORidBag ridBag = (ORidBag) iPropertyValue;
+        ridBag.setOwner(this);
+      }
+    }
 
     removeCollectionChangeListener(iFieldName);
     removeCollectionTimeLine(iFieldName);
@@ -921,7 +920,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return _fieldOriginalValues != null ? _fieldOriginalValues.get(iFieldName) : null;
   }
 
-  public OMultiValueChangeTimeLine<String, Object> getCollectionTimeLine(final String iFieldName) {
+  public OMultiValueChangeTimeLine<Object, Object> getCollectionTimeLine(final String iFieldName) {
     return _fieldCollectionChangeTimeLines != null ? _fieldCollectionChangeTimeLines.get(iFieldName) : null;
   }
 
@@ -1004,8 +1003,34 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument addOwner(final ORecordElement iOwner) {
     if (_owners == null)
       _owners = new ArrayList<WeakReference<ORecordElement>>();
-    this._owners.add(new WeakReference<ORecordElement>(iOwner));
+
+    boolean found = false;
+    for (WeakReference<ORecordElement> _owner : _owners) {
+      final ORecordElement e = _owner.get();
+      if (e == iOwner) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+      this._owners.add(new WeakReference<ORecordElement>(iOwner));
+
     return this;
+  }
+
+  @Override
+  public ORecordElement getOwner() {
+    if (_owners == null)
+      return null;
+
+    for (WeakReference<ORecordElement> _owner : _owners) {
+      final ORecordElement e = _owner.get();
+      if (e != null)
+        return e;
+    }
+
+    return null;
   }
 
   public Iterable<ORecordElement> getOwners() {
@@ -1056,6 +1081,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   @Override
   public void onBeforeIdentityChanged(final ORID iRID) {
+    super.onBeforeIdentityChanged(iRID);
     if (_owners != null) {
       final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
@@ -1183,6 +1209,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   public void setLazyLoad(final boolean iLazyLoad) {
     this._lazyLoad = iLazyLoad;
+    checkForFields();
 
     if (_fieldValues != null) {
       // PROPAGATE LAZINESS TO THE FIELDS
@@ -1234,6 +1261,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return false;
 
     return this == obj || _recordId.isValid();
+  }
+
+  @Override
+  public int hashCode() {
+    if (_recordId.isValid())
+      return super.hashCode();
+
+    return System.identityHashCode(this);
   }
 
   /**
@@ -1410,21 +1445,25 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       fieldType = prop != null ? prop.getType() : null;
     }
 
+    if (fieldValue instanceof ORidBag)
+      fieldType = OType.LINKBAG;
+
     if (fieldType == null
         || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
-            || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
+            || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType) || OType.LINKBAG
+              .equals(fieldType)))
       return;
 
     if (!(fieldValue instanceof OTrackedMultiValue))
       return;
 
-    final OTrackedMultiValue<String, Object> multiValue = (OTrackedMultiValue<String, Object>) fieldValue;
+    final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
 
     if (_fieldChangeListeners == null)
-      _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener<String, Object>>();
+      _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener<Object, Object>>();
 
     if (!_fieldChangeListeners.containsKey(fieldName)) {
-      final OSimpleMultiValueChangeListener<String, Object> listener = new OSimpleMultiValueChangeListener<String, Object>(
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(
           fieldName);
       multiValue.addChangeListener(listener);
       _fieldChangeListeners.put(fieldName, listener);
@@ -1454,7 +1493,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_fieldChangeListeners == null)
       return;
 
-    final OMultiValueChangeListener<String, Object> changeListener = _fieldChangeListeners.remove(fieldName);
+    final OMultiValueChangeListener<Object, Object> changeListener = _fieldChangeListeners.remove(fieldName);
 
     final Object fieldValue;
     if (_fieldValues == null)
@@ -1466,7 +1505,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return;
 
     if (changeListener != null) {
-      final OTrackedMultiValue<String, Object> multiValue = (OTrackedMultiValue<String, Object>) fieldValue;
+      final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
       multiValue.removeRecordChangeListener(changeListener);
     }
   }
@@ -1548,15 +1587,15 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         return;
 
       if (_fieldCollectionChangeTimeLines == null)
-        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<String, Object>>();
+        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
 
-      OMultiValueChangeTimeLine<String, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
+      OMultiValueChangeTimeLine<Object, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
       if (timeLine == null) {
-        timeLine = new OMultiValueChangeTimeLine<String, Object>();
+        timeLine = new OMultiValueChangeTimeLine<Object, Object>();
         _fieldCollectionChangeTimeLines.put(fieldName, timeLine);
       }
 
-      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<String, Object>) event);
+      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
     }
   }
 

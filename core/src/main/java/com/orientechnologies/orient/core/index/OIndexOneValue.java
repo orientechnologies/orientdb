@@ -41,8 +41,10 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     super(type, algorithm, engine, valueContainerAlgorithm);
   }
 
-  public OIdentifiable get(final Object iKey) {
+  public OIdentifiable get(Object iKey) {
     checkForRebuild();
+
+    iKey = getCollatingValue(iKey);
 
     acquireSharedLock();
     try {
@@ -52,20 +54,24 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public long count(final Object key) {
+  public long count(Object iKey) {
     checkForRebuild();
+
+    iKey = getCollatingValue(iKey);
 
     acquireSharedLock();
     try {
-      return indexEngine.contains(key) ? 1 : 0;
+      return indexEngine.contains(iKey) ? 1 : 0;
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object key) {
+  public void checkEntry(final OIdentifiable iRecord, Object key) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(key);
@@ -99,16 +105,19 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
         OStreamSerializerRID.INSTANCE);
   }
 
-  public void getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive, final IndexValuesResultListener resultListener) {
+  public void getValuesBetween(Object iRangeFrom, final boolean iFromInclusive, Object iRangeTo, final boolean iToInclusive,
+															 boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     if (iRangeFrom.getClass() != iRangeTo.getClass())
       throw new IllegalArgumentException("Range from-to parameters are of different types");
 
+    iRangeFrom = getCollatingValue(iRangeFrom);
+    iRangeTo = getCollatingValue(iRangeTo);
+
     acquireSharedLock();
     try {
-      indexEngine.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, null,
+      indexEngine.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, ascSortOrder, null,
           new OIndexEngine.ValuesResultListener() {
             @Override
             public boolean addResult(OIdentifiable identifiable) {
@@ -120,12 +129,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValuesMajor(final Object fromKey, final boolean isInclusive, final IndexValuesResultListener resultListener) {
+  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
+
+    iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMajor(fromKey, isInclusive, null, new OIndexEngine.ValuesResultListener() {
+      indexEngine.getValuesMajor(iRangeFrom, isInclusive, ascSortOrder, null, new OIndexEngine.ValuesResultListener() {
         @Override
         public boolean addResult(OIdentifiable identifiable) {
           return resultListener.addResult(identifiable);
@@ -137,12 +148,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValuesMinor(final Object toKey, final boolean isInclusive, final IndexValuesResultListener resultListener) {
+  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
+
+    iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMinor(toKey, isInclusive, null, new OIndexEngine.ValuesResultListener() {
+      indexEngine.getValuesMinor(iRangeTo, isInclusive, ascSortOrder, null, new OIndexEngine.ValuesResultListener() {
         @Override
         public boolean addResult(OIdentifiable identifiable) {
           return resultListener.addResult(identifiable);
@@ -153,15 +166,24 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValues(final Collection<?> keys, final IndexValuesResultListener resultListener) {
+  public void getValues(final Collection<?> keys, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
-    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
+		final Comparator<Object> comparator;
+
+		if (ascSortOrder)
+			comparator = ODefaultComparator.INSTANCE;
+		else
+		  comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    Collections.sort(sortedKeys, comparator);
 
     acquireSharedLock();
     try {
-      for (final Object key : sortedKeys) {
+      for (Object key : sortedKeys) {
+        key = getCollatingValue(key);
+
         final OIdentifiable val = indexEngine.get(key);
         if (val != null) {
           if (!resultListener.addResult(val))
@@ -173,13 +195,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesMajor(final Object fromKey, final boolean isInclusive,
-      final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
+
+    iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMajor(fromKey, isInclusive, null, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, null, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);
@@ -191,12 +214,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesMinor(final Object toKey, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object iRangeTo, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
+
+    iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMinor(toKey, isInclusive, null, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesMinor(iRangeTo, isInclusive, null, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);
@@ -207,16 +232,19 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesBetween(final Object rangeFrom, final Object rangeTo, final boolean inclusive,
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean inclusive,
       final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
-    if (rangeFrom.getClass() != rangeTo.getClass())
+    if (iRangeFrom.getClass() != iRangeTo.getClass())
       throw new IllegalArgumentException("Range from-to parameters are of different types");
 
+    iRangeFrom = getCollatingValue(iRangeFrom);
+    iRangeTo = getCollatingValue(iRangeTo);
+
     acquireSharedLock();
     try {
-      indexEngine.getEntriesBetween(rangeFrom, rangeTo, inclusive, null, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, null, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);
@@ -235,7 +263,9 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      for (final Object key : sortedKeys) {
+      for (Object key : sortedKeys) {
+        key = getCollatingValue(key);
+
         final OIdentifiable val = indexEngine.get(key);
         if (val != null) {
           final ODocument document = new ODocument();
@@ -263,21 +293,6 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
-      final int maxValuesToFetch) {
-    checkForRebuild();
-
-    if (iRangeFrom != null && iRangeTo != null && iRangeFrom.getClass() != iRangeTo.getClass())
-      throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-    acquireSharedLock();
-    try {
-      return indexEngine.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public long getKeySize() {
     checkForRebuild();
 
@@ -300,7 +315,6 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   public Iterator<OIdentifiable> valuesInverseIterator() {
     checkForRebuild();
 

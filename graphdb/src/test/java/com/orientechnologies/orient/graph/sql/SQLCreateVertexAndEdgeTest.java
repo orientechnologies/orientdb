@@ -17,39 +17,37 @@ package com.orientechnologies.orient.graph.sql;
 
 import java.util.List;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-@Test
+@RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
-  private OGraphDatabase database;
+  private ODatabaseDocumentTx database;
   private String         url;
 
   public SQLCreateVertexAndEdgeTest() {
-    this("memory:testgraph");
+    url = "memory:SQLCreateVertexAndEdgeTest";
+    database = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+		if (database.exists())
+			database.open("admin", "admin");
+		else
+		  database.create();
   }
 
-  public SQLCreateVertexAndEdgeTest(String iURL) {
-    url = iURL;
-    database = new OGraphDatabase(iURL);
-  }
-
-  @BeforeMethod
-  public void init() {
-    if (url.startsWith("memory"))
-      database.create();
-    else
-      database.open("admin", "admin");
-  }
-
-  @AfterMethod
+  @After
   public void deinit() {
     database.close();
   }
@@ -62,13 +60,13 @@ public class SQLCreateVertexAndEdgeTest {
 
     // VERTEXES
     ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
-    Assert.assertEquals(v1.getClassName(), OGraphDatabase.VERTEX_ALIAS);
+    Assert.assertEquals(v1.getClassName(), OrientVertexType.CLASS_NAME);
 
     ODocument v2 = database.command(new OCommandSQL("create vertex V1")).execute();
     Assert.assertEquals(v2.getClassName(), "V1");
 
     ODocument v3 = database.command(new OCommandSQL("create vertex set brand = 'fiat'")).execute();
-    Assert.assertEquals(v3.getClassName(), OGraphDatabase.VERTEX_ALIAS);
+    Assert.assertEquals(v3.getClassName(), OrientVertexType.CLASS_NAME);
     Assert.assertEquals(v3.field("brand"), "fiat");
 
     ODocument v4 = database.command(new OCommandSQL("create vertex V1 set brand = 'fiat',name = 'wow'")).execute();
@@ -92,7 +90,7 @@ public class SQLCreateVertexAndEdgeTest {
         new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v4.getIdentity() + " set weight = 3")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e3 = ((OIdentifiable) edges.get(0)).getRecord();
-    Assert.assertEquals(e3.getClassName(), OGraphDatabase.EDGE_ALIAS);
+    Assert.assertEquals(e3.getClassName(), OrientEdgeType.CLASS_NAME);
     Assert.assertEquals(e3.field("out"), v1);
     Assert.assertEquals(e3.field("in"), v4);
     Assert.assertEquals(e3.field("weight"), 3);

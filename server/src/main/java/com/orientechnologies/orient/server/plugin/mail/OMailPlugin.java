@@ -79,7 +79,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
         }
 
         if (profileParam.startsWith(CONFIG_MAIL_PREFIX)) {
-          profile.put("mail." + profileParam.substring(CONFIG_MAIL_PREFIX.length()), param.value);
+          profile.put(profileParam, param.value);
         }
       }
     }
@@ -114,20 +114,19 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
     msg.setFrom(new InternetAddress((String) iMessage.get("from")));
 
-	InternetAddress[] toAddresses = { new InternetAddress(
-			(String) iMessage.get("to")) };
-	msg.setRecipients(Message.RecipientType.TO, toAddresses);
-	String cc = (String) iMessage.get("cc");
-	if (cc != null && !cc.isEmpty()) {
-		InternetAddress[] ccAddresses = { new InternetAddress(cc) };
-		msg.setRecipients(Message.RecipientType.CC, ccAddresses);
-	}
-	String bcc = (String) iMessage.get("bcc");
-	if (bcc != null && !bcc.isEmpty()) {
-		InternetAddress[] bccAddresses = { new InternetAddress(bcc) };
-		msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
-	}
-	msg.setSubject((String) iMessage.get("subject"));
+    InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
+    msg.setRecipients(Message.RecipientType.TO, toAddresses);
+    String cc = (String) iMessage.get("cc");
+    if (cc != null && !cc.isEmpty()) {
+      InternetAddress[] ccAddresses = { new InternetAddress(cc) };
+      msg.setRecipients(Message.RecipientType.CC, ccAddresses);
+    }
+    String bcc = (String) iMessage.get("bcc");
+    if (bcc != null && !bcc.isEmpty()) {
+      InternetAddress[] bccAddresses = { new InternetAddress(bcc) };
+      msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
+    }
+    msg.setSubject((String) iMessage.get("subject"));
 
     // DATE
     Object date = iMessage.get("date");
@@ -152,7 +151,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     messageBodyPart.setContent(iMessage.get("message"), "text/html");
 
     // creates multi-part
-    Multipart multipart = new MimeMultipart();  
+    Multipart multipart = new MimeMultipart();
     multipart.addBodyPart(messageBodyPart);
 
     final String[] attachments = (String[]) iMessage.get("attachments");

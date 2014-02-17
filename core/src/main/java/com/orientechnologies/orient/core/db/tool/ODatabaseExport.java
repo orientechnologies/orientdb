@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +38,12 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -49,7 +58,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected OJSONWriter   writer;
   protected long          recordExported;
-  public static final int VERSION = 6;
+  public static final int VERSION = 7;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -66,7 +75,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (f.exists())
       f.delete();
 
-    writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName))));
+    writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName), 16384))); // 16KB
     writer.beginObject();
     iDatabase.getLevel1Cache().setEnable(false);
     iDatabase.getLevel2Cache().setEnable(false);
@@ -329,6 +338,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
         writer.endObject(4, true);
       }
+
+      ODocument metadata = index.getMetadata();
+      if (metadata != null)
+        writer.writeAttribute(4, true, "metadata", metadata);
 
       writer.endObject(2, true);
       listener.onMessage("OK");

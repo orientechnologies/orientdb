@@ -32,6 +32,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCollections;
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.collate.OCollateFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -51,6 +53,7 @@ public class OSQLEngine {
   private static List<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
   private static List<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
   private static List<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
+  private static List<OCollateFactory>            COLLATE_FACTORIES  = null;
   private static OQueryOperator[]                 SORTED_OPERATORS   = null;
 
   protected static final OSQLEngine               INSTANCE           = new OSQLEngine();
@@ -131,15 +134,15 @@ public class OSQLEngine {
   }
 
   public void registerFunction(final String iName, final OSQLFunction iFunction) {
-    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunction);
+    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunction);
   }
 
   public void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunctionClass) {
-    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toUpperCase(Locale.ENGLISH), iFunctionClass);
+    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunctionClass);
   }
 
   public OSQLFunction getFunction(String iFunctionName) {
-    iFunctionName = iFunctionName.toUpperCase(Locale.ENGLISH);
+    iFunctionName = iFunctionName.toLowerCase(Locale.ENGLISH);
 
     if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
       // SPECIAL FUNCTIONS
@@ -158,7 +161,7 @@ public class OSQLEngine {
   }
 
   public void unregisterFunction(String iName) {
-    iName = iName.toUpperCase(Locale.ENGLISH);
+    iName = iName.toLowerCase(Locale.ENGLISH);
     ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
 
@@ -177,6 +180,23 @@ public class OSQLEngine {
       FUNCTION_FACTORIES = Collections.unmodifiableList(factories);
     }
     return FUNCTION_FACTORIES.iterator();
+  }
+
+  /**
+   * @return Iterator of all function factories
+   */
+  public static synchronized Iterator<OCollateFactory> getCollateFactories() {
+    if (COLLATE_FACTORIES == null) {
+
+      final Iterator<OCollateFactory> ite = lookupProviderWithOrientClassLoader(OCollateFactory.class, orientClassLoader);
+
+      final List<OCollateFactory> factories = new ArrayList<OCollateFactory>();
+      while (ite.hasNext()) {
+        factories.add(ite.next());
+      }
+      COLLATE_FACTORIES = Collections.unmodifiableList(factories);
+    }
+    return COLLATE_FACTORIES.iterator();
   }
 
   /**
@@ -230,6 +250,20 @@ public class OSQLEngine {
     final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
     while (ite.hasNext()) {
       types.addAll(ite.next().getFunctionNames());
+    }
+    return types;
+  }
+
+  /**
+   * Iterates on all factories and append all collate names.
+   * 
+   * @return Set of all colate names.
+   */
+  public static Set<String> getCollateNames() {
+    final Set<String> types = new HashSet<String>();
+    final Iterator<OCollateFactory> ite = getCollateFactories();
+    while (ite.hasNext()) {
+      types.addAll(ite.next().getNames());
     }
     return types;
   }
@@ -386,4 +420,13 @@ public class OSQLEngine {
     return ids;
   }
 
+  public static OCollate getCollate(final String name) {
+    for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext();) {
+      OCollateFactory f = iter.next();
+      final OCollate c = f.getCollate(name);
+      if (c != null)
+        return c;
+    }
+    return null;
+  }
 }

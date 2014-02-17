@@ -35,8 +35,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
@@ -64,8 +64,8 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     iRequest.data.commandDetail = text;
 
     final ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
     try {
 
       final Iterable<OrientVertex> vertices;

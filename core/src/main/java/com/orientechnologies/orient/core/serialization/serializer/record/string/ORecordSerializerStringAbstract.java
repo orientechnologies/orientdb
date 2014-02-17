@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -398,6 +399,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.SHORT;
     else if (iCharType == 'e')
       return OType.EMBEDDEDSET;
+    else if (iCharType == 'g')
+      return OType.LINKBAG;
 
     return OType.STRING;
   }
@@ -500,7 +503,10 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       } catch (NumberFormatException e) {
         return new Long(iValue);
       }
-    } else
+    } else if ("NaN".equals(iValue) || "Infinity".equals(iValue))
+      // NaN and Infinity CANNOT BE MANAGED BY BIG-DECIMAL TYPE
+      return new Double(iValue);
+    else
       return new BigDecimal(iValue);
   }
 
@@ -642,7 +648,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case DATE:
       if (iValue instanceof Date) {
         // RESET HOURS, MINUTES, SECONDS AND MILLISECONDS
-        Calendar calendar = Calendar.getInstance();
+        final Calendar calendar = ODateHelper.getDatabaseCalendar();
         calendar.setTime((Date) iValue);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);

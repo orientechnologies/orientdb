@@ -19,8 +19,23 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -38,7 +53,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -364,6 +379,22 @@ public class OWOWCache {
     }
   }
 
+  public long isOpen(String fileName) throws IOException {
+    synchronized (syncObject) {
+      initNameIdMapping();
+
+      final Long fileId = nameIdMap.get(fileName);
+      if (fileId == null)
+        return -1;
+
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return -1;
+
+      return fileId;
+    }
+  }
+
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
     synchronized (syncObject) {
       OFileClassic fileClassic = files.get(fileId);
@@ -680,6 +711,25 @@ public class OWOWCache {
           throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
       }
     }
+
+    if (!commitExecutor.isShutdown()) {
+      commitExecutor.shutdown();
+      try {
+        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
+          throw new OException("Background data flush task can not be stopped.");
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "Data flush thread was interrupted");
+
+        Thread.interrupted();
+        throw new OException("Data flush thread was interrupted", e);
+      }
+    }
+  }
+
+  public String fileNameById(long fileId) {
+    synchronized (syncObject) {
+      return files.get(fileId).getName();
+    }
   }
 
   private final class GroupKey implements Comparable<GroupKey> {
@@ -826,7 +876,7 @@ public class OWOWCache {
             for (int i = 0; i < 16; i++) {
               final OCachePointer pagePointer = group.pages[i];
               if (pagePointer != null) {
-                if (!pagePointer.tryAcquireExclusiveLock())
+                if (!pagePointer.tryAcquireSharedLock())
                   continue groupsLoop;
 
                 try {
@@ -836,7 +886,7 @@ public class OWOWCache {
                   final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
                   pagePointer.setLastFlushedLsn(flushedLSN);
                 } finally {
-                  pagePointer.releaseExclusiveLock();
+                  pagePointer.releaseSharedLock();
                 }
               }
             }
@@ -889,14 +939,14 @@ public class OWOWCache {
             OCachePointer pagePointer = writeGroup.pages[i];
 
             if (pagePointer != null) {
-              if (!pagePointer.tryAcquireExclusiveLock())
+              if (!pagePointer.tryAcquireSharedLock())
                 continue groupsLoop;
 
               try {
                 flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                 flushedPages++;
               } finally {
-                pagePointer.releaseExclusiveLock();
+                pagePointer.releaseSharedLock();
               }
             }
           }

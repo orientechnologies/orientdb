@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridset.sbtree.OSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -34,8 +34,16 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   private K                           firstKey;
   private Map.Entry<K, V>             currentEntry;
 
+  private final int                   prefetchSize;
+
   public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree) {
+    this(sbTree, 8000);
+  }
+
+  public OSBTreeMapEntryIterator(OTreeInternal<K, V> sbTree, int prefetchSize) {
     this.sbTree = sbTree;
+    this.prefetchSize = prefetchSize;
+
     if (sbTree.size() == 0) {
       this.preFetchedValues = null;
       return;
@@ -48,12 +56,12 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   }
 
   private void prefetchData(boolean firstTime) {
-    sbTree.loadEntriesMajor(firstKey, firstTime, new OTreeInternal.RangeResultListener<K, V>() {
+    sbTree.loadEntriesMajor(firstKey, firstTime, true, new OTreeInternal.RangeResultListener<K, V>() {
       @Override
       public boolean addResult(final Map.Entry<K, V> entry) {
         final V value = entry.getValue();
         final V resultValue;
-        if (value instanceof OSBTreeIndexRIDContainer)
+        if (value instanceof OIndexRIDContainer)
           resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
         else
           resultValue = value;
@@ -75,7 +83,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
           }
         });
 
-        return preFetchedValues.size() <= 8000;
+        return preFetchedValues.size() <= prefetchSize;
       }
     });
 

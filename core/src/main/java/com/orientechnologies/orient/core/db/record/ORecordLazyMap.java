@@ -82,14 +82,14 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   }
 
   @Override
-  public OIdentifiable put(final Object iKey, OIdentifiable iValue) {
-    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS && iValue instanceof ORecord<?> && !iValue.getIdentity().isNew())
+  public OIdentifiable put(final Object key, OIdentifiable value) {
+    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS && value instanceof ORecord<?> && !value.getIdentity().isNew())
       // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
-      iValue = iValue.getIdentity();
+      value = value.getIdentity();
     else
-      status = ORecordMultiValueHelper.updateContentType(status, iValue);
+      status = ORecordMultiValueHelper.updateContentType(status, value);
 
-    return super.put(iKey, iValue);
+    return super.put(key, value);
   }
 
   @Override

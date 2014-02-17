@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+
 import java.util.Map;
 
 /**
@@ -32,7 +34,9 @@ public interface OCommandContext {
 
   public Object getVariable(String iName, Object iDefaultValue);
 
-  public OCommandContext setVariable(final String iName, final Object iValue);
+  public OCommandContext setVariable(String iName, Object iValue);
+
+  public OCommandContext incrementVariable(String getNeighbors);
 
   public Map<String, Object> getVariables();
 
@@ -59,5 +63,12 @@ public interface OCommandContext {
 
   public void beginExecution(long timeoutMs, TIMEOUT_STRATEGY iStrategy);
 
+  /**
+   * Check if timeout is elapsed, if defined.
+   * 
+   * @return false if it the timeout is elapsed and strategy is "return"
+   * @exception OTimeoutException
+   *              if the strategy is "exception" (default)
+   */
   public boolean checkTimeout();
 }

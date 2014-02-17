@@ -54,7 +54,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "");
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN);
   }
 
   /**
@@ -102,7 +102,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -134,7 +134,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return (Map<String, String>) result.field("databases");
   }
@@ -204,7 +204,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -238,7 +238,7 @@ public class OServerAdmin {
     } catch (Exception e) {
       OLogManager.instance().exception("Error on checking existence of the remote storage: " + storage.getName(), e,
           OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return false;
   }
@@ -475,7 +475,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return config;
   }
@@ -486,6 +486,7 @@ public class OServerAdmin {
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
       network.writeString(iConfig.getKey());
+      network.endRequest();
 
       try {
         storage.beginResponse(network);
@@ -496,7 +497,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return null;
   }
@@ -509,11 +510,12 @@ public class OServerAdmin {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
       network.writeString(iConfig.getKey());
       network.writeString(iValue != null ? iValue.toString() : "");
+      storage.endRequest(network);
       storage.getResponse(network);
 
     } catch (Exception e) {
       OLogManager.instance().exception("Cannot set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -526,7 +528,7 @@ public class OServerAdmin {
   }
 
   public synchronized void close(boolean iForce) {
-    storage.close(iForce);
+    storage.close(iForce, false);
   }
 
   public synchronized String getURL() {

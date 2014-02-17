@@ -32,7 +32,7 @@ public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
     super(iQueryToParse, iName.substring(1));
   }
 
-  public Object getValue(final OIdentifiable iRecord, final OCommandContext iContext) {
+  public Object getValue(final OIdentifiable iRecord, Object iCurrentResult, final OCommandContext iContext) {
     if (iContext == null)
       return null;
 

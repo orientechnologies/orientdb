@@ -55,6 +55,11 @@ public interface ORecordElement {
   public <RET> RET setDirty();
 
   /**
+   * @return Returns record element which contains given one.
+   */
+  public ORecordElement getOwner();
+
+  /**
    * Internal only.
    */
   public void onBeforeIdentityChanged(ORID iRID);

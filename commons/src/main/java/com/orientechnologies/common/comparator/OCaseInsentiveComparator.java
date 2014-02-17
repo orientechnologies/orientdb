@@ -7,6 +7,6 @@ import java.util.Comparator;
  */
 public class OCaseInsentiveComparator implements Comparator<String> {
   public int compare(final String stringOne, final String stringTwo) {
-    return stringOne.toLowerCase().compareTo(stringTwo.toLowerCase());
+    return stringOne.compareToIgnoreCase(stringTwo);
   }
 }

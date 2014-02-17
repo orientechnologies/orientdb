@@ -22,7 +22,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @author Andrey Lomakin
  * @since 14.05.13
  */
-public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
+public abstract class OAbstractCheckPointStartRecord extends OAbstractWALRecord {
   private OLogSequenceNumber previousCheckpoint;
 
   protected OAbstractCheckPointStartRecord() {
@@ -111,6 +111,6 @@ public abstract class OAbstractCheckPointStartRecord implements OWALRecord {
 
   @Override
   public String toString() {
-    return "OAbstractCheckPointStartRecord{" + "previousCheckpoint=" + previousCheckpoint + '}';
+    return toString("previousCheckpoint=" + previousCheckpoint);
   }
 }

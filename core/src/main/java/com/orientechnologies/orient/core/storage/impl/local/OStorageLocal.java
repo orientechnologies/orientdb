@@ -15,18 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -47,6 +36,7 @@ import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -60,6 +50,7 @@ import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -70,10 +61,23 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class OStorageLocal extends OStorageLocalAbstract {
   private final int                     DELETE_MAX_RETRIES;
@@ -89,7 +93,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
       ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION };
+      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION };
 
   private long                          positionGenerator         = 1;
   private OModificationLock             modificationLock          = new OModificationLock();
@@ -122,16 +126,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     clustersToSyncImmediately.addAll(Arrays.asList(clustersToSync));
 
     installProfilerHooks();
-
-    long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
-    long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)
-        * diskCacheSize);
-    long readCacheSize = diskCacheSize - writeCacheSize;
-
-    diskCache = new OReadWriteDiskCache(name, readCacheSize, writeCacheSize,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, null, false, true);
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -151,6 +145,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
       status = STATUS.OPEN;
+
+      init();
 
       // OPEN BASIC SEGMENTS
       int pos;
@@ -217,11 +213,12 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
         writeAheadLog = new OWriteAheadLog(this);
+      atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
       txManager.open();
 
     } catch (Exception e) {
-      close(true);
+      close(true, false);
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       lock.releaseExclusiveLock();
@@ -269,6 +266,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       status = STATUS.OPEN;
 
+      init();
+
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
       addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
@@ -288,6 +287,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       configuration.create();
 
       writeAheadLog = new OWriteAheadLog(this);
+      atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
       txManager.create();
     } catch (OStorageException e) {
@@ -316,7 +316,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   @Override
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
@@ -347,7 +347,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       OMMapManagerLocator.getInstance().flush();
 
-      super.close(iForce);
+      super.close(iForce, onDelete);
       uninstallProfilerHooks();
 
       if (diskCache != null)
@@ -380,7 +380,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           ;
       }
     }
-    close(true);
+    close(true, true);
 
     try {
       Orient.instance().unregisterStorage(this);
@@ -1139,9 +1139,10 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      ORecordCallback<ORawBuffer> iCallback, final boolean loadTombstones, final LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones));
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones,
+        iLockingStrategy));
   }
 
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
@@ -1308,7 +1309,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           try {
             txManager.clearLogEntries(iTx);
             if (writeAheadLog != null)
-              writeAheadLog.shrinkTill(writeAheadLog.end());
+              writeAheadLog.truncate();
           } catch (Exception e) {
             // XXX WHAT CAN WE DO HERE ? ROLLBACK IS NOT POSSIBLE
             // IF WE THROW EXCEPTION, A ROLLBACK WILL BE DONE AT DB LEVEL BUT NOT AT STORAGE LEVEL
@@ -1316,7 +1317,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
           }
         }
       } finally {
-        transaction = null;
+        transaction.set(null);
         lock.releaseExclusiveLock();
       }
     } finally {
@@ -1338,7 +1339,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
         OLogManager.instance().error(this,
             "Error executing rollback for transaction with id '" + iTx.getId() + "' cause: " + ioe.getMessage(), ioe);
       } finally {
-        transaction = null;
+        transaction.set(null);
         lock.releaseExclusiveLock();
       }
     } finally {
@@ -1599,7 +1600,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
    * INTERNAL MAPPING</strong>
    */
   public void renameCluster(final String iOldName, final String iNewName) {
-    clusterMap.put(iNewName, clusterMap.remove(iOldName));
+    clusterMap.put(iNewName.toLowerCase(), clusterMap.remove(iOldName.toLowerCase()));
   }
 
   protected int registerDataSegment(final OStorageDataConfiguration iConfig) throws IOException {
@@ -1646,10 +1647,10 @@ public class OStorageLocal extends OStorageLocalAbstract {
    * @throws IOException
    */
   private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-    OCluster cluster = clusterMap.get(iConfig.getName());
+    OCluster cluster = clusterMap.get(iConfig.getName().toLowerCase());
 
     if (cluster instanceof OClusterLocal && iConfig instanceof OStorageEHClusterConfiguration)
-      clusterMap.remove(iConfig.getName());
+      clusterMap.remove(iConfig.getName().toLowerCase());
     else if (cluster != null) {
       if (cluster instanceof OClusterLocal) {
         // ALREADY CONFIGURED, JUST OVERWRITE CONFIG
@@ -1760,7 +1761,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   @Override
-  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock, boolean loadTombstones) {
+  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
+      final boolean loadTombstones, final LOCKING_STRATEGY iLockingStrategy) {
     if (!iRid.isPersistent())
       throw new IllegalArgumentException("Cannot read record " + iRid + " since the position is invalid in database '" + name
           + '\'');
@@ -1776,7 +1778,19 @@ public class OStorageLocal extends OStorageLocalAbstract {
       lock.acquireSharedLock();
 
     try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+      switch (iLockingStrategy) {
+      case DEFAULT:
+      case KEEP_SHARED_LOCK:
+        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        break;
+      case NONE:
+        // DO NOTHING
+        break;
+      case KEEP_EXCLUSIVE_LOCK:
+        throw new IllegalStateException("Exclusive locking not supported on read() in 'local' storage. Use plocal instead.");
+        // lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      }
+
       try {
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
 
@@ -1791,7 +1805,16 @@ public class OStorageLocal extends OStorageLocalAbstract {
         return new ORawBuffer(data.getRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        switch (iLockingStrategy) {
+        case DEFAULT:
+          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          break;
+        case NONE:
+        case KEEP_SHARED_LOCK:
+        case KEEP_EXCLUSIVE_LOCK:
+          // DO NOTHING
+          break;
+        }
       }
 
     } catch (IOException e) {
@@ -2037,13 +2060,30 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public boolean wasClusterSoftlyClosed(String clusterName) {
-    final OCluster indexCluster = clusterMap.get(clusterName);
+    final OCluster indexCluster = clusterMap.get(clusterName.toLowerCase());
     return !(indexCluster instanceof OClusterLocal) || ((OClusterLocal) indexCluster).isSoftlyClosed();
   }
 
   @Override
   public String getType() {
     return OEngineLocal.NAME;
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return null;
+  }
+
+  protected void init() {
+    final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+    final long writeCacheSize = (long) Math
+        .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
+    final long readCacheSize = diskCacheSize - writeCacheSize;
+
+    diskCache = new OReadWriteDiskCache(name, readCacheSize, writeCacheSize,
+        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, null, false, true);
   }
 
 }

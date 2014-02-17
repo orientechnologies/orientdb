@@ -54,8 +54,7 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
-      final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
 
     boolean result;
 

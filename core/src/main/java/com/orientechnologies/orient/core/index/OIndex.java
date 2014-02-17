@@ -71,17 +71,6 @@ public interface OIndex<T> {
   T get(Object iKey);
 
   /**
-   * Counts the elements associated with the passed key, if any.
-   * 
-   * @param iKey
-   *          The key to count
-   * @return The size of found records, otherwise 0 if the key is not found
-   */
-  long count(Object iKey);
-
-  public long count(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch);
-
-  /**
    * Tells if a key is contained in the index.
    * 
    * @param iKey
@@ -206,13 +195,15 @@ public interface OIndex<T> {
   /**
    * Returns set of records with keys in specific set
    * 
+   * 
    * @param iKeys
    *          Set of keys
+   * @param ascSortOrder
    * @return
    */
-  Collection<OIdentifiable> getValues(Collection<?> iKeys);
+  Collection<OIdentifiable> getValues(Collection<?> iKeys, boolean ascSortOrder);
 
-  void getValues(Collection<?> iKeys, IndexValuesResultListener resultListener);
+  void getValues(Collection<?> iKeys, boolean ascSortOrder, IndexValuesResultListener resultListener);
 
   /**
    * Returns a set of documents with keys in specific set
@@ -242,27 +233,6 @@ public interface OIndex<T> {
   public Iterator<Entry<Object, T>> iterator();
 
   /**
-   * Returns an iterator to walk across all the index items from the last to the first one.
-   * 
-   * @return
-   */
-  public Iterator<Entry<Object, T>> inverseIterator();
-
-  /**
-   * Returns an iterator to walk across all the index values from the first to the latest one.
-   * 
-   * @return
-   */
-  public Iterator<OIdentifiable> valuesIterator();
-
-  /**
-   * Returns an iterator to walk across all the index values from the last to the first one.
-   * 
-   * @return
-   */
-  public Iterator<OIdentifiable> valuesInverseIterator();
-
-  /**
    * Returns an Iterable instance of all the keys contained in the index.
    * 
    * @return A Iterable<Object> that lazy load the entries once fetched
@@ -274,21 +244,25 @@ public interface OIndex<T> {
    * 
    * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
    * 
+   * 
+   * 
    * @param iRangeFrom
    *          Starting range
    * @param iRangeTo
    *          Ending range
    * 
+   * @param ascSortOrder
    * @return a set of records with key between the range passed as parameter. Range bounds are included.
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-   * @see #getValuesBetween(Object, boolean, Object, boolean)
+   * @see #getValuesBetween(Object, boolean, Object, boolean, boolean)
    */
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo);
+  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo, boolean ascSortOrder);
 
   /**
    * Returns a set of records with key between the range passed as parameter.
    * 
    * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+   * 
    * 
    * @param iRangeFrom
    *          Starting range
@@ -299,43 +273,51 @@ public interface OIndex<T> {
    * @param iToInclusive
    *          Indicates whether end range boundary is included in result.
    * 
+   * @param ascSortOrder
    * @return Returns a set of records with key between the range passed as parameter.
    * 
    * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
    * 
    */
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive);
+  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
+      boolean iToInclusive, boolean ascSortOrder);
 
   public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-      IndexValuesResultListener resultListener);
+      boolean ascSortOrder, IndexValuesResultListener resultListener);
 
   /**
    * Returns a set of records with keys greater than passed parameter.
+   * 
    * 
    * @param fromKey
    *          Starting key.
    * @param isInclusive
    *          Indicates whether record with passed key will be included.
    * 
+   * @param ascSortOrder
    * @return set of records with keys greater than passed parameter.
    */
-  public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
+  public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder);
 
-  public abstract void getValuesMajor(Object fromKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
+  public abstract void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      IndexValuesResultListener valuesResultListener);
 
   /**
    * Returns a set of records with keys less than passed parameter.
+   * 
    * 
    * @param toKey
    *          Ending key.
    * @param isInclusive
    *          Indicates whether record with passed key will be included.
    * 
+   * @param ascSortOrder
    * @return set of records with keys less than passed parameter.
    */
-  public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
+  public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder);
 
-  public abstract void getValuesMinor(Object toKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
+  public abstract void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      IndexValuesResultListener valuesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -392,6 +374,8 @@ public interface OIndex<T> {
    * @return Valid ORID if it's persistent, otherwise ORID(-1:-1)
    */
   public ORID getIdentity();
+
+  ODocument getMetadata();
 
   public boolean supportsOrderedIterations();
 

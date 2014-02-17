@@ -16,8 +16,18 @@
 package com.orientechnologies.orient.console;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
@@ -179,7 +189,7 @@ public class OTableFormatter {
   }
 
   private void printHeaderLine(final Map<String, Integer> iColumns) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder("\n");
 
     if (iColumns.size() > 0) {
       int i = 0;

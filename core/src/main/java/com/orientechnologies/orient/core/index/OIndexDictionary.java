@@ -32,8 +32,10 @@ public class OIndexDictionary extends OIndexOneValue {
     super(typeId, algorithm, engine, valueContainerAlgorithm);
   }
 
-  public OIndexOneValue put(final Object key, final OIdentifiable value) {
+  public OIndexOneValue put(Object key, final OIdentifiable value) {
     modificationLock.requestModificationLock();
+
+    key = getCollatingValue(key);
 
     try {
       acquireExclusiveLock();
@@ -52,11 +54,13 @@ public class OIndexDictionary extends OIndexOneValue {
 
   @Override
   protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
     snapshot.put(key, value.getIdentity());
   }
 
   @Override
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
     snapshot.put(key, RemovedValue.INSTANCE);
   }
 

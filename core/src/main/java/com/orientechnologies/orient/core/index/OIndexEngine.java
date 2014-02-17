@@ -66,13 +66,13 @@ public interface OIndexEngine<V> {
   void put(Object key, V value);
 
   void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
+												boolean ascSortOrder, ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
 
-  void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener);
+  void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
+											ValuesResultListener valuesResultListener);
 
-  void getValuesMinor(final Object toKey, final boolean isInclusive, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener);
+  void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
+											ValuesResultListener valuesResultListener);
 
   void getEntriesMajor(final Object fromKey, final boolean isInclusive, ValuesTransformer<V> transformer,
       EntriesResultListener entriesResultListener);
@@ -84,9 +84,6 @@ public interface OIndexEngine<V> {
       EntriesResultListener entriesResultListener);
 
   long size(ValuesTransformer<V> transformer);
-
-  long count(Object rangeFrom, final boolean fromInclusive, Object rangeTo, final boolean toInclusive, final int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
 
   boolean hasRangeQuerySupport();
 

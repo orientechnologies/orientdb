@@ -36,7 +36,7 @@ public class OProfiler extends OAbstractProfiler {
   public OProfiler() {
   }
 
-  public OProfiler(final OProfiler profiler) {
+  public OProfiler(final OAbstractProfiler profiler) {
     super(profiler);
   }
 

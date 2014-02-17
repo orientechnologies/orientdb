@@ -15,16 +15,29 @@
  */
 package com.orientechnologies.common.profiler;
 
+import java.util.Locale;
+
 public class OProfilerEntry {
-  public String name    = null;
-  public long   entries = 0;
-  public long   last    = 0;
-  public long   min     = 999999999;
-  public long   max     = 0;
-  public long   average = 0;
-  public long   total   = 0;
-  public String payLoad;
-  public String description;
+  public String     name    = null;
+  public long       entries = 0;
+  public long       last    = 0;
+  public long       min     = 999999999;
+  public long       max     = 0;
+  public float      average = 0;
+  public long       total   = 0;
+  public final long firstExecution;
+  public long       lastExecution;
+  public String     payLoad;
+  public String     description;
+
+  public OProfilerEntry() {
+    firstExecution = System.currentTimeMillis();
+    lastExecution = firstExecution;
+  }
+
+  public void updateLastExecution() {
+    lastExecution = System.currentTimeMillis();
+  }
 
   public String toJSON() {
     final StringBuilder buffer = new StringBuilder();
@@ -34,20 +47,22 @@ public class OProfilerEntry {
 
   public void toJSON(final StringBuilder buffer) {
     buffer.append('{');
-    buffer.append(String.format("\"%s\":%d,", "entries", entries));
-    buffer.append(String.format("\"%s\":%d,", "last", last));
-    buffer.append(String.format("\"%s\":%d,", "min", min));
-    buffer.append(String.format("\"%s\":%d,", "max", max));
-    buffer.append(String.format("\"%s\":%d,", "average", average));
-    buffer.append(String.format("\"%s\":%d", "total", total));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "entries", entries));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "last", last));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "min", min));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "max", max));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%.2f,", "average", average));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
     if (payLoad != null)
-      buffer.append(String.format("\"%s\":%d", "payload", payLoad));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "payload", payLoad));
     buffer.append('}');
   }
 
   @Override
   public String toString() {
-    return String.format("Profiler entry [%s]: total=%d, average=%d, items=%d, last=%d, max=%d, min=%d", total, name, average,
+    return String.format("Profiler entry [%s]: total=%d, average=%.2f, items=%d, last=%d, max=%d, min=%d", total, name, average,
         entries, last, max, min);
   }
 }

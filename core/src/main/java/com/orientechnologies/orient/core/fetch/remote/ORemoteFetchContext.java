@@ -16,8 +16,6 @@
  */
 package com.orientechnologies.orient.core.fetch.remote;
 
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -30,48 +28,48 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
  * 
  */
 public class ORemoteFetchContext implements OFetchContext {
-	public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
-	}
+  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  }
 
-	public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
-	}
+  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  }
 
-	public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-	}
+  public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
-	}
+  public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  }
 
-	public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
-			throws OFetchException {
-	}
+  public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+      throws OFetchException {
+  }
 
-	public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
-	}
+  public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeDocument(ORecordSchemaAware<?> iRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
-			final Object iUserObject) throws OFetchException {
-	}
+  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
+      final Object iUserObject) throws OFetchException {
+  }
 
-	public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
-			final Collection<?> iCollection) throws OFetchException {
-	}
+  public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
+      final Iterable<?> iterable) throws OFetchException {
+  }
 
-	public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-	}
+  public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
 
-	public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
-	}
+  public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  }
 
-	public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
-			final Object iUserObject) throws OFetchException {
-	}
+  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
+      final Object iUserObject) throws OFetchException {
+  }
 
-	public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-			throws OFetchException {
-	}
+  public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+      throws OFetchException {
+  }
 
-	public boolean fetchEmbeddedDocuments() {
-		return false;
-	}
+  public boolean fetchEmbeddedDocuments() {
+    return false;
+  }
 }

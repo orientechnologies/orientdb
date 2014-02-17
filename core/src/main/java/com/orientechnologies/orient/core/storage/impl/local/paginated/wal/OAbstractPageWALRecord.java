@@ -23,10 +23,8 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @since 29.04.13
  */
 public abstract class OAbstractPageWALRecord extends OOperationUnitRecord {
-  private OLogSequenceNumber lsn;
-
-  private long               pageIndex;
-  private long               fileId;
+  private long pageIndex;
+  private long fileId;
 
   protected OAbstractPageWALRecord() {
   }
@@ -77,16 +75,6 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -118,6 +106,6 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitRecord {
 
   @Override
   public String toString() {
-    return "OAbstractPageWALRecord{" + "lsn=" + lsn + ", pageIndex=" + pageIndex + ", fileId=" + fileId + '}';
+    return toString("pageIndex=" + pageIndex + ", fileId=" + fileId);
   }
 }

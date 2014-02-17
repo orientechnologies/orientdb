@@ -31,13 +31,12 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Index that consist of several indexDefinitions like {@link OPropertyIndexDefinition}.
  */
 
-public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
+public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   private final List<OIndexDefinition> indexDefinitions;
   private String                       className;
   private int                          multiValueDefinitionIndex = -1;
@@ -53,8 +52,6 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
    *          - name of class which is owner of this index
    */
   public OCompositeIndexDefinition(final String iClassName) {
-    super(new ODocument());
-
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     className = iClassName;
   }
@@ -68,8 +65,6 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
    *          List of indexDefinitions to add in given index.
    */
   public OCompositeIndexDefinition(final String iClassName, final List<? extends OIndexDefinition> iIndexes) {
-    super(new ODocument());
-
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     for (OIndexDefinition indexDefinition : iIndexes) {
       indexDefinitions.add(indexDefinition);
@@ -369,6 +364,7 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
+    document.field("collate", collate.getName());
     return document;
   }
 
@@ -427,6 +423,8 @@ public class OCompositeIndexDefinition extends ODocumentWrapperNoClass implement
         if (indexDefinition instanceof OIndexDefinitionMultiValue)
           multiValueDefinitionIndex = indexDefinitions.size() - 1;
       }
+
+      setCollate((String) document.field("collate"));
 
     } catch (final ClassNotFoundException e) {
       throw new OIndexException("Error during composite index deserialization", e);

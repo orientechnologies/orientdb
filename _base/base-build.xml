@@ -41,7 +41,7 @@
         <mkdir dir="${project.lib}"/>
         <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}"
                target="${project.target-comp}" source="${project.source-comp}" verbose="false"
-               includeAntRuntime="false">
+               includeAntRuntime="false" encoding="UTF-8">
             <src path="${project.src}"/>
             <src path="${project.src2}"/>
             <classpath refid="project.classpath"/>

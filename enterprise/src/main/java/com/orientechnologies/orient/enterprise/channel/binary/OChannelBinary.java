@@ -20,7 +20,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -67,6 +72,19 @@ public abstract class OChannelBinary extends OChannel {
     }
 
     return in.readByte();
+  }
+
+  public boolean readBoolean() throws IOException {
+    updateMetricReceivedBytes(OBinaryProtocol.SIZE_BYTE);
+
+    if (debug) {
+      OLogManager.instance().info(this, "%s - Reading boolean (1 byte)...", socket.getRemoteSocketAddress());
+      final boolean value = in.readBoolean();
+      OLogManager.instance().info(this, "%s - Read boolean: %b", socket.getRemoteSocketAddress(), value);
+      return value;
+    }
+
+    return in.readBoolean();
   }
 
   public int readInt() throws IOException {
@@ -269,6 +287,15 @@ public abstract class OChannelBinary extends OChannel {
       OLogManager.instance().info(this, "%s - Writing byte (1 byte): %d", socket.getRemoteSocketAddress(), iContent);
 
     out.write(iContent);
+    updateMetricTransmittedBytes(OBinaryProtocol.SIZE_BYTE);
+    return this;
+  }
+
+  public OChannelBinary writeBoolean(final boolean iContent) throws IOException {
+    if (debug)
+      OLogManager.instance().info(this, "%s - Writing boolean (1 byte): %b", socket.getRemoteSocketAddress(), iContent);
+
+    out.writeBoolean(iContent);
     updateMetricTransmittedBytes(OBinaryProtocol.SIZE_BYTE);
     return this;
   }

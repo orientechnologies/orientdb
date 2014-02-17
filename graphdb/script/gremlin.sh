@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #set current working directory
-cd "$(dirname "$0")"
+cd `dirname $0`
 
 case `uname` in
   CYGWIN*)

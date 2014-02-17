@@ -28,13 +28,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
@@ -141,7 +144,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     lock.acquireExclusiveLock();
     try {
 
@@ -149,6 +152,8 @@ public class OStorageMemory extends OStorageEmbedded {
         return;
 
       status = STATUS.CLOSING;
+
+      super.close(iForce, onDelete);
 
       // CLOSE ALL THE CLUSTERS
       for (OClusterMemory c : clusters)
@@ -165,8 +170,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
       level2Cache.shutdown();
 
-      super.close(iForce);
-
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
 
@@ -176,16 +179,17 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public void delete() {
-    close(true);
+    close(true, false);
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 
@@ -365,18 +369,30 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
-    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones));
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+    return new OStorageOperationResult<ORawBuffer>(readRecord(getClusterById(iRid.clusterId), iRid, true, loadTombstones,
+        iLockingStrategy));
   }
 
   @Override
   protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
-      boolean loadTombstones) {
+      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireSharedLock();
     try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+      switch (iLockingStrategy) {
+      case DEFAULT:
+      case KEEP_SHARED_LOCK:
+        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        break;
+      case NONE:
+        // DO NOTHING
+        break;
+      case KEEP_EXCLUSIVE_LOCK:
+        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      }
+
       try {
         final OClusterPosition lastPos = iClusterSegment.getLastPosition();
 
@@ -397,7 +413,16 @@ public class OStorageMemory extends OStorageEmbedded {
         return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        switch (iLockingStrategy) {
+        case DEFAULT:
+          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          break;
+        case NONE:
+        case KEEP_SHARED_LOCK:
+        case KEEP_EXCLUSIVE_LOCK:
+          // DO NOTHING
+          break;
+        }
       }
     } catch (IOException e) {
       throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
@@ -994,6 +1019,11 @@ public class OStorageMemory extends OStorageEmbedded {
   @Override
   public String getType() {
     return OEngineMemory.NAME;
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return null;
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {

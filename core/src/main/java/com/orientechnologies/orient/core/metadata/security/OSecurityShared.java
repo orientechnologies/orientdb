@@ -132,6 +132,13 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
           if (iAllowOperation != null && iAllowOperation.contains(r.getDocument().getIdentity()))
             return true;
+		  // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's inheritance
+		  ORole parentRole = r.getParentRole();
+		  while (parentRole!=null){
+		   if (iAllowAll.contains(parentRole.getDocument().getIdentity())) return true;
+		   if (iAllowOperation != null && iAllowOperation.contains(parentRole.getDocument().getIdentity())) return true;
+		   parentRole=parentRole.getParentRole();
+		  }
         }
         return false;
       }
@@ -404,7 +411,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       roleClass.setSuperClass(identityClass);
 
     if (!roleClass.existsProperty("name")) {
-      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final Set<OIndex<?>> indexes = roleClass.getInvolvedIndexes("name");
@@ -427,7 +434,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       userClass.setSuperClass(identityClass);
 
     if (!userClass.existsProperty("name")) {
-      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
     if (!userClass.existsProperty("password"))
@@ -468,7 +475,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     return adminUser;
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
   }
 
   public void load() {
