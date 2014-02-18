@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,10 +37,12 @@ import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -384,6 +387,17 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           // ASSIGN A UNIQUE SERIAL TEMPORARY ID
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
             rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
+
+          if (iRecord instanceof ORecordSchemaAwareAbstract) {
+            final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) iRecord;
+            final OClass recordClass = recordSchemaAware.getSchemaClass();
+            final OClass clusterIdClass = database.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
+            if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+                || (recordClass != null && !recordClass.equals(clusterIdClass)))
+              throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
+                  + clusterIdClass + " but saved with class " + recordClass);
+          }
+
           rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(newObjectCounter--);
 
           iRecord.onAfterIdentityChanged(iRecord);

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -81,10 +82,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       } else
         iMarshalledRecords.add(record);
 
-    if (!iOnlyDelta && record.getSchemaClass() != null) {
+    if (record.getIdentity().getClusterId() < 0 && !iOnlyDelta && record.getSchemaClass() != null) {
       // MARSHALL THE CLASSNAME
       iOutput.append(record.getSchemaClass().getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
+    } else {
+      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (database != null && !database.getStorageVersions().classesAreDetectedByClusterId() && !iOnlyDelta
+          && record.getSchemaClass() != null) {
+        iOutput.append(record.getSchemaClass().getStreamableName());
+        iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
+      }
     }
 
     OProperty prop;
@@ -382,13 +390,18 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     // UNMARSHALL THE CLASS NAME
     final ODocument record = (ODocument) iRecord;
 
-    final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
-    int pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
-      record.setClassNameIfExists(iContent.substring(0, pos));
-      iContent = iContent.substring(pos + 1);
-    } else
-      record.setClassNameIfExists(null);
+    int pos;
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (record.getIdentity().getClusterId() < 0
+        || (database != null && !database.getStorageVersions().classesAreDetectedByClusterId())) {
+      final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
+      pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+      if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
+        record.setClassNameIfExists(iContent.substring(0, pos));
+        iContent = iContent.substring(pos + 1);
+      } else
+        record.setClassNameIfExists(null);
+    }
 
     if (iFields != null && iFields.length == 1 && iFields[0].equals("@class"))
       // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD

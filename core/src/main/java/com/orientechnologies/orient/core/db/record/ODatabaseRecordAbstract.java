@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
@@ -79,6 +80,7 @@ import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -116,6 +118,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private boolean                                     mvcc;
   private boolean                                     validation;
   private ODataSegmentStrategy                        dataSegmentStrategy = new ODefaultDataSegmentStrategy();
+  private OCurrentStorageVersions                     currentStorageVersions;
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
@@ -140,6 +143,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.open(iUserName, iUserPassword);
+
+      currentStorageVersions = new OCurrentStorageVersions(getStorage().getConfiguration());
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -216,6 +221,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
       super.create();
 
+      currentStorageVersions = new OCurrentStorageVersions(getStorage().getConfiguration());
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -269,6 +275,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       throw new ODatabaseException("Cannot create database", e);
     }
     return (DB) this;
+  }
+
+  @Override
+  public OCurrentStorageVersions getStorageVersions() {
+    return currentStorageVersions;
   }
 
   @Override
@@ -836,14 +847,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (isNew && rid.clusterId < 0)
           rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
-        if (rid.clusterId > -1 && iClusterName == null)
-          iClusterName = getClusterNameById(rid.clusterId);
+        if (rid.clusterId > -1) {
+          if (iClusterName == null)
+            iClusterName = getClusterNameById(rid.clusterId);
+
+          if (isNew && record instanceof ORecordSchemaAwareAbstract) {
+            final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) record;
+            final OClass recordClass = recordSchemaAware.getSchemaClass();
+            final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);
+            if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+                || (recordClass != null && !recordClass.equals(clusterIdClass)))
+              throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
+                  + clusterIdClass + " but saved with class " + recordClass);
+          }
+        }
+
+        if (wasNew)
+          checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+        else
+          checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
 
         if (stream != null && stream.length > 0) {
           if (iCallTriggers)
             if (wasNew) {
               // CHECK ACCESS ON CLUSTER
-              checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
               if (callbackHooks(TYPE.BEFORE_CREATE, record) == RESULT.RECORD_CHANGED) {
                 // RECORD CHANGED IN TRIGGER, REACQUIRE IT
                 record.unsetDirty();
@@ -855,7 +882,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
               }
             } else {
               // CHECK ACCESS ON CLUSTER
-              checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
               if (callbackHooks(TYPE.BEFORE_UPDATE, record) == RESULT.RECORD_CHANGED) {
                 // RECORD CHANGED IN TRIGGER, REACQUIRE IT
                 record.unsetDirty();

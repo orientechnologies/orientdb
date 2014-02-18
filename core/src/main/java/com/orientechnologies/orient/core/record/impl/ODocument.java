@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
@@ -133,6 +130,16 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument(final String iClassName, final ORID iRID) {
     this(iClassName);
     _recordId = (ORecordId) iRID;
+
+    final ODatabaseRecord database = getDatabase();
+    if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      final OSchema schema = database.getMetadata().getSchema();
+      final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
+      if (cls != null && !cls.getName().equals(iClassName))
+        throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
+            + cls.getName());
+    }
+
     _dirty = false;
     _status = STATUS.NOT_LOADED;
   }
