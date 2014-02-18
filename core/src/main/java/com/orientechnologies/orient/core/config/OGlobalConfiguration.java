@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
-
 import java.io.PrintStream;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
@@ -30,6 +22,14 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.ODefaultCache;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -56,8 +56,8 @@ public enum OGlobalConfiguration {
       "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
       String.class, "70%"),
 
-  DIRECT_MEMORY_UNSAFE_MODE(
-      "memory.directMemory.unsafeMode",
+  DIRECT_MEMORY_SAFE_MODE(
+      "memory.directMemory.safeMode",
       "Indicates whether to do perform range check before each direct memory update, it is false by default, "
           + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
       Boolean.class, false),
@@ -698,6 +698,6 @@ public enum OGlobalConfiguration {
     }
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
+    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
   }
 }
