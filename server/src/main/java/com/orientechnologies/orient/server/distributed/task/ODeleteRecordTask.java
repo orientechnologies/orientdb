@@ -15,22 +15,23 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed delete record task used for synchronization.
@@ -55,14 +56,13 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
         database.getName(), rid.toString(), version.toString());
 
     final ORecordInternal<?> record = database.load(rid);
+    if (record.getRecordVersion().equals(version))
+      // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
+      ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
+    else
+      throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
 
-    final OBuffer buffer;
-    if (record != null) {
-      buffer = new OBuffer(record.toStream());
-      record.delete();
-    } else
-      buffer = new OBuffer();
-    return buffer;
+    return true;
   }
 
   @Override
@@ -71,9 +71,13 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OFixDeleteRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
-      final ODistributedResponse iGoodResponse) {
-    return new OFixDeleteRecordTask(rid, version);
+  public OResurrectRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+    return new OResurrectRecordTask(rid, version);
+  }
+
+  @Override
+  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    return new OResurrectRecordTask(rid, version);
   }
 
   @Override

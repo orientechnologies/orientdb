@@ -82,14 +82,24 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   /**
    * Returns a Transactional OrientGraph implementation from the current database in thread local.
    * 
-   * @return
+   * @param autoStartTx
+   *          Whether returned graph will start transaction before each operation till commit automatically or user should do it
+   *          explicitly be calling {@link OrientGraph#getRawGraph()} method {@link ODatabaseDocumentTx#begin()}.
+   * 
+   * @return Transactional OrientGraph implementation from the current database in thread local.
    */
-  public static OrientGraph getGraph() {
+  public static OrientGraph getGraph(boolean autoStartTx) {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof ODatabaseDocumentTx))
       database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
 
-    return new OrientGraph((ODatabaseDocumentTx) database);
+    final OrientGraph orientGraph = new OrientGraph((ODatabaseDocumentTx) database);
+    if (!autoStartTx) {
+      orientGraph.setAutoStartTx(autoStartTx);
+      orientGraph.commit();
+    }
+
+    return orientGraph;
   }
 
   /**
@@ -109,10 +119,9 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final ODatabaseRecord databaseRecord = getDatabase();
     final boolean txWasActive = databaseRecord.getTransaction().isActive();
 
-    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
-		graph.setAutoStartTx(false);
-		if(!txWasActive)
-			graph.getRawGraph().begin();
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    if (!txWasActive)
+      graph.getRawGraph().begin();
 
     try {
       final T result = callBack.call(graph);

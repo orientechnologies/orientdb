@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OHazelcastDistributedMessageService implements ODistributedMessageService {
 
+  public static final int                                              MAX_MESSAGES                = 20;
   protected final OHazelcastPlugin                                     manager;
 
   protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
@@ -89,6 +90,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     new Thread(new Runnable() {
       @Override
       public void run() {
+        Thread.currentThread().setName("OrientDB Node Response " + queueName);
         while (!Thread.interrupted()) {
           String senderNode = null;
           ODistributedResponse message = null;
@@ -122,6 +124,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     return new OHazelcastDistributedRequest();
   }
 
+  /**
+   * Not synchronized, it's called when a message arrives
+   * 
+   * @param response
+   */
   protected void dispatchResponseToThread(final ODistributedResponse response) {
     try {
       final long reqId = response.getRequestId();
@@ -133,8 +140,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
               "received response for message %d after the timeout (%dms)", reqId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
-      } else if (asynchMgr.addResponse(response))
-        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER
+      } else if (asynchMgr.collectResponse(response))
+        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
         responsesByRequestIds.remove(reqId);
 
     } finally {
@@ -205,7 +212,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       final long timeElapsed = now - resp.getSentOn();
 
       if (timeElapsed > timeout) {
-        // EXPIRED, FREE IT!
+        // EXPIRED REQUEST, FREE IT!
         final List<String> missingNodes = resp.getMissingNodes();
 
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), missingNodes.toString(), DIRECTION.IN,
@@ -294,7 +301,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     doc.field("serviceName", queue.getServiceName());
 
     doc.field("size", queue.size());
-    doc.field("nextElement", queue.peek());
+    // doc.field("nextElement", queue.peek());
 
     final LocalQueueStats stats = queue.getLocalQueueStats();
     doc.field("minAge", stats.getMinAge());
@@ -310,6 +317,18 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
     doc.field("ownedItemCount", stats.getOwnedItemCount());
     doc.field("rejectedOfferOperationCount", stats.getRejectedOfferOperationCount());
+
+    List<Object> nextMessages = new ArrayList<Object>(MAX_MESSAGES);
+    for (Iterator<Object> it = queue.iterator(); it.hasNext();) {
+      Object next = it.next();
+      if (next != null)
+        nextMessages.add(next.toString());
+
+      if (nextMessages.size() >= MAX_MESSAGES)
+        break;
+    }
+
+    doc.field("nextMessages", nextMessages);
 
     return doc;
   }

@@ -20,7 +20,7 @@ start() {
 	fi
 	echo "Starting OrientDB server daemon..."
 	cd "$ORIENTDB_DIR/bin"
-	su -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./server.sh 1>../log/orientdb.log 2>../log/orientdb.err &" - $ORIENTDB_USER
+	su $ORIENTDB_USER -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./server.sh 1>../log/orientdb.log 2>../log/orientdb.err &"
 }
 
 stop() {
@@ -32,7 +32,7 @@ stop() {
 	fi
 	echo "Stopping OrientDB server daemon..."
 	cd "$ORIENTDB_DIR/bin"
-	su -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./shutdown.sh 1>>../log/orientdb.log 2>>../log/orientdb.err &" - $ORIENTDB_USER
+	su $ORIENTDB_USER -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./shutdown.sh 1>>../log/orientdb.log 2>>../log/orientdb.err &"
 }
 
 status() {
@@ -41,7 +41,7 @@ status() {
 	then
 		PID=0
 	fi
-	
+
 	# if PID is greater than 0 then OrientDB is running, else it is not
 	return $PID
 }

@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 
 /**
  * Base class for Replicated tasks.
@@ -27,8 +26,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
 
-  public abstract OAbstractRemoteTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
-      ODistributedResponse iGoodResponse);
+  public OAbstractRemoteTask getFixTask(ODistributedRequest iRequest, Object iBadResponse,
+                                         Object iGoodResponse) {
+    return null;
+  }
+
+  public OAbstractRemoteTask getUndoTask(ODistributedRequest iRequest, Object iBadResponse) {
+    return null;
+  }
 
   public abstract String getPayload();
 }

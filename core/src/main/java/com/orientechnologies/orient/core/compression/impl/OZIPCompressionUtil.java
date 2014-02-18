@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
@@ -144,8 +145,8 @@ public class OZIPCompressionUtil {
         if (iOutput != null) {
           final long ratio = 100 - (ze.getCompressedSize() * 100 / ze.getSize());
 
-          iOutput.onMessage("ok size=" + ze.getSize() + " compressedSize=" + ze.getCompressedSize() + "ratio=" + ratio
-              + "% elapsed: " + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
+          iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
+              + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
         }
 
         total++;

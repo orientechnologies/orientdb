@@ -169,7 +169,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           .updateCounter("distributed.replication." + databaseName + ".msgSent",
               "Number of replication messages sent from current node", +1, "distributed.replication.*.msgSent");
 
-      return collectResponses(iRequest, currentResponseMgr);
+      return waitForResponse(iRequest, currentResponseMgr);
 
     } catch (Throwable e) {
       throw new ODistributedException("Error on sending distributed request against database '" + databaseName
@@ -245,14 +245,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return quorum;
   }
 
-  protected ODistributedResponse collectResponses(final ODistributedRequest iRequest,
+  protected ODistributedResponse waitForResponse(final ODistributedRequest iRequest,
       final ODistributedResponseManager currentResponseMgr) throws InterruptedException {
     if (iRequest.getExecutionMode() == ODistributedRequest.EXECUTION_MODE.NO_RESPONSE)
       return null;
 
     final long beginTime = System.currentTimeMillis();
 
-    // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (WRITE QUORUM)
+    // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)
     if (!currentResponseMgr.waitForSynchronousResponses()) {
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
           "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s",
@@ -264,8 +264,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       ODistributedServerLog.warn(this, getLocalNodeName(), manager.getLocalNodeName(), DIRECTION.IN,
           "no response received from local node about request %s", iRequest);
 
-    // QUORUM REACHED
-    return currentResponseMgr.getResponse(iRequest.getTask().getResultStrategy());
+    return currentResponseMgr.getFinalResponse();
   }
 
   public boolean isRestoringMessages() {
@@ -289,6 +288,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     listenerThread = new Thread(new Runnable() {
       @Override
       public void run() {
+        Thread.currentThread().setName("OrientDB Node Request " + queueName);
         while (!Thread.interrupted()) {
           if (restoringMessages && requestQueue.isEmpty()) {
             // END OF RESTORING MESSAGES, SET IT ONLINE
@@ -517,6 +517,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           "restore last replication message before the crash for database %s: %s", databaseName, undoRequest);
 
       try {
+        initDatabaseInstance();
         onMessage(undoRequest);
       } catch (Throwable t) {
         ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,

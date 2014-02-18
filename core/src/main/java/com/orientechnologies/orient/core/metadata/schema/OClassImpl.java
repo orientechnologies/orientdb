@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -1167,20 +1169,30 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     for (final String fieldToIndex : fields) {
       final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
       if (!existingFieldNames.contains(fieldName.toLowerCase()))
-        throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name + "' because field: '"
-            + fieldName + "' is absent in class definition.");
+        throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
+            + "' because field: '" + fieldName + "' is absent in class definition.");
     }
 
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
         extractFieldTypes(fields));
 
-    if (fields.length == 1) {
-      // TRY TO DETERMINE THE COLLATE IF ANY
-      final OProperty p = getProperty(fields[0]);
+    // BROWSE ALL THE FIELDS TO DETERMINE THE COLLATE TO USE ON INDEX
+    OCollate collate = null;
+    for (int i = 0; i < fields.length; ++i) {
+      final OProperty p = getProperty(fields[i]);
       if (p != null) {
-        indexDefinition.setCollate(p.getCollate());
+        if (collate == null)
+          collate = p.getCollate();
+        else if (!collate.equals(p.getCollate())) {
+          collate = null;
+          break;
+        }
       }
     }
+
+    if (collate != null && !(collate instanceof ODefaultCollate))
+      // INHERIT THE PROPERTIES COLLATE
+      indexDefinition.setCollate(collate);
 
     return getDatabase().getMetadata().getIndexManager()
         .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata);
