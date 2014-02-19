@@ -111,6 +111,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.getSerializerFactory();
   }
 
+  public void setSerializerFactory(OBinarySerializerFactory factory) {
+    underlying.setSerializerFactory(factory);
+  }
+
   public OTransaction getTransaction() {
     return underlying.getTransaction();
   }

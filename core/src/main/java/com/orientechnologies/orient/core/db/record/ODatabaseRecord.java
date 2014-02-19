@@ -161,4 +161,6 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
   public OCurrentStorageVersions getStorageVersions();
 
   OBinarySerializerFactory getSerializerFactory();
+
+  void setSerializerFactory(OBinarySerializerFactory oBinarySerializerFactory);
 }

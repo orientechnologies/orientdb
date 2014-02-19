@@ -162,4 +162,8 @@ public class OBinarySerializerFactory {
   public static OBinarySerializerFactory getInstance() {
     return ODatabaseRecordThreadLocal.INSTANCE.get().getSerializerFactory();
   }
+
+  public static void registerFactory(OCurrentStorageVersions storageVersions) {
+    ODatabaseRecordThreadLocal.INSTANCE.get().setSerializerFactory(create(storageVersions));
+  }
 }

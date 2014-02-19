@@ -145,8 +145,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final OStorage storage = getStorage();
       currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
 
-      binarySerializerFactory = OBinarySerializerFactory.create(currentStorageVersions);
-
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -226,8 +224,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final OStorage storage = getStorage();
       currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
 
-      binarySerializerFactory = OBinarySerializerFactory.create(currentStorageVersions);
-
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -286,6 +282,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   @Override
   public OBinarySerializerFactory getSerializerFactory() {
     return binarySerializerFactory;
+  }
+
+  @Override
+  public void setSerializerFactory(OBinarySerializerFactory factory) {
+    binarySerializerFactory = factory;
   }
 
   @Override
