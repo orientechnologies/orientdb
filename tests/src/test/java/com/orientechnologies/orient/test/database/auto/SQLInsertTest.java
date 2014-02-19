@@ -53,6 +53,9 @@ public class SQLInsertTest {
 
   @Test
   public void insertOperator() {
+		if (database.getURL().startsWith("local:"))
+			return;
+
     database.open("admin", "admin");
 
     final int clId = database.addCluster("anotherdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
@@ -275,7 +278,10 @@ public class SQLInsertTest {
 
   @Test
   public void insertCluster() {
-    database.open("admin", "admin");
+		if (database.getURL().startsWith("local:"))
+			return;
+
+		database.open("admin", "admin");
 
     ODocument doc = database.command(
         new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();

@@ -472,11 +472,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
         if (!(c instanceof OClusterLocal))
           continue;
 
-        // mvrbtree is not used any more so just skip it.
-        if (c.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
-            || c.getName().equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
-          continue;
-
         formatMessage(iVerbose, iListener, "\n- data-cluster #%-5d %s -> ", c.getId(), c.getName());
 
         // BROWSE ALL THE RECORDS
@@ -570,11 +565,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
         if (d == null)
           continue;
 
-        // mvrbtree is not used any more so just skip it.
-        if (d.getName().equals(OMetadataDefault.DATASEGMENT_INDEX_NAME)
-            || d.getName().equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
-          continue;
-
         formatMessage(iVerbose, iListener, "\n- data-segment %s (id=%d) size=%d/%d...", d.getName(), d.getId(), d.getFilledUpTo(),
             d.getSize(), d.getHoles());
 
@@ -660,7 +650,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
                       d.getName(), totalChunks, pos, recordSize, rid);
                   warnings++;
                 } else {
-                  if (rid.clusterId >= clusters.length || rid.clusterId < 0) {
+                  if (rid.clusterId >= clusters.length) {
                     formatMessage(
                         iVerbose,
                         iListener,
