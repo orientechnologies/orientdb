@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -25,6 +37,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -81,18 +94,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1098,7 +1099,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.exists");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    if (storageType != null)
+      connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    else {
+      // CHECK AGAINST ALL THE ENGINE TYPES
+      for (String engine : Orient.instance().getEngines()) {
+        connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, engine);
+        if (connection.database.exists())
+          break;
+      }
+    }
 
     beginResponse();
     try {
@@ -1303,14 +1313,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (!isConnectionAlive())
         return;
 
-       // ASSIGNED THE PARSED FETCHPLAN
+      // ASSIGNED THE PARSED FETCHPLAN
       listener.setFetchPlan(connection.database.command(command).getFetchPlan());
 
       final Object result = connection.database.command(command).execute();
 
       // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
       listener.setFetchPlan(command.getFetchPlan());
-
 
       if (asynch) {
         // ASYNCHRONOUS
