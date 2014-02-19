@@ -82,14 +82,17 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           throw new OCommandSQLParsingException("Class '" + word + " was not found");
       }
 
-      if (rid == null && clazz == null)
-        // DELETE ALL VERTEXES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from V", this));
-
       word = parseOptionalWord(true);
       if (parserIsEnded())
         break;
     }
+
+    if (query == null && rid == null)
+      if (clazz == null)
+        // DELETE ALL VERTEXES
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from V", this));
+      else
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName(), this));
 
     return this;
   }
