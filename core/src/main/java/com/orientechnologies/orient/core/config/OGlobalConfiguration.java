@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -30,6 +22,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+
+import java.io.PrintStream;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -513,6 +513,12 @@ public enum OGlobalConfiguration {
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
+      "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
+      "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
 
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
       Integer.class, 5000l),
