@@ -456,7 +456,7 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0 && (waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) {
+      while (currentTimeout > 0 && ( (waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) ) {
         // WAIT FOR THE RESPONSES
         if (synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS))
           break;
