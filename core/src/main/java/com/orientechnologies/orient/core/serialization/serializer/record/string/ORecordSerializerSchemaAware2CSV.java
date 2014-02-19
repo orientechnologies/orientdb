@@ -88,7 +88,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     } else {
       final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (database != null && !database.getStorageVersions().classesAreDetectedByClusterId() && !iOnlyDelta
+      if ((database == null || !database.getStorageVersions().classesAreDetectedByClusterId()) && !iOnlyDelta
           && record.getSchemaClass() != null) {
         iOutput.append(record.getSchemaClass().getStreamableName());
         iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
@@ -392,8 +392,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     int pos;
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (record.getIdentity().getClusterId() < 0
-        || (database != null && !database.getStorageVersions().classesAreDetectedByClusterId())) {
+    if (record.getIdentity().getClusterId() < 0 || database == null
+        || !database.getStorageVersions().classesAreDetectedByClusterId()) {
       final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
       pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
       if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {

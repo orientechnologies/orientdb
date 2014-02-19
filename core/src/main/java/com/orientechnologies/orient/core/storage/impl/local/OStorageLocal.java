@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -471,6 +472,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
         if (!(c instanceof OClusterLocal))
           continue;
 
+        // mvrbtree is not used any more so just skip it.
+        if (c.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
+            || c.getName().equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+          continue;
+
         formatMessage(iVerbose, iListener, "\n- data-cluster #%-5d %s -> ", c.getId(), c.getName());
 
         // BROWSE ALL THE RECORDS
@@ -564,6 +570,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
         if (d == null)
           continue;
 
+        // mvrbtree is not used any more so just skip it.
+        if (d.getName().equals(OMetadataDefault.DATASEGMENT_INDEX_NAME)
+            || d.getName().equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+          continue;
+
         formatMessage(iVerbose, iListener, "\n- data-segment %s (id=%d) size=%d/%d...", d.getName(), d.getId(), d.getFilledUpTo(),
             d.getSize(), d.getHoles());
 
@@ -649,7 +660,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
                       d.getName(), totalChunks, pos, recordSize, rid);
                   warnings++;
                 } else {
-                  if (rid.clusterId >= clusters.length) {
+                  if (rid.clusterId >= clusters.length || rid.clusterId < 0) {
                     formatMessage(
                         iVerbose,
                         iListener,

@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -93,14 +92,12 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -144,7 +141,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
       super.open(iUserName, iUserPassword);
 
-      currentStorageVersions = new OCurrentStorageVersions(getStorage().getConfiguration());
+      final OStorage storage = getStorage();
+      currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -221,7 +219,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
       super.create();
 
-      currentStorageVersions = new OCurrentStorageVersions(getStorage().getConfiguration());
+      final OStorage storage = getStorage();
+      currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -851,7 +850,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (iClusterName == null)
             iClusterName = getClusterNameById(rid.clusterId);
 
-          if (isNew && record instanceof ORecordSchemaAwareAbstract) {
+          if (getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ORecordSchemaAwareAbstract) {
             final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) record;
             final OClass recordClass = recordSchemaAware.getSchemaClass();
             final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);

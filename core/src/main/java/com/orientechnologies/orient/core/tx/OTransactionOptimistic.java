@@ -388,7 +388,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
             rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
 
-          if (iRecord instanceof ORecordSchemaAwareAbstract) {
+          if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ORecordSchemaAwareAbstract) {
             final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) iRecord;
             final OClass recordClass = recordSchemaAware.getSchemaClass();
             final OClass clusterIdClass = database.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
