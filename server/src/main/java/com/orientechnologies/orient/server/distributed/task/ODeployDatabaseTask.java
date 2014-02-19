@@ -19,6 +19,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
@@ -72,7 +73,8 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
           FileOutputStream fileOutputStream = new FileOutputStream(f);
           try {
-            database.backup(fileOutputStream, null, null, this, 7, CHUNK_MAX_SIZE);
+            database.backup(fileOutputStream, null, null, this,
+                OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
             fileSize = f.length();
 
@@ -122,7 +124,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public long getTimeout() {
-    return 1200000; // 20 MINUTES
+    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override
