@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
  * Generic interface for record based Database implementations.
@@ -158,4 +159,6 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
   public OSBTreeCollectionManager getSbTreeCollectionManager();
 
   public OCurrentStorageVersions getStorageVersions();
+
+  OBinarySerializerFactory getSerializerFactory();
 }

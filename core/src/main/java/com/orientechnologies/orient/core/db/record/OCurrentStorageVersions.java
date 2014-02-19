@@ -29,11 +29,15 @@ public class OCurrentStorageVersions {
     this.storageVersion = configuration.storageVersion;
   }
 
-	/**
-	 * @return Whether class of is detected by cluster id or it is taken from documents serialized content.
-	 * @since 1.7
-	 */
+  /**
+   * @return Whether class of is detected by cluster id or it is taken from documents serialized content.
+   * @since 1.7
+   */
   public boolean classesAreDetectedByClusterId() {
     return storageVersion >= 10;
+  }
+
+  public boolean legacyStringSerializer() {
+    return storageVersion <= 8;
   }
 }

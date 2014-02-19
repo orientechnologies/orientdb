@@ -82,6 +82,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -92,7 +93,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
@@ -116,6 +116,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private boolean                                     validation;
   private ODataSegmentStrategy                        dataSegmentStrategy = new ODefaultDataSegmentStrategy();
   private OCurrentStorageVersions                     currentStorageVersions;
+  private OBinarySerializerFactory                    binarySerializerFactory;
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
@@ -143,6 +144,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       final OStorage storage = getStorage();
       currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
+
+      binarySerializerFactory = OBinarySerializerFactory.create(currentStorageVersions);
+
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -221,6 +225,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       final OStorage storage = getStorage();
       currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
+
+      binarySerializerFactory = OBinarySerializerFactory.create(currentStorageVersions);
+
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
@@ -274,6 +281,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       throw new ODatabaseException("Cannot create database", e);
     }
     return (DB) this;
+  }
+
+  @Override
+  public OBinarySerializerFactory getSerializerFactory() {
+    return binarySerializerFactory;
   }
 
   @Override

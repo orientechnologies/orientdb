@@ -268,8 +268,10 @@ public class OStorageConfiguration implements OSerializableStream {
 
     if (version >= 7)
       storageVersion = Integer.parseInt(read(values[index++]));
-    else
+    else if (version == 6)
       storageVersion = 9;
+    else
+      storageVersion = 8;
 
     return this;
   }

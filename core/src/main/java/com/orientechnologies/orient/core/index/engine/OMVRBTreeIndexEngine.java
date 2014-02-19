@@ -98,7 +98,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
           if (indexDefinition.getTypes().length > 1) {
             keySerializer = OCompositeKeySerializer.INSTANCE;
           } else {
-            keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
+            keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
           }
           map = new OMVRBTreeDatabaseLazySave<Object, V>(clusterIndexName, (OBinarySerializer<Object>) keySerializer,
               valueSerializer, indexDefinition.getTypes().length, maxUpdatesBeforeSave);
@@ -405,19 +405,19 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     final OMVRBTreeEntry<Object, V> lastEntry;
 
-		final OMVRBTreeEntry<Object, V> firstEntry;
+    final OMVRBTreeEntry<Object, V> firstEntry;
 
-		if (toInclusive)
-			firstEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
-		else
-			firstEntry = map.getLowerEntry(rangeTo);
+    if (toInclusive)
+      firstEntry = map.getCeilingEntry(rangeTo, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+    else
+      firstEntry = map.getLowerEntry(rangeTo);
 
-		if (firstEntry == null)
-			return;
+    if (firstEntry == null)
+      return;
 
-		final int firstEntryIndex = map.getPageIndex();
+    final int firstEntryIndex = map.getPageIndex();
 
-		if (fromInclusive)
+    if (fromInclusive)
       lastEntry = map.getLowerEntry(rangeFrom);
     else
       lastEntry = map.getCeilingEntry(rangeFrom, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
