@@ -909,11 +909,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return;
 
     final long msgDelta = maxQSize - secondMaxQSize;
-    if (msgDelta > 50) {
+    if (msgDelta > 100) {
       // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
       // "slowing down request to avoid to fill queues. Wait for %dms...", msgDelta);
       try {
-        Thread.sleep(msgDelta - 50);
+        Thread.sleep((msgDelta - 100) * 10);
       } catch (InterruptedException e) {
       }
     }
