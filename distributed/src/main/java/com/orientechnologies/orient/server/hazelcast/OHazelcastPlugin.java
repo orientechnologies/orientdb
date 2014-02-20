@@ -683,7 +683,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
             // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY MSG ARRIVES
-            distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class, true);
+            distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class, false);
             try {
 
               distrDatabase.configureDatabase(false, false);

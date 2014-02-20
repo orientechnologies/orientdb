@@ -384,6 +384,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedRequest req = null;
 
     if (waitForTaskType == null && !skippedMessages.isEmpty())
+      // GET IT FROM THE IN MEMORY LIST
       req = skippedMessages.remove(0);
 
     if (req == null)
