@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -146,6 +146,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     final StringBuilder buffer = new StringBuilder();
     buffer.append("id=");
     buffer.append(id);
+    buffer.append(" from=");
+    buffer.append(senderNodeName);
     if (task != null) {
       buffer.append(" task=");
       buffer.append(task.toString());

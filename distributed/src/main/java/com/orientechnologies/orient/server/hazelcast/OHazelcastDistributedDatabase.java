@@ -349,9 +349,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         manager.getLocalNodeName(), databaseName);
 
     // SET THE NODE.DB AS ONLINE
-
-    manager.getConfigurationMap()
-        .put(OHazelcastPlugin.CONFIG_STATUS_PREFIX + manager.getLocalNodeName() + "." + databaseName, true);
+    manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
@@ -540,8 +538,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final List<String> foundPartition = cfg.addNewNodeInPartitions(manager.getLocalNodeName());
     if (foundPartition != null) {
       // SET THE NODE.DB AS OFFLINE
-      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_STATUS_PREFIX + manager.getLocalNodeName() + "." + databaseName,
-          false);
+      manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
 
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
           manager.getLocalNodeName(), databaseName, foundPartition);

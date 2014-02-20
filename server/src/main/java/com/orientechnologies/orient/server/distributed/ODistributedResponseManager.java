@@ -186,8 +186,9 @@ public class ODistributedResponseManager {
         }
 
         if (availableNodes < quorum) {
-          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "overridden quorum because available nodes are less than quorum, received responses: %s", responses);
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "overridden quorum (%d) because available nodes (%d) are less than quorum, received responses: %s", quorum,
+              availableNodes, responses);
           return true;
         }
       }
@@ -456,13 +457,26 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0 && ( (waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) ) {
+      while (currentTimeout > 0 && ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses)) {
         // WAIT FOR THE RESPONSES
-        if (synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS))
+        synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
+
+        if ((!waitForLocalNode || receivedCurrentNode) && (receivedResponses >= expectedSynchronousResponses))
+          // OK
           break;
 
-        final long elapsed = System.currentTimeMillis() - beginTime;
+        final long now = System.currentTimeMillis();
+        final long elapsed = now - beginTime;
         currentTimeout = synchTimeout - elapsed;
+
+        final long lastMemberAddedOn = dManager.getLastClusterChangeOn();
+        if (lastMemberAddedOn > 0 && now - lastMemberAddedOn < (synchTimeout * 2)) {
+          // NEW NODE DURING WAIT: ENLARGE TIMEOUT
+          currentTimeout += synchTimeout;
+          ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "cluster shape changed during request %s: enlarge timeout +%dms, wait again for %dms", request, synchTimeout,
+              currentTimeout);
+        }
       }
 
       return receivedResponses >= expectedSynchronousResponses;

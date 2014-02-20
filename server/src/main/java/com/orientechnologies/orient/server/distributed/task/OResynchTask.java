@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Execute a resynch task to align asynchronous nodes.
@@ -47,6 +47,14 @@ public class OResynchTask extends OAbstractRemoteTask {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  }
+
+  public long getSynchronousTimeout(final int iSynchNodes) {
+    return super.getSynchronousTimeout(iSynchNodes) * 3;
+  }
+
+  public long getTotalTimeout(final int iTotalNodes) {
+    return super.getTotalTimeout(iTotalNodes) * 3;
   }
 
   public QUORUM_TYPE getQuorumType() {
