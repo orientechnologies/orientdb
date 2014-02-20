@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
+import org.junit.Test;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class TestLoadGraph {
   private static final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
@@ -51,7 +51,11 @@ public class TestLoadGraph {
 
     System.out.println("Imported in " + (System.currentTimeMillis() - startTime) + "ms. Vertexes: " + g.countVertices());
 
+    g.command(new OCommandSQL("alter database TIMEZONE GMT")).execute();
+    g.command(new OCommandSQL("alter database LOCALECOUNTRY UK")).execute();
+    g.command(new OCommandSQL("alter database LOCALELANGUAGE EN")).execute();
+
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldKeepOpen);
-    //g.drop();
+    // g.drop();
   }
 }

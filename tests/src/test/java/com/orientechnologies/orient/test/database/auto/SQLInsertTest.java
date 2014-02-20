@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -51,7 +53,14 @@ public class SQLInsertTest {
 
   @Test
   public void insertOperator() {
+		if (database.getURL().startsWith("local:"))
+			return;
+
     database.open("admin", "admin");
+
+    final int clId = database.addCluster("anotherdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
+    profileClass.addClusterId(clId);
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
@@ -269,13 +278,16 @@ public class SQLInsertTest {
 
   @Test
   public void insertCluster() {
-    database.open("admin", "admin");
+		if (database.getURL().startsWith("local:"))
+			return;
 
-    ODocument doc = (ODocument) database.command(
-        new OCommandSQL("insert into Account cluster default (id, title) values (10, 'NoSQL movement')")).execute();
+		database.open("admin", "admin");
+
+    ODocument doc = database.command(
+        new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();
 
     Assert.assertTrue(doc != null);
-    Assert.assertEquals(doc.getIdentity().getClusterId(), database.getDefaultClusterId());
+    Assert.assertEquals(doc.getIdentity().getClusterId(), database.getClusterIdByName("anotherdefault"));
     Assert.assertEquals(doc.getClassName(), "Account");
 
     database.close();

@@ -277,7 +277,7 @@ public class ODistributedResponseManager {
       final List<ODistributedResponse> res = getConflictResponses();
       if (res.isEmpty())
         msg.append(" no server in conflict");
-      else{
+      else {
         for (ODistributedResponse r : res) {
           msg.append("\n- ");
           msg.append(r.getExecutorNodeName());
@@ -455,13 +455,15 @@ public class ODistributedResponseManager {
     synchronousResponsesLock.lock();
     try {
 
-      do {
-        if ((waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) {
-          // WAIT FOR THE RESPONSES
-          if (synchronousResponsesArrived.await(synchTimeout, TimeUnit.MILLISECONDS))
-            break;
-        }
-      } while (waitForLocalNode && !receivedCurrentNode);
+      long currentTimeout = synchTimeout;
+      while (currentTimeout > 0 && ( (waitForLocalNode && !receivedCurrentNode) || receivedResponses < expectedSynchronousResponses) ) {
+        // WAIT FOR THE RESPONSES
+        if (synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS))
+          break;
+
+        final long elapsed = System.currentTimeMillis() - beginTime;
+        currentTimeout = synchTimeout - elapsed;
+      }
 
       return receivedResponses >= expectedSynchronousResponses;
 

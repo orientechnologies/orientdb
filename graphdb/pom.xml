@@ -42,7 +42,10 @@
             com.tinkerpop.gremlin.java;resolution:=optional,
             *
         </osgi.import>
-        <osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
+        <osgi.export>
+            com.orientechnologies.orient.graph.*,
+            com.tinkerpop.blueprints.impls.orient
+        </osgi.export>
         <blueprints.version>2.5.0-SNAPSHOT</blueprints.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

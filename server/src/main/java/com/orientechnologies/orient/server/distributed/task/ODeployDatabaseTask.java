@@ -19,6 +19,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
@@ -41,6 +42,7 @@ import java.util.concurrent.locks.Lock;
  */
 public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
   public final static int CHUNK_MAX_SIZE = 1048576; // 1MB
+  protected long          fileSize;
 
   public ODeployDatabaseTask() {
   }
@@ -71,11 +73,14 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
           FileOutputStream fileOutputStream = new FileOutputStream(f);
           try {
-            database.backup(fileOutputStream, null, null, this, 7, CHUNK_MAX_SIZE);
+            database.backup(fileOutputStream, null, null, this,
+                OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+            fileSize = f.length();
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "sending the compressed database '%s' over the NETWORK to node '%s', size=%s...", databaseName, getNodeSource(),
-                OFileUtils.getSizeAsString(f.length()));
+                OFileUtils.getSizeAsString(fileSize));
 
             final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
 
@@ -119,7 +124,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public long getTimeout() {
-    return 60000;
+    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override

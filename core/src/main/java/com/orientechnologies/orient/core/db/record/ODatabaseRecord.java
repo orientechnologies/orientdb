@@ -156,4 +156,6 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
   public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy);
 
   public OSBTreeCollectionManager getSbTreeCollectionManager();
+
+  public OCurrentStorageVersions getStorageVersions();
 }
