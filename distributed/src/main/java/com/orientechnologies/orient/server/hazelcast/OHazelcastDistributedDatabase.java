@@ -384,7 +384,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedRequest req = null;
 
     if (waitForTaskType == null && !skippedMessages.isEmpty())
-      req = skippedMessages.get(0);
+      req = skippedMessages.remove(0);
 
     if (req == null)
       // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
@@ -401,7 +401,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
               "skip request because the node is not online yet, request=%s sourceNode=%s", req, req.getSenderNodeName());
 
-          skippedMessages.add(req);
+          if (saveSkippedMessages)
+            skippedMessages.add(req);
 
           // READ THE NEXT ONE
           req = requestQueue.take();
