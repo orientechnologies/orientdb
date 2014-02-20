@@ -28,7 +28,12 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   private final OCollectionNetworkSerializer networkSerializer;
   private boolean                            remoteCreationAllowed = false;
 
-  private Map<UUID, WeakReference<ORidBag>>  pendingCollections    = new HashMap<UUID, WeakReference<ORidBag>>();
+  private ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
+                                                                                 @Override
+                                                                                 protected Map<UUID, WeakReference<ORidBag>> initialValue() {
+                                                                                   return new HashMap<UUID, WeakReference<ORidBag>>();
+                                                                                 }
+                                                                               };
 
   public OSBTreeCollectionManagerRemote() {
     super();
@@ -80,15 +85,15 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
     if (id == null)
       id = UUID.randomUUID();
 
-    pendingCollections.put(id, new WeakReference<ORidBag>(collection));
+    pendingCollections.get().put(id, new WeakReference<ORidBag>(collection));
 
     return id;
   }
 
   @Override
   public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
-    final WeakReference<ORidBag> reference = pendingCollections.get(uuid);
-    if (reference == null) {
+    final WeakReference<ORidBag> reference = pendingCollections.get().get(uuid);
+   if (reference == null) {
       OLogManager.instance().warn(this, "Update of collection pointer is received but collection is not registered");
       return;
     }
@@ -102,7 +107,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
 
   @Override
   public void clearPendingCollections() {
-    pendingCollections.clear();
+    pendingCollections.get().clear();
   }
 
   @Override

@@ -227,7 +227,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void setNameInternal(final String iName) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-    owner.changeClassName(name, iName);
+    owner.changeClassName(name, iName, this);
     name = iName;
   }
 
@@ -258,15 +258,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void setShortNameInternal(final String iShortName) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    String oldName = null;
+
     if (this.shortName != null)
-      // UNREGISTER ANY PREVIOUS SHORT NAME
-      owner.classes.remove(this.shortName.toLowerCase());
+      oldName = this.shortName.toLowerCase();
 
     this.shortName = iShortName;
 
-    // REGISTER IT
-    if (null != iShortName)
-      owner.classes.put(iShortName.toLowerCase(), this);
+    owner.changeClassName(oldName, shortName, this);
   }
 
   public String getStreamableName() {
@@ -557,34 +557,39 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  public OClass addClusterIdInternal(final int iId) {
+  public OClass addClusterIdInternal(final int clusterId) {
+    owner.checkClusterCanBeAdded(clusterId, this);
+
     for (int currId : clusterIds)
-      if (currId == iId)
+      if (currId == clusterId)
         // ALREADY ADDED
         return this;
 
     clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
-    clusterIds[clusterIds.length - 1] = iId;
+    clusterIds[clusterIds.length - 1] = clusterId;
     Arrays.sort(clusterIds);
 
     polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-    polymorphicClusterIds[polymorphicClusterIds.length - 1] = iId;
+    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
     Arrays.sort(polymorphicClusterIds);
 
     if (defaultClusterId == -1)
-      defaultClusterId = iId;
+      defaultClusterId = clusterId;
 
     setDirty();
-    addClusterIdToIndexes(iId);
+    addClusterIdToIndexes(clusterId);
 
+    owner.addClusterForClass(clusterId, this);
     return this;
   }
 
-  public OClass removeClusterId(final int iId) {
+  public OClass removeClusterId(final int clusterId) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-    final String cmd = String.format("alter class %s removecluster %d", name, iId);
+    final String cmd = String.format("alter class %s removecluster %d", name, clusterId);
     getDatabase().command(new OCommandSQL(cmd)).execute();
-    removeClusterIdInternal(iId);
+    removeClusterIdInternal(clusterId);
+
+    owner.removeClusterForClass(clusterId, this);
     return this;
   }
 

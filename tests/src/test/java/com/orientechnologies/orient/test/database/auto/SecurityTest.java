@@ -55,7 +55,7 @@ public class SecurityTest {
     database.open("writer", "writer");
 
     try {
-      new ODocument("Profile").save("internal");
+      new ODocument().save("internal");
       Assert.assertTrue(false);
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);

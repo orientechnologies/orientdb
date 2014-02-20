@@ -41,260 +41,260 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @SuppressWarnings("unchecked")
 @Test(groups = { "crud", "record-vobject" })
 public class ComplexTypesTest {
-	private ODatabaseDocumentTx	database;
-	private String							url;
-
-	@Parameters(value = "url")
-	public ComplexTypesTest(final String iURL) {
-		url = iURL;
-	}
-
-	@BeforeMethod
-	public void init() {
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-	}
+  private ODatabaseDocumentTx database;
+  private String              url;
+
+  @Parameters(value = "url")
+  public ComplexTypesTest(final String iURL) {
+    url = iURL;
+  }
+
+  @BeforeMethod
+  public void init() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+  }
 
-	@AfterMethod
-	public void deinit() {
-		if (database != null)
-			database.close();
-	}
+  @AfterMethod
+  public void deinit() {
+    if (database != null)
+      database.close();
+  }
 
-	@Test
-	public void testBigDecimal() {
-		ODocument newDoc = new ODocument();
-		newDoc.field("integer", new BigInteger("10"));
-		newDoc.field("decimal_integer", new BigDecimal(10));
-		newDoc.field("decimal_float", new BigDecimal("10.34"));
-		database.save(newDoc);
+  @Test
+  public void testBigDecimal() {
+    ODocument newDoc = new ODocument();
+    newDoc.field("integer", new BigInteger("10"));
+    newDoc.field("decimal_integer", new BigDecimal(10));
+    newDoc.field("decimal_float", new BigDecimal("10.34"));
+    database.save(newDoc);
 
-		final ORID rid = newDoc.getIdentity();
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertEquals(((Number) loadedDoc.field("integer")).intValue(), 10);
-		Assert.assertEquals(loadedDoc.field("decimal_integer"), new BigDecimal(10));
-		Assert.assertEquals(loadedDoc.field("decimal_float"), new BigDecimal("10.34"));
-	}
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertEquals(((Number) loadedDoc.field("integer")).intValue(), 10);
+    Assert.assertEquals(loadedDoc.field("decimal_integer"), new BigDecimal(10));
+    Assert.assertEquals(loadedDoc.field("decimal_float"), new BigDecimal("10.34"));
+  }
 
-	@Test
-	public void testEmbeddedList() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testEmbeddedList() {
+    ODocument newDoc = new ODocument();
 
-		final ArrayList<ODocument> list = new ArrayList<ODocument>();
-		newDoc.field("embeddedList", list, OType.EMBEDDEDLIST);
-		list.add(new ODocument().field("name", "Luca"));
-		list.add(new ODocument("Account").field("name", "Marcus"));
+    final ArrayList<ODocument> list = new ArrayList<ODocument>();
+    newDoc.field("embeddedList", list, OType.EMBEDDEDLIST);
+    list.add(new ODocument().field("name", "Luca"));
+    list.add(new ODocument("Account").field("name", "Marcus"));
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertTrue(loadedDoc.containsField("embeddedList"));
-		Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
-		Assert.assertTrue(((List<ODocument>) loadedDoc.field("embeddedList")).get(0) instanceof ODocument);
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertTrue(loadedDoc.containsField("embeddedList"));
+    Assert.assertTrue(loadedDoc.field("embeddedList") instanceof List<?>);
+    Assert.assertTrue(((List<ODocument>) loadedDoc.field("embeddedList")).get(0) instanceof ODocument);
 
-		ODocument d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
-		Assert.assertEquals(d.field("name"), "Luca");
-		d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
-		Assert.assertEquals(d.getClassName(), "Account");
-		Assert.assertEquals(d.field("name"), "Marcus");
-	}
+    ODocument d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(0);
+    Assert.assertEquals(d.field("name"), "Luca");
+    d = ((List<ODocument>) loadedDoc.field("embeddedList")).get(1);
+    Assert.assertEquals(d.getClassName(), "Account");
+    Assert.assertEquals(d.field("name"), "Marcus");
+  }
 
-	@Test
-	public void testLinkList() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testLinkList() {
+    ODocument newDoc = new ODocument();
 
-		final ArrayList<ODocument> list = new ArrayList<ODocument>();
-		newDoc.field("linkedList", list, OType.LINKLIST);
-		list.add(new ODocument().field("name", "Luca"));
-		list.add(new ODocument("Account").field("name", "Marcus"));
+    final ArrayList<ODocument> list = new ArrayList<ODocument>();
+    newDoc.field("linkedList", list, OType.LINKLIST);
+    list.add(new ODocument().field("name", "Luca"));
+    list.add(new ODocument("Account").field("name", "Marcus"));
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertTrue(loadedDoc.containsField("linkedList"));
-		Assert.assertTrue(loadedDoc.field("linkedList") instanceof List<?>);
-		Assert.assertTrue(((List<ODocument>) loadedDoc.field("linkedList")).get(0) instanceof ODocument);
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertTrue(loadedDoc.containsField("linkedList"));
+    Assert.assertTrue(loadedDoc.field("linkedList") instanceof List<?>);
+    Assert.assertTrue(((List<ODocument>) loadedDoc.field("linkedList")).get(0) instanceof ODocument);
 
-		ODocument d = ((List<ODocument>) loadedDoc.field("linkedList")).get(0);
-		Assert.assertTrue(d.getIdentity().isValid());
-		Assert.assertEquals(d.field("name"), "Luca");
-		d = ((List<ODocument>) loadedDoc.field("linkedList")).get(1);
-		Assert.assertEquals(d.getClassName(), "Account");
-		Assert.assertEquals(d.field("name"), "Marcus");
-	}
+    ODocument d = ((List<ODocument>) loadedDoc.field("linkedList")).get(0);
+    Assert.assertTrue(d.getIdentity().isValid());
+    Assert.assertEquals(d.field("name"), "Luca");
+    d = ((List<ODocument>) loadedDoc.field("linkedList")).get(1);
+    Assert.assertEquals(d.getClassName(), "Account");
+    Assert.assertEquals(d.field("name"), "Marcus");
+  }
 
-	@Test
-	public void testEmbeddedSet() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testEmbeddedSet() {
+    ODocument newDoc = new ODocument();
 
-		final Set<ODocument> set = new HashSet<ODocument>();
-		newDoc.field("embeddedSet", set, OType.EMBEDDEDSET);
-		set.add(new ODocument().field("name", "Luca"));
-		set.add(new ODocument("Account").field("name", "Marcus"));
+    final Set<ODocument> set = new HashSet<ODocument>();
+    newDoc.field("embeddedSet", set, OType.EMBEDDEDSET);
+    set.add(new ODocument().field("name", "Luca"));
+    set.add(new ODocument("Account").field("name", "Marcus"));
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertTrue(loadedDoc.containsField("embeddedSet"));
-		Assert.assertTrue(loadedDoc.field("embeddedSet", Set.class) instanceof Set<?>);
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertTrue(loadedDoc.containsField("embeddedSet"));
+    Assert.assertTrue(loadedDoc.field("embeddedSet", Set.class) instanceof Set<?>);
 
-		final Iterator<ODocument> it = ((Collection<ODocument>) loadedDoc.field("embeddedSet")).iterator();
+    final Iterator<ODocument> it = ((Collection<ODocument>) loadedDoc.field("embeddedSet")).iterator();
 
-		int tot = 0;
-		while (it.hasNext()) {
-			ODocument d = it.next();
-			Assert.assertTrue(d instanceof ODocument);
+    int tot = 0;
+    while (it.hasNext()) {
+      ODocument d = it.next();
+      Assert.assertTrue(d instanceof ODocument);
 
-			if (d.field("name").equals("Marcus"))
-				Assert.assertEquals(d.getClassName(), "Account");
+      if (d.field("name").equals("Marcus"))
+        Assert.assertEquals(d.getClassName(), "Account");
 
-			++tot;
-		}
+      ++tot;
+    }
 
-		Assert.assertEquals(tot, 2);
-	}
+    Assert.assertEquals(tot, 2);
+  }
 
-	@Test
-	public void testLinkSet() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testLinkSet() {
+    ODocument newDoc = new ODocument();
 
-		final Set<ODocument> set = new HashSet<ODocument>();
-		newDoc.field("linkedSet", set, OType.LINKSET);
-		set.add(new ODocument().field("name", "Luca"));
-		set.add(new ODocument("Account").field("name", "Marcus"));
+    final Set<ODocument> set = new HashSet<ODocument>();
+    newDoc.field("linkedSet", set, OType.LINKSET);
+    set.add(new ODocument().field("name", "Luca"));
+    set.add(new ODocument("Account").field("name", "Marcus"));
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertTrue(loadedDoc.containsField("linkedSet"));
-		Assert.assertTrue(loadedDoc.field("linkedSet", Set.class) instanceof Set<?>);
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertTrue(loadedDoc.containsField("linkedSet"));
+    Assert.assertTrue(loadedDoc.field("linkedSet", Set.class) instanceof Set<?>);
 
-		final Iterator<ODocument> it = ((Collection<ODocument>) loadedDoc.field("linkedSet")).iterator();
+    final Iterator<ODocument> it = ((Collection<ODocument>) loadedDoc.field("linkedSet")).iterator();
 
-		int tot = 0;
-		while (it.hasNext()) {
-			ODocument d = it.next();
-			Assert.assertTrue(d instanceof ODocument);
+    int tot = 0;
+    while (it.hasNext()) {
+      ODocument d = it.next();
+      Assert.assertTrue(d instanceof ODocument);
 
-			if (d.field("name").equals("Marcus"))
-				Assert.assertEquals(d.getClassName(), "Account");
+      if (d.field("name").equals("Marcus"))
+        Assert.assertEquals(d.getClassName(), "Account");
 
-			++tot;
-		}
+      ++tot;
+    }
 
-		Assert.assertEquals(tot, 2);
-	}
+    Assert.assertEquals(tot, 2);
+  }
 
-	@Test
-	public void testEmbeddedMap() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testEmbeddedMap() {
+    ODocument newDoc = new ODocument();
 
-		final Map<String, ODocument> map = new HashMap<String, ODocument>();
-		newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
-		map.put("Luca", new ODocument().field("name", "Luca"));
-		map.put("Marcus", new ODocument().field("name", "Marcus"));
-		map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
+    final Map<String, ODocument> map = new HashMap<String, ODocument>();
+    newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
+    map.put("Luca", new ODocument().field("name", "Luca"));
+    map.put("Marcus", new ODocument().field("name", "Marcus"));
+    map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
-		Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
-		Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("embeddedMap")).values().iterator().next() instanceof ODocument);
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
+    Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
+    Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("embeddedMap")).values().iterator().next() instanceof ODocument);
 
-		ODocument d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Luca");
-		Assert.assertEquals(d.field("name"), "Luca");
+    ODocument d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Luca");
+    Assert.assertEquals(d.field("name"), "Luca");
 
-		d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Marcus");
-		Assert.assertEquals(d.field("name"), "Marcus");
+    d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Marcus");
+    Assert.assertEquals(d.field("name"), "Marcus");
 
-		d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Cesare");
-		Assert.assertEquals(d.field("name"), "Cesare");
-		Assert.assertEquals(d.getClassName(), "Account");
-	}
+    d = ((Map<String, ODocument>) loadedDoc.field("embeddedMap")).get("Cesare");
+    Assert.assertEquals(d.field("name"), "Cesare");
+    Assert.assertEquals(d.getClassName(), "Account");
+  }
 
-	@Test
-	public void testEmptyEmbeddedMap() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testEmptyEmbeddedMap() {
+    ODocument newDoc = new ODocument();
 
-		final Map<String, ODocument> map = new HashMap<String, ODocument>();
-		newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
+    final Map<String, ODocument> map = new HashMap<String, ODocument>();
+    newDoc.field("embeddedMap", map, OType.EMBEDDEDMAP);
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
+    ODocument loadedDoc = database.load(rid);
 
-		Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
-		Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
+    Assert.assertTrue(loadedDoc.containsField("embeddedMap"));
+    Assert.assertTrue(loadedDoc.field("embeddedMap") instanceof Map<?, ?>);
 
-		final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
-		Assert.assertEquals(loadedMap.size(), 0);
-	}
+    final Map<String, ODocument> loadedMap = loadedDoc.field("embeddedMap");
+    Assert.assertEquals(loadedMap.size(), 0);
+  }
 
-	@Test
-	public void testLinkMap() {
-		ODocument newDoc = new ODocument();
+  @Test
+  public void testLinkMap() {
+    ODocument newDoc = new ODocument();
 
-		final Map<String, ODocument> map = new HashMap<String, ODocument>();
-		newDoc.field("linkedMap", map, OType.LINKMAP);
-		map.put("Luca", new ODocument().field("name", "Luca"));
-		map.put("Marcus", new ODocument().field("name", "Marcus"));
-		map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
+    final Map<String, ODocument> map = new HashMap<String, ODocument>();
+    newDoc.field("linkedMap", map, OType.LINKMAP);
+    map.put("Luca", new ODocument().field("name", "Luca"));
+    map.put("Marcus", new ODocument().field("name", "Marcus"));
+    map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
-		database.save(newDoc);
-		final ORID rid = newDoc.getIdentity();
+    database.save(newDoc);
+    final ORID rid = newDoc.getIdentity();
 
-		database.close();
+    database.close();
 
-		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
-		ODocument loadedDoc = database.load(rid);
-		Assert.assertNotNull(loadedDoc.field("linkedMap", OType.LINKMAP));
-		Assert.assertTrue(loadedDoc.field("linkedMap") instanceof Map<?, ?>);
-		Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("linkedMap")).values().iterator().next() instanceof ODocument);
+    ODocument loadedDoc = database.load(rid);
+    Assert.assertNotNull(loadedDoc.field("linkedMap", OType.LINKMAP));
+    Assert.assertTrue(loadedDoc.field("linkedMap") instanceof Map<?, ?>);
+    Assert.assertTrue(((Map<String, ODocument>) loadedDoc.field("linkedMap")).values().iterator().next() instanceof ODocument);
 
-		ODocument d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Luca");
-		Assert.assertEquals(d.field("name"), "Luca");
+    ODocument d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Luca");
+    Assert.assertEquals(d.field("name"), "Luca");
 
-		d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Marcus");
-		Assert.assertEquals(d.field("name"), "Marcus");
+    d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Marcus");
+    Assert.assertEquals(d.field("name"), "Marcus");
 
-		d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Cesare");
-		Assert.assertEquals(d.field("name"), "Cesare");
-		Assert.assertEquals(d.getClassName(), "Account");
-	}
+    d = ((Map<String, ODocument>) loadedDoc.field("linkedMap")).get("Cesare");
+    Assert.assertEquals(d.field("name"), "Cesare");
+    Assert.assertEquals(d.getClassName(), "Account");
+  }
 }

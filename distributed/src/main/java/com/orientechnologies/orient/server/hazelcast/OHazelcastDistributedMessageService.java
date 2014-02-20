@@ -56,6 +56,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   protected final TimerTask                                            asynchMessageManager;
+  protected Thread                                                     responseThread;
 
   public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
@@ -87,7 +88,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.response, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING THE
     // THREAD ID
-    new Thread(new Runnable() {
+    responseThread = new Thread(new Runnable() {
       @Override
       public void run() {
         Thread.currentThread().setName("OrientDB Node Response " + queueName);
@@ -112,7 +113,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           }
         }
       }
-    }).start();
+    });
+
+    responseThread.setDaemon(true);
+    responseThread.start();
   }
 
   public OHazelcastDistributedDatabase getDatabase(final String iDatabaseName) {
@@ -157,6 +161,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   public void shutdown() {
+    if (responseThread != null) {
+      responseThread.interrupt();
+      responseThread = null;
+    }
+
     for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet())
       m.getValue().shutdown();
 

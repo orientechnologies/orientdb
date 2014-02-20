@@ -1,13 +1,17 @@
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OCharSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 10/19/13
  */
 public class ODirectMemoryPointer {
-  private final boolean       SAFE_MODE    = !Boolean.valueOf(System.getProperty("memory.directMemory.unsafeMode"));
+  private final boolean       SAFE_MODE    = !Boolean.valueOf(System.getProperty("memory.directMemory.safeMode"));
 
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
