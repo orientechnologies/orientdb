@@ -11,7 +11,7 @@ import com.orientechnologies.common.serialization.types.OShortSerializer;
  * @since 10/19/13
  */
 public class ODirectMemoryPointer {
-  private final boolean       SAFE_MODE    = !Boolean.valueOf(System.getProperty("memory.directMemory.safeMode"));
+  private final boolean       SAFE_MODE    = Boolean.valueOf(System.getProperty("memory.directMemory.safeMode"));
 
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
@@ -30,10 +30,11 @@ public class ODirectMemoryPointer {
   public ODirectMemoryPointer(byte[] data) {
     if (data.length == 0)
       throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but 0 was provided.");
+		this.pageSize = data.length;
+		this.dataPointer = directMemory.allocate(pageSize);
 
-    this.dataPointer = directMemory.allocate(data);
-    this.pageSize = data.length;
-  }
+		set(0, data, 0, data.length);
+	}
 
   public byte[] get(long offset, int length) {
     if (SAFE_MODE)

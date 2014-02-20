@@ -64,13 +64,6 @@ public class OUnsafeMemory implements ODirectMemory {
     unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
   }
 
-  @Override
-  public long allocate(byte[] bytes) {
-    final long pointer = unsafe.allocateMemory(bytes.length);
-    set(pointer, bytes, 0, bytes.length);
-
-    return pointer;
-  }
 
   @Override
   public long allocate(long size) {
