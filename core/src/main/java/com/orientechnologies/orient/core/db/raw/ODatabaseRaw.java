@@ -66,6 +66,7 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -111,7 +112,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       final OStorageConfiguration configuration = storage.getConfiguration();
       if (configuration != null) {
-        configuration.load();
+        if (!(storage instanceof OStorageMemory))
+          configuration.load();
         OBinarySerializerFactory.registerFactory(new OCurrentStorageVersions(configuration));
       }
 
@@ -179,7 +181,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
 
   }

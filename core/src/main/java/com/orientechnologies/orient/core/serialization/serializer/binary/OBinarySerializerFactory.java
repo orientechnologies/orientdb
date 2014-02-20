@@ -36,8 +36,10 @@ import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.serialization.types.legacy.OStringSerializer_1_5_1;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageVersions;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -65,6 +67,17 @@ public class OBinarySerializerFactory {
    * Size of the type identifier block size
    */
   public static final int                                        TYPE_IDENTIFIER_SIZE   = 1;
+
+  /**
+   * Default factory instance that is used if db is not initialized.
+   */
+  private static final OBinarySerializerFactory                  DEFAULT_INSTANCE       = create(new OCurrentStorageVersions(
+                                                                                            new OStorageConfiguration(null)) {
+                                                                                          @Override
+                                                                                          public boolean legacyStringSerializer() {
+                                                                                            return false;
+                                                                                          }
+                                                                                        });
 
   private OBinarySerializerFactory() {
   }
@@ -160,7 +173,11 @@ public class OBinarySerializerFactory {
   }
 
   public static OBinarySerializerFactory getInstance() {
+    try {
     return ODatabaseRecordThreadLocal.INSTANCE.get().getSerializerFactory();
+    } catch (ODatabaseException e) {
+      return DEFAULT_INSTANCE;
+    }
   }
 
   public static void registerFactory(OCurrentStorageVersions storageVersions) {
