@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OResynchTask;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -79,18 +77,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     this.databaseName = iDatabaseName;
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
-
-    long resyncEvery = manager.getDatabaseConfiguration(databaseName).getResyncEvery();
-    if (resyncEvery > 0) {
-      resyncEvery *= 1000; // TRANSFORM IN SECONDS
-      // CREATE A TIMER TASK TO RESYNCH
-      Orient.instance().getTimer().schedule(new TimerTask() {
-        @Override
-        public void run() {
-          resynch();
-        }
-      }, resyncEvery, resyncEvery);
-    }
 
     checkLocalNodeInConfiguration();
   }
@@ -188,23 +174,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final Set<String> nodes = partition.getNodes();
 
     return send2Nodes(iRequest, nodes);
-  }
-
-  protected void resynch() {
-    final long startTimer = System.currentTimeMillis();
-
-    try {
-      send(new OHazelcastDistributedRequest(manager.getLocalNodeName(), databaseName, null, new OResynchTask(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE));
-    } catch (ODistributedException e) {
-      // HIDE EXCEPTION IF ANY ERROR ON QUORUM
-    }
-
-    Orient
-        .instance()
-        .getProfiler()
-        .stopChrono("distributed.replication." + databaseName + ".resynch", "Synchronization time among all the nodes", startTimer,
-            "distributed.replication.*.resynch");
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final String clusterName, final ODistributedConfiguration cfg,

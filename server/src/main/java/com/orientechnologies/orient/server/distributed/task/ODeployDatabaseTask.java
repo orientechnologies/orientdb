@@ -58,7 +58,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
       final Lock lock = iManager.getLock(databaseName);
       if (lock.tryLock()) {
         try {
-          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.READ_ONLY);
+          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
           try {
 
             ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,

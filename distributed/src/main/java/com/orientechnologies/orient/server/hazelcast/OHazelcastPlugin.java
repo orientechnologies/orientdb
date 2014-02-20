@@ -330,6 +330,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public Object sendRequest(final String iDatabaseName, final String iClusterName, final OAbstractRemoteTask iTask,
       final EXECUTION_MODE iExecutionMode) {
+
+    if (iTask.isRequireNodeOnline())
+      // WAIT THE DATABASE ON THE NODE IS ONLINE
+      while (getDatabaseStatus(getLocalNodeName(), iDatabaseName) != DB_STATUS.ONLINE) {
+        try {
+          ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "waiting for the database '%s' is online on local node...", iDatabaseName);
+
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+        }
+      }
+
+    checkForClusterRebalance(iDatabaseName);
+
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iClusterName,
         iTask, iExecutionMode);
 
@@ -455,9 +470,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
-    lastClusterChangeOn = System.currentTimeMillis();
+    updateLastClusterChange();
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "added new node id=%s name=%s", iEvent.getMember(),
         getNodeName(iEvent.getMember()));
+  }
+
+  @Override
+  public void updateLastClusterChange() {
+    lastClusterChangeOn = System.currentTimeMillis();
   }
 
   /**
@@ -465,8 +485,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
-    lastClusterChangeOn = System.currentTimeMillis();
-
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "node removed id=%s name=%s", iEvent.getMember(),
         getNodeName(iEvent.getMember()));
 
@@ -823,8 +841,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       db.close();
       Orient.instance().unregisterStorageByName(db.getName());
 
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s', setting it online...",
-          databaseName);
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s'", databaseName);
 
       distrDatabase.setOnline();
 
@@ -834,6 +851,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN, "error on copying database '%s' on local server", e,
           databaseName);
     }
+  }
+
+  public long getLastClusterChangeOn() {
+    return lastClusterChangeOn;
+  }
+
+  @Override
+  public void onMessage(String iText) {
+    OLogManager.instance().info(this, iText);
   }
 
   @Override
@@ -854,12 +880,43 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return super.loadDatabaseConfiguration(iDatabaseName, file);
   }
 
-  public long getLastClusterChangeOn() {
-    return lastClusterChangeOn;
+  protected void checkForClusterRebalance(final String iDatabaseName) {
+    if (cachedClusterNodes.size() <= 1)
+      return;
+
+    int maxQSize = 0;
+    int secondMaxQSize = 0;
+    int availableNodes = 0;
+    for (Map.Entry<String, Member> entry : cachedClusterNodes.entrySet()) {
+      final String nodeName = entry.getKey();
+      if (isNodeAvailable(nodeName, iDatabaseName)) {
+        availableNodes++;
+
+        final IQueue q = getMessageService().getQueue(
+            OHazelcastDistributedMessageService.getRequestQueueName(nodeName, iDatabaseName));
+        if (q != null) {
+          final int qSize = q.size();
+
+          if (qSize > maxQSize) {
+            secondMaxQSize = maxQSize;
+            maxQSize = qSize;
+          }
+        }
+      }
+    }
+
+    if (availableNodes <= 1)
+      return;
+
+    final long msgDelta = maxQSize - secondMaxQSize;
+    if (msgDelta > 50) {
+      // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+      // "slowing down request to avoid to fill queues. Wait for %dms...", msgDelta);
+      try {
+        Thread.sleep(msgDelta - 50);
+      } catch (InterruptedException e) {
+      }
+    }
   }
 
-  @Override
-  public void onMessage(String iText) {
-    OLogManager.instance().info(this, iText);
-  }
 }

@@ -37,7 +37,7 @@ public interface ODistributedServerManager {
   };
 
   public enum DB_STATUS {
-    OFFLINE, SYNCHRONIZING, READ_ONLY, ONLINE
+    OFFLINE, SYNCHRONIZING, ONLINE
   };
 
   public boolean isEnabled();
@@ -57,6 +57,8 @@ public interface ODistributedServerManager {
   public void setDatabaseStatus(final String iDatabaseName, DB_STATUS iStatus);
 
   public ODistributedMessageService getMessageService();
+
+  public void updateLastClusterChange();
 
   public boolean isNodeAvailable(final String iNodeName, String databaseName);
 
