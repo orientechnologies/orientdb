@@ -748,6 +748,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                   if (file.exists())
                     file.delete();
 
+                  try {
+                    file.createNewFile();
+                  } catch (IOException e) {
+                    throw new ODistributedException("Error on creating temp database file to install locally", e);
+                  }
+
                   FileOutputStream out = null;
                   try {
                     out = new FileOutputStream(fileName, false);
@@ -773,6 +779,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                   } catch (Exception e) {
                     ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
                         "error on transferring database '%s' to '%s'", e, databaseName, fileName);
+                    throw new ODistributedException("Error on transferring database", e);
                   } finally {
                     try {
                       if (out != null) {
