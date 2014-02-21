@@ -749,6 +749,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                     file.delete();
 
                   try {
+                    file.getParentFile().mkdirs();
                     file.createNewFile();
                   } catch (IOException e) {
                     throw new ODistributedException("Error on creating temp database file to install locally", e);

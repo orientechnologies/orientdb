@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -50,6 +39,17 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
+
 /**
  * Export data from a database to a file.
  * 
@@ -71,7 +71,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       fileName += ".gz";
     }
     final File f = new File(fileName);
-    f.mkdirs();
+    f.getParentFile().mkdirs();
     if (f.exists())
       f.delete();
 
