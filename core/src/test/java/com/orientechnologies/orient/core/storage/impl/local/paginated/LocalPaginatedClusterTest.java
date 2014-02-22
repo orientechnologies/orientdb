@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
@@ -64,6 +65,8 @@ public class LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
+		when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,

@@ -115,8 +115,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private boolean                                     mvcc;
   private boolean                                     validation;
   private ODataSegmentStrategy                        dataSegmentStrategy = new ODefaultDataSegmentStrategy();
-  private OCurrentStorageVersions                     currentStorageVersions;
-  private OBinarySerializerFactory                    binarySerializerFactory;
+  private OCurrentStorageComponentsFactory            componentsFactory;
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
@@ -141,9 +140,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.open(iUserName, iUserPassword);
-
-      final OStorage storage = getStorage();
-      currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
+      componentsFactory = getStorage().getComponentsFactory();
 
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
@@ -220,9 +217,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.create();
-
-      final OStorage storage = getStorage();
-      currentStorageVersions = new OCurrentStorageVersions(storage.getConfiguration());
+      componentsFactory = getStorage().getComponentsFactory();
 
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
@@ -281,17 +276,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
   @Override
   public OBinarySerializerFactory getSerializerFactory() {
-    return binarySerializerFactory;
+    return componentsFactory.binarySerializerFactory;
   }
 
   @Override
-  public void setSerializerFactory(OBinarySerializerFactory factory) {
-    binarySerializerFactory = factory;
-  }
-
-  @Override
-  public OCurrentStorageVersions getStorageVersions() {
-    return currentStorageVersions;
+  public OCurrentStorageComponentsFactory getStorageVersions() {
+    return componentsFactory;
   }
 
   @Override

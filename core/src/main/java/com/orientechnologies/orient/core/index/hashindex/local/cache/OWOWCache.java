@@ -74,7 +74,7 @@ public class OWOWCache {
   public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
   private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
-  private OBinarySerializer<String>                         stringSerializer;
+  private final OBinarySerializer<String>                   stringSerializer;
 
   private Map<String, Long>                                 nameIdMap;
 
@@ -125,6 +125,9 @@ public class OWOWCache {
     this.cacheMaxSize = cacheMaxSize;
     this.storageLocal = storageLocal;
 
+    final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
+    this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
+
     if (checkMinSize && this.cacheMaxSize < MIN_CACHE_SIZE)
       this.cacheMaxSize = MIN_CACHE_SIZE;
 
@@ -135,9 +138,6 @@ public class OWOWCache {
   public long openFile(String fileName) throws IOException {
     synchronized (syncObject) {
       initNameIdMapping();
-
-      if (stringSerializer == null)
-        stringSerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING);
 
       Long fileId = nameIdMap.get(fileName);
       OFileClassic fileClassic;
@@ -711,10 +711,15 @@ public class OWOWCache {
         doDeleteFile(fileId);
 
       if (nameIdMapHolderFile != null) {
-        nameIdMapHolder.close();
+        if (nameIdMapHolderFile.exists()) {
+          nameIdMapHolder.close();
 
-        if (!nameIdMapHolderFile.delete())
-          throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+          if (!nameIdMapHolderFile.delete())
+            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+        }
+
+        nameIdMapHolder = null;
+        nameIdMapHolderFile = null;
       }
     }
 

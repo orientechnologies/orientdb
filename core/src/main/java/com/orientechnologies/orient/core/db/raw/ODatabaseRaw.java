@@ -46,7 +46,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageVersions;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -110,14 +110,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
 
-      final OStorageConfiguration configuration = storage.getConfiguration();
-      if (configuration != null) {
-        if (!(storage instanceof OStorageMemory))
-          configuration.load();
-        OBinarySerializerFactory.registerFactory(new OCurrentStorageVersions(configuration));
-      }
-
-      storage.open(iUserName, iUserPassword, properties);
+			storage.open(iUserName, iUserPassword, properties);
 
       status = STATUS.OPEN;
 
@@ -141,7 +134,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
 
-      OBinarySerializerFactory.registerFactory(new OCurrentStorageVersions(storage.getConfiguration()));
       storage.create(properties);
 
       status = STATUS.OPEN;

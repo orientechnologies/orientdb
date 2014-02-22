@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
@@ -185,7 +186,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     try {
       delegate.close();
 
-			Orient.instance().unregisterStorage(this);
+      Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
     }
@@ -216,7 +217,8 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
@@ -667,6 +669,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return delegate.getComponentsFactory();
+  }
+
   public OLevel2RecordCache getLevel2Cache() {
     return delegate.getLevel2Cache();
   }
@@ -727,13 +734,13 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public boolean equals(final Object iOther) {
-		if (iOther instanceof OStorageRemoteThread)
-			return iOther == this;
+    if (iOther instanceof OStorageRemoteThread)
+      return iOther == this;
 
-		if (iOther instanceof   OStorageRemote)
-    	return iOther == delegate;
+    if (iOther instanceof OStorageRemote)
+      return iOther == delegate;
 
-		return false;
+    return false;
   }
 
   protected void pushSession() {

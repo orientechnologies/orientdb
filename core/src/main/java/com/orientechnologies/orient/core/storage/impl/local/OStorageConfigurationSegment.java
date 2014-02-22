@@ -47,6 +47,10 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   public void create() throws IOException {
     segment.create(START_SIZE);
     super.create();
+
+    final OFile f = segment.getFile();
+    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
+      f.synch();
   }
 
   @Override
@@ -59,7 +63,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
         // @COMPATIBILITY0.9.25
         // CHECK FOR OLD VERSION OF DATABASE
-        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+            .getResult();
         if (rawRecord != null)
           fromStream(rawRecord.buffer);
 

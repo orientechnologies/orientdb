@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
@@ -690,6 +691,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
   public OStorage getUnderlying() {
     return wrapped;
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return wrapped.getComponentsFactory();
   }
 
   @Override

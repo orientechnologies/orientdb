@@ -158,9 +158,7 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
 
   public OSBTreeCollectionManager getSbTreeCollectionManager();
 
-  public OCurrentStorageVersions getStorageVersions();
+  public OCurrentStorageComponentsFactory getStorageVersions();
 
   OBinarySerializerFactory getSerializerFactory();
-
-  void setSerializerFactory(OBinarySerializerFactory oBinarySerializerFactory);
 }

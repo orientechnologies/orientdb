@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
@@ -147,6 +148,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       status = STATUS.OPEN;
 
+      configuration.load();
       init();
 
       // OPEN BASIC SEGMENTS
@@ -235,7 +237,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private void addDefaultClusters() throws IOException {
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         OMetadataDefault.CLUSTER_INTERNAL_NAME));
-    configuration.load();
 
     createClusterFromConfig(new OStoragePhysicalClusterConfigurationLocal(configuration, clusters.length, 0,
         OMetadataDefault.CLUSTER_INDEX_NAME));
@@ -267,13 +268,14 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       status = STATUS.OPEN;
 
-      init();
+			init();
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
       addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
+			configuration.create();
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
@@ -282,10 +284,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
 
+
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
-
-      configuration.create();
 
       writeAheadLog = new OWriteAheadLog(this);
       atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
@@ -2076,6 +2077,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   protected void init() {
+    componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+
     final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
     final long writeCacheSize = (long) Math
         .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);

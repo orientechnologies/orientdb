@@ -60,7 +60,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageVersions;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -202,9 +202,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       configuration = new OStorageConfiguration(this);
       configuration.load();
-      // Can't be loaded earlier for remote storage
-      OBinarySerializerFactory.registerFactory(new OCurrentStorageVersions(configuration));
 
+			componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
       if (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean())
         close();

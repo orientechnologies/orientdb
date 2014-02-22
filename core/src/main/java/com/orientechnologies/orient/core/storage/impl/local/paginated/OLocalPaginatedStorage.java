@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
@@ -52,6 +53,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -208,6 +210,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
+
+      configuration.load();
+      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
       initWal();
 
@@ -620,12 +625,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (exists())
         throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
 
+      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       initWal();
 
       status = STATUS.OPEN;
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null, false, null);
+
+      configuration.create();
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
@@ -637,8 +645,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null, false, null);
-
-      configuration.create();
 
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
@@ -2056,8 +2062,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void addDefaultClusters() throws IOException {
-    configuration.load();
-
     final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));

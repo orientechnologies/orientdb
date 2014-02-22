@@ -21,7 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageVersions;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -482,7 +482,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   }
 
 	@Override
-	public OCurrentStorageVersions getStorageVersions() {
+	public OCurrentStorageComponentsFactory getStorageVersions() {
 		return underlying.getStorageVersions();
 	}
 }

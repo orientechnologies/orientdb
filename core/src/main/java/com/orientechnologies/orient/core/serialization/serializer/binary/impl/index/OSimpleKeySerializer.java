@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl.i
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
@@ -41,7 +43,8 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
 
   public OSimpleKeySerializer(final OType iType) {
     type = iType;
-    binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(type);
+
+    binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(iType);
   }
 
   public int getObjectSize(T key, Object... hints) {

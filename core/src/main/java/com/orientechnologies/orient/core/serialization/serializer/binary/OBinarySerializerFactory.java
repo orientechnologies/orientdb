@@ -36,10 +36,8 @@ import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.serialization.types.legacy.OStringSerializer_1_5_1;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageVersions;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -67,17 +65,6 @@ public class OBinarySerializerFactory {
    * Size of the type identifier block size
    */
   public static final int                                        TYPE_IDENTIFIER_SIZE   = 1;
-
-  /**
-   * Default factory instance that is used if db is not initialized.
-   */
-  private static final OBinarySerializerFactory                  DEFAULT_INSTANCE       = create(new OCurrentStorageVersions(
-                                                                                            new OStorageConfiguration(null)) {
-                                                                                          @Override
-                                                                                          public boolean legacyStringSerializer() {
-                                                                                            return false;
-                                                                                          }
-                                                                                        });
 
   private OBinarySerializerFactory() {
   }
@@ -132,7 +119,7 @@ public class OBinarySerializerFactory {
     return (OBinarySerializer<T>) serializerTypeMap.get(type);
   }
 
-  public static OBinarySerializerFactory create(OCurrentStorageVersions storageVersions) {
+  public static OBinarySerializerFactory create(int binaryFormatVersion) {
     final OBinarySerializerFactory factory = new OBinarySerializerFactory();
 
     // STATELESS SERIALIER
@@ -146,7 +133,7 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
     factory.registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
     factory.registerSerializer(OCharSerializer.INSTANCE, null);
-    if (storageVersions.legacyStringSerializer())
+    if (binaryFormatVersion <= 8)
       factory.registerSerializer(OStringSerializer_1_5_1.INSTANCE, OType.STRING);
     else
       factory.registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
@@ -173,14 +160,10 @@ public class OBinarySerializerFactory {
   }
 
   public static OBinarySerializerFactory getInstance() {
-    try {
-    return ODatabaseRecordThreadLocal.INSTANCE.get().getSerializerFactory();
-    } catch (ODatabaseException e) {
-      return DEFAULT_INSTANCE;
-    }
-  }
-
-  public static void registerFactory(OCurrentStorageVersions storageVersions) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().setSerializerFactory(create(storageVersions));
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (database != null)
+      return database.getSerializerFactory();
+    else
+      return OBinarySerializerFactory.create(Integer.MAX_VALUE);
   }
 }

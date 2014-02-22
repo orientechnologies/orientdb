@@ -17,16 +17,20 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 2/14/14
  */
-public class OCurrentStorageVersions {
-  public final int storageVersion;
+public class OCurrentStorageComponentsFactory {
+  public final int                      binaryFormatVersion;
+  public final OBinarySerializerFactory binarySerializerFactory;
 
-  public OCurrentStorageVersions(OStorageConfiguration configuration) {
-    this.storageVersion = configuration.storageVersion;
+  public OCurrentStorageComponentsFactory(OStorageConfiguration configuration) {
+    this.binaryFormatVersion = configuration.binaryFormatVersion;
+
+    binarySerializerFactory = OBinarySerializerFactory.create(binaryFormatVersion);
   }
 
   /**
@@ -34,10 +38,6 @@ public class OCurrentStorageVersions {
    * @since 1.7
    */
   public boolean classesAreDetectedByClusterId() {
-    return storageVersion >= 10;
-  }
-
-  public boolean legacyStringSerializer() {
-    return storageVersion <= 8;
+    return binaryFormatVersion >= 10;
   }
 }
