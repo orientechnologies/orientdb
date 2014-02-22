@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OResynchTask;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -79,18 +77,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     this.databaseName = iDatabaseName;
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
-
-    long resyncEvery = manager.getDatabaseConfiguration(databaseName).getResyncEvery();
-    if (resyncEvery > 0) {
-      resyncEvery *= 1000; // TRANSFORM IN SECONDS
-      // CREATE A TIMER TASK TO RESYNCH
-      Orient.instance().getTimer().schedule(new TimerTask() {
-        @Override
-        public void run() {
-          resynch();
-        }
-      }, resyncEvery, resyncEvery);
-    }
 
     checkLocalNodeInConfiguration();
   }
@@ -188,23 +174,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final Set<String> nodes = partition.getNodes();
 
     return send2Nodes(iRequest, nodes);
-  }
-
-  protected void resynch() {
-    final long startTimer = System.currentTimeMillis();
-
-    try {
-      send(new OHazelcastDistributedRequest(manager.getLocalNodeName(), databaseName, null, new OResynchTask(),
-          ODistributedRequest.EXECUTION_MODE.RESPONSE));
-    } catch (ODistributedException e) {
-      // HIDE EXCEPTION IF ANY ERROR ON QUORUM
-    }
-
-    Orient
-        .instance()
-        .getProfiler()
-        .stopChrono("distributed.replication." + databaseName + ".resynch", "Synchronization time among all the nodes", startTimer,
-            "distributed.replication.*.resynch");
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final String clusterName, final ODistributedConfiguration cfg,
@@ -349,9 +318,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         manager.getLocalNodeName(), databaseName);
 
     // SET THE NODE.DB AS ONLINE
-
-    manager.getConfigurationMap()
-        .put(OHazelcastPlugin.CONFIG_STATUS_PREFIX + manager.getLocalNodeName() + "." + databaseName, true);
+    manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
@@ -384,7 +351,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedRequest req = null;
 
     if (waitForTaskType == null && !skippedMessages.isEmpty())
-      req = skippedMessages.get(0);
+      // GET IT FROM THE IN MEMORY LIST
+      req = skippedMessages.remove(0);
 
     if (req == null)
       // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
@@ -401,7 +369,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
               "skip request because the node is not online yet, request=%s sourceNode=%s", req, req.getSenderNodeName());
 
-          skippedMessages.add(req);
+          if (saveSkippedMessages)
+            skippedMessages.add(req);
 
           // READ THE NEXT ONE
           req = requestQueue.take();
@@ -538,8 +507,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final List<String> foundPartition = cfg.addNewNodeInPartitions(manager.getLocalNodeName());
     if (foundPartition != null) {
       // SET THE NODE.DB AS OFFLINE
-      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_STATUS_PREFIX + manager.getLocalNodeName() + "." + databaseName,
-          false);
+      manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
 
       ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
           manager.getLocalNodeName(), databaseName, foundPartition);

@@ -58,9 +58,9 @@ public enum OGlobalConfiguration {
 
   DIRECT_MEMORY_SAFE_MODE(
       "memory.directMemory.safeMode",
-      "Indicates whether to do perform range check before each direct memory update, it is false by default, "
-          + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
-      Boolean.class, false),
+      "Indicates whether to do perform range check before each direct memory update, it is true by default, "
+          + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),

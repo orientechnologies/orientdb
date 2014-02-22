@@ -88,19 +88,6 @@ public class JNADirectMemoryTest {
     directMemory.free(pointer);
   }
 
-  public void testAllocateBytes() {
-    final Random rnd = new Random();
-    ODirectMemory directMemory = new OJNADirectMemory();
-
-    byte[] value = new byte[256];
-    rnd.nextBytes(value);
-
-    long pointer = directMemory.allocate(value);
-
-    Assert.assertEquals(directMemory.get(pointer, value.length), value);
-
-    directMemory.free(pointer);
-  }
 
   public void testBytesWithoutOffset() {
     final Random rnd = new Random();
