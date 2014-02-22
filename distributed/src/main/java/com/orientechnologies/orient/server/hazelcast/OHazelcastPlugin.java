@@ -912,7 +912,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (averageResponseTime > timeout * 75 / 100) {
       final long sleep = Math.abs(timeout - averageResponseTime);
 
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
           "slowing down request to avoid to fill queues. Wait for %dms (timeout=%d, averageResponseTime=%d)...", sleep, timeout,
           averageResponseTime);
       try {
