@@ -33,6 +33,7 @@ import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -411,6 +412,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     doc.field("localNode", localNode);
 
     localNode.put("name", getLocalNodeName());
+    localNode.put("averageResponseTime", messageService.getAverageResponseTime());
 
     Map<String, Object> databases = new HashMap<String, Object>();
     localNode.put("databases", databases);
@@ -888,43 +890,44 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return super.loadDatabaseConfiguration(iDatabaseName, file);
   }
 
+  /**
+   * Pauses the request if the distributed cluster need to be rebalanced because change of shape (add/remove nodes) or a node that
+   * is much slower than the average.
+   * 
+   * @param iDatabaseName
+   */
   protected void checkForClusterRebalance(final String iDatabaseName) {
     if (cachedClusterNodes.size() <= 1)
       return;
 
-    int maxQSize = 0;
-    int secondMaxQSize = 0;
-    int availableNodes = 0;
-    for (Map.Entry<String, Member> entry : cachedClusterNodes.entrySet()) {
-      final String nodeName = entry.getKey();
-      if (isNodeAvailable(nodeName, iDatabaseName)) {
-        availableNodes++;
-
-        final IQueue q = getMessageService().getQueue(
-            OHazelcastDistributedMessageService.getRequestQueueName(nodeName, iDatabaseName));
-        if (q != null) {
-          final int qSize = q.size();
-
-          if (qSize > maxQSize) {
-            secondMaxQSize = maxQSize;
-            maxQSize = qSize;
-          }
-        }
-      }
-    }
-
-    if (availableNodes <= 1)
+    if (getAvailableNodes(iDatabaseName) <= 1)
       return;
 
-    final long msgDelta = maxQSize - secondMaxQSize;
-    if (msgDelta > 100) {
-      // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-      // "slowing down request to avoid to fill queues. Wait for %dms...", msgDelta);
+    // TODO: SEPARATE METRICS PER DATABASE
+    final long averageResponseTime = messageService.getAverageResponseTime();
+
+    // TODO: SELECT THE RIGHT TIMEOUT
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
+
+    if (averageResponseTime > timeout * 75 / 100) {
+      final long sleep = Math.abs(timeout - averageResponseTime);
+
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "slowing down request to avoid to fill queues. Wait for %dms (timeout=%d, averageResponseTime=%d)...", sleep, timeout,
+          averageResponseTime);
       try {
-        Thread.sleep((msgDelta - 100) * 10);
+        Thread.sleep(sleep);
       } catch (InterruptedException e) {
       }
     }
   }
 
+  public int getAvailableNodes(final String iDatabaseName) {
+    int availableNodes = 0;
+    for (Map.Entry<String, Member> entry : cachedClusterNodes.entrySet()) {
+      if (isNodeAvailable(entry.getKey(), iDatabaseName))
+        availableNodes++;
+    }
+    return availableNodes;
+  }
 }
