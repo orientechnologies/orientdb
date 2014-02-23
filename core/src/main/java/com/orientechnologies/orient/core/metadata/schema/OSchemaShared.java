@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -40,15 +49,6 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -274,7 +274,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public OClass createClassInternal(final String iClassName, final OClass superClass, final int[] iClusterIds) {
     if (iClassName == null || iClassName.length() == 0)
-      throw new OSchemaException("Found class name null");
+      throw new OSchemaException("Found class name null or empty");
+
+    if (Character.isDigit(iClassName.charAt(0)))
+      throw new OSchemaException("Found invalid class name. Cannot start with numbers");
 
     final Character wrongCharacter = checkNameIfValid(iClassName);
     if (wrongCharacter != null)
@@ -633,7 +636,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       // REGISTER ALL THE CLASSES
       classes.clear();
-			clustersToClasses.clear();
+      clustersToClasses.clear();
 
       OClassImpl cls;
       Collection<ODocument> storedClasses = document.field("classes");

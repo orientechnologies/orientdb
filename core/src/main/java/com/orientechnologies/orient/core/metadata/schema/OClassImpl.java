@@ -395,6 +395,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   protected OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
+    if (iPropertyName == null || iPropertyName.length() == 0)
+      throw new OSchemaException("Property name is null or empty");
+
+    if (Character.isDigit(iPropertyName.charAt(0)))
+      throw new OSchemaException("Found invalid property name. Cannot start with numbers");
+
     if (getDatabase().getTransaction().isActive())
       throw new OSchemaException("Cannot create a new property inside a transaction");
 
