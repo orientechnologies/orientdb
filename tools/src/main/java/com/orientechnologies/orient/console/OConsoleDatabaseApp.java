@@ -2032,7 +2032,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @Override
   protected String getContext() {
-    if (currentDatabase != null)
+    if (currentDatabase != null && currentDatabaseName != null)
       return " {" + currentDatabaseName + "}";
     else if (serverAdmin != null)
       return " {" + serverAdmin.getURL() + "}";
