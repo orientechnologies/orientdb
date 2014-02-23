@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.OResettable;
+import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -24,17 +36,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.OResettable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
   private byte[]                                                       serializedContent = null;
@@ -359,7 +360,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     return OIdentifiable.class;
   }
 
-  private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable {
+  private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
     private int           currentIndex = -1;
     private int           nextIndex    = -1;
 
@@ -418,7 +419,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     public void reset() {
       currentIndex = -1;
       nextIndex = -1;
-			currentRemoved = false;
+      currentRemoved = false;
 
       nextIndex = nextIndex();
     }
@@ -431,6 +432,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       }
 
       return -1;
+    }
+
+    @Override
+    public int size() {
+      return size;
     }
   }
 
