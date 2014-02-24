@@ -129,8 +129,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         expectedSynchronousResponses, quorum, waitLocalNode,
         iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses), iRequest.getTask().getTotalTimeout(queueSize));
 
-    msgService.registerRequest(iRequest.getId(), currentResponseMgr);
-
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "request %s", iRequest.getTask());
 
@@ -139,6 +137,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     try {
       requestLock.lock();
       try {
+        iRequest.assignId();
+
+        msgService.registerRequest(iRequest.getId(), currentResponseMgr);
+
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
         for (IQueue<ODistributedRequest> queue : reqQueues) {

@@ -27,6 +27,8 @@ public interface ODistributedRequest {
     RESPONSE, NO_RESPONSE
   };
 
+  void assignId();
+
   long getId();
 
   EXECUTION_MODE getExecutionMode();
