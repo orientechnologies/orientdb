@@ -58,7 +58,7 @@ import java.util.List;
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull {
   protected static final int TOT_RECORDS = 10;
-  public static final String EXPORT_DIR  = "/target/objectSchemaTest/database.export.gz";
+  public static final String EXPORT_DIR  = "target/objectSchemaTest/database.export.gz";
 
   protected long             startRecordNumber;
   private OObjectDatabaseTx  database;
@@ -70,6 +70,8 @@ public class CRUDObjectInheritanceTestSchemaFull {
   public CRUDObjectInheritanceTestSchemaFull(String iURL, String iTestPath) {
     url = iURL;
     testsRoot = iTestPath;
+		if (testsRoot != null && testsRoot.length() > 0)
+			testsRoot = testsRoot + "/";
   }
 
   @BeforeClass
