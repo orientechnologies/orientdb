@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +49,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected final OHazelcastPlugin                                     manager;
 
   protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
-
-  protected final static Map<String, IQueue<?>>                        queues                      = new HashMap<String, IQueue<?>>();
 
   protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
@@ -265,7 +262,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
             "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
         return true;
       }
-    }
+    } else
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
+          iQueueName);
+
     return false;
   }
 
@@ -274,26 +274,15 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    */
   @SuppressWarnings("unchecked")
   protected <T> IQueue<T> getQueue(final String iQueueName) {
-    synchronized (queues) {
-      IQueue<T> queue = (IQueue<T>) queues.get(iQueueName);
-      if (queue == null) {
-        queue = manager.getHazelcastInstance().getQueue(iQueueName);
-        queues.put(iQueueName, queue);
-      }
-
-      return manager.getHazelcastInstance().getQueue(iQueueName);
-    }
+    return manager.getHazelcastInstance().getQueue(iQueueName);
   }
 
   /**
    * Remove the queue.
    */
   protected void removeQueue(final String iQueueName) {
-    synchronized (queues) {
-      queues.remove(iQueueName);
-      IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
-      queue.clear();
-    }
+    IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    queue.clear();
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {

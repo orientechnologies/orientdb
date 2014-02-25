@@ -92,7 +92,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   protected String                              nodeId;
   protected String                              hazelcastConfigFile    = "hazelcast.xml";
-  protected Map<String, Member>                 cachedClusterNodes     = new ConcurrentHashMap<String, Member>();
+  protected Map<String, Member>                 activeNodes            = new ConcurrentHashMap<String, Member>();
   protected OHazelcastDistributedMessageService messageService;
   protected long                                timeOffset             = 0;
   protected Date                                startedOn              = new Date();
@@ -162,14 +162,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
 
-    cachedClusterNodes.clear();
+    activeNodes.clear();
 
     try {
       hazelcastInstance = Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
 
       nodeId = hazelcastInstance.getCluster().getLocalMember().getUuid();
       timeOffset = System.currentTimeMillis() - hazelcastInstance.getCluster().getClusterTime();
-      cachedClusterNodes.put(getLocalNodeName(), hazelcastInstance.getCluster().getLocalMember());
+      activeNodes.put(getLocalNodeName(), hazelcastInstance.getCluster().getLocalMember());
 
       membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
@@ -182,7 +182,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
         final String memberName = getNodeName(m);
         if (memberName != null)
-          cachedClusterNodes.put(memberName, m);
+          activeNodes.put(memberName, m);
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
@@ -222,7 +222,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     super.shutdown();
 
-    cachedClusterNodes.clear();
+    activeNodes.clear();
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
@@ -256,7 +256,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final List<ODocument> members = new ArrayList<ODocument>();
     cluster.field("members", members, OType.EMBEDDEDLIST);
     // members.add(getLocalNodeConfiguration());
-    for (Member member : cachedClusterNodes.values()) {
+    for (Member member : activeNodes.values()) {
       members.add(getNodeConfigurationById(member.getUuid()));
     }
 
@@ -467,7 +467,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public Set<String> getRemoteNodeIds() {
-    return cachedClusterNodes.keySet();
+    return activeNodes.keySet();
   }
 
   @Override
@@ -494,7 +494,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final String nodeName = getNodeName(member);
     if (nodeName != null) {
-      cachedClusterNodes.remove(nodeName);
+      activeNodes.remove(nodeName);
 
       for (String dbName : messageService.getDatabases()) {
         messageService.getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
@@ -510,11 +510,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
         final ODocument cfg = (ODocument) iEvent.getValue();
-        cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+        activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
 
         ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
             "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
-            getNodeName(iEvent.getMember()), cachedClusterNodes.size());
+            getNodeName(iEvent.getMember()), activeNodes.size());
 
         installNewDatabases(false);
       }
@@ -536,7 +536,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           iEvent.getMember(), getNodeName(iEvent.getMember()));
 
       final ODocument cfg = (ODocument) iEvent.getValue();
-      cachedClusterNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+      activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -563,7 +563,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (nName != null) {
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "removed node configuration id=%s name=%s",
             iEvent.getMember(), nName);
-        cachedClusterNodes.remove(nName);
+        activeNodes.remove(nName);
       }
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
@@ -582,7 +582,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
-    if (cachedClusterNodes.containsKey(iNodeName)) {
+    if (activeNodes.containsKey(iNodeName)) {
       final Boolean nodeStatus = checkDatabaseStatus(iNodeName, iDatabaseName, DB_STATUS.ONLINE);
       if (nodeStatus != null && nodeStatus)
         return nodeStatus;
@@ -686,7 +686,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected void installNewDatabases(final boolean iStartup) {
-    if (cachedClusterNodes.size() <= 1)
+    if (activeNodes.size() <= 1)
       // NO OTHER NODES WHERE ALIGN
       return;
 
@@ -897,7 +897,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    * @param iDatabaseName
    */
   protected void checkForClusterRebalance(final String iDatabaseName) {
-    if (cachedClusterNodes.size() <= 1)
+    if (activeNodes.size() <= 1)
       return;
 
     if (getAvailableNodes(iDatabaseName) <= 1)
@@ -924,7 +924,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public int getAvailableNodes(final String iDatabaseName) {
     int availableNodes = 0;
-    for (Map.Entry<String, Member> entry : cachedClusterNodes.entrySet()) {
+    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
       if (isNodeAvailable(entry.getKey(), iDatabaseName))
         availableNodes++;
     }
