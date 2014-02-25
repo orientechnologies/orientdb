@@ -14,6 +14,8 @@
     </target>
 
     <target name="test-init">
+        <property name="project.root.dir" location="."/>
+
         <copy todir="${project.build}">
             <fileset dir="src/test/java">
                 <include name="**/*.xml"/>
@@ -26,6 +28,7 @@
 
             <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
             <replacefilter token="@URL@" value="local:${orient.path}/databases/demo"/>
+            <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
         </replace>
 
         <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
@@ -33,6 +36,7 @@
 
             <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
             <replacefilter token="@URL@" value="plocal:${orient.path}/databases/demo"/>
+            <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
         </replace>
 
     </target>
