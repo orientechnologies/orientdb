@@ -110,7 +110,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         else {
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip listening of response because node '%s' is not online", node);
+                "skip expected response from node '%s' for request %d because it's not online", node, iRequest.getId());
         }
       }
     } else
@@ -129,16 +129,19 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         expectedSynchronousResponses, quorum, waitLocalNode,
         iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses), iRequest.getTask().getTotalTimeout(queueSize));
 
-    msgService.registerRequest(iRequest.getId(), currentResponseMgr);
-
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "request %s", iRequest.getTask());
+      ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "sending request %s",
+          iRequest.getTask());
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
     try {
       requestLock.lock();
       try {
+        iRequest.assignId();
+
+        msgService.registerRequest(iRequest.getId(), currentResponseMgr);
+
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
         for (IQueue<ODistributedRequest> queue : reqQueues) {
@@ -148,6 +151,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       } finally {
         requestLock.unlock();
       }
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "sent request %s",
+            iRequest.getTask());
 
       Orient
           .instance()
@@ -312,13 +319,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public void setOnline() {
     initDatabaseInstance();
 
-    status.set(true);
-
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Publishing online status for database %s.%s...",
         manager.getLocalNodeName(), databaseName);
 
     // SET THE NODE.DB AS ONLINE
     manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+    status.set(true);
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
@@ -326,16 +333,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     // WAKE UP ANY WAITERS
     synchronized (waitForOnline) {
       waitForOnline.notifyAll();
-    }
-  }
-
-  protected void waitForOnline() {
-    synchronized (waitForOnline) {
-      try {
-        waitForOnline.wait();
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-      }
     }
   }
 
@@ -350,9 +347,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     // GET FROM SKIPPED MSG FIRST
     ODistributedRequest req = null;
 
-    if (waitForTaskType == null && !skippedMessages.isEmpty())
+    if (waitForTaskType == null && !skippedMessages.isEmpty()) {
       // GET IT FROM THE IN MEMORY LIST
       req = skippedMessages.remove(0);
+
+      if (req != null)
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.NONE,
+            "pop buffered request %s", req);
+    }
 
     if (req == null)
       // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
@@ -366,7 +368,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           return req;
         } else {
           // SKIP IT
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
               "skip request because the node is not online yet, request=%s sourceNode=%s", req, req.getSenderNodeName());
 
           if (saveSkippedMessages)
@@ -388,8 +390,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
-        "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
+          "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
 
     return req;
   }
