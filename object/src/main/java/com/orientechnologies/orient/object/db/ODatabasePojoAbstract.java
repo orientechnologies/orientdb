@@ -271,7 +271,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return underlying.callbackHooks(iType, iObject);
   }
 
-  public Set<ORecordHook> getHooks() {
+  public Map<ORecordHook,ORecordHook.HOOK_POSITION> getHooks() {
     return underlying.getHooks();
   }
 

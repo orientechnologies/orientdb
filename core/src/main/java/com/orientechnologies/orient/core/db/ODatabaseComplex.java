@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -385,9 +385,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Retrieves all the registered hooks.
    * 
-   * @return A not-null unmodifiable set of ORecordHook instances. If there are no hooks registered, the Set is empty.
+   * @return A not-null unmodifiable map of ORecordHook and position instances. If there are no hooks registered, the Map is empty.
    */
-  public Set<ORecordHook> getHooks();
+  public Map<ORecordHook, HOOK_POSITION> getHooks();
 
   /**
    * Unregisters a previously registered hook.

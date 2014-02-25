@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -45,12 +34,26 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.test.domain.base.IdObject;
 import com.orientechnologies.orient.test.domain.base.Instrument;
 import com.orientechnologies.orient.test.domain.base.Musician;
-import com.orientechnologies.orient.test.domain.business.*;
+import com.orientechnologies.orient.test.domain.business.Account;
+import com.orientechnologies.orient.test.domain.business.Address;
+import com.orientechnologies.orient.test.domain.business.City;
+import com.orientechnologies.orient.test.domain.business.Company;
+import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestAbstractClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseClass;
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
 import com.orientechnologies.orient.test.domain.schemageneration.JavaTestSchemaGeneration;
 import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGenerationChild;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull {
@@ -94,7 +97,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
         impor.setPreserveClusterIDs(false);
 
       // UNREGISTER ALL THE HOOKS
-      for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks())) {
+      for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
         importDatabase.unregisterHook(hook);
       }
 
