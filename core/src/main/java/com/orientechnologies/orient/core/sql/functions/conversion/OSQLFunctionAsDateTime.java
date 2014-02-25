@@ -39,20 +39,22 @@ public class OSQLFunctionAsDateTime extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
+      final OCommandContext iContext) {
     final Object value = iFuncParams[0];
 
     if (value != null) {
-      if (value instanceof Number) {
+      if (value instanceof Date)
+        return value;
+      else if (value instanceof Number)
         return new Date(((Number) value).longValue());
-      } else if (!(value instanceof Date)) {
+      else
         try {
           return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
               .parse(value.toString());
         } catch (ParseException e) {
           // IGNORE IT: RETURN NULL
         }
-      }
     }
     return null;
   }
