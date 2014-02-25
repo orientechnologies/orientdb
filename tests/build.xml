@@ -15,6 +15,7 @@
 
     <target name="test-init">
         <property name="project.root.dir" location="."/>
+        <property name="test.path" location="${orient.path}/databases/demo"/>
 
         <copy todir="${project.build}">
             <fileset dir="src/test/java">
@@ -26,16 +27,16 @@
             <include name="*-test-db-from-scratch.xml"/>
             <exclude name="paginated-local-test-db-from-scratch.xml"/>
 
-            <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
-            <replacefilter token="@URL@" value="local:${orient.path}/databases/demo"/>
+            <replacefilter token="@PATH@" value="${test.path}"/>
+            <replacefilter token="@URL@" value="local:${test.path}"/>
             <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
         </replace>
 
         <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
             <include name="paginated-local-test-db-from-scratch.xml"/>
 
-            <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
-            <replacefilter token="@URL@" value="plocal:${orient.path}/databases/demo"/>
+            <replacefilter token="@PATH@" value="${test.path}"/>
+            <replacefilter token="@URL@" value="plocal:${test.path}"/>
             <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
         </replace>
 
