@@ -96,6 +96,7 @@
             <groupId>com.tinkerpop.blueprints</groupId>
             <artifactId>blueprints-test</artifactId>
             <version>${blueprints.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.tinkerpop</groupId>
