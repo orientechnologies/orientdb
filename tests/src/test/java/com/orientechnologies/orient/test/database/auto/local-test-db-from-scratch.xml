@@ -3,7 +3,7 @@
 
     <parameter name="path" value="@PATH@"/>
     <parameter name="url" value="@URL@"/>
-    <parameter name="testPath" value="tests"/>
+    <parameter name="testPath" value="@TESTPATH@"/>
 
     <test name="Setup">
         <classes>
