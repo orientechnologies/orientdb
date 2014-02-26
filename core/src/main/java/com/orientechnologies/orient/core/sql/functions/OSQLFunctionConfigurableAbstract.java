@@ -34,4 +34,19 @@ public abstract class OSQLFunctionConfigurableAbstract extends OSQLFunctionAbstr
   public void config(final Object[] iConfiguredParameters) {
     configuredParameters = iConfiguredParameters;
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder(name);
+    buffer.append('(');
+    if (configuredParameters != null) {
+      for (int i = 0; i < configuredParameters.length; ++i) {
+        if (i > 0)
+          buffer.append(',');
+        buffer.append(configuredParameters[i]);
+      }
+    }
+    buffer.append(')');
+    return buffer.toString();
+  }
 }

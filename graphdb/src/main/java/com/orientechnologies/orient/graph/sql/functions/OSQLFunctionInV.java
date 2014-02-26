@@ -29,7 +29,7 @@ public class OSQLFunctionInV extends OSQLFunctionMove {
   public static final String NAME = "inV";
 
   public OSQLFunctionInV() {
-    super(NAME, 0, 1);
+    super(NAME, 0, -1);
   }
 
   @Override

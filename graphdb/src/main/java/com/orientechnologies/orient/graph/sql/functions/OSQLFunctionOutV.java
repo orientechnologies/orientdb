@@ -29,7 +29,7 @@ public class OSQLFunctionOutV extends OSQLFunctionMove {
   public static final String NAME = "outV";
 
   public OSQLFunctionOutV() {
-    super(NAME, 0, 1);
+    super(NAME, 0, -1);
   }
 
   @Override
