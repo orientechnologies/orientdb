@@ -39,22 +39,21 @@ import java.util.concurrent.locks.ReentrantLock;
  * 
  */
 public class ODistributedResponseManager {
+  private static final String                    NO_RESPONSE                 = "waiting-for-response";
   private final ODistributedServerManager        dManager;
   private final ODistributedRequest              request;
   private final long                             sentOn;
   private final HashMap<String, Object>          responses                   = new HashMap<String, Object>();
   private final List<List<ODistributedResponse>> responseGroups              = new ArrayList<List<ODistributedResponse>>();
   private final int                              expectedSynchronousResponses;
+  private final long                             synchTimeout;
+  private final long                             totalTimeout;
+  private final Lock                             synchronousResponsesLock    = new ReentrantLock();
+  private final Condition                        synchronousResponsesArrived = synchronousResponsesLock.newCondition();
   private int                                    receivedResponses           = 0;
   private int                                    quorum;
   private boolean                                waitForLocalNode;
-  private final long                             synchTimeout;
-  private final long                             totalTimeout;
   private volatile boolean                       receivedCurrentNode;
-  private final Lock                             synchronousResponsesLock    = new ReentrantLock();
-  private final Condition                        synchronousResponsesArrived = synchronousResponsesLock.newCondition();
-
-  private static final String                    NO_RESPONSE                 = "waiting-for-response";
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Set<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
@@ -321,7 +320,8 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "fixing response for request=%s in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
 
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r, goodResponse);
+          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
+              goodResponse.getPayload());
 
           if (fixTask != null)
             dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixTask,
