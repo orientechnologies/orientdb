@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -136,7 +135,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final String linkAsString = iValue.substring(pos + 1);
         try {
           return new ORecordId(linkAsString);
-        } catch (NumberFormatException e) {
+        } catch (IllegalArgumentException e) {
           OLogManager.instance().error(this, "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link", iName,
               iSourceRecord, linkAsString);
           return new ORecordId();
