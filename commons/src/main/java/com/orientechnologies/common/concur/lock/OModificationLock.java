@@ -78,13 +78,7 @@ public class OModificationLock {
    * {@link #allowModifications()} method will be called. This method will wait till all ongoing modifications will be finished.
    */
   public void prohibitModifications() {
-    lock.writeLock().lock();
-    try {
-      throwException = false;
-      veto = true;
-    } finally {
-      lock.writeLock().unlock();
-    }
+    prohibitModifications(false);
   }
 
   /**

@@ -467,4 +467,9 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return wrapped.getComponentsFactory();
   }
+
+  @Override
+  public long getLastOperationId() {
+    return 0;
+  }
 }

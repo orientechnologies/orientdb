@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -280,4 +279,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass();
 
   public OCurrentStorageComponentsFactory getComponentsFactory();
+
+  public long getLastOperationId();
 }

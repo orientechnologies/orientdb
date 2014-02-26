@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -47,28 +47,21 @@ import java.util.concurrent.locks.Lock;
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  protected final OHazelcastPlugin                        manager;
-  protected final OHazelcastDistributedMessageService     msgService;
-
-  protected final String                                  databaseName;
-  protected final static Map<String, IQueue<?>>           queues                     = new HashMap<String, IQueue<?>>();
-  protected final Lock                                    requestLock;
-
-  protected volatile ODatabaseDocumentTx                  database;
-
-  public static final String                              NODE_QUEUE_PREFIX          = "orientdb.node.";
-  public static final String                              NODE_QUEUE_REQUEST_POSTFIX = ".request";
-  public static final String                              NODE_QUEUE_UNDO_POSTFIX    = ".undo";
-  private static final String                             NODE_LOCK_PREFIX           = "orientdb.reqlock.";
-
-  protected volatile Class<? extends OAbstractRemoteTask> waitForTaskType;
-  protected volatile boolean                              saveSkippedMessages        = false;
-  protected volatile boolean                              restoringMessages          = false;
-  protected List<ODistributedRequest>                     skippedMessages            = new ArrayList<ODistributedRequest>();
-
-  protected AtomicBoolean                                 status                     = new AtomicBoolean(false);
-  protected Object                                        waitForOnline              = new Object();
-  protected Thread                                        listenerThread;
+  public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
+  public static final String                          NODE_QUEUE_REQUEST_POSTFIX = ".request";
+  public static final String                          NODE_QUEUE_UNDO_POSTFIX    = ".undo";
+  protected final static Map<String, IQueue<?>>       queues                     = new HashMap<String, IQueue<?>>();
+  private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  protected final OHazelcastPlugin                    manager;
+  protected final OHazelcastDistributedMessageService msgService;
+  protected final String                              databaseName;
+  protected final Lock                                requestLock;
+  protected volatile ODatabaseDocumentTx              database;
+  protected volatile boolean                          restoringMessages          = false;
+  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
+  protected Object                                    waitForOnline              = new Object();
+  protected Thread                                    listenerThread;
+  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -138,7 +131,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     try {
       requestLock.lock();
       try {
-        iRequest.assignId();
+        iRequest.setId(msgService.getMessageIdCounter().getAndIncrement());
 
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
@@ -336,43 +329,29 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
-  public OHazelcastDistributedDatabase setWaitForTaskType(Class<? extends OAbstractRemoteTask> iTaskType,
-      final boolean iSaveSkippedMessages) {
-    waitForTaskType = iTaskType;
-    saveSkippedMessages = iSaveSkippedMessages;
+  public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+        "waiting for message id %d (discard all previous ones if any)...", iMessageId);
+
+    waitForMessageId.set(iMessageId);
     return this;
   }
 
   protected ODistributedRequest readRequest(final IQueue<ODistributedRequest> requestQueue) throws InterruptedException {
-    // GET FROM SKIPPED MSG FIRST
-    ODistributedRequest req = null;
+    // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
+    ODistributedRequest req = requestQueue.take();
 
-    if (waitForTaskType == null && !skippedMessages.isEmpty()) {
-      // GET IT FROM THE IN MEMORY LIST
-      req = skippedMessages.remove(0);
-
-      if (req != null)
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.NONE,
-            "pop buffered request %s", req);
-    }
-
-    if (req == null)
-      // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
-      req = requestQueue.take();
-
-    while (waitForTaskType != null) {
+    while (waitForMessageId.get() > -1) {
       if (req != null) {
-        if (req.getTask().getClass().equals(waitForTaskType)) {
+        if (req.getId() >= waitForMessageId.get()) {
           // ARRIVED, RESET IT
-          waitForTaskType = null;
+          waitForMessageId.set(-1);
           return req;
         } else {
           // SKIP IT
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-              "skip request because the node is not online yet, request=%s sourceNode=%s", req, req.getSenderNodeName());
-
-          if (saveSkippedMessages)
-            skippedMessages.add(req);
+              "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(), waitForMessageId, req,
+              req.getSenderNodeName());
 
           // READ THE NEXT ONE
           req = requestQueue.take();

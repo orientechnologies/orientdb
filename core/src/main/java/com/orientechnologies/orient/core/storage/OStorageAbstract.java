@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -36,7 +32,10 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
   protected final String                              url;
@@ -231,5 +230,10 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   @Override
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return componentsFactory;
+  }
+
+  @Override
+  public long getLastOperationId() {
+    return 0;
   }
 }

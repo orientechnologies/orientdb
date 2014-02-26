@@ -54,8 +54,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' }, new boolean[] { false, true }, 0,
-        -1, false, true, false, false, new char[] {});
+    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' },
+        new boolean[] { false, true, true }, 0, -1, false, true, false, false, new char[] {});
 
     setRoot(iQueryToParse, parts.get(0));
 
@@ -67,7 +67,10 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
         final String part = parts.get(i);
 
         final int pindex = part.indexOf('(');
-        if (pindex > -1) {
+        if (part.charAt(0) == '[')
+          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLFunctionMultiValue.NAME),
+              new Object[] { part }));
+        else if (pindex > -1) {
           final String methodName = part.substring(0, pindex).trim().toLowerCase(Locale.ENGLISH);
 
           OSQLMethod method = OSQLHelper.getMethodByName(methodName);
@@ -110,9 +113,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
           // SPECIAL OPERATION FOUND: ADD IT IN TO THE CHAIN
           operationsChain.add(new OPair<OSQLMethod, Object[]>(method, arguments));
 
-        } else if (part.charAt(0) == '[') {
-          operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLFunctionMultiValue.NAME),
-              new Object[] { part }));
         } else {
           operationsChain.add(new OPair<OSQLMethod, Object[]>(OSQLHelper.getMethodByName(OSQLMethodField.NAME),
               new Object[] { part }));

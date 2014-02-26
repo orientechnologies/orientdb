@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.EntryEvent;
@@ -54,28 +71,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -227,7 +228,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
 
-    getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
+    // AVOID TO REMOVE THE CFG TO PREVENT OTHER NODES TO UN-REGISTER IT
+    // getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
 
     try {
       hazelcastInstance.shutdown();
@@ -634,6 +636,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final OAbstractRemoteTask task = req.getTask();
 
     try {
+      ((ODistributedStorage) database.getStorage()).setLastOperationId(req.getId());
+
       return (Serializable) task.execute(serverInstance, this, database);
     } catch (Throwable e) {
       return e;
@@ -720,90 +724,84 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
-            // READ ALL THE MESSAGES DISCARDING EVERYTHING UNTIL DEPLOY MSG ARRIVES
-            distrDatabase.setWaitForTaskType(ODeployDatabaseTask.class, false);
-            try {
+            distrDatabase.configureDatabase(false, false);
 
-              distrDatabase.configureDatabase(false, false);
+            final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
+                EXECUTION_MODE.RESPONSE);
 
-              final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
-                  EXECUTION_MODE.RESPONSE);
+            // EXTRACT THE REAL RESULT
+            for (Entry<String, Object> r : results.entrySet()) {
+              final Object value = r.getValue();
 
-              // EXTRACT THE REAL RESULT
-              for (Entry<String, Object> r : results.entrySet()) {
-                final Object value = r.getValue();
+              if (value instanceof Boolean) {
+                continue;
+              } else if (value instanceof Exception) {
+                ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
+                    "error on installing database %s in %s", (Exception) value, databaseName, dbPath);
+              } else if (value instanceof ODistributedDatabaseChunk) {
+                ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
 
-                if (value instanceof Boolean) {
-                  continue;
-                } else if (value instanceof Exception) {
-                  ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
-                      "error on installing database %s in %s", (Exception) value, databaseName, dbPath);
-                } else if (value instanceof ODistributedDatabaseChunk) {
-                  ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
+                // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
+                distrDatabase.setWaitForMessage(chunk.getLastOperationId() + 1);
 
-                  final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
+                final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 
-                  ODistributedServerLog.info(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
-                      "copying remote database '%s' to: %s", databaseName, fileName);
+                ODistributedServerLog.info(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
+                    "copying remote database '%s' to: %s", databaseName, fileName);
 
-                  final File file = new File(fileName);
-                  if (file.exists())
-                    file.delete();
+                final File file = new File(fileName);
+                if (file.exists())
+                  file.delete();
 
+                try {
+                  file.getParentFile().mkdirs();
+                  file.createNewFile();
+                } catch (IOException e) {
+                  throw new ODistributedException("Error on creating temp database file to install locally", e);
+                }
+
+                FileOutputStream out = null;
+                try {
+                  out = new FileOutputStream(fileName, false);
+
+                  long fileSize = writeDatabaseChunk(1, chunk, out);
+                  for (int chunkNum = 2; !chunk.last; chunkNum++) {
+                    final Object result = sendRequest2Node(databaseName, r.getKey(), new OCopyDatabaseChunkTask(chunk.filePath,
+                        chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
+
+                    if (result instanceof Boolean)
+                      continue;
+                    else {
+                      chunk = (ODistributedDatabaseChunk) result;
+                      fileSize += writeDatabaseChunk(chunkNum, chunk, out);
+                    }
+                  }
+
+                  ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "database copied correctly, size=%s",
+                      OFileUtils.getSizeAsString(fileSize));
+
+                } catch (Exception e) {
+                  ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+                      "error on transferring database '%s' to '%s'", e, databaseName, fileName);
+                  throw new ODistributedException("Error on transferring database", e);
+                } finally {
                   try {
-                    file.getParentFile().mkdirs();
-                    file.createNewFile();
+                    if (out != null) {
+                      out.flush();
+                      out.close();
+                    }
                   } catch (IOException e) {
-                    throw new ODistributedException("Error on creating temp database file to install locally", e);
                   }
+                }
 
-                  FileOutputStream out = null;
-                  try {
-                    out = new FileOutputStream(fileName, false);
+                installDatabase(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
+                return;
 
-                    long fileSize = writeDatabaseChunk(1, chunk, out);
-                    for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                      final Object result = sendRequest2Node(databaseName, r.getKey(), new OCopyDatabaseChunkTask(chunk.filePath,
-                          chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
-
-                      if (result instanceof Boolean)
-                        continue;
-                      else {
-                        chunk = (ODistributedDatabaseChunk) result;
-                        fileSize += writeDatabaseChunk(chunkNum, chunk, out);
-                      }
-                    }
-
-                    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-                        "database copied correctly, size=%s", OFileUtils.getSizeAsString(fileSize));
-
-                  } catch (Exception e) {
-                    ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-                        "error on transferring database '%s' to '%s'", e, databaseName, fileName);
-                    throw new ODistributedException("Error on transferring database", e);
-                  } finally {
-                    try {
-                      if (out != null) {
-                        out.flush();
-                        out.close();
-                      }
-                    } catch (IOException e) {
-                    }
-                  }
-
-                  installDatabase(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
-                  return;
-
-                } else
-                  throw new IllegalArgumentException("Type " + value + " not supported");
-              }
-
-              throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
-
-            } finally {
-              // AVOID THE NODE CANCEL ALL THE FURTHER REQUESTS
-              distrDatabase.setWaitForTaskType(null, false);
+              } else
+                throw new IllegalArgumentException("Type " + value + " not supported");
             }
+
+            throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
           }
         }
       }

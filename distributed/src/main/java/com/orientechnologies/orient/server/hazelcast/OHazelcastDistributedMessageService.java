@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
 import com.orientechnologies.orient.core.Orient;
@@ -26,15 +36,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -297,6 +298,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
         queueNames.add(q);
     }
     return queueNames;
+  }
+
+  public IAtomicLong getMessageIdCounter() {
+    return manager.getHazelcastInstance().getAtomicLong("orientdb.requestId");
   }
 
   @Override

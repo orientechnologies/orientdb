@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -66,18 +79,6 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Distributed storage implementation that routes to the owner node the request.
  * 
@@ -89,7 +90,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   protected final OStorageEmbedded                                          wrapped;
 
   protected final TimerTask                                                 purgeDeletedRecordsTask;
-  protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
+  protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
+  protected final AtomicLong                                                lastOperationId = new AtomicLong();
 
   public ODistributedStorage(final OServer iServer, final OStorageEmbedded wrapped) {
     this.serverInstance = iServer;
@@ -739,6 +741,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     wrapped.restore(in, options, callable, iListener);
   }
 
+  @Override
+  public long getLastOperationId() {
+    return lastOperationId.get();
+  }
+
   private OFreezableStorage getFreezableStorage() {
     if (wrapped instanceof OFreezableStorage)
       return ((OFreezableStorage) wrapped);
@@ -756,5 +763,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
   protected Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode) {
     return dManager.sendRequest(iDatabaseName, iClusterName, iTask, iExecutionMode);
+  }
+
+  public void setLastOperationId(final long lastOperationId) {
+    this.lastOperationId.set(lastOperationId);
   }
 }
