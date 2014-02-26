@@ -298,10 +298,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return status;
   }
 
-  public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
-    return status.equals(iStatus2Check);
-  }
-
   @Override
   public void setNodeStatus(final NODE_STATUS iStatus) {
     if (status.equals(iStatus))
@@ -311,6 +307,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     status = iStatus;
 
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node status to '%s'", status);
+  }
+
+  public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
+    return status.equals(iStatus2Check);
   }
 
   @Override
@@ -763,8 +763,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
                     long fileSize = writeDatabaseChunk(1, chunk, out);
                     for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                      distrDatabase.setWaitForTaskType(OCopyDatabaseChunkTask.class, true);
-
                       final Object result = sendRequest2Node(databaseName, r.getKey(), new OCopyDatabaseChunkTask(chunk.filePath,
                           chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
 
