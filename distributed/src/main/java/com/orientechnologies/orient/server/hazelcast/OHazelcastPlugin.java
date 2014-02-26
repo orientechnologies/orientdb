@@ -640,7 +640,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final OAbstractRemoteTask task = req.getTask();
 
     try {
-      ((ODistributedStorage) database.getStorage()).setLastOperationId(req.getId());
+      if (database != null)
+        ((ODistributedStorage) database.getStorage()).setLastOperationId(req.getId());
 
       return (Serializable) task.execute(serverInstance, this, database);
     } catch (Throwable e) {
