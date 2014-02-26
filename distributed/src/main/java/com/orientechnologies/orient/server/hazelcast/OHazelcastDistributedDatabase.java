@@ -345,6 +345,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       if (req != null) {
         if (req.getId() >= waitForMessageId.get()) {
           // ARRIVED, RESET IT
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+              "reached waited request %d on request=%s sourceNode=%s", req.getId(), waitForMessageId, req, req.getSenderNodeName());
+
           waitForMessageId.set(-1);
           return req;
         } else {
@@ -384,6 +387,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     try {
       final OAbstractRemoteTask task = iRequest.getTask();
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+            "received request: %s", iRequest);
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
