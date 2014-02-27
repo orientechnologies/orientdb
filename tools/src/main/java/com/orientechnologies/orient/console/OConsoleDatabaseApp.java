@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -88,6 +89,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected ODatabaseDocument   currentDatabase;
   protected String              currentDatabaseName;
   protected ORecordInternal<?>  currentRecord;
+  protected int                 currentRecordIdx;
   protected List<OIdentifiable> currentResultSet;
   protected OServerAdmin        serverAdmin;
   private int                   lastPercentStep;
@@ -136,6 +138,52 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     System.exit(result);
   }
 
+  protected static boolean setTerminalToCBreak() throws IOException, InterruptedException {
+    // set the console to be character-buffered instead of line-buffered
+    int result = stty("-icanon min 1");
+    if (result != 0) {
+      return false;
+    }
+
+    // disable character echoing
+    stty("-echo");
+    return true;
+  }
+
+  /**
+   * Execute the stty command with the specified arguments against the current active terminal.
+   */
+  protected static int stty(final String args) throws IOException, InterruptedException {
+    String cmd = "stty " + args + " < /dev/tty";
+
+    return exec(new String[] { "sh", "-c", cmd });
+  }
+
+  /**
+   * Execute the specified command and return the output (both stdout and stderr).
+   */
+  protected static int exec(final String[] cmd) throws IOException, InterruptedException {
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+    Process p = Runtime.getRuntime().exec(cmd);
+    int c;
+    InputStream in = p.getInputStream();
+
+    while ((c = in.read()) != -1) {
+      bout.write(c);
+    }
+
+    in = p.getErrorStream();
+
+    while ((c = in.read()) != -1) {
+      bout.write(c);
+    }
+
+    p.waitFor();
+
+    return p.exitValue();
+  }
+
   @Override
   protected boolean isCollectingCommands(final String iLine) {
     return iLine.startsWith("js");
@@ -145,7 +193,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void onBefore() {
     super.onBefore();
 
-    currentResultSet = new ArrayList<OIdentifiable>();
+    setResultset(new ArrayList<OIdentifiable>());
 
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
@@ -655,6 +703,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n\nCluster '" + iClusterName + "' was released successfully");
   }
 
+  @ConsoleCommand(description = "Move the current record cursor to the next one in result set")
+  public void next() {
+    setCurrentRecord(currentRecordIdx + 1);
+    dumpRecordDetails();
+  }
+
+  @ConsoleCommand(description = "Move the current record cursor to the previous one in result set")
+  public void prev() {
+    setCurrentRecord(currentRecordIdx - 1);
+    dumpRecordDetails();
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Alter a class in the database schema")
   public void alterClass(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("alter", iCommandText, "\nClass updated successfully\n", false);
@@ -706,7 +766,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     long start = System.currentTimeMillis();
-    currentResultSet = currentDatabase.command(new OCommandSQL("traverse " + iQueryText)).execute();
+    setResultset((List<OIdentifiable>) currentDatabase.command(new OCommandSQL("traverse " + iQueryText)).execute());
 
     float elapsedSeconds = getElapsedSecs(start);
 
@@ -737,13 +797,55 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     final long start = System.currentTimeMillis();
-    currentResultSet = currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:1"));
+    setResultset((List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, limit).setFetchPlan("*:1")));
 
     float elapsedSeconds = getElapsedSecs(start);
 
     dumpResultSet(limit);
 
     message("\n\n" + currentResultSet.size() + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Move from current record by evaluating a predicate against current record")
+  public void move(@ConsoleParameter(name = "text", description = "The sql predicate to evaluate") final String iText) {
+    if (iText == null)
+      return;
+
+    if (currentRecord == null)
+      return;
+
+    final Object result = new OSQLPredicate(iText).evaluate(currentRecord, null, null);
+
+    if (result != null) {
+      if (result instanceof OIdentifiable) {
+        setResultset(new ArrayList<OIdentifiable>());
+        currentRecord = ((OIdentifiable) result).getRecord();
+        dumpRecordDetails();
+      } else if (result instanceof List<?>) {
+        setResultset((List<OIdentifiable>) result);
+        dumpResultSet(-1);
+      } else if (result instanceof Iterator<?>) {
+        final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+        while (((Iterator) result).hasNext())
+          list.add(((Iterator<OIdentifiable>) result).next());
+        setResultset(list);
+        dumpResultSet(-1);
+      } else
+        setResultset(new ArrayList<OIdentifiable>());
+    }
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Evaluate a predicate against current record")
+  public void eval(@ConsoleParameter(name = "text", description = "The sql predicate to evaluate") final String iText) {
+    if (iText == null)
+      return;
+
+    if (currentRecord == null)
+      return;
+
+    final Object result = new OSQLPredicate(iText).evaluate(currentRecord, null, null);
+    if (result != null)
+      out.println("\n" + result);
   }
 
   @SuppressWarnings("unchecked")
@@ -753,7 +855,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (iText == null)
       return;
 
-    currentResultSet.clear();
+    resetResultSet();
 
     final OCommandExecutorScript cmd = new OCommandExecutorScript();
     cmd.parse(new OCommandScript("Javascript", iText));
@@ -774,6 +876,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         currentResultSet = new ArrayList<OIdentifiable>();
         Collections.addAll(currentResultSet, (OIdentifiable[]) result);
       }
+
+      setResultset(currentResultSet);
+
       dumpResultSet(-1);
       message("Client side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
@@ -789,7 +894,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (iText == null)
       return;
 
-    currentResultSet.clear();
+    resetResultSet();
 
     long start = System.currentTimeMillis();
     Object result = currentDatabase.command(new OCommandScript("Javascript", iText)).execute();
@@ -805,6 +910,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         currentResultSet = new ArrayList<OIdentifiable>();
         Collections.addAll(currentResultSet, (OIdentifiable[]) result);
       }
+
+      setResultset(currentResultSet);
+
       dumpResultSet(-1);
       message("Server side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
@@ -923,7 +1031,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void browseClass(@ConsoleParameter(name = "class-name", description = "The name of the class") final String iClassName) {
     checkForDatabase();
 
-    currentResultSet.clear();
+    resetResultSet();
 
     final int limit = Integer.parseInt(properties.get("limit"));
 
@@ -937,7 +1045,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "cluster-name", description = "The name of the cluster") final String iClusterName) {
     checkForDatabase();
 
-    currentResultSet.clear();
+    resetResultSet();
 
     final int limit = Integer.parseInt(properties.get("limit"));
 
@@ -962,7 +1070,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         throw new OException("The record requested is not part of current result set (0"
             + (currentResultSet.size() > 0 ? "-" + (currentResultSet.size() - 1) : "") + ")");
 
-      currentRecord = currentResultSet.get(recNumber).getRecord();
+      setCurrentRecord(recNumber);
     }
 
     dumpRecordDetails();
@@ -1742,6 +1850,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return currentRecord;
   }
 
+  protected void setCurrentRecord(final int iIndex) {
+    currentRecordIdx = iIndex;
+    if (iIndex < currentResultSet.size())
+      currentRecord = (ORecordInternal<?>) currentResultSet.get(iIndex);
+    else
+      currentRecord = null;
+  }
+
   /** Should be used only by console commands */
   public List<OIdentifiable> getCurrentResultSet() {
     return currentResultSet;
@@ -1791,7 +1907,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   private void dumpRecordDetails() {
-    if (currentRecord instanceof ODocument) {
+    if (currentRecord == null)
+      return;
+    else if (currentRecord instanceof ODocument) {
       ODocument rec = (ODocument) currentRecord;
       message("\n--------------------------------------------------");
       message("\nODocument - Class: %s   id: %s   v.%s", rec.getClassName(), rec.getIdentity().toString(), rec.getRecordVersion()
@@ -1866,6 +1984,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentResultSet.clear();
     while (it.hasNext() && currentResultSet.size() <= limit)
       currentResultSet.add(it.next());
+    setResultset(currentResultSet);
 
     tableFormatter.writeRecords(currentResultSet, limit);
   }
@@ -1879,7 +1998,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     iReceivedCommand = iExpectedCommand + " " + iReceivedCommand.trim();
 
-    currentResultSet.clear();
+    resetResultSet();
 
     final long start = System.currentTimeMillis();
 
@@ -1952,58 +2071,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nType 'help' to display all the commands supported.");
   }
 
-  protected static boolean setTerminalToCBreak() throws IOException, InterruptedException {
-    // set the console to be character-buffered instead of line-buffered
-    int result = stty("-icanon min 1");
-    if (result != 0) {
-      return false;
-    }
-
-    // disable character echoing
-    stty("-echo");
-    return true;
-  }
-
   protected void dumpResultSet(final int limit) {
     new OTableFormatter(this).setMaxWidthSize(Integer.parseInt(properties.get("width"))).writeRecords(currentResultSet, limit);
   }
 
-  /**
-   * Execute the stty command with the specified arguments against the current active terminal.
-   */
-  protected static int stty(final String args) throws IOException, InterruptedException {
-    String cmd = "stty " + args + " < /dev/tty";
-
-    return exec(new String[] { "sh", "-c", cmd });
-  }
-
   protected float getElapsedSecs(final long start) {
     return (float) (System.currentTimeMillis() - start) / 1000;
-  }
-
-  /**
-   * Execute the specified command and return the output (both stdout and stderr).
-   */
-  protected static int exec(final String[] cmd) throws IOException, InterruptedException {
-    ByteArrayOutputStream bout = new ByteArrayOutputStream();
-
-    Process p = Runtime.getRuntime().exec(cmd);
-    int c;
-    InputStream in = p.getInputStream();
-
-    while ((c = in.read()) != -1) {
-      bout.write(c);
-    }
-
-    in = p.getErrorStream();
-
-    while ((c = in.read()) != -1) {
-      bout.write(c);
-    }
-
-    p.waitFor();
-
-    return p.exitValue();
   }
 
   protected void printError(final Exception e) {
@@ -2042,5 +2115,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @Override
   protected String getPrompt() {
     return String.format("orientdb%s> ", getContext());
+  }
+
+  protected void setResultset(final List<OIdentifiable> iResultset) {
+    currentResultSet = iResultset;
+    currentRecordIdx = 0;
+    currentRecord = currentResultSet.isEmpty() ? null : (ORecordInternal<?>) currentResultSet.get(0).getRecord();
+  }
+
+  protected void resetResultSet() {
+    currentResultSet.clear();
+    currentRecord = null;
   }
 }
