@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -31,6 +26,11 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -52,31 +52,6 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     commands.put(OCommandExecutorSQLDeleteVertex.NAME, OCommandExecutorSQLDeleteVertex.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Set<String> getCommandNames() {
-    return COMMANDS.keySet();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
-    final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
-
-    if (clazz == null) {
-      throw new OCommandExecutionException("Unknowned command name :" + name);
-    }
-
-    try {
-      return clazz.newInstance();
-    } catch (Exception e) {
-      throw new OCommandExecutionException("Error in creation of command " + name
-          + "(). Probably there is not an empty constructor or the constructor generates errors", e);
-    }
   }
 
   /**
@@ -115,11 +90,10 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     return new OrientGraphNoTx((ODatabaseDocumentTx) database);
   }
 
-  public static <T> T runInTx(GraphCallBack<T> callBack) {
+  public static <T> T runInTx(final OrientGraph graph, final GraphCallBack<T> callBack) {
     final ODatabaseRecord databaseRecord = getDatabase();
     final boolean txWasActive = databaseRecord.getTransaction().isActive();
 
-    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
     if (!txWasActive)
       graph.getRawGraph().begin();
 
@@ -138,11 +112,40 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     }
   }
 
-  public interface GraphCallBack<T> {
-    T call(OrientBaseGraph graph);
+  public static <T> T runInTx(final GraphCallBack<T> callBack) {
+    return runInTx(OGraphCommandExecutorSQLFactory.getGraph(false), callBack);
   }
 
   public static ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public Set<String> getCommandNames() {
+    return COMMANDS.keySet();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public OCommandExecutorSQLAbstract createCommand(final String name) throws OCommandExecutionException {
+    final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
+
+    if (clazz == null) {
+      throw new OCommandExecutionException("Unknowned command name :" + name);
+    }
+
+    try {
+      return clazz.newInstance();
+    } catch (Exception e) {
+      throw new OCommandExecutionException("Error in creation of command " + name
+          + "(). Probably there is not an empty constructor or the constructor generates errors", e);
+    }
+  }
+
+  public interface GraphCallBack<T> {
+    T call(OrientBaseGraph graph);
   }
 }
