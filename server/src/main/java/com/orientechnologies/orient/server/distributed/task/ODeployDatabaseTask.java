@@ -61,7 +61,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
         try {
           // WAIT UNTIL ALL PENDING OPERATION ARE COMPLETED
           while (database.getStorage().getLastOperationId() >= iManager.getMessageService().getLastMessageId()) {
-            ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "pausing deploy of database %s until all pending operations are completed...", databaseName);
             Thread.sleep(300);
           }

@@ -138,6 +138,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
         for (IQueue<ODistributedRequest> queue : reqQueues) {
+//          ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "****** sending msg %d to queue %s",
+//              iRequest.getId(), queue);
+
           queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
 
