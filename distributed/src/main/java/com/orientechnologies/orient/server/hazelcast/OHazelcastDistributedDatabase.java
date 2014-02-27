@@ -346,7 +346,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         if (req.getId() >= waitForMessageId.get()) {
           // ARRIVED, RESET IT
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-              "reached waited request %d on request=%s sourceNode=%s", waitForMessageId, req, req.getSenderNodeName());
+              "reached waited request %d on request=%s sourceNode=%s", waitForMessageId.get(), req, req.getSenderNodeName());
 
           waitForMessageId.set(-1);
           return req;
