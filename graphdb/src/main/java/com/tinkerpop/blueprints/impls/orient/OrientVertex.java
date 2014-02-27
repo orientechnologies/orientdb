@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -48,6 +49,16 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   protected OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
     super(graph, record);
+  }
+
+  /**
+   * Executes the execute against current vertex. Use OSQLPredicate to execute SQL
+   *
+   * @param iPredicate
+   *          Predicate to evaluate. Use OSQLPredicate to use SQL
+   */
+  public Object execute(final OCommandPredicate iPredicate) {
+    return iPredicate.evaluate( rawElement.getRecord(), null, null );
   }
 
   @Override
@@ -437,7 +448,7 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   /**
    * Determines if a field is a connections or not.
-   * 
+   *
    * @param iDirection
    *          Direction to check
    * @param iFieldName
@@ -606,7 +617,7 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   /**
    * Used to extract the class name from the vertex's field.
-   * 
+   *
    * @param iDirection
    *          Direction of connection
    * @param iFieldName
