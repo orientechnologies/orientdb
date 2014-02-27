@@ -727,6 +727,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 continue;
             }
 
+            try {
+              Thread.sleep(2000);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+
             final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
             distrDatabase.configureDatabase(false, false);
