@@ -167,6 +167,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public ODistributedResponse send(final ODistributedRequest iRequest) {
     final String databaseName = iRequest.getDatabaseName();
     final String clusterName = iRequest.getClusterName();
+
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     final ODistributedPartitioningStrategy strategy = manager.getPartitioningStrategy(cfg.getPartitionStrategy(clusterName));

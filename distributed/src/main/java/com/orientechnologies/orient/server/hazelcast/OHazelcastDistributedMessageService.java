@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
@@ -37,6 +28,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
@@ -47,21 +47,18 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 public class OHazelcastDistributedMessageService implements ODistributedMessageService {
 
   public static final int                                              MAX_MESSAGES                = 20;
-  protected final OHazelcastPlugin                                     manager;
-
-  protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
-
-  protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
-  protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
-  protected final TimerTask                                            asynchMessageManager;
-  protected Thread                                                     responseThread;
-  protected long[]                                                     responseTimeMetrics         = new long[10];
-  protected int                                                        responseTimeMetricIndex     = 0;
-
   public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
   public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
   public static final String                                           NODE_QUEUE_UNDO_POSTFIX     = ".undo";
+  protected final OHazelcastPlugin                                     manager;
+  protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
+  protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
+  protected final TimerTask                                            asynchMessageManager;
+  protected Map<String, OHazelcastDistributedDatabase>                 databases                   = new ConcurrentHashMap<String, OHazelcastDistributedDatabase>();
+  protected Thread                                                     responseThread;
+  protected long[]                                                     responseTimeMetrics         = new long[10];
+  protected int                                                        responseTimeMetricIndex     = 0;
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -123,6 +120,32 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     responseThread.setDaemon(true);
     responseThread.start();
+  }
+
+  /**
+   * Composes the request queue name based on node name and database.
+   */
+  protected static String getRequestQueueName(final String iNodeName, final String iDatabaseName) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(NODE_QUEUE_PREFIX);
+    buffer.append(iNodeName);
+    if (iDatabaseName != null) {
+      buffer.append('.');
+      buffer.append(iDatabaseName);
+    }
+    buffer.append(NODE_QUEUE_REQUEST_POSTFIX);
+    return buffer.toString();
+  }
+
+  /**
+   * Composes the response queue name based on node name.
+   */
+  protected static String getResponseQueueName(final String iNodeName) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(NODE_QUEUE_PREFIX);
+    buffer.append(iNodeName);
+    buffer.append(NODE_QUEUE_RESPONSE_POSTFIX);
+    return buffer.toString();
   }
 
   public OHazelcastDistributedDatabase getDatabase(final String iDatabaseName) {
@@ -187,32 +210,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       nodeResponseQueue.clear();
       nodeResponseQueue.destroy();
     }
-  }
-
-  /**
-   * Composes the request queue name based on node name and database.
-   */
-  protected static String getRequestQueueName(final String iNodeName, final String iDatabaseName) {
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append(NODE_QUEUE_PREFIX);
-    buffer.append(iNodeName);
-    if (iDatabaseName != null) {
-      buffer.append('.');
-      buffer.append(iDatabaseName);
-    }
-    buffer.append(NODE_QUEUE_REQUEST_POSTFIX);
-    return buffer.toString();
-  }
-
-  /**
-   * Composes the response queue name based on node name.
-   */
-  protected static String getResponseQueueName(final String iNodeName) {
-    final StringBuilder buffer = new StringBuilder();
-    buffer.append(NODE_QUEUE_PREFIX);
-    buffer.append(iNodeName);
-    buffer.append(NODE_QUEUE_RESPONSE_POSTFIX);
-    return buffer.toString();
   }
 
   protected String getLocalNodeNameAndThread() {
@@ -298,6 +295,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
         queueNames.add(q);
     }
     return queueNames;
+  }
+
+  @Override
+  public long getLastMessageId() {
+    return getMessageIdCounter().get();
   }
 
   public IAtomicLong getMessageIdCounter() {
