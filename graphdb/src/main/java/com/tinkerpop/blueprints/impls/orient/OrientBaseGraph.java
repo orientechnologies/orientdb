@@ -3,8 +3,13 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -16,6 +21,7 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,66 +47,24 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<ODatabaseDocumentTx>, KeyIndexableGraph {
-  public static final String CONNECTION_OUT = "out";
-  public static final String CONNECTION_IN  = "in";
-  public static final String CLASS_PREFIX   = "class:";
-  public static final String CLUSTER_PREFIX = "cluster:";
-
-  public enum THREAD_MODE {
-    MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
-  };
-
-  protected final static String ADMIN = "admin";
-
-  public class Settings {
-    protected boolean     useLightweightEdges          = true;
-    protected boolean     useClassForEdgeLabel         = true;
-    protected boolean     useClassForVertexLabel       = true;
-    protected boolean     keepInMemoryReferences       = false;
-    protected boolean     useVertexFieldsForEdgeLabels = true;
-    protected boolean     saveOriginalIds              = false;
-    protected boolean     standardElementConstraints   = true;
-    protected boolean     warnOnForceClosingTx         = true;
-    protected THREAD_MODE threadMode                   = THREAD_MODE.AUTOSET_IFNULL;
-
-    public Settings copy() {
-      final Settings copy = new Settings();
-      copy.useLightweightEdges = useLightweightEdges;
-      copy.useClassForEdgeLabel = useClassForEdgeLabel;
-      copy.useClassForVertexLabel = useClassForVertexLabel;
-      copy.keepInMemoryReferences = keepInMemoryReferences;
-      copy.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
-      copy.saveOriginalIds = saveOriginalIds;
-      copy.standardElementConstraints = standardElementConstraints;
-      copy.warnOnForceClosingTx = warnOnForceClosingTx;
-      copy.threadMode = threadMode;
-      return copy;
-    }
-  }
-
-  protected Settings                                   settings      = new Settings();
-
+  public static final String                           CONNECTION_OUT = "out";
+  public static final String                           CONNECTION_IN  = "in";
+  public static final String                           CLASS_PREFIX   = "class:";
+  public static final String                           CLUSTER_PREFIX = "cluster:";
+  protected final static String                        ADMIN          = "admin";                               ;
+  private static final ThreadLocal<OrientGraphContext> threadContext  = new ThreadLocal<OrientGraphContext>();
+  private static final Set<OrientGraphContext>         contexts       = new HashSet<OrientGraphContext>();
+  private final ODatabaseDocumentPool                  pool;
+  protected Settings                                   settings       = new Settings();
   private String                                       url;
   private String                                       username;
   private String                                       password;
-
-  private static final ThreadLocal<OrientGraphContext> threadContext = new ThreadLocal<OrientGraphContext>();
-  private static final Set<OrientGraphContext>         contexts      = new HashSet<OrientGraphContext>();
-
-  private final ODatabaseDocumentPool                  pool;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -222,6 +186,43 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     final Boolean lightweightEdges = configuration.getBoolean("blueprints.orientdb.lightweightEdges", null);
     if (lightweightEdges != null)
       setUseLightweightEdges(lightweightEdges);
+  }
+
+  public static void encodeClassNames(final String... iLabels) {
+    if (iLabels != null)
+      // ENCODE LABELS
+      for (int i = 0; i < iLabels.length; ++i)
+        iLabels[i] = encodeClassName(iLabels[i]);
+  }
+
+  public static String encodeClassName(String iClassName) {
+    if (iClassName == null)
+      return null;
+
+    if (Character.isDigit(iClassName.charAt(0)))
+      iClassName = "-" + iClassName;
+
+    try {
+      return URLEncoder.encode(iClassName, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      return iClassName;
+    }
+  }
+
+  public static String decodeClassName(String iClassName) {
+    if (iClassName == null)
+      return null;
+
+    if (iClassName.charAt(0) == '-')
+      iClassName = iClassName.substring(1);
+
+    try {
+      return URLDecoder.decode(iClassName, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      return iClassName;
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -622,7 +623,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     this.username = iDatabase.getUser() != null ? iDatabase.getUser().getName() : null;
     synchronized (this) {
       OrientGraphContext context = threadContext.get();
-      if (context == null || !context.rawGraph.getName().equals(iDatabase.getName())) {
+      if (context == null || !context.rawGraph.getName().equals(iDatabase.getName()) || context.rawGraph.isClosed()) {
         removeContext();
         context = new OrientGraphContext();
         context.rawGraph = iDatabase;
@@ -1168,43 +1169,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return this;
   }
 
-  public static void encodeClassNames(final String... iLabels) {
-    if (iLabels != null)
-      // ENCODE LABELS
-      for (int i = 0; i < iLabels.length; ++i)
-        iLabels[i] = encodeClassName(iLabels[i]);
-  }
-
-  public static String encodeClassName(String iClassName) {
-    if (iClassName == null)
-      return null;
-
-    if (Character.isDigit(iClassName.charAt(0)))
-      iClassName = "-" + iClassName;
-
-    try {
-      return URLEncoder.encode(iClassName, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-      return iClassName;
-    }
-  }
-
-  public static String decodeClassName(String iClassName) {
-    if (iClassName == null)
-      return null;
-
-    if (iClassName.charAt(0) == '-')
-      iClassName = iClassName.substring(1);
-
-    try {
-      return URLDecoder.decode(iClassName, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-      return iClassName;
-    }
-  }
-
   protected <T> String getClassName(final Class<T> elementClass) {
     if (elementClass.isAssignableFrom(Vertex.class))
       return OrientVertexType.CLASS_NAME;
@@ -1305,6 +1269,36 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       if (ctx != null && (tlDb == null || tlDb != ctx.rawGraph))
         // SET IT
         ODatabaseRecordThreadLocal.INSTANCE.set(getRawGraph());
+    }
+  }
+
+  public enum THREAD_MODE {
+    MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
+  }
+
+  public class Settings {
+    protected boolean     useLightweightEdges          = true;
+    protected boolean     useClassForEdgeLabel         = true;
+    protected boolean     useClassForVertexLabel       = true;
+    protected boolean     keepInMemoryReferences       = false;
+    protected boolean     useVertexFieldsForEdgeLabels = true;
+    protected boolean     saveOriginalIds              = false;
+    protected boolean     standardElementConstraints   = true;
+    protected boolean     warnOnForceClosingTx         = true;
+    protected THREAD_MODE threadMode                   = THREAD_MODE.AUTOSET_IFNULL;
+
+    public Settings copy() {
+      final Settings copy = new Settings();
+      copy.useLightweightEdges = useLightweightEdges;
+      copy.useClassForEdgeLabel = useClassForEdgeLabel;
+      copy.useClassForVertexLabel = useClassForVertexLabel;
+      copy.keepInMemoryReferences = keepInMemoryReferences;
+      copy.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
+      copy.saveOriginalIds = saveOriginalIds;
+      copy.standardElementConstraints = standardElementConstraints;
+      copy.warnOnForceClosingTx = warnOnForceClosingTx;
+      copy.threadMode = threadMode;
+      return copy;
     }
   }
 }
