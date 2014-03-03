@@ -82,17 +82,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       } else
         iMarshalledRecords.add(record);
 
-    if (record.getIdentity().getClusterId() < 0 && !iOnlyDelta && record.getSchemaClass() != null) {
+    if (!iOnlyDelta && record.getSchemaClass() != null) {
       // MARSHALL THE CLASSNAME
       iOutput.append(record.getSchemaClass().getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
-    } else {
-      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if ((database == null || !database.getStorageVersions().classesAreDetectedByClusterId()) && !iOnlyDelta
-          && record.getSchemaClass() != null) {
-        iOutput.append(record.getSchemaClass().getStreamableName());
-        iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
-      }
     }
 
     OProperty prop;
