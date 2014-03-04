@@ -744,6 +744,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       acquireExclusiveLock();
       try {
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
+				if (positionEntry == null)
+					return;
 
         int recordPosition = positionEntry.getRecordPosition();
         long pageIndex = positionEntry.getPageIndex();

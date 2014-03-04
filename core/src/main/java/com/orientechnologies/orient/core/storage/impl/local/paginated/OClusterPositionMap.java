@@ -191,6 +191,9 @@ public class OClusterPositionMap extends ODurableComponent {
       long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
 
+			if(pageIndex >= diskCache.getFilledUpTo(fileId))
+				return null;
+
       final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
       final OCachePointer cachePointer = cacheEntry.getCachePointer();
 
