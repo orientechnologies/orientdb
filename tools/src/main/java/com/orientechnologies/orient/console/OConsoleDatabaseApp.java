@@ -703,6 +703,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n\nCluster '" + iClusterName + "' was released successfully");
   }
 
+  @ConsoleCommand(description = "Display current record")
+  public void current() {
+    dumpRecordDetails();
+  }
+
   @ConsoleCommand(description = "Move the current record cursor to the next one in result set")
   public void next() {
     setCurrentRecord(currentRecordIdx + 1);
@@ -1080,7 +1085,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void displayRawRecord(@ConsoleParameter(name = "rid", description = "The record id to display") final String iRecordId) {
     checkForDatabase();
 
-    ORecordId rid = new ORecordId(iRecordId);
+    ORecordId rid;
+    if (iRecordId.indexOf(':') > -1)
+      rid = new ORecordId(iRecordId);
+    else {
+      OIdentifiable rec = setCurrentRecord(Integer.parseInt(iRecordId));
+      if (rec != null)
+        rid = (ORecordId) rec.getIdentity();
+      else
+        return;
+    }
+
     final ORawBuffer buffer = currentDatabase.getStorage()
         .readRecord(rid, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
 
@@ -1093,7 +1108,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     else
       content = new String(buffer.buffer);
 
-    message("\nRaw record content. The size is " + buffer.buffer.length + " bytes, while settings force to print first "
+    out.println("\nRaw record content. The size is " + buffer.buffer.length + " bytes, while settings force to print first "
         + content.length() + " bytes:\n\n" + content);
   }
 
@@ -1850,12 +1865,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return currentRecord;
   }
 
-  protected void setCurrentRecord(final int iIndex) {
+  protected OIdentifiable setCurrentRecord(final int iIndex) {
     currentRecordIdx = iIndex;
     if (iIndex < currentResultSet.size())
       currentRecord = (ORecordInternal<?>) currentResultSet.get(iIndex);
     else
       currentRecord = null;
+    return currentRecord;
   }
 
   /** Should be used only by console commands */
