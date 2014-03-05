@@ -332,6 +332,25 @@ public class CRUDDocumentPhysicalTest {
     }
   }
 
+  public void testLazyLoadingByLink() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      ODocument coreDoc = new ODocument();
+      ODocument linkDoc = new ODocument();
+
+      coreDoc.field("link", linkDoc);
+      coreDoc.save();
+
+      ODocument coreDocCopy = database.load(coreDoc.getIdentity(), "*:-1", true);
+      Assert.assertNotSame(coreDocCopy, coreDoc);
+
+      Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
+      Assert.assertTrue(coreDocCopy.field("link", (OType)null) instanceof ODocument);
+    } finally {
+      database.close();
+    }
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testDbCacheUpdated() {
