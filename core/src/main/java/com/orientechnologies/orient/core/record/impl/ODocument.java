@@ -611,7 +611,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
-    return field(iFieldName, iPropertyValue, null);
+    return field(iFieldName, iPropertyValue, new OType[0]);
   }
 
   /**
@@ -644,18 +644,20 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Writes the field value forcing the type. This method sets the current document as dirty.
    * 
-   * @param iFieldName
-   *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
-   *          {@link #setAllowChainedAccess(boolean)} to false.
-   * @param iPropertyValue
-   *          field value
-   * @param iFieldType
-   *          Forced type (not auto-determined)
-   * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
+   *
+	 *
+	 * @param iFieldName
+	 *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
+	 *          {@link #setAllowChainedAccess(boolean)} to false.
+	 * @param iPropertyValue
+	 *          field value
+	 * @param iFieldType
+	 *          Forced type (not auto-determined)
+	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
    *         document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no
    *         document has been found in chain
    */
-  public ODocument field(String iFieldName, Object iPropertyValue, OType iFieldType) {
+  public ODocument field(String iFieldName, Object iPropertyValue, OType... iFieldType) {
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
@@ -732,20 +734,32 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         }
       }
 
-    setFieldType(iFieldName, iFieldType);
+		OType fieldType;
 
-    if (iFieldType == null && _clazz != null) {
+		if (iFieldType != null && iFieldType.length == 1) {
+			setFieldType(iFieldName, iFieldType[0]);
+			fieldType = iFieldType[0];
+		} else
+		  fieldType = null;
+
+
+
+    if (fieldType == null && _clazz != null) {
       // SCHEMAFULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
       if (prop != null)
-        iFieldType = prop.getType();
+        fieldType = prop.getType();
     }
 
     if (iPropertyValue != null)
       // CHECK FOR CONVERSION
-      if (iFieldType != null)
-        iPropertyValue = ODocumentHelper.convertField(this, iFieldName, iFieldType.getDefaultJavaType(), iPropertyValue);
-      else if (iPropertyValue instanceof Enum)
+      if (fieldType != null) {
+        iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
+        if (fieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          embeddedDocument.addOwner(this);
+        }
+      } else if (iPropertyValue instanceof Enum)
         iPropertyValue = iPropertyValue.toString();
 
     removeCollectionChangeListener(iFieldName);
