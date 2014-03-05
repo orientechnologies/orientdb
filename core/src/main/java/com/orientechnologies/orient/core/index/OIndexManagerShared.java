@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -39,15 +48,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -410,7 +410,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   if (indexName != null && indexDefinition != null && clusters != null && !clusters.isEmpty() && type != null) {
                     OLogManager.instance().info(this, "Start creation of index %s", indexName);
 
-                    if (algorithm.equals(ODefaultIndexFactory.SBTREE_ALGORITHM) || indexType.endsWith("HASH_INDEX"))
+                    if (ODefaultIndexFactory.SBTREE_ALGORITHM.equals(algorithm) || indexType.endsWith("HASH_INDEX"))
                       index.deleteWithoutIndexLoad(indexName);
 
                     index.create(indexName, indexDefinition, defaultClusterName, clusters, false, new OIndexRebuildOutputListener(
