@@ -11,7 +11,6 @@ import java.util.Map;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 class OrientGraphContext {
-  public Map<String, OrientIndex<? extends OrientElement>> manualIndices = new HashMap<String, OrientIndex<? extends OrientElement>>();
-  public ODatabaseDocumentTx                               rawGraph;
-  public Thread                                            thread        = Thread.currentThread();
+  public ODatabaseDocumentTx rawGraph;
+  public Thread              thread = Thread.currentThread();
 }

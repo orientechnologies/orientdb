@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndexManager;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -53,18 +54,22 @@ import com.tinkerpop.blueprints.util.StringFactory;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<ODatabaseDocumentTx>, KeyIndexableGraph {
-  public static final String                           CONNECTION_OUT = "out";
-  public static final String                           CONNECTION_IN  = "in";
-  public static final String                           CLASS_PREFIX   = "class:";
-  public static final String                           CLUSTER_PREFIX = "cluster:";
-  protected final static String                        ADMIN          = "admin";                               ;
-  private static final ThreadLocal<OrientGraphContext> threadContext  = new ThreadLocal<OrientGraphContext>();
-  private static final Set<OrientGraphContext>         contexts       = new HashSet<OrientGraphContext>();
-  private final ODatabaseDocumentPool                  pool;
-  protected Settings                                   settings       = new Settings();
-  private String                                       url;
-  private String                                       username;
-  private String                                       password;
+  public static final String                    CONNECTION_OUT  = "out";
+  public static final String                    CONNECTION_IN   = "in";
+  public static final String                    CLASS_PREFIX    = "class:";
+  public static final String                    CLUSTER_PREFIX  = "cluster:";
+  protected final static String                 ADMIN           = "admin";
+
+  private final ThreadLocal<OrientGraphContext> threadContext   = new ThreadLocal<OrientGraphContext>();
+  private final Set<OrientGraphContext>         contexts        = new HashSet<OrientGraphContext>();
+
+  private static final Object                   manualIndexLock = new Object();
+
+  private final ODatabaseDocumentPool           pool;
+  protected Settings                            settings        = new Settings();
+  private String                                url;
+  private String                                username;
+  private String                                password;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -256,16 +261,14 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
     return executeOutsideTx(new OCallable<Index<T>, OrientBaseGraph>() {
       public Index<T> call(final OrientBaseGraph g) {
-        synchronized (contexts) {
-          if (context.manualIndices.containsKey(indexName))
+        synchronized (manualIndexLock) {
+          final ODatabaseDocumentTx database = context.rawGraph;
+          final OIndexManager indexManager = database.getMetadata().getIndexManager();
+
+          if (indexManager.getIndex(indexName) != null)
             throw ExceptionFactory.indexAlreadyExists(indexName);
 
           final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
-
-          // ADD THE INDEX IN ALL CURRENT CONTEXTS
-          for (OrientGraphContext ctx : contexts)
-            ctx.manualIndices.put(index.getIndexName(), index);
-          context.manualIndices.put(index.getIndexName(), index);
 
           // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
           saveIndexConfiguration();
@@ -279,10 +282,13 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   @SuppressWarnings("unchecked")
   public <T extends Element> Index<T> getIndex(final String indexName, final Class<T> indexClass) {
     final OrientGraphContext context = getContext(true);
-    Index<? extends Element> index = context.manualIndices.get(indexName);
-    if (null == index) {
+    final ODatabaseDocumentTx database = context.rawGraph;
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndex idx = indexManager.getIndex(indexName);
+    if (idx == null || !hasIndexClass(idx))
       return null;
-    }
+
+    final Index<? extends Element> index = new OrientIndex(this, idx);
 
     if (indexClass.isAssignableFrom(index.getIndexClass()))
       return (Index<T>) index;
@@ -292,15 +298,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   public Iterable<Index<? extends Element>> getIndices() {
     final OrientGraphContext context = getContext(true);
-    final List<Index<? extends Element>> list = new ArrayList<Index<? extends Element>>();
-    for (Index<?> index : context.manualIndices.values()) {
-      list.add(index);
-    }
-    return list;
-  }
-
-  protected Iterable<OrientIndex<? extends OrientElement>> getManualIndices() {
-    return getContext(true).manualIndices.values();
+    return loadManualIndexes(context);
   }
 
   public void dropIndex(final String indexName) {
@@ -308,21 +306,19 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       @Override
       public Object call(OrientBaseGraph g) {
         try {
-          String recordMapIndexName = null;
-          synchronized (contexts) {
-            for (OrientGraphContext ctx : contexts) {
-              OrientIndex<?> index = ctx.manualIndices.remove(indexName);
-              if (recordMapIndexName == null && index != null)
-                recordMapIndexName = index.getUnderlying().getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
-            }
+          synchronized (manualIndexLock) {
+            final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
+            final OIndex index = indexManager.getIndex(indexName);
+            final String recordMapIndexName = index.getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
+
+            indexManager.dropIndex(indexName);
+            if (recordMapIndexName != null)
+              getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
+
+            saveIndexConfiguration();
+            return null;
           }
 
-          getRawGraph().getMetadata().getIndexManager().dropIndex(indexName);
-          if (recordMapIndexName != null)
-            getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
-
-          saveIndexConfiguration();
-          return null;
         } catch (Exception e) {
           g.rollback();
           throw new RuntimeException(e.getMessage(), e);
@@ -895,12 +891,15 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
   }
 
-  private void loadManualIndexes(OrientGraphContext context) {
+  private List<Index<? extends Element>> loadManualIndexes(OrientGraphContext context) {
+    final List<Index<? extends Element>> result = new ArrayList<Index<? extends Element>>();
     for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
       if (hasIndexClass(idx))
         // LOAD THE INDEXES
-        loadIndex(idx);
+        result.add(new OrientIndex<OrientElement>(this, idx));
     }
+
+    return result;
   }
 
   private boolean hasIndexClass(OIndex<?> idx) {
@@ -909,15 +908,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
     // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
-  }
-
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  private OrientIndex<?> loadIndex(final OIndex<?> rawIndex) {
-    final OrientIndex<?> index = new OrientIndex(this, rawIndex);
-
-    // REGISTER THE INDEX
-    getContext(true).manualIndices.put(index.getIndexName(), index);
-    return index;
   }
 
   public void removeContext() {
@@ -935,8 +925,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
     for (OrientGraphContext contextItem : contextsToRemove) {
       try {
-        contextItem.manualIndices.clear();
-
         if (!contextItem.rawGraph.isClosed())
           contextItem.rawGraph.commit();
 

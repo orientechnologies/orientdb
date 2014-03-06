@@ -175,9 +175,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final String recordKeyValueMap = metadata.field(CONFIG_RECORD_MAP_NAME);
 
     if (VERTEX.equals(indexClassName))
-      this.indexClass = OrientVertex.class;
+      this.indexClass = Vertex.class;
     else if (EDGE.equals(indexClassName))
-      this.indexClass = OrientEdge.class;
+      this.indexClass = Edge.class;
     else
       try {
         this.indexClass = (Class<T>) Class.forName(indexClassName);
