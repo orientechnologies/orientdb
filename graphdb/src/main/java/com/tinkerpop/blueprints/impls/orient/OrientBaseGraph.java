@@ -897,11 +897,18 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   private void loadManualIndexes(OrientGraphContext context) {
     for (OIndex<?> idx : context.rawGraph.getMetadata().getIndexManager().getIndexes()) {
-      final ODocument metadata = idx.getMetadata();
-      if (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
+      if (hasIndexClass(idx))
         // LOAD THE INDEXES
         loadIndex(idx);
     }
+  }
+
+  private boolean hasIndexClass(OIndex<?> idx) {
+    final ODocument metadata = idx.getMetadata();
+
+    return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
+    // compatibility with versions earlier 1.6.3
+        || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
