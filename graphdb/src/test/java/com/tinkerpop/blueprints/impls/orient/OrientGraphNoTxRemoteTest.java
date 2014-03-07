@@ -31,7 +31,8 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   private static String                   oldOrientDBHome;
 
   private static String                   serverHome;
-  private OrientGraphNoTx                 currentGraph;
+
+  private Map<String, OrientGraphNoTx>    currentGraphs  = new HashMap<String, OrientGraphNoTx>();
 
   private Map<String, OrientGraphFactory> graphFactories = new HashMap<String, OrientGraphFactory>();
 
@@ -42,10 +43,10 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + OrientGraphNoTxRemoteTest.class.getSimpleName();
 
-		File file = new File(serverHome);
-		deleteDirectory(file);
+    File file = new File(serverHome);
+    deleteDirectory(file);
 
-		file = new File(serverHome);
+    file = new File(serverHome);
     Assert.assertTrue(file.mkdir());
 
     oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
@@ -59,7 +60,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   @AfterClass
   public static void stopEmbeddedServer() throws Exception {
     server.shutdown();
-		Thread.sleep(1000);
+    Thread.sleep(1000);
 
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
@@ -67,16 +68,16 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
       System.clearProperty("ORIENTDB_HOME");
 
     final File file = new File(serverHome);
-		deleteDirectory(file);
+    deleteDirectory(file);
 
-		Orient.instance().startup();
+    Orient.instance().startup();
   }
 
-	@Before
-	public void setUp() throws Exception {
-		Assume.assumeThat(System.getProperty("orientdb.test.env", "dev").toUpperCase(), IsEqual.equalTo("RELEASE"));
-		super.setUp();
-	}
+  @Before
+  public void setUp() throws Exception {
+    Assume.assumeThat(System.getProperty("orientdb.test.env", "dev").toUpperCase(), IsEqual.equalTo("RELEASE"));
+    super.setUp();
+  }
 
   // testing only those suites that are read-only
 
@@ -127,8 +128,18 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
+    final String url = "remote:localhost:3080/" + graphDirectoryName;
+    OrientGraphNoTx graph = currentGraphs.get(url);
+
+    if (graph != null) {
+      if (graph.isClosed())
+        currentGraphs.remove(url);
+      else
+        return graph;
+    }
+
     try {
-      final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3080/" + graphDirectoryName);
+      final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
       if (!serverAdmin.existsDatabase("plocal"))
         serverAdmin.createDatabase("graph", "plocal");
@@ -139,18 +150,20 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
       throw new IllegalStateException(e);
     }
 
-    OrientGraphFactory factory = graphFactories.get(graphDirectoryName);
+    OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
-      factory = new OrientGraphFactory("remote:localhost:3080/" + graphDirectoryName);
+      factory = new OrientGraphFactory(url);
+
       factory.setupPool(5, 256);
-      graphFactories.put(graphDirectoryName, factory);
+      graphFactories.put(url, factory);
     }
 
-    currentGraph = factory.getNoTx();
+    graph = factory.getNoTx();
+    graph.setWarnOnForceClosingTx(false);
 
-    currentGraph.setWarnOnForceClosingTx(false);
+    currentGraphs.put(url, graph);
 
-    return currentGraph;
+    return graph;
   }
 
   @Override
@@ -158,22 +171,22 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
     try {
-      if (currentGraph != null) {
-        if (!currentGraph.isClosed())
-          currentGraph.shutdown();
+      final String url = "remote:localhost:3080/" + graphDirectoryName;
+      final OrientGraphNoTx graph = currentGraphs.get(url);
+      if (graph != null)
+        graph.shutdown();
 
-        for (OrientGraphFactory factory : graphFactories.values())
-          factory.close();
-        graphFactories.clear();
+      final OrientGraphFactory factory = graphFactories.remove(url);
+      if (factory != null)
+        factory.close();
 
-        final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3080/" + graphDirectoryName);
-        serverAdmin.connect("root", "root");
+      final OServerAdmin serverAdmin = new OServerAdmin(url);
+      serverAdmin.connect("root", "root");
 
-        if (serverAdmin.existsDatabase("plocal"))
-          serverAdmin.dropDatabase("plocal");
+      if (serverAdmin.existsDatabase("plocal"))
+        serverAdmin.dropDatabase("plocal");
 
-        serverAdmin.close();
-      }
+      serverAdmin.close();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }

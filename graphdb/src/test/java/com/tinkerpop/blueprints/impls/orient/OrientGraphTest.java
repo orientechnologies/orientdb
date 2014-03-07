@@ -2,8 +2,9 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
@@ -20,7 +21,7 @@ import org.junit.Test;
  */
 public abstract class OrientGraphTest extends GraphTest {
 
-  protected OrientGraph currentGraph;
+  protected Map<String, OrientGraph> currentGraphs = new HashMap<String, OrientGraph>();
 
   @Before
   @Override
@@ -133,13 +134,23 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String dbPath = getWorkingDirectory() + "/" + graphDirectoryName;
-    this.currentGraph = new OrientGraph("plocal:" + dbPath);
+    final String url = "plocal:" + getWorkingDirectory() + "/" + graphDirectoryName;
 
-    // OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-    currentGraph.setWarnOnForceClosingTx(false);
+    OrientGraph graph = currentGraphs.get(url);
 
-    return currentGraph;
+    if (graph != null) {
+      if (graph.isClosed())
+        currentGraphs.remove(url);
+      else
+        return graph;
+    }
+
+    graph = new OrientGraph(url);
+    graph.setWarnOnForceClosingTx(false);
+
+    currentGraphs.put(url, graph);
+
+    return graph;
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
@@ -158,18 +169,20 @@ public abstract class OrientGraphTest extends GraphTest {
   public void dropGraph(final String graphDirectoryName) {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
-    try {
-      if (this.currentGraph != null) {
-        if (this.currentGraph.isClosed())
-          currentGraph = new OrientGraph("plocal:" + graphDirectoryName);
 
-        this.currentGraph.drop();
-      }
+    final String graphDirectory = getWorkingDirectory() + "/" + graphDirectoryName;
+    final String url = "plocal:" + graphDirectory;
+    try {
+      OrientGraph graph = currentGraphs.remove(url);
+      if (graph == null || graph.isClosed())
+        graph = new OrientGraph(url);
+
+      graph.drop();
     } catch (Exception e) {
       e.printStackTrace();
     }
 
-    deleteDirectory(new File(graphDirectoryName));
+    deleteDirectory(new File(graphDirectory));
   }
 
   protected String getWorkingDirectory() {
