@@ -411,14 +411,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * l=long, f=float, d=double, t=date. If starts with # it's a RecordID. Most of the code is equals to getType() but has been
    * copied to speed-up it.
    * 
-   * @param iUnusualSymbols
-   *          Localized decimal number separators
    * @param iValue
    *          Value to parse
    * @return The closest type recognized
    */
   public static Object getTypeValue(final String iValue) {
-    if (iValue == null)
+    if (iValue == null || iValue.equalsIgnoreCase("NULL"))
       return null;
 
     if (iValue.length() == 0)
