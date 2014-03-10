@@ -18,32 +18,37 @@ package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
- * Replaces all the occurrences.
+ * Extracts a sub string from the original.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionReplace extends OSQLFunctionAbstract {
+public class OSQLMethodSubString extends OAbstractSQLMethod {
 
-  public static final String NAME = "replace";
+  public static final String NAME = "substring";
 
-  public OSQLFunctionReplace() {
-    super(NAME, 3, 3);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null || iFuncParams[1] == null || iFuncParams[2] == null)
-      return iFuncParams[0];
-
-    return iFuncParams[0].toString().replace(iFuncParams[1].toString(), iFuncParams[2].toString());
+  public OSQLMethodSubString() {
+    super(NAME, 1, 2);
   }
 
   @Override
   public String getSyntax() {
-    return "replace(<value|expression|field>, <to-find>, <to-replace>)";
+    return "subString(<from-index> [,<to-index>])";
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null || iParams[0] == null) {
+      return null;
+    }
+
+    if (iParams.length>1) {
+      return iThis.toString().substring(Integer.parseInt(iParams[0].toString()), Integer.parseInt(iParams[1].toString()));
+    } else {
+      return iThis.toString().substring(Integer.parseInt(iParams[0].toString()));
+    }
   }
 }

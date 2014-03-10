@@ -18,7 +18,8 @@ package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Appends strings. Acts as a concatenation.
@@ -26,30 +27,32 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionAppend extends OSQLFunctionAbstract {
+public class OSQLMethodAppend extends OAbstractSQLMethod {
 
   public static final String NAME = "append";
 
-  public OSQLFunctionAppend() {
-    super(NAME, 2, -1);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null)
-      return null;
-
-    final StringBuilder buffer = new StringBuilder(iFuncParams[0].toString());
-    for (int i = 1; i < iFuncParams.length; ++i)
-      if (iFuncParams[i] != null)
-        buffer.append(iFuncParams[i]);
-
-    return buffer.toString();
+  public OSQLMethodAppend() {
+    super(NAME, 1, -1);
   }
 
   @Override
   public String getSyntax() {
-    return "append(<value|expression|field>, [,<value|expression|field>]*)";
+    return "append([<value|expression|field>]*)";
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null || iParams[0] == null)
+      return iThis;
+
+    final StringBuilder buffer = new StringBuilder(iThis.toString());
+    for (int i = 0; i < iParams.length; ++i) {
+      if (iParams[i] != null) {
+        buffer.append(OStringSerializerHelper.getStringContent(iParams[i]));
+      }
+    }
+
+    return buffer.toString();
   }
 
 }

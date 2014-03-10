@@ -336,18 +336,18 @@ public class SQLFunctionsTest {
       }
 
       @Override
-      public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-        if (iParameters[0] == null || iParameters[1] == null)
+      public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
+        if (iParams[0] == null || iParams[1] == null)
           // CHECK BOTH EXPECTED PARAMETERS
           return null;
 
-        if (!(iParameters[0] instanceof Number) || !(iParameters[1] instanceof Number))
+        if (!(iParams[0] instanceof Number) || !(iParams[1] instanceof Number))
           // EXCLUDE IT FROM THE RESULT SET
           return null;
 
         // USE DOUBLE TO AVOID LOSS OF PRECISION
-        final double v1 = ((Number) iParameters[0]).doubleValue();
-        final double v2 = ((Number) iParameters[1]).doubleValue();
+        final double v1 = ((Number) iParams[0]).doubleValue();
+        final double v2 = ((Number) iParams[1]).doubleValue();
 
         return Math.max(v1, v2);
       }

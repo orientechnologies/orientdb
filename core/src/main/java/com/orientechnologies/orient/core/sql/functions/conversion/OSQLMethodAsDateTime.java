@@ -16,13 +16,13 @@
  */
 package com.orientechnologies.orient.core.sql.functions.conversion;
 
-import java.text.ParseException;
-import java.util.Date;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+
+import java.text.ParseException;
+import java.util.Date;
 
 /**
  * Transforms a value to datetime. If the conversion is not possible, null is returned.
@@ -30,37 +30,34 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionAsDateTime extends OSQLFunctionAbstract {
+public class OSQLMethodAsDateTime extends OAbstractSQLMethod {
 
   public static final String NAME = "asdatetime";
 
-  public OSQLFunctionAsDateTime() {
-    super(NAME, 1, 1);
-  }
-
-  @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
-      final OCommandContext iContext) {
-    final Object value = iFuncParams[0];
-
-    if (value != null) {
-      if (value instanceof Date)
-        return value;
-      else if (value instanceof Number)
-        return new Date(((Number) value).longValue());
-      else
-        try {
-          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance()
-              .parse(value.toString());
-        } catch (ParseException e) {
-          // IGNORE IT: RETURN NULL
-        }
-    }
-    return null;
+  public OSQLMethodAsDateTime() {
+    super(NAME, 0, 0);
   }
 
   @Override
   public String getSyntax() {
-    return "asDatetime(<value|expression|field>)";
+    return "asDatetime()";
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis != null) {
+      if (iThis instanceof Date) {
+        return iThis;
+      } else if (iThis instanceof Number) {
+        return new Date(((Number) iThis).longValue());
+      } else {
+        try {
+          return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iThis.toString());
+        } catch (ParseException e) {
+          // IGNORE IT: RETURN NULL
+        }
+      }
+    }
+    return null;
   }
 }

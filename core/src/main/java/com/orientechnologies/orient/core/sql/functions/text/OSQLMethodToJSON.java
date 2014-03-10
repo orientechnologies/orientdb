@@ -14,35 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.conversion;
-
-import java.math.BigDecimal;
+package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
- * Transforms a value to decimal. If the conversion is not possible, null is returned.
+ * Converts a document in JSON string.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionAsDecimal extends OSQLFunctionAbstract {
+public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
-  public static final String NAME = "asdecimal";
+  public static final String NAME = "tojson";
 
-  public OSQLFunctionAsDecimal() {
-    super(NAME, 1, 1);
+  public OSQLMethodToJSON() {
+    super(NAME, 0, 1);
   }
 
   @Override
   public String getSyntax() {
-    return "asDecimal(<value|expression|field>)";
+    return "toJSON([<format>])";
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    return iFuncParams[0] != null ? new BigDecimal(iFuncParams[0].toString().trim()) : null;
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null) {
+      return null;
+    }
+
+    if (iThis instanceof ODocument) {
+      final ODocument doc = (ODocument) iThis;
+      return iParams.length == 1 ? doc.toJSON(((String) iParams[0]).replace("\"", "")) : doc.toJSON();
+    }
+    return null;
   }
 }

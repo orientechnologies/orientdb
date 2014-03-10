@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 /**
- * Abstract class for math functions.
+ * Abstract class for math function.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

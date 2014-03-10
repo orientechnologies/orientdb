@@ -18,37 +18,33 @@ package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
- * Returns the first characters from the end of the string.
+ * Replaces all the occurrences.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionRight extends OSQLFunctionAbstract {
+public class OSQLMethodReplace extends OAbstractSQLMethod {
 
-  public static final String NAME = "right";
+  public static final String NAME = "replace";
 
-  public OSQLFunctionRight() {
+  public OSQLMethodReplace() {
     super(NAME, 2, 2);
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null || iFuncParams[1] == null)
-      return null;
-
-    final Object value = iFuncParams[0];
-    final String valueAsString = value.toString();
-
-    final int offset = Integer.parseInt(iFuncParams[1].toString());
-    return valueAsString.substring(offset < valueAsString.length() ? valueAsString.length() - offset : 0);
+  public String getSyntax() {
+    return "replace(<to-find>, <to-replace>)";
   }
 
   @Override
-  public String getSyntax() {
-    return "right(<value|expression|field>, <characters>)";
-  }
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null || iParams[0] == null || iParams[1] == null) {
+      return iParams[0];
+    }
 
+    return iThis.toString().replace(iParams[0].toString(), iParams[1].toString());
+  }
 }

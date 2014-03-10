@@ -18,37 +18,37 @@ package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
- * Extracts a sub string from the original.
+ * Returns the first characters from the end of the string.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionSubString extends OSQLFunctionAbstract {
+public class OSQLMethodRight extends OAbstractSQLMethod {
 
-  public static final String NAME = "substring";
+  public static final String NAME = "right";
 
-  public OSQLFunctionSubString() {
-    super(NAME, 2, 3);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null || iFuncParams[1] == null)
-      return null;
-
-    final Object value = iFuncParams[0];
-
-    if (iFuncParams.length > 2)
-      return value.toString().substring(Integer.parseInt(iFuncParams[1].toString()), Integer.parseInt(iFuncParams[2].toString()));
-    else
-      return value.toString().substring(Integer.parseInt(iFuncParams[1].toString()));
+  public OSQLMethodRight() {
+    super(NAME, 1, 1);
   }
 
   @Override
   public String getSyntax() {
-    return "subString(<value|expression|field>, <from-index> [,<to-index>])";
+    return "right( <characters>)";
   }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null || iParams[0] == null) {
+      return null;
+    }
+
+    final String valueAsString = iThis.toString();
+
+    final int offset = Integer.parseInt(iParams[0].toString());
+    return valueAsString.substring(offset < valueAsString.length() ? valueAsString.length() - offset : 0);
+  }
+
 }
