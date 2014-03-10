@@ -247,7 +247,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     OSchema schema = database.getMetadata().getSchema();
     Collection<OClass> classes = schema.getClasses();
-    
+
     final Map<String, OClass> classesToDrop = new HashMap<String, OClass>();
     for (OClass dbClass : classes) {
       String className = dbClass.getName();
@@ -256,7 +256,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         classesToDrop.put(className, dbClass);
       }
     }
-    
+
     int removedClasses = 0;
     while (!classesToDrop.isEmpty()) {
       final AbstractList<String> classesReadyToDrop = new ArrayList<String>();
@@ -959,6 +959,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     while (jsonReader.lastChar() != ']') {
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
+      String blueprintsIndexClass = null;
       String indexName = null;
       String indexType = null;
       Set<String> clustersToIndex = new HashSet<String>();
@@ -980,7 +981,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
           metadata = new ODocument().fromJSON(jsonMetadata);
           jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
-        }
+        } else if (fieldName.equals("blueprintsIndexClass"))
+          blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+
       }
 
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
@@ -1000,7 +1003,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           i++;
         }
 
-        indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata);
+        OIndex index = indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata);
+        if (blueprintsIndexClass != null) {
+          ODocument configuration = index.getConfiguration();
+          configuration.field("blueprintsIndexClass", blueprintsIndexClass);
+          indexManager.save();
+        }
+
         n++;
         listener.onMessage("OK");
 
@@ -1181,7 +1190,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (value instanceof ORecordLazyMultiValue) {
         ORecordLazyMultiValue multiValue = (ORecordLazyMultiValue) value;
         multiValue.setAutoConvertToRecord(oldAutoConvertValue);
-    }
+      }
 
       return newValue;
     }
@@ -1196,7 +1205,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       return true;
     }
 
- @Override
+    @Override
     public boolean updateMode() {
       return true;
     }
@@ -1205,7 +1214,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   private static abstract class AbstractCollectionConverter<T> implements ValuesConverter<T> {
     protected boolean convertSingleValue(final Object item, ResultCallback result, boolean updated) {
-      if( item == null )
+      if (item == null)
         return false;
 
       if (item instanceof OIdentifiable) {
@@ -1236,7 +1245,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     interface ResultCallback {
       void add(Object item);
     }
- }
+  }
 
   private static final class SetConverter extends AbstractCollectionConverter<Set> {
     public static final SetConverter INSTANCE = new SetConverter();

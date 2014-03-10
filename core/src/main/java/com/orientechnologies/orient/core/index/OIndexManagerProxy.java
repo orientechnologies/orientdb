@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
@@ -144,5 +145,10 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   @Override
   public void removeClusterFromIndex(String clusterName, String indexName) {
     delegate.removeClusterFromIndex(clusterName, indexName);
+  }
+
+  @Override
+  public<RET extends ODocumentWrapper> RET save() {
+    return delegate.save();
   }
 }

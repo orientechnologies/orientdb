@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * Interface to handle indexes. Implementations works at local or remote level.
@@ -125,4 +126,6 @@ public interface OIndexManager {
   public void addClusterToIndex(String clusterName, String indexName);
 
   public void removeClusterFromIndex(String clusterName, String indexName);
+
+  public <RET extends ODocumentWrapper> RET save();
 }

@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundExcepti
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
-import com.orientechnologies.orient.graph.migration.ORidBagMigration;
+import com.orientechnologies.orient.graph.migration.OGraphMigration;
 
 /**
  * Gremlin specialized console.
@@ -102,7 +102,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
   @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
   public void upgradeGraph() {
-    ORidBagMigration migration = new ORidBagMigration(getCurrentDatabase());
+    OGraphMigration migration = new OGraphMigration(getCurrentDatabase());
     migration.execute();
     message("Graph has been upgraded.");
   }

@@ -29,7 +29,7 @@ import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
 public class OrientIndex<T extends OrientElement> implements Index<T> {
   protected static final String      VERTEX                 = "Vertex";
   protected static final String      EDGE                   = "Edge";
-  protected static final String      CONFIG_CLASSNAME       = "blueprintsIndexClass";
+  public static final String         CONFIG_CLASSNAME       = "blueprintsIndexClass";
   public static final String         CONFIG_RECORD_MAP_NAME = "record_map_name";
 
   protected static final String      SEPARATOR              = "!=!";
