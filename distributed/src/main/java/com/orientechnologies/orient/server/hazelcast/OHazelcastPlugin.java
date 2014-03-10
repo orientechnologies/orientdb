@@ -686,6 +686,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                   ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
 
                   final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
+                  new File(Orient.getTempPath()).mkdirs();
 
                   ODistributedServerLog.info(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
                       "copying remote database '%s' to: %s", databaseName, fileName);
