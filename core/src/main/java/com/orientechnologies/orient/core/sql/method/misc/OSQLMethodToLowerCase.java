@@ -33,7 +33,7 @@ public class OSQLMethodToLowerCase extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
         ioResult = ioResult != null ? ioResult.toString().toLowerCase() : null;
         return ioResult;
     }

@@ -38,22 +38,27 @@ public class OSQLMethodAsMap extends OAbstractSQLMethod {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
     if (ioResult instanceof Map)
-      // ALREADY A MAP
+    // ALREADY A MAP
+    {
       return ioResult;
+    }
 
     if (ioResult == null)
-      // NULL VALUE, RETURN AN EMPTY SET
+    // NULL VALUE, RETURN AN EMPTY SET
+    {
       return new HashMap<Object, Object>();
+    }
 
     Iterator<Object> iter;
-    if (ioResult instanceof Iterator<?>)
+    if (ioResult instanceof Iterator<?>) {
       iter = (Iterator<Object>) ioResult;
-    else if (ioResult instanceof Iterable<?>)
+    } else if (ioResult instanceof Iterable<?>) {
       iter = ((Iterable<Object>) ioResult).iterator();
-    else
+    } else {
       return null;
+    }
 
     final HashMap<Object, Object> map = new HashMap<Object, Object>();
     while (iter.hasNext()) {

@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns, a
@@ -41,11 +41,11 @@ public class OSQLFunctionUnionAll extends OSQLFunctionMultiValueAbstract<Collect
     super(NAME, 1, -1);
   }
 
-  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
-      OCommandContext iContext) {
-    if (iParameters.length == 1) {
-      // AGGREGATION MODE (STATEFULL)
-      Object value = iParameters[0];
+  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
+      final Object[] iParams, OCommandContext iContext) {
+    if (iParams.length == 1) {
+      // AGGREGATION MODE (STATEFUL)
+      Object value = iParams[0];
       if (value != null) {
 
         if (value instanceof OSQLFilterItemVariable)
@@ -61,7 +61,7 @@ public class OSQLFunctionUnionAll extends OSQLFunctionMultiValueAbstract<Collect
     } else {
       // IN-LINE MODE (STATELESS)
       final OMultiCollectionIterator<OIdentifiable> result = new OMultiCollectionIterator<OIdentifiable>();
-      for (Object value : iParameters) {
+      for (Object value : iParams) {
         if (value != null) {
           if (value instanceof OSQLFilterItemVariable)
             value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
@@ -75,7 +75,7 @@ public class OSQLFunctionUnionAll extends OSQLFunctionMultiValueAbstract<Collect
   }
 
   public String getSyntax() {
-    return "Syntax error: unionAll(<field>*)";
+    return "unionAll(<field>*)";
   }
 
   @Override

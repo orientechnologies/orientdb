@@ -40,9 +40,9 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    Object value = iParameters[0];
+    Object value = iParams[0];
 
     if (value instanceof OSQLFilterItemVariable)
       value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
@@ -55,8 +55,8 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
 
     final Collection<?> coll = (Collection<?>) value;
 
-    if (iParameters.length == 1) {
-      // AGGREGATION MODE (STATEFULL)
+    if (iParams.length == 1) {
+      // AGGREGATION MODE (STATEFUL)
       if (context == null) {
         // ADD ALL THE ITEMS OF THE FIRST COLLECTION
         context = new HashSet<Object>(coll);
@@ -69,8 +69,8 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
       // IN-LINE MODE (STATELESS)
       final HashSet<Object> result = new HashSet<Object>(coll);
 
-      for (int i = 1; i < iParameters.length; ++i) {
-        value = iParameters[i];
+      for (int i = 1; i < iParams.length; ++i) {
+        value = iParams[i];
 
         if (value instanceof OSQLFilterItemVariable)
           value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
@@ -90,7 +90,7 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
   }
 
   public String getSyntax() {
-    return "Syntax error: intersect(<field>*)";
+    return "intersect(<field>*)";
   }
 
   @SuppressWarnings("unchecked")

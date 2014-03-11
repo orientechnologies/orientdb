@@ -14,29 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.method.misc;
+package com.orientechnologies.orient.core.sql.functions.conversion;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+
+import java.math.BigDecimal;
 
 /**
+ * Transforms a value to decimal. If the conversion is not possible, null is returned.
  * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLMethodPrefix extends OAbstractSQLMethod {
+public class OSQLMethodAsDecimal extends OAbstractSQLMethod {
 
-  public static final String NAME = "prefix";
+  public static final String NAME = "asdecimal";
 
-  public OSQLMethodPrefix() {
-    super(NAME, 1);
+  public OSQLMethodAsDecimal() {
+    super(NAME, 0, 0);
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis == null || iParams[0] == null)
-      return iThis;
+  public String getSyntax() {
+    return "asDecimal()";
+  }
 
-    return iParams[0] + iThis.toString();
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    return iThis != null ? new BigDecimal(iThis.toString().trim()) : null;
   }
 }

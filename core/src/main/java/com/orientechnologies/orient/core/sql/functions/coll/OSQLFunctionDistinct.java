@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Keeps items only once removing duplicates
@@ -37,8 +37,9 @@ public class OSQLFunctionDistinct extends OSQLFunctionAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    final Object value = iParameters[0];
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    final Object value = iParams[0];
 
     if (value != null && !context.contains(value)) {
       context.add(value);
@@ -54,6 +55,6 @@ public class OSQLFunctionDistinct extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: distinct(<field>)";
+    return "distinct(<field>)";
   }
 }

@@ -32,13 +32,13 @@ public class OSQLFunctionFormat extends OSQLFunctionAbstract {
     super(NAME, 2, -1);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    final Object[] args = new Object[iParameters.length - 1];
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
+    final Object[] args = new Object[iParams.length - 1];
 
     for (int i = 0; i < args.length; ++i)
-      args[i] = iParameters[i + 1];
+      args[i] = iParams[i + 1];
 
-    return String.format((String) iParameters[0], args);
+    return String.format((String) iParams[0], args);
   }
 
   public String getSyntax() {

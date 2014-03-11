@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 /**
- * Abstract class for multi-value based functions implementations.
+ * Abstract class for multi-value based function implementations.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 

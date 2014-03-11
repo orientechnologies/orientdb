@@ -19,42 +19,44 @@ package com.orientechnologies.orient.core.sql.functions.conversion;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Converts a value to another type in Java or OrientDB's supported types.
  * 
  * @author Luca Garulli
  */
-public class OSQLFunctionConvert extends OSQLFunctionAbstract {
+public class OSQLMethodConvert extends OAbstractSQLMethod {
 
   public static final String NAME = "convert";
 
-  public OSQLFunctionConvert() {
-    super(NAME, 2, 2);
+  public OSQLMethodConvert() {
+    super(NAME, 1, 1);
   }
 
   @Override
   public String getSyntax() {
-    return "convert(<value|expression|field>, <type>)";
+    return "convert(<type>)";
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null || iFuncParams[1] == null)
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null || iParams[0] == null) {
       return null;
+    }
 
-    final String destType = iFuncParams[1].toString();
+    final String destType = iParams[0].toString();
 
-    if (destType.contains("."))
+    if (destType.contains(".")) {
       try {
-        return OType.convert(iFuncParams[0], Class.forName(destType));
+        return OType.convert(iThis, Class.forName(destType));
       } catch (ClassNotFoundException e) {
       }
-    else {
+    } else {
       final OType orientType = OType.valueOf(destType.toUpperCase());
-      if (orientType != null)
-        return OType.convert(iFuncParams[0], orientType.getDefaultJavaType());
+      if (orientType != null) {
+        return OType.convert(iThis, orientType.getDefaultJavaType());
+      }
     }
 
     return null;

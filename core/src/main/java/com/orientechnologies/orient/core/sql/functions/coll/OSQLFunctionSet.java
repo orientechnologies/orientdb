@@ -41,14 +41,15 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters.length > 1)
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    if (iParams.length > 1)
       // IN LINE MODE
       context = new HashSet<Object>();
 
-    for (Object value : iParameters) {
+    for (Object value : iParams) {
       if (value != null) {
-        if (iParameters.length == 1 && context == null)
+        if (iParams.length == 1 && context == null)
           // AGGREGATION MODE (STATEFULL)
           context = new HashSet<Object>();
 
@@ -60,7 +61,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
   }
 
   public String getSyntax() {
-    return "Syntax error: set(<value>*)";
+    return "set(<value>*)";
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {
