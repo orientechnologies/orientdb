@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
@@ -28,19 +31,20 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 public class OTraverseContext extends OBasicCommandContext {
-  private Set<ORID>                         history = new HashSet<ORID>();
-  private List<OTraverseAbstractProcess<?>> stack   = new ArrayList<OTraverseAbstractProcess<?>>();
-  private int                               depth   = -1;
+  private Set<ORID> history = new HashSet<ORID>();
+  private Memory    memory  = new StackMemory();
+
+  private int       depth   = -1;
 
   public void push(final OTraverseAbstractProcess<?> iProcess) {
-    stack.add(iProcess);
+    memory.add(iProcess);
   }
 
   public Map<String, Object> getVariables() {
     final HashMap<String, Object> map = new HashMap<String, Object>();
     map.put("depth", depth);
     map.put("path", getPath());
-    map.put("stack", stack);
+    map.put("stack", memory.getUnderlying());
     // DELEGATE
     map.putAll(super.getVariables());
     return map;
@@ -54,7 +58,7 @@ public class OTraverseContext extends OBasicCommandContext {
     else if (name.startsWith("PATH"))
       return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
     else if (name.startsWith("STACK"))
-      return ODocumentHelper.getFieldValue(stack, iName.substring("STACK".length()));
+      return ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
     else if (name.startsWith("HISTORY"))
       return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
     else
@@ -62,22 +66,20 @@ public class OTraverseContext extends OBasicCommandContext {
       return super.getVariable(iName);
   }
 
-  public OTraverseAbstractProcess<?> pop() {
-    if (stack.isEmpty())
-      throw new IllegalStateException("Traverse stack is empty");
-    return stack.remove(stack.size() - 1);
+  public void pop() {
+    try {
+      memory.dropFrame();
+    } catch (NoSuchElementException e) {
+      throw new IllegalStateException("Traverse stack is empty", e);
+    }
   }
 
   public OTraverseAbstractProcess<?> peek() {
-    return stack.isEmpty() ? null : stack.get(stack.size() - 1);
-  }
-
-  public OTraverseAbstractProcess<?> peek(final int iFromLast) {
-    return stack.size() + iFromLast < 0 ? null : stack.get(stack.size() + iFromLast);
+    return memory.peek();
   }
 
   public void reset() {
-    stack.clear();
+    memory.clear();
   }
 
   public boolean isAlreadyTraversed(final OIdentifiable identity) {
@@ -98,15 +100,89 @@ public class OTraverseContext extends OBasicCommandContext {
 
   public String getPath() {
     final StringBuilder buffer = new StringBuilder();
-    for (OTraverseAbstractProcess<?> process : stack) {
-      final String status = process.getStatus();
-
-      if (status != null) {
-        if (buffer.length() > 0 && !status.startsWith("["))
-          buffer.append('.');
-        buffer.append(status);
-      }
+    List<String> path = memory.peek().getPath();
+    for (String status : path) {
+      if (buffer.length() > 0 && !status.startsWith("["))
+        buffer.append('.');
+      buffer.append(status);
     }
     return buffer.toString();
+  }
+
+  public void setStrategy(OTraverse.STRATEGY strategy) {
+    if (strategy == OTraverse.STRATEGY.BREADTH_FIRST)
+      memory = new QueueMemory(memory);
+    else
+      memory = new StackMemory(memory);
+  }
+
+  private interface Memory {
+    void add(OTraverseAbstractProcess<?> iProcess);
+
+    OTraverseAbstractProcess<?> peek();
+
+    void dropFrame();
+
+    void clear();
+
+    Collection<OTraverseAbstractProcess<?>> getUnderlying();
+  }
+
+  private abstract class AbstractMemory implements Memory {
+    protected Deque<OTraverseAbstractProcess<?>> deque = new ArrayDeque<OTraverseAbstractProcess<?>>();
+
+    public AbstractMemory() {
+      deque = new ArrayDeque<OTraverseAbstractProcess<?>>();
+    }
+
+    public AbstractMemory(Memory memory) {
+      deque = new ArrayDeque<OTraverseAbstractProcess<?>>(memory.getUnderlying());
+    }
+
+    @Override
+    public OTraverseAbstractProcess<?> peek() {
+      return deque.peek();
+    }
+
+    @Override
+    public void dropFrame() {
+      deque.removeFirst();
+    }
+
+    @Override
+    public void clear() {
+      deque.clear();
+    }
+
+    @Override
+    public Collection<OTraverseAbstractProcess<?>> getUnderlying() {
+      return deque;
+    }
+  }
+
+  private class StackMemory extends AbstractMemory {
+    public StackMemory() {
+      super();
+    }
+
+    public StackMemory(Memory memory) {
+      super(memory);
+    }
+
+    @Override
+    public void add(OTraverseAbstractProcess<?> iProcess) {
+      deque.push(iProcess);
+    }
+  }
+
+  private class QueueMemory extends AbstractMemory {
+    public QueueMemory(Memory memory) {
+      super(memory);
+    }
+
+    @Override
+    public void add(OTraverseAbstractProcess<?> iProcess) {
+      deque.addLast(iProcess);
+    }
   }
 }

@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
  * @author Luca Garulli
  */
 public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OIdentifiable> {
-  private OTraverseContext                  context     = new OTraverseContext();
   private OCommandPredicate                 predicate;
   private Iterator<? extends OIdentifiable> target;
   private List<Object>                      fields      = new ArrayList<Object>();
@@ -40,6 +39,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   private long                              limit       = 0;
   private OIdentifiable                     lastTraversed;
   private STRATEGY                          strategy    = STRATEGY.DEPTH_FIRST;
+  private OTraverseContext                  context     = new OTraverseContext();
 
   public enum STRATEGY {
     DEPTH_FIRST, BREADTH_FIRST
@@ -134,7 +134,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   public OTraverse target(final Iterator<? extends OIdentifiable> iTarget) {
     target = iTarget;
     context.reset();
-    new OTraverseRecordSetProcess(this, (Iterator<OIdentifiable>) target);
+    new OTraverseRecordSetProcess(this, (Iterator<OIdentifiable>) target, Collections.<String> emptyList());
     return this;
   }
 
@@ -203,5 +203,6 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public void setStrategy(STRATEGY strategy) {
     this.strategy = strategy;
+    context.setStrategy(strategy);
   }
 }

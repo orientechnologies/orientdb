@@ -15,18 +15,24 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 
-import java.util.Iterator;
-
 public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Object>> {
-  protected Object field;
+  private final List<String> parentPath;
+  private final ODocument    doc;
+  protected Object           field;
 
-  public OTraverseFieldProcess(final OTraverse iCommand, final Iterator<Object> iTarget) {
+  public OTraverseFieldProcess(final OTraverse iCommand, ODocument doc, final Iterator<Object> iTarget, List<String> parentPath) {
     super(iCommand, iTarget);
+    this.parentPath = parentPath;
+    this.doc = doc;
   }
 
   public OIdentifiable process() {
@@ -35,10 +41,9 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Obj
 
       final Object fieldValue;
       if (field instanceof OSQLFilterItem)
-        fieldValue = ((OSQLFilterItem) field).getValue(((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget(), null,
-            null);
+        fieldValue = ((OSQLFilterItem) field).getValue(doc, null, null);
       else
-        fieldValue = ((OTraverseRecordProcess) command.getContext().peek(-2)).getTarget().rawField(field.toString());
+        fieldValue = doc.rawField(field.toString());
 
       if (fieldValue != null) {
         final OTraverseAbstractProcess<?> subProcess;
@@ -46,27 +51,16 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Obj
         if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue)) {
           final Iterator<Object> coll = OMultiValue.getMultiValueIterator(fieldValue);
 
-          switch (command.getStrategy()) {
-          case BREADTH_FIRST:
-            subProcess = new OTraverseMultiValueBreadthFirstProcess(command, coll);
-            break;
-
-          case DEPTH_FIRST:
-            subProcess = new OTraverseMultiValueDepthFirstProcess(command, coll);
-            break;
-
-          default:
-            throw new IllegalArgumentException("Traverse strategy not supported: " + command.getStrategy());
-          }
-        } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument)
-          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord());
-        else
+          subProcess = new OTraverseMultiValueProcess(command, coll, getPath());
+        } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
+          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), parentPath);
+        }        else
           continue;
 
-        final OIdentifiable subValue = subProcess.process();
-        if (subValue != null)
-          return subValue;
-      }
+        command.getContext().push(subProcess);
+
+        return null;
+     }
     }
 
     return drop();
@@ -75,6 +69,16 @@ public class OTraverseFieldProcess extends OTraverseAbstractProcess<Iterator<Obj
   @Override
   public String getStatus() {
     return field != null ? field.toString() : null;
+  }
+
+  @Override
+  public List<String> getPath() {
+    if (field != null) {
+      final ArrayList<String> path = new ArrayList<String>(parentPath);
+      path.add(field.toString());
+      return path;
+    } else
+      return null;
   }
 
   @Override

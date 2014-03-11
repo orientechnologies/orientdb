@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandProcess;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public abstract class OTraverseAbstractProcess<T> extends OCommandProcess<OTraverse, T, OIdentifiable> {
   public OTraverseAbstractProcess(final OTraverse iCommand, final T iTarget) {
     super(iCommand, iTarget);
-    command.getContext().push(this);
   }
 
   public abstract String getStatus();
@@ -30,4 +31,6 @@ public abstract class OTraverseAbstractProcess<T> extends OCommandProcess<OTrave
     command.getContext().pop();
     return null;
   }
+
+  public abstract List<String> getPath();
 }
