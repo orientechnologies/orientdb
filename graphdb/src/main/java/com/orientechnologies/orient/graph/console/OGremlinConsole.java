@@ -102,7 +102,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
   @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
   public void upgradeGraph() {
-    OGraphMigration migration = new OGraphMigration(getCurrentDatabase());
+    OGraphMigration migration = new OGraphMigration(getCurrentDatabase(), this);
     migration.execute();
     message("Graph has been upgraded.");
   }

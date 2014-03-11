@@ -387,6 +387,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (i > 0)
             writer.append(",");
 
+					indexEntry.setLazyLoad(false);
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -30,16 +31,22 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OGraphMigration {
-  private final ODatabaseDocument database;
+  private final ODatabaseDocument      database;
+  private final OCommandOutputListener commandOutputListener;
 
-  public OGraphMigration(ODatabaseDocument database) {
+  public OGraphMigration(ODatabaseDocument database, OCommandOutputListener commandOutputListener) {
     this.database = database;
+    this.commandOutputListener = commandOutputListener;
   }
 
   public void execute() {
     List<ODocument> vertexes = database.query(new OSQLSynchQuery<ODocument>("select from V"));
 
-    for (ODocument vertex : vertexes) {
+    if (commandOutputListener != null)
+      commandOutputListener.onMessage(vertexes.size() + " vertexes were fetched to process.");
+    for (int i = 0; i < vertexes.size(); i++) {
+      final ODocument vertex = vertexes.get(i);
+
       for (String fieldName : vertex.fieldNames()) {
         if (fieldName.startsWith(OrientVertex.CONNECTION_IN_PREFIX) || fieldName.startsWith(OrientVertex.CONNECTION_OUT_PREFIX)) {
           Object oldValue = vertex.field(fieldName);
@@ -53,7 +60,13 @@ public class OGraphMigration {
         }
       }
       vertex.save();
+
+      if (commandOutputListener != null && i % 10000 == 0)
+        commandOutputListener.onMessage(i + " vertexes were processed.");
     }
+
+    if (commandOutputListener != null)
+      commandOutputListener.onMessage("All vertexes were processed, looking for manual indexes to update.");
 
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
@@ -64,6 +77,9 @@ public class OGraphMigration {
       ODocument metadata = index.getMetadata();
 
       if (config.field(OrientIndex.CONFIG_CLASSNAME) != null && metadata == null) {
+        if (commandOutputListener != null)
+          commandOutputListener.onMessage("Index " + index.getName() + " uses out of dated index format and will be updated.");
+
         final OIndex<OIdentifiable> recordKeyValueIndex = (OIndex<OIdentifiable>) database
             .getMetadata()
             .getIndexManager()
@@ -86,10 +102,17 @@ public class OGraphMigration {
         config.field("metadata", metadata);
 
         indexWasMigrated = true;
+
+        if (commandOutputListener != null)
+          commandOutputListener.onMessage("Index " + index.getName() + " structure was updated.");
       }
     }
 
     if (indexWasMigrated)
       indexManager.save();
+
+    if (commandOutputListener != null)
+      commandOutputListener.onMessage("Graph database update is completed");
+
   }
 }
