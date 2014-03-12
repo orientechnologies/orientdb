@@ -50,17 +50,9 @@ public class OSQLMethodFunctionDelegate extends OAbstractSQLMethod {
 
   @Override
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext,
-      final Object ioResult, final Object[] iMethodParams) {
+      final Object ioResult, final Object[] iParams) {
 
-    final Object[] newParams;
-    if (iMethodParams != null) {
-      newParams = new Object[iMethodParams.length + 1];
-      newParams[0] = iThis;
-      System.arraycopy(iMethodParams, 0, newParams, 1, iMethodParams.length);
-    } else
-      newParams = new Object[] { iThis };
-
-    func.setParameters(newParams, false);
+    func.setParameters(iParams, false);
 
     return func.execute(iThis, iCurrentRecord, ioResult, iContext);
   }

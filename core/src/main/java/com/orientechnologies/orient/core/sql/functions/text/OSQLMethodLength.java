@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Returns the string length.
@@ -26,24 +26,25 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionLength extends OSQLFunctionAbstract {
+public class OSQLMethodLength extends OAbstractSQLMethod {
 
   public static final String NAME = "length";
 
-  public OSQLFunctionLength() {
-    super(NAME, 1, 1);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null)
-      return 0;
-
-    return iFuncParams[0].toString().length();
+  public OSQLMethodLength() {
+    super(NAME, 0, 0);
   }
 
   @Override
   public String getSyntax() {
-    return "length(<value|expression|field>)";
+    return "length()";
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null) {
+      return 0;
+    }
+
+    return iThis.toString().length();
   }
 }

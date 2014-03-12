@@ -154,7 +154,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (doc == null)
       throw ExceptionFactory.vertexWithIdDoesNotExist(this.getId());
 
-    final Iterator<OrientIndex<? extends OrientElement>> it = graph.getManualIndices().iterator();
+    final Iterator<Index<? extends Element>> it = graph.getIndices().iterator();
 
     if (it.hasNext()) {
       final Set<Edge> allEdges = new HashSet<Edge>();

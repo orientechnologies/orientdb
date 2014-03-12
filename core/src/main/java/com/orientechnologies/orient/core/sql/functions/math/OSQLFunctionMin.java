@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Compute the minimum value for a field. Uses the context to save the last minimum number. When different Number class are used,
@@ -39,12 +39,13 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
 
     // calculate min value for current record
     // consider both collection of parameters and collection in each parameter
     Object min = null;
-    for (Object item : iParameters) {
+    for (Object item : iParams) {
       if (item instanceof Collection<?>) {
         for (Object subitem : ((Collection<?>) item)) {
           if (min == null || subitem != null && ((Comparable) subitem).compareTo(min) < 0)
@@ -87,7 +88,7 @@ public class OSQLFunctionMin extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: min(<field> [,<field>*])";
+    return "min(<field> [,<field>*])";
   }
 
   @Override

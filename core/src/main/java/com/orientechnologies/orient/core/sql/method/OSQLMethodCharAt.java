@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.text;
+package com.orientechnologies.orient.core.sql.method;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Returns a character in a string.
@@ -26,25 +26,27 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionCharAt extends OSQLFunctionAbstract {
+public class OSQLMethodCharAt extends OAbstractSQLMethod {
 
   public static final String NAME = "charat";
 
-  public OSQLFunctionCharAt() {
-    super(NAME, 2, 2);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null)
-      return null;
-
-    int index = Integer.parseInt(iFuncParams[1].toString());
-    return "" + iFuncParams[0].toString().charAt(index);
+  public OSQLMethodCharAt() {
+    super(NAME, 1, 1);
   }
 
   @Override
   public String getSyntax() {
-    return "charAt(<value|expression|field>, <position>)";
+    return "charAt(<position>)";
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult,
+      Object[] iParams) {
+    if (iParams[0] == null) {
+      return null;
+    }
+
+    int index = Integer.parseInt(iParams[0].toString());
+    return "" + iThis.toString().charAt(index);
   }
 }

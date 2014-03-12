@@ -23,8 +23,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
+import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
 
 import java.util.Set;
 
@@ -91,8 +91,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return true;
     }
 
-    for (OPair<OSQLMethod, Object[]> pair : operationsChain) {
-      if (!pair.getKey().getName().equals(OSQLMethodField.NAME)) {
+    for (OPair<OSQLMethodRuntime, Object[]> pair : operationsChain) {
+      if (!pair.getKey().getMethod().getName().equals(OSQLMethodField.NAME)) {
         return false;
       }
     }
@@ -113,6 +113,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     return new FieldChain();
+  }
+
+  public void setPreLoadedFields(final Set<String> iPrefetchedFieldList) {
+    this.preLoadedFields = iPrefetchedFieldList;
+  }
+
+  public OCollate getCollate() {
+    return collate;
   }
 
   /**
@@ -146,13 +154,5 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     public boolean isLong() {
       return operationsChain != null && operationsChain.size() > 0;
     }
-  }
-
-  public void setPreLoadedFields(final Set<String> iPrefetchedFieldList) {
-    this.preLoadedFields = iPrefetchedFieldList;
-  }
-
-  public OCollate getCollate() {
-    return collate;
   }
 }

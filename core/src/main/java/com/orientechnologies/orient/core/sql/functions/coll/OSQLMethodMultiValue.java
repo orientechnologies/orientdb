@@ -16,55 +16,60 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Works against multi value objects like collections, maps and arrays.
  * 
  * @author Luca Garulli
  */
-public class OSQLFunctionMultiValue extends OSQLFunctionAbstract {
+public class OSQLMethodMultiValue extends OAbstractSQLMethod {
 
   public static final String NAME = "multivalue";
 
-  public OSQLFunctionMultiValue() {
-    super(NAME, 2, -1);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null || iFuncParams[1] == null)
-      return null;
-
-    if (iFuncParams.length == 2 && !OMultiValue.isMultiValue(iFuncParams[1]))
-      return ODocumentHelper.getFieldValue(iFuncParams[0], iFuncParams[1].toString(), iContext);
-
-    // MULTI VALUES
-    final List<Object> list = new ArrayList<Object>();
-    for (int i = 1; i < iFuncParams.length; ++i) {
-      if (OMultiValue.isMultiValue(iFuncParams[i])) {
-        for (Object o : OMultiValue.getMultiValueIterable(iFuncParams[i]))
-          list.add(ODocumentHelper.getFieldValue(iFuncParams[0], o.toString(), iContext));
-      } else
-        list.add(ODocumentHelper.getFieldValue(iFuncParams[0], iFuncParams[i].toString(), iContext));
-    }
-
-    if (list.size() == 1)
-      return list.get(0);
-
-    return list;
+  public OSQLMethodMultiValue() {
+    super(NAME, 1, -1);
   }
 
   @Override
   public String getSyntax() {
-    return "multivalue(<value|expression|field>, <index>)";
+    return "multivalue(<index>)";
 
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iThis == null || iParams[0] == null) {
+      return null;
+    }
+
+    if (iParams.length == 1 && !OMultiValue.isMultiValue(iParams[0])) {
+      return ODocumentHelper.getFieldValue(iThis, iParams[0].toString(), iContext);
+    }
+
+    // MULTI VALUES
+    final List<Object> list = new ArrayList<Object>();
+    for (int i = 0; i < iParams.length; ++i) {
+      if (OMultiValue.isMultiValue(iParams[i])) {
+        for (Object o : OMultiValue.getMultiValueIterable(iParams[i])) {
+          list.add(ODocumentHelper.getFieldValue(iThis, o.toString(), iContext));
+        }
+      } else {
+        list.add(ODocumentHelper.getFieldValue(iThis, iParams[i].toString(), iContext));
+      }
+    }
+
+    if (list.size() == 1) {
+      return list.get(0);
+    }
+
+    return list;
   }
 }

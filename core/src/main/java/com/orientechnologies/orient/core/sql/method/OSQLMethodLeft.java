@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.sql.functions.text;
+package com.orientechnologies.orient.core.sql.method;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
  * Returns the first characters from the beginning of the string.
@@ -26,28 +26,28 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
-public class OSQLFunctionLeft extends OSQLFunctionAbstract {
+public class OSQLMethodLeft extends OAbstractSQLMethod {
 
   public static final String NAME = "left";
 
-  public OSQLFunctionLeft() {
-    super(NAME, 2, 2);
-  }
-
-  @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext) {
-    if (iFuncParams[0] == null || iFuncParams[1] == null)
-      return null;
-
-    final Object value = iFuncParams[0];
-    final String valueAsString = value.toString();
-
-    final int len = Integer.parseInt(iFuncParams[1].toString());
-    return valueAsString.substring(0, len <= valueAsString.length() ? len : valueAsString.length());
+  public OSQLMethodLeft() {
+    super(NAME, 1, 1);
   }
 
   @Override
   public String getSyntax() {
-    return "left(<value|expression|field>, <characters>)";
+    return "left(<characters>)";
+  }
+
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (iParams[0] == null || iThis == null) {
+      return null;
+    }
+
+    final String valueAsString = iThis.toString();
+
+    final int len = Integer.parseInt(iParams[0].toString());
+    return valueAsString.substring(0, len <= valueAsString.length() ? len : valueAsString.length());
   }
 }

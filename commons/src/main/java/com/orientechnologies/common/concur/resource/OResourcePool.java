@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 
 public class OResourcePool<K, V> {
@@ -46,7 +47,7 @@ public class OResourcePool<K, V> {
         throw new OLockException("Not more resources available in pool. Requested resource: " + iKey);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new OLockException("Not more resources available in pool. Requested resource: " + iKey, e);
+      throw new OInterruptedException(e);
     }
 
     V res;
@@ -89,8 +90,8 @@ public class OResourcePool<K, V> {
   public void close() {
     sem.drainPermits();
   }
-  
+
   public void remove(final V res) {
-  	this.resources.remove(res);
+    this.resources.remove(res);
   }
 }

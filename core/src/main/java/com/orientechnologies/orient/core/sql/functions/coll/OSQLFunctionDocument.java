@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This operator add an entry in a map. The entry is composed by a key and a value.
@@ -37,30 +37,31 @@ public class OSQLFunctionDocument extends OSQLFunctionMultiValueAbstract<ODocume
   }
 
   @SuppressWarnings("unchecked")
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
 
-    if (iParameters.length > 2)
+    if (iParams.length > 2)
       // IN LINE MODE
       context = new ODocument();
 
-    if (iParameters.length == 1) {
-      if (iParameters[0] instanceof ODocument)
+    if (iParams.length == 1) {
+      if (iParams[0] instanceof ODocument)
         // INSERT EVERY DOCUMENT FIELD
-        context.merge((ODocument) iParameters[0], true, false);
-      else if (iParameters[0] instanceof Map<?, ?>)
+        context.merge((ODocument) iParams[0], true, false);
+      else if (iParams[0] instanceof Map<?, ?>)
         // INSERT EVERY SINGLE COLLECTION ITEM
-        context.fields((Map<String, Object>) iParameters[0]);
+        context.fields((Map<String, Object>) iParams[0]);
       else
         throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
-    } else if (iParameters.length % 2 != 0)
+    } else if (iParams.length % 2 != 0)
       throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
     else
-      for (int i = 0; i < iParameters.length; i += 2) {
-        final String key = iParameters[i].toString();
-        final Object value = iParameters[i + 1];
+      for (int i = 0; i < iParams.length; i += 2) {
+        final String key = iParams[i].toString();
+        final Object value = iParams[i + 1];
 
         if (value != null) {
-          if (iParameters.length <= 2 && context == null)
+          if (iParams.length <= 2 && context == null)
             // AGGREGATION MODE (STATEFULL)
             context = new ODocument();
 
@@ -72,7 +73,7 @@ public class OSQLFunctionDocument extends OSQLFunctionMultiValueAbstract<ODocume
   }
 
   public String getSyntax() {
-    return "Syntax error: map(<map>|[<key>,<value>]*)";
+    return "document(<map>|[<key>,<value>]*)";
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {

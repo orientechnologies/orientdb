@@ -58,7 +58,7 @@ import java.util.zip.GZIPOutputStream;
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected OJSONWriter   writer;
   protected long          recordExported;
-  public static final int VERSION = 7;
+  public static final int VERSION = 8;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -343,6 +343,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       if (metadata != null)
         writer.writeAttribute(4, true, "metadata", metadata);
 
+      final ODocument configuration = index.getConfiguration();
+      if (configuration.field("blueprintsIndexClass") != null)
+        writer.writeAttribute(4, true, "blueprintsIndexClass", configuration.field("blueprintsIndexClass"));
+
       writer.endObject(2, true);
       listener.onMessage("OK");
     }
@@ -383,6 +387,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (i > 0)
             writer.append(",");
 
+					indexEntry.setLazyLoad(false);
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();

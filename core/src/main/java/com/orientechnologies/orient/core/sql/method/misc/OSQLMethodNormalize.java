@@ -35,15 +35,15 @@ public class OSQLMethodNormalize extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
 
         if (ioResult != null) {
-            final Normalizer.Form form = iMethodParams != null && iMethodParams.length > 0 ? Normalizer.Form
-                    .valueOf(OStringSerializerHelper.getStringContent(iMethodParams[0].toString())) : Normalizer.Form.NFD;
+            final Normalizer.Form form = iParams != null && iParams.length > 0 ? Normalizer.Form
+                    .valueOf(OStringSerializerHelper.getStringContent(iParams[0].toString())) : Normalizer.Form.NFD;
 
             String normalized = Normalizer.normalize(ioResult.toString(), form);
-            if (iMethodParams != null && iMethodParams.length > 1) {
-                normalized = normalized.replaceAll(OStringSerializerHelper.getStringContent(iMethodParams[0].toString()), "");
+            if (iParams != null && iParams.length > 1) {
+                normalized = normalized.replaceAll(OStringSerializerHelper.getStringContent(iParams[0].toString()), "");
             } else {
                 normalized = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
             }
