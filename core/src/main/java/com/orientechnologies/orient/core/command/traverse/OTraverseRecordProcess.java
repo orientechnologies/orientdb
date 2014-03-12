@@ -17,13 +17,16 @@ package com.orientechnologies.orient.core.command.traverse;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 
@@ -33,7 +36,6 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
   public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, List<String> parentPath) {
     super(iCommand, iTarget);
     this.path = createPath(parentPath);
-    command.getContext().incrementDepth();
   }
 
   private List<String> createPath(List<String> path) {
@@ -43,6 +45,8 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
   }
 
   public OIdentifiable process() {
+    command.getContext().incrementDepth();
+
     if (target == null)
       return drop();
 
@@ -105,10 +109,47 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
       }
     }
 
-    final OTraverseFieldProcess field = new OTraverseFieldProcess(command, target, fields.iterator(), getPath());
-    command.getContext().push(field);
+    processFields(fields.iterator());
 
     return target;
+  }
+
+  private void processFields(Iterator<Object> target) {
+    final ODocument doc = this.target;
+
+    while (target.hasNext()) {
+      Object field = target.next();
+
+      final Object fieldValue;
+      if (field instanceof OSQLFilterItem)
+        fieldValue = ((OSQLFilterItem) field).getValue(doc, null, null);
+      else
+        fieldValue = doc.rawField(field.toString());
+
+      if (fieldValue != null) {
+        final OTraverseAbstractProcess<?> subProcess;
+
+        if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue)) {
+          final Iterator<Object> coll = OMultiValue.getMultiValueIterator(fieldValue);
+
+          subProcess = new OTraverseMultiValueProcess(command, coll, fieldPath(field));
+        } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
+          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), fieldPath(field));
+        } else
+          continue;
+
+        command.getContext().push(subProcess);
+      }
+    }
+  }
+
+  private ArrayList<String> fieldPath(Object field) {
+    if (field != null) {
+      final ArrayList<String> path = new ArrayList<String>(getPath());
+      path.add(field.toString());
+      return path;
+    } else
+      return null;
   }
 
   @Override

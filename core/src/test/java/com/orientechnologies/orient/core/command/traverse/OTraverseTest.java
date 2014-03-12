@@ -59,9 +59,27 @@ public class OTraverseTest {
     rootDocument.field("a", a);
     rootDocument.field("b", b);
 
+    final ODocument c1 = new ODocument();
+    final ODocument c1a = new ODocument();
+    c1.field("a", c1a);
+    final ODocument c1b = new ODocument();
+    c1.field("b", c1b);
+    final ODocument c2 = new ODocument();
+    final ODocument c2a = new ODocument();
+    c2.field("a", c2a);
+    final ODocument c2b = new ODocument();
+    c2.field("b", c2b);
+    final ODocument c3 = new ODocument();
+    final ODocument c3a = new ODocument();
+    c3.field("a", c3a);
+    final ODocument c3b = new ODocument();
+    c3.field("b", c3b);
+    rootDocument.field("c", new ArrayList<ODocument>(Arrays.asList(c1, c2, c3)));
+
     rootDocument.save();
 
-    final List<ODocument> expectedResult = Arrays.asList(rootDocument, a, aa, ab, b, ba, bb);
+    final List<ODocument> expectedResult = Arrays.asList(rootDocument, c1, c1b, c1a, c2, c2b, c2a, c3, c3b, c3a, b, bb, ba, a, ab,
+        aa);
 
     final List<OIdentifiable> results = traverse.execute();
 
