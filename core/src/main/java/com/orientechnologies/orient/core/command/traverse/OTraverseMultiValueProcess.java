@@ -16,18 +16,17 @@
 package com.orientechnologies.orient.core.command.traverse;
 
 import java.util.Iterator;
-import java.util.List;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterator<Object>> {
-  private final List<String> parentPath;
-  protected Object value;
-  protected int    index = -1;
+  private final OTraversePath parentPath;
+  protected Object            value;
+  protected int               index = -1;
 
-  public OTraverseMultiValueProcess(final OTraverse iCommand, final Iterator<Object> iTarget, List<String> parentPath) {
+  public OTraverseMultiValueProcess(final OTraverse iCommand, final Iterator<Object> iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
     this.parentPath = parentPath;
   }
@@ -41,7 +40,7 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
         final ORecord<?> rec = ((OIdentifiable) value).getRecord();
 
         if (rec instanceof ODocument) {
-          final OTraverseAbstractProcess<ODocument> subProcess = new OTraverseRecordProcess(command, (ODocument) rec, parentPath);
+          final OTraverseAbstractProcess<ODocument> subProcess = new OTraverseRecordProcess(command, (ODocument) rec, getPath());
           command.getContext().push(subProcess);
 
           return null;
@@ -53,13 +52,8 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
   }
 
   @Override
-  public String getStatus() {
-    return toString();
-  }
-
-  @Override
-  public List<String> getPath() {
-    return null;
+  public OTraversePath getPath() {
+    return parentPath.appendIndex(index);
   }
 
   @Override

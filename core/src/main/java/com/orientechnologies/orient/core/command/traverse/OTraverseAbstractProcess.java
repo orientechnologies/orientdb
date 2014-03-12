@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandProcess;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -25,12 +23,10 @@ public abstract class OTraverseAbstractProcess<T> extends OCommandProcess<OTrave
     super(iCommand, iTarget);
   }
 
-  public abstract String getStatus();
-
   public OIdentifiable drop() {
     command.getContext().pop();
     return null;
   }
 
-  public abstract List<String> getPath();
+  public abstract OTraversePath getPath();
 }

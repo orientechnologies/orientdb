@@ -58,8 +58,8 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return result;
   }
 
-  public OTraverseAbstractProcess<?> currentProcess() {
-    return context.peek();
+  public OTraverseAbstractProcess<?> nextProcess() {
+    return context.next();
   }
 
   public boolean hasNext() {
@@ -70,7 +70,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
       // GET THE NEXT
       lastTraversed = next();
 
-    if (lastTraversed == null && context.peek() != null)
+    if (lastTraversed == null && !context.isEmpty())
       throw new IllegalStateException("Traverse ended abnormally");
 
     if (!context.checkTimeout())
@@ -97,7 +97,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     OIdentifiable result;
     OTraverseAbstractProcess<?> toProcess;
     // RESUME THE LAST PROCESS
-    while ((toProcess = currentProcess()) != null) {
+    while ((toProcess = nextProcess()) != null) {
       result = toProcess.process();
       if (result != null) {
         resultCount++;
@@ -134,7 +134,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   public OTraverse target(final Iterator<? extends OIdentifiable> iTarget) {
     target = iTarget;
     context.reset();
-    new OTraverseRecordSetProcess(this, (Iterator<OIdentifiable>) target, Collections.<String> emptyList());
+    new OTraverseRecordSetProcess(this, (Iterator<OIdentifiable>) target, OTraversePath.empty());
     return this;
   }
 

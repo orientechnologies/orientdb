@@ -31,22 +31,14 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 
 public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> {
-  private final List<String> path;
+  private final OTraversePath path;
 
-  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, List<String> parentPath) {
+  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
-    this.path = createPath(parentPath);
-  }
-
-  private List<String> createPath(List<String> path) {
-    path = new ArrayList<String>(path);
-    path.add(getStatus());
-    return Collections.unmodifiableList(path);
+    this.path = parentPath.append(iTarget);
   }
 
   public OIdentifiable process() {
-    command.getContext().incrementDepth();
-
     if (target == null)
       return drop();
 
@@ -132,9 +124,10 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue)) {
           final Iterator<Object> coll = OMultiValue.getMultiValueIterator(fieldValue);
 
-          subProcess = new OTraverseMultiValueProcess(command, coll, fieldPath(field));
+          subProcess = new OTraverseMultiValueProcess(command, coll, getPath().appendField(field.toString()));
         } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
-          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), fieldPath(field));
+          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), getPath()
+              .appendField(field.toString()));
         } else
           continue;
 
@@ -143,33 +136,13 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
     }
   }
 
-  private ArrayList<String> fieldPath(Object field) {
-    if (field != null) {
-      final ArrayList<String> path = new ArrayList<String>(getPath());
-      path.add(field.toString());
-      return path;
-    } else
-      return null;
-  }
-
-  @Override
-  public String getStatus() {
-    return target != null ? target.getIdentity().toString() : null;
-  }
-
   @Override
   public String toString() {
     return target != null ? target.getIdentity().toString() : "-";
   }
 
   @Override
-  public OIdentifiable drop() {
-    command.getContext().decrementDepth();
-    return super.drop();
-  }
-
-  @Override
-  public List<String> getPath() {
+  public OTraversePath getPath() {
     return path;
   }
 }
