@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.Locale;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
@@ -27,13 +35,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.Locale;
 
 @Test(groups = "db")
 public class DbCreationTest {
@@ -143,7 +144,7 @@ public class DbCreationTest {
     try {
       ODatabaseHelper.dropDatabase(db, "plocal");
     } catch (OStorageException e) {
-      Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
+      Assert.assertEquals(e.getCause().getMessage(), "Database with name 'sub/subTest' doesn't exits.");
     }
     ODatabaseHelper.createDatabase(db, u, "plocal");
     db.open("admin", "admin");
@@ -169,7 +170,7 @@ public class DbCreationTest {
     try {
       ODatabaseHelper.dropDatabase(db, "plocal");
     } catch (OStorageException e) {
-      Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
+      Assert.assertEquals(e.getCause().getMessage(), "Database with name 'sub/subTest' doesn't exits.");
     }
     ODatabaseHelper.createDatabase(db, u, "plocal");
 
