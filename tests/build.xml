@@ -115,15 +115,15 @@
 
     <target name="test-remote" depends="test-init">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-            <env key="JAVA_OPTS"
+        <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+        <env key="JAVA_OPTS"
                  value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-            <env key="JAVA_OPTS"
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+        <env key="JAVA_OPTS"
                  value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
@@ -147,12 +147,12 @@
         </testng>
 
         <echo>SHUTDOWNING THE SERVER...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
+        <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+        <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c shutdown.bat"/>
         </exec>
 
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>

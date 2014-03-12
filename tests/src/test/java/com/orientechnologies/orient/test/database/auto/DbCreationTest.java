@@ -130,8 +130,8 @@ public class DbCreationTest {
   @Test(dependsOnMethods = { "testChangeLocale" })
   public void testSubFolderDbCreate() throws IOException {
     int pos = url.lastIndexOf("/");
-    String u = url;
 
+    final String u;
     if (pos > -1)
       u = url.substring(0, pos) + "/sub/subTest";
     else {
@@ -141,11 +141,7 @@ public class DbCreationTest {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-    try {
-      ODatabaseHelper.dropDatabase(db, "plocal");
-    } catch (OStorageException e) {
-      Assert.assertEquals(e.getCause().getMessage(), "Database with name 'sub/subTest' doesn't exits.");
-    }
+    ODatabaseHelper.dropDatabase(db, "plocal");
     ODatabaseHelper.createDatabase(db, u, "plocal");
     db.open("admin", "admin");
     db.close();
@@ -156,8 +152,8 @@ public class DbCreationTest {
   @Test(dependsOnMethods = { "testChangeLocale" })
   public void testSubFolderDbCreateConnPool() throws IOException {
     int pos = url.lastIndexOf("/");
-    String u = url;
 
+    final String u;
     if (pos > -1)
       u = url.substring(0, pos) + "/sub/subTest";
     else {
@@ -167,11 +163,7 @@ public class DbCreationTest {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-    try {
-      ODatabaseHelper.dropDatabase(db, "plocal");
-    } catch (OStorageException e) {
-      Assert.assertEquals(e.getCause().getMessage(), "Database with name 'sub/subTest' doesn't exits.");
-    }
+    ODatabaseHelper.dropDatabase(db, "plocal");
     ODatabaseHelper.createDatabase(db, u, "plocal");
 
     db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
