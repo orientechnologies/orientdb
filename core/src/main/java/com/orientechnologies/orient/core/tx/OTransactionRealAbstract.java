@@ -302,13 +302,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       if (!rec.getRecord().getIdentity().equals(newRid)) {
         rec.getRecord().onBeforeIdentityChanged(oldRid);
 
-				final ORecordId recordId = (ORecordId)rec.getRecord().getIdentity();
-				if (recordId == null) {
-					rec.getRecord().setIdentity(new ORecordId(newRid));
-				} else {
-					recordId.clusterPosition = newRid.getClusterPosition();
-					recordId.clusterId = newRid.getClusterId();
-				}
+        final ORecordId recordId = (ORecordId) rec.getRecord().getIdentity();
+        if (recordId == null) {
+          rec.getRecord().setIdentity(new ORecordId(newRid));
+        } else {
+          recordId.clusterPosition = newRid.getClusterPosition();
+          recordId.clusterId = newRid.getClusterId();
+        }
 
         rec.getRecord().onAfterIdentityChanged(rec.getRecord());
       }

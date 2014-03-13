@@ -18,174 +18,193 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.ORollbackException;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
-public class TransactionOptimisticTest {
-  private String url;
-
+public class TransactionOptimisticTest extends BaseTest {
   @Parameters(value = "url")
-  public TransactionOptimisticTest(String iURL) {
-    url = iURL;
+  public TransactionOptimisticTest(@Optional String iURL) {
+    super(iURL);
   }
 
   @Test
   public void testTransactionOptimisticRollback() throws IOException {
-    ODatabaseFlat db1 = new ODatabaseFlat(url);
-    db1.open("admin", "admin");
+    if (database.getClusterIdByName("binary") == -1)
+      database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-    long rec = db1.countClusterElements("binary");
+    long rec = database.countClusterElements("binary");
 
-    db1.begin();
+    database.begin();
 
-    ORecordFlat record1 = new ORecordFlat(db1);
-    record1.value("This is the first version").save();
+    ORecordBytes recordBytes = new ORecordBytes("This is the first version".getBytes());
+    recordBytes.save("binary");
 
-    db1.rollback();
+    database.rollback();
 
-    Assert.assertEquals(db1.countClusterElements("binary"), rec);
-
-    db1.close();
+    Assert.assertEquals(database.countClusterElements("binary"), rec);
   }
 
   @Test(dependsOnMethods = "testTransactionOptimisticRollback")
   public void testTransactionOptimisticCommit() throws IOException {
-    ODatabaseFlat db1 = new ODatabaseFlat(url);
-    db1.open("admin", "admin");
+    if (database.getClusterIdByName("binary") == -1)
+      database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-    long tot = db1.countClusterElements("binary");
+    long tot = database.countClusterElements("binary");
 
-    db1.begin();
+    database.begin();
 
-    ORecordFlat record1 = new ORecordFlat(db1);
-    record1.value("This is the first version").save("binary");
+    ORecordBytes recordBytes = new ORecordBytes("This is the first version".getBytes());
+    recordBytes.save("binary");
 
-    db1.commit();
+    database.commit();
 
-    Assert.assertEquals(db1.countClusterElements("binary"), tot + 1);
-
-    db1.close();
+    Assert.assertEquals(database.countClusterElements("binary"), tot + 1);
   }
 
   @Test(dependsOnMethods = "testTransactionOptimisticCommit")
-  public void testTransactionOptimisticCuncurrentException() throws IOException {
-    ODatabaseFlat db1 = new ODatabaseFlat(url);
-    db1.open("admin", "admin");
+  public void testTransactionOptimisticConcurrentException() throws IOException {
+    if (database.getClusterIdByName("binary") == -1)
+      database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-    ODatabaseFlat db2 = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
-    ORecordFlat record1 = new ORecordFlat(db1);
-    record1.value("This is the first version").save();
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
+    record1.save("binary");
 
     try {
-      db1.begin();
+      database.begin();
 
       // RE-READ THE RECORD
       record1.load();
-      ORecordFlat record2 = db2.load(record1.getIdentity());
 
-      db2.save(record2.value("This is the second version"));
-      db1.save(record1.value("This is the third version"));
+      ODatabaseRecordThreadLocal.INSTANCE.set(db2);
+      ORecordBytes record2 = db2.load(record1.getIdentity());
 
-      db1.commit();
+      record2.setDirty();
+      record2.fromStream("This is the second version".getBytes());
+      record2.save();
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+      record1.setDirty();
+      record1.fromStream("This is the third version".getBytes());
+      record1.save();
+
+      database.commit();
 
       Assert.assertTrue(false);
 
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
 
-      db1.rollback();
+      database.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
-      db1.rollback();
+      database.rollback();
 
     } finally {
 
-      db1.close();
+      database.close();
       db2.close();
     }
   }
 
-  @Test(dependsOnMethods = "testTransactionOptimisticCuncurrentException")
+  @Test(dependsOnMethods = "testTransactionOptimisticConcurrentException")
   public void testTransactionOptimisticCacheMgmt1Db() throws IOException {
-    ODatabaseFlat db = new ODatabaseFlat(url);
-    db.open("admin", "admin");
+    if (database.getClusterIdByName("binary") == -1)
+      database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-    ORecordFlat record = new ORecordFlat(db);
-    record.value("This is the first version").save();
+    ORecordBytes record = new ORecordBytes("This is the first version".getBytes());
+    record.save();
 
     try {
-      db.begin();
+      database.begin();
 
       // RE-READ THE RECORD
       record.load();
       int v1 = record.getRecordVersion().getCounter();
-      record.value("This is the second version").save();
-      db.commit();
+      record.setDirty();
+      record.fromStream("This is the second version".getBytes());
+      record.save();
+      database.commit();
 
       record.reload();
       Assert.assertEquals(record.getRecordVersion().getCounter(), v1 + 1);
-      Assert.assertTrue(record.value().contains("second"));
+      Assert.assertTrue(new String(record.toStream()).contains("second"));
     } finally {
-
-      db.close();
+      database.close();
     }
   }
 
   @Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
-    ODatabaseFlat db1 = new ODatabaseFlat(url);
-    db1.open("admin", "admin");
+    if (database.getClusterIdByName("binary") == -1)
+      database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
 
-    ODatabaseFlat db2 = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
 
-    ORecordFlat record1 = new ORecordFlat(db1);
-    record1.value("This is the first version").save();
+    ORecordBytes record1 = new ORecordBytes("This is the first version".getBytes());
+    record1.save();
 
     try {
-      db1.begin();
+      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+      database.begin();
 
       // RE-READ THE RECORD
       record1.load();
       int v1 = record1.getRecordVersion().getCounter();
-      record1.value("This is the second version").save();
+      record1.setDirty();
+      record1.fromStream("This is the second version".getBytes());
+      record1.save();
 
-      db1.commit();
+      database.commit();
 
-      ORecordFlat record2 = db2.load(record1.getIdentity());
+      ODatabaseRecordThreadLocal.INSTANCE.set(db2);
+
+      ORecordBytes record2 = db2.load(record1.getIdentity(), "*:-1", true);
       Assert.assertEquals(record2.getRecordVersion().getCounter(), v1 + 1);
-      Assert.assertTrue(record2.value().contains("second"));
+      Assert.assertTrue(new String(record2.toStream()).contains("second"));
 
     } finally {
 
-      db1.close();
+      database.close();
       db2.close();
     }
   }
 
   @Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt2Db")
   public void testTransactionMultipleRecords() throws IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    final OSchema schema = database.getMetadata().getSchema();
 
-    long totalAccounts = db.countClusterElements("Account");
+    if (!schema.existsClass("Account"))
+      schema.createClass("Account");
+
+    long totalAccounts = database.countClusterElements("Account");
 
     String json = "{ \"@class\": \"Account\", \"type\": \"Residence\", \"street\": \"Piazza di Spagna\"}";
 
-    db.begin(TXTYPE.OPTIMISTIC);
+    database.begin(TXTYPE.OPTIMISTIC);
     for (int g = 0; g < 1000; g++) {
       ODocument doc = new ODocument("Account");
       doc.fromJSON(json);
@@ -193,20 +212,21 @@ public class TransactionOptimisticTest {
 
       doc.save();
     }
-    db.commit();
+    database.commit();
 
-    Assert.assertEquals(db.countClusterElements("Account"), totalAccounts + 1000);
+    Assert.assertEquals(database.countClusterElements("Account"), totalAccounts + 1000);
 
-    db.close();
+    database.close();
   }
 
   @SuppressWarnings("unchecked")
-  @Test
   public void createGraphInTx() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    final OSchema schema = database.getMetadata().getSchema();
 
-    db.begin();
+    if (!schema.existsClass("Profile"))
+      schema.createClass("Profile");
+
+    database.begin();
 
     ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
     ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
@@ -218,15 +238,12 @@ public class TransactionOptimisticTest {
 
     jack.save();
 
-    db.commit();
+    database.commit();
 
-    System.out
-        .println("Kim indexed: " + db.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndex().get("Kim"));
+    database.close();
+    database.open("admin", "admin");
 
-    db.close();
-    db.open("admin", "admin");
-
-    ODocument loadedJack = db.load(jack.getIdentity());
+    ODocument loadedJack = database.load(jack.getIdentity());
     Assert.assertEquals(loadedJack.field("name"), "Jack");
     Collection<ODocument> jackFollowings = loadedJack.field("following");
     Assert.assertNotNull(jackFollowings);
@@ -246,6 +263,176 @@ public class TransactionOptimisticTest {
 
     Assert.assertEquals(teriFollowings.iterator().next().field("name"), "Jack");
 
-    db.close();
+    database.close();
+  }
+
+  public void testNestedTx() throws Exception {
+    final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    final Callable<Void> assertEmptyRecord = new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+        db.open("admin", "admin");
+        try {
+          Assert.assertEquals(db.countClass("NestedTxClass"), 0);
+        } finally {
+          db.close();
+        }
+
+        return null;
+      }
+    };
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (!schema.existsClass("NestedTxClass"))
+      schema.createClass("NestedTxClass");
+
+    database.begin();
+
+    final ODocument externalDocOne = new ODocument("NestedTxClass");
+    externalDocOne.field("v", "val1");
+    externalDocOne.save();
+
+    Future assertFuture = executorService.submit(assertEmptyRecord);
+    assertFuture.get();
+
+    database.begin();
+
+    final ODocument externalDocTwo = new ODocument("NestedTxClass");
+    externalDocTwo.field("v", "val2");
+    externalDocTwo.save();
+
+    assertFuture = executorService.submit(assertEmptyRecord);
+    assertFuture.get();
+
+    database.commit();
+
+    assertFuture = executorService.submit(assertEmptyRecord);
+    assertFuture.get();
+
+    final ODocument externalDocThree = new ODocument("NestedTxClass");
+    externalDocThree.field("v", "val3");
+    externalDocThree.save();
+
+    database.commit();
+
+    Assert.assertTrue(!database.getTransaction().isActive());
+    Assert.assertEquals(database.countClass("NestedTxClass"), 3);
+  }
+
+  public void testNestedTxRollbackOne() throws Exception {
+    final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    final Callable<Void> assertEmptyRecord = new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(database.getURL());
+        db.open("admin", "admin");
+        try {
+          Assert.assertEquals(db.countClass("NestedTxRollbackOne"), 1);
+        } finally {
+          db.close();
+        }
+
+        return null;
+      }
+    };
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (!schema.existsClass("NestedTxRollbackOne"))
+      schema.createClass("NestedTxRollbackOne");
+
+    ODocument brokenDocOne = new ODocument("NestedTxRollbackOne");
+    brokenDocOne.save();
+
+    brokenDocOne = database.load(brokenDocOne.getIdentity(), "*:-1", true);
+
+    ODocument brokenDocTwo = database.load(brokenDocOne.getIdentity(), "*:-1", true);
+    brokenDocTwo.setDirty();
+    brokenDocTwo.field("v", "vstr");
+    brokenDocTwo.save();
+
+    try {
+      database.begin();
+
+      final ODocument externalDocOne = new ODocument("NestedTxRollbackOne");
+      externalDocOne.field("v", "val1");
+      externalDocOne.save();
+
+      Future assertFuture = executorService.submit(assertEmptyRecord);
+      assertFuture.get();
+
+      database.begin();
+      ODocument externalDocTwo = new ODocument("NestedTxRollbackOne");
+      externalDocTwo.field("v", "val2");
+      externalDocTwo.save();
+
+      assertFuture = executorService.submit(assertEmptyRecord);
+      assertFuture.get();
+
+      brokenDocOne.setDirty();
+      brokenDocOne.save();
+
+      database.commit();
+
+      assertFuture = executorService.submit(assertEmptyRecord);
+      assertFuture.get();
+
+      final ODocument externalDocThree = new ODocument("NestedTxRollbackOne");
+      externalDocThree.field("v", "val3");
+      externalDocThree.save();
+
+      database.commit();
+      Assert.fail();
+    } catch (OConcurrentModificationException e) {
+      database.rollback();
+    } catch (OResponseProcessingException e) {
+      database.rollback();
+    }
+
+    Assert.assertTrue(!database.getTransaction().isActive());
+    Assert.assertEquals(database.countClass("NestedTxRollbackOne"), 1);
+  }
+
+  public void testNestedTxRollbackTwo() {
+    final OSchema schema = database.getMetadata().getSchema();
+    if (!schema.existsClass("NestedTxRollbackTwo"))
+      schema.createClass("NestedTxRollbackTwo");
+
+    database.begin();
+    try {
+      final ODocument externalDocOne = new ODocument("NestedTxRollbackTwo");
+      externalDocOne.field("v", "val1");
+      externalDocOne.save();
+
+      database.begin();
+
+      final ODocument externalDocTwo = new ODocument("NestedTxRollbackTwo");
+      externalDocTwo.field("v", "val2");
+      externalDocTwo.save();
+
+      database.rollback();
+
+      database.begin();
+
+      final ODocument externalDocFour = new ODocument("NestedTxRollbackTwo");
+      externalDocFour.field("v", "val4");
+      externalDocFour.save();
+
+      database.commit();
+
+      final ODocument externalDocThree = new ODocument("NestedTxRollbackTwo");
+      externalDocThree.field("v", "val3");
+      externalDocThree.save();
+
+      database.commit();
+      Assert.fail();
+    } catch (ORollbackException e) {
+      database.rollback();
+    }
+
+    Assert.assertTrue(!database.getTransaction().isActive());
+    Assert.assertEquals(database.countClass("NestedTxRollbackTwo"), 0);
   }
 }

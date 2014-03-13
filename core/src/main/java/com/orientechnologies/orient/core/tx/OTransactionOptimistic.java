@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
@@ -67,173 +68,212 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial    = new AtomicInteger();
   private int                  autoRetries = OGlobalConfiguration.TX_AUTO_RETRY.getValueAsInteger();
 
+  private int                  txStartCounter;
+
   public OTransactionOptimistic(final ODatabaseRecordTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
     usingLog = OGlobalConfiguration.TX_USE_LOG.getValueAsBoolean();
   }
 
   public void begin() {
-    status = TXSTATUS.BEGUN;
+    if (txStartCounter == 0)
+      status = TXSTATUS.BEGUN;
+
+    txStartCounter++;
+
+    if (txStartCounter > 1)
+      OLogManager.instance().info(this, "Transaction was already started and will be reused.");
   }
 
   public void commit() {
     checkTransaction();
-    status = TXSTATUS.COMMITTING;
 
-    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED && !(database.getStorage() instanceof OStorageEmbedded))
-      database.getStorage().commit(this, null);
-    else {
-      final List<String> involvedIndexes = getInvolvedIndexes();
+    txStartCounter--;
 
-      if (involvedIndexes != null)
-        Collections.sort(involvedIndexes);
+    if (txStartCounter == 0) {
+      if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
+        throw new ORollbackException("Given transaction was rolled back and can not be used.");
 
-      for (int retry = 1; retry <= autoRetries; ++retry) {
-        try {
+      status = TXSTATUS.COMMITTING;
 
-          // LOCK INVOLVED INDEXES
-          List<OIndexAbstract<?>> lockedIndexes = null;
+      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+          && !(database.getStorage() instanceof OStorageEmbedded))
+        database.getStorage().commit(this, null);
+      else {
+        final List<String> involvedIndexes = getInvolvedIndexes();
+
+        if (involvedIndexes != null)
+          Collections.sort(involvedIndexes);
+
+        for (int retry = 1; retry <= autoRetries; ++retry) {
           try {
-            if (involvedIndexes != null)
-              for (String indexName : involvedIndexes) {
-                final OIndexAbstract<?> index = (OIndexAbstract<?>) database.getMetadata().getIndexManager()
-                    .getIndexInternal(indexName);
-                if (lockedIndexes == null)
-                  lockedIndexes = new ArrayList<OIndexAbstract<?>>();
 
-                index.acquireModificationLock();
-                lockedIndexes.add(index);
-              }
+            // LOCK INVOLVED INDEXES
+            List<OIndexAbstract<?>> lockedIndexes = null;
+            try {
+              if (involvedIndexes != null)
+                for (String indexName : involvedIndexes) {
+                  final OIndexAbstract<?> index = (OIndexAbstract<?>) database.getMetadata().getIndexManager()
+                      .getIndexInternal(indexName);
+                  if (lockedIndexes == null)
+                    lockedIndexes = new ArrayList<OIndexAbstract<?>>();
 
-            if (!useSBTree) {
-              // SEARCH FOR INDEX BASED ON DOCUMENT TOUCHED
-              final Collection<? extends OIndex<?>> indexes = database.getMetadata().getIndexManager().getIndexes();
-              List<? extends OIndex<?>> indexesToLock = null;
-              if (indexes != null) {
-                indexesToLock = new ArrayList<OIndex<?>>(indexes);
-                Collections.sort(indexesToLock, new Comparator<OIndex<?>>() {
-                  public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
-                    return indexOne.getName().compareTo(indexTwo.getName());
-                  }
-                });
-              }
+                  index.acquireModificationLock();
+                  lockedIndexes.add(index);
+                }
 
-              if (indexesToLock != null && !indexesToLock.isEmpty()) {
-                if (lockedIndexes == null)
-                  lockedIndexes = new ArrayList<OIndexAbstract<?>>();
+              if (!useSBTree) {
+                // SEARCH FOR INDEX BASED ON DOCUMENT TOUCHED
+                final Collection<? extends OIndex<?>> indexes = database.getMetadata().getIndexManager().getIndexes();
+                List<? extends OIndex<?>> indexesToLock = null;
+                if (indexes != null) {
+                  indexesToLock = new ArrayList<OIndex<?>>(indexes);
+                  Collections.sort(indexesToLock, new Comparator<OIndex<?>>() {
+                    public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
+                      return indexOne.getName().compareTo(indexTwo.getName());
+                    }
+                  });
+                }
 
-                for (OIndex<?> index : indexesToLock) {
-                  for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-                    final ORecord<?> record = entry.getValue().record.getRecord();
-                    if (record instanceof ODocument) {
-                      ODocument doc = (ODocument) record;
-                      if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null
-                          && index.getDefinition() != null
-                          && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
-                        index.getInternal().acquireModificationLock();
-                        lockedIndexes.add((OIndexAbstract<?>) index.getInternal());
+                if (indexesToLock != null && !indexesToLock.isEmpty()) {
+                  if (lockedIndexes == null)
+                    lockedIndexes = new ArrayList<OIndexAbstract<?>>();
+
+                  for (OIndex<?> index : indexesToLock) {
+                    for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
+                      final ORecord<?> record = entry.getValue().record.getRecord();
+                      if (record instanceof ODocument) {
+                        ODocument doc = (ODocument) record;
+                        if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null
+                            && index.getDefinition() != null
+                            && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
+                          index.getInternal().acquireModificationLock();
+                          lockedIndexes.add((OIndexAbstract<?>) index.getInternal());
+                        }
                       }
                     }
                   }
-                }
 
-                for (OIndexAbstract<?> index : lockedIndexes)
-                  index.acquireExclusiveLock();
-              }
-            }
-
-            final Map<String, OIndex> indexes = new HashMap<String, OIndex>();
-            for (OIndex index : database.getMetadata().getIndexManager().getIndexes())
-              indexes.put(index.getName(), index);
-
-            final Runnable callback = new Runnable() {
-              @Override
-              public void run() {
-                final ODocument indexEntries = getIndexChanges();
-                if (indexEntries != null) {
-                  final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
-
-                  for (Entry<String, Object> indexEntry : indexEntries) {
-                    final OIndexInternal<?> index = indexes.get(indexEntry.getKey()).getInternal();
-                    indexesToCommit.put(index.getName(), index.getInternal());
-                  }
-
-                  for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-                    indexInternal.preCommit();
-
-                  for (Entry<String, Object> indexEntry : indexEntries) {
-                    final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
-
-                    if (index == null) {
-                      OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
-                      throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
-                    } else
-                      index.addTxOperation((ODocument) indexEntry.getValue());
-                  }
-
-                  try {
-                    for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-                      indexInternal.commit();
-                  } finally {
-                    for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-                      indexInternal.postCommit();
-                  }
+                  for (OIndexAbstract<?> index : lockedIndexes)
+                    index.acquireExclusiveLock();
                 }
               }
-            };
 
-            final String storageType = database.getStorage().getType();
+              final Map<String, OIndex> indexes = new HashMap<String, OIndex>();
+              for (OIndex index : database.getMetadata().getIndexManager().getIndexes())
+                indexes.put(index.getName(), index);
 
-            if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME))
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
-            else {
-              database.getStorage().callInLock(new Callable<Object>() {
+              final Runnable callback = new Runnable() {
                 @Override
-                public Object call() throws Exception {
-                  database.getStorage().commit(OTransactionOptimistic.this, null);
-                  callback.run();
-                  return null;
+                public void run() {
+                  final ODocument indexEntries = getIndexChanges();
+                  if (indexEntries != null) {
+                    final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
+
+                    for (Entry<String, Object> indexEntry : indexEntries) {
+                      final OIndexInternal<?> index = indexes.get(indexEntry.getKey()).getInternal();
+                      indexesToCommit.put(index.getName(), index.getInternal());
+                    }
+
+                    for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+                      indexInternal.preCommit();
+
+                    for (Entry<String, Object> indexEntry : indexEntries) {
+                      final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
+
+                      if (index == null) {
+                        OLogManager.instance().error(this, "Index with name " + indexEntry.getKey() + " was not found.");
+                        throw new OIndexException("Index with name " + indexEntry.getKey() + " was not found.");
+                      } else
+                        index.addTxOperation((ODocument) indexEntry.getValue());
+                    }
+
+                    try {
+                      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+                        indexInternal.commit();
+                    } finally {
+                      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+                        indexInternal.postCommit();
+                    }
+                  }
                 }
-              }, true);
-            }
-            // OK
-            break;
+              };
 
-          } finally {
-            // RELEASE INDEX LOCKS IF ANY
-            if (lockedIndexes != null) {
-              if (!useSBTree) {
-                for (OIndexAbstract<?> index : lockedIndexes)
-                  index.releaseExclusiveLock();
+              final String storageType = database.getStorage().getType();
+
+              if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME))
+                database.getStorage().commit(OTransactionOptimistic.this, callback);
+              else {
+                database.getStorage().callInLock(new Callable<Object>() {
+                  @Override
+                  public Object call() throws Exception {
+                    database.getStorage().commit(OTransactionOptimistic.this, null);
+                    callback.run();
+                    return null;
+                  }
+                }, true);
               }
+              // OK
+              break;
 
-              for (OIndexAbstract<?> index : lockedIndexes)
-                index.releaseModificationLock();
+            } finally {
+              // RELEASE INDEX LOCKS IF ANY
+              if (lockedIndexes != null) {
+                if (!useSBTree) {
+                  for (OIndexAbstract<?> index : lockedIndexes)
+                    index.releaseExclusiveLock();
+                }
 
+                for (OIndexAbstract<?> index : lockedIndexes)
+                  index.releaseModificationLock();
+
+              }
             }
-          }
-        } catch (OTimeoutException e) {
-          if (autoRetries == 0) {
-            OLogManager.instance().debug(this, "Caught timeout exception during commit, but no automatic retry has been set", e);
-            throw e;
-          } else if (retry == autoRetries) {
-            OLogManager.instance().debug(this, "Caught timeout exception during %d/%d. Retry limit is exceeded.", retry,
-                autoRetries);
-            throw e;
-          } else {
-            OLogManager.instance().debug(this, "Caught timeout exception during commit retrying %d/%d...", retry, autoRetries);
+          } catch (OTimeoutException e) {
+            if (autoRetries == 0) {
+              OLogManager.instance().debug(this, "Caught timeout exception during commit, but no automatic retry has been set", e);
+              throw e;
+            } else if (retry == autoRetries) {
+              OLogManager.instance().debug(this, "Caught timeout exception during %d/%d. Retry limit is exceeded.", retry,
+                  autoRetries);
+              throw e;
+            } else {
+              OLogManager.instance().debug(this, "Caught timeout exception during commit retrying %d/%d...", retry, autoRetries);
+            }
           }
         }
       }
-    }
 
-    status = TXSTATUS.COMPLETED;
+      status = TXSTATUS.COMPLETED;
+    } else if (txStartCounter > 0)
+      OLogManager.instance().info(this, "Nested transaction was closed but transaction itself was not committed.");
+    else
+      throw new OTransactionException("Transaction was committed more times than it is started.");
   }
 
-  public void rollback() {
+  @Override
+  public int amountOfNestedTxs() {
+    return txStartCounter;
+  }
+
+	public void rollback() {
+    rollback(false, -1);
+  }
+
+  @Override
+  public void rollback(boolean force, int commitLevelDiff) {
     checkTransaction();
 
+    txStartCounter += commitLevelDiff;
     status = TXSTATUS.ROLLBACKING;
+
+    if (!force && txStartCounter > 0) {
+      OLogManager.instance().info(this, "Nested transaction was closed but transaction itself was scheduled for rollback.");
+      return;
+    }
+
+    if (txStartCounter < 0)
+      throw new OTransactionException("Transaction was rolled back more times than it was started.");
 
     database.getStorage().callInLock(new Callable<Void>() {
 
@@ -261,7 +301,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     recordIndexOperations.clear();
     recordEntries.clear();
 
-    status = TXSTATUS.COMPLETED;
+    status = TXSTATUS.ROLLED_BACK;
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
