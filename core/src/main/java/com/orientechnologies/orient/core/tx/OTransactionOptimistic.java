@@ -82,7 +82,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     txStartCounter++;
 
     if (txStartCounter > 1)
-      OLogManager.instance().info(this, "Transaction was already started and will be reused.");
+      OLogManager.instance().debug(this, "Transaction was already started and will be reused.");
   }
 
   public void commit() {
@@ -246,7 +246,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
       status = TXSTATUS.COMPLETED;
     } else if (txStartCounter > 0)
-      OLogManager.instance().info(this, "Nested transaction was closed but transaction itself was not committed.");
+      OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was not committed.");
     else
       throw new OTransactionException("Transaction was committed more times than it is started.");
   }
@@ -268,7 +268,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.ROLLBACKING;
 
     if (!force && txStartCounter > 0) {
-      OLogManager.instance().info(this, "Nested transaction was closed but transaction itself was scheduled for rollback.");
+      OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was scheduled for rollback.");
       return;
     }
 
