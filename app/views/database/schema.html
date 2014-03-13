@@ -1,48 +1,54 @@
-<div class="row-fluid" ng-controller="SchemaController">
-    <div class="span12 nomargin">
-        <div>
-            <a href="javascript:void(0)" class="btn" ng-click="createNewClass()"> <i class="icon-plus"></i> New
-                Class</a>
-            <a href="javascript:void(0)" class="btn" ng-click="rebuildAllIndexes()"> <i class="icon-refresh"></i>
-                Rebuild All Indexes</a>
-            <input class="input-xlarge" placeholder="Search" ng-model="queryy">
+<div class="ocontainer">
+    <div class="ocontainer-body">
+        <div class="row-fluid " ng-controller="SchemaController">
+            <div class="span12 nomargin">
+                <div>
+                    <a href="javascript:void(0)" class="btn" ng-click="createNewClass()"> <i class="icon-plus"></i> New
+                        Class</a>
+                    <a href="javascript:void(0)" class="btn" ng-click="rebuildAllIndexes()"> <i
+                            class="icon-refresh"></i>
+                        Rebuild All Indexes</a>
+                    <input class="input-xlarge" placeholder="Search" ng-model="queryy">
+                </div>
+                <br>
+
+                <table class="table table-striped table-bordered table-hover table-condensed pointer">
+                    <thead>
+                    <tr>
+                        <th ng-repeat="header in headers">
+                            {{header}}
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="result in listClassesTotal | filter: queryy ">
+                        <td ng-click="openClass(result)">{{result['name']}}</td>
+                        <td ng-click="openClass(result)">{{result['superClass']}}</td>
+                        <td ng-click="openClass(result)">{{result['alias']}}</td>
+                        <td ng-click="openClass(result)">
+                            <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
+                        </td>
+
+                        <td ng-click="openClass(result)">{{result['clusters']}}</td>
+                        <td ng-click="openClass(result)">{{result['defaultCluster']}}</td>
+                        <td ng-click="openClass(result)">{{result['records']}}</td>
+                        <td>
+                            <a href="javascript:void(0)" class="btn btn-small" ng-click="queryAll(result['name'])"> <i
+                                    class="icon-question-sign"></i> Query All</a>
+
+                            <a href="javascript:void(0)" class="btn btn-small" ng-click="createRecord(result['name'])">
+                                <i
+                                        class="icon-plus"></i> New Record</a>
+
+                            <a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropClass(result)">
+                                <i class="icon-white icon-trash"></i> Drop</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <br>
-
-        <table class="table table-striped table-bordered table-hover table-condensed pointer">
-            <thead>
-            <tr>
-                <th ng-repeat="header in headers">
-                    {{header}}
-                </th>
-                <th>Actions</th>
-            </tr>
-
-            </thead>
-            <tbody>
-            <tr ng-repeat="result in listClassesTotal | filter: queryy ">
-                <td ng-click="openClass(result)">{{result['name']}}</td>
-                <td ng-click="openClass(result)">{{result['superClass']}}</td>
-                <td ng-click="openClass(result)">{{result['alias']}}</td>
-                <td ng-click="openClass(result)">
-                    <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
-                </td>
-
-                <td ng-click="openClass(result)">{{result['clusters']}}</td>
-                <td ng-click="openClass(result)">{{result['defaultCluster']}}</td>
-                <td ng-click="openClass(result)">{{result['records']}}</td>
-                <td>
-                    <a href="javascript:void(0)" class="btn btn-small" ng-click="queryAll(result['name'])"> <i
-                            class="icon-question-sign"></i> Query All</a>
-
-                    <a href="javascript:void(0)" class="btn btn-small" ng-click="createRecord(result['name'])"> <i
-                            class="icon-plus"></i> New Record</a>
-
-                    <a href="javascript:void(0)" class="btn btn-danger btn-small" ng-click="dropClass(result)">
-                        <i class="icon-white icon-trash"></i> Drop</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
     </div>
 </div>

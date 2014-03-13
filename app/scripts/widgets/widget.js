@@ -181,7 +181,7 @@ Widget.directive('jsontext', function () {
                     case '{':
                     case '[':
                         if (!inString) {
-                            newJson += currentChar + "\n" + repeat(tab, indentLevel + 1);
+                            newJson += currentChar + "\r\n" + repeat(tab, indentLevel + 1);
                             indentLevel += 1;
                         } else {
                             newJson += currentChar;
@@ -191,14 +191,14 @@ Widget.directive('jsontext', function () {
                     case ']':
                         if (!inString) {
                             indentLevel -= 1;
-                            newJson += "\n" + repeat(tab, indentLevel) + currentChar;
+                            newJson += "\r\n" + repeat(tab, indentLevel) + currentChar;
                         } else {
                             newJson += currentChar;
                         }
                         break;
                     case ',':
                         if (!inString) {
-                            newJson += ",\n" + repeat(tab, indentLevel);
+                            newJson += ",\r\n" + repeat(tab, indentLevel);
                         } else {
                             newJson += currentChar;
                         }
@@ -228,7 +228,6 @@ Widget.directive('jsontext', function () {
                         break;
                 }
             }
-
             return newJson;
         }
 
@@ -381,7 +380,7 @@ Widget.directive('ridrender', function (Database) {
                         i++;
                     }
                 });
-                html +="</ul>";
+                html += "</ul>";
                 if (html != "" && i == value.length) {
                     element.html(html);
                 }

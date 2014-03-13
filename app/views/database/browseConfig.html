@@ -1,0 +1,26 @@
+<div class="row-fluid">
+
+    <div class="span12">
+        <form class="">
+            <fieldset>
+
+                <label>Content Type</label>
+                <select ng-model="selectedContentType" class="input-medium"
+                        ng-options="q for q in contentType"></select>
+                <label>Limit</label>
+                <input type="text" class="input-medium" ng-model="limit"/>
+                <label>Keep Limit</label>
+                <input type="text" class="input-medium" ng-model="keepLimit"/>
+                <label>Shallow collection</label>
+                <input type="checkbox" class="input-medium pull-right" ng-model="shallow"/>
+                <br>
+                <!--<div style="margin-top: 5px;">-->
+                <!--<label>History</label>-->
+                <!--<select ng-model="queryText" ng-options="q for q in queries"></select>-->
+                <!--<i class="icon-trash pointer" ng-click="clear()"></i>-->
+                <!--</div>-->
+            </fieldset>
+        </form>
+    </div>
+
+</div>

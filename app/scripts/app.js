@@ -16,9 +16,11 @@ var deps = ['header.controller',
     '$strap.directives',
     'ui.codemirror',
     'LocalStorageModule',
+    'ngTable',
     'filters',
     'rendering',
-    'schema.controller'];
+    'schema.controller',
+    'duScroll'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);

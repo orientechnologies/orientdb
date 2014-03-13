@@ -22,6 +22,8 @@
     <link rel="stylesheet" href="components/bootstrap/docs/assets/css/bootstrap.css">
     <link rel="stylesheet" href="components/bootstrap/docs/assets/css/docs.css">
     <link rel="stylesheet" href="components/bootstrap-datepicker/css/datepicker.css"/>
+    <link rel="stylesheet" href="components/ng-table/ng-table.css"/>
+
     <!--<link rel="stylesheet" href="components/ng-grid/ng-grid.min.css"/>-->
     <link rel="stylesheet" href="components/bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"/>
     <link rel="stylesheet" href="styles/main.css">
@@ -48,6 +50,13 @@
     </div>
 </div>
 
+<div class="container-fluid container-notification">
+    <div class="row-fluid">
+        <div ng-controller="NotificationController">
+            <div ng-include src="'views/notification.html'"></div>
+        </div>
+    </div>
+</div>
 <!-- Add your site or application content here -->
 <div class="container-fluid container-studio">
     <!--<div class="row-fluid">
@@ -59,11 +68,7 @@
     <div class="row-fluid" ng-view>
 
     </div>
-    <div class="row-fluid">
-        <div ng-controller="NotificationController">
-            <div ng-include src="'views/notification.html'"></div>
-        </div>
-    </div>
+
 </div>
 
 
@@ -81,9 +86,9 @@
 <script src="components/moment/moment.js"></script>
 <script src="components/angular-strap/dist/angular-strap.js"></script>
 <script src="components/bootstrap/docs/assets/js/bootstrap.js"></script>
+<script src="components/bootstrap/docs/assets/js/bootstrap-tooltip.js"></script>
 <script src="components/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 <script type="text/javascript" src="components/angular-local-storage/angular-local-storage.min.js"></script>
-<!--<script type="text/javascript" src="components/ng-grid/ng-grid-2.0.7.min.js"></script>-->
 <script type="text/javascript" src="components/codemirror/lib/codemirror.js"></script>
 <script type="text/javascript" src="components/codemirror/mode/javascript/javascript.js"></script>
 <script type="text/javascript" src="components/codemirror/mode/sql/sql.js"></script>
@@ -92,7 +97,9 @@
 <script type="text/javascript" src="components/angular-ui-codemirror/ui-codemirror.js"></script>
 <script src="components/angular-ui-bootstrap-bower/ui-bootstrap.js"></script>
 <script src="components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.js"></script>
-<!--<script type="text/javascript" src="components/nnnick-chartjs/Chart.js"></script>-->
+<script src="components/angular-scroll/angular-scroll.min.js"></script>
+<script src="components/ng-table/ng-table.js"></script>
+
 <script type="text/javascript"
         src="components/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>
 

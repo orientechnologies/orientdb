@@ -1,30 +1,30 @@
 {
-  "name": "orientdbstudio",
-  "version": "0.0.0",
-  "dependencies": {
-    "angular": "~1.0.5",
-    "json3": "~3.2.4",
-    "es5-shim": "~2.0.8",
-    "angularjs-bower": "latest",
-    "angular-resource": "~1.0.5",
-    "angular-cookies": "~1.0.5",
-    "angular-sanitize": "~1.0.5",
-    "angular-strap" : "~0.7.4",
-    "js-base64":"~2.1.2",
-    "angular-ui-codemirror": "latest",
-    "codemirror": "~3.16.0",
-    "font-awesome": "latest",
-    "angular-local-storage" : "latest",
-    "bootstrap-datepicker" : "1.0.2",
-    "moment" : "latest",
-    "angular-ui-bootstrap-bower" : "latest",
-    "spin.js" : "latest",
-    "nnnick-chartjs" : "latest",
-    "bootstrap-datetimepicker": "latest"
-
-  },
-  "devDependencies": {
-    "angular-mocks": "~1.0.5",
-    "angular-scenario": "~1.0.5"
-  }
+    "name": "orientdbstudio",
+    "version": "0.0.0",
+    "dependencies": {
+        "angular": "1.2.14",
+        "json3": "~3.2.4",
+        "es5-shim": "~2.0.8",
+        "angular-resource": "~1.0.5",
+        "angular-cookies": "~1.0.5",
+        "angular-sanitize": "~1.0.5",
+        "angular-strap": "~0.7.4",
+        "angular-scroll": "0.2.8",
+        "js-base64": "~2.1.2",
+        "angular-ui-codemirror": "~0.1.0",
+        "codemirror": "3.19.0",
+        "angular-local-storage": "~0.0.1",
+        "bootstrap-datepicker": "1.0.2",
+        "moment": "latest",
+        "angular-ui-bootstrap-bower": "0.10.0",
+        "spin.js": "2.0.0",
+        "bootstrap-datetimepicker": "0.0.11"
+    },
+    "devDependencies": {
+        "angular-mocks": "~1.0.5",
+        "angular-scenario": "~1.0.5"
+    },
+    "resolutions": {
+        "angular": "1.2.14"
+    }
 }

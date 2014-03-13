@@ -1,88 +1,108 @@
-<div class="row-fluid">
-    <div class="span12">
-        <p>
-            Welcome to OrientDB Studio. This is a graphical tool built as HTML + JS that communicates against OrientDB
-            server using the <a href="https://github.com/orientechnologies/orientdb/wiki/OrientDB-REST">HTTP RESTful protocol</a>. To know more about OrientDB Studio look at the <a href="https://github.com/orientechnologies/orientdb-studio/wiki">Documentation</a>. To
-            report problems use the <a href="https://github.com/orientechnologies/orientdb-studio/issues?state=open">Issue Tracker</a>, to receive
-            help go to the <a
-                href="http://groups.google.com/group/orient-database">Community Group</a>. Look also at <a
-                href="http://www.orientechnologies.com/enterprise.htm">Enterprise Edition</a> and <a
-                href="http://www.orientechnologies.com/support.htm">Professional Support</a>.
-        </p>
-    </div>
-</div>
-<div class="row-fluid">
-    <div class="span6">
-        <h2>Database
-            <small>access</small>
-        </h2>
-        <div class="well">
-            <form id="signin" name="loginForm" class="form-horizontal" novalidate>
-                <fieldset>
-                    <div class="control-group">
-                        <label class="control-label">Database:</label>
-
-                        <div class="controls">
-                            <select ng-model="database" required ng-options="i for i in databases">
-                            </select>
-                            <a class="btn" ng-click="createNew()"> Create new database
-                            </a>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">User</label>
-
-                        <div class="controls">
-                            <input id="user" type="text" ng-model="username"  value=""/>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label">Password</label>
-
-                        <div class="controls">
-                            <input id="password" type="password" ng-model="password"  value=""/>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button ng-click="connect()" type="submit" ng-disabled="loginForm.$invalid" class="btn btn-primary"
-                                rel="tooltip" data-placement="right" data-original-title="Connect to the database">
-                            Connect
-                        </button>
-
-                    </div>
-
-                </fieldset>
-            </form>
-        </div>
-        <p>
-            If this is your first time play with the 'GratefulDeadConcerts' database provided in bundle with the official OrientDB
-            distribution. To Login use any database user. By default "<b>reader</b>/reader" can read records from the database, "<b>writer</b>/writer" can read, create, update and delete records. "<b>admin</b>/admin" is God.
-        </p>
-    </div>
-    <div class="span6">
-        <h2>Server
-            <small>management</small>
-        </h2>
-        <div class="well">
-            <a class="btn" ng-href="#/server" id="connectServer"
-               rel="tooltip" data-placement="right" data-original-title="Connect to the server">
-                <img src='img/menu-server.png'/><br>Server
-            </a>
+<div class="ocontainer">
+    <div class="ocontainer-body">
+        <div class="row-fluid">
+            <div class="span12">
+                <p>
+                    Welcome to OrientDB Studio. This is a graphical tool built as HTML + JS that communicates against
+                    OrientDB
+                    server using the <a href="https://github.com/orientechnologies/orientdb/wiki/OrientDB-REST">HTTP
+                    RESTful
+                    protocol</a>. To know more about OrientDB Studio look at the <a
+                        href="https://github.com/orientechnologies/orientdb-studio/wiki">Documentation</a>. To
+                    report problems use the <a
+                        href="https://github.com/orientechnologies/orientdb-studio/issues?state=open">Issue Tracker</a>,
+                    to
+                    receive
+                    help go to the <a
+                        href="http://groups.google.com/group/orient-database">Community Group</a>. Look also at <a
+                        href="http://www.orientechnologies.com/enterprise.htm">Enterprise Edition</a> and <a
+                        href="http://www.orientechnologies.com/support.htm">Professional Support</a>.
+                </p>
+            </div>
         </div>
         <div class="row-fluid">
-            <div class="hidden-phone">
-                This is the section with the Server's information. To access it you have to provide the OrientDB
-                Server's
-                credentials. If you have access to the server look at the config/orientdb-server-config.xml file (config/orientdb-dserver-config.xml for the distributed version) and search the
-                XML user tag. Remember that the first time the Server runs, the 'root' user is created automatically with a random password. For more
-                information look at the <a
-                    href="https://github.com/orientechnologies/orientdb/wiki/Security">Security</a> page.
-                Below and example of content in config/orientdb-server-config.xml file:
+            <div class="span6">
+                <h2>Database
+                    <small>access</small>
+                </h2>
+                <div class="well">
+                    <form id="signin" name="loginForm" class="form-horizontal" novalidate>
+                        <fieldset>
+                            <div class="control-group">
+                                <label class="control-label">Database:</label>
+
+                                <div class="controls">
+                                    <select ng-model="database" required ng-options="i for i in databases">
+                                    </select>
+                                    <a class="btn" ng-click="createNew()"> Create new database
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">User</label>
+
+                                <div class="controls">
+                                    <input id="user" type="text" ng-model="username" value=""/>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">Password</label>
+
+                                <div class="controls">
+                                    <input id="password" type="password" ng-model="password" value=""/>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button ng-click="connect()" type="submit" ng-disabled="loginForm.$invalid"
+                                        class="btn btn-primary"
+                                        rel="tooltip" data-placement="right"
+                                        data-original-title="Connect to the database">
+                                    Connect
+                                </button>
+
+                            </div>
+
+                        </fieldset>
+                    </form>
+                </div>
+                <p>
+                    If this is your first time play with the 'GratefulDeadConcerts' database provided in bundle with the
+                    official OrientDB
+                    distribution. To Login use any database user. By default "<b>reader</b>/reader" can read records
+                    from
+                    the database, "<b>writer</b>/writer" can read, create, update and delete records. "<b>admin</b>/admin"
+                    is God.
+                </p>
+            </div>
+            <div class="span6">
+                <h2>Server
+                    <small>management</small>
+                </h2>
+                <div class="well">
+                    <a class="btn" ng-href="#/server" id="connectServer"
+                       rel="tooltip" data-placement="right" data-original-title="Connect to the server">
+                        <img src='img/menu-server.png'/><br>Server
+                    </a>
+                </div>
+                <div class="row-fluid">
+                    <div class="hidden-phone">
+                        This is the section with the Server's information. To access it you have to provide the OrientDB
+                        Server's
+                        credentials. If you have access to the server look at the config/orientdb-server-config.xml file
+                        (config/orientdb-dserver-config.xml for the distributed version) and search the
+                        XML user tag. Remember that the first time the Server runs, the 'root' user is created
+                        automatically
+                        with a random password. For more
+                        information look at the <a
+                            href="https://github.com/orientechnologies/orientdb/wiki/Security">Security</a> page.
+                        Below and example of content in config/orientdb-server-config.xml file:
 <pre>
 &lt;users&gt;<br/> &nbsp;&nbsp;&lt;user name="root"
          password="FAFF343DD54DKFJFKDA95F05A"
          resources="*" /&gt;<br/> &lt;/users&gt;
 </pre>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -314,7 +314,7 @@ module.exports = function (grunt) {
         // 'jshint',
         // 'test',
         'coffee',
-        'compass:dist',
+        //'compass:dist',
         'useminPrepare',
         //'imagemin',
         // 'cssmin',

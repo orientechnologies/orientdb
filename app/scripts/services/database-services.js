@@ -106,8 +106,8 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                 delete current.name;
                 delete current.username;
                 delete current.metadata;
-                localStorageService.clearAll();
-                localStorageService.cookie.clearAll();
+                //if (localStorageService.cookie)
+                //    localStorageService.cookie.clearAll();
                 document.cookie = "";
 
                 callback();
@@ -493,7 +493,7 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
-        var shallow = params.shallow  ? ',shallow' : '';
+        var shallow = params.shallow ? ',shallow' : '';
         var contentType = params.contentType || 'application/json';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
@@ -517,9 +517,10 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
                 document.getElementById('linkdownload').click();
                 var elem = document.getElementById('linkdownload');
                 elem.parentNode.removeChild(elem);
+                var noti = "Query executed  in " + time + " sec. Returned " + records + " record(s)";
                 if (verbose) {
-                    var noti = "Query executed  in " + time + " sec. Returned " + records + " record(s)";
                     Notification.push({content: noti});
+
                 }
                 callback(data);
             }).error(function (data) {
@@ -539,11 +540,13 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
                     var time = ((new Date().getTime() - startTime) / 1000);
                     var records = data.result ? data.result.length : "";
 
+                    var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
                     if (verbose) {
-                        var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
                         Notification.push({content: noti});
                     }
+
                     if (data != undefined) {
+                        data.notification = noti;
                         callback(data);
                     }
                     else {
@@ -551,7 +554,7 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
                     }
 
                 }).error(function (data) {
-                        Notification.push({content: data});
+                        Notification.push({content: data, error: true});
                         if (error) error(data);
                     });
             }
