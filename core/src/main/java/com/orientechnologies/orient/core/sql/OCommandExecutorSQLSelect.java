@@ -696,7 +696,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (fetchLimit < 0 && orderedFields.isEmpty())
             resultListener = null;
           else
-            resultListener = new IndexResultListener(fullySortedByIndex ? fetchLimit : (orderedFields.isEmpty() ? fetchLimit : -1));
+            resultListener = new IndexResultListener(fullySortedByIndex ? fetchLimit : (orderedFields.isEmpty() ? fetchLimit : -1),
+                skip);
 
           result = operator.executeIndexQuery(context, index, keyParams, ascSortOrder, resultListener, fetchLimit);
         } catch (Exception e) {
@@ -1486,9 +1487,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private final class IndexResultListener implements OQueryOperator.IndexResultListener {
     private final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
     private final int                 fetchLimit;
+    private final int                 skip;
 
-    private IndexResultListener(int fetchLimit) {
+    private IndexResultListener(int fetchLimit, int skip) {
       this.fetchLimit = fetchLimit;
+      this.skip = skip;
     }
 
     @Override
@@ -1514,7 +1517,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
         result.add(value);
 
-      return fetchLimit < 0 || result.size() < fetchLimit;
+      return fetchLimit < 0 || result.size() < fetchLimit + skip;
     }
   }
 }
