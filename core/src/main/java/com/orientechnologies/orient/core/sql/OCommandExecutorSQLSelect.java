@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -48,12 +61,18 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorOr;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -246,57 +265,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  public boolean hasNext() {
-    if (lastRecord == null)
-      // GET THE NEXT
-      lastRecord = next();
-
-    // BROWSE ALL THE RECORDS
-    return lastRecord != null;
-  }
-
-  public OIdentifiable next() {
-    if (lastRecord != null) {
-      // RETURN LATEST AND RESET IT
-      final OIdentifiable result = lastRecord;
-      lastRecord = null;
-      return result;
-    }
-
-    if (subIterator == null) {
-      if (target == null) {
-        // GET THE RESULT
-        executeSearch(null);
-        applyExpand();
-        handleNoTarget();
-        handleGroupBy();
-        applyOrderBy();
-
-        subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
-        lastRecord = null;
-        tempResult = null;
-        groupedResult = null;
-      } else
-        subIterator = (Iterator<OIdentifiable>) target;
-    }
-
-    // RESUME THE LAST POSITION
-    if (lastRecord == null && subIterator != null)
-      while (subIterator.hasNext()) {
-        lastRecord = subIterator.next();
-        if (lastRecord != null)
-          return lastRecord;
-      }
-
-    return lastRecord;
-  }
-
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
-
   public Iterator<OIdentifiable> iterator() {
-    return this;
+    return iterator(null);
+  }
+
+  public Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs) {
+    if (target == null) {
+      // GET THE RESULT
+      executeSearch(iArgs);
+      applyExpand();
+      handleNoTarget();
+      handleGroupBy();
+      applyOrderBy();
+
+      subIterator = new ArrayList<OIdentifiable>((List<OIdentifiable>) getResult()).iterator();
+      lastRecord = null;
+      tempResult = null;
+      groupedResult = null;
+    } else
+      subIterator = (Iterator<OIdentifiable>) target;
+
+    return subIterator;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -370,7 +359,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!context.checkTimeout())
       return false;
 
-    final OStorage.LOCKING_STRATEGY lockingStrategy = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+    final OStorage.LOCKING_STRATEGY lockingStrategy = context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
 
     final ORecordInternal<?> record = id instanceof ORecordInternal<?> ? (ORecordInternal<?>) id : getDatabase().load(
