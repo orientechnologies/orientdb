@@ -72,7 +72,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
 
     // TODO: IMPROVE TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
-    return record;
+    return new OPlaceholder(record);
   }
 
   @Override
@@ -83,14 +83,14 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
     // TODO: NO ROLLBACK, PUT THE NODE AS OFFLINE
-    OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
 
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
 
   @Override
   public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
 
