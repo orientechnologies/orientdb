@@ -36,11 +36,13 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatabasePooled {
 
   private OObjectDatabasePool ownerPool;
+  private final String        userName;
 
   public OObjectDatabaseTxPooled(final OObjectDatabasePool iOwnerPool, final String iURL, final String iUserName,
       final String iUserPassword) {
     super(iURL);
     ownerPool = iOwnerPool;
+    userName = iUserName;
     super.open(iUserName, iUserPassword);
   }
 
@@ -88,11 +90,16 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     if (isClosed())
       return;
 
+    checkOpeness();
+    if (ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
+      ownerPool.release(this);
+      return;
+    }
+
     objects2Records.clear();
     records2Objects.clear();
     rid2Records.clear();
 
-    checkOpeness();
     try {
       rollback();
     } catch (Exception e) {

@@ -457,19 +457,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   }
 
   public ODatabaseComplex<ORecordInternal<?>> commit() {
-    try {
-      return underlying.commit();
-    } finally {
-      getTransaction().close();
-    }
+    return underlying.commit();
   }
 
   public ODatabaseComplex<ORecordInternal<?>> rollback() {
-    try {
-      return underlying.rollback();
-    } finally {
-      getTransaction().close();
-    }
+    return underlying.rollback();
   }
 
   public String getType() {
@@ -481,8 +473,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return underlying.getSbTreeCollectionManager();
   }
 
-	@Override
-	public OCurrentStorageComponentsFactory getStorageVersions() {
-		return underlying.getStorageVersions();
-	}
+  @Override
+  public OCurrentStorageComponentsFactory getStorageVersions() {
+    return underlying.getStorageVersions();
+  }
 }

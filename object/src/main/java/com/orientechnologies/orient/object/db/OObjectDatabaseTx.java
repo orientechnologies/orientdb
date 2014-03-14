@@ -285,7 +285,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
     if (iPojo == null)
       return null;
@@ -316,13 +317,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
     if (iRecordId == null)
       return null;
 
     // GET THE ASSOCIATED DOCUMENT
-    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
+    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
     if (record == null)
       return null;
 
@@ -566,29 +569,27 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> commit() {
-    try {
-      // BY PASS DOCUMENT DB
-      ((ODatabaseRecordTx) underlying.getUnderlying()).commit();
+    // BY PASS DOCUMENT DB
+    ((ODatabaseRecordTx) underlying.getUnderlying()).commit();
+    if (getTransaction().isActive())
+      return this;
 
-      if (getTransaction().getAllRecordEntries() != null) {
-        // UPDATE ID & VERSION FOR ALL THE RECORDS
-        Object pojo = null;
-        for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
-          switch (entry.type) {
-          case ORecordOperation.CREATED:
-          case ORecordOperation.UPDATED:
-            break;
+    if (getTransaction().getAllRecordEntries() != null) {
+      // UPDATE ID & VERSION FOR ALL THE RECORDS
+      Object pojo = null;
+      for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
+        switch (entry.type) {
+        case ORecordOperation.CREATED:
+        case ORecordOperation.UPDATED:
+          break;
 
-          case ORecordOperation.DELETED:
-            final ORecordInternal<?> rec = entry.getRecord();
-            if (rec instanceof ODocument)
-              unregisterPojo(pojo, (ODocument) rec);
-            break;
-          }
+        case ORecordOperation.DELETED:
+          final ORecordInternal<?> rec = entry.getRecord();
+          if (rec instanceof ODocument)
+            unregisterPojo(pojo, (ODocument) rec);
+          break;
         }
       }
-    } finally {
-      getTransaction().close();
     }
 
     return this;
@@ -596,23 +597,18 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> rollback() {
-    try {
-      // COPY ALL TX ENTRIES
-      final List<ORecordOperation> newEntries;
-      if (getTransaction().getCurrentRecordEntries() != null) {
-        newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
-          if (entry.type == ORecordOperation.CREATED)
-            newEntries.add(entry);
-      } else
-        newEntries = null;
+    // COPY ALL TX ENTRIES
+    final List<ORecordOperation> newEntries;
+    if (getTransaction().getCurrentRecordEntries() != null) {
+      newEntries = new ArrayList<ORecordOperation>();
+      for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
+        if (entry.type == ORecordOperation.CREATED)
+          newEntries.add(entry);
+    } else
+      newEntries = null;
 
-      // BY PASS DOCUMENT DB
-      ((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
-
-    } finally {
-      getTransaction().close();
-    }
+    // BY PASS DOCUMENT DB
+    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
 
     return this;
   }

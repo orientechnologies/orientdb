@@ -138,6 +138,10 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
     return dbPool.acquire(iName, iUserName, iUserPassword, iOptionalParams);
   }
 
+  public int getConnectionsInCurrentThread(final String name, final String userName) {
+    return dbPool.getConnectionsInCurrentThread(name, userName);
+  }
+
   /**
    * Don't call it directly but use database.close().
    * 

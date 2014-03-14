@@ -27,16 +27,18 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-	super(iDatabase);
-	setCurrentGraphInThreadLocal();
-	this.setAutoStartTx(iAutoStartTx);
-	autoStartTransaction();
+    super(iDatabase);
+    setCurrentGraphInThreadLocal();
+    this.setAutoStartTx(iAutoStartTx);
+
+    getContext(false).rawGraph.begin();
   }
 
   protected OrientTransactionalGraph(ODatabaseDocumentPool pool) {
     super(pool);
     setCurrentGraphInThreadLocal();
-    autoStartTransaction();
+
+    getContext(false).rawGraph.begin();
   }
 
   public OrientTransactionalGraph(final String url) {
@@ -44,10 +46,12 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   public OrientTransactionalGraph(final String url, final boolean iAutoStartTx) {
-	super(url, ADMIN, ADMIN);
-	setCurrentGraphInThreadLocal();
-	this.setAutoStartTx(iAutoStartTx);
-	autoStartTransaction();
+    super(url, ADMIN, ADMIN);
+    setCurrentGraphInThreadLocal();
+    this.setAutoStartTx(iAutoStartTx);
+
+    if (iAutoStartTx)
+      getContext(false).rawGraph.begin();
   }
 
   public OrientTransactionalGraph(final String url, final String username, final String password) {
@@ -57,8 +61,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public OrientTransactionalGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
     super(url, username, password);
     setCurrentGraphInThreadLocal();
-	this.setAutoStartTx(iAutoStartTx);
-    autoStartTransaction();
+    this.setAutoStartTx(iAutoStartTx);
+
+    if (iAutoStartTx)
+      getContext(false).rawGraph.begin();
   }
 
   public OrientTransactionalGraph(final Configuration configuration) {
@@ -75,6 +81,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     final OrientGraphContext context = getContext(false);
     if (context == null)
       return;
+
     if (context.rawGraph.isClosed() || context.rawGraph.getTransaction() instanceof OTransactionNoTx
         || context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN)
       return;
@@ -91,7 +98,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       return;
 
     context.rawGraph.commit();
-    autoStartTransaction();
+		if (autoStartTx)
+			getContext(false).rawGraph.begin();
   }
 
   public void rollback() {
@@ -100,7 +108,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       return;
 
     context.rawGraph.rollback();
-    autoStartTransaction();
+		if (autoStartTx)
+			getContext(false).rawGraph.begin();
   }
 
   @Override

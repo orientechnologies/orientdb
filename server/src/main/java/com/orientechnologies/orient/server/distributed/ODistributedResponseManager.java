@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,12 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Asynchronous response manager
@@ -105,49 +105,51 @@ public class ODistributedResponseManager {
         .stopChrono("distributed.replication." + executorNode + ".responseTime", "Response time from replication messages", sentOn,
             "distributed.replication.*.responseTime");
 
-    responses.put(executorNode, response);
-    receivedResponses++;
+    boolean completed = false;
+    synchronized (responseGroups) {
+      responses.put(executorNode, response);
+      receivedResponses++;
 
-    if (waitForLocalNode && response.isExecutedOnLocalNode())
-      receivedCurrentNode = true;
+      if (waitForLocalNode && response.isExecutedOnLocalNode())
+        receivedCurrentNode = true;
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
-          "received response '%s' for request %s (receivedCurrentNode=%s receivedResponses=%d)", response, request,
-          receivedCurrentNode, receivedResponses);
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
+            "received response '%s' for request %s (receivedCurrentNode=%s receivedResponses=%d)", response, request,
+            receivedCurrentNode, receivedResponses);
 
-    // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
-    boolean foundBucket = false;
-    for (int i = 0; i < responseGroups.size(); ++i) {
-      final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-      if (sameResponse.isEmpty() || sameResponse.get(0).getPayload().equals(response.getPayload())) {
-        sameResponse.add(response);
-        foundBucket = true;
-        break;
+      // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
+      boolean foundBucket = false;
+      for (int i = 0; i < responseGroups.size(); ++i) {
+        final List<ODistributedResponse> sameResponse = responseGroups.get(i);
+        if (sameResponse.isEmpty() || sameResponse.get(0).getPayload().equals(response.getPayload())) {
+          sameResponse.add(response);
+          foundBucket = true;
+          break;
+        }
       }
-    }
 
-    if (!foundBucket) {
-      // CREATE A NEW BUCKET
-      final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
-      responseGroups.add(newBucket);
-      newBucket.add(response);
-    }
+      if (!foundBucket) {
+        // CREATE A NEW BUCKET
+        final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
+        responseGroups.add(newBucket);
+        newBucket.add(response);
+      }
 
-    final boolean completed = getExpectedResponses() == receivedResponses;
+      completed = getExpectedResponses() == receivedResponses;
 
-    if (receivedResponses >= expectedSynchronousResponses && (!waitForLocalNode || receivedCurrentNode)) {
-      if (completed || isMinimumQuorumReached(false)) {
-        // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-        synchronousResponsesLock.lock();
-        try {
-          synchronousResponsesArrived.signalAll();
-        } finally {
-          synchronousResponsesLock.unlock();
+      if (receivedResponses >= expectedSynchronousResponses && (!waitForLocalNode || receivedCurrentNode)) {
+        if (completed || isMinimumQuorumReached(false)) {
+          // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
+          synchronousResponsesLock.lock();
+          try {
+            synchronousResponsesArrived.signalAll();
+          } finally {
+            synchronousResponsesLock.unlock();
+          }
         }
       }
     }
-
     return completed;
   }
 
@@ -170,25 +172,27 @@ public class ODistributedResponseManager {
     if (quorum == 0)
       return true;
 
-    for (List<ODistributedResponse> group : responseGroups)
-      if (group.size() >= quorum)
-        return true;
-
-    if (getReceivedResponsesCount() < quorum && iCheckAvailableNodes) {
-      final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
-      if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
-        // CHECK IF ANY NODE IS OFFLINE
-        int availableNodes = 0;
-        for (Map.Entry<String, Object> r : responses.entrySet()) {
-          if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
-            availableNodes++;
-        }
-
-        if (availableNodes < quorum) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "overridden quorum (%d) because available nodes (%d) are less than quorum, received responses: %s", quorum,
-              availableNodes, responses);
+    synchronized (responseGroups) {
+      for (List<ODistributedResponse> group : responseGroups)
+        if (group.size() >= quorum)
           return true;
+
+      if (getReceivedResponsesCount() < quorum && iCheckAvailableNodes) {
+        final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
+        if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
+          // CHECK IF ANY NODE IS OFFLINE
+          int availableNodes = 0;
+          for (Map.Entry<String, Object> r : responses.entrySet()) {
+            if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
+              availableNodes++;
+          }
+
+          if (availableNodes < quorum) {
+            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                "overridden quorum (%d) because available nodes (%d) are less than quorum, received responses: %s", quorum,
+                availableNodes, responses);
+            return true;
+          }
         }
       }
     }

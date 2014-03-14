@@ -206,4 +206,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
   public void updateIdentityAfterCommit(ORID oldRid, ORID newRid) {
   }
+
+  @Override
+  public int amountOfNestedTxs() {
+    return 0;
+  }
+
+	@Override
+  public void rollback(boolean force, int commitLevelDiff) {
+  }
 }
