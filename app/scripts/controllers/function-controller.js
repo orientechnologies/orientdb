@@ -45,7 +45,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
                 if ($scope.functions.length > 0 && $scope.functionToExecute != undefined) {
                     var index = $scope.functionsrid.indexOf($scope.functionToExecute['name']);
-                    $scope.showInConsoleAfterSave($scope.functions[index]);
+                    if (index != -1)
+                        $scope.showInConsoleAfterSave($scope.functions[index]);
                 }
             }
         });
@@ -239,6 +240,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         });
 
     }
+    $scope.createNewFunction();
 }])
 ;
 

@@ -23,7 +23,9 @@ body div.container-studio {
     min-height: 50px;
     max-height: 300px;
 }
-
+.jsonView .CodeMirror {
+    height: 200px !important;
+}
 .CodeMirror-scroll {
     /*overflow-y: hidden;*/
     /*overflow-x: auto;*/

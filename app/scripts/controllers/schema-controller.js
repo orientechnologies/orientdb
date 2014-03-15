@@ -98,7 +98,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.modificati = undefined;
     $scope.limit = 20;
     $scope.queries = new Array;
-    $scope.classClickedHeaders = ['Name', 'Type', 'Linked_Type', 'Linked_Class', 'Mandatory', 'Read_Only', 'Not_Null', 'Min', 'Max','Collate', 'Actions'];
+    $scope.classClickedHeaders = ['Name', 'Type', 'Linked_Type', 'Linked_Class', 'Mandatory', 'Read_Only', 'Not_Null', 'Min', 'Max', 'Collate', 'Actions'];
     $scope.property = null;
     $scope.property = Database.listPropertiesForClass(clazz);
     $scope.propertyNames = new Array;
@@ -123,6 +123,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                 var sql = 'DROP CLASS ' + nameClass;
 
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                    Database.setMetadata(null);
                     $location.path("/database/" + $scope.database.getName() + "/schema");
 
                 });
@@ -145,7 +146,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.queryText = ""
     $scope.modificati = new Array;
     $scope.listTypes = ['BINARY', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
-    $scope.collateTypes  = ['Case Insensitive', 'default'];
+    $scope.collateTypes = ['Case Insensitive', 'default'];
     $scope.modificato = function (result, prop) {
         var key = result['name'];
         if ($scope.modificati[result['name']] == undefined) {
@@ -215,8 +216,8 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
             var prop = arrayToUpdate[0];
             var newValue = properties[result][prop] != '' ? properties[result][prop] : null;
-            if(newValue == 'Case Insensitive')
-            newValue = 'ci';
+            if (newValue == 'Case Insensitive')
+                newValue = 'ci';
             var sql = 'ALTER PROPERTY ' + clazz + '.' + keyName + ' ' + prop + ' ' + newValue;
             CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
                 if (data) {

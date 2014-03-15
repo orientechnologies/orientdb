@@ -16,6 +16,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         dbTime = new Object;
         localStorageService.add("Timeline", dbTime);
     }
+
     $scope.timeline = dbTime[Database.getName()];
     if (!$scope.timeline) {
         $scope.timeline = new Array;
@@ -60,14 +61,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
         }
     };
-    $scope.viewerOptions = {
-        lineWrapping: true,
-        lineNumbers: true,
-        readOnly: true,
-        mode: 'javascript'
-
-    };
-
 
     $scope.query = function () {
         Spinner.start();
@@ -153,10 +146,22 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     }
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller','$ojson', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller,$ojson) {
 
 
     var data = $scope.item.resultTotal;
+
+    $scope.viewerOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        readOnly: true,
+        mode: 'javascript',
+        onLoad : function(_cm){
+            $scope.item.cm = _cm;
+            $scope.item.cm.setValue($ojson.format($scope.item.rawData));
+        }
+
+    };
     $scope.tableParams = new ngTableParams({
         page: 1,            // show first page
         count: 10          // count per page
@@ -205,8 +210,12 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     }
     $scope.changeQuery = function () {
         $scope.queryText = $scope.item.query;
-        $scope.cm.setValue($scope.queryText);
         scroller.scrollTo(0, 0, 2000);
+        $scope.cm.focus();
+
+        $scope.cm.setValue($scope.queryText);
+        $scope.cm.setCursor($scope.cm.lineCount());
+
     }
 
 }]);
