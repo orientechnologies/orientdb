@@ -24,6 +24,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         localTime[Database.getName()] = $scope.timeline;
         localStorageService.add("Timeline", localTime);
 
+
     }
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Query");
 
@@ -157,8 +158,8 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         readOnly: true,
         mode: 'javascript',
         onLoad : function(_cm){
-            $scope.item.cm = _cm;
-            $scope.item.cm.setValue($ojson.format($scope.item.rawData));
+            $scope.vcm = _cm;
+            $scope.vcm.setValue($ojson.format($scope.item.rawData));
         }
 
     };

@@ -375,11 +375,12 @@ Widget.directive('ridrender', function (Database) {
 
                 value.forEach(function (elem) {
                     if (typeof elem == 'string' && elem.indexOf('#') == 0) {
-                        var link = '<li><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></li>,';
+                        var link = '<li><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></li>, ';
                         html += link;
                         i++;
                     }
                 });
+                html = html.replace(/,([^,]*)$/,'$1');
                 html += "</ul>";
                 if (html != "" && i == value.length) {
                     element.html(html);
