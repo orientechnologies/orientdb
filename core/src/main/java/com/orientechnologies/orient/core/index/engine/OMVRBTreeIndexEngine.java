@@ -345,6 +345,26 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
+  public Object getFirstKey() {
+    acquireExclusiveLock();
+    try {
+      return map.getFirstEntry().getFirstKey();
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public Object getLastKey() {
+    acquireExclusiveLock();
+    try {
+      return map.getLastEntry().getLastKey();
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
   public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
       ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     acquireExclusiveLock();

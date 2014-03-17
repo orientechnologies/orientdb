@@ -240,6 +240,16 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("firstKey");
+  }
+
+  @Override
+  public Object getLastKey() {
+    throw new UnsupportedOperationException("lastKey");
+  }
+
+  @Override
   public void startTransaction() {
   }
 

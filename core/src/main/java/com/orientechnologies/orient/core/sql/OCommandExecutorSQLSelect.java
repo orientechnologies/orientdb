@@ -745,8 +745,64 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
 
     // fetch all possible variants of subqueries that can be used in indexes.
-    if (compiledFilter == null)
+    if (compiledFilter == null) {
+      if (orderedFields.size() == 0)
+        return false;
+
+      // use index to order documents by provided fields
+      final List<String> fieldNames = new ArrayList<String>();
+
+      for (OPair<String, String> pair : orderedFields)
+        fieldNames.add(pair.getKey());
+
+      final Set<OIndex<?>> indexes = iSchemaClass.getInvolvedIndexes(fieldNames);
+
+      for (OIndex<?> index : indexes) {
+        if (canBeUsedByOrderBy(index)) {
+          final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
+          final OQueryOperator.IndexResultListener resultListener = new IndexResultListener(fetchLimit, skip);
+
+          if (ascSortOrder) {
+            final Object firstKey = index.getFirstKey();
+            if (firstKey == null)
+              return false;
+
+            index.getValuesMajor(firstKey, true, true, resultListener);
+          } else {
+            final Object lastKey = index.getLastKey();
+            if (lastKey == null)
+              return false;
+
+            index.getValuesMinor(lastKey, true, false, resultListener);
+          }
+
+          fillSearchIndexResultSet(resultListener.getResult());
+
+          fullySortedByIndex = true;
+
+          if (context.isRecordingMetrics()) {
+            context.setVariable("indexIsUsedInOrderBy", true);
+            context.setVariable("fullySortedByIndex", fullySortedByIndex);
+
+            Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+            if (idxNames == null) {
+              idxNames = new HashSet<String>();
+              context.setVariable("involvedIndexes", idxNames);
+            }
+
+            idxNames.add(index.getName());
+          }
+
+          return true;
+        }
+      }
+
+      if (context.isRecordingMetrics()) {
+        context.setVariable("indexIsUsedInOrderBy", false);
+        context.setVariable("fullySortedByIndex", fullySortedByIndex);
+      }
       return false;
+    }
 
     analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
 
@@ -811,8 +867,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         Object result;
-        final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(indexDefinition)
-            && !(index.getInternal() instanceof OChainedIndexProxy);
+        final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(index) && !(index.getInternal() instanceof OChainedIndexProxy);
         try {
           boolean ascSortOrder;
           if (indexIsUsedInOrderBy)
@@ -846,8 +901,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (result == null)
           continue;
 
-        context.setVariable("indexIsUsedInOrderBy", indexIsUsedInOrderBy);
-        context.setVariable("fullySortedByIndex", fullySortedByIndex);
+        if (context.isRecordingMetrics()) {
+          context.setVariable("indexIsUsedInOrderBy", indexIsUsedInOrderBy);
+          context.setVariable("fullySortedByIndex", fullySortedByIndex);
+        }
 
         fillSearchIndexResultSet(result);
 
@@ -857,10 +914,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private boolean canBeUsedByOrderBy(OIndexDefinition definition) {
+  private boolean canBeUsedByOrderBy(OIndex<?> index) {
     if (orderedFields.isEmpty())
       return false;
 
+    if (!index.supportsOrderedIterations())
+      return false;
+
+    final OIndexDefinition definition = index.getDefinition();
     final List<String> fields = definition.getFields();
     final int endIndex = Math.min(fields.size(), orderedFields.size());
 
@@ -1456,10 +1517,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final int result = firstParamCount - secondParamCount;
 
       if (result == 0 && !orderedFields.isEmpty()) {
-        if (!(indexOne instanceof OChainedIndexProxy) && canBeUsedByOrderBy(definitionOne))
+        if (!(indexOne instanceof OChainedIndexProxy) && canBeUsedByOrderBy(indexOne))
           return 1;
 
-        if (!(indexTwo instanceof OChainedIndexProxy) && canBeUsedByOrderBy(definitionTwo))
+        if (!(indexTwo instanceof OChainedIndexProxy) && canBeUsedByOrderBy(indexTwo))
           return -1;
       }
 

@@ -366,6 +366,26 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
+  public Object getFirstKey() {
+    acquireSharedLock();
+    try {
+      return sbTree.firstKey();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public Object getLastKey() {
+    acquireSharedLock();
+    try {
+      return sbTree.lastKey();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
       final ValuesTransformer<V> transformer, final ValuesResultListener valuesResultListener) {
     acquireSharedLock();

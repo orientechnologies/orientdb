@@ -154,20 +154,30 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-															 boolean ascSortOrder, ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("getFirstKey");
+  }
+
+  @Override
+  public Object getLastKey() {
+    throw new UnsupportedOperationException("getLastKey");
+  }
+
+  @Override
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
   public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-														 ValuesResultListener valuesResultListener) {
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
   public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-														 ValuesResultListener valuesResultListener) {
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMinor");
   }
 

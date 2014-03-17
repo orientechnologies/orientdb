@@ -381,6 +381,10 @@ public interface OIndex<T> {
 
   public boolean isRebuiding();
 
+  public Object getFirstKey();
+
+  public Object getLastKey();
+
   public interface IndexValuesResultListener {
     boolean addResult(OIdentifiable value);
   }
