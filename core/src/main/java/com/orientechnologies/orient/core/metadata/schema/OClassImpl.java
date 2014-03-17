@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -43,10 +57,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 /**
  * Schema Class implementation.
  * 
@@ -56,6 +66,7 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final long               serialVersionUID = 1L;
+  private static final int                NOT_EXISTENT_CLUSTER_ID = -1;
 
   protected OSchemaShared                 owner;
   protected String                        name;
@@ -63,7 +74,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   protected final Map<String, OProperty>  properties       = new LinkedHashMap<String, OProperty>();
 
   protected int[]                         clusterIds;
-  protected int                           defaultClusterId = -1;
+  protected int                           defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   protected OClassImpl                    superClass;
   protected int[]                         polymorphicClusterIds;
   protected List<OClass>                  baseClasses;
@@ -100,10 +111,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     this(iOwner);
     name = iName;
     setClusterIds(iClusterIds);
-    setPolymorphicClusterIds(iClusterIds);
     defaultClusterId = iClusterIds[0];
-    if (defaultClusterId == -1)
+    if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
       abstractClass = true;
+
+    setPolymorphicClusterIds(iClusterIds);
   }
 
   public <T> T newInstance() throws InstantiationException, IllegalAccessException {
@@ -579,7 +591,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
     Arrays.sort(polymorphicClusterIds);
 
-    if (defaultClusterId == -1)
+    if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
       defaultClusterId = clusterId;
 
     setDirty();
@@ -622,7 +634,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     if (defaultClusterId == iId)
-      defaultClusterId = -1;
+      defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
 
     return this;
   }
@@ -754,17 +766,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     if (iAbstract) {
       // SWITCH TO ABSTRACT
-      if (defaultClusterId > -1) {
+      if (defaultClusterId != NOT_EXISTENT_CLUSTER_ID) {
         // CHECK
-        final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (count() > 0)
           throw new IllegalStateException("Cannot set the class as abstract because contains records.");
 
-        if (name.toLowerCase().equals(db.getClusterNameById(defaultClusterId))) {
+        if (name.toLowerCase().equals(getDatabase().getClusterNameById(defaultClusterId))) {
           // DROP THE DEFAULT CLUSTER CALLED WITH THE SAME NAME ONLY IF EMPTY
           if (ODatabaseRecordThreadLocal.INSTANCE.get().getClusterRecordSizeById(defaultClusterId) == 0)
             ODatabaseRecordThreadLocal.INSTANCE.get().dropCluster(defaultClusterId, true);
         }
+
+        owner.removeClusterForClass(defaultClusterId, this);
+        defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
       }
     } else {
       // SWITCH TO NOT ABSTRACT
@@ -1004,14 +1018,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     case ADDCLUSTER: {
       int clId = getClusterId(stringValue);
-      if (clId == -1)
+      if (clId == NOT_EXISTENT_CLUSTER_ID)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
       addClusterIdInternal(clId);
       break;
     }
     case REMOVECLUSTER: {
       int clId = getClusterId(stringValue);
-      if (clId == -1)
+      if (clId == NOT_EXISTENT_CLUSTER_ID)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be removed");
       removeClusterIdInternal(clId);
       break;
@@ -1069,14 +1083,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       break;
     case ADDCLUSTER: {
       int clId = getClusterId(stringValue);
-      if (clId == -1)
+      if (clId == NOT_EXISTENT_CLUSTER_ID)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
       addClusterId(clId);
       break;
     }
     case REMOVECLUSTER:
       int clId = getClusterId(stringValue);
-      if (clId == -1)
+      if (clId == NOT_EXISTENT_CLUSTER_ID)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
       removeClusterId(clId);
       break;
