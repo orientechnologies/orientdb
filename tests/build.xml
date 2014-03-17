@@ -9,13 +9,28 @@
 
     <taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar"/>
 
+
     <target name="test"
             depends="test-memory, test-local, test-plocal, test-remote">
     </target>
 
     <target name="test-init">
-        <property name="project.root.dir" location="."/>
-        <property name="test.path" location="${orient.path}/databases/demo"/>
+        <pathconvert property="project.root.dir" targetos="unix"  >
+            <path location="."/>
+        </pathconvert>
+        <pathconvert property="test.path" targetos="unix"   >
+            <path location="../${orient.path}/databases/demo"/>
+        </pathconvert>
+        <pathconvert property="project.root.dir" targetos="windows"  dirsep="/" >
+            <path location="."/>
+        </pathconvert>
+        <pathconvert property="test.path" targetos="windows"  dirsep="/" >
+            <path location="../${orient.path}/databases/demo"/>
+        </pathconvert>
+        <echo>Normalized paths</echo>
+        <echo>project.root.dir=${project.root.dir}</echo>
+        <echo>test.path=${test.path}</echo>
+
 
         <copy todir="${project.build}">
             <fileset dir="src/test/java">
