@@ -423,6 +423,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       return true;
 
     } finally {
+      if (lockStrategy.equalsIgnoreCase("RECORD"))
+        ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
     }
   }
 
