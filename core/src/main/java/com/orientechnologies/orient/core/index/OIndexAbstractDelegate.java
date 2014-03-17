@@ -57,7 +57,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.iterator();
   }
 
-
   public T get(final Object iKey) {
     return delegate.get(iKey);
   }
@@ -91,7 +90,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-																										final boolean iToInclusive, boolean ascSortOrder) {
+      final boolean iToInclusive, boolean ascSortOrder) {
     return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, ascSortOrder);
   }
 
@@ -211,15 +210,17 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   public void getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-															 final boolean iToInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
+      final boolean iToInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
     delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, ascSortOrder, valuesResultListener);
   }
 
-  public void getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
+  public void getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder,
+      IndexValuesResultListener valuesResultListener) {
     delegate.getValuesMajor(fromKey, isInclusive, ascSortOrder, valuesResultListener);
   }
 
-  public void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
+  public void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+      IndexValuesResultListener valuesResultListener) {
     delegate.getValuesMinor(toKey, isInclusive, ascSortOrder, valuesResultListener);
   }
 
@@ -273,5 +274,15 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   @Override
   public boolean isRebuiding() {
     return delegate.isRebuiding();
+  }
+
+  @Override
+  public Object getFirstKey() {
+    return delegate.getFirstKey();
+  }
+
+  @Override
+  public Object getLastKey() {
+    return delegate.getLastKey();
   }
 }

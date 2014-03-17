@@ -61,4 +61,20 @@ public class OTransactionIndexChanges {
     return changesPerKey.containsKey(iKey);
   }
 
+  public Object getFirstKey() {
+    return changesPerKey.firstKey();
+  }
+
+  public Object getLastKey() {
+    return changesPerKey.lastKey();
+  }
+
+  public Object getLowerKey(Object key) {
+    return changesPerKey.lowerKey(key);
+  }
+
+  public Object getHigherKey(Object key) {
+    return changesPerKey.higherKey(key);
+  }
+
 }

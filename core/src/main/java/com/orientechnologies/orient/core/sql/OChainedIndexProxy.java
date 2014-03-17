@@ -184,7 +184,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    * {@inheritDoc}
    */
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, boolean ascSortOrder) {
+  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
+      boolean iToInclusive, boolean ascSortOrder) {
     final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
     final Object lastIndexValuesBetween = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
@@ -205,7 +206,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    */
   @Override
   public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-															 boolean ascSortOrder, IndexValuesResultListener resultListener) {
+      boolean ascSortOrder, IndexValuesResultListener resultListener) {
     final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
 
     applyTailIndexes(result, resultListener);
@@ -647,6 +648,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public Set<String> getClusters() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public Object getLastKey() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
