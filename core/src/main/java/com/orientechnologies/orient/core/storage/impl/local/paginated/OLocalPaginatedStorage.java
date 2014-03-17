@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -99,22 +98,18 @@ import java.util.concurrent.TimeUnit;
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private static final int             ONE_KB                               = 1024;
-  private final int                    DELETE_MAX_RETRIES;
-  private final int                    DELETE_WAIT_TIME;
-
-  private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
-  private OCluster[]                   clusters                             = new OCluster[0];
-
-  private String                       storagePath;
-  private final OStorageVariableParser variableParser;
-  private int                          defaultClusterId                     = -1;
-
   private static String[]              ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
       ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
       OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION };
-
+  private final int                    DELETE_MAX_RETRIES;
+  private final int                    DELETE_WAIT_TIME;
+  private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
+  private final OStorageVariableParser variableParser;
+  private OCluster[]                   clusters                             = new OCluster[0];
+  private String                       storagePath;
+  private int                          defaultClusterId                     = -1;
   private OModificationLock            modificationLock                     = new OModificationLock();
 
   private ScheduledExecutorService     fuzzyCheckpointExecutor;
@@ -1249,7 +1244,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
             lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
             break;
           case KEEP_EXCLUSIVE_LOCK:
-           // DO NOTHING - THIS EXCLUSIVE LOCK IS RELEASED LATER IN UPPER CALLERs
+            // DO NOTHING - THIS EXCLUSIVE LOCK IS RELEASED LATER IN UPPER CALLERs
             break;
           case NONE:
           case KEEP_SHARED_LOCK:
@@ -1745,10 +1740,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public void setDefaultClusterId(final int defaultClusterId) {
-    this.defaultClusterId = defaultClusterId;
-  }
-
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 
@@ -1772,6 +1763,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public int getDefaultClusterId() {
     return defaultClusterId;
+  }
+
+  public void setDefaultClusterId(final int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
   }
 
   public OCluster getClusterById(int iClusterId) {

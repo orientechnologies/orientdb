@@ -65,7 +65,6 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
@@ -82,24 +81,22 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class OStorageLocal extends OStorageLocalAbstract {
-  private final int                     DELETE_MAX_RETRIES;
-  private final int                     DELETE_WAIT_TIME;
-  private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
-  private OCluster[]                    clusters                  = new OCluster[0];
-  private ODataLocal[]                  dataSegments              = new ODataLocal[0];
-  private final OStorageLocalTxExecuter txManager;
-  private String                        storagePath;
-  private final OStorageVariableParser  variableParser;
-  private int                           defaultClusterId          = -1;
-
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
       ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION };
-
+  private final int                     DELETE_MAX_RETRIES;
+  private final int                     DELETE_WAIT_TIME;
+  private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
+  private final OStorageLocalTxExecuter txManager;
+  private final OStorageVariableParser  variableParser;
+  private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
+  private OCluster[]                    clusters                  = new OCluster[0];
+  private ODataLocal[]                  dataSegments              = new ODataLocal[0];
+  private String                        storagePath;
+  private int                           defaultClusterId          = -1;
   private long                          positionGenerator         = 1;
   private OModificationLock             modificationLock          = new OModificationLock();
-  private final Set<String>             clustersToSyncImmediately = new HashSet<String>();
 
   public OStorageLocal(final String iName, final String iFilePath, final String iMode) throws IOException {
     super(iName, iFilePath, iMode);
@@ -268,14 +265,14 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       status = STATUS.OPEN;
 
-			init();
+      init();
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
       addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
-			configuration.create();
+      configuration.create();
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
@@ -283,7 +280,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING
       addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null, true);
-
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
@@ -1464,10 +1460,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     }
   }
 
-  public void setDefaultClusterId(final int defaultClusterId) {
-    this.defaultClusterId = defaultClusterId;
-  }
-
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 
@@ -1494,6 +1486,10 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   public int getDefaultClusterId() {
     return defaultClusterId;
+  }
+
+  public void setDefaultClusterId(final int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
   }
 
   public OCluster getClusterById(int iClusterId) {
