@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -492,8 +493,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final OStorage.LOCKING_STRATEGY lockingStrategy = context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
-
-    final ORecordInternal<?> record = id instanceof ORecordInternal<?> ? (ORecordInternal<?>) id : getDatabase().load(
+    ORecordInternal<?> record = null;
+    try{
+        record = id instanceof ORecordInternal<?> ? (ORecordInternal<?>) id : getDatabase().load(
         id.getIdentity(), null, false, false, lockingStrategy);
 
     context.updateMetric("recordReads", +1);
@@ -508,7 +510,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (!handleResult(record, true))
         // END OF EXECUTION
         return false;
-
+    }finally{
+          // lock must be released (no matter if filtered or not)
+          if (lockingStrategy==OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+          {
+              if (record!=null)
+              {
+                  ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
+              }
+          }
+      }
     return true;
   }
 
@@ -971,7 +982,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return -1;
 
     int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
-        KEYWORD_LET_2FIND);
+            KEYWORD_LET_2FIND);
     if (upperBound == -1)
       // UP TO THE END
       upperBound = parserText.length();

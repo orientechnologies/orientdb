@@ -1248,9 +1248,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           case DEFAULT:
             lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
             break;
+          case KEEP_EXCLUSIVE_LOCK:
+           // DO NOTHING - THIS EXCLUSIVE LOCK IS RELEASED LATER IN UPPER CALLERs
+            break;
           case NONE:
           case KEEP_SHARED_LOCK:
-          case KEEP_EXCLUSIVE_LOCK:
             // DO NOTHING
             break;
           }
