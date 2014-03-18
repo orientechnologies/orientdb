@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -214,7 +216,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   private int createCluster(String iType, String iClassName) {
-    return getDatabase().command(new OCommandSQL("create cluster " + iClassName + " " + iType)).<Integer> execute();
+    return getDatabase().addCluster(iType, iClassName, null, null);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
@@ -253,8 +255,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       getDatabase().command(new OCommandSQL(cmd.toString())).execute();
-      if (!(getDatabase().getStorage() instanceof OStorageEmbedded))
-        getDatabase().reload();
 
       if (classes.containsKey(key))
         return classes.get(key);
@@ -314,15 +314,17 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         cls.setSuperClassInternal(superClass);
 
         // UPDATE INDEXES
-        final int[] clustersToIndex = superClass.getPolymorphicClusterIds();
-        final String[] clusterNames = new String[clustersToIndex.length];
-        for (int i = 0; i < clustersToIndex.length; i++)
-          clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
+        if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
+          final int[] clustersToIndex = superClass.getPolymorphicClusterIds();
+          final String[] clusterNames = new String[clustersToIndex.length];
+          for (int i = 0; i < clustersToIndex.length; i++)
+            clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
 
-        for (OIndex<?> index : superClass.getIndexes())
-          for (String clusterName : clusterNames)
-            if (clusterName != null)
-              database.getMetadata().getIndexManager().addClusterToIndex(clusterName, index.getName());
+          for (OIndex<?> index : superClass.getIndexes())
+            for (String clusterName : clusterNames)
+              if (clusterName != null)
+                database.getMetadata().getIndexManager().addClusterToIndex(clusterName, index.getName());
+        }
       }
 
       addClusterClassMap(cls);

@@ -216,7 +216,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void setSuperClassInternal(final OClass iSuperClass) {
-    final OClassImpl cls = (OClassImpl) iSuperClass;
+    final OClassImpl cls;
+
+    if (iSuperClass instanceof OClassAbstractDelegate)
+      cls = (OClassImpl) ((OClassAbstractDelegate) iSuperClass).delegate;
+    else
+      cls = (OClassImpl) iSuperClass;
 
     if (cls != null)
       cls.addBaseClasses(this);

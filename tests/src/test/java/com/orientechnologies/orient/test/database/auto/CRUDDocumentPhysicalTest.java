@@ -25,12 +25,15 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import org.testng.Assert;
@@ -345,7 +348,7 @@ public class CRUDDocumentPhysicalTest {
       Assert.assertNotSame(coreDocCopy, coreDoc);
 
       Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
-      Assert.assertTrue(coreDocCopy.field("link", (OType)null) instanceof ODocument);
+      Assert.assertTrue(coreDocCopy.field("link", (OType) null) instanceof ODocument);
     } finally {
       database.close();
     }
@@ -992,6 +995,38 @@ public class CRUDDocumentPhysicalTest {
       doc.reload();
       Assert.assertEquals(doc.getVersion(), oldVersion);
       Assert.assertEquals(doc.field("name"), "modified");
+    } finally {
+      database.close();
+    }
+  }
+
+  public void testCreateEmbddedClassDocument() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      final OSchema schema = database.getMetadata().getSchema();
+      final String SUFFIX = "TESTCLUSTER1";
+
+      OClass testClass1 = schema.createClass("testCreateEmbddedClass1");
+      OClass testClass2 = schema.createClass("testCreateEmbddedClass2");
+      testClass2.createProperty("testClass1Property", OType.EMBEDDED, testClass1);
+
+      int clusterId = database.addCluster("testCreateEmbddedClass2" + SUFFIX, OStorage.CLUSTER_TYPE.PHYSICAL);
+      schema.getClass("testCreateEmbddedClass2").addClusterId(clusterId);
+
+      testClass1 = schema.getClass("testCreateEmbddedClass1");
+      testClass2 = schema.getClass("testCreateEmbddedClass2");
+
+      ODocument testClass2Document = new ODocument(testClass2);
+      testClass2Document.field("testClass1Property", new ODocument(testClass1));
+      testClass2Document.save("testCreateEmbddedClass2" + SUFFIX);
+
+      testClass2Document = database.load(testClass2Document.getIdentity(), "*:-1", true);
+      Assert.assertNotNull(testClass2Document);
+
+      Assert.assertEquals(testClass2Document.getSchemaClass(), testClass2);
+
+      ODocument embeddedDoc = testClass2Document.field("testClass1Property");
+      Assert.assertEquals(embeddedDoc.getSchemaClass(), testClass1);
     } finally {
       database.close();
     }
