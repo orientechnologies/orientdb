@@ -42,6 +42,8 @@ public interface OTransaction {
 
   public void commit();
 
+	public void commit(boolean force);
+
   public void rollback();
 
   public void rollback(boolean force, int commitLevelDiff);

@@ -86,9 +86,17 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   public void commit() {
+    commit(false);
+  }
+
+  @Override
+  public void commit(boolean force) {
     checkTransaction();
 
-    txStartCounter--;
+    if (force)
+      txStartCounter = 0;
+    else
+      txStartCounter--;
 
     if (txStartCounter == 0) {
       if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
@@ -256,7 +264,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return txStartCounter;
   }
 
-	public void rollback() {
+  public void rollback() {
     rollback(false, -1);
   }
 

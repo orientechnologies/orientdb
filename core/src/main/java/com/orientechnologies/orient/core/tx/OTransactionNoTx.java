@@ -50,7 +50,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void commit() {
   }
 
-  public void rollback() {
+	@Override
+	public void commit(boolean force) {
+	}
+
+	public void rollback() {
   }
 
   public void close() {

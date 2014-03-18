@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -110,7 +111,15 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   public ODatabaseRecord commit() {
-    if (currentTx.amountOfNestedTxs() > 1) {
+    return commit(false);
+  }
+
+  @Override
+  public ODatabaseRecord commit(boolean force) throws OTransactionException {
+		if(!currentTx.isActive())
+			return this;
+
+    if (!force && currentTx.amountOfNestedTxs() > 1) {
       currentTx.commit();
       return this;
     }
@@ -123,7 +132,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
           listener.onBeforeTxCommit(this);
         } catch (Throwable t) {
           try {
-            rollback();
+            rollback(force);
           } catch (RuntimeException e) {
             throw e;
           }
@@ -133,7 +142,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         }
 
       try {
-        currentTx.commit();
+        currentTx.commit(force);
       } catch (RuntimeException e) {
         // WAKE UP ROLLBACK LISTENERS
         for (ODatabaseListener listener : underlying.browseListeners())
@@ -162,9 +171,9 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
           OLogManager
               .instance()
               .debug(
-                  this,
-                  "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-                  t, OTransactionBlockedException.class, listener.getClass());
+											this,
+											"Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+											t, OTransactionBlockedException.class, listener.getClass());
         }
 
       return this;
@@ -173,9 +182,26 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     }
   }
 
+  @Override
+  public void close() {
+    try {
+      commit(true);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Exception during commit of active transaction.", e);
+    }
+
+    super.close();
+  }
+
   public ODatabaseRecord rollback() {
+    return rollback(false);
+  }
+
+  @Override
+  public ODatabaseRecord rollback(boolean force) throws OTransactionException {
     if (currentTx.isActive()) {
-      if (currentTx.amountOfNestedTxs() > 1) {
+
+      if (!force && currentTx.amountOfNestedTxs() > 1) {
         currentTx.rollback();
         return this;
       }
@@ -189,7 +215,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
             OLogManager.instance().error(this, "Error before tx rollback", t);
           }
 
-        currentTx.rollback();
+        currentTx.rollback(force, -1);
 
         // WAKE UP LISTENERS
         for (ODatabaseListener listener : underlying.browseListeners())

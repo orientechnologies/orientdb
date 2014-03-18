@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -457,14 +458,24 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   }
 
   public ODatabaseComplex<ORecordInternal<?>> commit() {
-    return underlying.commit();
+    return commit(false);
+  }
+
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> commit(boolean force) throws OTransactionException {
+    return underlying.commit(force);
   }
 
   public ODatabaseComplex<ORecordInternal<?>> rollback() {
-    return underlying.rollback();
+    return rollback(false);
   }
 
-  public String getType() {
+	@Override
+	public ODatabaseComplex<ORecordInternal<?>> rollback(boolean force) throws OTransactionException {
+		return underlying.rollback(force);
+	}
+
+	public String getType() {
     return TYPE;
   }
 

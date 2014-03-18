@@ -310,6 +310,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> commit() throws OTransactionException;
 
+  public ODatabaseComplex<T> commit(boolean force) throws OTransactionException;
+
   /**
    * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
    * are not guaranteed to being restored as well.
@@ -317,6 +319,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @return
    */
   public ODatabaseComplex<T> rollback() throws OTransactionException;
+
+  public ODatabaseComplex<T> rollback(boolean force) throws OTransactionException;
 
   /**
    * Execute a query against the database.

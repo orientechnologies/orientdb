@@ -469,6 +469,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
         if (!(c instanceof OClusterLocal))
           continue;
 
+        if (c.getName().equals("index"))
+          continue;
+
         formatMessage(iVerbose, iListener, "\n- data-cluster #%-5d %s -> ", c.getId(), c.getName());
 
         // BROWSE ALL THE RECORDS
@@ -560,6 +563,9 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       for (ODataLocal d : dataSegments) {
         if (d == null)
+          continue;
+
+        if (d.getName().equals("index"))
           continue;
 
         formatMessage(iVerbose, iListener, "\n- data-segment %s (id=%d) size=%d/%d...", d.getName(), d.getId(), d.getFilledUpTo(),

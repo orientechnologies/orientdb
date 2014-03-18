@@ -101,7 +101,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     rid2Records.clear();
 
     try {
-      rollback();
+      commit(true);
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
