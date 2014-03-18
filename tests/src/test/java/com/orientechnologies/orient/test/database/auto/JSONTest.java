@@ -615,7 +615,7 @@ public class JSONTest {
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {
-    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:test").create();
+    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:testshouldDeserializeFieldWithCurlyBraces").create();
 
     String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
     ODocument in = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(json, tx.newInstance(), new String[] {});
@@ -628,7 +628,7 @@ public class JSONTest {
 
   @Test
   public void mapTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:mapTest");
     db.create();
 
     ODocument doc = new ODocument("TestModel");
