@@ -252,7 +252,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       for (ODatabaseListener listener : underlying.browseListeners())
         try {
           listener.onCreate(underlying);
-        } catch (Throwable t) {
+        } catch (Throwable ignore) {
         }
 
     } catch (Exception e) {
@@ -809,7 +809,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
-    final Set<String> lockedIndexes = new HashSet<String>();
+    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
       if (record instanceof ODocument)
@@ -973,7 +973,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
-    final Set<String> lockedIndexes = new HashSet<String>();
+    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
     ORecordSerializationContext.pushContext();
     try {
@@ -1347,7 +1347,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
-  private void releaseIndexModificationLock(Set<String> lockedIndexes) {
+  private void releaseIndexModificationLock(Set<OIndex<?>> lockedIndexes) {
     final OMetadataDefault metadata = getMetadata();
     if (metadata == null)
       return;
@@ -1356,13 +1356,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     if (indexManager == null)
       return;
 
-    for (String indexName : lockedIndexes) {
-      OIndex index = indexManager.getIndex(indexName);
+    for (OIndex<?> index : lockedIndexes) {
       index.getInternal().releaseModificationLock();
     }
   }
 
-  private void acquireIndexModificationLock(ODocument doc, Set<String> lockedIndexes) {
+  private void acquireIndexModificationLock(ODocument doc, Set<OIndex<?>> lockedIndexes) {
     if (getStorage() instanceof OStorageEmbedded) {
       final OClass cls = doc.getSchemaClass();
       if (cls != null) {
@@ -1378,7 +1377,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
           for (final OIndex<?> index : indexesToLock) {
             index.getInternal().acquireModificationLock();
-            lockedIndexes.add(index.getName());
+            lockedIndexes.add(index);
           }
         }
       }
