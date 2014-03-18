@@ -2534,7 +2534,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     OClass klazz = database.getMetadata().getSchema().getOrCreateClass("CountFunctionWithUniqueIndexTest");
     if (!klazz.existsProperty("a")) {
       klazz.createProperty("a", OType.STRING);
-      klazz.createIndex("a", "NOTUNIQUE", "a");
+      klazz.createIndex("testCountFunctionWithUniqueIndex", "NOTUNIQUE", "a");
     }
 
     database.newInstance("CountFunctionWithUniqueIndexTest").field("a", "a").field("b", "c").save();

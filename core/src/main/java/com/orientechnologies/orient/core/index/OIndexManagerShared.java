@@ -119,6 +119,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
     acquireExclusiveLock();
     try {
+      if (indexes.containsKey(iName.toLowerCase()))
+        throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
+
       final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType, alghorithm, valueContainerAlgorithm);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
@@ -449,7 +452,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
             rebuildCompleted = true;
 
-            //newDb.close();
+            // newDb.close();
 
             OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
           } catch (Exception e) {
