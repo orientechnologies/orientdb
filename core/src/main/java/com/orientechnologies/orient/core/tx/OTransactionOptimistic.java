@@ -16,6 +16,17 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -49,17 +60,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static final boolean useSBTree   = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
@@ -256,7 +256,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return txStartCounter;
   }
 
-	public void rollback() {
+  public void rollback() {
     rollback(false, -1);
   }
 
@@ -388,8 +388,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         case ORecordOperation.CREATED:
         case ORecordOperation.UPDATED:
           final ORID oldRid = iRecord.getIdentity().copy();
-          database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iRecord.getRecordType(), false,
-              OPERATION_MODE.SYNCHRONOUS, false, null, null);
+          database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), false, OPERATION_MODE.SYNCHRONOUS, false,
+              null, null);
           updateIdentityAfterCommit(oldRid, iRecord.getIdentity());
           break;
         case ORecordOperation.DELETED:

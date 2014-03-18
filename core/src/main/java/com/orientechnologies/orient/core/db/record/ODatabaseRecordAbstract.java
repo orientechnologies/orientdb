@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -84,9 +98,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -384,8 +395,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -394,21 +404,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          call back for record create
    * @param iRecordUpdatedCallback
+   *          call back for record update
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), iContent.getRecordType(), true, iMode,
-        iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), true, iMode, iForceCreate, iRecordCreatedCallback,
+        iRecordUpdatedCallback);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false,
+        null, null);
   }
 
   @Override
@@ -420,14 +432,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record in the requested cluster without checking the version.
    * 
    * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          call back for record create
    * @param iRecordUpdatedCallback
+   *          call back for record update
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
       final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), iContent.getRecordType(), true, iMode,
-        iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), true, iMode, iForceCreate,
+        iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
@@ -539,7 +554,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
-  public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs) {
+  public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
     setCurrentDatabaseinThreadLocal();
 
     iCommand.reset();
@@ -550,7 +565,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return recordType;
   }
 
-  public <RET extends Object> RET newInstance() {
+  public <RET> RET newInstance() {
     return (RET) Orient.instance().getRecordFactoryManager().newInstance(recordType);
   }
 
@@ -779,9 +794,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> record, String iClusterName,
-      final ORecordVersion iVersion, final byte iRecordType, boolean iCallTriggers, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordVersion iVersion, boolean iCallTriggers, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
 
     if (!record.isDirty())
@@ -825,51 +839,28 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (isNew && rid.clusterId < 0)
           rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
 
-        if (rid.clusterId > -1) {
-          if (iClusterName == null)
+        if (rid.clusterId > -1 && iClusterName == null)
             iClusterName = getClusterNameById(rid.clusterId);
 
-          if (getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ORecordSchemaAwareAbstract) {
-            final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) record;
-            final OClass recordClass = recordSchemaAware.getSchemaClass();
-            final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);
-            if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                || (recordClass != null && !recordClass.equals(clusterIdClass)))
-              throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                  + clusterIdClass + " but saved with class " + recordClass);
-          }
-        }
+        checkRecordClass(record, iClusterName, rid, isNew);
+
+        final int permission;
 
         if (wasNew)
-          checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+          permission = ORole.PERMISSION_CREATE;
         else
-          checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+          permission = ORole.PERMISSION_UPDATE;
+
+        checkSecurity(ODatabaseSecurityResources.CLUSTER, permission, iClusterName);
 
         if (stream != null && stream.length > 0) {
-          if (iCallTriggers)
-            if (wasNew) {
-              // CHECK ACCESS ON CLUSTER
-              if (callbackHooks(TYPE.BEFORE_CREATE, record) == RESULT.RECORD_CHANGED) {
-                // RECORD CHANGED IN TRIGGER, REACQUIRE IT
-                record.unsetDirty();
-                record.setDirty();
-                ORecordSerializationContext.pullContext();
-                ORecordSerializationContext.pushContext();
+          if (iCallTriggers) {
+            final TYPE triggerType = wasNew ? TYPE.BEFORE_CREATE : TYPE.BEFORE_UPDATE;
 
-                stream = record.toStream();
-              }
-            } else {
-              // CHECK ACCESS ON CLUSTER
-              if (callbackHooks(TYPE.BEFORE_UPDATE, record) == RESULT.RECORD_CHANGED) {
-                // RECORD CHANGED IN TRIGGER, REACQUIRE IT
-                record.unsetDirty();
-                record.setDirty();
-                ORecordSerializationContext.pullContext();
-                ORecordSerializationContext.pushContext();
-
-                stream = record.toStream();
-              }
+            if (callbackHooks(triggerType, record) == RESULT.RECORD_CHANGED) {
+              stream = updateStream(record);
             }
+          }
         }
 
         if (!record.isDirty())
@@ -893,11 +884,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             // NOTIFY IDENTITY HAS CHANGED
             record.onAfterIdentityChanged(record);
             // UPDATE INFORMATION: CLUSTER ID+POSITION
-            record.fill(rid, version, stream, stream == null || stream.length == 0);
-          } else {
-            // UPDATE INFORMATION: VERSION
-            record.fill(rid, version, stream, stream == null || stream.length == 0);
           }
+
+          record.fill(rid, version, stream, stream == null || stream.length == 0);
 
           if (iCallTriggers && stream != null && stream.length > 0) {
             if (!operationResult.isMoved()) {
@@ -930,6 +919,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
+  }
+
+  private void checkRecordClass(ORecordInternal<?> record, String iClusterName, ORecordId rid, boolean isNew) {
+    if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew
+        && record instanceof ORecordSchemaAwareAbstract) {
+      final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) record;
+      final OClass recordClass = recordSchemaAware.getSchemaClass();
+      final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);
+      if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+          || (recordClass != null && !recordClass.equals(clusterIdClass)))
+        throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class " + clusterIdClass
+            + " but saved with class " + recordClass);
+    }
+  }
+
+  private byte[] updateStream(ORecordInternal<?> record) {
+    byte[] stream;
+    record.unsetDirty();
+    record.setDirty();
+    ORecordSerializationContext.pullContext();
+    ORecordSerializationContext.pushContext();
+
+    stream = record.toStream();
+    return stream;
   }
 
   public boolean executeUpdateReplica(final ORecordInternal<?> record) {
