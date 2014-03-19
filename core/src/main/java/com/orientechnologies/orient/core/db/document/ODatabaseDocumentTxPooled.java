@@ -100,7 +100,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
     }
 
     try {
-      rollback();
+      commit(true);
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }

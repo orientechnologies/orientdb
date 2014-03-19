@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
@@ -570,7 +571,13 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public ODatabasePojoAbstract<Object> commit() {
     // BY PASS DOCUMENT DB
-    ((ODatabaseRecordTx) underlying.getUnderlying()).commit();
+    return (ODatabasePojoAbstract<Object>) commit(false);
+  }
+
+  @Override
+  public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
+    ((ODatabaseRecordTx) underlying.getUnderlying()).commit(force);
+
     if (getTransaction().isActive())
       return this;
 
@@ -597,18 +604,25 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> rollback() {
-    // COPY ALL TX ENTRIES
-    final List<ORecordOperation> newEntries;
-    if (getTransaction().getCurrentRecordEntries() != null) {
-      newEntries = new ArrayList<ORecordOperation>();
-      for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
-        if (entry.type == ORecordOperation.CREATED)
-          newEntries.add(entry);
-    } else
-      newEntries = null;
+    return rollback(false);
+  }
 
+  @Override
+  public ODatabasePojoAbstract<Object> rollback(boolean force) throws OTransactionException {
     // BY PASS DOCUMENT DB
-    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
+    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback(force);
+
+    if (!underlying.getTransaction().isActive()) {
+      // COPY ALL TX ENTRIES
+      final List<ORecordOperation> newEntries;
+      if (getTransaction().getCurrentRecordEntries() != null) {
+        newEntries = new ArrayList<ORecordOperation>();
+        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
+          if (entry.type == ORecordOperation.CREATED)
+            newEntries.add(entry);
+      } else
+        newEntries = null;
+    }
 
     return this;
   }

@@ -147,6 +147,7 @@ public class TransactionAtomicTest {
       }
     });
 
+		db.begin();
     db.commit();
 
     db.close();
