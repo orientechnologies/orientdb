@@ -15,9 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -54,9 +58,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
@@ -90,6 +91,65 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private String                      fetchPlan;
 
   private boolean                     fullySortedByIndex   = false;
+
+  private final class IndexComparator implements Comparator<OIndex<?>> {
+    public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
+      final OIndexDefinition definitionOne = indexOne.getDefinition();
+      final OIndexDefinition definitionTwo = indexTwo.getDefinition();
+
+      final int firstParamCount = definitionOne.getParamCount();
+      final int secondParamCount = definitionTwo.getParamCount();
+
+      final int result = firstParamCount - secondParamCount;
+
+      if (result == 0 && !orderedFields.isEmpty()) {
+        if (!(indexOne instanceof OChainedIndexProxy) && canBeUsedByOrderBy(indexOne))
+          return 1;
+
+        if (!(indexTwo instanceof OChainedIndexProxy) && canBeUsedByOrderBy(indexTwo))
+          return -1;
+      }
+
+      return result;
+    }
+  }
+
+  private final class IndexResultListener implements OQueryOperator.IndexResultListener {
+    private final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    private final int                 fetchLimit;
+    private final int                 skip;
+
+    private IndexResultListener(int fetchLimit, int skip) {
+      this.fetchLimit = fetchLimit;
+      this.skip = skip;
+    }
+
+    @Override
+    public Object getResult() {
+      return result;
+    }
+
+    @Override
+    public boolean addResult(OIdentifiable value) {
+      final ORecord record = value.getRecord();
+
+      if (record instanceof ORecordSchemaAware<?>) {
+        final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
+        final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
+        if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+          for (OClass targetClass : targetClasses.keySet()) {
+            if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+              return true;
+          }
+        }
+      }
+
+      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
+        result.add(value);
+
+      return fetchLimit < 0 || result.size() < fetchLimit + skip;
+    }
+  }
 
   protected static OSQLFilterCondition getConditionForRidPosRange(long fromId, long toId) {
 
@@ -447,6 +507,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  public Map<String, Object> getProjections() {
+    return projections;
+  }
+
+  public List<OPair<String, String>> getOrderedFields() {
+    return orderedFields;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] TIMEOUT <TimeoutInMs>";
+  }
+
+  public String getFetchPlan() {
+    return fetchPlan != null ? fetchPlan : request.getFetchPlan();
+  }
+
   protected void executeSearch(final Map<Object, Object> iArgs) {
     assignTarget(iArgs);
 
@@ -514,7 +591,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // lock must be released (no matter if filtered or not)
       if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
         if (record != null) {
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
+          try {
+            ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
+          } catch (OLockException e) {
+            // IGNORE IT: THE LOCK WAS NOT ACQUIRED
+          }
         }
       }
     }
@@ -650,37 +731,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private int getQueryFetchLimit() {
-    final int sqlLimit;
-    final int requestLimit;
-
-    if (limit > -1)
-      sqlLimit = limit;
-    else
-      sqlLimit = -1;
-
-    if (request.getLimit() > -1)
-      requestLimit = request.getLimit();
-    else
-      requestLimit = -1;
-
-    if (sqlLimit == -1)
-      return requestLimit;
-
-    if (requestLimit == -1)
-      return sqlLimit;
-
-    return Math.min(sqlLimit, requestLimit);
-  }
-
-  public Map<String, Object> getProjections() {
-    return projections;
-  }
-
-  public List<OPair<String, String>> getOrderedFields() {
-    return orderedFields;
-  }
-
   protected void parseGroupBy(final String w) {
     parserRequiredKeyword(KEYWORD_BY);
 
@@ -742,6 +792,279 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (searchForIndexes(cls)) {
     } else
       super.searchInClasses();
+  }
+
+  protected int parseProjections() {
+    if (!parserOptionalKeyword(KEYWORD_SELECT))
+      return -1;
+
+    int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
+        KEYWORD_LET_2FIND);
+    if (upperBound == -1)
+      // UP TO THE END
+      upperBound = parserText.length();
+
+    int lastRealPositionProjection = -1;
+
+    final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound).trim();
+    if (projectionString.length() > 0) {
+      // EXTRACT PROJECTIONS
+      projections = new LinkedHashMap<String, Object>();
+      projectionDefinition = new LinkedHashMap<String, String>();
+
+      final List<String> items = OStringSerializerHelper.smartSplit(projectionString, ',');
+
+      String fieldName;
+      int beginPos;
+      int endPos;
+      for (String projection : items) {
+        projection = projection.trim();
+
+        if (projectionDefinition == null)
+          throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
+
+        final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
+        if (words.size() > 1)
+          lastRealPositionProjection = words.get(0).length();
+
+        fieldName = null;
+        endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
+        if (endPos > -1) {
+          // EXTRACT ALIAS
+          fieldName = projection.substring(endPos + KEYWORD_AS.length()).trim();
+          lastRealPositionProjection = endPos + KEYWORD_AS.length() + fieldName.length() + 1;
+          projection = projection.substring(0, endPos).trim();
+
+          if (projectionDefinition.containsKey(fieldName))
+            throw new OCommandSQLParsingException("Field '" + fieldName
+                + "' is duplicated in current SELECT, choose a different name");
+        } else {
+          // EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
+          beginPos = projection.charAt(0) == '@' ? 1 : 0;
+
+          endPos = extractProjectionNameSubstringEndPosition(projection);
+
+          fieldName = endPos > -1 ? projection.substring(beginPos, endPos) : projection.substring(beginPos);
+
+          fieldName = OStringSerializerHelper.getStringContent(fieldName);
+
+          // FIND A UNIQUE NAME BY ADDING A COUNTER
+          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex)
+            fieldName += fieldIndex;
+        }
+
+        String p = projection.toUpperCase(Locale.ENGLISH);
+        if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
+          if (p.startsWith("FLATTEN("))
+            OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
+          List<String> pars = OStringSerializerHelper.getParameters(projection);
+          if (pars.size() != 1) {
+            throw new OCommandSQLParsingException(
+                "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
+          }
+          expandTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
+
+          // BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
+          projectionDefinition = null;
+          projections = null;
+
+          if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
+              && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
+            getProjectionGroup(null);
+
+          continue;
+        }
+
+        projectionDefinition.put(fieldName, projection);
+      }
+
+      if (projectionDefinition != null
+          && (projectionDefinition.size() > 1 || !projectionDefinition.values().iterator().next().equals("*"))) {
+        projections = createProjectionFromDefinition();
+
+        for (Object p : projections.values()) {
+
+          if (groupedResult == null && p instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) p).aggregateResults()) {
+            // AGGREGATE IT
+            getProjectionGroup(null);
+            break;
+          }
+        }
+
+      } else {
+        // TREATS SELECT * AS NO PROJECTION
+        projectionDefinition = null;
+        projections = null;
+      }
+    }
+
+    if (upperBound < parserText.length() - 1)
+      parserSetCurrentPosition(upperBound);
+    else if (lastRealPositionProjection > -1)
+      parserMoveCurrentPosition(lastRealPositionProjection + 1);
+    else
+      parserSetEndOfText();
+
+    return parserGetCurrentPosition();
+  }
+
+  protected Map<String, Object> createProjectionFromDefinition() {
+    if (projectionDefinition == null)
+      return new LinkedHashMap<String, Object>();
+
+    final Map<String, Object> projections = new LinkedHashMap<String, Object>(projectionDefinition.size());
+    for (Entry<String, String> p : projectionDefinition.entrySet()) {
+      final Object projectionValue = OSQLHelper.parseValue(this, p.getValue(), context);
+      projections.put(p.getKey(), projectionValue);
+    }
+    return projections;
+  }
+
+  protected int extractProjectionNameSubstringEndPosition(final String projection) {
+    int endPos;
+    final int pos1 = projection.indexOf('.');
+    final int pos2 = projection.indexOf('(');
+    final int pos3 = projection.indexOf('[');
+    if (pos1 > -1 && pos2 == -1 && pos3 == -1)
+      endPos = pos1;
+    else if (pos2 > -1 && pos1 == -1 && pos3 == -1)
+      endPos = pos2;
+    else if (pos3 > -1 && pos1 == -1 && pos2 == -1)
+      endPos = pos3;
+    else if (pos1 > -1 && pos2 > -1 && pos3 == -1)
+      endPos = Math.min(pos1, pos2);
+    else if (pos2 > -1 && pos3 > -1 && pos1 == -1)
+      endPos = Math.min(pos2, pos3);
+    else if (pos1 > -1 && pos3 > -1 && pos2 == -1)
+      endPos = Math.min(pos1, pos3);
+    else if (pos1 > -1 && pos2 > -1 && pos3 > -1) {
+      endPos = Math.min(pos1, pos2);
+      endPos = Math.min(endPos, pos3);
+    } else
+      endPos = -1;
+    return endPos;
+  }
+
+  protected void parseIndexSearchResult(final Collection<ODocument> entries) {
+    for (final ODocument document : entries) {
+      final boolean continueResultParsing = handleResult(document, false);
+      if (!continueResultParsing)
+        break;
+    }
+  }
+
+  /**
+   * Parses the fetchplan keyword if found.
+   */
+  protected boolean parseFetchplan(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_FETCHPLAN))
+      return false;
+
+    parserSkipWhiteSpaces();
+    int start = parserGetCurrentPosition();
+
+    parserNextWord(true);
+    int end = parserGetCurrentPosition();
+    parserSkipWhiteSpaces();
+
+    int position = parserGetCurrentPosition();
+    while (!parserIsEnded()) {
+      parserNextWord(true);
+
+      final String word = OStringSerializerHelper.getStringContent(parserGetLastWord());
+      if (!word.matches(".*:-?\\d+"))
+        break;
+
+      end = parserGetCurrentPosition();
+      parserSkipWhiteSpaces();
+      position = parserGetCurrentPosition();
+    }
+
+    parserSetCurrentPosition(position);
+
+    if (end < 0)
+      fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start));
+    else
+      fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start, end));
+
+    request.setFetchPlan(fetchPlan);
+
+    return true;
+  }
+
+  protected boolean optimizeExecution() {
+    if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && groupByFields == null
+        && projections != null && projections.size() == 1) {
+
+      final long startOptimization = System.currentTimeMillis();
+      try {
+
+        final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
+
+        if (entry.getValue() instanceof OSQLFunctionRuntime) {
+          final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
+          if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
+              && "*".equals(rf.configuredParameters[0])) {
+            long count = 0;
+
+            if (parsedTarget.getTargetClasses() != null) {
+              final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
+              count = cls.count();
+            } else if (parsedTarget.getTargetClusters() != null) {
+              for (String cluster : parsedTarget.getTargetClusters().keySet()) {
+                count += getDatabase().countClusterElements(cluster);
+              }
+            } else if (parsedTarget.getTargetIndex() != null) {
+              count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
+            } else {
+              final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
+              if (recs != null) {
+                if (recs instanceof Collection<?>)
+                  count += ((Collection<?>) recs).size();
+                else {
+                  for (Object o : recs)
+                    count++;
+                }
+              }
+
+            }
+
+            if (tempResult == null)
+              tempResult = new ArrayList<OIdentifiable>();
+            ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
+            return true;
+          }
+        }
+
+      } finally {
+        context.setVariable("optimizationElapsed", (System.currentTimeMillis() - startOptimization));
+      }
+    }
+
+    return false;
+  }
+
+  private int getQueryFetchLimit() {
+    final int sqlLimit;
+    final int requestLimit;
+
+    if (limit > -1)
+      sqlLimit = limit;
+    else
+      sqlLimit = -1;
+
+    if (request.getLimit() > -1)
+      requestLimit = request.getLimit();
+    else
+      requestLimit = -1;
+
+    if (sqlLimit == -1)
+      return requestLimit;
+
+    if (requestLimit == -1)
+      return sqlLimit;
+
+    return Math.min(sqlLimit, requestLimit);
   }
 
   @SuppressWarnings("rawtypes")
@@ -973,157 +1296,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           handleResult(record, true);
       }
     }
-  }
-
-  protected int parseProjections() {
-    if (!parserOptionalKeyword(KEYWORD_SELECT))
-      return -1;
-
-    int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
-        KEYWORD_LET_2FIND);
-    if (upperBound == -1)
-      // UP TO THE END
-      upperBound = parserText.length();
-
-    int lastRealPositionProjection = -1;
-
-    final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound).trim();
-    if (projectionString.length() > 0) {
-      // EXTRACT PROJECTIONS
-      projections = new LinkedHashMap<String, Object>();
-      projectionDefinition = new LinkedHashMap<String, String>();
-
-      final List<String> items = OStringSerializerHelper.smartSplit(projectionString, ',');
-
-      String fieldName;
-      int beginPos;
-      int endPos;
-      for (String projection : items) {
-        projection = projection.trim();
-
-        if (projectionDefinition == null)
-          throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
-
-        final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
-        if (words.size() > 1)
-          lastRealPositionProjection = words.get(0).length();
-
-        fieldName = null;
-        endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
-        if (endPos > -1) {
-          // EXTRACT ALIAS
-          fieldName = projection.substring(endPos + KEYWORD_AS.length()).trim();
-          lastRealPositionProjection = endPos + KEYWORD_AS.length() + fieldName.length() + 1;
-          projection = projection.substring(0, endPos).trim();
-
-          if (projectionDefinition.containsKey(fieldName))
-            throw new OCommandSQLParsingException("Field '" + fieldName
-                + "' is duplicated in current SELECT, choose a different name");
-        } else {
-          // EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
-          beginPos = projection.charAt(0) == '@' ? 1 : 0;
-
-          endPos = extractProjectionNameSubstringEndPosition(projection);
-
-          fieldName = endPos > -1 ? projection.substring(beginPos, endPos) : projection.substring(beginPos);
-
-          fieldName = OStringSerializerHelper.getStringContent(fieldName);
-
-          // FIND A UNIQUE NAME BY ADDING A COUNTER
-          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex)
-            fieldName += fieldIndex;
-        }
-
-        String p = projection.toUpperCase(Locale.ENGLISH);
-        if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
-          if (p.startsWith("FLATTEN("))
-            OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
-          List<String> pars = OStringSerializerHelper.getParameters(projection);
-          if (pars.size() != 1) {
-            throw new OCommandSQLParsingException(
-                "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
-          }
-          expandTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
-
-          // BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
-          projectionDefinition = null;
-          projections = null;
-
-          if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
-              && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
-            getProjectionGroup(null);
-
-          continue;
-        }
-
-        projectionDefinition.put(fieldName, projection);
-      }
-
-      if (projectionDefinition != null
-          && (projectionDefinition.size() > 1 || !projectionDefinition.values().iterator().next().equals("*"))) {
-        projections = createProjectionFromDefinition();
-
-        for (Object p : projections.values()) {
-
-          if (groupedResult == null && p instanceof OSQLFunctionRuntime && ((OSQLFunctionRuntime) p).aggregateResults()) {
-            // AGGREGATE IT
-            getProjectionGroup(null);
-            break;
-          }
-        }
-
-      } else {
-        // TREATS SELECT * AS NO PROJECTION
-        projectionDefinition = null;
-        projections = null;
-      }
-    }
-
-    if (upperBound < parserText.length() - 1)
-      parserSetCurrentPosition(upperBound);
-    else if (lastRealPositionProjection > -1)
-      parserMoveCurrentPosition(lastRealPositionProjection + 1);
-    else
-      parserSetEndOfText();
-
-    return parserGetCurrentPosition();
-  }
-
-  protected Map<String, Object> createProjectionFromDefinition() {
-    if (projectionDefinition == null)
-      return new LinkedHashMap<String, Object>();
-
-    final Map<String, Object> projections = new LinkedHashMap<String, Object>(projectionDefinition.size());
-    for (Entry<String, String> p : projectionDefinition.entrySet()) {
-      final Object projectionValue = OSQLHelper.parseValue(this, p.getValue(), context);
-      projections.put(p.getKey(), projectionValue);
-    }
-    return projections;
-  }
-
-  protected int extractProjectionNameSubstringEndPosition(final String projection) {
-    int endPos;
-    final int pos1 = projection.indexOf('.');
-    final int pos2 = projection.indexOf('(');
-    final int pos3 = projection.indexOf('[');
-    if (pos1 > -1 && pos2 == -1 && pos3 == -1)
-      endPos = pos1;
-    else if (pos2 > -1 && pos1 == -1 && pos3 == -1)
-      endPos = pos2;
-    else if (pos3 > -1 && pos1 == -1 && pos2 == -1)
-      endPos = pos3;
-    else if (pos1 > -1 && pos2 > -1 && pos3 == -1)
-      endPos = Math.min(pos1, pos2);
-    else if (pos2 > -1 && pos3 > -1 && pos1 == -1)
-      endPos = Math.min(pos2, pos3);
-    else if (pos1 > -1 && pos3 > -1 && pos2 == -1)
-      endPos = Math.min(pos1, pos3);
-    else if (pos1 > -1 && pos2 > -1 && pos3 > -1) {
-      endPos = Math.min(pos1, pos2);
-      endPos = Math.min(endPos, pos3);
-    } else
-      endPos = -1;
-    return endPos;
   }
 
   private void applyOrderBy() {
@@ -1379,14 +1551,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  protected void parseIndexSearchResult(final Collection<ODocument> entries) {
-    for (final ODocument document : entries) {
-      final boolean continueResultParsing = handleResult(document, false);
-      if (!continueResultParsing)
-        break;
-    }
-  }
-
   private void handleNoTarget() {
     if (parsedTarget == null && expandTarget == null)
       // ONLY LET, APPLY TO THEM
@@ -1412,165 +1576,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       } finally {
         context.setVariable("groupByElapsed", (System.currentTimeMillis() - startGroupBy));
       }
-    }
-  }
-
-  @Override
-  public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] TIMEOUT <TimeoutInMs>";
-  }
-
-  /**
-   * Parses the fetchplan keyword if found.
-   */
-  protected boolean parseFetchplan(final String w) throws OCommandSQLParsingException {
-    if (!w.equals(KEYWORD_FETCHPLAN))
-      return false;
-
-    parserSkipWhiteSpaces();
-    int start = parserGetCurrentPosition();
-
-    parserNextWord(true);
-    int end = parserGetCurrentPosition();
-    parserSkipWhiteSpaces();
-
-    int position = parserGetCurrentPosition();
-    while (!parserIsEnded()) {
-      parserNextWord(true);
-
-      final String word = OStringSerializerHelper.getStringContent(parserGetLastWord());
-      if (!word.matches(".*:-?\\d+"))
-        break;
-
-      end = parserGetCurrentPosition();
-      parserSkipWhiteSpaces();
-      position = parserGetCurrentPosition();
-    }
-
-    parserSetCurrentPosition(position);
-
-    if (end < 0)
-      fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start));
-    else
-      fetchPlan = OStringSerializerHelper.getStringContent(parserText.substring(start, end));
-
-    request.setFetchPlan(fetchPlan);
-
-    return true;
-  }
-
-  public String getFetchPlan() {
-    return fetchPlan != null ? fetchPlan : request.getFetchPlan();
-  }
-
-  protected boolean optimizeExecution() {
-    if ((compiledFilter == null || (compiledFilter != null && compiledFilter.getRootCondition() == null)) && groupByFields == null
-        && projections != null && projections.size() == 1) {
-
-      final long startOptimization = System.currentTimeMillis();
-      try {
-
-        final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
-
-        if (entry.getValue() instanceof OSQLFunctionRuntime) {
-          final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
-          if (rf.function instanceof OSQLFunctionCount && rf.configuredParameters.length == 1
-              && "*".equals(rf.configuredParameters[0])) {
-            long count = 0;
-
-            if (parsedTarget.getTargetClasses() != null) {
-              final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
-              count = cls.count();
-            } else if (parsedTarget.getTargetClusters() != null) {
-              for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-                count += getDatabase().countClusterElements(cluster);
-              }
-            } else if (parsedTarget.getTargetIndex() != null) {
-              count += getDatabase().getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex()).getSize();
-            } else {
-              final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
-              if (recs != null) {
-                if (recs instanceof Collection<?>)
-                  count += ((Collection<?>) recs).size();
-                else {
-                  for (Object o : recs)
-                    count++;
-                }
-              }
-
-            }
-
-            if (tempResult == null)
-              tempResult = new ArrayList<OIdentifiable>();
-            ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
-            return true;
-          }
-        }
-
-      } finally {
-        context.setVariable("optimizationElapsed", (System.currentTimeMillis() - startOptimization));
-      }
-    }
-
-    return false;
-  }
-
-  private final class IndexComparator implements Comparator<OIndex<?>> {
-    public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
-      final OIndexDefinition definitionOne = indexOne.getDefinition();
-      final OIndexDefinition definitionTwo = indexTwo.getDefinition();
-
-      final int firstParamCount = definitionOne.getParamCount();
-      final int secondParamCount = definitionTwo.getParamCount();
-
-      final int result = firstParamCount - secondParamCount;
-
-      if (result == 0 && !orderedFields.isEmpty()) {
-        if (!(indexOne instanceof OChainedIndexProxy) && canBeUsedByOrderBy(indexOne))
-          return 1;
-
-        if (!(indexTwo instanceof OChainedIndexProxy) && canBeUsedByOrderBy(indexTwo))
-          return -1;
-      }
-
-      return result;
-    }
-  }
-
-  private final class IndexResultListener implements OQueryOperator.IndexResultListener {
-    private final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-    private final int                 fetchLimit;
-    private final int                 skip;
-
-    private IndexResultListener(int fetchLimit, int skip) {
-      this.fetchLimit = fetchLimit;
-      this.skip = skip;
-    }
-
-    @Override
-    public Object getResult() {
-      return result;
-    }
-
-    @Override
-    public boolean addResult(OIdentifiable value) {
-      final ORecord record = value.getRecord();
-
-      if (record instanceof ORecordSchemaAware<?>) {
-        final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
-        final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
-        if ((targetClasses != null) && (!targetClasses.isEmpty())) {
-          for (OClass targetClass : targetClasses.keySet()) {
-            if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
-              return true;
-          }
-        }
-      }
-
-      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
-        result.add(value);
-
-      return fetchLimit < 0 || result.size() < fetchLimit + skip;
     }
   }
 }
