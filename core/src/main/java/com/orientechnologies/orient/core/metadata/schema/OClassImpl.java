@@ -457,19 +457,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       shortName = document.field("shortName");
     else
       shortName = null;
-    defaultClusterId = document.field("defaultClusterId");
+    defaultClusterId = (Integer) document.field("defaultClusterId");
     if (document.containsField("strictMode"))
-      strictMode = document.field("strictMode");
+      strictMode = (Boolean) document.field("strictMode");
     else
       strictMode = false;
 
     if (document.containsField("abstract"))
-      abstractClass = document.field("abstract");
+      abstractClass = (Boolean) document.field("abstract");
     else
       abstractClass = false;
 
     if (document.field("overSize") != null)
-      overSize = document.field("overSize");
+      overSize = (Float) document.field("overSize");
     else
       overSize = 0f;
 
