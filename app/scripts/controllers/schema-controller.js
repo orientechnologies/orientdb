@@ -95,7 +95,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.class2show = clazz;
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);
-    $scope.modificati = undefined;
+    $scope.modificati = new Array;
     $scope.limit = 20;
     $scope.queries = new Array;
     $scope.classClickedHeaders = ['Name', 'Type', 'Linked_Type', 'Linked_Class', 'Mandatory', 'Read_Only', 'Not_Null', 'Min', 'Max', 'Collate', 'Actions'];
@@ -207,7 +207,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                 return;
             }
         }
-        $scope.modificati = undefined;
+        $scope.modificati = new Array;
         $scope.database.refreshMetadata($routeParams.database);
     }
     $scope.recursiveSaveProperty = function (arrayToUpdate, clazz, properties, result, keyName) {
@@ -390,7 +390,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
     }
 }]);
 
-schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, Spinner) {
+schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, Spinner, Notification) {
 
 
     $scope.property = {"name": "", "type": "", "linkedType": "", "linkedClass": "", "mandatory": "false", "readonly": "false", "notNull": "false", "min": null, "max": null}
@@ -409,29 +409,44 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
         var linkedClass = prop['linkedClass'] != null ? prop['linkedClass'] : '';
         var sql = 'CREATE PROPERTY ' + $scope.classInject + '.' + propName + ' ' + propType + ' ' + linkedType + ' ' + linkedClass;
         Spinner.startSpinnerPopup();
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-            Spinner.stopSpinnerPopup();
+        var allCommand = $q.when();
+
+        var addCommandToExecute = function (sql, i, len) {
+            allCommand = allCommand.then(function () {
+                return executeCommand(sql, i, len);
+            });
+        }
+        var executeCommand = function (sql, i, len) {
+            var deferred = $q.defer();
+            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
+                if (i == len) {
+                    $scope.database.refreshMetadata($routeParams.database, function () {
+                        $scope.parentScope.addProperties(prop);
+                        $scope.parentScope.indexes = Database.listIndexesForClass($scope.classInject);
+                    });
+                    Spinner.stopSpinnerPopup();
+                    $scope.hide();
+                    Notification.push({content: "Property created."});
+
+                }
+                deferred.resolve(data);
+
+            });
+            return deferred.promise;
+        }
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
+
+            var len = Object.keys(prop).length;
+            var i = 1;
+            for (entry in prop) {
+                var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + prop[entry];
+                addCommandToExecute(sql, i, len);
+                i++;
+            }
         }, function (error) {
             Spinner.stopSpinnerPopup();
         });
 
-        var i = 1;
-        Spinner.startSpinnerPopup();
-        for (entry in prop) {
-            var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + prop[entry];
-            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-                i++;
-                if (i == 5) {
-                    $scope.database.refreshMetadata($routeParams.database, function () {
-                        $scope.parentScope.addProperties(prop);
-                        $scope.parentScope.indexes = Database.listIndexesForClass(clazz);
-                        $scope.parentScope.apply();
-                    });
-                    Spinner.startSpinnerPopup();
-                    $scope.hide();
-                }
-            });
-        }
 
     }
 
