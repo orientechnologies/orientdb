@@ -15,16 +15,16 @@
     </target>
 
     <target name="test-init">
-        <pathconvert property="project.root.dir" targetos="unix"  >
-            <path location="."/>
+        <pathconvert property="project.root.dir" targetos="unix">
+        <path location="."/>
         </pathconvert>
-        <pathconvert property="test.path" targetos="unix"   >
-            <path location="../${orient.path}/databases/demo"/>
+        <pathconvert property="test.path" targetos="unix">
+        <path location="../${orient.path}/databases/demo"/>
         </pathconvert>
-        <pathconvert property="project.root.dir" targetos="windows"  dirsep="/" >
-            <path location="."/>
+        <pathconvert property="project.root.dir" targetos="windows" dirsep="/">
+        <path location="."/>
         </pathconvert>
-        <pathconvert property="test.path" targetos="windows"  dirsep="/" >
+        <pathconvert property="test.path" targetos="windows" dirsep="/">
             <path location="../${orient.path}/databases/demo"/>
         </pathconvert>
         <echo>Normalized paths</echo>
@@ -131,14 +131,14 @@
     <target name="test-remote" depends="test-init">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-        <env key="JAVA_OPTS"
+            <env key="JAVA_OPTS"
                  value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
-        <env key="JAVA_OPTS"
+            <env key="JAVA_OPTS"
                  value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
@@ -163,7 +163,7 @@
 
         <echo>SHUTDOWNING THE SERVER...</echo>
         <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
-        <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
+            <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c shutdown.bat"/>
         </exec>
 

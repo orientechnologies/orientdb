@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Interface to handle indexes. Implementations works at local or remote level.
@@ -48,6 +48,9 @@ public interface OIndexManager {
 
   public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata);
+
+  public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
+                                final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata, String algorithm);
 
   public OIndexManager dropIndex(final String iIndexName);
 
