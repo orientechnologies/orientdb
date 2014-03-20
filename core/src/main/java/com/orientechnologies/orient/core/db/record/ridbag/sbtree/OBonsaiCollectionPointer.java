@@ -16,8 +16,18 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
+/**
+ * The pointer to a bonsai collection.
+ * 
+ * Determines where the collection is stored. Contains file id and position of root bucket of tree representation.
+ * 
+ * @see ORidBag
+ * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @since 1.7rc1
+ */
 public class OBonsaiCollectionPointer {
   public static final OBonsaiCollectionPointer INVALID = new OBonsaiCollectionPointer(-1, new OBonsaiBucketPointer(-1, -1));
 
