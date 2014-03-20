@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
@@ -26,6 +23,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
@@ -67,6 +67,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata);
+  }
+
+  @Override
+  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex, OProgressListener iProgressListener, ODocument metadata, String algorithm) {
+    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata, algorithm);
   }
 
   public OIndex<?> getIndexInternal(final String iName) {
