@@ -444,7 +444,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   }
 
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> rollback(boolean force) throws OTransactionException {
+  public ODatabaseComplex<ORecordInternal<?>> rollback(final boolean force) throws OTransactionException {
     return underlying.rollback(force);
   }
 
@@ -467,7 +467,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return underlying.getSerializer();
   }
 
-  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, boolean throwException) {
+  public void setSerializer(final ORecordSerializer iSerializer) {
+    underlying.setSerializer(iSerializer);
+  }
+
+  private void freezeIndexes( final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
     if (indexesToFreeze != null) {
       for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
         indexToLock.freeze(throwException);
@@ -475,13 +479,13 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     }
   }
 
-  private void flushIndexes(List<OIndexAbstract<?>> indexesToFlush) {
+  private void flushIndexes(final List<OIndexAbstract<?>> indexesToFlush) {
     for (OIndexAbstract<?> index : indexesToFlush) {
       index.flush();
     }
   }
 
-  private List<OIndexAbstract<?>> prepareIndexesToFreeze(Collection<? extends OIndex<?>> indexes) {
+  private List<OIndexAbstract<?>> prepareIndexesToFreeze(final Collection<? extends OIndex<?>> indexes) {
     List<OIndexAbstract<?>> indexesToFreeze = null;
     if (indexes != null && !indexes.isEmpty()) {
       indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
@@ -499,7 +503,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return indexesToFreeze;
   }
 
-  private void releaseIndexes(Collection<? extends OIndex<?>> indexesToRelease) {
+  private void releaseIndexes(final Collection<? extends OIndex<?>> indexesToRelease) {
     if (indexesToRelease != null) {
       Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
       while (it.hasNext()) {

@@ -15,13 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -57,6 +53,9 @@ import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -572,8 +571,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
     ORecordInternal<?> record = null;
     try {
-      record = id instanceof ORecordInternal<?> ? (ORecordInternal<?>) id : getDatabase().load(id.getIdentity(), null, false,
-          false, lockingStrategy);
+      if (id instanceof ORecordInternal<?>) {
+        record = (ORecordInternal<?>) id;
+
+        // LOCK THE RECORD IF NEEDED
+        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+          ((OStorageEmbedded) getDatabase().getStorage()).acquireWriteLock(record.getIdentity());
+        else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          ((OStorageEmbedded) getDatabase().getStorage()).acquireReadLock(record.getIdentity());
+
+      } else
+        record = getDatabase().load(id.getIdentity(), null, false, false, lockingStrategy);
 
       context.updateMetric("recordReads", +1);
 
@@ -589,15 +597,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return false;
     } finally {
       // lock must be released (no matter if filtered or not)
-      if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-        if (record != null) {
-          try {
-            ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
-          } catch (OLockException e) {
-            // IGNORE IT: THE LOCK WAS NOT ACQUIRED
-          }
-        }
-      }
+      if (record != null)
+        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
+        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(record.getIdentity());
     }
     return true;
   }
