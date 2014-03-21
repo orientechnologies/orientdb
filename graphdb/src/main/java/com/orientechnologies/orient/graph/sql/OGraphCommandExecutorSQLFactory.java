@@ -54,32 +54,30 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     COMMANDS = Collections.unmodifiableMap(commands);
   }
 
+  public interface GraphCallBack<T> {
+    T call(OrientBaseGraph graph);
+  }
+
   /**
    * Returns a Transactional OrientGraph implementation from the current database in thread local.
-   * 
+   *
    * @param autoStartTx
    *          Whether returned graph will start transaction before each operation till commit automatically or user should do it
    *          explicitly be calling {@link OrientGraph#getRawGraph()} method {@link ODatabaseDocumentTx#begin()}.
-   * 
+   *
    * @return Transactional OrientGraph implementation from the current database in thread local.
    */
-  public static OrientGraph getGraph(boolean autoStartTx) {
+  public static OrientGraph getGraph(final boolean autoStartTx) {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof ODatabaseDocumentTx))
       database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
 
-    final OrientGraph orientGraph = new OrientGraph((ODatabaseDocumentTx) database);
-    if (!autoStartTx) {
-      orientGraph.setAutoStartTx(autoStartTx);
-      orientGraph.commit();
-    }
-
-    return orientGraph;
+    return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
   }
 
   /**
    * Returns a Non Transactional OrientGraph implementation from the current database in thread local.
-   * 
+   *
    * @return
    */
   public static OrientBaseGraph getNoTxGraph() {
@@ -143,9 +141,5 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       throw new OCommandExecutionException("Error in creation of command " + name
           + "(). Probably there is not an empty constructor or the constructor generates errors", e);
     }
-  }
-
-  public interface GraphCallBack<T> {
-    T call(OrientBaseGraph graph);
   }
 }
