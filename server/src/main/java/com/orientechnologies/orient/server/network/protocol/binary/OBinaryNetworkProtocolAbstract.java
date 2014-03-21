@@ -323,7 +323,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       iDatabase.hide(rid, version);
       return 1;
-    } catch (Exception e) {
+    } catch (ORecordNotFoundException e) {
       return 0;
     }
   }
