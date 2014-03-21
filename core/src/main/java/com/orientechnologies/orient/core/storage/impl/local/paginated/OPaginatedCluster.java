@@ -737,6 +737,39 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
+  @Override
+  public boolean hideRecord(OClusterPosition position) throws IOException {
+    externalModificationLock.requestModificationLock();
+    try {
+      acquireExclusiveLock();
+      try {
+        OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(position);
+        if (positionEntry == null)
+          return false;
+
+        long pageIndex = positionEntry.getPageIndex();
+
+        if (diskCache.getFilledUpTo(fileId) <= pageIndex)
+          return false;
+
+        startAtomicOperation();
+        lockTillAtomicOperationCompletes();
+
+        final OClusterPage.TrackMode trackMode = getTrackMode();
+        updateClusterState(trackMode, -1, 0);
+        clusterPositionMap.remove(position);
+        endAtomicOperation(false);
+
+        return true;
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      externalModificationLock.releaseModificationLock();
+    }
+
+  }
+
   public void updateRecord(OClusterPosition clusterPosition, byte[] content, final ORecordVersion recordVersion,
       final byte recordType) throws IOException {
     externalModificationLock.requestModificationLock();
@@ -744,8 +777,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       acquireExclusiveLock();
       try {
         OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
-				if (positionEntry == null)
-					return;
+        if (positionEntry == null)
+          return;
 
         int recordPosition = positionEntry.getRecordPosition();
         long pageIndex = positionEntry.getPageIndex();

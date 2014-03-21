@@ -197,7 +197,20 @@ public class OAutoshardedStorageImpl implements OAutoshardedStorage {
       return new OStorageOperationResult<Boolean>(node.deleteRecord(wrapped.getName(), iRecordId, iVersion), true);
   }
 
-  @Override
+	@Override
+	public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
+		if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT || undistributedClusters.contains(iRecordId.getClusterId())) {
+			return wrapped.hideRecord(iRecordId, iVersion, iMode, iCallback);
+		}
+
+		final ODHTNode node = serverInstance.findSuccessor(iRecordId.clusterPosition.longValue());
+		if (node.isLocal())
+			return wrapped.hideRecord(iRecordId, iVersion, iMode, iCallback);
+		else
+			return new OStorageOperationResult<Boolean>(node.deleteRecord(wrapped.getName(), iRecordId, iVersion), true);
+	}
+
+	@Override
   public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
     return wrapped.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
