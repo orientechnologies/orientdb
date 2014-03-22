@@ -31,7 +31,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
-    getContext(false).rawGraph.begin();
+    if (iAutoStartTx)
+      getContext(false).rawGraph.begin();
   }
 
   protected OrientTransactionalGraph(ODatabaseDocumentPool pool) {
@@ -98,8 +99,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       return;
 
     context.rawGraph.commit();
-		if (autoStartTx)
-			getContext(false).rawGraph.begin();
+    if (autoStartTx)
+      getContext(false).rawGraph.begin();
   }
 
   public void rollback() {
@@ -108,8 +109,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       return;
 
     context.rawGraph.rollback();
-		if (autoStartTx)
-			getContext(false).rawGraph.begin();
+    if (autoStartTx)
+      getContext(false).rawGraph.begin();
   }
 
   @Override
