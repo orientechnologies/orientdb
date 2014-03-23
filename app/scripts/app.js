@@ -46,6 +46,11 @@ App.config(function ($routeProvider) {
             controller: 'SchemaController',
             resolve: DatabaseResolve
         })
+        .when('/database/:database/indexes', {
+            templateUrl: 'views/database/index/indexMain.html',
+            controller: 'IndexesController',
+            resolve: DatabaseResolve
+        })
         .when('/database/:database/browse/edit/:rid', {
             templateUrl: 'views/database/edit.html',
             controller: 'EditController',

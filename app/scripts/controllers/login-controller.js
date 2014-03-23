@@ -13,6 +13,7 @@ angular.module('login.controller', ['database.services']).controller("LoginContr
     });
 
     $scope.connect = function () {
+        $scope.$broadcast("autofill:update");
         Database.connect($scope.database, $scope.username, $scope.password, function () {
             $location.path("/database/" + $scope.database + "/browse");
         }, function () {

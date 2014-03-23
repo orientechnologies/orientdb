@@ -713,3 +713,7 @@ ul.arrayrid > li {
 .container-notification .alert{
     margin-bottom: 0px;
 }
+.class-body .btn-toolbar {
+    margin-bottom: 0px;
+    margin-top: 0px;
+}

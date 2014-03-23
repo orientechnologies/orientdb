@@ -390,6 +390,16 @@ Widget.directive('ridrender', function (Database) {
         }
     };
 });
+Widget.directive("autofill", function () {
+    return {
+        require: "ngModel",
+        link: function (scope, element, attrs, ngModel) {
+            scope.$on("autofill:update", function() {
+                ngModel.$setViewValue(element.val());
+            });
+        }
+    }
+});
 Widget.directive('dtpicker', function () {
 
 

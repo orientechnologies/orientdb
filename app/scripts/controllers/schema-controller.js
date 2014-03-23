@@ -73,6 +73,9 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.createRecord = function (className) {
         $location.path("/database/" + $scope.database.getName() + "/browse/create/" + className);
     }
+    $scope.allIndexes = function () {
+        $location.path("/database/" + $scope.database.getName() + "/indexes");
+    }
     $scope.createNewClass = function () {
         modalScope = $scope.$new(true);
         modalScope.db = database;
@@ -517,6 +520,35 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
         }, function (error) {
             $scope.testMsgClass = 'alert alert-error'
             $scope.testMsg = error;
+        });
+    }
+}]);
+schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route) {
+
+    $scope.indexes = Database.getMetadata()["indexes"];
+    console.log($scope.indexes);
+
+    $scope.rebuildIndex = function (indexName) {
+        var sql = 'REBUILD INDEX ' + indexName;
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+        });
+    }
+
+    $scope.dropIndex = function (nameIndex) {
+
+        Utilities.confirm($scope, $modal, $q, {
+
+            title: 'Warning!',
+            body: 'You are dropping index ' + nameIndex.name + '. Are you sure?',
+            success: function () {
+                var sql = 'DROP INDEX ' + nameIndex.name;
+
+                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                    var index = $scope.indexes.indexOf(nameIndex)
+                    $scope.indexes.splice(index, 1);
+                    $scope.indexes.splice();
+                });
+            }
         });
     }
 }]);
