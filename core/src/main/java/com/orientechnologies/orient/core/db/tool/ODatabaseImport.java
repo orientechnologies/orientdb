@@ -63,11 +63,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.util.AbstractList;
@@ -211,9 +207,21 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       listener.onMessage("\n\nDatabase import completed in " + ((System.currentTimeMillis() - time)) + " ms");
 
     } catch (Exception e) {
-      System.err.println("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column "
-          + jsonReader.getColumnNumber());
-      e.printStackTrace();
+      final StringWriter writer = new StringWriter();
+      writer.append("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column "
+          + jsonReader.getColumnNumber() + "\n");
+      final PrintWriter printWriter = new PrintWriter(writer);
+      e.printStackTrace(printWriter);
+      printWriter.flush();
+
+      listener.onMessage(writer.toString());
+
+      try {
+        writer.close();
+      } catch (IOException e1) {
+        throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e1);
+      }
+
       throw new ODatabaseExportException("Error on importing database '" + database.getName() + "' from file: " + fileName, e);
     } finally {
       close();
