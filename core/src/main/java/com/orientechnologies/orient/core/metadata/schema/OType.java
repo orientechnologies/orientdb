@@ -349,7 +349,7 @@ public enum OType {
         if (iValue instanceof BigDecimal)
           return iValue;
         else if (iValue instanceof String)
-          return new BigDecimal((String) iValue);
+          return new BigDecimal((((String) iValue).isEmpty() ? "0" : (String) iValue));
         else if (iValue instanceof Number)
           return new BigDecimal(iValue.toString());
 

@@ -653,7 +653,8 @@ public class OMultiValue {
     return iCallback != null ? iCallback.call(iObject) : iObject;
   }
 
-  public static boolean equals(final Collection<Object> col1, final Collection<Object> col2) {
+
+  public static boolean equals(Collection<Object> col1, Collection<Object> col2) {
     if (col1.size() != col2.size())
       return false;
     return col1.containsAll(col2) && col2.containsAll(col1);

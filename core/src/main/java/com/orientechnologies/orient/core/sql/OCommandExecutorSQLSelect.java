@@ -695,6 +695,61 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
     ORuntimeResult group = null;
 
+<<<<<<< HEAD
+    Object key = null;
+    if (groupedResult == null)
+      groupedResult = new LinkedHashMap<Object, ORuntimeResult>();
+
+    if (fieldValue != null) {
+      if (fieldValue.getClass().isArray()) {
+        // LOOK IT BY HASH (FASTER THAN COMPARE EACH SINGLE VALUE)
+        final Object[] array = (Object[]) fieldValue;
+
+        final StringBuilder keyArray = new StringBuilder();
+<<<<<<< Updated upstream
+        for (Object o : array) {
+          if (keyArray.length() > 0)
+            keyArray.append(",");
+          if (o != null)
+            keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable) o).getIdentity().toString() : o.toString());
+=======
+        for (Object o : array){
+          if( keyArray.length() > 0 )
+            keyArray.append(",");
+          if (o != null)
+            keyArray.append(o instanceof OIdentifiable ? ((OIdentifiable)o).getIdentity().toString() : o.toString());
+>>>>>>> Stashed changes
+          else
+            keyArray.append("null");
+        }
+
+        key = keyArray.toString();
+      } else
+        // LOKUP FOR THE FIELD
+<<<<<<< Updated upstream
+        key = fieldValue;
+=======
+        key = fieldValue.toString();
+
+      group = groupedResult.get(key);
+>>>>>>> Stashed changes
+    }
+
+    group = groupedResult.get(key);
+    if (group == null) {
+      group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
+<<<<<<< Updated upstream
+      groupedResult.put(key, group);
+=======
+      if (fieldValue != null && fieldValue.getClass().isArray())
+        groupedResult.put(key, group);
+      else
+        groupedResult.put(fieldValue, group);
+>>>>>>> Stashed changes
+    }
+    return group;
+  }
+=======
     final long projectionElapsed = (Long) context.getVariable("projectionElapsed", 0l);
     final long begin = System.currentTimeMillis();
     try {
@@ -723,6 +778,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           // LOOKUP FOR THE FIELD
           key = fieldValue;
       }
+>>>>>>> develop
 
       group = groupedResult.get(key);
       if (group == null) {

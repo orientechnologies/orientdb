@@ -119,6 +119,9 @@ public class OWriteAheadLog {
           return validateName(name);
         }
       });
+      
+      if(walFiles == null)
+        walFiles = new File[0];
 
       if (walFiles == null)
         throw new IllegalStateException(
@@ -603,6 +606,8 @@ public class OWriteAheadLog {
 
     private LogSegment(File file, int maxPagesCacheSize) throws IOException {
       this.file = file;
+//      if(file)
+      
       this.maxPagesCacheSize = maxPagesCacheSize;
 
       order = extractOrder(file.getName());
