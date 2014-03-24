@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -31,15 +30,13 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * 
  */
 public class OHazelcastDistributedRequest implements ODistributedRequest, Externalizable {
-  private static AtomicLong   serialId = new AtomicLong();
-
   private long                id;
   private EXECUTION_MODE      executionMode;
   private String              senderNodeName;
   private String              databaseName;
   private String              clusterName;
   private long                senderThreadId;
-  private OAbstractRemoteTask payload;
+  private OAbstractRemoteTask task;
 
   /**
    * Constructor used by serializer.
@@ -53,14 +50,18 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     this.databaseName = databaseName;
     this.clusterName = clusterName;
     this.senderThreadId = Thread.currentThread().getId();
-    this.payload = payload;
+    this.task = payload;
     this.executionMode = iExecutionMode;
-    id = serialId.incrementAndGet();
+    id = -1;
+  }
+
+  public void setId(final long iReqId) {
+    id = iReqId;
   }
 
   @Override
   public void undo() {
-    payload.undo();
+    task.undo();
   }
 
   public long getId() {
@@ -78,36 +79,25 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   }
 
   @Override
-  public long getSenderThreadId() {
-    return senderThreadId;
+  public OAbstractRemoteTask getTask() {
+    return task;
   }
 
   @Override
-  public OAbstractRemoteTask getPayload() {
-    return payload;
-  }
-
-  @Override
-  public OHazelcastDistributedRequest setDatabaseName(String databaseName) {
+  public OHazelcastDistributedRequest setDatabaseName(final String databaseName) {
     this.databaseName = databaseName;
     return this;
   }
 
   @Override
-  public OHazelcastDistributedRequest setClusterName(String clusterName) {
+  public OHazelcastDistributedRequest setClusterName(final String clusterName) {
     this.clusterName = clusterName;
     return this;
   }
 
   @Override
-  public OHazelcastDistributedRequest setSenderThreadId(long threadId) {
-    this.senderThreadId = threadId;
-    return this;
-  }
-
-  @Override
-  public OHazelcastDistributedRequest setPayload(OAbstractRemoteTask payload) {
-    this.payload = payload;
+  public OHazelcastDistributedRequest setTask(final OAbstractRemoteTask payload) {
+    this.task = payload;
     return this;
   }
 
@@ -115,7 +105,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     return senderNodeName;
   }
 
-  public OHazelcastDistributedRequest setSenderNodeName(String senderNodeName) {
+  public OHazelcastDistributedRequest setSenderNodeName(final String senderNodeName) {
     this.senderNodeName = senderNodeName;
     return this;
   }
@@ -137,7 +127,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
     out.writeUTF(clusterName != null ? clusterName : "");
-    out.writeObject(payload);
+    out.writeObject(task);
   }
 
   @Override
@@ -149,11 +139,20 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     clusterName = in.readUTF();
     if (clusterName.length() == 0)
       clusterName = null;
-    payload = (OAbstractRemoteTask) in.readObject();
+    task = (OAbstractRemoteTask) in.readObject();
   }
 
   @Override
   public String toString() {
-    return payload != null ? payload.toString() : null;
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("id=");
+    buffer.append(id);
+    buffer.append(" from=");
+    buffer.append(senderNodeName);
+    if (task != null) {
+      buffer.append(" task=");
+      buffer.append(task.toString());
+    }
+    return buffer.toString();
   }
 }

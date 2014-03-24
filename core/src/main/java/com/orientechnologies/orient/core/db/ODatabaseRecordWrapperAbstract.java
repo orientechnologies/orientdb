@@ -15,13 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,6 +26,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -40,12 +35,19 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
@@ -102,6 +104,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public boolean dropDataSegment(final String iName) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     return super.dropDataSegment(iName);
+  }
+
+  public OBinarySerializerFactory getSerializerFactory() {
+    return underlying.getSerializerFactory();
   }
 
   public OTransaction getTransaction() {
@@ -195,8 +201,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid, final ORecordVersion iVersion) {
     underlying.delete(iRid, iVersion);
+    return this;
+  }
+
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> hide(ORID rid, ORecordVersion version) {
+    underlying.hide(rid, version);
     return this;
   }
 
@@ -224,14 +237,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
-    return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone);
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iObject, String iFetchPlan, boolean iIgnoreCache,
-      boolean loadTombstone) {
-    return (RET) underlying.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone);
+      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) underlying.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {
@@ -356,7 +370,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.callbackHooks(iType, iObject);
   }
 
-  public Set<ORecordHook> getHooks() {
+  public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
     return underlying.getHooks();
   }
 
@@ -374,16 +388,24 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    underlying.backup(out, options);
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+    underlying.backup(out, options, new Callable<Object>() {
+
+      @Override
+      public Object call() throws Exception {
+        // FLUSHES ALL THE INDEX BEFORE
+        for (OIndex<?> index : getMetadata().getIndexManager().getIndexes()) {
+          index.flush();
+        }
+        if (callable != null)
+          return callable.call();
+        return null;
+      }
+    }, iListener, compressionLevel, bufferSize);
   }
 
-  @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    underlying.restore(in, options);
-  }
-
-  protected void checkClusterBoundedToClass(int iClusterId) {
+  protected void checkClusterBoundedToClass(final int iClusterId) {
     if (iClusterId == -1)
       return;
 

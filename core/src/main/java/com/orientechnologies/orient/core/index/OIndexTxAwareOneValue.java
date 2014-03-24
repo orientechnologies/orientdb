@@ -15,15 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.collection.OAlwaysGreaterKey;
+import com.orientechnologies.common.collection.OAlwaysLessKey;
+import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -44,73 +48,97 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   @Override
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXISTS IN TX
-    final OIdentifiable previousRecord = get(iKey);
-    if (previousRecord != null && !previousRecord.equals(iRecord))
-      OLogManager.instance().exception(
-          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
-          OIndexException.class, iRecord, iKey, getName(), previousRecord);
+    String storageType = database.getStorage().getType();
+    if (storageType.equals(OEngineMemory.NAME) || storageType.equals(OEngineLocal.NAME) || !database.getTransaction().isActive()) {
+      final OIdentifiable previousRecord = get(iKey);
+      if (previousRecord != null && !previousRecord.equals(iRecord))
+        throw new ORecordDuplicatedException(String.format(
+            "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord, iKey,
+            getName(), previousRecord), previousRecord.getIdentity());
 
-    super.checkEntry(iRecord, iKey);
-  }
-
-  @Override
-  public OIdentifiable get(final Object iKey) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-
-    OIdentifiable result;
-    if (indexChanges == null || !indexChanges.cleared)
-      // BEGIN FROM THE UNDERLYING RESULT SET
-      result = super.get(iKey);
-    else
-      // BEGIN FROM EMPTY RESULT SET
-      result = null;
-
-    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
-    return filterIndexChanges(indexChanges, iKey, result, null);
-  }
-
-  @Override
-  public boolean contains(final Object iKey) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-
-    OIdentifiable result;
-    if (indexChanges == null || !indexChanges.cleared)
-      // BEGIN FROM THE UNDERLYING RESULT SET
-      result = (OIdentifiable) super.get(iKey);
-    else
-      // BEGIN FROM EMPTY RESULT SET
-      result = null;
-
-    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
-    return filterIndexChanges(indexChanges, iKey, result, null) != null;
-  }
-
-  @Override
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-    final Collection<?> keys = new ArrayList<Object>(iKeys);
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges == null) {
-      result.addAll(super.getValues(keys));
-      return result;
+      super.checkEntry(iRecord, iKey);
     }
+  }
+
+  @Override
+  public OIdentifiable get(final Object key) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+
+    if (indexChanges == null)
+      return super.get(key);
+
+    OIdentifiable result;
+    if (!indexChanges.cleared)
+      // BEGIN FROM THE UNDERLYING RESULT SET
+      result = super.get(key);
+    else
+      // BEGIN FROM EMPTY RESULT SET
+      result = null;
+
+    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
+    return filterIndexChanges(indexChanges, Collections.singletonMap(key, result), null).get(key);
+  }
+
+  @Override
+  public boolean contains(final Object key) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return super.get(key) != null;
+
+    OIdentifiable result;
+    if (!indexChanges.cleared)
+      // BEGIN FROM THE UNDERLYING RESULT SET
+      result = (OIdentifiable) super.get(key);
+    else
+      // BEGIN FROM EMPTY RESULT SET
+      result = null;
+
+    // FILTER RESULT SET WITH TRANSACTIONAL CHANGES
+    return filterIndexChanges(indexChanges, Collections.singletonMap(key, result), null).get(key) != null;
+  }
+
+  @Override
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+
+    if (indexChanges == null)
+      return super.getValues(iKeys, ascSortOrder);
+
+    final Comparator<Object> comparator;
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    final TreeMap<Object, OIdentifiable> result = new TreeMap<Object, OIdentifiable>(comparator);
+
+    final Collection<?> keys = new ArrayList<Object>(iKeys);
 
     final Set<Object> keysToRemove = new HashSet<Object>();
+    final Map<Object, OIdentifiable> keyValueEntries = new HashMap<Object, OIdentifiable>();
+
     for (final Object key : keys) {
       if (indexChanges.cleared)
         keysToRemove.add(key);
 
-      final OIdentifiable keyResult = filterIndexChanges(indexChanges, key, null, keysToRemove);
-
-      if (keyResult != null)
-        result.add(keyResult);
+      keyValueEntries.put(key, null);
     }
+
+    final Map<Object, OIdentifiable> keyResult = filterIndexChanges(indexChanges, keyValueEntries, keysToRemove);
+
+    for (Map.Entry<Object, OIdentifiable> keyResultEntry : keyResult.entrySet())
+      result.put(keyResultEntry.getKey(), keyResultEntry.getValue().getIdentity());
 
     keys.removeAll(keysToRemove);
 
-    if (!keys.isEmpty())
-      result.addAll(super.getValues(keys));
-    return result;
+    if (!keys.isEmpty()) {
+      final Collection<ODocument> entries = super.getEntries(keys);
+
+      for (ODocument entry : entries)
+        result.put(entry.field("key"), entry.<OIdentifiable> field("rid", OType.LINK));
+    }
+
+    return result.values();
   }
 
   @Override
@@ -118,83 +146,133 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     final Collection<?> keys = new ArrayList<Object>(iKeys);
     final Set<ODocument> result = new ODocumentFieldsHashSet();
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+
     if (indexChanges == null) {
       result.addAll(super.getEntries(keys));
       return result;
     }
 
     final Set<Object> keysToRemove = new HashSet<Object>();
+    final Map<Object, OIdentifiable> keyValueEntries = new HashMap<Object, OIdentifiable>();
+
     for (final Object key : keys) {
       if (indexChanges.cleared)
         keysToRemove.add(key);
 
-      final OIdentifiable keyResult = filterIndexChanges(indexChanges, key, null, keysToRemove);
+      keyValueEntries.put(key, null);
+    }
 
-      if (keyResult != null) {
-        final ODocument document = new ODocument();
-        document.field("key", key);
-        document.field("rid", keyResult.getIdentity());
-        document.unsetDirty();
-        result.add(document);
-      }
+    final Map<Object, OIdentifiable> keyResult = filterIndexChanges(indexChanges, keyValueEntries, keysToRemove);
+
+    for (Map.Entry<Object, OIdentifiable> keyResultEntry : keyResult.entrySet()) {
+      final ODocument document = new ODocument();
+      document.field("key", keyResultEntry.getKey());
+      document.field("rid", keyResultEntry.getValue().getIdentity());
+
+      document.unsetDirty();
+      result.add(document);
     }
 
     keys.removeAll(keysToRemove);
 
     if (!keys.isEmpty())
       result.addAll(super.getEntries(keys));
+
     return result;
   }
 
-  protected OIdentifiable filterIndexChanges(final OTransactionIndexChanges indexChanges, final Object key, OIdentifiable iValue,
-      final Set<Object> keysToRemove) {
+  protected Map<Object, OIdentifiable> filterIndexChanges(OTransactionIndexChanges indexChanges,
+      Map<Object, OIdentifiable> keyValueEntries, final Set<Object> keysToRemove) {
+    final Map<Object, OIdentifiable> result = new HashMap<Object, OIdentifiable>();
+    for (Map.Entry<Object, OIdentifiable> keyValueEntry : keyValueEntries.entrySet()) {
+      OIdentifiable keyResult = keyValueEntry.getValue();
+      Object key = keyValueEntry.getKey();
+
+      // CHECK FOR THE RECEIVED KEY
+
+      if (indexChanges.containsChangesPerKey(key)) {
+        final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
+        if (value != null) {
+          for (final OTransactionIndexEntry entry : value.entries) {
+            if (entry.operation == OPERATION.REMOVE) {
+              if (entry.value == null || entry.value.equals(keyResult)) {
+                // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
+                if (keysToRemove != null)
+                  keysToRemove.add(key);
+                keyResult = null;
+              }
+            } else if (entry.operation == OPERATION.PUT) {
+              // ADD ALSO THIS RID
+              if (keysToRemove != null)
+                keysToRemove.add(key);
+              keyResult = entry.value;
+            }
+          }
+        }
+      }
+
+      if (keyResult != null)
+        result.put(key, keyResult.getIdentity());
+    }
+
+    return result;
+  }
+
+  @Override
+  public Collection<ODocument> getEntriesBetween(Object rangeFrom, Object rangeTo) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)
-      return iValue;
+      return super.getEntriesBetween(rangeFrom, rangeTo);
 
-    OIdentifiable keyResult = iValue;
-    // CHECK FOR THE RECEIVED KEY
-    if (indexChanges.containsChangesPerKey(key)) {
-      final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
-      if (value != null) {
-        for (final OTransactionIndexEntry entry : value.entries) {
-          if (entry.operation == OPERATION.REMOVE) {
-            if (entry.value == null || entry.value.equals(keyResult)) {
-              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-              if (keysToRemove != null)
-                keysToRemove.add(key);
-              keyResult = null;
-            }
-          } else if (entry.operation == OPERATION.PUT) {
-            // ADD ALSO THIS RID
-            if (keysToRemove != null)
-              keysToRemove.add(key);
-            keyResult = entry.value;
-          }
-        }
-      }
+    final OIndexDefinition indexDefinition = getDefinition();
+    Object compRangeFrom = rangeFrom;
+    Object compRangeTo = rangeTo;
+    if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount() > 1) {
+      int keySize = indexDefinition.getParamCount();
+
+      final OCompositeKey fullKeyFrom = new OCompositeKey((Comparable) rangeFrom);
+      final OCompositeKey fullKeyTo = new OCompositeKey((Comparable) rangeTo);
+
+      while (fullKeyFrom.getKeys().size() < keySize)
+        fullKeyFrom.addKey(new OAlwaysLessKey());
+
+      while (fullKeyTo.getKeys().size() < keySize)
+        fullKeyTo.addKey(new OAlwaysGreaterKey());
+
+      compRangeFrom = fullKeyFrom;
+      compRangeTo = fullKeyTo;
     }
 
-    // CHECK FOR ANY KEYS
-    if (indexChanges.containsChangesCrossKey()) {
-      final OTransactionIndexChangesPerKey value = indexChanges.getChangesCrossKey();
-      if (value != null) {
-        for (final OTransactionIndexEntry entry : value.entries) {
-          if (entry.operation == OPERATION.REMOVE) {
-            if (entry.value == null || entry.value.equals(keyResult)) {
-              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-              if (keysToRemove != null)
-                keysToRemove.add(key);
-              keyResult = null;
-            }
-          } else if (entry.operation == OPERATION.PUT) {
-            // ADD ALSO THIS RID
-            if (keysToRemove != null)
-              keysToRemove.add(key);
-            keyResult = entry.value;
-          }
-        }
-      }
+    final Collection<OTransactionIndexChangesPerKey> rangeChanges = indexChanges.getChangesForKeys(compRangeFrom, compRangeTo);
+    if (rangeChanges.isEmpty())
+      return super.getEntriesBetween(rangeFrom, rangeTo);
+
+    final Map<Object, OIdentifiable> keyValueEntries = new HashMap<Object, OIdentifiable>();
+    if (indexChanges.cleared) {
+      for (OTransactionIndexChangesPerKey changesPerKey : rangeChanges)
+        keyValueEntries.put(changesPerKey.key, null);
+    } else {
+      final Collection<ODocument> storedEntries = super.getEntriesBetween(rangeFrom, rangeTo);
+      for (ODocument entry : storedEntries)
+        keyValueEntries.put(entry.field("key"), entry.<OIdentifiable> field("rid"));
+
+      for (OTransactionIndexChangesPerKey changesPerKey : rangeChanges)
+        if (!keyValueEntries.containsKey(changesPerKey.key))
+          keyValueEntries.put(changesPerKey.key, null);
     }
-    return keyResult;
+
+    final Map<Object, OIdentifiable> keyValuesResult = filterIndexChanges(indexChanges, keyValueEntries, null);
+
+    final Set<ODocument> result = new ODocumentFieldsHashSet();
+    for (Map.Entry<Object, OIdentifiable> keyResultEntry : keyValuesResult.entrySet()) {
+      final ODocument document = new ODocument();
+      document.field("key", keyResultEntry.getKey());
+      document.field("rid", keyResultEntry.getValue().getIdentity());
+
+      document.unsetDirty();
+      result.add(document);
+    }
+
+    return result;
   }
 }

@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,6 +26,13 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElementIterable;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Executes a GREMLIN expression as function of SQL engine.
@@ -49,7 +48,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
     if (!(iCurrentRecord instanceof ODocument))
       // NOT DOCUMENT OR GRAPHDB? IGNORE IT
@@ -61,7 +60,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
       result = new ArrayList<Object>();
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    final Object scriptResult = OGremlinHelper.execute(db, (String) iParameters[0], null, (Map) iContext.getVariables(), result,
+    final Object scriptResult = OGremlinHelper.execute(db, (String) iParams[0], null, (Map) iContext.getVariables(), result,
         new OGremlinHelper.OGremlinCallback() {
 
           @Override
@@ -75,7 +74,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
               iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put("it", graphElement); // FRAMES LIKE SYNTAX
 
             } else {
-              
+
               // VERTEX TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientVertex graphElement = (OrientVertex) new OrientElementIterable<OrientVertex>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();
@@ -96,7 +95,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: gremlin(<gremlin-expression>)";
+    return "gremlin(<gremlin-expression>)";
   }
 
   @Override

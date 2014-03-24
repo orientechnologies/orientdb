@@ -168,6 +168,11 @@ public class OUser extends ODocumentWrapper {
     return document.field("name");
   }
 
+  public OUser setName(final String iName) {
+    document.field("name", iName);
+    return this;
+  }
+
   public String getPassword() {
     return document.field("password");
   }

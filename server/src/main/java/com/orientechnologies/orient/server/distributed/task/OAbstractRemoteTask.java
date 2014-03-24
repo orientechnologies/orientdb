@@ -86,4 +86,8 @@ public abstract class OAbstractRemoteTask implements Externalizable {
 
   public void undo() {
   }
+
+  public boolean isRequireNodeOnline() {
+    return true;
+  }
 }

@@ -40,21 +40,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -73,14 +74,13 @@ public class OWOWCache {
   public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
   private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final OBinarySerializer<String>                   stringSerializer;
 
   private Map<String, Long>                                 nameIdMap;
 
   private RandomAccessFile                                  nameIdMapHolder;
 
   private final Map<Long, OFileClassic>                     files;
-
-  private final ODirectMemory                               directMemory          = ODirectMemoryFactory.INSTANCE.directMemory();
 
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
@@ -124,6 +124,9 @@ public class OWOWCache {
     this.writeAheadLog = writeAheadLog;
     this.cacheMaxSize = cacheMaxSize;
     this.storageLocal = storageLocal;
+
+    final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
+    this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
 
     if (checkMinSize && this.cacheMaxSize < MIN_CACHE_SIZE)
       this.cacheMaxSize = MIN_CACHE_SIZE;
@@ -246,7 +249,7 @@ public class OWOWCache {
 
       nameIdMapHolder.readFully(serializedName);
 
-      final String name = OStringSerializer.INSTANCE.deserialize(serializedName, 0);
+      final String name = stringSerializer.deserialize(serializedName, 0);
       final long fileId = nameIdMapHolder.readLong();
 
       return new NameFileIdEntry(name, fileId);
@@ -259,9 +262,9 @@ public class OWOWCache {
 
     nameIdMapHolder.seek(nameIdMapHolder.length());
 
-    final int nameSize = OStringSerializer.INSTANCE.getObjectSize(nameFileIdEntry.name);
+    final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
     byte[] serializedName = new byte[nameSize];
-    OStringSerializer.INSTANCE.serialize(nameFileIdEntry.name, serializedName, 0);
+    stringSerializer.serialize(nameFileIdEntry.name, serializedName, 0);
 
     nameIdMapHolder.writeInt(nameSize);
     nameIdMapHolder.write(serializedName);
@@ -271,7 +274,9 @@ public class OWOWCache {
       nameIdMapHolder.getFD().sync();
   }
 
-  public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  public Future store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+    Future future = null;
+
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
@@ -304,16 +309,10 @@ public class OWOWCache {
       }
 
       if (cacheSize.get() > cacheMaxSize) {
-        Future future = commitExecutor.submit(new PeriodicFlushTask());
-        try {
-          future.get();
-        } catch (InterruptedException e) {
-          Thread.interrupted();
-          throw new OException("File flush was interrupted", e);
-        } catch (Exception e) {
-          throw new OException("File flush was abnormally terminated", e);
-        }
+        future = commitExecutor.submit(new PeriodicFlushTask());
       }
+
+      return future;
     }
   }
 
@@ -347,24 +346,20 @@ public class OWOWCache {
   }
 
   public void flush(long fileId) {
-    synchronized (syncObject) {
-      Future<Void> future = commitExecutor.submit(new FileFlushTask(fileId));
-      try {
-        future.get();
-      } catch (InterruptedException e) {
-        Thread.interrupted();
-        throw new OException("File flush was interrupted", e);
-      } catch (Exception e) {
-        throw new OException("File flush was abnormally terminated", e);
-      }
+    final Future<Void> future = commitExecutor.submit(new FileFlushTask(fileId));
+    try {
+      future.get();
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new OException("File flush was interrupted", e);
+    } catch (Exception e) {
+      throw new OException("File flush was abnormally terminated", e);
     }
   }
 
   public void flush() {
-    synchronized (syncObject) {
-      for (long fileId : files.keySet())
-        flush(fileId);
-    }
+    for (long fileId : files.keySet())
+      flush(fileId);
   }
 
   public long getFilledUpTo(long fileId) throws IOException {
@@ -390,11 +385,34 @@ public class OWOWCache {
     }
   }
 
+  public long isOpen(String fileName) throws IOException {
+    synchronized (syncObject) {
+      initNameIdMapping();
+
+      final Long fileId = nameIdMap.get(fileName);
+      if (fileId == null)
+        return -1;
+
+      final OFileClassic fileClassic = files.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return -1;
+
+      return fileId;
+    }
+  }
+
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
     synchronized (syncObject) {
       OFileClassic fileClassic = files.get(fileId);
-      if (fileClassic != null)
+      if (fileClassic != null && fileClassic.isOpen())
         fileClassic.setSoftlyClosed(softlyClosed);
+    }
+  }
+
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    synchronized (syncObject) {
+      for (long fileId : files.keySet())
+        setSoftlyClosed(fileId, softlyClosed);
     }
   }
 
@@ -468,22 +486,22 @@ public class OWOWCache {
   }
 
   public void close() throws IOException {
-    synchronized (syncObject) {
-      flush();
+    flush();
 
-      if (!commitExecutor.isShutdown()) {
-        commitExecutor.shutdown();
-        try {
-          if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-            throw new OException("Background data flush task can not be stopped.");
-        } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Data flush thread was interrupted");
+    if (!commitExecutor.isShutdown()) {
+      commitExecutor.shutdown();
+      try {
+        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
+          throw new OException("Background data flush task can not be stopped.");
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "Data flush thread was interrupted");
 
-          Thread.interrupted();
-          throw new OException("Data flush thread was interrupted", e);
-        }
+        Thread.interrupted();
+        throw new OException("Data flush thread was interrupted", e);
       }
+    }
 
+    synchronized (syncObject) {
       for (OFileClassic fileClassic : files.values()) {
         if (fileClassic.isOpen())
           fileClassic.close();
@@ -548,29 +566,29 @@ public class OWOWCache {
 
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length);
-      final long pointer = directMemory.allocate(content);
+      final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
-      final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(directMemory, pointer);
+      final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(pointer);
       dataPointer = new OCachePointer(pointer, storedLSN);
     } else {
       fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
 
-      final long pointer = directMemory.allocate(content);
+      final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
       dataPointer = new OCachePointer(pointer, new OLogSequenceNumber(0, -1));
     }
 
     return dataPointer;
   }
 
-  private void flushPage(long fileId, long pageIndex, long dataPointer) throws IOException {
+  private void flushPage(long fileId, long pageIndex, ODirectMemoryPointer dataPointer) throws IOException {
     if (writeAheadLog != null) {
-      OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(directMemory, dataPointer);
+      OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(dataPointer);
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLSN();
       if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0)
         writeAheadLog.flush();
     }
 
-    final byte[] content = directMemory.get(dataPointer, pageSize);
+    final byte[] content = dataPointer.get(0, pageSize);
     OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
 
     final int crc32 = calculatePageCrc(content);
@@ -693,11 +711,35 @@ public class OWOWCache {
         doDeleteFile(fileId);
 
       if (nameIdMapHolderFile != null) {
-        nameIdMapHolder.close();
+        if (nameIdMapHolderFile.exists()) {
+          nameIdMapHolder.close();
 
-        if (!nameIdMapHolderFile.delete())
-          throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+          if (!nameIdMapHolderFile.delete())
+            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+        }
+
+        nameIdMapHolder = null;
+        nameIdMapHolderFile = null;
       }
+    }
+
+    if (!commitExecutor.isShutdown()) {
+      commitExecutor.shutdown();
+      try {
+        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
+          throw new OException("Background data flush task can not be stopped.");
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "Data flush thread was interrupted");
+
+        Thread.interrupted();
+        throw new OException("Data flush thread was interrupted", e);
+      }
+    }
+  }
+
+  public String fileNameById(long fileId) {
+    synchronized (syncObject) {
+      return files.get(fileId).getName();
     }
   }
 
@@ -839,27 +881,24 @@ public class OWOWCache {
             group.recencyBit = false;
           else {
             group.recencyBit = false;
+
             int flushedPages = 0;
+
             for (int i = 0; i < 16; i++) {
               final OCachePointer pagePointer = group.pages[i];
               if (pagePointer != null) {
-                if (weakLockMode) {
-                  if (!pagePointer.tryAcquireExclusiveLock())
-                    continue groupsLoop;
-                } else
-                  pagePointer.acquireExclusiveLock();
+                if (!pagePointer.tryAcquireSharedLock())
+                  continue groupsLoop;
 
                 try {
                   flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
                   flushedPages++;
 
-                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(directMemory,
-                      pagePointer.getDataPointer());
+                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
                   pagePointer.setLastFlushedLsn(flushedLSN);
                 } finally {
-                  pagePointer.releaseExclusiveLock();
+                  pagePointer.releaseSharedLock();
                 }
-
               }
             }
 
@@ -898,28 +937,36 @@ public class OWOWCache {
       NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.subMap(firstKey, true, lastKey, true);
       Iterator<Map.Entry<GroupKey, WriteGroup>> entryIterator = subMap.entrySet().iterator();
 
-      while (entryIterator.hasNext()) {
+      groupsLoop: while (entryIterator.hasNext()) {
         Map.Entry<GroupKey, WriteGroup> entry = entryIterator.next();
         final WriteGroup writeGroup = entry.getValue();
         final GroupKey groupKey = entry.getKey();
 
         lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
         try {
+          int flushedPages = 0;
+
           for (int i = 0; i < 16; i++) {
             OCachePointer pagePointer = writeGroup.pages[i];
 
             if (pagePointer != null) {
-              pagePointer.acquireExclusiveLock();
+              if (!pagePointer.tryAcquireSharedLock())
+                continue groupsLoop;
+
               try {
                 flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
-                pagePointer.decrementReferrer();
-
-                cacheSize.decrementAndGet();
+                flushedPages++;
               } finally {
-                pagePointer.releaseExclusiveLock();
+                pagePointer.releaseSharedLock();
               }
             }
           }
+
+          for (OCachePointer pagePointer : writeGroup.pages)
+            if (pagePointer != null)
+              pagePointer.decrementReferrer();
+
+          cacheSize.addAndGet(-flushedPages);
           entryIterator.remove();
         } finally {
           lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
@@ -975,7 +1022,7 @@ public class OWOWCache {
     }
   }
 
-  private class NameFileIdEntry {
+  private static final class NameFileIdEntry {
     private final String name;
     private final long   fileId;
 

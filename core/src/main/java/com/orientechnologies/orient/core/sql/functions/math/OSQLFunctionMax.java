@@ -39,13 +39,13 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
 
     // calculate max value for current record
     // consider both collection of parameters and collection in each parameter
     Object max = null;
-    for (Object item : iParameters) {
+    for (Object item : iParams) {
       if (item instanceof Collection<?>) {
         for (Object subitem : ((Collection<?>) item)) {
           if (max == null || subitem != null && ((Comparable) subitem).compareTo(max) > 0)
@@ -87,7 +87,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: max(<field> [,<field>*])";
+    return "max(<field> [,<field>*])";
   }
 
   @Override

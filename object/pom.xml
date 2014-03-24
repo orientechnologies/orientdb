@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>1.7-rc2-SNAPSHOT</version>
     </parent>
 
     <artifactId>orientdb-object</artifactId>
@@ -60,19 +60,34 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-	<build>
-		<plugins>
-		</plugins>
-		<testResources>
-			<testResource>
-				<directory>src/test/resources</directory>
-				<filtering>true</filtering>
-			</testResource>
-		</testResources>
-	</build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <argLine>-ea -Xmx2048m -Dstorage.makeFullCheckpointAfterCreate=false
+                        -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
+                        -Dstorage.configuration.syncOnUpdate=false
+                    </argLine>
+                    <systemPropertyVariables>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+    </build>
     <properties>
         <import.package>*</import.package>
         <export.package>com.orientechnologies.orient.object.*</export.package>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <repositories>
         <repository>

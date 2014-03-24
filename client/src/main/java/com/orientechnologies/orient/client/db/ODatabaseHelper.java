@@ -102,7 +102,7 @@ public class ODatabaseHelper {
     return getConfigurationFile(null);
   }
 
-  protected static String getServerRootPassword() throws IOException {
+  public static String getServerRootPassword() throws IOException {
     return getServerRootPassword("server");
   }
 
@@ -132,7 +132,11 @@ public class ODatabaseHelper {
     if (!file.exists())
       file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists())
+      file = new File("../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    if (!file.exists())
       file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    if (!file.exists())
+      file = new File("../../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
     if (!file.exists() && iDirectory != null) {
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
       if (!file.exists())

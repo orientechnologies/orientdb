@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -108,6 +104,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this;
   }
 
+  @Override
+  public void deleteWithoutIndexLoad(String indexName) {
+    throw new UnsupportedOperationException("deleteWithoutIndexLoad");
+  }
+
   public String getDatabaseName() {
     return databaseName;
   }
@@ -117,13 +118,19 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
     final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
     return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive) {
+      final boolean iToInclusive, boolean ascSortOrder) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
     final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
 
     if (iFromInclusive) {
@@ -149,7 +156,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
     final OCommandRequest cmd;
     if (isInclusive)
       cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS, name);
@@ -167,7 +177,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return getDatabase().command(cmd).execute(fromKey);
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
     final OCommandRequest cmd;
     if (isInclusive)
       cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS, name);
@@ -197,7 +210,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Long) result.get(0).field("size");
   }
 
-  @Override
   public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
       final int maxValuesToFetch) {
     final StringBuilder query = new StringBuilder(QUERY_COUNT_RANGE);
@@ -235,9 +247,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this;
   }
 
-  public boolean remove(final Object iKey) {
+  public boolean remove(final Object key) {
     final OCommandRequest cmd = formatCommand(QUERY_REMOVE, name);
-    return ((Integer) getDatabase().command(cmd).execute(iKey)) > 0;
+    return ((Integer) getDatabase().command(cmd).execute(key)) > 0;
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
@@ -317,6 +329,11 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return configuration;
   }
 
+  @Override
+  public ODocument getMetadata() {
+    return configuration.field("metadata", OType.EMBEDDED);
+  }
+
   public ORID getIdentity() {
     return rid;
   }
@@ -347,7 +364,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return null;
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
     final StringBuilder params = new StringBuilder();
     if (!iKeys.isEmpty()) {
       params.append("?");
@@ -394,10 +414,75 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return name.hashCode();
   }
 
+  @Override
+  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
+      boolean ascSortOrder, IndexValuesResultListener resultListener) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
+    Collection<OIdentifiable> result = getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
+
+    addValues(resultListener, result);
+  }
+
+  private void addValues(IndexValuesResultListener resultListener, Collection<OIdentifiable> result) {
+    for (OIdentifiable identifiable : result)
+      if (!resultListener.addResult(identifiable))
+        break;
+  }
+
+  @Override
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener resultListener) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
+    Collection<OIdentifiable> result = getValuesMajor(fromKey, isInclusive, true);
+
+    addValues(resultListener, result);
+  }
+
+  @Override
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
+    Collection<OIdentifiable> result = getValuesMinor(toKey, isInclusive, true);
+
+    addValues(valuesResultListener, result);
+  }
+
+  @Override
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
+    Collection<ODocument> result = getEntriesMajor(fromKey, isInclusive);
+
+    addEntries(entriesResultListener, result);
+  }
+
+  private void addEntries(IndexEntriesResultListener entriesResultListener, Collection<ODocument> result) {
+    for (ODocument entry : result)
+      if (!entriesResultListener.addResult(entry))
+        break;
+  }
+
+  @Override
+  public void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
+    Collection<ODocument> result = getEntriesMinor(toKey, isInclusive);
+
+    addEntries(entriesResultListener, result);
+  }
+
+  @Override
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive,
+      IndexEntriesResultListener entriesResultListener) {
+    Collection<ODocument> result = getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
+
+    addEntries(entriesResultListener, result);
+  }
+
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
       final boolean iToInclusive, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
+      return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
 
     final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
 
@@ -423,7 +508,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValuesMajor(fromKey, isInclusive);
+      return getValuesMajor(fromKey, isInclusive, true);
 
     final OCommandRequest cmd;
     if (isInclusive)
@@ -435,9 +520,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
-
     if (maxValuesToFetch < 0)
-      return getValuesMinor(toKey, isInclusive);
+      return getValuesMinor(toKey, isInclusive, true);
 
     final OCommandRequest cmd;
 
@@ -482,9 +566,19 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
+  @Override
+  public void getValues(Collection<?> iKeys, boolean ascSortOrder, IndexValuesResultListener resultListener) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported");
+
+    Collection<OIdentifiable> result = getValues(iKeys, ascSortOrder);
+
+    addValues(resultListener, result);
+  }
+
   public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
     if (maxValuesToFetch < 0)
-      return getValues(iKeys);
+      return getValues(iKeys, true);
 
     final StringBuilder params = new StringBuilder();
     if (!iKeys.isEmpty()) {
@@ -498,7 +592,14 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
   }
 
-  public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
+  @Override
+  public void getEntries(final Collection<?> iKeys, IndexEntriesResultListener resultListener) {
+    final Collection<ODocument> result = getEntries(iKeys);
+
+    addEntries(resultListener, result);
+  }
+
+  public Collection<ODocument> getEntries(final Collection<?> iKeys, int maxEntriesToFetch) {
     if (maxEntriesToFetch < 0)
       return getEntries(iKeys);
 
@@ -512,7 +613,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
     final OCommandRequest cmd = formatCommand(QUERY_GET_ENTRIES + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name,
         params.toString());
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(iKeys.toArray());
+    return getDatabase().command(cmd).execute(iKeys.toArray());
   }
 
   public Set<String> getClusters() {
@@ -525,5 +626,15 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   @Override
   public boolean isRebuiding() {
     return false;
+  }
+
+  @Override
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("getFirstKey");
+  }
+
+  @Override
+  public Object getLastKey() {
+    throw new UnsupportedOperationException("getLastKey");
   }
 }

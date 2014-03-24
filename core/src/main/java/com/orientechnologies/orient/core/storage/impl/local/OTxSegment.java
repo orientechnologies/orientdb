@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -357,7 +356,7 @@ public class OTxSegment extends OSingleFileSegment {
 
     final OCluster cluster = storage.getClusterById(iRid.clusterId);
 
-    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalEH))
+    if (!(cluster instanceof OClusterLocal))
       return;
 
     OLogManager.instance().debug(this, "Recovering tx <%d>. Operation <%d> was in status <%d> on record %s size=%d...", iTxId,

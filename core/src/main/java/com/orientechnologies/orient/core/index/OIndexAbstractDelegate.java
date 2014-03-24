@@ -57,27 +57,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.iterator();
   }
 
-  @Override
-  public Iterator<Entry<Object, T>> inverseIterator() {
-    return delegate.inverseIterator();
-  }
-
-  @Override
-  public Iterator<OIdentifiable> valuesIterator() {
-    return delegate.valuesIterator();
-  }
-
-  @Override
-  public Iterator<OIdentifiable> valuesInverseIterator() {
-    return delegate.valuesInverseIterator();
-  }
-
   public T get(final Object iKey) {
     return delegate.get(iKey);
-  }
-
-  public long count(final Object iKey) {
-    return delegate.count(iKey);
   }
 
   public boolean contains(final Object iKey) {
@@ -88,13 +69,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.put(iKey, iValue);
   }
 
-  public boolean remove(final Object iKey) {
-    return delegate.remove(iKey);
-  }
-
-  @Override
-  public int remove(OIdentifiable iRID) {
-    return delegate.remove(iRID);
+  public boolean remove(final Object key) {
+    return delegate.remove(key);
   }
 
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
@@ -109,18 +85,13 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.keys();
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo) {
-    return delegate.getValuesBetween(iRangeFrom, iRangeTo);
+  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
+    return delegate.getValuesBetween(iRangeFrom, iRangeTo, ascSortOrder);
   }
 
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive) {
-    return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive);
-  }
-
-  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
-      final int fetchLimit) {
-    return delegate.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, fetchLimit);
+      final boolean iToInclusive, boolean ascSortOrder) {
+    return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, ascSortOrder);
   }
 
   public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
@@ -131,16 +102,16 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getEntriesBetween(iRangeFrom, iRangeTo);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive) {
-    return delegate.getValuesMajor(fromKey, isInclusive);
+  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
+    return delegate.getValuesMajor(fromKey, isInclusive, ascSortOrder);
   }
 
   public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
     return delegate.getEntriesMajor(fromKey, isInclusive);
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive) {
-    return delegate.getValuesMinor(toKey, isInclusive);
+  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
+    return delegate.getValuesMinor(toKey, isInclusive, ascSortOrder);
   }
 
   public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
@@ -160,6 +131,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.delete();
   }
 
+  @Override
+  public void deleteWithoutIndexLoad(String indexName) {
+    delegate.deleteWithoutIndexLoad(indexName);
+  }
+
   public String getName() {
     return delegate.getName();
   }
@@ -176,12 +152,13 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getConfiguration();
   }
 
-  public ORID getIdentity() {
-    return delegate.getIdentity();
+  @Override
+  public ODocument getMetadata() {
+    return delegate.getMetadata();
   }
 
-  public void commit(final ODocument iDocument) {
-    delegate.commit(iDocument);
+  public ORID getIdentity() {
+    return delegate.getIdentity();
   }
 
   public void unload() {
@@ -200,8 +177,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getKeyTypes();
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-    return delegate.getValues(iKeys);
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
+    return delegate.getValues(iKeys, ascSortOrder);
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
@@ -232,38 +209,40 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.hashCode();
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive, final int maxValuesToFetch) {
-    return delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch);
+  public void getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
+      final boolean iToInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
+    delegate.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, ascSortOrder, valuesResultListener);
   }
 
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
-    return delegate.getValuesMajor(fromKey, isInclusive, maxValuesToFetch);
+  public void getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder,
+      IndexValuesResultListener valuesResultListener) {
+    delegate.getValuesMajor(fromKey, isInclusive, ascSortOrder, valuesResultListener);
   }
 
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
-    return delegate.getValuesMinor(toKey, isInclusive, maxValuesToFetch);
+  public void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+      IndexValuesResultListener valuesResultListener) {
+    delegate.getValuesMinor(toKey, isInclusive, ascSortOrder, valuesResultListener);
   }
 
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
-    return delegate.getEntriesMajor(fromKey, isInclusive, maxEntriesToFetch);
+  public void getEntriesMajor(final Object fromKey, final boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesMajor(fromKey, isInclusive, entriesResultListener);
   }
 
-  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive, final int maxEntriesToFetch) {
-    return delegate.getEntriesMinor(toKey, isInclusive, maxEntriesToFetch);
+  public void getEntriesMinor(final Object toKey, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesMinor(toKey, isInclusive, entriesResultListener);
   }
 
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      final int maxEntriesToFetch) {
-    return delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, maxEntriesToFetch);
+  public void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
+      final IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, entriesResultListener);
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
-    return delegate.getValues(iKeys, maxValuesToFetch);
+  public void getValues(final Collection<?> iKeys, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
+    delegate.getValues(iKeys, ascSortOrder, resultListener);
   }
 
-  public Collection<ODocument> getEntries(final Collection<?> iKeys, final int maxEntriesToFetch) {
-    return delegate.getEntries(iKeys, maxEntriesToFetch);
+  public void getEntries(final Collection<?> iKeys, IndexEntriesResultListener resultListener) {
+    delegate.getEntries(iKeys, resultListener);
   }
 
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
@@ -295,5 +274,15 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   @Override
   public boolean isRebuiding() {
     return delegate.isRebuiding();
+  }
+
+  @Override
+  public Object getFirstKey() {
+    return delegate.getFirstKey();
+  }
+
+  @Override
+  public Object getLastKey() {
+    return delegate.getLastKey();
   }
 }

@@ -32,14 +32,17 @@ public interface OIndexFactory {
    * 
    * 
    * 
+   * 
    * @param database
    * @param indexType
    *          index type
    * @param algorithm
+   * @param valueContainerAlgorithm
    * @return OIndexInternal
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm) throws OConfigurationException;
+  OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm)
+      throws OConfigurationException;
 
 }

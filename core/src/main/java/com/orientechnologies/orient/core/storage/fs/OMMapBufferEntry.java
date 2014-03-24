@@ -21,13 +21,13 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 
 public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
-  private static final OJVMProfiler PROFILER = Orient.instance().getProfiler();
+  private static final OProfilerMBean PROFILER = Orient.instance().getProfiler();
   private static final int          FORCE_DELAY;
   private static final int          FORCE_RETRY;
 

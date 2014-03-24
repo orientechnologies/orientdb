@@ -16,14 +16,13 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
- * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
@@ -33,16 +32,16 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   /**
    * size of char value in bytes
    */
-  public static final int               CHAR_SIZE        = 2;
+  public static final int CHAR_SIZE = 2;
 
-  public static OCharSerializer         INSTANCE         = new OCharSerializer();
-  public static final byte              ID               = 3;
+  public static OCharSerializer INSTANCE = new OCharSerializer();
+  public static final byte ID = 3;
 
-  public int getObjectSize(final Character object) {
+  public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
   }
 
-  public void serialize(final Character object, final byte[] stream, final int startPosition) {
+  public void serialize(final Character object, final byte[] stream, final int startPosition, Object... hints) {
     stream[startPosition] = (byte) (object >>> 8);
     stream[startPosition + 1] = (byte) (object.charValue());
   }
@@ -63,7 +62,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return CHAR_SIZE;
   }
 
-  public void serializeNative(Character object, byte[] stream, int startPosition) {
+  public void serializeNative(Character object, byte[] stream, int startPosition, Object... hints) {
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -72,17 +71,17 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public void serializeInDirectMemory(Character object, ODirectMemory memory, long pointer) {
-    memory.setChar(pointer, object);
+  public void serializeInDirectMemory(Character object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setChar(offset, object);
   }
 
   @Override
-  public Character deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getChar(pointer);
+  public Character deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getChar(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return CHAR_SIZE;
   }
 
@@ -92,5 +91,10 @@ public class OCharSerializer implements OBinarySerializer<Character> {
 
   public int getFixedLength() {
     return CHAR_SIZE;
+  }
+
+  @Override
+  public Character preprocess(Character value, Object... hints) {
+    return value;
   }
 }

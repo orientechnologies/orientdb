@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#set current working directory
+cd `dirname $0`
+
 case `uname` in
   CYGWIN*)
     CP=$( echo `dirname $0`/../lib/*.jar . | sed 's/ /;/g')

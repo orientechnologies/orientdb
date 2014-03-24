@@ -33,11 +33,11 @@ public class OSQLMethodIndexOf extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        final String param0 = iMethodParams[0].toString();
+    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+        final String param0 = iParams[0].toString();
         if (param0.length() > 2) {
             String toFind = param0.substring(1, param0.length() - 1);
-            int startIndex = iMethodParams.length > 1 ? Integer.parseInt(iMethodParams[1].toString()) : 0;
+            int startIndex = iParams.length > 1 ? Integer.parseInt(iParams[1].toString()) : 0;
             ioResult = ioResult != null ? ioResult.toString().indexOf(toFind, startIndex) : null;
         }
         return ioResult;

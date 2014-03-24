@@ -9,6 +9,9 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -56,10 +59,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     storageDir = buildDirectory + "/localPaginatedClusterWithWALTestOne";
     when(storage.getStoragePath()).thenReturn(storageDir);
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
+		when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -73,10 +78,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
+    atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(storageDir);
 
     when(storage.getStorageTransaction()).thenReturn(null);
+    when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(storage.getDiskCache()).thenReturn(diskCache);
     when(storage.getWALInstance()).thenReturn(writeAheadLog);
     when(storage.getVariableParser()).thenReturn(variableParser);
@@ -95,9 +102,11 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
+		when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
 
@@ -113,8 +122,10 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, testStorage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(testStorageDir);
+    final OAtomicOperationsManager testAtomicOperationsManager = new OAtomicOperationsManager(null);
 
     when(testStorage.getStorageTransaction()).thenReturn(null);
+    when(testStorage.getAtomicOperationsManager()).thenReturn(testAtomicOperationsManager);
     when(testStorage.getDiskCache()).thenReturn(testDiskCache);
     when(testStorage.getWALInstance()).thenReturn(null);
     when(testStorage.getVariableParser()).thenReturn(variableParser);
@@ -130,6 +141,8 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
   @AfterMethod
   public void afterMethod() throws IOException {
+    Assert.assertNull(atomicOperationsManager.getCurrentOperation());
+
     writeAheadLog.delete();
     paginatedCluster.delete();
     diskCache.delete();
@@ -278,7 +291,35 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
-  @Override
+	@Override
+	public void testHideHalfSmallRecords() throws IOException {
+		super.testHideHalfSmallRecords();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
+	public void testHideHalfBigRecords() throws IOException {
+		super.testHideHalfBigRecords();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
+	public void testHideHalfRecords() throws IOException {
+		super.testHideHalfRecords();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
+	public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
+		super.testHideHalfRecordsAndAddAnotherHalfAgain();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
   @Test(enabled = false)
   public void testForwardIteration() throws IOException {
     super.testForwardIteration();
@@ -392,31 +433,44 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   private void assertClusterContentIsTheSame(String expectedCluster, String actualCluster) throws IOException {
-    File expectedFile = new File(testStorageDir, expectedCluster + ".pcl");
-    RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".pcl"), "r");
+    File expectedDataFile = new File(testStorageDir, expectedCluster + ".pcl");
+    RandomAccessFile datFileOne = new RandomAccessFile(expectedDataFile, "r");
+    RandomAccessFile datFileTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".pcl"), "r");
 
-    Assert.assertEquals(fileOne.length(), fileTwo.length());
+    assertFileContentIsTheSame(datFileOne, datFileTwo);
+
+    datFileOne.close();
+    datFileTwo.close();
+
+    File expectedRIDMapFile = new File(testStorageDir, expectedCluster + ".cpm");
+    RandomAccessFile ridMapOne = new RandomAccessFile(expectedRIDMapFile, "r");
+    RandomAccessFile ridMapTwo = new RandomAccessFile(new File(storageDir, actualCluster + ".cpm"), "r");
+
+    assertFileContentIsTheSame(ridMapOne, ridMapTwo);
+
+    ridMapOne.close();
+    ridMapTwo.close();
+
+  }
+
+  private void assertFileContentIsTheSame(RandomAccessFile datFileOne, RandomAccessFile datFileTwo) throws IOException {
+    Assert.assertEquals(datFileOne.length(), datFileTwo.length());
 
     byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
     byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OAbstractFile.HEADER_SIZE);
-    fileTwo.seek(OAbstractFile.HEADER_SIZE);
+    datFileOne.seek(OAbstractFile.HEADER_SIZE);
+    datFileTwo.seek(OAbstractFile.HEADER_SIZE);
 
-    int bytesRead = fileOne.read(expectedContent);
+    int bytesRead = datFileOne.read(expectedContent);
     while (bytesRead >= 0) {
-      fileTwo.readFully(actualContent, 0, bytesRead);
+      datFileTwo.readFully(actualContent, 0, bytesRead);
 
       Assert.assertEquals(expectedContent, actualContent);
 
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
-      bytesRead = fileOne.read(expectedContent);
+      bytesRead = datFileOne.read(expectedContent);
     }
-
-    fileOne.close();
-    fileTwo.close();
-
   }
 }

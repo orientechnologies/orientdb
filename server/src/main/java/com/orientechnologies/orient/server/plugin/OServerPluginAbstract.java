@@ -64,7 +64,7 @@ public abstract class OServerPluginAbstract implements OServerPlugin {
   }
 
   @Override
-  public Object getContent(String iURL) {
+  public Object getContent(final String iURL) {
     return null;
   }
 }

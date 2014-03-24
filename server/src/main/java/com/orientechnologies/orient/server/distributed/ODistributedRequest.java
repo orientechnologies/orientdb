@@ -29,6 +29,8 @@ public interface ODistributedRequest {
 
   long getId();
 
+  void setId(long iId);
+
   EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();
@@ -43,13 +45,9 @@ public interface ODistributedRequest {
 
   ODistributedRequest setSenderNodeName(String localNodeName);
 
-  long getSenderThreadId();
+  OAbstractRemoteTask getTask();
 
-  ODistributedRequest setSenderThreadId(final long threadId);
-
-  OAbstractRemoteTask getPayload();
-
-  ODistributedRequest setPayload(final OAbstractRemoteTask payload);
+  ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
   void undo();
 }

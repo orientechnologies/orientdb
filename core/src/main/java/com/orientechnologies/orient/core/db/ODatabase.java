@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -84,6 +85,8 @@ public interface ODatabase extends OBackupable, Closeable {
   /**
    * Drops a database.
    * 
+   * @throws ODatabaseException
+   *           if database is closed.
    */
   public void drop();
 

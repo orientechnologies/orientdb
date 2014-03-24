@@ -2,10 +2,12 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OSingleFileSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
@@ -14,6 +16,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 04.03.13
  */
 public class OHashIndexBufferStore extends OSingleFileSegment {
+
+  private final OBinarySerializer<String> stringSerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(
+                                                               OType.STRING);
+
   public OHashIndexBufferStore(String iPath, String iType) throws IOException {
     super(iPath, iType);
   }
@@ -61,7 +67,7 @@ public class OHashIndexBufferStore extends OSingleFileSegment {
       counter++;
 
       final String fileName = metadata.getFileName();
-      bufferSize += OStringSerializer.INSTANCE.getObjectSize(fileName);
+      bufferSize += stringSerializer.getObjectSize(fileName);
 
       bufferSize += 2 * OLongSerializer.LONG_SIZE;
     }
@@ -77,8 +83,8 @@ public class OHashIndexBufferStore extends OSingleFileSegment {
       if (fileMetadata == null)
         break;
 
-      OStringSerializer.INSTANCE.serializeNative(fileMetadata.getFileName(), buffer, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(fileMetadata.getFileName());
+      stringSerializer.serializeNative(fileMetadata.getFileName(), buffer, offset);
+      offset += stringSerializer.getObjectSize(fileMetadata.getFileName());
 
       OLongSerializer.INSTANCE.serializeNative(fileMetadata.getBucketsCount(), buffer, offset);
       offset += OLongSerializer.LONG_SIZE;
@@ -102,8 +108,8 @@ public class OHashIndexBufferStore extends OSingleFileSegment {
 
     int offset = 0;
     for (int i = 0; i < len; i++) {
-      final String name = OStringSerializer.INSTANCE.deserializeNative(buffer, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(name);
+      final String name = stringSerializer.deserializeNative(buffer, offset);
+      offset += stringSerializer.getObjectSize(name);
 
       final long bucketsCount = OLongSerializer.INSTANCE.deserializeNative(buffer, offset);
       offset += OLongSerializer.LONG_SIZE;

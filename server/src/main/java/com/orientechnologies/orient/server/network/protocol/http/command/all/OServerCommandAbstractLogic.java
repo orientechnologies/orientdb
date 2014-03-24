@@ -25,6 +25,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestWrapper;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWrapper;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
@@ -59,6 +60,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
 
       // BIND CONTEXT VARIABLES
       final OBasicCommandContext context = new OBasicCommandContext();
+      context.setVariable("session", OHttpSessionManager.getInstance().getSession(iRequest.sessionId));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
 

@@ -35,8 +35,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
@@ -64,8 +64,8 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     iRequest.data.commandDetail = text;
 
     final ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
 
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
     try {
 
       final Iterable<OrientVertex> vertices;
@@ -145,11 +145,11 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       json.resetAttributes();
       json.beginObject();
       json.beginObject(1, false, "ae");
-      json.beginObject(2, false, edge.getIdentity());
+      json.beginObject(2, false, edge.getId());
       json.writeAttribute(3, false, "directed", false);
 
-      json.writeAttribute(3, false, "source", edge.getInVertex().getIdentity());
-      json.writeAttribute(3, false, "target", edge.getOutVertex().getIdentity());
+      json.writeAttribute(3, false, "source", edge.getVertex(Direction.IN).getId());
+      json.writeAttribute(3, false, "target", edge.getVertex(Direction.OUT).getId());
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);

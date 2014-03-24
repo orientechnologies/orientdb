@@ -14,8 +14,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -24,7 +23,7 @@ import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
@@ -34,7 +33,6 @@ public class ReadWriteDiskCacheTest {
 
   private OReadWriteDiskCache    buffer;
   private OLocalPaginatedStorage storageLocal;
-  private ODirectMemory          directMemory;
   private String                 fileName;
   private byte                   seed;
   private OWriteAheadLog         writeAheadLog;
@@ -42,18 +40,19 @@ public class ReadWriteDiskCacheTest {
   @BeforeClass
   public void beforeClass() throws IOException {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
-    directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
+		storageLocal.create(null);
 
     fileName = "readWriteDiskCacheTest.tst";
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
+
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
@@ -90,7 +89,7 @@ public class ReadWriteDiskCacheTest {
   @AfterClass
   public void afterClass() throws IOException {
     if (buffer != null) {
-      buffer.close();
+      buffer.delete();
       buffer = null;
     }
 
@@ -126,8 +125,7 @@ public class ReadWriteDiskCacheTest {
 
       entries[i].markDirty();
 
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-          (byte) i }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       entries[i].getCachePointer().releaseExclusiveLock();
 
       buffer.release(entries[i]);
@@ -164,8 +162,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-          (byte) i }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       setLsn(entries[i].getCachePointer().getDataPointer(), new OLogSequenceNumber(1, i));
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -232,8 +229,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-          (byte) i }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       setLsn(entries[i].getCachePointer().getDataPointer(), new OLogSequenceNumber(1, i));
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -303,8 +299,7 @@ public class ReadWriteDiskCacheTest {
 
       entries[i].markDirty();
 
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-          (byte) i }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
       setLsn(entries[i].getCachePointer().getDataPointer(), new OLogSequenceNumber(1, i));
 
       entries[i].getCachePointer().releaseExclusiveLock();
@@ -366,8 +361,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-          (byte) i }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -405,8 +399,7 @@ public class ReadWriteDiskCacheTest {
 
       entries[i].markDirty();
 
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-          (byte) i }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -444,7 +437,7 @@ public class ReadWriteDiskCacheTest {
       entries[i] = buffer.load(fileId, i, false);
       entries[i].getCachePointer().acquireExclusiveLock();
 
-      content[i] = directMemory.get(entries[i].getCachePointer().getDataPointer() + systemOffset, 8);
+      content[i] = entries[i].getCachePointer().getDataPointer().get(systemOffset, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -471,8 +464,8 @@ public class ReadWriteDiskCacheTest {
 
         entries[i].markDirty();
 
-        directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5,
-            (byte) j, (byte) i }, 0, 8);
+        entries[i].getCachePointer().getDataPointer()
+            .set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i }, 0, 8);
 
         entries[i].getCachePointer().releaseExclusiveLock();
         buffer.release(entries[i]);
@@ -512,8 +505,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -557,12 +549,11 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       if (i - 4 >= 0) {
         buffer.load(fileId, i - 4, false);
-        directMemory.set(entries[i - 4].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed,
-            4, 5, 6, 7 }, 0, 8);
+        entries[i - 4].getCachePointer().getDataPointer()
+            .set(systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
       }
     }
 
@@ -593,8 +584,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -605,8 +595,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
     }
 
     for (int i = 0; i < 4; i++) {
@@ -633,12 +622,11 @@ public class ReadWriteDiskCacheTest {
         entries[i].getCachePointer().acquireExclusiveLock();
 
         entries[i].markDirty();
-        directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6,
-            7 }, 0, 8);
+        entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
         if (i - 4 >= 0) {
           buffer.load(fileId, i - 4, false);
-          directMemory.set(entries[i - 4].getCachePointer().getDataPointer() + systemOffset, new byte[] { (byte) (i - 4), 1, 2,
-              seed, 4, 5, 6, 7 }, 0, 8);
+          entries[i - 4].getCachePointer().getDataPointer()
+              .set(systemOffset, new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
         }
       }
     } finally {
@@ -661,8 +649,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -681,8 +668,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -720,8 +706,7 @@ public class ReadWriteDiskCacheTest {
       entries[i].getCachePointer().acquireExclusiveLock();
 
       entries[i].markDirty();
-      directMemory.set(entries[i].getCachePointer().getDataPointer() + systemOffset,
-          new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
+      entries[i].getCachePointer().getDataPointer().set(systemOffset, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 }, 0, 8);
 
       entries[i].getCachePointer().releaseExclusiveLock();
       buffer.release(entries[i]);
@@ -903,7 +888,7 @@ public class ReadWriteDiskCacheTest {
     fileClassic.close();
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, long pointer, boolean dirty, OLogSequenceNumber lsn) {
+  private OCacheEntry generateEntry(long fileId, long pageIndex, ODirectMemoryPointer pointer, boolean dirty, OLogSequenceNumber lsn) {
     return new OCacheEntry(fileId, pageIndex, new OCachePointer(pointer, lsn), dirty);
   }
 
@@ -911,11 +896,10 @@ public class ReadWriteDiskCacheTest {
     return new OCacheEntry(fileId, pageIndex, null, false);
   }
 
-  private void setLsn(long dataPointer, OLogSequenceNumber lsn) {
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), directMemory, dataPointer + OIntegerSerializer.INT_SIZE
+  private void setLsn(ODirectMemoryPointer dataPointer, OLogSequenceNumber lsn) {
+    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), dataPointer, OIntegerSerializer.INT_SIZE
         + OLongSerializer.LONG_SIZE);
-    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), directMemory, dataPointer + OIntegerSerializer.INT_SIZE + 2
+    OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), dataPointer, OIntegerSerializer.INT_SIZE + 2
         * OLongSerializer.LONG_SIZE);
   }
 }

@@ -77,12 +77,12 @@ public class DbImportExportTest implements OCommandOutputListener {
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 
     // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
+    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
       database.unregisterHook(hook);
     }
 
-    if (url.startsWith("plocal:") || url.startsWith("remote:"))
-      dbImport.setPreserveClusterIDs(true);
+    if (url.startsWith("local:") || url.startsWith("memory:"))
+      dbImport.setPreserveClusterIDs(false);
 
     dbImport.setPreserveRids(true);
     dbImport.setDeleteRIDMapping(false);
@@ -92,6 +92,7 @@ public class DbImportExportTest implements OCommandOutputListener {
     database.close();
   }
 
+  @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
     System.out.print(iText);

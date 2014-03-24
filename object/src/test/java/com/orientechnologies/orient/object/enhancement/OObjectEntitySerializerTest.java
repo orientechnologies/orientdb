@@ -24,7 +24,7 @@ public class OObjectEntitySerializerTest {
 
 	@AfterClass
 	protected void tearDown() {
-		databaseTx.close();
+		databaseTx.drop();
 	}
 
 	@Test

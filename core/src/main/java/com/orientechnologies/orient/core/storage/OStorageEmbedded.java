@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,6 +29,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+
+import java.io.IOException;
 
 /**
  * Interface for embedded storage.
@@ -58,16 +58,16 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   public abstract OCluster getClusterByName(final String iClusterName);
 
   protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
-      boolean loadTombstones);
+      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Closes the storage freeing the lock manager first.
    */
   @Override
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     if (checkForClose(iForce))
       lockManager.clear();
-    super.close(iForce);
+    super.close(iForce, onDelete);
   }
 
   /**
@@ -93,11 +93,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     try {
 
-      final Object result = executor.execute(iCommand.getParameters());
-      return result;
+      return executor.execute(iCommand.getParameters());
 
     } catch (OException e) {
-      // PASS THROUGHT
+      // PASS THROUGH
       throw e;
     } catch (Exception e) {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
@@ -200,6 +199,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
   public void releaseReadLock(final ORID iRid) {
     lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+  }
+
+  public void releaseAllLocksOfCurrentThread() {
+    lockManager.releaseAllLocksOfRequester(Thread.currentThread());
   }
 
   @Override

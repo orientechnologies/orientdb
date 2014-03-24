@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -65,8 +66,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
-  private final Level            logClientExceptions;
-  private final boolean          logClientFullStackTrace;
+  protected final Level          logClientExceptions;
+  protected final boolean        logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
@@ -249,14 +250,16 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.writeBytes(stream, realLength);
     } catch (Exception e) {
       channel.writeBytes(null);
-      OLogManager.instance().error(this, "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")",
-          OSerializationException.class);
+      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      OLogManager.instance().error(this, message, e);
+
+      throw new OSerializationException(message, e);
     }
   }
 
   protected void checkStorageExistence(final String iDatabaseName) {
     for (OStorage stg : Orient.instance().getStorages()) {
-      if (stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
+      if (!(stg instanceof OStorageProxy) && stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
         throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
     }
   }
@@ -296,8 +299,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     else if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(dbName);
+
       if (path == null)
-        path = storageType + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + dbName;
+        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
     } else if (storageType.equals(OEngineMemory.NAME)) {
       path = storageType + ":" + dbName;
     } else
@@ -311,6 +315,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       iDatabase.delete(rid, version);
       return 1;
     } catch (Exception e) {
+      return 0;
+    }
+  }
+
+  protected int hideRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+    try {
+      iDatabase.hide(rid, version);
+      return 1;
+    } catch (ORecordNotFoundException e) {
       return 0;
     }
   }

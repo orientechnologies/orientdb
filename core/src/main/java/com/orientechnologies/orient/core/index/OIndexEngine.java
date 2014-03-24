@@ -23,6 +23,8 @@ public interface OIndexEngine<V> {
 
   void delete();
 
+  void deleteWithoutLoad(String indexName);
+
   void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic);
 
   boolean contains(Object key);
@@ -63,29 +65,29 @@ public interface OIndexEngine<V> {
 
   void put(Object key, V value);
 
-  int removeValue(OIdentifiable value, ValuesTransformer<V> transformer);
+	public Object getFirstKey();
 
-  Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer);
+	public Object getLastKey();
 
-  Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
+  void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+												boolean ascSortOrder, ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
 
-  Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
+  void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
+											ValuesResultListener valuesResultListener);
 
-  Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch,
-      ValuesTransformer<V> transformer);
+  void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
+											ValuesResultListener valuesResultListener);
 
-  Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch, ValuesTransformer<V> transformer);
+  void getEntriesMajor(final Object fromKey, final boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener);
 
-  Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer);
+  void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener);
+
+  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener);
 
   long size(ValuesTransformer<V> transformer);
-
-  long count(Object rangeFrom, final boolean fromInclusive, Object rangeTo, final boolean toInclusive, final int maxValuesToFetch,
-      ValuesTransformer<V> transformer);
 
   boolean hasRangeQuerySupport();
 
@@ -93,5 +95,13 @@ public interface OIndexEngine<V> {
     Collection<OIdentifiable> transformFromValue(V value);
 
     V transformToValue(Collection<OIdentifiable> collection);
+  }
+
+  interface ValuesResultListener {
+    boolean addResult(OIdentifiable identifiable);
+  }
+
+  interface EntriesResultListener {
+    boolean addResult(ODocument entry);
   }
 }

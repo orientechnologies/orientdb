@@ -26,76 +26,81 @@ import java.util.Map;
  * 
  */
 public class OContextConfiguration {
-	private Map<String, Object>	config	= new HashMap<String, Object>();	;
+  private Map<String, Object> config = new HashMap<String, Object>(); ;
 
-	/**
-	 * Empty constructor to create just a proxy for the OGlobalConfiguration. No values are setted.
-	 */
-	public OContextConfiguration() {
-	}
+  /**
+   * Empty constructor to create just a proxy for the OGlobalConfiguration. No values are setted.
+   */
+  public OContextConfiguration() {
+  }
 
-	/**
-	 * Initializes the context with custom parameters.
-	 * 
-	 * @param iConfig
-	 *          Map of parameters of type Map<String, Object>.
-	 */
-	public OContextConfiguration(final Map<String, Object> iConfig) {
-		this.config = iConfig;
-	}
+  /**
+   * Initializes the context with custom parameters.
+   * 
+   * @param iConfig
+   *          Map of parameters of type Map<String, Object>.
+   */
+  public OContextConfiguration(final Map<String, Object> iConfig) {
+    this.config = iConfig;
+  }
 
-	public OContextConfiguration(final OContextConfiguration iParent) {
-		if (iParent != null)
-			config.putAll(iParent.config);
-	}
+  public OContextConfiguration(final OContextConfiguration iParent) {
+    if (iParent != null)
+      config.putAll(iParent.config);
+  }
 
-	public Object setValue(final OGlobalConfiguration iConfig, final Object iValue) {
-		return config.put(iConfig.getKey(), iValue);
-	}
+  public Object setValue(final OGlobalConfiguration iConfig, final Object iValue) {
+    return config.put(iConfig.getKey(), iValue);
+  }
 
-	public Object setValue(final String iName, final Object iValue) {
-		return config.put(iName, iValue);
-	}
+  public Object setValue(final String iName, final Object iValue) {
+    return config.put(iName, iValue);
+  }
 
-	public Object getValue(final OGlobalConfiguration iConfig) {
-		if (config != null && config.containsKey(iConfig.getKey()))
-			return config.get(iConfig.getKey());
-		return iConfig.getValue();
-	}
+  public Object getValue(final OGlobalConfiguration iConfig) {
+    if (config != null && config.containsKey(iConfig.getKey()))
+      return config.get(iConfig.getKey());
+    return iConfig.getValue();
+  }
 
-	@SuppressWarnings("unchecked")
-	public <T> T getValue(final String iName, final T iDefaultValue) {
-		if (config != null && config.containsKey(iName))
-			return (T) config.get(iName);
+  @SuppressWarnings("unchecked")
+  public <T> T getValue(final String iName, final T iDefaultValue) {
+    if (config != null && config.containsKey(iName))
+      return (T) config.get(iName);
 
-		final String sysProperty = System.getProperty(iName);
-		if (sysProperty != null)
-			return (T) sysProperty;
+    final String sysProperty = System.getProperty(iName);
+    if (sysProperty != null)
+      return (T) sysProperty;
 
-		return iDefaultValue;
-	}
+    return iDefaultValue;
+  }
 
-	public boolean getValueAsBoolean(final OGlobalConfiguration iConfig) {
-		final Object v = getValue(iConfig);
-		return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
-	}
+  public boolean getValueAsBoolean(final OGlobalConfiguration iConfig) {
+    final Object v = getValue(iConfig);
+    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
+  }
 
-	public String getValueAsString(final String iName, final String iDefaultValue) {
-		return getValue(iName, iDefaultValue);
-	}
+  public String getValueAsString(final String iName, final String iDefaultValue) {
+    return getValue(iName, iDefaultValue);
+  }
 
-	public String getValueAsString(final OGlobalConfiguration iConfig) {
-		final Object v = getValue(iConfig);
-		return v.toString();
-	}
+  public String getValueAsString(final OGlobalConfiguration iConfig) {
+    final Object v = getValue(iConfig);
+    return v.toString();
+  }
 
-	public int getValueAsInteger(final OGlobalConfiguration iConfig) {
-		final Object v = getValue(iConfig);
-		return v instanceof Integer ? ((Integer) v).intValue() : Integer.parseInt(v.toString());
-	}
+  public int getValueAsInteger(final OGlobalConfiguration iConfig) {
+    final Object v = getValue(iConfig);
+    return v instanceof Integer ? ((Integer) v).intValue() : Integer.parseInt(v.toString());
+  }
 
-	public float getValueAsFloat(final OGlobalConfiguration iConfig) {
-		final Object v = getValue(iConfig);
-		return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
-	}
+  public long getValueAsLong(final OGlobalConfiguration iConfig) {
+    final Object v = getValue(iConfig);
+    return v instanceof Long ? ((Long) v).intValue() : Long.parseLong(v.toString());
+  }
+
+  public float getValueAsFloat(final OGlobalConfiguration iConfig) {
+    final Object v = getValue(iConfig);
+    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+  }
 }

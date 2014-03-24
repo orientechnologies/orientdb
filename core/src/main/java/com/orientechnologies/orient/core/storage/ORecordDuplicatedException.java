@@ -10,17 +10,22 @@ import com.orientechnologies.orient.core.id.ORID;
 public class ORecordDuplicatedException extends OException {
   private final ORID iRid;
 
+  public ORecordDuplicatedException(String message) {
+    super(message);
+    this.iRid = null;
+  }
+
   public ORecordDuplicatedException(String message, ORID iRid) {
     super(message);
     this.iRid = iRid;
   }
 
-	public ORID getiRid() {
-		return iRid;
-	}
+  public ORID getiRid() {
+    return iRid;
+  }
 
-	@Override
-	public String toString() {
-		return super.toString() + " RID=" + iRid ;
-	}
+  @Override
+  public String toString() {
+    return super.toString() + " RID=" + iRid;
+  }
 }

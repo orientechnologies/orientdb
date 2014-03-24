@@ -181,6 +181,11 @@ public class OSchemaProxyObject implements OSchema {
     return underlying;
   }
 
+  @Override
+  public OClass getClassByClusterId(int clusterId) {
+    return underlying.getClassByClusterId(clusterId);
+  }
+
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
    * 

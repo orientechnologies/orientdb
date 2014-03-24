@@ -17,9 +17,7 @@
 package com.orientechnologies.nio;
 
 import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
 /**
@@ -27,15 +25,10 @@ import com.sun.jna.Pointer;
  * @since 5/6/13
  */
 public class OJNADirectMemory implements ODirectMemory {
-  public static final OJNADirectMemory INSTANCE = new OJNADirectMemory();
+  private static final CLibrary        C_LIBRARY = OCLibraryFactory.INSTANCE.library();
 
-  @Override
-  public long allocate(byte[] bytes) {
-    final long pointer = allocate(bytes.length);
-    set(pointer, bytes, 0, bytes.length);
+  public static final OJNADirectMemory INSTANCE  = new OJNADirectMemory();
 
-    return pointer;
-  }
 
   @Override
   public long allocate(long size) {
@@ -60,16 +53,6 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public void set(long pointer, byte[] content, int arrayOffset, int length) {
     new Pointer(pointer).write(0, content, arrayOffset, length);
-  }
-
-  @Override
-  public <T> T get(long pointer, OBinarySerializer<T> serializer) {
-    return serializer.deserializeFromDirectMemory(this, pointer);
-  }
-
-  @Override
-  public <T> void set(long pointer, T data, OBinarySerializer<T> serializer) {
-    serializer.serializeInDirectMemory(data, this, pointer);
   }
 
   @Override
@@ -125,8 +108,8 @@ public class OJNADirectMemory implements ODirectMemory {
   }
 
   @Override
-  public void copyData(long srcPointer, long destPointer, long len) {
-    CLibrary.memmove(new Pointer(destPointer), new Pointer(srcPointer), new NativeLong(len));
+  public void moveData(long srcPointer, long destPointer, long len) {
+    C_LIBRARY.memoryMove(srcPointer, destPointer, len);
   }
 
 }

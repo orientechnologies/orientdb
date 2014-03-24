@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.storage;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -49,7 +50,11 @@ public interface OCluster {
 
   public void close() throws IOException;
 
+  public void close(boolean flush) throws IOException;
+
   public void delete() throws IOException;
+
+  public OModificationLock getExternalModificationLock();
 
   public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
@@ -69,6 +74,17 @@ public interface OCluster {
   public String getType();
 
   public int getDataSegmentId();
+
+  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
+
+  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException;
+
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException;
+
+  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException;
+
+  public boolean exists();
 
   /**
    * Adds a new entry.
@@ -103,20 +119,6 @@ public interface OCluster {
 
   public OClusterPosition getLastPosition() throws IOException;
 
-  /**
-   * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
-   * 
-   * @see #unlock();
-   */
-  public void lock();
-
-  /**
-   * Lets to an external actor to unlock the shared mode lock acquired by the lock().
-   * 
-   * @see #lock();
-   */
-  public void unlock();
-
   public int getId();
 
   public void synch() throws IOException;
@@ -134,13 +136,13 @@ public interface OCluster {
    */
   public long getRecordsSize() throws IOException;
 
-	public boolean useWal();
+  public boolean useWal();
 
-	public float recordGrowFactor();
+  public float recordGrowFactor();
 
-	public float recordOverflowGrowFactor();
+  public float recordOverflowGrowFactor();
 
-	public String compression();
+  public String compression();
 
   public boolean isHashBased();
 
@@ -153,4 +155,18 @@ public interface OCluster {
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
 
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
+
+  /**
+   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * 
+   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method.
+   * 
+   * @param position
+   *          Position of record in cluster
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * 
+   * @return false if record does not exist.
+   */
+  public boolean hideRecord(OClusterPosition position) throws IOException;
 }

@@ -14,9 +14,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -54,8 +55,8 @@ public class LocalHashTableIterationTest {
 
     localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", hashFunction);
 
-    localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE,
-        (OStorageLocal) databaseDocumentTx.getStorage());
+    localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
   @AfterClass

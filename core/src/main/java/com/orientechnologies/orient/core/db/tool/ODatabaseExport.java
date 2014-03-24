@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -50,6 +39,17 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
+
 /**
  * Export data from a database to a file.
  * 
@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected OJSONWriter   writer;
   protected long          recordExported;
-  public static final int VERSION = 6;
+  public static final int VERSION = 8;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -71,11 +71,11 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       fileName += ".gz";
     }
     final File f = new File(fileName);
-    f.mkdirs();
+    f.getParentFile().mkdirs();
     if (f.exists())
       f.delete();
 
-    writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName))));
+    writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName), 16384))); // 16KB
     writer.beginObject();
     iDatabase.getLevel1Cache().setEnable(false);
     iDatabase.getLevel2Cache().setEnable(false);
@@ -251,23 +251,24 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       final String clusterName = database.getClusterNameById(clusterId);
 
-      if (clusterName != null) {
-        // CHECK IF THE CLUSTER IS INCLUDED
-        if (includeClusters != null) {
-          if (!includeClusters.contains(clusterName.toUpperCase()))
-            continue;
-        } else if (excludeClusters != null) {
-          if (excludeClusters.contains(clusterName.toUpperCase()))
-            continue;
-        }
-      } else if (includeClusters != null && !includeClusters.isEmpty())
+      // exclude removed clusters
+      if (clusterName == null)
         continue;
+
+      // CHECK IF THE CLUSTER IS INCLUDED
+      if (includeClusters != null) {
+        if (!includeClusters.contains(clusterName.toUpperCase()))
+          continue;
+      } else if (excludeClusters != null) {
+        if (excludeClusters.contains(clusterName.toUpperCase()))
+          continue;
+      }
 
       writer.beginObject(2, true, null);
 
-      writer.writeAttribute(0, false, "name", clusterName != null ? clusterName : "");
+      writer.writeAttribute(0, false, "name", clusterName);
       writer.writeAttribute(0, false, "id", clusterId);
-      writer.writeAttribute(0, false, "type", clusterName != null ? database.getClusterType(clusterName) : "");
+      writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
       exportedClusters++;
       writer.endObject(2, false);
@@ -318,6 +319,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     final Collection<? extends OIndex<?>> indexes = indexManager.getIndexes();
 
     for (OIndex<?> index : indexes) {
+      if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
+        continue;
+
       listener.onMessage("\n- Index " + index.getName() + "...");
       writer.beginObject(2, true, null);
       writer.writeAttribute(3, true, "name", index.getName());
@@ -334,6 +338,14 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
         writer.endObject(4, true);
       }
+
+      ODocument metadata = index.getMetadata();
+      if (metadata != null)
+        writer.writeAttribute(4, true, "metadata", metadata);
+
+      final ODocument configuration = index.getConfiguration();
+      if (configuration.field("blueprintsIndexClass") != null)
+        writer.writeAttribute(4, true, "blueprintsIndexClass", configuration.field("blueprintsIndexClass"));
 
       writer.endObject(2, true);
       listener.onMessage("OK");
@@ -357,6 +369,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     int manualIndexes = 0;
     writer.beginCollection(1, true, "manualIndexes");
     for (OIndex<?> index : indexes) {
+      if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
+        continue;
+
       if (!index.isAutomatic()) {
         listener.onMessage("\n- Exporting index " + index.getName() + " ...");
 
@@ -372,9 +387,12 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (i > 0)
             writer.append(",");
 
+					indexEntry.setLazyLoad(false);
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();
+          exportEntry.setLazyLoad(false);
+
           if (indexDefinition instanceof ORuntimeKeyIndexDefinition
               && ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer() != null) {
             final OBinarySerializer binarySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();

@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,25 +16,20 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.serialization.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -47,14 +42,25 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
  */
 public abstract class OStorageLocalAbstract extends OStorageEmbedded implements OFreezableStorage {
-  protected OWriteAheadLog      writeAheadLog;
-  protected OStorageTransaction transaction = null;
-  protected ODiskCache          diskCache;
+  protected volatile OWriteAheadLog                writeAheadLog;
+  protected volatile ODiskCache                    diskCache;
+  protected volatile OAtomicOperationsManager      atomicOperationsManager;
+
+  protected final ThreadLocal<OStorageTransaction> transaction = new ThreadLocal<OStorageTransaction>();
 
   public OStorageLocalAbstract(String name, String filePath, String mode) {
     super(name, filePath, mode);
@@ -79,62 +85,79 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 
   public OStorageTransaction getStorageTransaction() {
-    lock.acquireSharedLock();
-    try {
-      return transaction;
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return transaction.get();
+  }
+
+  public OAtomicOperationsManager getAtomicOperationsManager() {
+    return atomicOperationsManager;
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    freeze(true);
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
+    freeze(false);
     try {
-      OZIPCompressionUtil.compressDirectory(getStoragePath(), out);
+      if (callable != null)
+        try {
+          callable.call();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on callback invocation during backup", e);
+        }
+
+      final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+      try {
+        OZIPCompressionUtil.compressDirectory(getStoragePath(), bo, new String[] { ".wal" }, iOutput, compressionLevel);
+      } finally {
+        if (bufferSize > 0) {
+          bo.flush();
+          bo.close();
+        }
+      }
     } finally {
       release();
     }
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     if (!isClosed())
       close();
 
-    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath());
+    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
   }
 
   protected void endStorageTx() throws IOException {
-    if (writeAheadLog == null)
-      return;
+    atomicOperationsManager.endAtomicOperation(false);
 
-    writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), false));
+    assert atomicOperationsManager.getCurrentOperation() == null;
   }
 
   protected void startStorageTx(OTransaction clientTx) throws IOException {
     if (writeAheadLog == null)
       return;
 
-    if (transaction != null && transaction.getClientTx().getId() != clientTx.getId())
+    final OStorageTransaction storageTx = transaction.get();
+    if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
 
-    transaction = new OStorageTransaction(clientTx, OOperationUnitId.generateId());
-
-    OLogSequenceNumber startLSN = writeAheadLog.log(new OAtomicUnitStartRecord(true, transaction.getOperationUnitId()));
-    transaction.setStartLSN(startLSN);
+    atomicOperationsManager.startAtomicOperation();
+    transaction.set(new OStorageTransaction(clientTx));
   }
 
   protected void rollbackStorageTx() throws IOException {
-    if (writeAheadLog == null || transaction == null)
+    if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    writeAheadLog.log(new OAtomicUnitEndRecord(transaction.getOperationUnitId(), true));
-    final List<OWALRecord> operationUnit = readOperationUnit(transaction.getStartLSN(), transaction.getOperationUnitId());
+    final OAtomicOperation operation = atomicOperationsManager.endAtomicOperation(true);
+
+    assert atomicOperationsManager.getCurrentOperation() == null;
+
+    final List<OLogSequenceNumber> operationUnit = readOperationUnit(operation.getStartLSN(), operation.getOperationUnitId());
     undoOperation(operationUnit);
   }
 
-  private List<OWALRecord> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
+  private List<OLogSequenceNumber> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {
     final OLogSequenceNumber beginSequence = writeAheadLog.begin();
 
     if (startLSN == null)
@@ -143,7 +166,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
     if (startLSN.compareTo(beginSequence) < 0)
       startLSN = beginSequence;
 
-    List<OWALRecord> operationUnit = new ArrayList<OWALRecord>();
+    List<OLogSequenceNumber> operationUnit = new ArrayList<OLogSequenceNumber>();
 
     OLogSequenceNumber lsn = startLSN;
     while (lsn != null) {
@@ -155,7 +178,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
       OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
       if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
-        operationUnit.add(record);
+        operationUnit.add(lsn);
         if (record instanceof OAtomicUnitEndRecord)
           break;
       }
@@ -165,9 +188,9 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
     return operationUnit;
   }
 
-  protected void undoOperation(List<OWALRecord> operationUnit) throws IOException {
+  protected void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
     for (int i = operationUnit.size() - 1; i >= 0; i--) {
-      OWALRecord record = operationUnit.get(i);
+      OWALRecord record = writeAheadLog.read(operationUnit.get(i));
       if (checkFirstAtomicUnitRecord(i, record)) {
         assert ((OAtomicUnitStartRecord) record).isRollbackSupported();
         continue;
@@ -195,7 +218,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
           OPageChanges pageChanges = updatePageRecord.getChanges();
           durablePage.revertChanges(pageChanges);
 
-          durablePage.setLsn(updatePageRecord.getPrevLsn());
+          durablePage.setLsn(updatePageRecord.getLsn());
         } finally {
           cachePointer.releaseExclusiveLock();
           diskCache.release(cacheEntry);
@@ -243,12 +266,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   }
 
   public OWriteAheadLog getWALInstance() {
-    lock.acquireSharedLock();
-    try {
-      return writeAheadLog;
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return writeAheadLog;
   }
 
 }

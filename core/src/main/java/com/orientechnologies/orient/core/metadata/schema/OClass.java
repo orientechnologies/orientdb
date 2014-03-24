@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Schema class
@@ -97,7 +97,9 @@ public interface OClass extends Comparable<OClass> {
 
   public int[] getPolymorphicClusterIds();
 
-  public Iterator<OClass> getBaseClasses();
+  public Collection<OClass> getBaseClasses();
+
+  public Collection<OClass> getAllBaseClasses();
 
   public long getSize();
 
@@ -220,8 +222,7 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Creates database index that is based on passed in field names. Given index will be added into class instance.
    * 
-   * @param fields
-   *          Field names from which index will be created.
+   * 
    * @param iName
    *          Database index name.
    * @param iType
@@ -229,9 +230,15 @@ public interface OClass extends Comparable<OClass> {
    * @param iProgressListener
    *          Progress listener.
    * 
-   * @return Class index registered inside of given class ans associated with database index.
+   * @param metadata
+   *          Additional parameters which will be added in index configuration document as "metadata" field.
+   * 
+   * @param fields
+   *          Field names from which index will be created. @return Class index registered inside of given class ans associated with
+   *          database index.
    */
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, String... fields);
+  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+      String... fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.

@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+
+import java.util.List;
 
 /**
  * Evaluates a complex expression.
@@ -37,10 +37,10 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
     if (predicate == null)
-      predicate = new OSQLPredicate((String) iParameters[0].toString());
+      predicate = new OSQLPredicate((String) iParams[0].toString());
 
     try {
       return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, (ODocument) iCurrentResult, iContext);
@@ -57,7 +57,7 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: eval(<expression>)";
+    return "eval(<expression>)";
   }
 
   @Override

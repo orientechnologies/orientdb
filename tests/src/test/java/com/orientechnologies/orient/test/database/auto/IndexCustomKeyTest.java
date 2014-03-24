@@ -18,9 +18,13 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -46,6 +50,7 @@ public class IndexCustomKeyTest {
       value = buffer;
     }
 
+    @Override
     public int compareTo(ComparableBinary o) {
       final int size = value.length;
 
@@ -62,10 +67,12 @@ public class IndexCustomKeyTest {
       return value;
     }
 
+    @Override
     public byte[] toStream() throws OSerializationException {
       return value;
     }
 
+    @Override
     public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
       this.value = iStream;
       return this;
@@ -82,62 +89,77 @@ public class IndexCustomKeyTest {
       return length;
     }
 
-    public int getObjectSize(final ComparableBinary object) {
+    @Override
+    public int getObjectSize(final ComparableBinary object, Object... hints) {
       return object.toByteArray().length;
     }
 
-    public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition) {
+    @Override
+    public void serialize(final ComparableBinary object, final byte[] stream, final int startPosition, Object... hints) {
       final byte[] buffer = object.toByteArray();
       System.arraycopy(buffer, 0, stream, startPosition, buffer.length);
     }
 
+    @Override
     public ComparableBinary deserialize(final byte[] stream, final int startPosition) {
       final byte[] buffer = Arrays.copyOfRange(stream, startPosition, startPosition + LENGTH);
       return new ComparableBinary(buffer);
     }
 
+    @Override
     public int getObjectSize(byte[] stream, int startPosition) {
       return LENGTH;
     }
 
+    @Override
     public byte getId() {
       return ID;
     }
 
+    @Override
     public int getObjectSizeNative(byte[] stream, int startPosition) {
       return LENGTH;
     }
 
-    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition) {
+    @Override
+    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
       serialize(object, stream, startPosition);
     }
 
+    @Override
     public ComparableBinary deserializeNative(byte[] stream, int startPosition) {
       return deserialize(stream, startPosition);
     }
 
     @Override
-    public void serializeInDirectMemory(ComparableBinary object, ODirectMemory memory, long pointer) {
+    public void serializeInDirectMemory(ComparableBinary object, ODirectMemoryPointer pointer, long offset, Object... hints) {
       final byte[] buffer = object.toByteArray();
-      memory.set(pointer, buffer, 0, buffer.length);
+      pointer.set(offset, buffer, 0, buffer.length);
     }
 
     @Override
-    public ComparableBinary deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-      return new ComparableBinary(memory.get(pointer, LENGTH));
+    public ComparableBinary deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+      return new ComparableBinary(pointer.get(offset, LENGTH));
     }
 
     @Override
-    public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+    public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
       return LENGTH;
     }
 
+    @Override
     public boolean isFixedLength() {
       return true;
     }
 
+    @Override
     public int getFixedLength() {
       return LENGTH;
+    }
+
+    @Override
+    public ComparableBinary preprocess(ComparableBinary value, Object... hints) {
+      return value;
     }
   }
 
@@ -151,10 +173,10 @@ public class IndexCustomKeyTest {
     OIndex<?> index = getIndex();
 
     if (index == null) {
-      OBinarySerializerFactory.INSTANCE.registerSerializer(new OHash256Serializer(), null);
+      OBinarySerializerFactory.getInstance().registerSerializer(new OHash256Serializer(), null);
 
       database.getMetadata().getIndexManager()
-          .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null);
+          .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null, null);
     }
   }
 

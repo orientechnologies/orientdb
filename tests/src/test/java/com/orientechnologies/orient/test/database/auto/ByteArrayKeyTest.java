@@ -48,8 +48,10 @@ public class ByteArrayKeyTest {
 
     compositeByteArrayKeyTest.createIndex("compositeByteArrayKey", OClass.INDEX_TYPE.UNIQUE, "byteArrayKey", "intKey");
 
-    database.getMetadata().getIndexManager()
-        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null);
+    database
+        .getMetadata()
+        .getIndexManager()
+        .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
 
     database.close();
   }
@@ -61,7 +63,7 @@ public class ByteArrayKeyTest {
 
     if (index == null) {
       index = database.getMetadata().getIndexManager()
-          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null);
+          .createIndex("byte-array-manualIndex", "UNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
       this.manualIndex = index;
     } else {
       index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
@@ -213,14 +215,14 @@ public class ByteArrayKeyTest {
     byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
 
     OIndex<?> autoIndex = database.getMetadata().getIndexManager().getIndex("byteArrayKeyIndex");
-    Assert.assertEquals(autoIndex.getValues(Arrays.asList(key1, key2)).size(), 2);
+    Assert.assertEquals(autoIndex.getValues(Arrays.asList(key1, key2), true).size(), 2);
 
     byte[] key3 = new byte[] { 0, 1, 2, 3 };
     byte[] key4 = new byte[] { 4, 5, 6, 7 };
 
     OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
 
-    Assert.assertEquals(index.getValues(Arrays.asList(key3, key4)).size(), 3);
+    Assert.assertEquals(index.getValues(Arrays.asList(key3, key4), true).size(), 3);
   }
 
   @Test(dependsOnMethods = { "testAutomaticUsage", "testRemoveKeyValue" })
@@ -269,8 +271,8 @@ public class ByteArrayKeyTest {
     uniqueIndex.put(key3, doc3);
     uniqueIndex.put(key4, doc4);
 
-    Assert.assertEquals(uniqueIndex.getValuesBetween(key1, key3).size(), 3);
-    Assert.assertEquals(notUniqueIndex.getValuesBetween(key1, key2).size(), 2);
+    Assert.assertEquals(uniqueIndex.getValuesBetween(key1, key3, true).size(), 3);
+    Assert.assertEquals(notUniqueIndex.getValuesBetween(key1, key2, true).size(), 2);
   }
 
   public void testTransactionalUsageWorks() {

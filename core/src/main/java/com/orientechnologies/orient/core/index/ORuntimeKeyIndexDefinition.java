@@ -20,12 +20,12 @@ import java.util.Collections;
 import java.util.List;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Index definition that use the serializer specified at run-time not based on type. This is useful to have custom type keys for
@@ -34,13 +34,12 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass implements OIndexDefinition {
+public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   private OBinarySerializer<T> serializer;
 
   @SuppressWarnings("unchecked")
   public ORuntimeKeyIndexDefinition(final byte iId) {
-    super(new ODocument());
-    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(iId);
+    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
     if (serializer == null)
       throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
           + ". Assure to plug custom serializer into the server.");
@@ -82,6 +81,7 @@ public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass imple
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     try {
       document.field("keySerializerId", serializer.getId());
+      document.field("collate", collate.getName());
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -92,10 +92,14 @@ public class ORuntimeKeyIndexDefinition<T> extends ODocumentWrapperNoClass imple
   @Override
   protected void fromStream() {
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
-    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(keySerializerId);
+    serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(keySerializerId);
     if (serializer == null)
       throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + keySerializerId
           + ". Assure to plug custom serializer into the server.");
+
+    String collateField = document.field("collate");
+    if (collateField == null)
+      collateField = ODefaultCollate.NAME;
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {

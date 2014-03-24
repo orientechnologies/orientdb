@@ -9,12 +9,10 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import org.mockito.Mockito;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -30,15 +28,9 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
  * @author Andrey Lomakin
@@ -64,9 +56,19 @@ public class SBTreeWAL extends SBTreeTest {
 
   private OSBTree<Integer, OIdentifiable> expectedSBTree;
 
+  private OLocalPaginatedStorage          expectedStorage;
+  private OStorageConfiguration           expectedStorageConfiguration;
+  private OStorageConfiguration           actualStorageConfiguration;
+
+  private OAtomicOperationsManager        actualAtomicOperationsManager;
+
   @BeforeClass
   @Override
   public void beforeClass() {
+    actualStorage = mock(OLocalPaginatedStorage.class);
+    actualStorageConfiguration = mock(OStorageConfiguration.class);
+    expectedStorage = mock(OLocalPaginatedStorage.class);
+    expectedStorageConfiguration = mock(OStorageConfiguration.class);
   }
 
   @AfterClass
@@ -76,6 +78,8 @@ public class SBTreeWAL extends SBTreeTest {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
+    Mockito.reset(actualStorage, expectedStorage, expectedStorageConfiguration, actualStorageConfiguration);
+
     buildDirectory = System.getProperty("buildDirectory", ".");
 
     buildDirectory += "/sbtreeWithWALTest";
@@ -87,6 +91,8 @@ public class SBTreeWAL extends SBTreeTest {
   @AfterMethod
   @Override
   public void afterMethod() throws Exception {
+    Assert.assertNull(actualAtomicOperationsManager.getCurrentOperation());
+
     sbTree.delete();
     expectedSBTree.delete();
 
@@ -101,10 +107,8 @@ public class SBTreeWAL extends SBTreeTest {
   }
 
   private void createActualSBTree() throws IOException {
-    actualStorage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    actualStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
+    actualStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     actualStorageDir = buildDirectory + "/sbtreeWithWALTestActual";
     when(actualStorage.getStoragePath()).thenReturn(actualStorageDir);
@@ -122,27 +126,27 @@ public class SBTreeWAL extends SBTreeTest {
 
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
+    actualAtomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
+    when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
     when(actualStorage.getVariableParser()).thenReturn(variableParser);
-    when(actualStorage.getConfiguration()).thenReturn(storageConfiguration);
+    when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(actualStorageDir);
+    when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, actualStorage);
   }
 
   private void createExpectedSBTree() {
-    final OLocalPaginatedStorage expectedStorage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+    expectedStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
+    expectedStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
 
     expectedStorageDir = buildDirectory + "/sbtreeWithWALTestExpected";
     when(expectedStorage.getStoragePath()).thenReturn(expectedStorageDir);
@@ -160,18 +164,20 @@ public class SBTreeWAL extends SBTreeTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, expectedStorage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(expectedStorageDir);
+    OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(null);
 
     when(expectedStorage.getStorageTransaction()).thenReturn(null);
     when(expectedStorage.getDiskCache()).thenReturn(expectedDiskCache);
     when(expectedStorage.getWALInstance()).thenReturn(null);
+    when(expectedStorage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
-    when(expectedStorage.getConfiguration()).thenReturn(storageConfiguration);
+    when(expectedStorage.getConfiguration()).thenReturn(expectedStorageConfiguration);
     when(expectedStorage.getMode()).thenReturn("rw");
 
-    when(storageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
+    when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
     expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, expectedStorage);
   }
 
   @Override
@@ -219,6 +225,27 @@ public class SBTreeWAL extends SBTreeTest {
   @Override
   public void testKeyAddDelete() throws Exception {
     super.testKeyAddDelete();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
+    super.testAddKeyValuesInTwoBucketsAndMakeFirstEmpty();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
+    super.testAddKeyValuesInTwoBucketsAndMakeLastEmpty();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
+    super.testAddKeyValuesAndRemoveFirstMiddleAndLastPages();
 
     assertFileRestoreFromWAL();
   }

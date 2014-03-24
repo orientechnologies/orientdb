@@ -28,6 +28,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.entity.OEntityManagerInternal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -54,12 +56,14 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
+import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
   public static final char FIELD_VALUE_SEPARATOR = ':';
+  private final boolean    preferSBTreeRIDSet    = OGlobalConfiguration.PREFER_SBTREE_SET.getValueAsBoolean();
 
   protected abstract ORecordSchemaAware<?> newObject(final String iClassName);
 
@@ -74,8 +78,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     case EMBEDDEDSET:
       return embeddedCollectionFromStream((ODocument) iSourceRecord, iType, iLinkedClass, iLinkedType, iValue);
 
-    case LINKLIST:
-    case LINKSET: {
+    case LINKSET:
+    case LINKLIST: {
       if (iValue.length() == 0)
         return null;
 
@@ -99,7 +103,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (value.length() == 0)
         return map;
 
-      final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true);
+      final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true, false);
 
       // EMBEDDED LITERALS
       for (String item : items) {
@@ -131,7 +135,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final String linkAsString = iValue.substring(pos + 1);
         try {
           return new ORecordId(linkAsString);
-        } catch (NumberFormatException e) {
+        } catch (IllegalArgumentException e) {
           OLogManager.instance().error(this, "Error on unmarshalling field '%s' of record '%s': value '%s' is not a link", iName,
               iSourceRecord, linkAsString);
           return new ORecordId();
@@ -148,7 +152,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         return ((ODocument) OStringSerializerEmbedded.INSTANCE.fromStream(value)).addOwner(iSourceRecord);
       } else
         return null;
-
+    case LINKBAG:
+      final String value = iValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN ? iValue.substring(1, iValue.length() - 1)
+          : iValue;
+      return ORidBag.fromStream(value);
     default:
       return fieldTypeFromStream((ODocument) iSourceRecord, iType, iValue);
     }
@@ -172,7 +179,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     if (value.length() == 0)
       return map;
 
-    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true);
+    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true, false);
 
     // EMBEDDED LITERALS
 
@@ -181,7 +188,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
     for (String item : items) {
       if (item != null && !item.isEmpty()) {
-        final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR, true);
+        final List<String> entries = OStringSerializerHelper.smartSplit(item, OStringSerializerHelper.ENTRY_SEPARATOR, true, false);
         if (!entries.isEmpty()) {
           final Object mapValueObject;
           if (entries.size() > 1) {
@@ -282,7 +289,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final ORecordLazyList coll;
         final Iterator<OIdentifiable> it;
         if (iValue instanceof OMultiCollectionIterator<?>) {
-          it = (Iterator<OIdentifiable>) iValue;
+          final OMultiCollectionIterator<OIdentifiable> iterator = (OMultiCollectionIterator<OIdentifiable>) iValue;
+          iterator.reset();
+          it = iterator;
           coll = null;
         } else if (!(iValue instanceof ORecordLazyList)) {
           // FIRST TIME: CONVERT THE ENTIRE COLLECTION
@@ -344,19 +353,19 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case LINKSET: {
-      final OMVRBTreeRIDSet coll;
+      final OStringBuilderSerializable coll;
 
       if (!(iValue instanceof OMVRBTreeRIDSet)) {
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
         coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
-        ((Collection<? extends OIdentifiable>) iValue).clear();
 
         iRecord.field(iName, coll);
       } else
         // LAZY SET
-        coll = (OMVRBTreeRIDSet) iValue;
+        coll = (OStringBuilderSerializable) iValue;
 
-      linkSetToStream(iOutput, iRecord, coll);
+      coll.toStream(iOutput);
+
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.linkSet2string"), "Serialize linkset to string",
           timer);
       break;
@@ -441,14 +450,16 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       break;
     }
 
+    case LINKBAG: {
+      iOutput.append(OStringSerializerHelper.BAG_BEGIN);
+      ((ORidBag) iValue).toStream(iOutput);
+      iOutput.append(OStringSerializerHelper.BAG_END);
+      break;
+    }
+
     default:
       fieldTypeToString(iOutput, iType, iValue);
     }
-  }
-
-  public static StringBuilder linkSetToStream(final StringBuilder iOutput, final ODocument iRecord, final OMVRBTreeRIDSet iSet) {
-    iSet.toStream(iOutput);
-    return iOutput;
   }
 
   public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
@@ -564,7 +575,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     if (coll instanceof ORecordElement)
       ((ORecordElement) coll).setInternalStatus(STATUS.UNMARSHALLING);
 
-    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true);
+    final List<String> items = OStringSerializerHelper.smartSplit(value, OStringSerializerHelper.RECORD_SEPARATOR, true, false);
     for (String item : items) {
       Object objectToAdd = null;
       linkedType = null;

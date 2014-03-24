@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.List;
+
 /**
  * Interface that defines a SQL Function. Functions can be state-less if registered as instance, or state-full when registered as
- * class. State-less functions are reused across queries, so don't keep any run-time information inside of it. State-full functions,
+ * class. State-less function are reused across queries, so don't keep any run-time information inside of it. State-full function,
  * instead, stores Implement it and register it with: <code>OSQLParser.getInstance().registerFunction()</code> to being used by the
  * SQL engine.
  * 
@@ -36,18 +36,20 @@ public interface OSQLFunction {
 	/**
 	 * Process a record.
 	 * 
-	 * @param iCurrentRecord
-	 *          : current record
-	 * @param iCurrentResult
-	 *          TODO
-	 * @param iFuncParams
-	 *          : function parameters, number is ensured to be within minParams and maxParams.
-	 * @param iContext
-	 *          : object calling this function
-	 * @return function result, can be null. Special cases : can be null if function aggregate results, can be null if function filter
+	 *
+   * @param iThis
+   * @param iCurrentRecord
+   *          : current record
+   * @param iCurrentResult
+   *          TODO
+   * @param iParams
+   *          : function parameters, number is ensured to be within minParams and maxParams.
+   * @param iContext
+   *          : object calling this function
+   * @return function result, can be null. Special cases : can be null if function aggregate results, can be null if function filter
 	 *         results : this mean result is excluded
 	 */
-	public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iFuncParams, OCommandContext iContext);
+	public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams, OCommandContext iContext);
 
 	/**
 	 * Configure the function.
@@ -59,11 +61,10 @@ public interface OSQLFunction {
 	/**
 	 * A function can make calculation on several records before returning a result.
 	 * <p>
-	 * Example of such functions : sum, count, max, min ...
+	 * Example of such function : sum, count, max, min ...
 	 * <p>
 	 * The final result of the aggregation is obtain by calling {@link #getResult() }
 	 * 
-	 * @param configuredParameters
 	 * @return true if function aggregate results
 	 */
 	public boolean aggregateResults();
@@ -73,7 +74,7 @@ public interface OSQLFunction {
 	 * must return true.
 	 * <p>
 	 * Function should return null for the
-	 * {@linkplain #execute(com.orientechnologies.orient.core.db.record.OIdentifiable, Object, java.lang.Object[], OCommandContext)
+	 * {@linkplain #execute(Object, OIdentifiable, Object, Object[], OCommandContext)
 	 * execute} method if the record must be excluded.
 	 * 
 	 * @return true if the function acts as a record filter.
@@ -131,14 +132,14 @@ public interface OSQLFunction {
 	public void setResult(Object iResult);
 
 	/**
-	 * This methods correspond to distributed query execution
+	 * This method correspond to distributed query execution
 	 * 
 	 * @return {@code true} if results that comes from different nodes need to be merged to obtain valid one, {@code false} otherwise
 	 */
 	public boolean shouldMergeDistributedResult();
 
 	/**
-	 * This methods correspond to distributed query execution
+	 * This method correspond to distributed query execution
 	 * 
 	 * @param resultsToMerge
 	 *          is the results that comes from different nodes

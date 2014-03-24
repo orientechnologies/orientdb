@@ -1,15 +1,13 @@
 {
     "replication": true,
     "autoDeploy": true,
+    "hotAlignment": true,
     "resyncEvery": 15,
     "clusters": {
         "internal": {
             "replication": false
         },
         "index": {
-            "replication": false
-        },
-        "ODistributedConflict": {
             "replication": false
         },
         "*": {

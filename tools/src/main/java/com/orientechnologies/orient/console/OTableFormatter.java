@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
@@ -41,13 +27,17 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 public class OTableFormatter {
   protected final static String       MORE            = "...";
+  protected final static Set<String>  prefixedColumns = new HashSet<String>(Arrays.asList(new String[] { "#", "@RID" }));
   protected final OConsoleApplication out;
+  protected final SimpleDateFormat    DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
   protected int                       minColumnSize   = 4;
   protected int                       maxWidthSize    = 132;
-  protected final static Set<String>  prefixedColumns = new HashSet<String>(Arrays.asList(new String[] { "#", "@RID" }));
-  protected final SimpleDateFormat    DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
   public OTableFormatter(final OConsoleApplication iConsole) {
     this.out = iConsole;
@@ -124,7 +114,7 @@ public class OTableFormatter {
         vargs.add(value);
       }
 
-      out.message(format.toString() + "\n", vargs.toArray());
+      out.message("\n" + format.toString(), vargs.toArray());
 
     } catch (Throwable t) {
       out.message("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
@@ -144,6 +134,13 @@ public class OTableFormatter {
       value = ((ORecordSchemaAwareAbstract<?>) iRecord).field(iColumnName);
     else if (iRecord instanceof ORecordBytes)
       value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
+    else if (iRecord instanceof OIdentifiable) {
+      final ORecord<?> rec = iRecord.getRecord();
+      if (rec instanceof ORecordSchemaAwareAbstract<?>)
+        value = ((ORecordSchemaAwareAbstract<?>) rec).field(iColumnName);
+      else if (rec instanceof ORecordBytes)
+        value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
+    }
 
     if (value instanceof OMultiCollectionIterator<?>)
       value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
@@ -169,7 +166,7 @@ public class OTableFormatter {
   }
 
   private void printHeader(final Map<String, Integer> iColumns) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder("\n");
 
     printHeaderLine(iColumns);
     int i = 0;
@@ -181,15 +178,13 @@ public class OTableFormatter {
         colName = colName.substring(0, column.getValue());
       buffer.append(String.format("%-" + column.getValue() + "s", colName));
     }
-    buffer.append("\n");
-
     out.message(buffer.toString());
 
     printHeaderLine(iColumns);
   }
 
   private void printHeaderLine(final Map<String, Integer> iColumns) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder("\n");
 
     if (iColumns.size() > 0) {
       int i = 0;
@@ -201,7 +196,6 @@ public class OTableFormatter {
           buffer.append("-");
       }
     }
-    buffer.append("\n");
 
     out.message(buffer.toString());
   }
@@ -227,6 +221,7 @@ public class OTableFormatter {
         columns.put(c, getColumnSize(fetched, rec, c, columns.get(c)));
 
       if (rec instanceof ODocument) {
+        ((ODocument) rec).setLazyLoad(false);
         // PARSE ALL THE DOCUMENT'S FIELDS
         ODocument doc = (ODocument) rec;
         for (String fieldName : doc.fieldNames()) {

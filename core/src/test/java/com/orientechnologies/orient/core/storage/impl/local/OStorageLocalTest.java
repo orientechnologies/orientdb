@@ -47,7 +47,7 @@ public class OStorageLocalTest {
     String dbPath = getDatabasePath();
 
     System.out.println("Using db = local:" + dbPath);
-    File dbDir = new File(dbPath).getParentFile();
+    File dbDir = new File(dbPath);
     System.out.println("Clean db directory for test...");
     delTree(dbDir);
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
@@ -94,10 +94,10 @@ public class OStorageLocalTest {
   }
 
   private String getDatabasePath() {
-    String dbPath = System.getProperty("java.io.tmpdir");
-    if (!dbPath.endsWith(File.separator))
-      dbPath += "/";
-    dbPath += "orientdb" + "/" + "test";
-    return dbPath;
+    String buildDirectory = System.getProperty("buildDirectory");
+    if (buildDirectory == null)
+      buildDirectory = "./target";
+
+    return buildDirectory + File.separator + "OStorageLocalTestDB__42";
   }
 }

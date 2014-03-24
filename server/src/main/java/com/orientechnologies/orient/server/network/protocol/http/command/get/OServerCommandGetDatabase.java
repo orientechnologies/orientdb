@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -213,6 +214,21 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.endCollection();
       }
 
+      final OIndexManagerProxy idxManager = db.getMetadata().getIndexManager();
+      json.beginCollection("indexes");
+      for (OIndex<?> index : idxManager.getIndexes()) {
+        json.beginObject();
+        try {
+          json.writeAttribute("name", index.getName());
+          json.writeAttribute("configuration", index.getConfiguration());
+          json.writeAttribute("size", index.getSize());
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Cannot serialize index configuration", e);
+        }
+        json.endObject();
+      }
+      json.endCollection();
+
       json.beginObject("config");
 
       json.beginCollection("values");
@@ -254,6 +270,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
     json.writeAttribute("alias", cls.getShortName());
     json.writeAttribute("abstract", cls.isAbstract());
+    json.writeAttribute("strictmode", cls.isStrictMode());
     json.writeAttribute("clusters", cls.getClusterIds());
     json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
     if (cls instanceof OClassImpl) {
@@ -284,6 +301,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("notNull", prop.isNotNull());
         json.writeAttribute("min", prop.getMin());
         json.writeAttribute("max", prop.getMax());
+        json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
 
         if (prop instanceof OPropertyImpl) {
           final Map<String, String> custom = ((OPropertyImpl) prop).getCustomInternal();

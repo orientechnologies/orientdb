@@ -15,28 +15,17 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -49,8 +38,15 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL Helper class
@@ -59,18 +55,17 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
  * 
  */
 public class OSQLHelper {
-  public static final String NAME              = "sql";
+  public static final String                  NAME              = "sql";
 
-  public static final String VALUE_NOT_PARSED  = "_NOT_PARSED_";
-  public static final String NOT_NULL          = "_NOT_NULL_";
-  public static final String DEFINED           = "_DEFINED_";
+  public static final String                  VALUE_NOT_PARSED  = "_NOT_PARSED_";
+  public static final String                  NOT_NULL          = "_NOT_NULL_";
+  public static final String                  DEFINED           = "_DEFINED_";
 
-  private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
+  private static ClassLoader                  orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
    * 
-   * @param iDatabase
    * @param iValue
    *          Value to convert.
    * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
@@ -130,20 +125,19 @@ public class OSQLHelper {
       fieldValue = new ORecordId(iValue.trim());
     else {
 
-      final String upperCase = iValue.toUpperCase(Locale.ENGLISH);
-      if (upperCase.equals("NULL"))
+      if (iValue.equalsIgnoreCase("null"))
         // NULL
         fieldValue = null;
-      else if (upperCase.equals("NOT NULL"))
+      else if (iValue.equalsIgnoreCase("not null"))
         // NULL
         fieldValue = NOT_NULL;
-      else if (upperCase.equals("DEFINED"))
+      else if (iValue.equalsIgnoreCase("defined"))
         // NULL
         fieldValue = DEFINED;
-      else if (upperCase.equals("TRUE"))
+      else if (iValue.equalsIgnoreCase("true"))
         // BOOLEAN, TRUE
         fieldValue = Boolean.TRUE;
-      else if (upperCase.equals("FALSE"))
+      else if (iValue.equalsIgnoreCase("false"))
         // BOOLEAN, FALSE
         fieldValue = Boolean.FALSE;
       else {
@@ -232,7 +226,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(null, null);
+      return ((OSQLFilterItem) iObject).getValue(null, null, null);
 
     return iObject;
   }
@@ -242,7 +236,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, null);
+      return ((OSQLFilterItem) iObject).getValue(iRecord, null, null);
 
     return iObject;
   }
@@ -252,7 +246,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, iContext);
+      return ((OSQLFilterItem) iObject).getValue(iRecord, null, iContext);
     else if (iObject instanceof String) {
       final String s = ((String) iObject).trim();
       if (!s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
@@ -312,6 +306,32 @@ public class OSQLHelper {
             }
           }
 
+          if (OMultiValue.isMultiValue(fieldValue)) {
+            final List<Object> tempColl = new ArrayList<Object>(OMultiValue.getSize(fieldValue));
+
+            String singleFieldName = null;
+            for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
+              if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
+                // TEMPORARY / EMBEDDED
+                final ORecord<?> rec = ((OIdentifiable) o).getRecord();
+                if (rec != null && rec instanceof ODocument) {
+                  // CHECK FOR ONE FIELD ONLY
+                  final ODocument doc = (ODocument) rec;
+                  if (doc.fields() == 1) {
+                    singleFieldName = doc.fieldNames()[0];
+                    tempColl.add(doc.field(singleFieldName));
+                  } else {
+                    // TRANSFORM IT IN EMBEDDED
+                    doc.getIdentity().reset();
+                    doc.addOwner(iDocument);
+                    tempColl.add(doc);
+                  }
+                }
+              }
+            }
+
+            fieldValue = tempColl;
+          }
         }
       }
 
@@ -323,27 +343,5 @@ public class OSQLHelper {
       }
     }
     return changedDocuments;
-  }
-
-  public static String[] getAllMethodNames() {
-    final List<String> methods = new ArrayList<String>();
-    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
-    while (ite.hasNext()) {
-      final OSQLMethodFactory factory = ite.next();
-      methods.addAll(factory.getMethodNames());
-    }
-    return methods.toArray(new String[methods.size()]);
-  }
-
-  public static OSQLMethod getMethodByName(String name) {
-    name = name.toLowerCase();
-    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
-    while (ite.hasNext()) {
-      final OSQLMethodFactory factory = ite.next();
-      if (factory.hasMethod(name)) {
-        return factory.createMethod(name);
-      }
-    }
-    return null;
   }
 }

@@ -1,18 +1,31 @@
+/*
+ * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 
 public class OPageChanges {
-  private final ODirectMemory directMemory   = ODirectMemoryFactory.INSTANCE.directMemory();
-  private List<ChangeUnit>    changeUnits    = new ArrayList<ChangeUnit>();
-  private int                 serializedSize = OIntegerSerializer.INT_SIZE;
+  private List<ChangeUnit> changeUnits    = new ArrayList<ChangeUnit>();
+  private int              serializedSize = OIntegerSerializer.INT_SIZE;
 
   public void addChanges(int pageOffset, byte[] newValues, byte[] oldValues) {
     assert newValues == null || newValues.length == oldValues.length;
@@ -27,17 +40,19 @@ public class OPageChanges {
     return changeUnits.isEmpty();
   }
 
-  public void applyChanges(long pointer) {
+  public void applyChanges(ODirectMemoryPointer pointer) {
     for (ChangeUnit changeUnit : changeUnits) {
-      directMemory.set(pointer + changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
+      // some components work in rollback only mode, so we do not have new values.
+      if (changeUnit.newValues != null)
+        pointer.set(changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
     }
   }
 
-  public void revertChanges(long pointer) {
+  public void revertChanges(ODirectMemoryPointer pointer) {
     ListIterator<ChangeUnit> iterator = changeUnits.listIterator(changeUnits.size());
     while (iterator.hasPrevious()) {
       ChangeUnit changeUnit = iterator.previous();
-      directMemory.set(pointer + changeUnit.pageOffset, changeUnit.oldValues, 0, changeUnit.oldValues.length);
+      pointer.set(changeUnit.pageOffset, changeUnit.oldValues, 0, changeUnit.oldValues.length);
     }
   }
 

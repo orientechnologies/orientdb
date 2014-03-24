@@ -16,17 +16,10 @@
 package com.orientechnologies.orient.object.db;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -98,29 +91,42 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   public ODatabaseComplex<T> commit() {
-    clearNewEntriesFromCache();
+    return commit(false);
+  }
 
-    underlying.commit();
+  @Override
+  public ODatabaseComplex<T> commit(boolean force) throws OTransactionException {
+    underlying.commit(force);
+
+    if (!underlying.getTransaction().isActive())
+      clearNewEntriesFromCache();
 
     return this;
   }
 
   public ODatabaseComplex<T> rollback() {
-    clearNewEntriesFromCache();
+    return rollback(false);
+  }
 
-    underlying.rollback();
+  @Override
+  public ODatabaseComplex<T> rollback(boolean force) throws OTransactionException {
+    underlying.rollback(force);
 
-    final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
+    if (!underlying.getTransaction().isActive()) {
+      clearNewEntriesFromCache();
 
-    ORecord<?> record;
-    Object object;
-    for (ORID rid : rids) {
-      if (rid.isTemporary()) {
-        record = rid2Records.remove(rid);
-        if (record != null) {
-          object = records2Objects.remove(record);
-          if (object != null) {
-            objects2Records.remove(object);
+      final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
+
+      ORecord<?> record;
+      Object object;
+      for (ORID rid : rids) {
+        if (rid.isTemporary()) {
+          record = rid2Records.remove(rid);
+          if (record != null) {
+            object = records2Objects.remove(record);
+            if (object != null) {
+              objects2Records.remove(object);
+            }
           }
         }
       }
@@ -280,7 +286,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return underlying.callbackHooks(iType, iObject);
   }
 
-  public Set<ORecordHook> getHooks() {
+  public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
     return underlying.getHooks();
   }
 

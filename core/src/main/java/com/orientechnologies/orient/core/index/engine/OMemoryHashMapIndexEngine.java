@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,11 +22,9 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
@@ -60,6 +56,10 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public void delete() {
+  }
+
+  @Override
+  public void deleteWithoutLoad(String indexName) {
   }
 
   @Override
@@ -154,66 +154,48 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
-    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
-
-    for (Map.Entry<Object, V> entry : concurrentHashMap.entrySet()) {
-      if (transformer != null) {
-        Collection<OIdentifiable> rids = transformer.transformFromValue(entry.getValue());
-        if (rids.remove(valueToRemove))
-          entriesToUpdate.put(entry.getKey(), transformer.transformToValue(rids));
-      } else if (entry.getValue().equals(valueToRemove))
-        entriesToUpdate.put(entry.getKey(), entry.getValue());
-    }
-
-    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
-      V value = entry.getValue();
-      if (value instanceof Collection) {
-        Collection col = (Collection) value;
-        if (col.isEmpty())
-          concurrentHashMap.remove(entry.getKey());
-        else
-          concurrentHashMap.put(entry.getKey(), value);
-      } else
-        concurrentHashMap.remove(entry.getKey());
-    }
-
-    return entriesToUpdate.size();
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("getFirstKey");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer) {
+  public Object getLastKey() {
+    throw new UnsupportedOperationException("getLastKey");
+  }
+
+  @Override
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
+      ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMinor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesBetween");
   }
 
@@ -228,12 +210,6 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
       }
       return counter;
     }
-  }
-
-  @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("count");
   }
 
   @Override

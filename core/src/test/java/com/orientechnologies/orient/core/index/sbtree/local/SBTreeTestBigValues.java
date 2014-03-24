@@ -44,8 +44,8 @@ public class SBTreeTestBigValues {
     databaseDocumentTx.create();
 
     sbTree = new OSBTree<Integer, byte[]>(".sbt", 1, false);
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx
-        .getStorage().getUnderlying());
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null,
+        (OStorageLocalAbstract) databaseDocumentTx.getStorage().getUnderlying());
   }
 
   @AfterMethod
@@ -61,7 +61,7 @@ public class SBTreeTestBigValues {
     databaseDocumentTx.drop();
   }
 
-  public void testPut() {
+  public void testPut() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i));
     }
@@ -243,7 +243,7 @@ public class SBTreeTestBigValues {
     }
   }
 
-  public void testKeysUpdateFromSmallToBig() {
+  public void testKeysUpdateFromSmallToBig() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 2 == 0)
         sbTree.put(i, createValue(i, 1024));
@@ -256,7 +256,7 @@ public class SBTreeTestBigValues {
     }
   }
 
-  public void testKeysUpdateFromBigToSmall() {
+  public void testKeysUpdateFromBigToSmall() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 2 == 0)
         sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
@@ -269,7 +269,7 @@ public class SBTreeTestBigValues {
     }
   }
 
-  public void testKeysUpdateFromSmallToSmall() {
+  public void testKeysUpdateFromSmallToSmall() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 2 == 0)
         sbTree.put(i, createValue(i, 512));

@@ -16,7 +16,11 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
@@ -46,6 +50,7 @@ public class OHttpRequest {
   public boolean                            isMultipart;
   public String                             ifMatch;
   public String                             authentication;
+  protected Map<String, String>             headers;
 
   public final ONetworkProtocolData         data;
   public final ONetworkProtocolHttpAbstract executor;
@@ -58,11 +63,39 @@ public class OHttpRequest {
     configuration = iConfiguration;
   }
 
+  public String getUser() {
+    return authorization != null ? authorization.substring(0, authorization.indexOf(":")) : null;
+  }
+
   public InputStream getInputStream() {
     return in;
   }
 
   public String getParameter(final String iName) {
     return parameters != null ? parameters.get(iName) : null;
+  }
+
+  public void addHeader(final String h) {
+    if (headers == null)
+      headers = new HashMap<String, String>();
+
+    final int pos = h.indexOf(':');
+    if (pos > -1) {
+      headers.put(h.substring(0, pos).trim().toLowerCase(), h.substring(pos + 1).trim());
+    }
+  }
+
+  public String getHeader(final String iName) {
+    return headers.get(iName.toLowerCase());
+  }
+
+  public Set<Entry<String, String>> getHeaders() {
+    return headers.entrySet();
+  }
+
+  public String getRemoteAddress() {
+    if (data.caller != null)
+      return data.caller;
+    return ((InetSocketAddress) executor.channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
   }
 }

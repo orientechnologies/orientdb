@@ -17,12 +17,14 @@ package com.orientechnologies.orient.client.remote;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -80,6 +82,41 @@ public class OClusterRemote implements OCluster {
   }
 
   public void close() throws IOException {
+  }
+
+  @Override
+  public OModificationLock getExternalModificationLock() {
+    throw new UnsupportedOperationException("getExternalModificationLock");
+  }
+
+  @Override
+  public void close(boolean flush) throws IOException {
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+    throw new UnsupportedOperationException("createRecord");
+  }
+
+  @Override
+  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("deleteRecord");
+  }
+
+  @Override
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    throw new UnsupportedOperationException("updateRecord");
+  }
+
+  @Override
+  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("readRecord");
+  }
+
+  @Override
+  public boolean exists() {
+    throw new UnsupportedOperationException("exists");
   }
 
   public void delete() throws IOException {
@@ -144,12 +181,6 @@ public class OClusterRemote implements OCluster {
 
   public OClusterPosition getLastPosition() {
     return OClusterPositionFactory.INSTANCE.valueOf(0);
-  }
-
-  public void lock() {
-  }
-
-  public void unlock() {
   }
 
   public int getId() {
@@ -227,4 +258,8 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("compression()");
   }
 
+  @Override
+  public boolean hideRecord(OClusterPosition position) {
+    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+  }
 }

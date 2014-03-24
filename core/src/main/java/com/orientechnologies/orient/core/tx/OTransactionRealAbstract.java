@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OCompositeKey;
@@ -31,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -228,9 +224,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       final List<ODocument> entries = new ArrayList<ODocument>();
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
-      if (indexEntry.getValue().changesCrossKey != null)
-        serializeIndexChangeEntry(indexEntry.getValue().changesCrossKey, indexDoc, entries);
-
       // STORE INDEX ENTRIES
       for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
         serializeIndexChangeEntry(entry, indexDoc, entries);
@@ -254,7 +247,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    * Bufferizes index changes to be flushed at commit time.
    */
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
-      final Object iKey, final OIdentifiable iValue) {
+      final Object key, final OIdentifiable iValue) {
     OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
     if (indexEntry == null) {
       indexEntry = new OTransactionIndexChanges();
@@ -273,16 +266,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
               changes.entries.remove(i);
               break;
             }
-
-        OTransactionIndexChangesPerKey changes = indexEntry.getChangesCrossKey();
-        for (int i = 0; i < changes.entries.size(); ++i)
-          if (changes.entries.get(i).value.equals(iValue)) {
-            changes.entries.remove(i);
-            break;
-          }
       }
 
-      OTransactionIndexChangesPerKey changes = iKey != null ? indexEntry.getChangesPerKey(iKey) : indexEntry.getChangesCrossKey();
+      OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
 
       changes.add(iValue, iOperation);
 
@@ -296,7 +282,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         recordIndexOperations.put(iValue.getIdentity().copy(), transactionIndexOperations);
       }
 
-      transactionIndexOperations.add(new OTransactionRecordIndexOperation(iIndexName, iKey, iOperation));
+      transactionIndexOperations.add(new OTransactionRecordIndexOperation(iIndexName, key, iOperation));
     }
   }
 
@@ -305,11 +291,27 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       // NO CHANGE, IGNORE IT
       return;
 
-    if (oldRid.isNew()) {
-      // REMOVE AND RE-PUT THE OPERATION BECAUSE KEY IS CHANGED
-      final ORecordOperation rec = allEntries.remove(oldRid);
-      if (rec != null)
+    final ORecordOperation rec = getRecordEntry(oldRid);
+    if (rec != null) {
+      if (allEntries.remove(oldRid) != null)
         allEntries.put(newRid, rec);
+
+      if (recordEntries.remove(oldRid) != null)
+        recordEntries.put(newRid, rec);
+
+      if (!rec.getRecord().getIdentity().equals(newRid)) {
+        rec.getRecord().onBeforeIdentityChanged(oldRid);
+
+        final ORecordId recordId = (ORecordId) rec.getRecord().getIdentity();
+        if (recordId == null) {
+          rec.getRecord().setIdentity(new ORecordId(newRid));
+        } else {
+          recordId.clusterPosition = newRid.getClusterPosition();
+          recordId.clusterId = newRid.getClusterId();
+        }
+
+        rec.getRecord().onAfterIdentityChanged(rec.getRecord());
+      }
     }
 
     // UPDATE INDEXES
@@ -320,12 +322,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         if (indexEntryChanges == null)
           continue;
 
-        final OTransactionIndexChangesPerKey changesPerKey;
-        if (indexOperation.key != null)
-          changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
-        else
-          changesPerKey = indexEntryChanges.changesCrossKey;
-
+        final OTransactionIndexChangesPerKey changesPerKey = indexEntryChanges.getChangesPerKey(indexOperation.key);
         updateChangesIdentity(oldRid, newRid, changesPerKey);
       }
     }

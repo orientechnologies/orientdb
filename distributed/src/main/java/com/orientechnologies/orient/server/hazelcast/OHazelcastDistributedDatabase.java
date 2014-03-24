@@ -15,39 +15,28 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedPartition;
-import com.orientechnologies.orient.server.distributed.ODistributedPartitioningStrategy;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask.QUORUM_TYPE;
-import com.orientechnologies.orient.server.distributed.task.OResynchTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -58,20 +47,21 @@ import com.orientechnologies.orient.server.distributed.task.OResynchTask;
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  protected final OHazelcastPlugin                    manager;
-  protected final OHazelcastDistributedMessageService msgService;
-
-  protected final String                              databaseName;
-  protected final static Map<String, IQueue<?>>       queues                     = new HashMap<String, IQueue<?>>();
-  protected final Lock                                requestLock;
-
-  protected ODatabaseDocumentTx                       database;
-
   public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
   public static final String                          NODE_QUEUE_REQUEST_POSTFIX = ".request";
   public static final String                          NODE_QUEUE_UNDO_POSTFIX    = ".undo";
-
+  protected final static Map<String, IQueue<?>>       queues                     = new HashMap<String, IQueue<?>>();
   private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  protected final OHazelcastPlugin                    manager;
+  protected final OHazelcastDistributedMessageService msgService;
+  protected final String                              databaseName;
+  protected final Lock                                requestLock;
+  protected volatile ODatabaseDocumentTx              database;
+  protected volatile boolean                          restoringMessages          = false;
+  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
+  protected Object                                    waitForOnline              = new Object();
+  protected Thread                                    listenerThread;
+  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -81,47 +71,104 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
 
-    long resyncEvery = manager.getDatabaseConfiguration(databaseName).getResyncEvery();
-    if (resyncEvery > 0) {
-      resyncEvery *= 1000; // TRANSFORM IN SECONDS
-      // CREATE A TIMER TASK TO RESYNCH
-      Orient.instance().getTimer().schedule(new TimerTask() {
-        @Override
-        public void run() {
-          resynch();
-        }
-      }, resyncEvery, resyncEvery);
-    }
+    checkLocalNodeInConfiguration();
   }
 
   @Override
-  public void send2Node(final ODistributedRequest iRequest, final String iTargetNode) {
-    final IQueue<ODistributedRequest> queue = msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(
-        iTargetNode, iRequest.getDatabaseName()));
+  public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Set<String> nodes) {
+    final String databaseName = iRequest.getDatabaseName();
+    final String clusterName = iRequest.getClusterName();
+
+    if (nodes.isEmpty()) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
+          "No nodes configured for partition '%s.%s' request: %s", databaseName, clusterName, iRequest);
+      throw new ODistributedException("No nodes configured for partition '" + databaseName + "." + clusterName + "' request: "
+          + iRequest);
+    }
+
+    final IQueue<ODistributedRequest>[] reqQueues = getRequestQueues(databaseName, nodes);
+
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes);
+
+    iRequest.setSenderNodeName(manager.getLocalNodeName());
+
+    int availableNodes;
+    if (iRequest.getTask().isRequireNodeOnline()) {
+      // CHECK THE ONLINE NODES
+      availableNodes = 0;
+      for (String node : nodes) {
+        if (manager.isNodeAvailable(node, databaseName))
+          availableNodes++;
+        else {
+          if (ODistributedServerLog.isDebugEnabled())
+            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                "skip expected response from node '%s' for request %s because it's not online", node, iRequest);
+        }
+      }
+    } else
+      // EXPECT ANSWER FROM ALL NODES
+      availableNodes = nodes.size();
+
+    final int queueSize = nodes.size();
+    int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : 1;
+    if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION)
+      expectedSynchronousResponses = availableNodes;
+
+    final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
+
+    // CREATE THE RESPONSE MANAGER
+    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, nodes,
+        expectedSynchronousResponses, quorum, waitLocalNode,
+        iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses), iRequest.getTask().getTotalTimeout(queueSize));
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "sending request %s",
+          iRequest.getTask());
+
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
     try {
-      queue.offer(iRequest, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS);
+      requestLock.lock();
+      try {
+        iRequest.setId(msgService.getMessageIdCounter().getAndIncrement());
+
+        msgService.registerRequest(iRequest.getId(), currentResponseMgr);
+
+        // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
+        // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
+        for (IQueue<ODistributedRequest> queue : reqQueues) {
+          // ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "****** sending msg %d to queue %s",
+          // iRequest.getId(), queue);
+
+          queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+        }
+
+      } finally {
+        requestLock.unlock();
+      }
+
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "sent request %s",
+            iRequest.getTask());
 
       Orient
           .instance()
           .getProfiler()
-          .updateCounter("distributed.replication." + databaseName + ".fixMsgSent",
-              "Number of replication fix messages sent from current node", +1, "distributed.replication.fixMsgSent");
+          .updateCounter("distributed.replication." + databaseName + ".msgSent",
+              "Number of replication messages sent from current node", +1, "distributed.replication.*.msgSent");
+
+      return waitForResponse(iRequest, currentResponseMgr);
 
     } catch (Throwable e) {
-      throw new ODistributedException("Error on sending distributed request against " + iTargetNode, e);
+      throw new ODistributedException("Error on sending distributed request against database '" + databaseName
+          + (clusterName != null ? ":" + clusterName : "") + "' to nodes " + nodes, e);
     }
-
   }
 
   @Override
   public ODistributedResponse send(final ODistributedRequest iRequest) {
-    // TODO: remove threadId
-    final Thread currentThread = Thread.currentThread();
-    final long threadId = currentThread.getId();
-
     final String databaseName = iRequest.getDatabaseName();
-
     final String clusterName = iRequest.getClusterName();
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
@@ -130,89 +177,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final ODistributedPartition partition = strategy.getPartition(manager, databaseName, clusterName);
     final Set<String> nodes = partition.getNodes();
 
-    final IQueue<ODistributedRequest>[] reqQueues = getRequestQueues(databaseName, nodes);
-
-    int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes);
-
-    iRequest.setSenderNodeName(manager.getLocalNodeName());
-    iRequest.setSenderThreadId(threadId);
-
-    int availableNodes = 0;
-    for (String node : nodes) {
-      if (manager.isNodeAvailable(node))
-        availableNodes++;
-      else {
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), node, DIRECTION.OUT,
-              "skip listening of response because node '%s' is not online", node);
-      }
-    }
-    
-    final int queueSize = nodes.size();
-    int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : queueSize;
-    final boolean waitLocalNode = nodes.contains(manager.getLocalNodeName()) && cfg.isReadYourWrites(clusterName);
-
-    // CREATE THE RESPONSE MANAGER
-    final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, nodes,
-        expectedSynchronousResponses, quorum, waitLocalNode, iRequest.getPayload().getSynchronousTimeout(
-            expectedSynchronousResponses), iRequest.getPayload().getTotalTimeout(queueSize));
-
-    msgService.registerRequest(iRequest.getId(), currentResponseMgr);
-
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), nodes.toString(), DIRECTION.OUT, "request %s",
-          iRequest.getPayload());
-
-    final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
-
-    try {
-      requestLock.lock();
-      try {
-        // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
-        // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
-        for (IQueue<ODistributedRequest> queue : reqQueues) {
-          queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
-        }
-
-      } finally {
-        requestLock.unlock();
-      }
-
-      Orient
-          .instance()
-          .getProfiler()
-          .updateCounter("distributed.replication." + databaseName + ".msgSent",
-              "Number of replication messages sent from current node", +1, "distributed.replication.*.msgSent");
-
-      return collectResponses(iRequest, currentResponseMgr);
-
-    } catch (Throwable e) {
-      throw new ODistributedException("Error on sending distributed request against " + databaseName
-          + (clusterName != null ? ":" + clusterName : ""), e);
-    }
-
-  }
-
-  protected void resynch() {
-    final long startTimer = System.currentTimeMillis();
-
-    try {
-      send(new OHazelcastDistributedRequest(manager.getLocalNodeName(), databaseName, null, new OResynchTask(),
-          EXECUTION_MODE.RESPONSE));
-    } catch (ODistributedException e) {
-      // HIDE EXCEPTION IF ANY ERROR ON QUORUM
-    }
-
-    Orient
-        .instance()
-        .getProfiler()
-        .stopChrono("distributed.replication." + databaseName + ".resynch", "Synchronization time among all the nodes", startTimer,
-            "distributed.replication.*.resynch");
+    return send2Nodes(iRequest, nodes);
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final String clusterName, final ODistributedConfiguration cfg,
-      final Set<String> nodes) {
-    final QUORUM_TYPE quorumType = iRequest.getPayload().getQuorumType();
+      final Collection<String> nodes) {
+    final OAbstractRemoteTask.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 
     final int queueSize = nodes.size();
 
@@ -239,7 +209,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             "Quorum cannot be reached because it is major than available nodes and 'failureAvailableNodesLessQuorum' settings is true");
       else {
         // SET THE QUORUM TO THE AVAILABLE NODE SIZE
-        ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), nodes.toString(), DIRECTION.OUT,
+        ODistributedServerLog.debug(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT,
             "quorum less then available nodes, downgrade quorum to %d", queueSize);
         quorum = queueSize;
       }
@@ -248,64 +218,61 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return quorum;
   }
 
-  protected ODistributedResponse collectResponses(final ODistributedRequest iRequest,
+  protected ODistributedResponse waitForResponse(final ODistributedRequest iRequest,
       final ODistributedResponseManager currentResponseMgr) throws InterruptedException {
-    if (iRequest.getExecutionMode() == EXECUTION_MODE.NO_RESPONSE)
+    if (iRequest.getExecutionMode() == ODistributedRequest.EXECUTION_MODE.NO_RESPONSE)
       return null;
 
     final long beginTime = System.currentTimeMillis();
 
-    // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (WRITE QUORUM)
+    // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)
     if (!currentResponseMgr.waitForSynchronousResponses()) {
-      ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), null, DIRECTION.IN,
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
           "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s",
           System.currentTimeMillis() - beginTime, currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(),
           iRequest);
     }
 
     if (currentResponseMgr.isWaitForLocalNode() && !currentResponseMgr.isReceivedCurrentNode())
-      ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), manager.getLocalNodeName(), DIRECTION.IN,
+      ODistributedServerLog.warn(this, getLocalNodeName(), manager.getLocalNodeName(), DIRECTION.IN,
           "no response received from local node about request %s", iRequest);
 
-    // QUORUM REACHED
-    return currentResponseMgr.getResponse(iRequest.getPayload().getResultStrategy());
+    return currentResponseMgr.getFinalResponse();
   }
 
-  public void configureDatabase(final ODatabaseDocumentTx iDatabase) {
-    // TODO: USE THE POOL!
-    if (iDatabase == null) {
-      // OPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
-      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-          replicatorUser.password);
-    } else
-      database = iDatabase;
+  public boolean isRestoringMessages() {
+    return restoringMessages;
+  }
 
+  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages) {
     // CREATE A QUEUE PER DATABASE
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
     final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
-          "listening for incoming requests on queue: %s", queueName);
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
+          queueName);
 
     // UNDO PREVIOUS MESSAGE IF ANY
-    final IMap<Object, Object> undoMap = restoreMessagesBeforeFailure();
+    final IMap<Object, Object> undoMap = restoreMessagesBeforeFailure(iRestoreMessages);
 
-    msgService.checkForPendingMessages(requestQueue, queueName);
+    restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
 
-    // CREATE THREAD LISTENER AGAINST orientdb.node.<node>.<db>.request, ONE PER NODE, THEN DISPATCH THE MESSAGE INTERNALLY USING
-    // THE THREAD ID
-    new Thread(new Runnable() {
+    listenerThread = new Thread(new Runnable() {
       @Override
       public void run() {
+        Thread.currentThread().setName("OrientDB Node Request " + queueName);
         while (!Thread.interrupted()) {
+          if (restoringMessages && requestQueue.isEmpty()) {
+            // END OF RESTORING MESSAGES, SET IT ONLINE
+            restoringMessages = false;
+            setOnline();
+          }
+
           String senderNode = null;
           ODistributedRequest message = null;
           try {
-            // TODO: ASSURE WE DON'T LOOSE THE MSG AT THIS POINT. HAZELCAST TX? OR PEEK? ARE NOT BLOCKING :-(
-            message = requestQueue.take();
+            message = readRequest(requestQueue);
 
             // SAVE THE MESSAGE IN THE UNDO MAP IN CASE OF FAILURE
             undoMap.put(databaseName, message);
@@ -324,44 +291,128 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             break;
 
           } catch (Throwable e) {
-            ODistributedServerLog.error(this, getLocalNodeNameAndThread(), senderNode, DIRECTION.IN,
-                "error on reading distributed request: %s", e, message != null ? message.getPayload() : "-");
+            ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
+                "error on reading distributed request: %s", e, message != null ? message.getTask() : "-");
           }
         }
       }
-    }).start();
+    });
+    listenerThread.start();
 
-    checkLocalNodeInConfiguration();
+    return this;
+  }
+
+  public void initDatabaseInstance() {
+    if (database == null) {
+      // OPEN IT
+      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+          ODistributedAbstractPlugin.REPLICATOR_USER);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+          replicatorUser.password);
+    }
+  }
+
+  @Override
+  public void setOnline() {
+    initDatabaseInstance();
+
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Publishing online status for database %s.%s...",
+        manager.getLocalNodeName(), databaseName);
+
+    // SET THE NODE.DB AS ONLINE
+    manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+    status.set(true);
+
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+        "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
+
+    // WAKE UP ANY WAITERS
+    synchronized (waitForOnline) {
+      waitForOnline.notifyAll();
+    }
+  }
+
+  public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+        "waiting for message id %d (discard all previous ones if any)...", iMessageId);
+
+    waitForMessageId.set(iMessageId);
+    return this;
+  }
+
+  protected ODistributedRequest readRequest(final IQueue<ODistributedRequest> requestQueue) throws InterruptedException {
+    // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
+    ODistributedRequest req = requestQueue.take();
+
+    while (waitForMessageId.get() > -1) {
+      if (req != null) {
+        if (req.getId() >= waitForMessageId.get()) {
+          // ARRIVED, RESET IT
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+              "reached waited request %d on request=%s sourceNode=%s", waitForMessageId.get(), req, req.getSenderNodeName());
+
+          waitForMessageId.set(-1);
+          return req;
+        } else {
+          // SKIP IT
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+              "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(), waitForMessageId, req,
+              req.getSenderNodeName());
+
+          // READ THE NEXT ONE
+          req = requestQueue.take();
+        }
+      }
+    }
+
+    while (!restoringMessages && !status.get() && req.getTask().isRequireNodeOnline()) {
+      // WAIT UNTIL THE NODE IS ONLINE
+      synchronized (waitForOnline) {
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
+            "node is not online, request=%s sourceNode=%s must wait to be processed", req, req.getSenderNodeName());
+
+        waitForOnline.wait(5000);
+      }
+    }
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
+          "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
+
+    return req;
   }
 
   /**
    * Execute the remote call on the local node and send back the result
    */
   protected void onMessage(final ODistributedRequest iRequest) {
-    OScenarioThreadLocal.INSTANCE.set(RUN_MODE.RUNNING_DISTRIBUTED);
+    OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
+      final OAbstractRemoteTask task = iRequest.getTask();
+
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(),
-            iRequest.getSenderNodeName() + ":" + iRequest.getSenderThreadId(), DIRECTION.IN, "request %s", iRequest.getPayload());
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+            "received request: %s", iRequest);
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
       try {
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
-        iRequest.getPayload().setNodeSource(iRequest.getSenderNodeName());
+        task.setNodeSource(iRequest.getSenderNodeName());
         responsePayload = manager.executeOnLocalNode(iRequest, database);
       } finally {
-        database.getLevel1Cache().clear();
+        if (database != null)
+          database.getLevel1Cache().clear();
       }
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(),
-            iRequest.getSenderNodeName() + ":" + iRequest.getSenderThreadId(), DIRECTION.OUT,
-            "sending back response %s to request %s", responsePayload, iRequest.getPayload());
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+            "sending back response '%s' to request: %s", responsePayload, task);
 
       final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(),
-          manager.getLocalNodeName(), iRequest.getSenderNodeName(), iRequest.getSenderThreadId(), responsePayload);
+          manager.getLocalNodeName(), iRequest.getSenderNodeName(), responsePayload);
 
       try {
         // GET THE SENDER'S RESPONSE QUEUE
@@ -369,21 +420,19 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             .getResponseQueueName(iRequest.getSenderNodeName()));
 
         if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
-          throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName()
-              + ":" + iRequest.getSenderThreadId());
+          throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
 
       } catch (Exception e) {
-        throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName() + ":"
-            + iRequest.getSenderThreadId(), e);
+        throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName(), e);
       }
 
     } finally {
-      OScenarioThreadLocal.INSTANCE.set(RUN_MODE.DEFAULT);
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }
   }
 
   @SuppressWarnings("unchecked")
-  protected IQueue<ODistributedRequest>[] getRequestQueues(final String iDatabaseName, final Set<String> nodes) {
+  protected IQueue<ODistributedRequest>[] getRequestQueues(final String iDatabaseName, final Collection<String> nodes) {
     final IQueue<ODistributedRequest>[] queues = new IQueue[nodes.size()];
 
     int i = 0;
@@ -394,6 +443,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   public void shutdown() {
+    if (listenerThread != null)
+      listenerThread.interrupt();
+
     try {
       database.close();
     } catch (Exception e) {
@@ -415,21 +467,22 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return buffer.toString();
   }
 
-  protected String getLocalNodeNameAndThread() {
-    return manager.getLocalNodeName() + ":" + Thread.currentThread().getId();
+  protected String getLocalNodeName() {
+    return manager.getLocalNodeName();
   }
 
-  protected IMap<Object, Object> restoreMessagesBeforeFailure() {
+  protected IMap<Object, Object> restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
     final IMap<Object, Object> undoMap = manager.getHazelcastInstance().getMap(getUndoMapName(databaseName));
     final ODistributedRequest undoRequest = (ODistributedRequest) undoMap.remove(databaseName);
-    if (undoRequest != null) {
-      ODistributedServerLog.warn(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
+    if (undoRequest != null && iRestoreMessages) {
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
           "restore last replication message before the crash for database %s: %s", databaseName, undoRequest);
 
       try {
+        initDatabaseInstance();
         onMessage(undoRequest);
       } catch (Throwable t) {
-        ODistributedServerLog.error(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
+        ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
             "error on executing restored message for database %s", t, databaseName);
       }
 
@@ -442,45 +495,31 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    final String localNode = manager.getLocalNodeName();
-
-    // LOAD DATABASE FILE IF ANY
-    manager.loadDatabaseConfiguration(databaseName, manager.getDistributedConfigFile(databaseName));
-
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
-    for (String clusterName : cfg.getClusterNames()) {
-      final List<List<String>> partitions = cfg.getPartitions(clusterName);
-      if (partitions != null)
-        for (List<String> partition : partitions) {
-          for (String node : partition)
-            if (node.equals(localNode))
-              // FOUND: DO NOTHING
-              return;
-        }
-    }
 
-    // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
-    boolean dirty = false;
-    for (String clusterName : cfg.getClusterNames()) {
-      final List<List<String>> partitions = cfg.getPartitions(clusterName);
-      if (partitions != null)
-        for (int p = 0; p < partitions.size(); ++p) {
-          List<String> partition = partitions.get(p);
-          for (String node : partition)
-            if (node.equalsIgnoreCase(ODistributedConfiguration.NEW_NODE_TAG)) {
-              ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-                  "adding node '%s' in partition: %s.%s.%d", localNode, databaseName, clusterName, p);
-              partition.add(localNode);
-              dirty = true;
-              break;
-            }
-        }
-    }
+    final List<String> foundPartition = cfg.addNewNodeInPartitions(manager.getLocalNodeName());
+    if (foundPartition != null) {
+      // SET THE NODE.DB AS OFFLINE
+      manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
 
-    if (dirty) {
-      final ODocument doc = cfg.serialize();
-      manager.getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, doc);
-      manager.updateDatabaseConfiguration(databaseName, doc);
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
+          manager.getLocalNodeName(), databaseName, foundPartition);
+
+      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+    }
+  }
+
+  protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
+    // GET DATABASE CFG
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
+    final List<String> foundPartition = cfg.removeNodeInPartition(iNode, iForce);
+    if (foundPartition != null) {
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "removing node '%s' in partition: db=%s %s", iNode, databaseName, foundPartition);
+
+      msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
+      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
     }
   }
 

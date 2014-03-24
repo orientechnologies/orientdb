@@ -82,7 +82,7 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
   }
 
   public OUser repair() {
@@ -126,7 +126,7 @@ public class OSecurityNull implements OSecurity {
   public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return null;
   }
-  
+
   @Override
   public void createClassTrigger() {
   }

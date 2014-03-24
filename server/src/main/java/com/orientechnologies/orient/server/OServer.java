@@ -15,32 +15,11 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -64,6 +43,7 @@ import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -74,9 +54,31 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 
-public class OServer {
-  protected ReentrantLock                                  lock               = new ReentrantLock();
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
 
+public class OServer {
+  private static ThreadGroup                               threadGroup;
+  private static Map<String, OServer>                      distributedServers = new ConcurrentHashMap<String, OServer>();
+  private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
+  protected ReentrantLock                                  lock               = new ReentrantLock();
   protected volatile boolean                               running            = true;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
@@ -89,13 +91,9 @@ public class OServer {
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private ODatabaseDocumentPool                            dbPool;
-  private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
   private Random                                           random             = new Random();
   private Map<String, Object>                              variables          = new HashMap<String, Object>();
   private String                                           databaseDirectory;
-
-  private static ThreadGroup                               threadGroup;
-  private static Map<String, OServer>                      distributedServers = new ConcurrentHashMap<String, OServer>();
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -124,7 +122,7 @@ public class OServer {
 
     Orient.instance().startup();
 
-    startup(new File(config));
+    startup(new File(OSystemVariableResolver.resolveSystemVariables(config)));
 
     Orient
         .instance()
@@ -192,7 +190,9 @@ public class OServer {
 
     dbPool = new ODatabaseDocumentPool();
     dbPool.setup(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MIN),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX));
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX),
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT),
+        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY));
 
     databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
@@ -222,6 +222,13 @@ public class OServer {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onAfterActivate();
 
+    try {
+      loadStorages();
+      loadUsers();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
+    }
+
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
     startupLatch.countDown();
 
@@ -250,24 +257,10 @@ public class OServer {
         OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
       }
 
+    lock.lock();
     try {
-      lock.lock();
-
-      final String[] plugins = pluginManager.getPluginNames();
-      if (plugins.length > 0) {
-        // SHUTDOWN HANDLERS
-        OLogManager.instance().info(this, "Shutting down plugins:");
-        for (String pluginName : plugins) {
-
-          OLogManager.instance().info(this, "- %s", pluginName);
-          final OServerPluginInfo plugin = pluginManager.getPluginByName(pluginName);
-          try {
-            plugin.shutdown();
-          } catch (Throwable t) {
-            OLogManager.instance().error(this, "Error during server plugin %s shutdown.", t, plugin);
-          }
-        }
-      }
+      if( pluginManager!=null)
+			  pluginManager.shutdown();
 
       if (networkProtocols.size() > 0) {
         // PROTOCOL SHUTDOWN
@@ -386,7 +379,7 @@ public class OServer {
 
   /**
    * Authenticate a server user.
-   * 
+   *
    * @param iUserName
    *          Username to authenticate
    * @param iPassword
@@ -462,7 +455,7 @@ public class OServer {
     }
 
     for (OServerPluginInfo h : getPlugins())
-      if (h.getInstance().getClass().equals(iPluginClass))
+      if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass))
         return (RET) h.getInstance();
 
     return null;
@@ -495,22 +488,15 @@ public class OServer {
   }
 
   protected void loadConfiguration(final OServerConfiguration iConfiguration) {
-    try {
-      configuration = iConfiguration;
+    configuration = iConfiguration;
 
-      // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
-      contextConfiguration = new OContextConfiguration();
-      if (iConfiguration.properties != null)
-        for (OServerEntryConfiguration prop : iConfiguration.properties)
-          contextConfiguration.setValue(prop.name, prop.value);
+    // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
+    contextConfiguration = new OContextConfiguration();
+    if (iConfiguration.properties != null)
+      for (OServerEntryConfiguration prop : iConfiguration.properties)
+        contextConfiguration.setValue(prop.name, prop.value);
 
-      loadStorages();
-      loadUsers();
-      hookManager = new OConfigurableHooksManager(iConfiguration);
-
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration.", OConfigurationException.class, e);
-    }
+    hookManager = new OConfigurableHooksManager(iConfiguration);
   }
 
   protected OServerConfiguration loadConfigurationFromFile(final File iFile) {
@@ -639,6 +625,24 @@ public class OServer {
       // ACTIVATE PLUGINS
       OServerPlugin handler;
       for (OServerHandlerConfiguration h : configuration.handlers) {
+        if (h.parameters != null) {
+          // CHECK IF IT'S ENABLED
+          boolean enabled = true;
+
+          for (OServerParameterConfiguration p : h.parameters) {
+            if (p.name.equals("enabled")) {
+              if (p.name.equals("false")) {
+                enabled = false;
+                break;
+              }
+            }
+          }
+
+          if (!enabled)
+            // SKIP IT
+            continue;
+        }
+
         handler = (OServerPlugin) Class.forName(h.clazz).newInstance();
 
         if (handler instanceof ODistributedServerManager)
@@ -663,14 +667,13 @@ public class OServer {
         if (db.isDirectory()) {
           final File localFile = new File(db.getAbsolutePath() + "/default.odh");
           final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+          final String dbPath = db.getPath().replace('\\', '/');
+          final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
           if (localFile.exists()) {
-            final String dbPath = db.getPath().replace('\\', '/');
             // FOUND DB FOLDER
-            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(rootDirectory.length())), "local:" + dbPath);
+            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
           } else if (plocalFile.exists()) {
-            final String dbPath = db.getPath().replace('\\', '/');
-
-            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(rootDirectory.length())), "plocal:" + dbPath);
+            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
           } else
             // TRY TO GO IN DEEP RECURSIVELY
             scanDatabaseDirectory(rootDirectory, db, storages);

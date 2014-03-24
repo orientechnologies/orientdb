@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.File;
 import java.io.IOException;
 
+import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
@@ -32,10 +33,11 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -194,6 +196,42 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     }
   }
 
+  @Override
+  public void close(boolean flush) throws IOException {
+    close();
+  }
+
+  @Override
+  public OModificationLock getExternalModificationLock() {
+    throw new UnsupportedOperationException("getExternalModificationLock");
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+    throw new UnsupportedOperationException("createRecord");
+  }
+
+  @Override
+  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("deleteRecord");
+  }
+
+  @Override
+  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
+      throws IOException {
+    throw new UnsupportedOperationException("updateRecord");
+  }
+
+  @Override
+  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+    throw new UnsupportedOperationException("readRecord");
+  }
+
+  @Override
+  public boolean exists() {
+    throw new UnsupportedOperationException("exists");
+  }
+
   public void delete() throws IOException {
     acquireExclusiveLock();
     try {
@@ -257,7 +295,9 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         break;
       case DATASEGMENT:
         setDataSegmentInternal(stringValue);
-        break;
+        break;        
+      default:
+        throw new IllegalArgumentException("Runtime change of attribute '" + iAttribute + " is not supported");
       }
 
     } finally {
@@ -314,12 +354,12 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     return 1;
   }
 
-	@Override
-	public String compression() {
-		return ONothingCompression.NAME;
-	}
+  @Override
+  public String compression() {
+    return ONothingCompression.NAME;
+  }
 
-	/**
+  /**
    * Update position in data segment (usually on defrag)
    * 
    * @throws IOException
@@ -573,14 +613,6 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
   @Override
   public String toString() {
     return name + " (id=" + id + ")";
-  }
-
-  public void lock() {
-    acquireSharedLock();
-  }
-
-  public void unlock() {
-    releaseSharedLock();
   }
 
   public String getType() {
@@ -971,4 +1003,9 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       releaseSharedLock();
     }
   }
+
+	@Override
+	public boolean hideRecord(OClusterPosition position) {
+		throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+	}
 }

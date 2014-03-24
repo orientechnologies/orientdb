@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,7 +24,10 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.List;
 
 public interface OTransaction {
   public enum TXTYPE {
@@ -34,21 +35,25 @@ public interface OTransaction {
   }
 
   public enum TXSTATUS {
-    INVALID, BEGUN, COMMITTING, ROLLBACKING
+    INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
   }
 
   public void begin();
 
   public void commit();
 
+	public void commit(boolean force);
+
   public void rollback();
+
+  public void rollback(boolean force, int commitLevelDiff);
 
   public ODatabaseRecordTx getDatabase();
 
   public void clearRecordEntries();
 
   public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
-      boolean loadTombstone);
+      boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   public boolean updateReplica(ORecordInternal<?> iRecord);
 
@@ -107,4 +112,6 @@ public interface OTransaction {
    *          Record identity after commit.
    */
   public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+
+  public int amountOfNestedTxs();
 }

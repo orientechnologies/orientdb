@@ -48,7 +48,7 @@ public class ODefaultCacheCleanUpTest {
 
     // When watchdog listener invoked with critically low memory
     int freeMemoryPercentageBelowCriticalPoint = 8;
-    sut.lowMemoryListener.memoryUsageLow(1, freeMemoryPercentageBelowCriticalPoint);
+    sut.lowMemoryListener.lowMemory(1, freeMemoryPercentageBelowCriticalPoint);
 
     // Then whole cache cleared
     assertEquals(sut.size(), 0, "Cache has entries in it yet");
@@ -61,7 +61,7 @@ public class ODefaultCacheCleanUpTest {
 
     // When watchdog listener invoked with critically low memory
     int freeMemoryPercentageBelowCriticalPoint = 20;
-    sut.lowMemoryListener.memoryUsageLow(1, freeMemoryPercentageBelowCriticalPoint);
+    sut.lowMemoryListener.lowMemory(1, freeMemoryPercentageBelowCriticalPoint);
 
     // Then whole cache cleared
     assertTrue(sut.size() < originalSize, "Cache was not cleaned");

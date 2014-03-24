@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableA
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Hi-level function that return the label for both edges and vertices. The label could be bound to the class name.
@@ -40,11 +42,10 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
     super(NAME, 0, 0);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
-      OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
-    if (iCurrentRecord == null) {
+    if (iCurrentResult != null) {
       return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
         public Object call(final OIdentifiable iArgument) {
@@ -58,12 +59,12 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {
     final ODocument rec = iCurrentRecord.getRecord();
 
-    if (rec.getSchemaClass().isSubClassOf(OrientVertex.CLASS_NAME)) {
+    if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // VERTEX
       final OrientVertex vertex = graph.getVertex(iCurrentRecord);
       return vertex.getLabel();
 
-    } else if (rec.getSchemaClass().isSubClassOf(OrientEdge.CLASS_NAME)) {
+    } else if (rec.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       final OrientEdge edge = graph.getEdge(iCurrentRecord);
       return edge.getLabel();

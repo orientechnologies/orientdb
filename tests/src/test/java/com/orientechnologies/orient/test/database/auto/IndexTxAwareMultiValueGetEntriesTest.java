@@ -37,8 +37,11 @@ public class IndexTxAwareMultiValueGetEntriesTest {
   @BeforeClass
   public void beforeClass() {
     database.open("admin", "admin");
-    database.getMetadata().getIndexManager()
-        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null);
+    database
+        .getMetadata()
+        .getIndexManager()
+        .createIndex("idxTxAwareMultiValueGetEntriesTest", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.INTEGER), null, null,
+            null);
     database.close();
   }
 

@@ -23,7 +23,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.7-rc2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -68,6 +68,18 @@
             <timezone>+2</timezone>
         </developer>
         <developer>
+            <id>lomakin.andrey</id>
+            <name>Andrey Lomakin</name>
+            <email>a.lomakin@orientechnologies.com</email>
+            <organization>Orientechnologies</organization>
+            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>+2</timezone>
+        </developer>
+        <developer>
             <id>molino.luca</id>
             <name>Luca Molino</name>
             <email>molino.luca@gmail.com</email>
@@ -76,16 +88,6 @@
                 <role>developer</role>
             </roles>
             <timezone>+1</timezone>
-        </developer>
-        <developer>
-            <id>lomakin.andrey</id>
-            <name>Andrey Lomakin</name>
-            <email>lomakin.andrey@gmail.com</email>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+2</timezone>
         </developer>
     </developers>
 
@@ -108,8 +110,7 @@
         <module>tests</module>
         <module>distributed</module>
         <module>graphdb</module>
-        <module>distribution/default</module>
-        <module>distribution/graphed</module>
+        <module>distribution</module>
     </modules>
 
     <scm>
@@ -168,7 +169,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.12</surefire.version>
+        <surefire.version>2.16</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
     </properties>

@@ -123,6 +123,8 @@ public class OIndexDefinitionFactory {
       }
 
       indexDefinition = new OPropertyListIndexDefinition(oClass.getName(), fieldName, indexType);
+    } else if (type.equals(OType.LINKBAG)) {
+      indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName);
     } else
       indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type);
     return indexDefinition;

@@ -1,13 +1,6 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -53,7 +46,7 @@ public class SBTreeTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false);
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, (OStorageLocalAbstract) databaseDocumentTx
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, (OStorageLocalAbstract) databaseDocumentTx
         .getStorage().getUnderlying());
   }
 
@@ -264,8 +257,11 @@ public class SBTreeTest {
       keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
-    assertMajorValues(keyValues, random, true);
-    assertMajorValues(keyValues, random, false);
+    assertMajorValues(keyValues, random, true, true);
+    assertMajorValues(keyValues, random, false, true);
+
+    assertMajorValues(keyValues, random, true, false);
+    assertMajorValues(keyValues, random, false, false);
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
@@ -282,8 +278,11 @@ public class SBTreeTest {
       keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
-    assertMinorValues(keyValues, random, true);
-    assertMinorValues(keyValues, random, false);
+    assertMinorValues(keyValues, random, true, true);
+    assertMinorValues(keyValues, random, false, true);
+
+    assertMinorValues(keyValues, random, true, false);
+    assertMinorValues(keyValues, random, false, false);
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
@@ -300,16 +299,161 @@ public class SBTreeTest {
       keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
     }
 
-    assertBetweenValues(keyValues, random, true, true);
-    assertBetweenValues(keyValues, random, true, false);
-    assertBetweenValues(keyValues, random, false, true);
-    assertBetweenValues(keyValues, random, false, false);
+    assertBetweenValues(keyValues, random, true, true, true);
+    assertBetweenValues(keyValues, random, true, false, true);
+    assertBetweenValues(keyValues, random, false, true, true);
+    assertBetweenValues(keyValues, random, false, false, true);
+
+    assertBetweenValues(keyValues, random, true, true, false);
+    assertBetweenValues(keyValues, random, true, false, false);
+    assertBetweenValues(keyValues, random, false, true, false);
+    assertBetweenValues(keyValues, random, false, false, false);
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
-  private void assertMajorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
+  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
+    for (int i = 0; i < 5167; i++)
+      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 0; i < 3500; i++)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.firstKey(), 3500);
+
+    for (int i = 0; i < 3500; i++)
+      Assert.assertNull(sbTree.get(i));
+
+    for (int i = 3500; i < 5167; i++)
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+  }
+
+  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
+    for (int i = 0; i < 5167; i++)
+      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 5166; i > 1700; i--)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.lastKey(), 1700);
+
+    for (int i = 5166; i > 1700; i--)
+      Assert.assertNull(sbTree.get(i));
+
+    for (int i = 1700; i >= 0; i--)
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+  }
+
+  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
+    for (int i = 0; i < 12055; i++)
+      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+
+    for (int i = 0; i < 1730; i++)
+      sbTree.remove(i);
+
+    for (int i = 3440; i < 6900; i++)
+      sbTree.remove(i);
+
+    for (int i = 8600; i < 12055; i++)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.firstKey(), 1730);
+    Assert.assertEquals((int) sbTree.lastKey(), 8599);
+
+    Collection<OIdentifiable> result = sbTree.getValuesMinor(7200, true, -1, true);
+
+    Set<OIdentifiable> identifiables = new HashSet<OIdentifiable>(result);
+    for (int i = 7200; i >= 6900; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 3439; i >= 1730; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesMinor(7200, true, -1, false);
+
+    identifiables = new HashSet<OIdentifiable>(result);
+    for (int i = 7200; i >= 6900; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 3439; i >= 1730; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesMajor(1740, true, -1, true);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 1740; i < 3440; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 6900; i < 8600; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesMajor(1740, true, -1, false);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 1740; i < 3440; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 6900; i < 8600; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesBetween(1740, true, 7200, true, -1, true);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 1740; i < 3440; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 6900; i <= 7200; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesBetween(1740, true, 7200, true, -1, false);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 1740; i < 3440; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 6900; i <= 7200; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+  }
+
+  private void assertMajorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
+      boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
@@ -327,16 +471,22 @@ public class SBTreeTest {
       }
 
       int maxValuesToFetch = 10000;
-      Collection<OIdentifiable> orids = sbTree.getValuesMajor(fromKey, keyInclusive, maxValuesToFetch);
+      Collection<OIdentifiable> orids = sbTree.getValuesMajor(fromKey, keyInclusive, maxValuesToFetch, ascSortOrder);
 
-      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
+      Iterator<ORID> valuesIterator;
+      if (ascSortOrder)
+        valuesIterator = keyValues.tailMap(fromKey, keyInclusive).values().iterator();
+      else
+        valuesIterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).values().iterator();
 
-      Iterator<ORID> valuesIterator = keyValues.tailMap(fromKey, keyInclusive).values().iterator();
+      Iterator<OIdentifiable> resultIterator = orids.iterator();
 
       int fetchedValues = 0;
       while (valuesIterator.hasNext() && fetchedValues < maxValuesToFetch) {
         ORID value = valuesIterator.next();
-        Assert.assertTrue(result.remove(value));
+        OIdentifiable resultValue = resultIterator.next();
+
+        Assert.assertEquals(resultValue, value);
 
         fetchedValues++;
       }
@@ -344,11 +494,12 @@ public class SBTreeTest {
       if (valuesIterator.hasNext())
         Assert.assertEquals(fetchedValues, maxValuesToFetch);
 
-      Assert.assertEquals(result.size(), 0);
+      Assert.assertFalse(resultIterator.hasNext());
     }
   }
 
-  private void assertMinorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
+  private void assertMinorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
+      boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int toKey;
@@ -366,16 +517,21 @@ public class SBTreeTest {
       }
 
       int maxValuesToFetch = 10000;
-      Collection<OIdentifiable> orids = sbTree.getValuesMinor(toKey, keyInclusive, maxValuesToFetch);
+      Collection<OIdentifiable> orids = sbTree.getValuesMinor(toKey, keyInclusive, maxValuesToFetch, ascSortOrder);
+      Iterator<OIdentifiable> resultIterator = orids.iterator();
 
-      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
-
-      Iterator<ORID> valuesIterator = keyValues.headMap(toKey, keyInclusive).descendingMap().values().iterator();
+      Iterator<ORID> valuesIterator;
+      if (ascSortOrder)
+        valuesIterator = keyValues.headMap(toKey, keyInclusive).values().iterator();
+      else
+        valuesIterator = keyValues.headMap(toKey, keyInclusive).descendingMap().values().iterator();
 
       int fetchedValues = 0;
       while (valuesIterator.hasNext() && fetchedValues < maxValuesToFetch) {
         ORID value = valuesIterator.next();
-        Assert.assertTrue(result.remove(value));
+        OIdentifiable resultValue = resultIterator.next();
+
+        Assert.assertEquals(resultValue, value);
 
         fetchedValues++;
       }
@@ -383,12 +539,12 @@ public class SBTreeTest {
       if (valuesIterator.hasNext())
         Assert.assertEquals(fetchedValues, maxValuesToFetch);
 
-      Assert.assertEquals(result.size(), 0);
+      Assert.assertFalse(resultIterator.hasNext());
     }
   }
 
   private void assertBetweenValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean fromInclusive,
-      boolean toInclusive) {
+      boolean toInclusive, boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
@@ -422,15 +578,22 @@ public class SBTreeTest {
 
       int maxValuesToFetch = 10000;
 
-      Collection<OIdentifiable> orids = sbTree.getValuesBetween(fromKey, fromInclusive, toKey, toInclusive, maxValuesToFetch);
-      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
+      Collection<OIdentifiable> orids = sbTree.getValuesBetween(fromKey, fromInclusive, toKey, toInclusive, maxValuesToFetch,
+          ascSortOrder);
 
-      Iterator<ORID> valuesIterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).values().iterator();
+      Iterator<ORID> valuesIterator;
+      if (ascSortOrder)
+        valuesIterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).values().iterator();
+      else
+        valuesIterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).values().iterator();
+
+      Iterator<OIdentifiable> resultIterator = orids.iterator();
 
       int fetchedValues = 0;
       while (valuesIterator.hasNext() && fetchedValues < maxValuesToFetch) {
         ORID value = valuesIterator.next();
-        Assert.assertTrue(result.remove(value));
+        OIdentifiable resultValue = resultIterator.next();
+        Assert.assertEquals(resultValue, value);
 
         fetchedValues++;
       }
@@ -438,7 +601,7 @@ public class SBTreeTest {
       if (valuesIterator.hasNext())
         Assert.assertEquals(fetchedValues, maxValuesToFetch);
 
-      Assert.assertEquals(result.size(), 0);
+      Assert.assertFalse(resultIterator.hasNext());
     }
   }
 }

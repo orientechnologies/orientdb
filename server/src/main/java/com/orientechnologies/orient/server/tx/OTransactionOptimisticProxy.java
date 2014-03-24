@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
@@ -124,10 +125,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
             loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
             entry.getValue().record = loadedRecord;
-            
+
             // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
-            updatedRecords.put((ORecordId)entry.getKey(), entry.getValue().getRecord());
-            
+            updatedRecords.put((ORecordId) entry.getKey(), entry.getValue().getRecord());
+
           }
         }
 
@@ -215,10 +216,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           final OTransactionIndexChanges.OPERATION indexOperation = OTransactionIndexChanges.OPERATION.values()[operation];
           final OIdentifiable value = op.field("v", OType.LINK);
 
-          if (key != null)
-            transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
-          else
-            transactionIndexChanges.getChangesCrossKey().add(value, indexOperation);
+          transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
 
           if (value == null)
             continue;
@@ -252,8 +250,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       ((ODocument) iRecord).deserializeFields();
 
       for (Entry<String, Object> field : ((ODocument) iRecord)) {
-        if (field.getValue() instanceof ORecordLazyList)
+        final Object value = field.getValue();
+        if (value instanceof ORecordLazyList)
           ((ORecordLazyList) field.getValue()).lazyLoad(true);
+        else if (value instanceof ORidBag)
+          ((ORidBag) value).convertLinks2Records();
       }
     }
   }

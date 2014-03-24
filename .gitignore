@@ -3,6 +3,7 @@ build.number
 */target/*
 target
 */test-output
+out
 */databases
 *.gz
 *.patch
@@ -14,7 +15,7 @@ target
 # Eclipse IDE files
 *.classpath
 *.project
-*/*.settings
+.settings/
 *.prefs
 
 #IntelliJ IDEA files

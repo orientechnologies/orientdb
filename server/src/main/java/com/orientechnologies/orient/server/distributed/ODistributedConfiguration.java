@@ -15,14 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Distributed configuration.
+ * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -45,9 +46,24 @@ public class ODistributedConfiguration {
       if (iClusterName != null) {
         ODocument cluster = getClusterConfiguration(iClusterName);
         if (cluster.containsField("replication"))
-          return cluster.field("replication");
+          return cluster.<Boolean> field("replication");
       }
-      return configuration.field("replication");
+
+      return configuration.<Boolean> field("replication");
+    }
+  }
+
+  /**
+   * Returns true if hot alignment is supported.
+   * 
+   * @return
+   */
+  public boolean isHotAlignment() {
+    synchronized (configuration) {
+      final Boolean value = configuration.field("hotAlignment");
+      if (value != null)
+        return value;
+      return true;
     }
   }
 
@@ -150,13 +166,6 @@ public class ODistributedConfiguration {
     }
   }
 
-  public ODistributedConfiguration addNodeInPartition(final String iClusterName, final int iPartition, final String iNode) {
-    synchronized (configuration) {
-      getPartition(iClusterName, iPartition).add(iNode);
-    }
-    return this;
-  }
-
   public List<String> getPartition(final String iClusterName, final int iPartition) {
     synchronized (configuration) {
       final List<List<String>> partitions = getPartitions(iClusterName);
@@ -219,6 +228,88 @@ public class ODistributedConfiguration {
   }
 
   public ODocument serialize() {
-    return configuration.copy();
+    return configuration;
+  }
+
+  public List<String> addNewNodeInPartitions(final String iNode) {
+    synchronized (configuration) {
+      // GET DATABASE CFG
+      for (String clusterName : getClusterNames()) {
+        final List<List<String>> partitions = getPartitions(clusterName);
+        if (partitions != null)
+          for (List<String> partition : partitions) {
+            for (String node : partition)
+              if (node.equals(iNode))
+                // FOUND: DO NOTHING
+                return null;
+          }
+      }
+
+      final List<String> changedPartitions = new ArrayList<String>();
+      // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
+      for (String clusterName : getClusterNames()) {
+        final List<List<String>> partitions = getPartitions(clusterName);
+        if (partitions != null)
+          for (int p = 0; p < partitions.size(); ++p) {
+            List<String> partition = partitions.get(p);
+            for (String node : partition)
+              if (node.equalsIgnoreCase(ODistributedConfiguration.NEW_NODE_TAG)) {
+                partition.add(iNode);
+                changedPartitions.add(clusterName + "." + p);
+                break;
+              }
+          }
+      }
+
+      if (!changedPartitions.isEmpty()) {
+        incrementVersion();
+        return changedPartitions;
+      }
+    }
+    return null;
+  }
+
+  public List<String> removeNodeInPartition(final String iNode, final boolean iForce) {
+    synchronized (configuration) {
+      if (!iForce && isHotAlignment())
+        // DO NOTHING
+        return null;
+
+      final List<String> changedPartitions = new ArrayList<String>();
+
+      for (String clusterName : getClusterNames()) {
+        final List<List<String>> partitions = getPartitions(clusterName);
+        if (partitions != null) {
+          for (int p = 0; p < partitions.size(); ++p) {
+            final List<String> partition = partitions.get(p);
+
+            for (int n = 0; n < partition.size(); ++n) {
+              final String node = partition.get(n);
+
+              if (node.equals(iNode)) {
+                // FOUND: REMOVE IT
+                partition.remove(n);
+                changedPartitions.add(clusterName + "." + p);
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (!changedPartitions.isEmpty()) {
+        incrementVersion();
+        return changedPartitions;
+      }
+    }
+    return null;
+  }
+
+  protected void incrementVersion() {
+    // INCREMENT VERSION
+    Integer oldVersion = configuration.field("version");
+    if (oldVersion == null)
+      oldVersion = 0;
+    configuration.field("version", oldVersion.intValue() + 1);
   }
 }

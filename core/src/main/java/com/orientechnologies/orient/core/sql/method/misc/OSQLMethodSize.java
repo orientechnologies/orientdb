@@ -35,17 +35,18 @@ public class OSQLMethodSize extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult,
-      final Object[] iMethodParams) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult, final Object[] iParams) {
     
     final Number size;
     if (ioResult != null) {
-      if (ioResult instanceof ORecord<?>)
+      if (ioResult instanceof ORecord<?>) {
         size = 1;
-      else
+      } else {
         size = OMultiValue.getSize(ioResult);
-    } else
+      }
+    } else {
       size = 0;
+    }
 
     return size;
   }

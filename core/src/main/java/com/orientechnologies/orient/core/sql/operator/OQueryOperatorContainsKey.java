@@ -23,7 +23,12 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -60,10 +65,9 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
     return OIndexReuseType.INDEX_METHOD;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -102,10 +106,11 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-        if (fetchLimit > -1)
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-        else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+        if (resultListener != null) {
+          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
+          result = resultListener.getResult();
+        } else
+          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);

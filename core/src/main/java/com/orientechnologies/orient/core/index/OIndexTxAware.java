@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -25,6 +23,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import java.util.Map.Entry;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -71,16 +71,19 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     final ORID rid = iValue.getIdentity();
 
     if (!rid.isValid())
-      // EARLY SAVE IT
-      ((ORecord<?>) iValue).save();
+      if (iValue instanceof ORecord<?>)
+        // EARLY SAVE IT
+        ((ORecord<?>) iValue).save();
+      else
+        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
 
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
     return this;
   }
 
   @Override
-  public boolean remove(final Object iKey) {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, null);
+  public boolean remove(final Object key) {
+    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
     return true;
   }
 
@@ -88,12 +91,6 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public boolean remove(final Object iKey, final OIdentifiable iRID) {
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
     return true;
-  }
-
-  @Override
-  public int remove(final OIdentifiable iRID) {
-    database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, null, iRID);
-    return 1;
   }
 
   @Override
@@ -106,5 +103,83 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public void unload() {
     database.getTransaction().clearIndexEntries();
     super.unload();
+  }
+
+  @Override
+  public Object getFirstKey() {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return delegate.getFirstKey();
+
+    Object indexFirstKey;
+    if (indexChanges.cleared)
+      indexFirstKey = null;
+    else
+      indexFirstKey = delegate.getFirstKey();
+
+    Object firstKey = indexChanges.getFirstKey();
+    while (true) {
+      OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(firstKey);
+
+      for (OTransactionIndexEntry indexEntry : changesPerKey.entries) {
+        if (indexEntry.operation.equals(OPERATION.REMOVE))
+          firstKey = null;
+        else
+          firstKey = changesPerKey.key;
+      }
+
+      if (changesPerKey.key.equals(indexFirstKey))
+        indexFirstKey = firstKey;
+
+      if (firstKey != null) {
+        if (indexFirstKey != null && ((Comparable) indexFirstKey).compareTo(firstKey) < 0)
+          return indexFirstKey;
+
+        return firstKey;
+      }
+
+      firstKey = indexChanges.getHigherKey(changesPerKey.key);
+      if (firstKey == null)
+        return indexFirstKey;
+    }
+  }
+
+  @Override
+  public Object getLastKey() {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return delegate.getLastKey();
+
+    Object indexLastKey;
+    if (indexChanges.cleared)
+      indexLastKey = null;
+    else
+      indexLastKey = delegate.getLastKey();
+
+    Object lastKey = indexChanges.getLastKey();
+    while (true) {
+      OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(lastKey);
+
+      for (OTransactionIndexEntry indexEntry : changesPerKey.entries) {
+        if (indexEntry.operation.equals(OPERATION.REMOVE))
+          lastKey = null;
+        else
+          lastKey = changesPerKey.key;
+      }
+
+      if (changesPerKey.key.equals(indexLastKey))
+        indexLastKey = lastKey;
+
+      if (lastKey != null) {
+        if (indexLastKey != null && ((Comparable) indexLastKey).compareTo(lastKey) > 0)
+          return indexLastKey;
+
+        return lastKey;
+      }
+
+      lastKey = indexChanges.getLowerKey(changesPerKey.key);
+      if (lastKey == null)
+        return indexLastKey;
+    }
   }
 }

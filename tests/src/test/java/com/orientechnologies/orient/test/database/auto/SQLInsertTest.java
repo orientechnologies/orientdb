@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -30,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -50,7 +53,14 @@ public class SQLInsertTest {
 
   @Test
   public void insertOperator() {
+		if (database.getURL().startsWith("local:"))
+			return;
+
     database.open("admin", "admin");
+
+    final int clId = database.addCluster("anotherdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
+    profileClass.addClusterId(clId);
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
@@ -235,6 +245,10 @@ public class SQLInsertTest {
   public void insertAvoidingSubQuery() {
     database.open("admin", "admin");
 
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass("test") == null)
+      schema.createClass("test");
+
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test(text) VALUES ('(Hello World)')")).execute();
 
     Assert.assertTrue(doc != null);
@@ -246,6 +260,10 @@ public class SQLInsertTest {
   @Test
   public void insertSubQuery() {
     database.open("admin", "admin");
+
+    final OSchema schema = database.getMetadata().getSchema();
+    if (schema.getClass("test") == null)
+      schema.createClass("test");
 
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test SET names = (select name from OUser)"))
         .execute();
@@ -260,13 +278,16 @@ public class SQLInsertTest {
 
   @Test
   public void insertCluster() {
-    database.open("admin", "admin");
+		if (database.getURL().startsWith("local:"))
+			return;
 
-    ODocument doc = (ODocument) database.command(
-        new OCommandSQL("insert into Account cluster default (id, title) values (10, 'NoSQL movement')")).execute();
+		database.open("admin", "admin");
+
+    ODocument doc = database.command(
+        new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();
 
     Assert.assertTrue(doc != null);
-    Assert.assertEquals(doc.getIdentity().getClusterId(), database.getDefaultClusterId());
+    Assert.assertEquals(doc.getIdentity().getClusterId(), database.getClusterIdByName("anotherdefault"));
     Assert.assertEquals(doc.getClassName(), "Account");
 
     database.close();

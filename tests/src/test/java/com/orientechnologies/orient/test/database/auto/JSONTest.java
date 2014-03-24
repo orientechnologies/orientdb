@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,6 +25,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 @Test
@@ -556,7 +555,7 @@ public class JSONTest {
       database.command(new OCommandSQL("insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })")).execute();
 
       List<ODocument> result = database
-          .query(new OSQLSynchQuery<Object>("select from device where domainset.domain[name] in 'eee'"));
+          .query(new OSQLSynchQuery<Object>("select from device where domainset.domain in 'eee'"));
       Assert.assertTrue(result.size() > 0);
 
     } finally {
@@ -616,7 +615,7 @@ public class JSONTest {
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {
-    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:test").create();
+    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:testshouldDeserializeFieldWithCurlyBraces").create();
 
     String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
     ODocument in = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(json, tx.newInstance(), new String[] {});
@@ -629,7 +628,7 @@ public class JSONTest {
 
   @Test
   public void mapTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:mapTest");
     db.create();
 
     ODocument doc = new ODocument("TestModel");

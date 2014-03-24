@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.query;
 
+import java.util.List;
+
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldMultiAbstract;
 
 /**
@@ -24,32 +27,43 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldMultiAbst
  * 
  */
 public class OQueryRuntimeValueMulti {
-	protected OSQLFilterItemFieldMultiAbstract	definition;
-	public Object[]																	values;
+  protected final OSQLFilterItemFieldMultiAbstract definition;
+  protected final List<OCollate>                   collates;
+  protected final Object[]                         values;
 
-	public OQueryRuntimeValueMulti(final OSQLFilterItemFieldMultiAbstract iDefinition, final Object[] iValues) {
-		definition = iDefinition;
-		values = iValues;
-	}
+  public OQueryRuntimeValueMulti(final OSQLFilterItemFieldMultiAbstract iDefinition, final Object[] iValues,
+      final List<OCollate> iCollates) {
+    definition = iDefinition;
+    values = iValues;
+    collates = iCollates;
+  }
 
-	@Override
-	public String toString() {
-		if (values == null)
-			return "";
+  @Override
+  public String toString() {
+    if (getValues() == null)
+      return "";
 
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("[");
-		int i = 0;
-		for (Object v : values) {
-			if (i++ > 0)
-				buffer.append(",");
-			buffer.append(v);
-		}
-		buffer.append("]");
-		return buffer.toString();
-	}
+    StringBuilder buffer = new StringBuilder();
+    buffer.append("[");
+    int i = 0;
+    for (Object v : getValues()) {
+      if (i++ > 0)
+        buffer.append(",");
+      buffer.append(v);
+    }
+    buffer.append("]");
+    return buffer.toString();
+  }
 
-	public OSQLFilterItemFieldMultiAbstract getDefinition() {
-		return definition;
-	}
+  public OSQLFilterItemFieldMultiAbstract getDefinition() {
+    return definition;
+  }
+
+  public OCollate getCollate(final int iIndex) {
+    return collates.get(iIndex);
+  }
+
+  public Object[] getValues() {
+    return values;
+  }
 }

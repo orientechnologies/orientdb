@@ -27,41 +27,42 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * 
  */
 public class OSQLFunctionDistance extends OSQLFunctionAbstract {
-	public static final String	NAME					= "distance";
+  public static final String  NAME         = "distance";
 
-	private final static double	EARTH_RADIUS	= 6371;
+  private final static double EARTH_RADIUS = 6371;
 
-	public OSQLFunctionDistance() {
-		super(NAME, 4, 5);
-	}
+  public OSQLFunctionDistance() {
+    super(NAME, 4, 5);
+  }
 
-	public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-		try {
-			double distance;
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    try {
+      double distance;
 
-			final double[] values = new double[4];
+      final double[] values = new double[4];
 
-			for (int i = 0; i < iParameters.length; ++i) {
-				if (iParameters[i] == null)
-					return null;
+      for (int i = 0; i < iParams.length; ++i) {
+        if (iParams[i] == null)
+          return null;
 
-				values[i] = ((Double) OType.convert(iParameters[i], Double.class)).doubleValue();
-			}
+        values[i] = ((Double) OType.convert(iParams[i], Double.class)).doubleValue();
+      }
 
-			final double deltaLat = Math.toRadians(values[2] - values[0]);
-			final double deltaLon = Math.toRadians(values[3] - values[1]);
+      final double deltaLat = Math.toRadians(values[2] - values[0]);
+      final double deltaLon = Math.toRadians(values[3] - values[1]);
 
-			final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0]))
-					* Math.cos(Math.toRadians(values[2])) * Math.pow(Math.sin(deltaLon / 2), 2);
-			distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
+      final double a = Math.pow(Math.sin(deltaLat / 2), 2) + Math.cos(Math.toRadians(values[0]))
+          * Math.cos(Math.toRadians(values[2])) * Math.pow(Math.sin(deltaLon / 2), 2);
+      distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS;
 
-			return distance;
-		} catch (Exception e) {
-			return null;
-		}
-	}
+      return distance;
+    } catch (Exception e) {
+      return null;
+    }
+  }
 
-	public String getSyntax() {
-		return "Syntax error: distance(<field-x>,<field-y>,<x-value>,<y-value>[,<unit>])";
-	}
+  public String getSyntax() {
+    return "distance(<field-x>,<field-y>,<x-value>,<y-value>[,<unit>])";
+  }
 }
