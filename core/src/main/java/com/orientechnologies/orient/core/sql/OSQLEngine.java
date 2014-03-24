@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
@@ -44,125 +33,40 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
+import com.orientechnologies.orient.core.sql.method.OSQLMethod;
+import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
+
 public class OSQLEngine {
 
+  protected static final OSQLEngine               INSTANCE           = new OSQLEngine();
   private static List<OSQLFunctionFactory>        FUNCTION_FACTORIES = null;
+  private static List<OSQLMethodFactory>          METHOD_FACTORIES   = null;
   private static List<OCommandExecutorSQLFactory> EXECUTOR_FACTORIES = null;
   private static List<OQueryOperatorFactory>      OPERATOR_FACTORIES = null;
   private static List<OCollateFactory>            COLLATE_FACTORIES  = null;
   private static OQueryOperator[]                 SORTED_OPERATORS   = null;
-
-  protected static final OSQLEngine               INSTANCE           = new OSQLEngine();
-
   private static ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
 
   protected OSQLEngine() {
   }
 
-  public synchronized OQueryOperator[] getRecordOperators() {
-    if (SORTED_OPERATORS != null) {
-      return SORTED_OPERATORS;
-    }
-
-    // sort operators, will happen only very few times since we cache the
-    // result
-    final Iterator<OQueryOperatorFactory> ite = getOperatorFactories();
-    final List<OQueryOperator> operators = new ArrayList<OQueryOperator>();
-    while (ite.hasNext()) {
-      final OQueryOperatorFactory factory = ite.next();
-      operators.addAll(factory.getOperators());
-    }
-
-    final List<OQueryOperator> sorted = new ArrayList<OQueryOperator>();
-    final Set<Pair> pairs = new LinkedHashSet<Pair>();
-    for (final OQueryOperator ca : operators) {
-      for (final OQueryOperator cb : operators) {
-        if (ca != cb) {
-          switch (ca.compare(cb)) {
-          case BEFORE:
-            pairs.add(new Pair(ca, cb));
-            break;
-          case AFTER:
-            pairs.add(new Pair(cb, ca));
-            break;
-          }
-          switch (cb.compare(ca)) {
-          case BEFORE:
-            pairs.add(new Pair(cb, ca));
-            break;
-          case AFTER:
-            pairs.add(new Pair(ca, cb));
-            break;
-          }
-        }
-      }
-    }
-    boolean added;
-    do {
-      added = false;
-      scan: for (final Iterator<OQueryOperator> it = operators.iterator(); it.hasNext();) {
-        final OQueryOperator candidate = it.next();
-        for (final Pair pair : pairs) {
-          if (pair.after == candidate) {
-            continue scan;
-          }
-        }
-        sorted.add(candidate);
-        it.remove();
-        for (final Iterator<Pair> itp = pairs.iterator(); itp.hasNext();) {
-          if (itp.next().before == candidate) {
-            itp.remove();
-          }
-        }
-        added = true;
-      }
-    } while (added);
-    if (!operators.isEmpty()) {
-      throw new OException("Unvalid sorting. " + OCollections.toString(pairs));
-    }
-    SORTED_OPERATORS = sorted.toArray(new OQueryOperator[sorted.size()]);
-    return SORTED_OPERATORS;
-  }
-
   public static void registerOperator(final OQueryOperator iOperator) {
     ODynamicSQLElementFactory.OPERATORS.add(iOperator);
     SORTED_OPERATORS = null; // clear cache
-  }
-
-  public void registerFunction(final String iName, final OSQLFunction iFunction) {
-    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunction);
-  }
-
-  public void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunctionClass) {
-    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunctionClass);
-  }
-
-  public OSQLFunction getFunction(String iFunctionName) {
-    iFunctionName = iFunctionName.toLowerCase(Locale.ENGLISH);
-
-    if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
-      // SPECIAL FUNCTIONS
-      return null;
-
-    final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
-    while (ite.hasNext()) {
-      final OSQLFunctionFactory factory = ite.next();
-      if (factory.hasFunction(iFunctionName)) {
-        return factory.createFunction(iFunctionName);
-      }
-    }
-
-    throw new OCommandSQLParsingException("No function for name " + iFunctionName + ", available names are : "
-        + OCollections.toString(getFunctionNames()));
-  }
-
-  public void unregisterFunction(String iName) {
-    iName = iName.toLowerCase(Locale.ENGLISH);
-    ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
   }
 
   /**
@@ -180,6 +84,20 @@ public class OSQLEngine {
       FUNCTION_FACTORIES = Collections.unmodifiableList(factories);
     }
     return FUNCTION_FACTORIES.iterator();
+  }
+
+  public static synchronized Iterator<OSQLMethodFactory> getMethodFactories() {
+    if (METHOD_FACTORIES == null) {
+
+      final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
+
+      final List<OSQLMethodFactory> factories = new ArrayList<OSQLMethodFactory>();
+      while (ite.hasNext()) {
+        factories.add(ite.next());
+      }
+      METHOD_FACTORIES = Collections.unmodifiableList(factories);
+    }
+    return METHOD_FACTORIES.iterator();
   }
 
   /**
@@ -254,6 +172,15 @@ public class OSQLEngine {
     return types;
   }
 
+  public static Set<String> getMethodNames() {
+    final Set<String> types = new HashSet<String>();
+    final Iterator<OSQLMethodFactory> ite = getMethodFactories();
+    while (ite.hasNext()) {
+      types.addAll(ite.next().getMethodNames());
+    }
+    return types;
+  }
+
   /**
    * Iterates on all factories and append all collate names.
    * 
@@ -294,6 +221,145 @@ public class OSQLEngine {
     FUNCTION_FACTORIES = null;
   }
 
+  public static Object foreachRecord(final OCallable<Object, OIdentifiable> iCallable, final Object iCurrent,
+      final OCommandContext iContext) {
+    if (iCurrent == null)
+      return null;
+
+    if (iContext != null && !iContext.checkTimeout())
+      return null;
+
+    if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
+      final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
+      for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
+        if (iContext != null && !iContext.checkTimeout())
+          return null;
+
+        if (OMultiValue.isMultiValue(o) || o instanceof Iterator) {
+          for (Object inner : OMultiValue.getMultiValueIterable(o)) {
+            result.add(iCallable.call((OIdentifiable) inner));
+          }
+        } else
+          result.add(iCallable.call((OIdentifiable) o));
+      }
+      return result;
+    } else if (iCurrent instanceof OIdentifiable)
+      return iCallable.call((OIdentifiable) iCurrent);
+
+    return null;
+  }
+
+  public static OSQLEngine getInstance() {
+    return INSTANCE;
+  }
+
+  public static OCollate getCollate(final String name) {
+    for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext();) {
+      OCollateFactory f = iter.next();
+      final OCollate c = f.getCollate(name);
+      if (c != null)
+        return c;
+    }
+    return null;
+  }
+
+  public synchronized OQueryOperator[] getRecordOperators() {
+    if (SORTED_OPERATORS != null) {
+      return SORTED_OPERATORS;
+    }
+
+    // sort operators, will happen only very few times since we cache the
+    // result
+    final Iterator<OQueryOperatorFactory> ite = getOperatorFactories();
+    final List<OQueryOperator> operators = new ArrayList<OQueryOperator>();
+    while (ite.hasNext()) {
+      final OQueryOperatorFactory factory = ite.next();
+      operators.addAll(factory.getOperators());
+    }
+
+    final List<OQueryOperator> sorted = new ArrayList<OQueryOperator>();
+    final Set<Pair> pairs = new LinkedHashSet<Pair>();
+    for (final OQueryOperator ca : operators) {
+      for (final OQueryOperator cb : operators) {
+        if (ca != cb) {
+          switch (ca.compare(cb)) {
+          case BEFORE:
+            pairs.add(new Pair(ca, cb));
+            break;
+          case AFTER:
+            pairs.add(new Pair(cb, ca));
+            break;
+          }
+          switch (cb.compare(ca)) {
+          case BEFORE:
+            pairs.add(new Pair(cb, ca));
+            break;
+          case AFTER:
+            pairs.add(new Pair(ca, cb));
+            break;
+          }
+        }
+      }
+    }
+    boolean added;
+    do {
+      added = false;
+      scan: for (final Iterator<OQueryOperator> it = operators.iterator(); it.hasNext();) {
+        final OQueryOperator candidate = it.next();
+        for (final Pair pair : pairs) {
+          if (pair.after == candidate) {
+            continue scan;
+          }
+        }
+        sorted.add(candidate);
+        it.remove();
+        for (final Iterator<Pair> itp = pairs.iterator(); itp.hasNext();) {
+          if (itp.next().before == candidate) {
+            itp.remove();
+          }
+        }
+        added = true;
+      }
+    } while (added);
+    if (!operators.isEmpty()) {
+      throw new OException("Unvalid sorting. " + OCollections.toString(pairs));
+    }
+    SORTED_OPERATORS = sorted.toArray(new OQueryOperator[sorted.size()]);
+    return SORTED_OPERATORS;
+  }
+
+  public void registerFunction(final String iName, final OSQLFunction iFunction) {
+    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunction);
+  }
+
+  public void registerFunction(final String iName, final Class<? extends OSQLFunction> iFunctionClass) {
+    ODynamicSQLElementFactory.FUNCTIONS.put(iName.toLowerCase(Locale.ENGLISH), iFunctionClass);
+  }
+
+  public OSQLFunction getFunction(String iFunctionName) {
+    iFunctionName = iFunctionName.toLowerCase(Locale.ENGLISH);
+
+    if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
+      // SPECIAL FUNCTIONS
+      return null;
+
+    final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
+    while (ite.hasNext()) {
+      final OSQLFunctionFactory factory = ite.next();
+      if (factory.hasFunction(iFunctionName)) {
+        return factory.createFunction(iFunctionName);
+      }
+    }
+
+    throw new OCommandSQLParsingException("No function with name '" + iFunctionName + "', available names are : "
+        + OCollections.toString(getFunctionNames()));
+  }
+
+  public void unregisterFunction(String iName) {
+    iName = iName.toLowerCase(Locale.ENGLISH);
+    ODynamicSQLElementFactory.FUNCTIONS.remove(iName);
+  }
+
   public OCommandExecutorSQLAbstract getCommand(final String candidate) {
     final Set<String> names = getCommandNames();
     String commandName = candidate;
@@ -330,36 +396,42 @@ public class OSQLEngine {
     return new OSQLTarget(iText, iContext, iFilterKeyword);
   }
 
-  public static Object foreachRecord(final OCallable<Object, OIdentifiable> iCallable, final Object iCurrent,
-      final OCommandContext iContext) {
-    if (iCurrent == null)
-      return null;
-
-    if (iContext != null && !iContext.checkTimeout())
-      return null;
-
-    if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
-      final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
-      for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
-        if (iContext != null && !iContext.checkTimeout())
-          return null;
-
-        if (OMultiValue.isMultiValue(o) || o instanceof Iterator) {
-          for (Object inner : OMultiValue.getMultiValueIterable(o)) {
-            result.add(iCallable.call((OIdentifiable) inner));
-          }
-        } else
-          result.add(iCallable.call((OIdentifiable) o));
+  public Set<ORID> parseRIDTarget(final ODatabaseRecord database, final String iTarget) {
+    final Set<ORID> ids;
+    if (iTarget.startsWith("(")) {
+      // SUB-QUERY
+      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
+      if (result == null || result.isEmpty())
+        ids = Collections.emptySet();
+      else {
+        ids = new HashSet<ORID>((int) (result.size() * 1.3));
+        for (OIdentifiable aResult : result)
+          ids.add(aResult.getIdentity());
       }
-      return result;
-    } else if (iCurrent instanceof OIdentifiable)
-      return iCallable.call((OIdentifiable) iCurrent);
-
-    return null;
+    } else if (iTarget.startsWith("[")) {
+      // COLLECTION OF RIDS
+      final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
+      ids = new HashSet<ORID>((int) (idsAsStrings.length * 1.3));
+      for (String idsAsString : idsAsStrings)
+        ids.add(new ORecordId(idsAsString));
+    } else
+      // SINGLE RID
+      ids = Collections.<ORID> singleton(new ORecordId(iTarget));
+    return ids;
   }
 
-  public static OSQLEngine getInstance() {
-    return INSTANCE;
+  public static OSQLMethod getMethod(String iMethodName) {
+    iMethodName = iMethodName.toLowerCase(Locale.ENGLISH);
+
+    final Iterator<OSQLMethodFactory> ite = getMethodFactories();
+    while (ite.hasNext()) {
+      final OSQLMethodFactory factory = ite.next();
+      if (factory.hasMethod(iMethodName)) {
+        return factory.createMethod(iMethodName);
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -394,39 +466,5 @@ public class OSQLEngine {
       return before + " > " + after;
     }
 
-  }
-
-  public Set<ORID> parseRIDTarget(final ODatabaseRecord database, final String iTarget) {
-    final Set<ORID> ids;
-    if (iTarget.startsWith("(")) {
-      // SUB-QUERY
-      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
-      if (result == null || result.isEmpty())
-        ids = Collections.emptySet();
-      else {
-        ids = new HashSet<ORID>((int) (result.size() * 1.3));
-        for (OIdentifiable aResult : result)
-          ids.add(aResult.getIdentity());
-      }
-    } else if (iTarget.startsWith("[")) {
-      // COLLECTION OF RIDS
-      final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
-      ids = new HashSet<ORID>((int) (idsAsStrings.length * 1.3));
-      for (String idsAsString : idsAsStrings)
-        ids.add(new ORecordId(idsAsString));
-    } else
-      // SINGLE RID
-      ids = Collections.<ORID> singleton(new ORecordId(iTarget));
-    return ids;
-  }
-
-  public static OCollate getCollate(final String name) {
-    for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext();) {
-      OCollateFactory f = iter.next();
-      final OCollate c = f.getCollate(name);
-      if (c != null)
-        return c;
-    }
-    return null;
   }
 }

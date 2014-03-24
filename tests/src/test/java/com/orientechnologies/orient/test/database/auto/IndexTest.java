@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -1589,6 +1590,35 @@ public class IndexTest {
     Assert.assertEquals(result.size(), 1);
 
     Assert.assertEquals(result.get(0).getIdentity(), docTwo.getIdentity());
+  }
+
+  public void testIndexWithLimitAndOffset() {
+    ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass indexWithLimitAndOffset = schema.createClass("IndexWithLimitAndOffsetClass");
+    indexWithLimitAndOffset.createProperty("val", OType.INTEGER);
+    indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
+
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
+
+    for (int i = 0; i < 30; i++) {
+      final ODocument document = new ODocument("IndexWithLimitAndOffsetClass");
+      document.field("val", i / 10);
+      document.field("index", i);
+      document.save();
+    }
+
+    final List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from IndexWithLimitAndOffsetClass where val = 1 offset 5 limit 2"));
+    Assert.assertEquals(result.size(), 2);
+
+    for (int i = 0; i < 2; i++) {
+      final ODocument document = result.get(i);
+      Assert.assertEquals(document.field("val"), 1);
+      Assert.assertEquals(document.field("index"), 15 + i);
+    }
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

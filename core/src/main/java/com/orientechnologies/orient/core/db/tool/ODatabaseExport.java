@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -50,6 +39,17 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
+
 /**
  * Export data from a database to a file.
  * 
@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected OJSONWriter   writer;
   protected long          recordExported;
-  public static final int VERSION = 7;
+  public static final int VERSION = 8;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -71,7 +71,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       fileName += ".gz";
     }
     final File f = new File(fileName);
-    f.mkdirs();
+    f.getParentFile().mkdirs();
     if (f.exists())
       f.delete();
 
@@ -343,6 +343,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       if (metadata != null)
         writer.writeAttribute(4, true, "metadata", metadata);
 
+      final ODocument configuration = index.getConfiguration();
+      if (configuration.field("blueprintsIndexClass") != null)
+        writer.writeAttribute(4, true, "blueprintsIndexClass", configuration.field("blueprintsIndexClass"));
+
       writer.endObject(2, true);
       listener.onMessage("OK");
     }
@@ -383,6 +387,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (i > 0)
             writer.append(",");
 
+					indexEntry.setLazyLoad(false);
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();

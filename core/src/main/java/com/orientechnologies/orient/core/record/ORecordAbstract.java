@@ -285,6 +285,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  public ODatabaseRecord getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
@@ -334,6 +338,13 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     getDatabase().delete(this);
     setDirty();
     return this;
+  }
+
+  @Override
+  public ORecordAbstract<T> hide() {
+    getDatabase().hide(getIdentity(), getRecordVersion());
+    setDirty();
+   return this;
   }
 
   public int getSize() {

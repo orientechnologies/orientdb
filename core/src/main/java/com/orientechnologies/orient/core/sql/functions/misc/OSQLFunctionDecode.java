@@ -38,10 +38,11 @@ public class OSQLFunctionDecode extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
 
-    final String candidate = iParameters[0].toString();
-    final String format = iParameters[1].toString();
+    final String candidate = iParams[0].toString();
+    final String format = iParams[1].toString();
 
     if (OSQLFunctionEncode.FORMAT_BASE64.equalsIgnoreCase(format)) {
       return OBase64Utils.decode(candidate);
@@ -52,6 +53,6 @@ public class OSQLFunctionDecode extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "Syntax error: decode(<binaryfield>, <format>)";
+    return "decode(<binaryfield>, <format>)";
   }
 }

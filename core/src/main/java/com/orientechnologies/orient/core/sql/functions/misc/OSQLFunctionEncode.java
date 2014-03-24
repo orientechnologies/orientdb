@@ -42,10 +42,11 @@ public class OSQLFunctionEncode extends OSQLFunctionAbstract {
     super(NAME, 2, 2);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
 
-    final Object candidate = iParameters[0];
-    final String format = iParameters[1].toString();
+    final Object candidate = iParams[0];
+    final String format = iParams[1].toString();
 
     byte[] data = null;
     if (candidate instanceof byte[]) {
@@ -72,6 +73,6 @@ public class OSQLFunctionEncode extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "Syntax error: encode(<binaryfield>, <format>)";
+    return "encode(<binaryfield>, <format>)";
   }
 }

@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -258,7 +259,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected void checkStorageExistence(final String iDatabaseName) {
     for (OStorage stg : Orient.instance().getStorages()) {
-      if (stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
+      if (!(stg instanceof OStorageProxy) && stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
         throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
     }
   }
@@ -314,6 +315,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       iDatabase.delete(rid, version);
       return 1;
     } catch (Exception e) {
+      return 0;
+    }
+  }
+
+  protected int hideRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+    try {
+      iDatabase.hide(rid, version);
+      return 1;
+    } catch (ORecordNotFoundException e) {
       return 0;
     }
   }

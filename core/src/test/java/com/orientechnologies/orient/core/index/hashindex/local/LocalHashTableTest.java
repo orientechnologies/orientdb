@@ -4,12 +4,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
@@ -43,8 +48,8 @@ public class LocalHashTableTest {
 
     localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", murmurHash3HashFunction);
 
-    localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OStringSerializer.INSTANCE, null,
-        (OStorageLocal) databaseDocumentTx.getStorage());
+    localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage());
   }
 
   @AfterClass

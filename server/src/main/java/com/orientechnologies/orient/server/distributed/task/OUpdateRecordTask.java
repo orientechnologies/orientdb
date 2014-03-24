@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -97,23 +96,17 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
+    super.writeExternal(out);
     out.writeInt(content.length);
     out.write(content);
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().writeTo(out, version);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
+    super.readExternal(in);
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().readFrom(in, version);
   }
 
   public byte[] getPreviousContent() {

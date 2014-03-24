@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -34,6 +29,11 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL CREATE INDEX command: Create a new index against a property.
@@ -52,14 +52,16 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_INDEX    = "INDEX";
   public static final String KEYWORD_ON       = "ON";
   public static final String KEYWORD_METADATA = "METADATA";
+  public static final String KEYWORD_ENGINE   = "ENGINE";
 
-  private String             indexName;
-  private OClass             oClass;
-  private String[]           fields;
-  private OClass.INDEX_TYPE  indexType;
-  private OType[]            keyTypes;
-  private byte               serializerKeyId;
-  private ODocument          metadataDoc      = null;
+  private String            indexName;
+  private OClass            oClass;
+  private String[]          fields;
+  private OClass.INDEX_TYPE indexType;
+  private OType[]           keyTypes;
+  private byte              serializerKeyId;
+  private String            engine;
+  private ODocument metadataDoc = null;
 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -138,6 +140,16 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       throw new OCommandSQLParsingException("Index type is null", parserText, oldPos);
 
     oldPos = pos;
+    pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+
+    if (word.toString().equals(KEYWORD_ENGINE)) {
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+
+      engine = word.toString().toUpperCase();
+    } else
+      parserGoBack();
+
     final int configPos = parserTextUpperCase.indexOf(KEYWORD_METADATA, oldPos);
 
     if (configPos > -1) {
@@ -177,10 +189,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     return this;
   }
 
-  private OClass findClass(String part) {
-    return getDatabase().getMetadata().getSchema().getClass(part);
-  }
-
   /**
    * Execute the CREATE INDEX.
    */
@@ -208,7 +216,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
             Arrays.asList(keyTypes));
 
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc);
+            .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);
       }
     }
 
@@ -216,6 +224,15 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       return idx.getSize();
 
     return null;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [METADATA {JSON Index Metadata Document}]";
+  }
+
+  private OClass findClass(String part) {
+    return getDatabase().getMetadata().getSchema().getClass(part);
   }
 
   private void checkMapIndexSpecifier(final String fieldName, final String text, final int pos) {
@@ -239,10 +256,5 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
     throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
         + "'", text, pos);
-  }
-
-  @Override
-  public String getSyntax() {
-    return "CREATE INDEX <name> [ON <class-name> (prop-names [COLLATE <collate>])] <type> [<key-type>] [METADATA {JSON Index Metadata Document}]";
   }
 }

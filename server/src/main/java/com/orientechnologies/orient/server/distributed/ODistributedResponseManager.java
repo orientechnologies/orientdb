@@ -39,22 +39,21 @@ import java.util.concurrent.locks.ReentrantLock;
  * 
  */
 public class ODistributedResponseManager {
+  private static final String                    NO_RESPONSE                 = "waiting-for-response";
   private final ODistributedServerManager        dManager;
   private final ODistributedRequest              request;
   private final long                             sentOn;
   private final HashMap<String, Object>          responses                   = new HashMap<String, Object>();
   private final List<List<ODistributedResponse>> responseGroups              = new ArrayList<List<ODistributedResponse>>();
   private final int                              expectedSynchronousResponses;
+  private final long                             synchTimeout;
+  private final long                             totalTimeout;
+  private final Lock                             synchronousResponsesLock    = new ReentrantLock();
+  private final Condition                        synchronousResponsesArrived = synchronousResponsesLock.newCondition();
   private int                                    receivedResponses           = 0;
   private int                                    quorum;
   private boolean                                waitForLocalNode;
-  private final long                             synchTimeout;
-  private final long                             totalTimeout;
   private volatile boolean                       receivedCurrentNode;
-  private final Lock                             synchronousResponsesLock    = new ReentrantLock();
-  private final Condition                        synchronousResponsesArrived = synchronousResponsesLock.newCondition();
-
-  private static final String                    NO_RESPONSE                 = "waiting-for-response";
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Set<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
@@ -106,49 +105,51 @@ public class ODistributedResponseManager {
         .stopChrono("distributed.replication." + executorNode + ".responseTime", "Response time from replication messages", sentOn,
             "distributed.replication.*.responseTime");
 
-    responses.put(executorNode, response);
-    receivedResponses++;
+    boolean completed = false;
+    synchronized (responseGroups) {
+      responses.put(executorNode, response);
+      receivedResponses++;
 
-    if (waitForLocalNode && response.isExecutedOnLocalNode())
-      receivedCurrentNode = true;
+      if (waitForLocalNode && response.isExecutedOnLocalNode())
+        receivedCurrentNode = true;
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
-          "received response '%s' for request %s (receivedCurrentNode=%s receivedResponses=%d)", response, request,
-          receivedCurrentNode, receivedResponses);
+      if (ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
+            "received response '%s' for request %s (receivedCurrentNode=%s receivedResponses=%d)", response, request,
+            receivedCurrentNode, receivedResponses);
 
-    // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
-    boolean foundBucket = false;
-    for (int i = 0; i < responseGroups.size(); ++i) {
-      final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-      if (sameResponse.isEmpty() || sameResponse.get(0).getPayload().equals(response.getPayload())) {
-        sameResponse.add(response);
-        foundBucket = true;
-        break;
+      // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
+      boolean foundBucket = false;
+      for (int i = 0; i < responseGroups.size(); ++i) {
+        final List<ODistributedResponse> sameResponse = responseGroups.get(i);
+        if (sameResponse.isEmpty() || sameResponse.get(0).getPayload().equals(response.getPayload())) {
+          sameResponse.add(response);
+          foundBucket = true;
+          break;
+        }
       }
-    }
 
-    if (!foundBucket) {
-      // CREATE A NEW BUCKET
-      final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
-      responseGroups.add(newBucket);
-      newBucket.add(response);
-    }
+      if (!foundBucket) {
+        // CREATE A NEW BUCKET
+        final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
+        responseGroups.add(newBucket);
+        newBucket.add(response);
+      }
 
-    final boolean completed = getExpectedResponses() == receivedResponses;
+      completed = getExpectedResponses() == receivedResponses;
 
-    if (receivedResponses >= expectedSynchronousResponses && (!waitForLocalNode || receivedCurrentNode)) {
-      if (completed || isMinimumQuorumReached(false)) {
-        // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
-        synchronousResponsesLock.lock();
-        try {
-          synchronousResponsesArrived.signalAll();
-        } finally {
-          synchronousResponsesLock.unlock();
+      if (receivedResponses >= expectedSynchronousResponses && (!waitForLocalNode || receivedCurrentNode)) {
+        if (completed || isMinimumQuorumReached(false)) {
+          // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
+          synchronousResponsesLock.lock();
+          try {
+            synchronousResponsesArrived.signalAll();
+          } finally {
+            synchronousResponsesLock.unlock();
+          }
         }
       }
     }
-
     return completed;
   }
 
@@ -171,25 +172,27 @@ public class ODistributedResponseManager {
     if (quorum == 0)
       return true;
 
-    for (List<ODistributedResponse> group : responseGroups)
-      if (group.size() >= quorum)
-        return true;
-
-    if (iCheckAvailableNodes) {
-      final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
-      if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
-        // CHECK IF ANY NODE IS OFFLINE
-        int availableNodes = 0;
-        for (Map.Entry<String, Object> r : responses.entrySet()) {
-          if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
-            availableNodes++;
-        }
-
-        if (availableNodes < quorum) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "overridden quorum (%d) because available nodes (%d) are less than quorum, received responses: %s", quorum,
-              availableNodes, responses);
+    synchronized (responseGroups) {
+      for (List<ODistributedResponse> group : responseGroups)
+        if (group.size() >= quorum)
           return true;
+
+      if (getReceivedResponsesCount() < quorum && iCheckAvailableNodes) {
+        final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
+        if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
+          // CHECK IF ANY NODE IS OFFLINE
+          int availableNodes = 0;
+          for (Map.Entry<String, Object> r : responses.entrySet()) {
+            if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
+              availableNodes++;
+          }
+
+          if (availableNodes < quorum) {
+            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+                "overridden quorum (%d) because available nodes (%d) are less than quorum, received responses: %s", quorum,
+                availableNodes, responses);
+            return true;
+          }
         }
       }
     }
@@ -321,7 +324,8 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "fixing response for request=%s in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
 
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r, goodResponse);
+          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
+              goodResponse.getPayload());
 
           if (fixTask != null)
             dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixTask,

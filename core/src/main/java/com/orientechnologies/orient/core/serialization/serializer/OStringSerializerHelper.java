@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
@@ -32,15 +41,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
 
@@ -51,6 +51,7 @@ public abstract class OStringSerializerHelper {
   public static final char   LIST_BEGIN              = '[';
   public static final char   LIST_END                = ']';
   public static final char   SET_BEGIN               = '<';
+  public static final String LINKSET_PREFIX          = "" + SET_BEGIN + LINK + CLASS_SEPARATOR;
   public static final char   SET_END                 = '>';
   public static final char   MAP_BEGIN               = '{';
   public static final char   MAP_END                 = '}';
@@ -66,7 +67,6 @@ public abstract class OStringSerializerHelper {
   public static final char[] DEFAULT_IGNORE_CHARS    = new char[] { '\n', '\r', ' ' };
   public static final char[] DEFAULT_FIELD_SEPARATOR = new char[] { ',', ' ' };
   public static final char   COLLECTION_SEPARATOR    = ',';
-  public static final String LINKSET_PREFIX          = "" + SET_BEGIN + LINK + CLASS_SEPARATOR;
 
   public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
     if (iValue == null)
@@ -252,10 +252,10 @@ public abstract class OStringSerializerHelper {
 
         if (iConsiderBraces) {
           if (c == LIST_BEGIN) {
-            if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator))
+            if (i < iMinPosSeparatorAreValid || insideParenthesis > 0 || insideList > 0 || !isCharPresent(c, iSeparator))
               insideList++;
           } else if (c == LIST_END) {
-            if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
+            if (i < iMinPosSeparatorAreValid || insideParenthesis > 0 || insideList > 0 || !isCharPresent(c, iSeparator)) {
               if (insideList == 0)
                 throw new OSerializationException("Found invalid " + LIST_END + " character at position " + i + " of text "
                     + iSource + ". Ensure it is opened and closed correctly.");

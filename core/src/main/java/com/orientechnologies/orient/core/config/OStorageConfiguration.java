@@ -47,37 +47,37 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId             CONFIG_RID              = new OImmutableRecordId(0,
-                                                                        OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId             CONFIG_RID                    = new OImmutableRecordId(0,
+                                                                              OClusterPositionFactory.INSTANCE.valueOf(0));
 
-  public static final String                DEFAULT_CHARSET         = "UTF-8";
+  public static final String                DEFAULT_CHARSET               = "UTF-8";
 
-  public static final int                   CURRENT_VERSION         = 7;
-  public static final int                   CURRENT_STORAGE_VERSION = 10;
+  public static final int                   CURRENT_VERSION               = 7;
+  public static final int                   CURRENT_BINARY_FORMAT_VERSION = 10;
 
-  public int                                version                 = -1;
+  public int                                version                       = -1;
   public String                             name;
   public String                             schemaRecordId;
   public String                             dictionaryRecordId;
   public String                             indexMgrRecordId;
 
-  private String                            localeLanguage          = Locale.getDefault().getLanguage();
-  private String                            localeCountry           = Locale.getDefault().getCountry();
-  public String                             dateFormat              = "yyyy-MM-dd";
-  public String                             dateTimeFormat          = "yyyy-MM-dd HH:mm:ss";
-  private TimeZone                          timeZone                = TimeZone.getDefault();
-  private String                            charset                 = DEFAULT_CHARSET;
+  private String                            localeLanguage                = Locale.getDefault().getLanguage();
+  private String                            localeCountry                 = Locale.getDefault().getCountry();
+  public String                             dateFormat                    = "yyyy-MM-dd";
+  public String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  private TimeZone                          timeZone                      = TimeZone.getDefault();
+  private String                            charset                       = DEFAULT_CHARSET;
 
-  public int                                storageVersion;
+  public int                                binaryFormatVersion;
 
   public OStorageSegmentConfiguration       fileTemplate;
 
-  public List<OStorageClusterConfiguration> clusters                = new ArrayList<OStorageClusterConfiguration>();
-  public List<OStorageDataConfiguration>    dataSegments            = new ArrayList<OStorageDataConfiguration>();
+  public List<OStorageClusterConfiguration> clusters                      = new ArrayList<OStorageClusterConfiguration>();
+  public List<OStorageDataConfiguration>    dataSegments                  = new ArrayList<OStorageDataConfiguration>();
 
-  public OStorageTxConfiguration            txSegment               = new OStorageTxConfiguration();
+  public OStorageTxConfiguration            txSegment                     = new OStorageTxConfiguration();
 
-  public List<OStorageEntryConfiguration>   properties              = new ArrayList<OStorageEntryConfiguration>();
+  public List<OStorageEntryConfiguration>   properties                    = new ArrayList<OStorageEntryConfiguration>();
 
   private transient Locale                  localeInstance;
   private transient DecimalFormatSymbols    unusualSymbols;
@@ -87,7 +87,7 @@ public class OStorageConfiguration implements OSerializableStream {
     storage = iStorage;
     fileTemplate = new OStorageSegmentConfiguration();
 
-    storageVersion = CURRENT_STORAGE_VERSION;
+    binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
   }
 
   /**
@@ -267,9 +267,11 @@ public class OStorageConfiguration implements OSerializableStream {
     }
 
     if (version >= 7)
-      storageVersion = Integer.parseInt(read(values[index++]));
+      binaryFormatVersion = Integer.parseInt(read(values[index++]));
+    else if (version == 6)
+      binaryFormatVersion = 9;
     else
-      storageVersion = 9;
+      binaryFormatVersion = 8;
 
     return this;
   }
@@ -358,7 +360,7 @@ public class OStorageConfiguration implements OSerializableStream {
     for (OStorageEntryConfiguration e : properties)
       entryToStream(buffer, e);
 
-    write(buffer, storageVersion);
+    write(buffer, binaryFormatVersion);
 
     // PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
     buffer.append("|");

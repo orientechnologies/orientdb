@@ -27,6 +27,8 @@ import java.util.List;
 public interface ODistributedMessageService {
   public ODistributedRequest createRequest();
 
+  long getLastMessageId();
+
   ODocument getQueueStats(String iQueueName);
 
   public ODistributedDatabase registerDatabase(String iDatabaseName);
@@ -34,5 +36,4 @@ public interface ODistributedMessageService {
   public ODistributedDatabase getDatabase(String iDatabaseName);
 
   public List<String> getManagedQueueNames();
-
 }

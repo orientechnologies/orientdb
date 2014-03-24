@@ -16,13 +16,6 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -39,6 +32,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
@@ -55,6 +49,13 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -96,12 +97,20 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
       storage.open(iUserName, iUserPassword, properties);
 
       status = STATUS.OPEN;
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
+
+    } catch (OStorageException e) {
+      // UNREGISTER STORAGE
+      Orient.instance().unregisterStorage(storage);
+
+      // PASS THROUGH
+      throw e;
 
     } catch (OException e) {
       // PASS THROUGH
@@ -119,6 +128,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
       storage.create(properties);
 
       status = STATUS.OPEN;
@@ -158,7 +168,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
 
   }
@@ -305,6 +316,22 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       return new OStorageOperationResult<Boolean>(Boolean.FALSE);
     }
   }
+
+	public OStorageOperationResult<Boolean> hide(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired,
+																								 final int iMode) {
+		try {
+			final OStorageOperationResult<Boolean> result = storage.hideRecord(iRid, iVersion, iMode, null);
+			if (!result.getResult() && iRequired)
+				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+			return result;
+		} catch (OException e) {
+			// PASS THROUGH
+			throw e;
+		} catch (Exception e) {
+			OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
+			return new OStorageOperationResult<Boolean>(Boolean.FALSE);
+		}
+	}
 
   public boolean cleanOutRecord(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
     try {

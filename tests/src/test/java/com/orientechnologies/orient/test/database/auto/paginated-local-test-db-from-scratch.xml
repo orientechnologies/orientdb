@@ -2,7 +2,7 @@
 
     <parameter name="path" value="@PATH@"/>
     <parameter name="url" value="@URL@"/>
-    <parameter name="testPath" value="tests"/>
+    <parameter name="testPath" value="@TESTPATH@"/>
 
     <test name="Setup">
         <classes>
@@ -172,6 +172,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
         </classes>
     </test>
     <test name="DbTools">

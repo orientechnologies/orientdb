@@ -54,12 +54,13 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams, final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
+      final OCommandContext iContext) {
 
     boolean result;
 
     try {
-      Object condition = iFuncParams[0];
+      Object condition = iParams[0];
       if (condition instanceof Boolean)
         result = (Boolean) condition;
       else if (condition instanceof String)
@@ -69,7 +70,7 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
       else
         return null;
 
-      return result ? iFuncParams[1] : iFuncParams[2];
+      return result ? iParams[1] : iParams[2];
 
     } catch (Exception e) {
       return null;
@@ -78,6 +79,6 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
 
   @Override
   public String getSyntax() {
-    return "Syntax error: if(<field|value|expression>, <return_value_if_true> [,<return_value_if_false>])";
+    return "if(<field|value|expression>, <return_value_if_true> [,<return_value_if_false>])";
   }
 }

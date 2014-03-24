@@ -43,14 +43,16 @@ import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -72,6 +74,7 @@ public class OWOWCache {
   public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
   private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final OBinarySerializer<String>                   stringSerializer;
 
   private Map<String, Long>                                 nameIdMap;
 
@@ -121,6 +124,9 @@ public class OWOWCache {
     this.writeAheadLog = writeAheadLog;
     this.cacheMaxSize = cacheMaxSize;
     this.storageLocal = storageLocal;
+
+    final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
+    this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
 
     if (checkMinSize && this.cacheMaxSize < MIN_CACHE_SIZE)
       this.cacheMaxSize = MIN_CACHE_SIZE;
@@ -243,7 +249,7 @@ public class OWOWCache {
 
       nameIdMapHolder.readFully(serializedName);
 
-      final String name = OStringSerializer.INSTANCE.deserialize(serializedName, 0);
+      final String name = stringSerializer.deserialize(serializedName, 0);
       final long fileId = nameIdMapHolder.readLong();
 
       return new NameFileIdEntry(name, fileId);
@@ -256,9 +262,9 @@ public class OWOWCache {
 
     nameIdMapHolder.seek(nameIdMapHolder.length());
 
-    final int nameSize = OStringSerializer.INSTANCE.getObjectSize(nameFileIdEntry.name);
+    final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
     byte[] serializedName = new byte[nameSize];
-    OStringSerializer.INSTANCE.serialize(nameFileIdEntry.name, serializedName, 0);
+    stringSerializer.serialize(nameFileIdEntry.name, serializedName, 0);
 
     nameIdMapHolder.writeInt(nameSize);
     nameIdMapHolder.write(serializedName);
@@ -705,10 +711,15 @@ public class OWOWCache {
         doDeleteFile(fileId);
 
       if (nameIdMapHolderFile != null) {
-        nameIdMapHolder.close();
+        if (nameIdMapHolderFile.exists()) {
+          nameIdMapHolder.close();
 
-        if (!nameIdMapHolderFile.delete())
-          throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+          if (!nameIdMapHolderFile.delete())
+            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+        }
+
+        nameIdMapHolder = null;
+        nameIdMapHolderFile = null;
       }
     }
 

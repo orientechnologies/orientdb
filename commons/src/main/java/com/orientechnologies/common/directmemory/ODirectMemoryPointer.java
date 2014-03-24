@@ -7,6 +7,22 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 
 /**
+ * Abstraction of pointer which points to allocated direct memory area.
+ * All access to direct memory should be performed ONLY using this class instance.
+ *
+ * Instance of this class can not be created directly.
+ * If you need to work with direct memory use following approach.
+ *
+ * <code>
+ *   ODirectMemory directMemory = ODirectMemoryFactory.directMemory();
+ *   ODirectMemoryPointer pointer = directMemory.allocate(1024); //size in bytes
+ *   //..do something
+ *   pointer.free();
+ * </code>
+ *
+ * but usually you will work with disk based data structures which work using disk cache so you will not allocate
+ * direct memory by yourself.
+ *
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 10/19/13
  */

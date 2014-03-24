@@ -15,26 +15,8 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -80,6 +62,23 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Import data from a file into a database.
@@ -248,7 +247,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     OSchema schema = database.getMetadata().getSchema();
     Collection<OClass> classes = schema.getClasses();
-    
+
     final Map<String, OClass> classesToDrop = new HashMap<String, OClass>();
     for (OClass dbClass : classes) {
       String className = dbClass.getName();
@@ -257,7 +256,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         classesToDrop.put(className, dbClass);
       }
     }
-    
+
     int removedClasses = 0;
     while (!classesToDrop.isEmpty()) {
       final AbstractList<String> classesReadyToDrop = new ArrayList<String>();
@@ -960,6 +959,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     while (jsonReader.lastChar() != ']') {
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
+      String blueprintsIndexClass = null;
       String indexName = null;
       String indexType = null;
       Set<String> clustersToIndex = new HashSet<String>();
@@ -981,7 +981,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
           metadata = new ODocument().fromJSON(jsonMetadata);
           jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
-        }
+        } else if (fieldName.equals("blueprintsIndexClass"))
+          blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+
       }
 
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
@@ -1001,7 +1003,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           i++;
         }
 
-        indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata);
+        OIndex index = indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata);
+        if (blueprintsIndexClass != null) {
+          ODocument configuration = index.getConfiguration();
+          configuration.field("blueprintsIndexClass", blueprintsIndexClass);
+          indexManager.save();
+        }
+
         n++;
         listener.onMessage("OK");
 
@@ -1182,7 +1190,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (value instanceof ORecordLazyMultiValue) {
         ORecordLazyMultiValue multiValue = (ORecordLazyMultiValue) value;
         multiValue.setAutoConvertToRecord(oldAutoConvertValue);
-    }
+      }
 
       return newValue;
     }
@@ -1197,7 +1205,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       return true;
     }
 
- @Override
+    @Override
     public boolean updateMode() {
       return true;
     }
@@ -1205,7 +1213,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private static abstract class AbstractCollectionConverter<T> implements ValuesConverter<T> {
-    protected boolean convertSingleValue(Object item, ResultCallback result, boolean updated) {
+    protected boolean convertSingleValue(final Object item, ResultCallback result, boolean updated) {
+      if (item == null)
+        return false;
+
       if (item instanceof OIdentifiable) {
         final ValuesConverter<OIdentifiable> converter = (ValuesConverter<OIdentifiable>) ConvertersFactory.INSTANCE
             .getConverter(item);
@@ -1234,7 +1245,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     interface ResultCallback {
       void add(Object item);
     }
- }
+  }
 
   private static final class SetConverter extends AbstractCollectionConverter<Set> {
     public static final SetConverter INSTANCE = new SetConverter();

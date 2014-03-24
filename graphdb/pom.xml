@@ -79,7 +79,6 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-core</artifactId>
             <version>${project.version}</version>
-            <type>pom</type>
         </dependency>
 
         <dependency>
@@ -99,6 +98,7 @@
             <groupId>com.tinkerpop.blueprints</groupId>
             <artifactId>blueprints-test</artifactId>
             <version>${blueprints.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.tinkerpop</groupId>

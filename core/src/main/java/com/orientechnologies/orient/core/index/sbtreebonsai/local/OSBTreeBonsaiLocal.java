@@ -510,10 +510,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
             this.rootBucketPointer.getPageOffset(), keySerializer, valueSerializer, ODurablePage.TrackMode.NONE);
-        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(rootBucket
-            .getKeySerializerId());
-        valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(rootBucket
-            .getValueSerializerId());
+        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+            rootBucket.getKeySerializerId());
+        valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+            rootBucket.getValueSerializerId());
       } finally {
         rootPointer.releaseSharedLock();
         diskCache.release(rootCacheEntry);
@@ -735,18 +735,18 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   /**
    * Load all entries with key greater then specified key.
-   *
-	 * @param key
-	 *          defines
-	 * @param inclusive
-	 *          if true entry with given key is included
-	 * @param ascSortOrder
-	 * @param listener
-	 */
+   * 
+   * @param key
+   *          defines
+   * @param inclusive
+   *          if true entry with given key is included
+   * @param ascSortOrder
+   * @param listener
+   */
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
-		if (!ascSortOrder)
-			throw new IllegalStateException("Descending sort order is not supported.");
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported.");
 
     acquireSharedLock();
     try {

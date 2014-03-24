@@ -36,11 +36,42 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
+/**
+ * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
+ * object.<br/>
+ * 
+ * Could be tree based and embedded representation.<br/>
+ * <ul>
+ * <li>
+ * <b>Embedded</b> stores its content directly to the document that owns it.<br/>
+ * It better fits for cases when only small amount of links are stored to the bag.<br/>
+ * </li>
+ * <li>
+ * <b>Tree-based</b> implementation stores its content in a separate data structure called {@link OSBTreeBonsai}.<br/>
+ * It fits great for cases when you have a huge amount of links.<br/>
+ * </li>
+ * </ul>
+ * <br/>
+ * The representation is automatically converted to tree-based implementation when top threshold is reached. And backward to
+ * embedded one when size is decreased to bottom threshold. <br/>
+ * The thresholds could be configured by {@link OGlobalConfiguration#RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD} and
+ * {@link OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}. <br/>
+ * <br/>
+ * This collection is used to efficiently manage relationships in graph model.<br/>
+ * <br/>
+ * Does not implement {@link Collection} interface because some operations could not be efficiently implemented and that's why
+ * should be avoided.<br/>
+ * 
+ * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Andrey Lomakin
+ * @since 1.7rc1
+ */
 public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
   private ORidBagDelegate delegate;
@@ -161,11 +192,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
 
     final UUID oldUuid = uuid;
-		final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-		if (sbTreeCollectionManager != null)
-			uuid = sbTreeCollectionManager.listenForChanges(this);
-		else
-		  uuid = null;
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
+    if (sbTreeCollectionManager != null)
+      uuid = sbTreeCollectionManager.listenForChanges(this);
+    else
+      uuid = null;
 
     boolean hasUuid = uuid != null;
 

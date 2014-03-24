@@ -1225,10 +1225,10 @@ public class ClassIndexTest {
     final OClass inClass = database.getMetadata().getSchema().createClass("ClassIndexInTest");
     inClass.createProperty("fOne", OType.INTEGER);
 
-    final OIndex result = inClass.createIndex("ClassIndexTestPropertyOne", OClass.INDEX_TYPE.UNIQUE, "fOne");
+    final OIndex result = inClass.createIndex("ClassIndexInTestPropertyOne", OClass.INDEX_TYPE.UNIQUE, "fOne");
 
-    assertEquals(result.getName(), "ClassIndexTestPropertyOne");
-    assertEquals(inClass.getClassIndex("ClassIndexTestPropertyOne").getName(), result.getName());
+    assertEquals(result.getName(), "ClassIndexInTestPropertyOne");
+    assertEquals(inClass.getClassIndex("ClassIndexInTestPropertyOne").getName(), result.getName());
 
     final Set<OIndex<?>> indexes = inClass.getIndexes();
     final OPropertyIndexDefinition propertyIndexDefinition = new OPropertyIndexDefinition("ClassIndexInTest", "fOne", OType.INTEGER);

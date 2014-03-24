@@ -32,6 +32,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -42,7 +44,6 @@ import java.util.concurrent.locks.Lock;
  */
 public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
   public final static int CHUNK_MAX_SIZE = 1048576; // 1MB
-  protected long          fileSize;
 
   public ODeployDatabaseTask() {
   }
@@ -58,7 +59,14 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
       final Lock lock = iManager.getLock(databaseName);
       if (lock.tryLock()) {
         try {
-          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.READ_ONLY);
+          // WAIT UNTIL ALL PENDING OPERATION ARE COMPLETED
+          while (database.getStorage().getLastOperationId() >= iManager.getMessageService().getLastMessageId()) {
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "pausing deploy of database %s until all pending operations are completed...", databaseName);
+            Thread.sleep(300);
+          }
+
+          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
           try {
 
             ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -74,18 +82,25 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                 "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
 
+            final AtomicLong lastOperationId = new AtomicLong(-1);
+
             FileOutputStream fileOutputStream = new FileOutputStream(f);
             try {
-              database.backup(fileOutputStream, null, null, this,
-                  OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+              database.backup(fileOutputStream, null, new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  lastOperationId.set(database.getStorage().getLastOperationId());
+                  return null;
+                }
+              }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
-              fileSize = f.length();
+              final long fileSize = f.length();
 
               ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                  "sending the compressed database '%s' over the NETWORK to node '%s', size=%s...", databaseName, getNodeSource(),
-                  OFileUtils.getSizeAsString(fileSize));
+                  "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...",
+                  databaseName, getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
 
-              final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
+              final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
 
               ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
                   "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));

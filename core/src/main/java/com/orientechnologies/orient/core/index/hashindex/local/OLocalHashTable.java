@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Iterator;
+
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,10 +34,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.Iterator;
 
 /**
  * @author Andrey Lomakin
@@ -405,10 +405,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       nodesMetadata = treeState.getHashTreeNodeMetadata();
 
       size = metadataStore.getRecordsCount();
-      keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(metadataStore
-          .getKeySerializerId());
-      valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(metadataStore
-          .getValuerSerializerId());
+      keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+          metadataStore.getKeySerializerId());
+      valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+          metadataStore.getValuerSerializerId());
 
       filesMetadata = metadataStore.loadMetadata();
       for (int i = 0; i < filesMetadata.length; i++) {

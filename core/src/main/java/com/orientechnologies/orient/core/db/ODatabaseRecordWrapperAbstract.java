@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
@@ -46,7 +47,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
@@ -104,6 +104,10 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public boolean dropDataSegment(final String iName) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     return super.dropDataSegment(iName);
+  }
+
+  public OBinarySerializerFactory getSerializerFactory() {
+    return underlying.getSerializerFactory();
   }
 
   public OTransaction getTransaction() {
@@ -197,8 +201,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid, final ORecordVersion iVersion) {
     underlying.delete(iRid, iVersion);
+    return this;
+  }
+
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> hide(ORID rid, ORecordVersion version) {
+    underlying.hide(rid, version);
     return this;
   }
 
@@ -359,7 +370,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.callbackHooks(iType, iObject);
   }
 
-  public Set<ORecordHook> getHooks() {
+  public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
     return underlying.getHooks();
   }
 
@@ -377,7 +388,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     underlying.backup(out, options, new Callable<Object>() {
 
       @Override

@@ -82,17 +82,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       } else
         iMarshalledRecords.add(record);
 
-    if (record.getIdentity().getClusterId() < 0 && !iOnlyDelta && record.getSchemaClass() != null) {
-      // MARSHALL THE CLASSNAME
+    if (!iOnlyDelta && record.getSchemaClass() != null) {
       iOutput.append(record.getSchemaClass().getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
-    } else {
-      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if ((database == null || !database.getStorageVersions().classesAreDetectedByClusterId()) && !iOnlyDelta
-          && record.getSchemaClass() != null) {
-        iOutput.append(record.getSchemaClass().getStreamableName());
-        iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
-      }
     }
 
     OProperty prop;
@@ -392,16 +384,15 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     int pos;
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (record.getIdentity().getClusterId() < 0 || database == null
-        || !database.getStorageVersions().classesAreDetectedByClusterId()) {
-      final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
-      pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-      if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
+    final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
+    pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
+      if ((record.getIdentity().getClusterId() < 0 || database == null || !database.getStorageVersions()
+          .classesAreDetectedByClusterId()))
         record.setClassNameIfExists(iContent.substring(0, pos));
-        iContent = iContent.substring(pos + 1);
-      } else
-        record.setClassNameIfExists(null);
-    }
+      iContent = iContent.substring(pos + 1);
+    } else
+      record.setClassNameIfExists(null);
 
     if (iFields != null && iFields.length == 1 && iFields[0].equals("@class"))
       // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD

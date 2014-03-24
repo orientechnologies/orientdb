@@ -506,6 +506,26 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
+  @Override
+  public Object getFirstKey() {
+    acquireSharedLock();
+    try {
+      return indexEngine.getFirstKey();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public Object getLastKey() {
+    acquireSharedLock();
+    try {
+      return indexEngine.getLastKey();
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   /**
    * Populates the index with all the existent records. Uses the massive insert intent to speed up and keep the consumed memory low.
    */

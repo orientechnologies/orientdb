@@ -30,9 +30,8 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + OrientGraphRemoteTest.class.getSimpleName();
 
-
     File file = new File(serverHome);
-		deleteDirectory(file);
+    deleteDirectory(file);
 
     file = new File(serverHome);
     Assert.assertTrue(file.mkdir());
@@ -56,14 +55,24 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       System.clearProperty("ORIENTDB_HOME");
 
     final File file = new File(serverHome);
-		deleteDirectory(file);
+    deleteDirectory(file);
 
-		Orient.instance().startup();
-	}
+    Orient.instance().startup();
+  }
 
   public Graph generateGraph(final String graphDirectoryName) {
+    final String url = "remote:localhost:3080/" + graphDirectoryName;
+    OrientGraph graph = currentGraphs.get(url);
+
+    if (graph != null) {
+      if (graph.isClosed())
+        currentGraphs.remove(url);
+      else
+        return graph;
+    }
+
     try {
-      final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3080/" + graphDirectoryName);
+      final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
       if (!serverAdmin.existsDatabase("plocal"))
         serverAdmin.createDatabase("graph", "plocal");
@@ -74,18 +83,20 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
       throw new IllegalStateException(e);
     }
 
-    OrientGraphFactory factory = graphFactories.get(graphDirectoryName);
+    OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
-      factory = new OrientGraphFactory("remote:localhost:3080/" + graphDirectoryName);
+      factory = new OrientGraphFactory(url);
+
       factory.setupPool(5, 256);
-      graphFactories.put(graphDirectoryName, factory);
+      graphFactories.put(url, factory);
     }
 
-    currentGraph = factory.getTx();
+    graph = factory.getTx();
+    graph.setWarnOnForceClosingTx(false);
 
-    currentGraph.setWarnOnForceClosingTx(false);
+    currentGraphs.put(url, graph);
 
-    return currentGraph;
+    return graph;
   }
 
   @Override
@@ -93,22 +104,22 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     // this is necessary on windows systems: deleting the directory is not enough because it takes a
     // while to unlock files
     try {
-      if (currentGraph != null) {
-        if (!currentGraph.isClosed())
-          currentGraph.shutdown();
+      final String url = "remote:localhost:3080/" + graphDirectoryName;
+      final OrientGraph graph = currentGraphs.get(url);
+      if (graph != null)
+        graph.shutdown();
 
-        for (OrientGraphFactory factory : graphFactories.values())
-          factory.close();
-        graphFactories.clear();
+      final OrientGraphFactory factory = graphFactories.remove(url);
+      if (factory != null)
+        factory.close();
 
-        final OServerAdmin serverAdmin = new OServerAdmin("remote:localhost:3080/" + graphDirectoryName);
-        serverAdmin.connect("root", "root");
+      final OServerAdmin serverAdmin = new OServerAdmin(url);
+      serverAdmin.connect("root", "root");
 
-        if (serverAdmin.existsDatabase("plocal"))
-          serverAdmin.dropDatabase("plocal");
+      if (serverAdmin.existsDatabase("plocal"))
+        serverAdmin.dropDatabase("plocal");
 
-        serverAdmin.close();
-      }
+      serverAdmin.close();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }

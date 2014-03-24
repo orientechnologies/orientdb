@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -73,7 +72,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         "+-> assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
 
     // TODO: IMPROVE TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
-    return record;
+    return new OPlaceholder(record);
   }
 
   @Override
@@ -84,35 +83,32 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
     // TODO: NO ROLLBACK, PUT THE NODE AS OFFLINE
-    OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
 
-    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion());
+    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
 
   @Override
   public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    OPlaceholder badResult = (OPlaceholder) iBadResponse;
-    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion());
+    final OPlaceholder badResult = (OPlaceholder) iBadResponse;
+    return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
+    super.writeExternal(out);
     if (content == null)
       out.writeInt(0);
     else {
       out.writeInt(content.length);
       out.write(content);
     }
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().writeTo(out, version);
     out.write(recordType);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
+    super.readExternal(in);
     final int contentSize = in.readInt();
     if (contentSize == 0)
       content = null;
@@ -120,9 +116,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       content = new byte[contentSize];
       in.readFully(content);
     }
-    if (version == null)
-      version = OVersionFactory.instance().createUntrackedVersion();
-    version.getSerializer().readFrom(in, version);
     recordType = in.readByte();
   }
 

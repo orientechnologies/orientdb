@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 
 /**
  * 
@@ -34,6 +34,8 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     register(OSQLFunctionGremlin.NAME, OSQLFunctionGremlin.class);
+    register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
+    register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
 
     register(OSQLFunctionLabel.NAME, new OSQLFunctionLabel());
     register(OSQLFunctionOut.NAME, new OSQLFunctionOut());
@@ -45,9 +47,6 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionOutV.NAME, new OSQLFunctionOutV());
     register(OSQLFunctionInV.NAME, new OSQLFunctionInV());
     register(OSQLFunctionBothV.NAME, new OSQLFunctionBothV());
-
-    register(OSQLFunctionDijkstra.NAME, new OSQLFunctionDijkstra());
-    register(OSQLFunctionShortestPath.NAME, new OSQLFunctionShortestPath());
   }
 
   public static void register(final String iName, final Object iImplementation) {
@@ -80,7 +79,5 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
             + "(). Probably there is not an empty constructor or the constructor generates errors", e);
       }
     }
-
   }
-
 }

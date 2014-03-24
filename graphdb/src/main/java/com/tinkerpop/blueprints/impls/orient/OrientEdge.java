@@ -203,7 +203,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
-    for (final Index<? extends Element> index : graph.getManualIndices()) {
+    for (final Index<? extends Element> index : graph.getIndices()) {
       if (Edge.class.isAssignableFrom(index.getIndexClass())) {
         OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
         idx.removeElement(this);

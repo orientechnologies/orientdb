@@ -195,193 +195,207 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected boolean executeRequest() throws IOException {
-    switch (requestType) {
+    try {
+      switch (requestType) {
 
-    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-      shutdownConnection();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+        shutdownConnection();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONNECT:
-      connect();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONNECT:
+        connect();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_LIST:
-      listDatabases();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_LIST:
+        listDatabases();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      openDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_OPEN:
+        openDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      reloadDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
+        reloadDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_CREATE:
-      createDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_CREATE:
+        createDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-      closeDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
+        closeDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_EXIST:
-      existsDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_EXIST:
+        existsDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_DROP:
-      dropDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_DROP:
+        dropDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_SIZE:
-      sizeDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_SIZE:
+        sizeDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
-      countDatabaseRecords();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
+        countDatabaseRecords();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_COPY:
-      copyDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_COPY:
+        copyDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_REPLICATION:
-      replicationDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_REPLICATION:
+        replicationDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      distributedCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CLUSTER:
+        distributedCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
-      addDataSegment();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
+        addDataSegment();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
-      dropDataSegment();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
+        dropDataSegment();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
-      countClusters();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
+        countClusters();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
-      rangeCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
+        rangeCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
-      addCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
+        addCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
-      removeCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
+        removeCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
-      readRecordMetadata();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+        readRecordMetadata();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
-      readRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
+        readRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
-      createRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+        createRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
-      updateRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+        updateRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
-      deleteRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+        deleteRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
-      higherPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
+				hideRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
-      ceilingPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+        higherPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
-      lowerPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+        ceilingPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
-      floorPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+        lowerPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_COUNT:
-      throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+        floorPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_COMMAND:
-      command();
-      break;
+      case OChannelBinaryProtocol.REQUEST_COUNT:
+        throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
 
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      commit();
-      break;
+      case OChannelBinaryProtocol.REQUEST_COMMAND:
+        command();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
-      configGet();
-      break;
+      case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+        commit();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
-      configSet();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
+        configGet();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
-      configList();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
+        configSet();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
-      freezeDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
+        configList();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
-      releaseDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+        freezeDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
-      freezeCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+        releaseDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
-      releaseCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
+        freezeCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
-      cleanOutRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
+        releaseCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
-      createSBTreeBonsai();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+        cleanOutRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
-      sbTreeBonsaiGet();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
+        createSBTreeBonsai();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
-      sbTreeBonsaiFirstKey();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
+        sbTreeBonsaiGet();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
-      sbTreeBonsaiGetEntriesMajor();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+        sbTreeBonsaiFirstKey();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
-      ridBagSize();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+        sbTreeBonsaiGetEntriesMajor();
+        break;
 
-    default:
-      setDataCommandInfo("Command not supported");
-      return false;
+      case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+        ridBagSize();
+        break;
+
+      default:
+        setDataCommandInfo("Command not supported");
+        return false;
+      }
+
+      return true;
+    } catch (RuntimeException e) {
+      if (connection != null && connection.database != null) {
+        final OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+        if (collectionManager != null)
+          collectionManager.clearChangedIds();
+      }
+
+      throw e;
     }
-
-    return true;
   }
 
   private void ridBagSize() throws IOException {
@@ -1396,6 +1410,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte mode = channel.readByte();
 
     final int result = deleteRecord(connection.database, rid, version);
+
+    if (mode < 2) {
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeByte((byte) result);
+      } finally {
+        endResponse();
+      }
+    }
+  }
+
+  protected void hideRecord() throws IOException {
+    setDataCommandInfo("Hide record");
+
+    if (!isConnectionAlive())
+      return;
+
+    final ORID rid = channel.readRID();
+    final ORecordVersion version = channel.readVersion();
+    final byte mode = channel.readByte();
+
+    final int result = hideRecord(connection.database, rid, version);
 
     if (mode < 2) {
       beginResponse();

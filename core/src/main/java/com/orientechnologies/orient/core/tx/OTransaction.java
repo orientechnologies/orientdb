@@ -35,14 +35,18 @@ public interface OTransaction {
   }
 
   public enum TXSTATUS {
-    INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED
+    INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
   }
 
   public void begin();
 
   public void commit();
 
+	public void commit(boolean force);
+
   public void rollback();
+
+  public void rollback(boolean force, int commitLevelDiff);
 
   public ODatabaseRecordTx getDatabase();
 
@@ -108,4 +112,6 @@ public interface OTransaction {
    *          Record identity after commit.
    */
   public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+
+  public int amountOfNestedTxs();
 }

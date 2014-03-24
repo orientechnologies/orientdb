@@ -96,15 +96,22 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public OFixTxTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
-    if (iBadResponse instanceof Boolean)
-      // TODO: MANAGE ERROR ON LOCAL NODE!
+    if (!(iBadResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating fix-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
       return null;
+    }
 
     final OFixTxTask fixTask = new OFixTxTask();
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
-      fixTask.add(t.getFixTask(iRequest, ((List<Object>) iBadResponse).get(i), ((List<Object>) iGoodResponse).get(i)));
+      OAbstractRemoteTask task = t
+          .getFixTask(iRequest, ((List<Object>) iBadResponse).get(i), ((List<Object>) iGoodResponse).get(i));
+
+      if (task != null)
+        fixTask.add(task);
     }
     return fixTask;
   }

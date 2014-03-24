@@ -56,7 +56,7 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     if (!f.exists())
       throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(0, f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));

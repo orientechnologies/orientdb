@@ -16,10 +16,27 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.*;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -654,12 +671,14 @@ public class OWriteAheadLog {
     }
 
     private long extractOrder(String name) {
-      int walOrderStartIndex = name.indexOf('.') + 1;
+      final Matcher matcher = Pattern.compile("^.*\\.(\\d+)\\.wal$").matcher(name);
 
-      int walOrderEndIndex = name.indexOf('.', walOrderStartIndex);
-      String walOrder = name.substring(walOrderStartIndex, walOrderEndIndex);
+      final boolean matches = matcher.find();
+      assert matches;
+
+      final String order = matcher.group(1);
       try {
-        return Long.parseLong(walOrder);
+        return Long.parseLong(order);
       } catch (NumberFormatException e) {
         // never happen
         throw new IllegalStateException(e);

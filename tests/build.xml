@@ -9,11 +9,29 @@
 
     <taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar"/>
 
+
     <target name="test"
             depends="test-memory, test-local, test-plocal, test-remote">
     </target>
 
     <target name="test-init">
+        <pathconvert property="project.root.dir" targetos="unix">
+        <path location="."/>
+        </pathconvert>
+        <pathconvert property="test.path" targetos="unix">
+        <path location="../${orient.path}/databases/demo"/>
+        </pathconvert>
+        <pathconvert property="project.root.dir" targetos="windows" dirsep="/">
+        <path location="."/>
+        </pathconvert>
+        <pathconvert property="test.path" targetos="windows" dirsep="/">
+            <path location="../${orient.path}/databases/demo"/>
+        </pathconvert>
+        <echo>Normalized paths</echo>
+        <echo>project.root.dir=${project.root.dir}</echo>
+        <echo>test.path=${test.path}</echo>
+
+
         <copy todir="${project.build}">
             <fileset dir="src/test/java">
                 <include name="**/*.xml"/>
@@ -24,15 +42,17 @@
             <include name="*-test-db-from-scratch.xml"/>
             <exclude name="paginated-local-test-db-from-scratch.xml"/>
 
-            <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
-            <replacefilter token="@URL@" value="local:${orient.path}/databases/demo"/>
+            <replacefilter token="@PATH@" value="${test.path}"/>
+            <replacefilter token="@URL@" value="local:${test.path}"/>
+            <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
         </replace>
 
         <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
             <include name="paginated-local-test-db-from-scratch.xml"/>
 
-            <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
-            <replacefilter token="@URL@" value="plocal:${orient.path}/databases/demo"/>
+            <replacefilter token="@PATH@" value="${test.path}"/>
+            <replacefilter token="@URL@" value="plocal:${test.path}"/>
+            <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
         </replace>
 
     </target>
@@ -110,14 +130,14 @@
 
     <target name="test-remote" depends="test-init">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+        <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
                  value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
                  value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
@@ -142,12 +162,12 @@
         </testng>
 
         <echo>SHUTDOWNING THE SERVER...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+        <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c shutdown.bat"/>
         </exec>
 
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>
