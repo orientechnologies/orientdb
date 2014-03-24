@@ -183,8 +183,9 @@ public abstract class OStringSerializerHelper {
   }
 
   public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator,
-      final boolean[] iRecordSeparatorInclude, int beginIndex, final int endIndex, final boolean iStringSeparatorExtended,
-      boolean iConsiderBraces, boolean iConsiderSets, boolean considerBags, final char... iJumpChars) {
+      final boolean[] iRecordSeparatorIncludeAsPrefix, final boolean[] iRecordSeparatorIncludeAsPostfix, int beginIndex,
+      final int endIndex, final boolean iStringSeparatorExtended, boolean iConsiderBraces, boolean iConsiderSets,
+      boolean considerBags, final char... iJumpChars) {
     final StringBuilder buffer = new StringBuilder();
     final ArrayList<String> parts = new ArrayList<String>();
 
@@ -193,8 +194,21 @@ public abstract class OStringSerializerHelper {
       while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
           iConsiderBraces, iConsiderSets, startSeparatorAt, considerBags, iJumpChars)) > -1) {
 
-        parts.add(buffer.toString());
-        buffer.setLength(0);
+        if (beginIndex > -1) {
+          final char lastSeparator = iSource.charAt(beginIndex - 1);
+          for (int i = 0; i < iRecordSeparator.length; ++i)
+            if (iRecordSeparator[i] == lastSeparator) {
+              if (iRecordSeparatorIncludeAsPrefix[i]) {
+                buffer.append(lastSeparator);
+              }
+              break;
+            }
+        }
+
+        if (buffer.length() > 0) {
+          parts.add(buffer.toString());
+          buffer.setLength(0);
+        }
 
         startSeparatorAt = -1;
 
@@ -202,16 +216,15 @@ public abstract class OStringSerializerHelper {
           final char lastSeparator = iSource.charAt(beginIndex - 1);
           for (int i = 0; i < iRecordSeparator.length; ++i)
             if (iRecordSeparator[i] == lastSeparator) {
-              if (iRecordSeparatorInclude[i]) {
-                beginIndex--;
-                startSeparatorAt = 0;
+              if (iRecordSeparatorIncludeAsPostfix[i]) {
+                buffer.append(lastSeparator);
               }
               break;
             }
         }
       }
 
-      if (buffer.length() > 0 || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
+      if (buffer.length() > 0 )
         parts.add(buffer.toString());
     }
 

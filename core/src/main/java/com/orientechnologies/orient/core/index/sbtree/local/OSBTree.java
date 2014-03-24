@@ -31,6 +31,8 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -157,6 +159,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   public V get(K key) {
     if (key == null)
       return null;
+    
+    if( keySerializer == null )
+      throw new OIndexException("keySerializer for index "+ this.getName() +" is null. Please rebuild the index before to use it.");
 
     acquireSharedLock();
     try {
@@ -187,6 +192,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   public void put(K key, V value) {
+    if( keySerializer == null )
+      throw new OIndexException("keySerializer for index "+ this.getName() +" is null. Please rebuild the index before to use it.");
+
     acquireExclusiveLock();
     final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
