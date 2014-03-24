@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -84,9 +87,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -891,6 +891,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
+        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          ((OStorageEmbedded) getStorage()).acquireReadLock(iRid);
+        else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+          ((OStorageEmbedded) getStorage()).acquireWriteLock(iRid);
+
+        callbackHooks(TYPE.AFTER_READ, iRecord);
+
         callbackHooks(TYPE.AFTER_READ, record);
         return (RET) record;
       }
@@ -912,8 +919,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return null;
 
       iRecord.fromStream(recordBuffer.buffer);
-
-      callbackHooks(TYPE.AFTER_READ, iRecord);
 
       if (!iIgnoreCache)
         getLevel1Cache().updateRecord(iRecord);
