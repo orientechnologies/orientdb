@@ -31,7 +31,10 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
             var find = $location.path().indexOf("/" + element.name.toLowerCase());
             if (find != -1) {
                 $scope.selectedMenu = element;
-
+                if (!$scope.$$phase && !$scope.$root.$$phase) {
+                    $scope.$apply();
+                }
+                return;
             }
 
         });

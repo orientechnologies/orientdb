@@ -1,7 +1,7 @@
 <div class="query-container odoc">
     <div class="row-fluid">
         <form class="form-horizontal  css-form" name="docForm">
-            <div class="query-header"><h5> {{ label }}: {{doc['@class']}} - {{doc['@rid']}} - Version
+            <div class="query-header"><h5> {{ label }}: <a href="#/database/{{database}}/schema/editclass/{{doc['@class']}}">{{doc['@class']}}</a> - {{doc['@rid']}} - Version
                 {{doc['@version']}}</h5></div>
 
             <div class="query-actions">

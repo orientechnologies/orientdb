@@ -23,11 +23,15 @@
                     <th>
                         Type
                     </th>
+
                     <th>
-                        Engine
+                        Class
                     </th>
                     <th>
                         Properties
+                    </th>
+                    <th>
+                        Engine
                     </th>
                     <th>
                         Actions
@@ -44,11 +48,15 @@
                     <td>
                         {{index.configuration.type}}
                     </td>
+
                     <td>
-                        {{index.configuration.algorithm}}
+                        {{index.configuration.indexDefinition.className}}
                     </td>
                     <td>
-                        {{index.fields}}
+                        {{getFields(index.configuration.indexDefinition)}}
+                    </td>
+                    <td>
+                        {{index.configuration.algorithm}}
                     </td>
                     <td>
                         <a href="javascript:void(0)" class="btn  btn-small" ng-click="rebuildIndex(index.name)">

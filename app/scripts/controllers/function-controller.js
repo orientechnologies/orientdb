@@ -13,6 +13,10 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 $scope.executeFunction();
 
             }
+        },
+        onLoad: function (_cm) {
+            $scope.vcm = _cm;
+            $scope.createNewFunction();
         }
     };
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Functions");
@@ -159,6 +163,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.selectedLanguage = selectedFunction['language'];
         $scope.functionToExecute = selectedFunction;
         $scope.inParams = $scope.functionToExecute['parameters'];
+        $scope.vcm.setValue($scope.consoleValue != null ? $scope.consoleValue : "");
+
     }
 
     $scope.showInConsole = function (selectedFunction) {
@@ -195,6 +201,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             if ($scope.isNewFunction == true) {
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
+                        $scope.isNewFunction = false;
                         var message = 'Function saved successfully. Server returns ' + JSON.stringify(data);
                         Notification.push({content: message });
                     }
@@ -240,7 +247,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         });
 
     }
-    $scope.createNewFunction();
 }])
 ;
 

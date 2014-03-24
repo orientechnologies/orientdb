@@ -380,7 +380,7 @@ Widget.directive('ridrender', function (Database) {
                         i++;
                     }
                 });
-                html = html.replace(/,([^,]*)$/,'$1');
+                html = html.replace(/,([^,]*)$/, '$1');
                 html += "</ul>";
                 if (html != "" && i == value.length) {
                     element.html(html);
@@ -389,16 +389,6 @@ Widget.directive('ridrender', function (Database) {
             }
         }
     };
-});
-Widget.directive("autofill", function () {
-    return {
-        require: "ngModel",
-        link: function (scope, element, attrs, ngModel) {
-            scope.$on("autofill:update", function() {
-                ngModel.$setViewValue(element.val());
-            });
-        }
-    }
 });
 Widget.directive('dtpicker', function () {
 

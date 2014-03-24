@@ -81,6 +81,16 @@ App.config(function ($routeProvider) {
             controller: 'ClassEditController',
             resolve: DatabaseResolve
         })
+        .when('/database/:database/schema/create/:clazz', {
+            templateUrl: 'views/database/createRecord.html',
+            controller: 'CreateController',
+            resolve: DatabaseResolve
+        }).
+        when('/database/:database/schema/editclass/:clazz', {
+            templateUrl: 'views/database/editclass.html',
+            controller: 'ClassEditController',
+            resolve: DatabaseResolve
+        })
         .when('/database/:database/db', {
             templateUrl: 'views/database/configuration.html',
             controller: 'ConfigurationController',

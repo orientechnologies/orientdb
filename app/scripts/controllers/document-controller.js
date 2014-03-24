@@ -288,6 +288,7 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
             if (type == 'INTEGER') {
                 $scope.doc[name] = 0;
             }
+            console.log(type);
             if (Database.getMappingFor(type)) {
                 if (types) {
                     types = types + ',' + name + '=' + Database.getMappingFor(type);
@@ -320,3 +321,18 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
         $location.path('database/' + $scope.database + '/browse/create/' + $scope.doc['@class']);
     }
 }
+DocController.controller("EmbeddedController", ['$scope', '$ojson', function ($scope, $ojson) {
+
+
+    $scope.viewerOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        mode: 'javascript',
+        onLoad: function (_cm) {
+            $scope.vcm = _cm;
+            $scope.vcm.setValue(JSON.stringify($scope.doc[$scope.header]));
+        }
+
+    };
+
+}]);

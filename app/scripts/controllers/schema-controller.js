@@ -23,7 +23,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         $scope.classClicked = clazz;
     }
     $scope.openClass = function (clazz) {
-        $location.path("/database/" + $scope.database.getName() + "/browse/editclass/" + clazz.name);
+        $location.path("/database/" + $scope.database.getName() + "/schema/editclass/" + clazz.name);
     }
     $scope.refreshWindow = function () {
         $window.location.reload();
@@ -343,7 +343,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
             $scope.prop2add.splice(index, 1)
         }
         var first = true;
-        $scope.nameIndexToShow = $scope.classInject + '_';
+        $scope.nameIndexToShow = $scope.classInject + '.';
 
         for (entry in $scope.prop2add) {
             if (first) {
@@ -526,7 +526,6 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
 schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route) {
 
     $scope.indexes = Database.getMetadata()["indexes"];
-    console.log($scope.indexes);
 
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
@@ -550,5 +549,21 @@ schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$locati
                 });
             }
         });
+    }
+    $scope.getFields = function (definition) {
+        var fields = "";
+        if (definition) {
+            if (definition.indexDefinitions) {
+                fields += " [";
+                definition.indexDefinitions.forEach(function (elem, idx, array) {
+                    if (idx > 0)fields += ","
+                    fields += elem.field;
+                });
+                fields += "]";
+            } else {
+                fields += "[" + definition.field + "]";
+            }
+        }
+        return fields;
     }
 }]);
