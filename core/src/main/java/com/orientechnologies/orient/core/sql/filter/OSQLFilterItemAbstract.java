@@ -50,8 +50,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[' },
-        new boolean[] { false, true, true }, 0, -1, false, true, false, false, new char[] {});
+    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false, false, true }, new boolean[] { false, true,
+        false },  0, -1, false, true, false, false, new char[] {});
 
     setRoot(iQueryToParse, parts.get(0));
 

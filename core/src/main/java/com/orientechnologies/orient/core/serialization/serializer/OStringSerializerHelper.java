@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
@@ -40,6 +31,15 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -183,8 +183,9 @@ public abstract class OStringSerializerHelper {
   }
 
   public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator,
-      final boolean[] iRecordSeparatorInclude, int beginIndex, final int endIndex, final boolean iStringSeparatorExtended,
-      boolean iConsiderBraces, boolean iConsiderSets, boolean considerBags, final char... iJumpChars) {
+      final boolean[] iRecordSeparatorIncludeAsPrefix, final boolean[] iRecordSeparatorIncludeAsPostfix, int beginIndex,
+      final int endIndex, final boolean iStringSeparatorExtended, boolean iConsiderBraces, boolean iConsiderSets,
+      boolean considerBags, final char... iJumpChars) {
     final StringBuilder buffer = new StringBuilder();
     final ArrayList<String> parts = new ArrayList<String>();
 
@@ -193,8 +194,21 @@ public abstract class OStringSerializerHelper {
       while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
           iConsiderBraces, iConsiderSets, startSeparatorAt, considerBags, iJumpChars)) > -1) {
 
-        parts.add(buffer.toString());
-        buffer.setLength(0);
+        if (beginIndex > -1) {
+          final char lastSeparator = iSource.charAt(beginIndex - 1);
+          for (int i = 0; i < iRecordSeparator.length; ++i)
+            if (iRecordSeparator[i] == lastSeparator) {
+              if (iRecordSeparatorIncludeAsPrefix[i]) {
+                buffer.append(lastSeparator);
+              }
+              break;
+            }
+        }
+
+        if (buffer.length() > 0) {
+          parts.add(buffer.toString());
+          buffer.setLength(0);
+        }
 
         startSeparatorAt = 0;
 
@@ -202,7 +216,7 @@ public abstract class OStringSerializerHelper {
           final char lastSeparator = iSource.charAt(beginIndex - 1);
           for (int i = 0; i < iRecordSeparator.length; ++i)
             if (iRecordSeparator[i] == lastSeparator) {
-              if (iRecordSeparatorInclude[i]) {
+              if (iRecordSeparatorIncludeAsPostfix[i]) {
                 beginIndex--;
                 startSeparatorAt = 1;
               }
@@ -211,7 +225,7 @@ public abstract class OStringSerializerHelper {
         }
       }
 
-      if (buffer.length() > 0 || isCharPresent(iSource.charAt(iSource.length() - 1), iRecordSeparator))
+      if (buffer.length() > 0)
         parts.add(buffer.toString());
     }
 
