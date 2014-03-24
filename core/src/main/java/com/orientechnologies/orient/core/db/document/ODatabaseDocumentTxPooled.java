@@ -94,7 +94,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
     checkOpeness();
 
-    if (ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
+    if (ownerPool != null && ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
       ownerPool.release(this);
       return;
     }

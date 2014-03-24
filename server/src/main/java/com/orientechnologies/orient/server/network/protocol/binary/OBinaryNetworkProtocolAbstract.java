@@ -319,6 +319,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
+  protected int hideRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+    try {
+      iDatabase.hide(rid, version);
+      return 1;
+    } catch (ORecordNotFoundException e) {
+      return 0;
+    }
+  }
+
   protected int cleanOutRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
     iDatabase.delete(rid, version);
     return 1;

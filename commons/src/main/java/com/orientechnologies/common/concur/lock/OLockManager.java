@@ -98,10 +98,10 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
         try {
           if (iLockType == LOCK.SHARED) {
             if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
+              throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           } else {
             if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
+              throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();

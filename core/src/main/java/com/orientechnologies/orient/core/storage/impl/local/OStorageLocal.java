@@ -2078,7 +2078,12 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return null;
   }
 
-  protected void init() {
+	@Override
+	public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
+		throw new UnsupportedOperationException("Given operation is not supported in current version.");
+	}
+
+	protected void init() {
     componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
     final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;

@@ -91,15 +91,14 @@ public class OStorageMemory extends OStorageEmbedded {
     lock.acquireExclusiveLock();
     try {
 
-
-			componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
       addDataSegment(OStorage.DATA_DEFAULT_NAME);
       addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null, null, true);
-			configuration.create();
+      configuration.create();
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF INDEXING IN THE INDEX DATA SEGMENT
       addCluster(CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
@@ -110,7 +109,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = addCluster(CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
-
 
       status = STATUS.OPEN;
 
@@ -187,7 +185,8 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
@@ -600,6 +599,12 @@ public class OStorageMemory extends OStorageEmbedded {
       ORecordCallback<Boolean> iCallback) {
     return new OStorageOperationResult<Boolean>(deleteRecord(iRid, iVersion,
         OGlobalConfiguration.STORAGE_USE_TOMBSTONES.getValueAsBoolean(), iCallback));
+  }
+
+  @Override
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
+      ORecordCallback<Boolean> iCallback) {
+    throw new UnsupportedOperationException("Given operation is not supported in current version.");
   }
 
   @Override

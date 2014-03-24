@@ -201,8 +201,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRid, final ORecordVersion iVersion) {
     underlying.delete(iRid, iVersion);
+    return this;
+  }
+
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> hide(ORID rid, ORecordVersion version) {
+    underlying.hide(rid, version);
     return this;
   }
 
@@ -363,7 +370,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return underlying.callbackHooks(iType, iObject);
   }
 
-  public Map<ORecordHook,ORecordHook.HOOK_POSITION> getHooks() {
+  public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
     return underlying.getHooks();
   }
 

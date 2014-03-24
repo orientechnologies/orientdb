@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -38,6 +39,9 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
@@ -52,54 +56,24 @@ import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
+  protected static ORecordSerializer defaultSerializer = ORecordSerializerFactory.instance().getFormat(
+                                                           ORecordSerializerSchemaAware2CSV.NAME);
+
   public ODatabaseDocumentTx(final String iURL) {
     super(new ODatabaseRecordTx(iURL, ODocument.RECORD_TYPE));
+    underlying.setSerializer(defaultSerializer);
   }
 
   public ODatabaseDocumentTx(final ODatabaseRecordTx iSource) {
     super(iSource);
   }
 
-  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, boolean throwException) {
-    if (indexesToFreeze != null) {
-      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
-        indexToLock.freeze(throwException);
-      }
-    }
+  public static ORecordSerializer getDefaultSerializer() {
+    return defaultSerializer;
   }
 
-  private void flushIndexes(List<OIndexAbstract<?>> indexesToFlush) {
-    for (OIndexAbstract<?> index : indexesToFlush) {
-      index.flush();
-    }
-  }
-
-  private List<OIndexAbstract<?>> prepareIndexesToFreeze(Collection<? extends OIndex<?>> indexes) {
-    List<OIndexAbstract<?>> indexesToFreeze = null;
-    if (indexes != null && !indexes.isEmpty()) {
-      indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
-      for (OIndex<?> index : indexes) {
-        indexesToFreeze.add((OIndexAbstract<?>) index.getInternal());
-      }
-
-      Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
-        public int compare(OIndex<?> o1, OIndex<?> o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
-
-    }
-    return indexesToFreeze;
-  }
-
-  private void releaseIndexes(Collection<? extends OIndex<?>> indexesToRelease) {
-    if (indexesToRelease != null) {
-      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
-      while (it.hasNext()) {
-        it.next().getInternal().release();
-        it.remove();
-      }
-    }
+  public static void setDefaultSerializer(ORecordSerializer iDefaultSerializer) {
+    defaultSerializer = iDefaultSerializer;
   }
 
   @Override
@@ -445,7 +419,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return this;
   }
 
-  /**
+	/**
    * Returns the number of the records of the class iClassName.
    */
   public long countClass(final String iClassName) {
@@ -470,12 +444,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return rollback(false);
   }
 
-	@Override
-	public ODatabaseComplex<ORecordInternal<?>> rollback(boolean force) throws OTransactionException {
-		return underlying.rollback(force);
-	}
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> rollback(final boolean force) throws OTransactionException {
+    return underlying.rollback(force);
+  }
 
-	public String getType() {
+  public String getType() {
     return TYPE;
   }
 
@@ -487,5 +461,56 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   @Override
   public OCurrentStorageComponentsFactory getStorageVersions() {
     return underlying.getStorageVersions();
+  }
+
+  @Override
+  public ORecordSerializer getSerializer() {
+    return underlying.getSerializer();
+  }
+
+  public void setSerializer(final ORecordSerializer iSerializer) {
+    underlying.setSerializer(iSerializer);
+  }
+
+  private void freezeIndexes( final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
+    if (indexesToFreeze != null) {
+      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
+        indexToLock.freeze(throwException);
+      }
+    }
+  }
+
+  private void flushIndexes(final List<OIndexAbstract<?>> indexesToFlush) {
+    for (OIndexAbstract<?> index : indexesToFlush) {
+      index.flush();
+    }
+  }
+
+  private List<OIndexAbstract<?>> prepareIndexesToFreeze(final Collection<? extends OIndex<?>> indexes) {
+    List<OIndexAbstract<?>> indexesToFreeze = null;
+    if (indexes != null && !indexes.isEmpty()) {
+      indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
+      for (OIndex<?> index : indexes) {
+        indexesToFreeze.add((OIndexAbstract<?>) index.getInternal());
+      }
+
+      Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
+        public int compare(OIndex<?> o1, OIndex<?> o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+
+    }
+    return indexesToFreeze;
+  }
+
+  private void releaseIndexes(final Collection<? extends OIndex<?>> indexesToRelease) {
+    if (indexesToRelease != null) {
+      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
+      while (it.hasNext()) {
+        it.next().getInternal().release();
+        it.remove();
+      }
+    }
   }
 }

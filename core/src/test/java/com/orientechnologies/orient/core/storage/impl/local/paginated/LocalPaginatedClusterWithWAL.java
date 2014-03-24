@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
@@ -58,10 +59,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     storageDir = buildDirectory + "/localPaginatedClusterWithWALTestOne";
     when(storage.getStoragePath()).thenReturn(storageDir);
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
+		when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -99,9 +102,11 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
+		when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
 
@@ -286,7 +291,35 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
-  @Override
+	@Override
+	public void testHideHalfSmallRecords() throws IOException {
+		super.testHideHalfSmallRecords();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
+	public void testHideHalfBigRecords() throws IOException {
+		super.testHideHalfBigRecords();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
+	public void testHideHalfRecords() throws IOException {
+		super.testHideHalfRecords();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
+	public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
+		super.testHideHalfRecordsAndAddAnotherHalfAgain();
+
+		assertFileRestoreFromWAL();
+	}
+
+	@Override
   @Test(enabled = false)
   public void testForwardIteration() throws IOException {
     super.testForwardIteration();

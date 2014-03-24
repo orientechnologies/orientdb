@@ -364,7 +364,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     }
   }
 
-  @Override
+	@Override
+	public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
   public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
     return wrapped.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);

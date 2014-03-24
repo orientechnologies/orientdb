@@ -298,6 +298,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         deleteRecord();
         break;
 
+      case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
+				hideRecord();
+        break;
+
       case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
         higherPositions();
         break;
@@ -1406,6 +1410,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte mode = channel.readByte();
 
     final int result = deleteRecord(connection.database, rid, version);
+
+    if (mode < 2) {
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeByte((byte) result);
+      } finally {
+        endResponse();
+      }
+    }
+  }
+
+  protected void hideRecord() throws IOException {
+    setDataCommandInfo("Hide record");
+
+    if (!isConnectionAlive())
+      return;
+
+    final ORID rid = channel.readRID();
+    final ORecordVersion version = channel.readVersion();
+    final byte mode = channel.readByte();
+
+    final int result = hideRecord(connection.database, rid, version);
 
     if (mode < 2) {
       beginResponse();
