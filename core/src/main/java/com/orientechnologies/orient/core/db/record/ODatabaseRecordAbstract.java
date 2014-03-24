@@ -918,7 +918,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       iRecord.fromStream(recordBuffer.buffer);
 
-      callbackHooks(TYPE.AFTER_READ, record);
+      callbackHooks(TYPE.AFTER_READ, iRecord);
 
       if (!iIgnoreCache)
         getLevel1Cache().updateRecord(iRecord);
