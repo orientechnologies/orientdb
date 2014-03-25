@@ -244,6 +244,8 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
+	INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
+
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),

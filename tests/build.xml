@@ -98,6 +98,7 @@
             <jvmarg value="-Dstorage.makeFullCheckpointAfterClusterCreate=false"/>
             <jvmarg value="-Dstorage.wal.syncOnPageFlush=false"/>
             <jvmarg value="-Dstorage.configuration.syncOnUpdate=false"/>
+            <jvmarg value="-Dindex.flushAfterCreate=false"/>
 
             <classpath>
                 <pathelement location="${project.build}"/>
@@ -132,14 +133,14 @@
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
-                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
+                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
-                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false"/>
+                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
         </exec>
