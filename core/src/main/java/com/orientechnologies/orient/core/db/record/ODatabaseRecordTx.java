@@ -350,13 +350,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return this;
   }
 
-	@Override
-	public ODatabaseComplex<ORecordInternal<?>> hide(ORID rid, ORecordVersion version) {
-		if (currentTx.isActive())
-			throw new ODatabaseException("This operation can be executed only in non tx mode");
-
-		return super.hide(rid, version);
-	}
 
 	@Override
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {

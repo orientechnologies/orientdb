@@ -340,13 +340,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
-  @Override
-  public ORecordAbstract<T> hide() {
-    getDatabase().hide(getIdentity(), getRecordVersion());
-    setDirty();
-   return this;
-  }
-
   public int getSize() {
     return _size;
   }
