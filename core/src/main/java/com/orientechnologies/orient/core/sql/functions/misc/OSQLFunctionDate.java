@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Builds a date object from the format passed. If no arguments are passed, than the system date is built (like sysdate() function)
@@ -48,28 +48,29 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
     date = new Date();
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters.length == 0)
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    if (iParams.length == 0)
       return date;
 
-    if (iParameters[0] instanceof Number)
-      return new Date(((Number) iParameters[0]).longValue());
+    if (iParams[0] instanceof Number)
+      return new Date(((Number) iParams[0]).longValue());
 
     if (format == null) {
-      if (iParameters.length > 1) {
-        format = new SimpleDateFormat((String) iParameters[1]);
+      if (iParams.length > 1) {
+        format = new SimpleDateFormat((String) iParams[1]);
         format.setTimeZone(ODateHelper.getDatabaseTimeZone());
       } else
         format = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
 
-      if (iParameters.length == 3)
-        format.setTimeZone(TimeZone.getTimeZone(iParameters[2].toString()));
+      if (iParams.length == 3)
+        format.setTimeZone(TimeZone.getTimeZone(iParams[2].toString()));
     }
 
     try {
-      return format.parse((String) iParameters[0]);
+      return format.parse((String) iParams[0]);
     } catch (ParseException e) {
-      throw new OQueryParsingException("Error on formatting date '" + iParameters[0] + "' using the format: " + format, e);
+      throw new OQueryParsingException("Error on formatting date '" + iParams[0] + "' using the format: " + format, e);
     }
   }
 
@@ -78,7 +79,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: date([<date-as-string>] [,<format>] [,<timezone>])";
+    return "date([<date-as-string>] [,<format>] [,<timezone>])";
   }
 
   @Override

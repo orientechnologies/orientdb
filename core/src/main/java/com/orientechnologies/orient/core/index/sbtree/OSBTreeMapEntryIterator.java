@@ -56,7 +56,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   }
 
   private void prefetchData(boolean firstTime) {
-    sbTree.loadEntriesMajor(firstKey, firstTime, new OTreeInternal.RangeResultListener<K, V>() {
+    sbTree.loadEntriesMajor(firstKey, firstTime, true, new OTreeInternal.RangeResultListener<K, V>() {
       @Override
       public boolean addResult(final Map.Entry<K, V> entry) {
         final V value = entry.getValue();

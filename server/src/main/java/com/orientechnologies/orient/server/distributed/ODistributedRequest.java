@@ -29,6 +29,8 @@ public interface ODistributedRequest {
 
   long getId();
 
+  void setId(long iId);
+
   EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();

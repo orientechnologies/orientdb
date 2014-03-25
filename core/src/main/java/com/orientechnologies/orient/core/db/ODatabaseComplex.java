@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -267,6 +267,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> delete(ORID iRID, ORecordVersion iVersion);
 
+
+
   public ODatabaseComplex<T> cleanOutRecord(ORID rid, ORecordVersion version);
 
   /**
@@ -310,6 +312,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> commit() throws OTransactionException;
 
+  public ODatabaseComplex<T> commit(boolean force) throws OTransactionException;
+
   /**
    * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
    * are not guaranteed to being restored as well.
@@ -317,6 +321,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @return
    */
   public ODatabaseComplex<T> rollback() throws OTransactionException;
+
+  public ODatabaseComplex<T> rollback(boolean force) throws OTransactionException;
 
   /**
    * Execute a query against the database.
@@ -385,9 +391,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Retrieves all the registered hooks.
    * 
-   * @return A not-null unmodifiable set of ORecordHook instances. If there are no hooks registered, the Set is empty.
+   * @return A not-null unmodifiable map of ORecordHook and position instances. If there are no hooks registered, the Map is empty.
    */
-  public Set<ORecordHook> getHooks();
+  public Map<ORecordHook, HOOK_POSITION> getHooks();
 
   /**
    * Unregisters a previously registered hook.

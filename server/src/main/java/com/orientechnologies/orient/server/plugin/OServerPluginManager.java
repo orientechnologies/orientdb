@@ -56,6 +56,7 @@ public class OServerPluginManager implements OService {
   private OServer                                      server;
   private ConcurrentHashMap<String, OServerPluginInfo> activePlugins = new ConcurrentHashMap<String, OServerPluginInfo>();
   private ConcurrentHashMap<String, String>            loadedPlugins = new ConcurrentHashMap<String, String>();
+  private volatile TimerTask                           autoReloadTimerTask;
 
   public void config(OServer iServer) {
     server = iServer;
@@ -78,14 +79,18 @@ public class OServerPluginManager implements OService {
 
     updatePlugins();
 
-    if (hotReload)
+    if (hotReload) {
       // SCHEDULE A TIMER TASK FOR AUTO-RELOAD
-      Orient.instance().getTimer().schedule(new TimerTask() {
+      final TimerTask timerTask = new TimerTask() {
         @Override
         public void run() {
           updatePlugins();
         }
-      }, CHECK_DELAY, CHECK_DELAY);
+      };
+
+      Orient.instance().getTimer().schedule(timerTask, CHECK_DELAY, CHECK_DELAY);
+      autoReloadTimerTask = timerTask;
+    }
   }
 
   public OServerPluginInfo getPluginByName(final String iName) {
@@ -326,7 +331,19 @@ public class OServerPluginManager implements OService {
 
   @Override
   public void shutdown() {
+    OLogManager.instance().info(this, "Shutting down plugins:");
+    for (Entry<String, OServerPluginInfo> pluginInfoEntry : activePlugins.entrySet()) {
+      OLogManager.instance().info(this, "- %s", pluginInfoEntry.getKey());
+      final OServerPluginInfo plugin = pluginInfoEntry.getValue();
+      try {
+        plugin.shutdown();
+      } catch (Throwable t) {
+        OLogManager.instance().error(this, "Error during server plugin %s shutdown.", t, plugin);
+      }
+    }
 
+    if (autoReloadTimerTask != null)
+      autoReloadTimerTask.cancel();
   }
 
   @Override

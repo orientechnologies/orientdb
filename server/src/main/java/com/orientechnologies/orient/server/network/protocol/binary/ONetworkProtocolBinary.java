@@ -37,6 +37,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -93,17 +94,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -205,193 +195,203 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected boolean executeRequest() throws IOException {
-    switch (requestType) {
+    try {
+      switch (requestType) {
 
-    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-      shutdownConnection();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+        shutdownConnection();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONNECT:
-      connect();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONNECT:
+        connect();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_LIST:
-      listDatabases();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_LIST:
+        listDatabases();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      openDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_OPEN:
+        openDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      reloadDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
+        reloadDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_CREATE:
-      createDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_CREATE:
+        createDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-      closeDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
+        closeDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_EXIST:
-      existsDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_EXIST:
+        existsDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_DROP:
-      dropDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_DROP:
+        dropDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_SIZE:
-      sizeDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_SIZE:
+        sizeDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
-      countDatabaseRecords();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
+        countDatabaseRecords();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_COPY:
-      copyDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_COPY:
+        copyDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_REPLICATION:
-      replicationDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_REPLICATION:
+        replicationDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      distributedCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CLUSTER:
+        distributedCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
-      addDataSegment();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
+        addDataSegment();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
-      dropDataSegment();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
+        dropDataSegment();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
-      countClusters();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
+        countClusters();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
-      rangeCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
+        rangeCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
-      addCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
+        addCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
-      removeCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
+        removeCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
-      readRecordMetadata();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+        readRecordMetadata();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
-      readRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
+        readRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
-      createRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+        createRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
-      updateRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+        updateRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
-      deleteRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+        deleteRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
-      higherPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+        higherPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
-      ceilingPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+        ceilingPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
-      lowerPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+        lowerPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
-      floorPositions();
-      break;
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+        floorPositions();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_COUNT:
-      throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
+      case OChannelBinaryProtocol.REQUEST_COUNT:
+        throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
 
-    case OChannelBinaryProtocol.REQUEST_COMMAND:
-      command();
-      break;
+      case OChannelBinaryProtocol.REQUEST_COMMAND:
+        command();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      commit();
-      break;
+      case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+        commit();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
-      configGet();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
+        configGet();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
-      configSet();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
+        configSet();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
-      configList();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
+        configList();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
-      freezeDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+        freezeDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
-      releaseDatabase();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+        releaseDatabase();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
-      freezeCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
+        freezeCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
-      releaseCluster();
-      break;
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
+        releaseCluster();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
-      cleanOutRecord();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+        cleanOutRecord();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
-      createSBTreeBonsai();
-      break;
+      case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
+        createSBTreeBonsai();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
-      sbTreeBonsaiGet();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
+        sbTreeBonsaiGet();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
-      sbTreeBonsaiFirstKey();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+        sbTreeBonsaiFirstKey();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
-      sbTreeBonsaiGetEntriesMajor();
-      break;
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+        sbTreeBonsaiGetEntriesMajor();
+        break;
 
-    case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
-      ridBagSize();
-      break;
+      case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+        ridBagSize();
+        break;
 
-    default:
-      setDataCommandInfo("Command not supported");
-      return false;
+      default:
+        setDataCommandInfo("Command not supported");
+        return false;
+      }
+
+      return true;
+    } catch (RuntimeException e) {
+      if (connection != null && connection.database != null) {
+        final OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+        if (collectionManager != null)
+          collectionManager.clearChangedIds();
+      }
+
+      throw e;
     }
-
-    return true;
   }
 
   private void ridBagSize() throws IOException {
@@ -431,7 +431,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
         5);
-    tree.loadEntriesMajor(key, inclusive, listener);
+    tree.loadEntriesMajor(key, inclusive, true, listener);
     List<Entry<OIdentifiable, Integer>> result = listener.getResult();
     byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
 
@@ -1109,7 +1109,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.exists");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    if (storageType != null)
+      connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    else {
+      // CHECK AGAINST ALL THE ENGINE TYPES
+      for (String engine : Orient.instance().getEngines()) {
+        connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, engine);
+        if (connection.database.exists())
+          break;
+      }
+    }
 
     beginResponse();
     try {
@@ -1319,6 +1328,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       final Object result = connection.database.command(command).execute();
 
+      // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
+      listener.setFetchPlan(command.getFetchPlan());
+
       if (asynch) {
         // ASYNCHRONOUS
         if (listener.isEmpty())
@@ -1326,6 +1338,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             sendOk(clientTxId);
           } catch (IOException e1) {
           }
+        channel.writeByte((byte) 0); // NO MORE RECORDS
 
       } else {
         // SYNCHRONOUS
@@ -1354,18 +1367,18 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
           channel.writeString(value.toString());
         }
-      }
 
-      if (asynch || connection.data.protocolVersion >= 17) {
-        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-        for (ODocument doc : listener.getFetchedRecordsToSend()) {
-          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-          // ISN'T PART OF THE
-          // RESULT SET
-          writeIdentifiable(doc);
+        if (connection.data.protocolVersion >= 17) {
+          // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+          for (ORecord<?> rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
+            channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+            // ISN'T PART OF THE
+            // RESULT SET
+            writeIdentifiable(rec);
+          }
+
+          channel.writeByte((byte) 0); // NO MORE RECORDS
         }
-
-        channel.writeByte((byte) 0); // NO MORE RECORDS
       }
 
     } finally {
@@ -1583,14 +1596,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             if (record instanceof ODocument) {
               final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+              final Set<ORecord<?>> recordsToSend = new HashSet<ORecord<?>>();
               final ODocument doc = (ODocument) record;
-              final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
+              final OFetchListener listener = new ORemoteFetchListener() {
+                @Override
+                protected void sendRecord(ORecord<?> iLinked) {
+                  recordsToSend.add(iLinked);
+                }
+              };
               final OFetchContext context = new ORemoteFetchContext();
               OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
               // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ODocument d : recordsToSend) {
+              for (ORecord<?> d : recordsToSend) {
                 if (d.getIdentity().isValid()) {
                   channel.writeByte((byte) 2); // CLIENT CACHE
                   // RECORD. IT ISN'T PART OF THE RESULT SET
@@ -1616,8 +1634,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void endResponse() throws IOException {
     // reseting transaction state. Commands are stateless and connection should be cleared
     // otherwise reused connection (connections pool) may lead to unpredicted errors
-    if (connection != null && connection.database!=null && connection.database.getTransaction()!=null)
-            connection.database.getTransaction().close();
+    if (connection != null && connection.database != null && connection.database.getTransaction() != null)
+      connection.database.getTransaction().close();
     channel.flush();
     channel.releaseWriteLock();
   }

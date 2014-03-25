@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -75,6 +76,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -140,24 +142,24 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     this(iClientId, iURL, iMode, null);
   }
 
-	public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
-		super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
-		if (status != null)
-			this.status = status;
+  public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
+    super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
+    if (status != null)
+      this.status = status;
 
-		clientId = iClientId;
-		configuration = null;
+    clientId = iClientId;
+    configuration = null;
 
-		clientConfiguration = new OContextConfiguration();
-		connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
-		connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
-		asynchEventListener = new OStorageRemoteAsynchEventListener(this);
-		parseServerURLs();
+    clientConfiguration = new OContextConfiguration();
+    connectionRetry = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
+    connectionRetryDelay = clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
+    asynchEventListener = new OStorageRemoteAsynchEventListener(this);
+    parseServerURLs();
 
-		asynchExecutor = Executors.newSingleThreadScheduledExecutor();
+    asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
-		maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
-	}
+    maxReadQueue = Runtime.getRuntime().availableProcessors() - 1;
+  }
 
   public int getSessionId() {
     return OStorageRemoteThreadLocal.INSTANCE.get().sessionId.intValue();
@@ -201,6 +203,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       configuration = new OStorageConfiguration(this);
       configuration.load();
 
+      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
       if (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean())
         close();
@@ -634,7 +637,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
@@ -1148,7 +1151,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
         // SET ALL THE RECORDS AS UNDIRTY
         for (ORecordOperation txEntry : iTx.getAllRecordEntries())
-          txEntry.getRecord().unload();
+          txEntry.getRecord().unsetDirty();
 
         // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
         // CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
@@ -2122,12 +2125,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public int getClusters() {
-		lock.acquireSharedLock();
-		try {
-			return clusterMap.size();
-		} finally {
-			lock.releaseSharedLock();
-		}
+    lock.acquireSharedLock();
+    try {
+      return clusterMap.size();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   public void setDefaultClusterId(int defaultClusterId) {

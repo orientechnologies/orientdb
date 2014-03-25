@@ -10,7 +10,7 @@ import java.util.Map;
 public interface OTreeInternal<K, V> {
   long size();
 
-  void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener);
+  void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener);
 
   K firstKey();
 

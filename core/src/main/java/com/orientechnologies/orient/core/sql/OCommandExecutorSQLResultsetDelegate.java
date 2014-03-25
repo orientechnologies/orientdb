@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import java.util.Iterator;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -26,9 +27,16 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLResultsetDelegate extends OCommandExecutorSQLDelegate implements Iterable<OIdentifiable> {
+public class OCommandExecutorSQLResultsetDelegate extends OCommandExecutorSQLDelegate implements OIterableRecordSource,
+    Iterable<OIdentifiable> {
 
+  @Override
   public Iterator<OIdentifiable> iterator() {
     return ((OCommandExecutorSQLResultsetAbstract) delegate).iterator();
+  }
+
+  @Override
+  public Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs) {
+    return ((OCommandExecutorSQLResultsetAbstract) delegate).iterator(iArgs);
   }
 }

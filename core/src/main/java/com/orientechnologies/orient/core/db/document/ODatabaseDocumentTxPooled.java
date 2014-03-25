@@ -36,11 +36,14 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements ODatabasePooled {
 
   private ODatabaseDocumentPool ownerPool;
+  private String                userName;
 
   public ODatabaseDocumentTxPooled(final ODatabaseDocumentPool iOwnerPool, final String iURL, final String iUserName,
       final String iUserPassword) {
     super(iURL);
     ownerPool = iOwnerPool;
+    userName = iUserName;
+
     super.open(iUserName, iUserPassword);
   }
 
@@ -91,8 +94,13 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
     checkOpeness();
 
+    if (ownerPool != null && ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
+      ownerPool.release(this);
+      return;
+    }
+
     try {
-      rollback();
+      commit(true);
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }

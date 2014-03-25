@@ -16,32 +16,26 @@
 package com.orientechnologies.orient.core.command.traverse;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
 
 public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> {
-  private boolean skipDocument = false;
+  private final OTraversePath path;
 
-  /**
-   * @param iCommand
-   * @param iTarget
-   */
-  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget) {
-    this(iCommand, iTarget, false);
-  }
-
-  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, final boolean iSkipDocument) {
+  public OTraverseRecordProcess(final OTraverse iCommand, final ODocument iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
-    skipDocument = iSkipDocument;
-    if (!skipDocument)
-      command.getContext().incrementDepth();
+    this.path = parentPath.append(iTarget);
   }
 
   public OIdentifiable process() {
@@ -80,8 +74,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
           || OSQLFilterItemFieldAny.FULL_NAME.equalsIgnoreCase(cfgField)) {
 
         // ADD ALL THE DOCUMENT FIELD
-        for (String f : target.fieldNames())
-          fields.add(f);
+        Collections.addAll(fields, target.fieldNames());
 
         break;
 
@@ -108,22 +101,39 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
       }
     }
 
-    final OTraverseFieldProcess field = new OTraverseFieldProcess(command, fields.iterator());
+    processFields(fields.iterator());
 
-    if (skipDocument) {
-      // GO DIRECTLY TO THE FIELD
-      final OIdentifiable res = field.process();
-      if (res != null)
-        return res;
-      return drop();
-    } else
-      // RETURN THE DOCUMENT ITSELF
-      return target;
+    return target;
   }
 
-  @Override
-  public String getStatus() {
-    return target != null ? target.getIdentity().toString() : null;
+  private void processFields(Iterator<Object> target) {
+    final ODocument doc = this.target;
+
+    while (target.hasNext()) {
+      Object field = target.next();
+
+      final Object fieldValue;
+      if (field instanceof OSQLFilterItem)
+        fieldValue = ((OSQLFilterItem) field).getValue(doc, null, null);
+      else
+        fieldValue = doc.rawField(field.toString());
+
+      if (fieldValue != null) {
+        final OTraverseAbstractProcess<?> subProcess;
+
+        if (fieldValue instanceof Iterator<?> || OMultiValue.isMultiValue(fieldValue)) {
+          final Iterator<Object> coll = OMultiValue.getMultiValueIterator(fieldValue);
+
+          subProcess = new OTraverseMultiValueProcess(command, coll, getPath().appendField(field.toString()));
+        } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
+          subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), getPath()
+              .appendField(field.toString()));
+        } else
+          continue;
+
+        command.getContext().push(subProcess);
+      }
+    }
   }
 
   @Override
@@ -131,15 +141,8 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
     return target != null ? target.getIdentity().toString() : "-";
   }
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.command.traverse.OTraverseAbstractProcess#drop()
-   */
   @Override
-  public OIdentifiable drop() {
-    if (!skipDocument)
-      command.getContext().decrementDepth();
-    return super.drop();
+  public OTraversePath getPath() {
+    return path;
   }
 }

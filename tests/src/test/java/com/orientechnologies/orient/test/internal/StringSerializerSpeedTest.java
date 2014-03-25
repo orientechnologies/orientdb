@@ -5,6 +5,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -24,7 +26,8 @@ public class StringSerializerSpeedTest extends SpeedTestMonoThread {
   public void init() throws Exception {
     super.init();
 
-    directMemoryPointer = new ODirectMemoryPointer(OStringSerializer.INSTANCE.getObjectSize(longString));
+    directMemoryPointer = new ODirectMemoryPointer(OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING)
+        .getObjectSize(longString));
   }
 
   @Test(enabled = false)

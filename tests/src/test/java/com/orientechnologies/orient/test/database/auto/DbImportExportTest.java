@@ -77,7 +77,7 @@ public class DbImportExportTest implements OCommandOutputListener {
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 
     // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
+    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
       database.unregisterHook(hook);
     }
 

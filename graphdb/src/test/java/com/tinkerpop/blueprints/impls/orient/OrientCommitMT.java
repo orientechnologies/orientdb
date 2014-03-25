@@ -25,24 +25,24 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 
 public class OrientCommitMT {
-  public static final String              DB_URL           = "remote:localhost/avltreetest";
-  public static final String              DB_USER          = "admin";
-  public static final String              DB_PASSWORD      = "admin";
-  private static final String             TEST_CLASS       = "ORIENT_COMMIT_TEST";
-  private static final String             THREAD_ID        = "ThreadId";
-  private static final String             ID               = "IdField";
+  public static final String        DB_URL           = "remote:localhost/avltreetest";
+  public static final String        DB_USER          = "admin";
+  public static final String        DB_PASSWORD      = "admin";
+  private static final String       TEST_CLASS       = "ORIENT_COMMIT_TEST";
+  private static final String       THREAD_ID        = "ThreadId";
+  private static final String       ID               = "IdField";
 
-  private String                          failureMessage   = "";
-  private boolean                         isValidData;
-  private TestExecutor[]                  threads;
+  private String                    failureMessage   = "";
+  private boolean                   isValidData;
+  private TestExecutor[]            threads;
 
-  final int                               threadCount      = 5;
-  final int                               maxSleepTime     = 100;
-  final int                               maxOpCount       = 6;
-  final int                               initialCacheSize = 10;
-  final AtomicInteger                     idGenerator      = new AtomicInteger(1);
+  final int                         threadCount      = 5;
+  final int                         maxSleepTime     = 100;
+  final int                         maxOpCount       = 6;
+  final int                         initialCacheSize = 10;
+  final AtomicInteger               idGenerator      = new AtomicInteger(1);
 
-  private static Random                   random           = new Random();
+  private static Random             random           = new Random();
   private static OrientGraphFactory factory;
 
   @Before
@@ -84,7 +84,7 @@ public class OrientCommitMT {
   @Ignore
   public void testWithTransactionEmbeddedRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
+
     try {
       System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalEmbeddedRidBag.txt")));
     } catch (FileNotFoundException e) {
@@ -97,7 +97,7 @@ public class OrientCommitMT {
   @Ignore
   public void testSingleThreadWithTransactionEmbeddedRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
+
     try {
       System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalSingleThreadEmbeddedRidBag.txt")));
     } catch (FileNotFoundException e) {
@@ -110,7 +110,7 @@ public class OrientCommitMT {
   @Ignore
   public void testWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+
     try {
       System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalSBTreeRidBag.txt")));
     } catch (FileNotFoundException e) {
@@ -123,7 +123,7 @@ public class OrientCommitMT {
   @Ignore
   public void testSingleThreadWithTransactionSBTreeRidBag() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+
     try {
       System.setOut(new PrintStream(new File("target/log/CommitTestTransactionalSingleThreadSBTreeRidBag.txt")));
     } catch (FileNotFoundException e) {
@@ -362,7 +362,7 @@ public class OrientCommitMT {
      * @param tempCache
      *          cached objects
      */
-   private void updateCache(final List<TempCacheObject> tempCache) {
+    private void updateCache(final List<TempCacheObject> tempCache) {
       for (TempCacheObject tempCacheObject : tempCache) {
         ORID id = tempCacheObject.getOrientId();
         Operation operation = tempCacheObject.getOperation();
@@ -484,8 +484,7 @@ public class OrientCommitMT {
       public String toString() {
         return "Operation:" + this.operation + ", ORID:" + this.orientId + ", CustomId:" + this.customId;
       }
-
-   }
+    }
   }
 
   /**

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
@@ -64,23 +65,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -113,22 +98,18 @@ import java.util.concurrent.TimeUnit;
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   private static final int             ONE_KB                               = 1024;
-  private final int                    DELETE_MAX_RETRIES;
-  private final int                    DELETE_WAIT_TIME;
-
-  private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
-  private OCluster[]                   clusters                             = new OCluster[0];
-
-  private String                       storagePath;
-  private final OStorageVariableParser variableParser;
-  private int                          defaultClusterId                     = -1;
-
   private static String[]              ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
       ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
       OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION };
-
+  private final int                    DELETE_MAX_RETRIES;
+  private final int                    DELETE_WAIT_TIME;
+  private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
+  private final OStorageVariableParser variableParser;
+  private OCluster[]                   clusters                             = new OCluster[0];
+  private String                       storagePath;
+  private int                          defaultClusterId                     = -1;
   private OModificationLock            modificationLock                     = new OModificationLock();
 
   private ScheduledExecutorService     fuzzyCheckpointExecutor;
@@ -224,6 +205,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
+
+      configuration.load();
+      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
       initWal();
 
@@ -503,30 +487,30 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
           records.add(lsn);
 
-					if (operationUnitRecord instanceof OUpdatePageRecord) {
-						final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) operationUnitRecord;
+          if (operationUnitRecord instanceof OUpdatePageRecord) {
+            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) operationUnitRecord;
 
-						final long fileId = updatePageRecord.getFileId();
-						final long pageIndex = updatePageRecord.getPageIndex();
+            final long fileId = updatePageRecord.getFileId();
+            final long pageIndex = updatePageRecord.getPageIndex();
 
-						if (!diskCache.isOpen(fileId))
-							diskCache.openFile(fileId);
+            if (!diskCache.isOpen(fileId))
+              diskCache.openFile(fileId);
 
-						final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
-						final OCachePointer cachePointer = cacheEntry.getCachePointer();
-						cachePointer.acquireExclusiveLock();
-						try {
-							ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
-							durablePage.restoreChanges(updatePageRecord.getChanges());
-							durablePage.setLsn(lsn);
+            final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+            final OCachePointer cachePointer = cacheEntry.getCachePointer();
+            cachePointer.acquireExclusiveLock();
+            try {
+              ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+              durablePage.restoreChanges(updatePageRecord.getChanges());
+              durablePage.setLsn(lsn);
 
-							cacheEntry.markDirty();
-						} finally {
-							cachePointer.releaseExclusiveLock();
-							diskCache.release(cacheEntry);
-						}
+              cacheEntry.markDirty();
+            } finally {
+              cachePointer.releaseExclusiveLock();
+              diskCache.release(cacheEntry);
+            }
 
-					} else  if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
+          } else if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
             final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 
             if (atomicUnitEndRecord.isRollback())
@@ -534,10 +518,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
             operationUnits.remove(unitId);
           } else {
-						OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
-										operationUnitRecord.getClass());
-						assert false : "Invalid WAL record type was passed " + operationUnitRecord.getClass().getName();
-					}
+            OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
+                operationUnitRecord.getClass());
+            assert false : "Invalid WAL record type was passed " + operationUnitRecord.getClass().getName();
+          }
         } else
           OLogManager.instance().warn(this, "Record %s will be skipped during data restore.", walRecord);
 
@@ -554,7 +538,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
 
     rollbackAllUnfinishedWALOperations(operationUnits);
-		operationUnits.clear();
+    operationUnits.clear();
   }
 
   private void redoOperation(List<OLogSequenceNumber> records) throws IOException {
@@ -597,7 +581,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits) throws IOException {
+  private void rollbackAllUnfinishedWALOperations(Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits)
+      throws IOException {
     for (List<OLogSequenceNumber> operationUnit : operationUnits.values()) {
       if (operationUnit.isEmpty())
         continue;
@@ -635,12 +620,15 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (exists())
         throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
 
+      componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       initWal();
 
       status = STATUS.OPEN;
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null, false, null);
+
+      configuration.create();
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
       // INDEXING
@@ -652,8 +640,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = doAddCluster(CLUSTER_DEFAULT_NAME, null, false, null);
-
-      configuration.create();
 
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
@@ -1257,9 +1243,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           case DEFAULT:
             lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
             break;
+          case KEEP_EXCLUSIVE_LOCK:
+            // DO NOTHING - THIS EXCLUSIVE LOCK IS RELEASED LATER IN UPPER CALLERs
+            break;
           case NONE:
           case KEEP_SHARED_LOCK:
-          case KEEP_EXCLUSIVE_LOCK:
             // DO NOTHING
             break;
           }
@@ -1400,17 +1388,41 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               else
                 throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
+            RuntimeException deleteException = null;
             atomicOperationsManager.startAtomicOperation();
             try {
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
               if (context != null)
                 context.executeOperations(this);
+
+              cluster.deleteRecord(ppos.clusterPosition);
               atomicOperationsManager.endAtomicOperation(false);
             } catch (RuntimeException e) {
               atomicOperationsManager.endAtomicOperation(true);
+              OLogManager.instance().error(this, "Error during deletion of record", e);
+
+              deleteException = e;
             }
 
-            cluster.deleteRecord(ppos.clusterPosition);
+            if (deleteException != null) {
+              if (transaction.get() == null) {
+                OLogManager.instance().error(this, "Error during deletion of record, will try to put tombstone.");
+
+                atomicOperationsManager.startAtomicOperation();
+                try {
+                  final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+                  if (context != null)
+                    context.executeOperations(this);
+
+                  cluster.hideRecord(ppos.clusterPosition);
+                  atomicOperationsManager.endAtomicOperation(false);
+                } catch (RuntimeException e) {
+                  atomicOperationsManager.endAtomicOperation(true);
+                  throw e;
+                }
+              } else
+                throw deleteException;
+            }
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
@@ -1752,10 +1764,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     }
   }
 
-  public void setDefaultClusterId(final int defaultClusterId) {
-    this.defaultClusterId = defaultClusterId;
-  }
-
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 
@@ -1779,6 +1787,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public int getDefaultClusterId() {
     return defaultClusterId;
+  }
+
+  public void setDefaultClusterId(final int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
   }
 
   public OCluster getClusterById(int iClusterId) {
@@ -2071,8 +2083,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void addDefaultClusters() throws IOException {
-    configuration.load();
-
     final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));

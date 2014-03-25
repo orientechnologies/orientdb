@@ -2,7 +2,7 @@
 
     <parameter name="path" value="@PATH@"/>
     <parameter name="url" value="@URL@"/>
-    <parameter name="testPath" value="tests"/>
+    <parameter name="testPath" value="@TESTPATH@"/>
 
     <test name="Setup">
         <classes>
@@ -102,6 +102,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
         </classes>
     </test>
     <test name="Dictionary">
@@ -151,6 +152,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexTest"/>
         </classes>
     </test>
     <test name="other-commands">

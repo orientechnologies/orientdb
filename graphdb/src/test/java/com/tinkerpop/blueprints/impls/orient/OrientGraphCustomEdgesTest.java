@@ -22,31 +22,31 @@ public class OrientGraphCustomEdgesTest extends OrientGraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    this.currentGraph = (OrientGraph) super.generateGraph(graphDirectoryName);
-    this.currentGraph.setUseClassForEdgeLabel(true);
+    OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
+    graph.setUseClassForEdgeLabel(true);
 
-    if (currentGraph.getEdgeType("friend") == null)
-      currentGraph.createEdgeType("friend");
-    if (currentGraph.getEdgeType("test") == null)
-      currentGraph.createEdgeType("test");
-    if (currentGraph.getEdgeType("knows") == null)
-      currentGraph.createEdgeType("knows");
-    if (currentGraph.getEdgeType("created") == null)
-      currentGraph.createEdgeType("created");
-    if (currentGraph.getEdgeType("collaborator") == null)
-      currentGraph.createEdgeType("collaborator");
-    if (currentGraph.getEdgeType("hate") == null)
-      currentGraph.createEdgeType("hate");
-    if (currentGraph.getEdgeType("hates") == null)
-      currentGraph.createEdgeType("hates");
-    if (currentGraph.getEdgeType("test-edge") == null)
-      currentGraph.createEdgeType("test-edge");
-    if (currentGraph.getEdgeType("self") == null)
-      currentGraph.createEdgeType("self");
-    if (currentGraph.getEdgeType("pets") == null)
-      currentGraph.createEdgeType("pets");
+    if (graph.getEdgeType("friend") == null)
+      graph.createEdgeType("friend");
+    if (graph.getEdgeType("test") == null)
+      graph.createEdgeType("test");
+    if (graph.getEdgeType("knows") == null)
+      graph.createEdgeType("knows");
+    if (graph.getEdgeType("created") == null)
+      graph.createEdgeType("created");
+    if (graph.getEdgeType("collaborator") == null)
+      graph.createEdgeType("collaborator");
+    if (graph.getEdgeType("hate") == null)
+      graph.createEdgeType("hate");
+    if (graph.getEdgeType("hates") == null)
+      graph.createEdgeType("hates");
+    if (graph.getEdgeType("test-edge") == null)
+      graph.createEdgeType("test-edge");
+    if (graph.getEdgeType("self") == null)
+      graph.createEdgeType("self");
+    if (graph.getEdgeType("pets") == null)
+      graph.createEdgeType("pets");
 
-    return this.currentGraph;
+    return graph;
   }
 
 }

@@ -1,15 +1,9 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -26,6 +20,13 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
@@ -48,6 +49,16 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   protected OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
     super(graph, record);
+  }
+
+  /**
+   * Executes the execute against current vertex. Use OSQLPredicate to execute SQL
+   *
+   * @param iPredicate
+   *          Predicate to evaluate. Use OSQLPredicate to use SQL
+   */
+  public Object execute(final OCommandPredicate iPredicate) {
+    return iPredicate.evaluate( rawElement.getRecord(), null, null );
   }
 
   @Override
@@ -143,7 +154,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (doc == null)
       throw ExceptionFactory.vertexWithIdDoesNotExist(this.getId());
 
-    final Iterator<OrientIndex<? extends OrientElement>> it = graph.getManualIndices().iterator();
+    final Iterator<Index<? extends Element>> it = graph.getIndices().iterator();
 
     if (it.hasNext()) {
       final Set<Edge> allEdges = new HashSet<Edge>();
@@ -196,9 +207,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
-    checkIfAttached();
-    setCurrentGraphInThreadLocal();
-    graph.autoStartTransaction();
+    if (graph != null) {
+      setCurrentGraphInThreadLocal();
+      graph.autoStartTransaction();
+    }
 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
     final ODocument outDocument = getRecord();
@@ -253,10 +265,11 @@ public class OrientVertex extends OrientElement implements Vertex {
     // IN-VERTEX ---> OUT-VERTEX/EDGE
     createLink(inDocument, from, inFieldName);
 
-    edge.save(iClusterName);
-    inDocument.save();
-    outDocument.save();
-
+    if (graph != null) {
+      edge.save(iClusterName);
+      inDocument.save();
+      outDocument.save();
+    }
     return edge;
 
   }
@@ -390,9 +403,8 @@ public class OrientVertex extends OrientElement implements Vertex {
               iterable.add(new OrientEdgeIterator(this, iDestination, coll.iterator(), connection, iLabels, -1));
           }
         } else if (fieldValue instanceof ORidBag) {
-          ORidBag bag = (ORidBag) fieldValue;
-
-          iterable.add(new OrientEdgeIterator(this, iDestination, bag.rawIterator(), connection, iLabels, -1));
+          iterable.add(new OrientEdgeIterator(this, iDestination, ((ORidBag) fieldValue).rawIterator(), connection, iLabels,
+              ((ORidBag) fieldValue).size()));
         }
       }
     }
@@ -423,7 +435,8 @@ public class OrientVertex extends OrientElement implements Vertex {
   }
 
   public String toString() {
-    graph.setCurrentGraphInThreadLocal();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
 
     final String clsName = getRecord().getClassName();
 
@@ -435,7 +448,7 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   /**
    * Determines if a field is a connections or not.
-   * 
+   *
    * @param iDirection
    *          Direction to check
    * @param iFieldName
@@ -604,7 +617,7 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   /**
    * Used to extract the class name from the vertex's field.
-   * 
+   *
    * @param iDirection
    *          Direction of connection
    * @param iFieldName
@@ -871,6 +884,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     final OrientEdge toAdd;
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
+    if (fieldRecord == null)
+      return null;
+
     if (fieldRecord.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       if (iTargetVertex != null && !iTargetVertex.equals(fieldValue))
         return null;

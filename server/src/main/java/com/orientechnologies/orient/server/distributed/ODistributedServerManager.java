@@ -32,21 +32,35 @@ import java.util.concurrent.locks.Lock;
  */
 public interface ODistributedServerManager {
 
-  public enum STATUS {
+  public enum NODE_STATUS {
     OFFLINE, STARTING, ONLINE, SHUTDOWNING
+  };
+
+  public enum DB_STATUS {
+    OFFLINE, SYNCHRONIZING, ONLINE
   };
 
   public boolean isEnabled();
 
-  public STATUS getStatus();
+  public long getLastClusterChangeOn();
 
-  public boolean checkStatus(STATUS string);
+  public NODE_STATUS getNodeStatus();
 
-  public void setStatus(STATUS iStatus);
+  public boolean checkNodeStatus(NODE_STATUS string);
+
+  public void setNodeStatus(NODE_STATUS iStatus);
+
+  public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName);
+
+  public boolean checkDatabaseStatus(final String iNode, final String iDatabaseName, DB_STATUS iStatus);
+
+  public void setDatabaseStatus(final String iDatabaseName, DB_STATUS iStatus);
 
   public ODistributedMessageService getMessageService();
 
-  public boolean isNodeAvailable(final String iNodeName);
+  public void updateLastClusterChange();
+
+  public boolean isNodeAvailable(final String iNodeName, String databaseName);
 
   public boolean isOffline();
 

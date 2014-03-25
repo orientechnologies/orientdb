@@ -19,8 +19,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -58,7 +56,7 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     if (!f.exists())
       throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
-    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(0, f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
 
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
@@ -78,17 +76,11 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
 
   @Override
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.ALL;
+    return QUORUM_TYPE.NONE;
   }
 
   @Override
   public String getPayload() {
-    return null;
-  }
-
-  @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
-      ODistributedResponse iGoodResponse) {
     return null;
   }
 

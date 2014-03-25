@@ -56,11 +56,11 @@ public enum OGlobalConfiguration {
       "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
       String.class, "70%"),
 
-  DIRECT_MEMORY_UNSAFE_MODE(
-      "memory.directMemory.unsafeMode",
-      "Indicates whether to do perform range check before each direct memory update, it is false by default, "
-          + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
-      Boolean.class, false),
+  DIRECT_MEMORY_SAFE_MODE(
+      "memory.directMemory.safeMode",
+      "Indicates whether to do perform range check before each direct memory update, it is true by default, "
+          + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
@@ -243,6 +243,8 @@ public enum OGlobalConfiguration {
       "index.auto.lazyUpdates",
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
+
+	INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
 
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
@@ -514,6 +516,12 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
 
+  DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
+      "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
+      "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
+
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
       Integer.class, 5000l),
 
@@ -698,7 +706,7 @@ public enum OGlobalConfiguration {
     }
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
+    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
   }
 }
 

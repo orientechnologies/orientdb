@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.Map;
-
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+
+import java.util.Map;
 
 /**
  * Database pool base class.
@@ -28,10 +28,10 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
  * 
  */
 public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
-  protected ODatabasePoolAbstract<DB> dbPool;
   protected final String              url;
   protected final String              userName;
   protected final String              userPassword;
+  protected ODatabasePoolAbstract<DB> dbPool;
 
   protected ODatabasePoolBase() {
     url = userName = userPassword = null;
@@ -136,6 +136,12 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
       final Map<String, Object> iOptionalParams) {
     setup();
     return dbPool.acquire(iName, iUserName, iUserPassword, iOptionalParams);
+  }
+
+  public int getConnectionsInCurrentThread(final String name, final String userName) {
+    if (dbPool == null)
+      return 0;
+    return dbPool.getConnectionsInCurrentThread(name, userName);
   }
 
   /**

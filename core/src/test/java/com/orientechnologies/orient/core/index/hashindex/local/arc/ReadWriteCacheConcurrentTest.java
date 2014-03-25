@@ -57,6 +57,7 @@ public class ReadWriteCacheConcurrentTest {
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage(
         "plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
+		storageLocal.create(null);
 
     prepareFilesForTest(FILE_COUNT);
 
@@ -91,9 +92,10 @@ public class ReadWriteCacheConcurrentTest {
   @AfterClass
   public void afterClass() throws IOException {
     buffer.close();
-    storageLocal.delete();
 
     deleteUsedFiles(FILE_COUNT);
+
+		storageLocal.delete();
   }
 
   private void deleteUsedFiles(int filesCount) {

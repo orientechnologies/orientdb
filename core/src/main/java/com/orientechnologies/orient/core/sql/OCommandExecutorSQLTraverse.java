@@ -156,31 +156,18 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     return getResult();
   }
 
-  public boolean hasNext() {
-    if (target == null)
-      assignTarget(null);
-
-    return traverse.hasNext();
-  }
-
   @Override
   public OCommandContext getContext() {
     return traverse.getContext();
   }
 
-  public OIdentifiable next() {
-    if (target == null)
-      assignTarget(null);
-
-    return traverse.next();
-  }
-
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
-
   public Iterator<OIdentifiable> iterator() {
-    return this;
+    return iterator(null);
+  }
+
+  public Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs) {
+    assignTarget(iArgs);
+    return traverse;
   }
 
   public String getSyntax() {

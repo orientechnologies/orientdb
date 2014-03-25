@@ -191,4 +191,9 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   public Set<OClass> getClassesRelyOnCluster(final String iClusterName) {
     return delegate.getClassesRelyOnCluster(iClusterName);
   }
+
+	@Override
+	public OClass getClassByClusterId(int clusterId) {
+		return delegate.getClassByClusterId(clusterId);
+	}
 }

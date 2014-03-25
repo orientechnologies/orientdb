@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -260,7 +261,7 @@ public class SQLSelectProjectionsTest {
 
   @Test
   public void queryProjectionContentCollection() {
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
     List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("SELECT FLATTEN( outE() ) FROM V WHERE outE() TRAVERSE(1,1) (@class = 'E')")).execute();
@@ -347,7 +348,7 @@ public class SQLSelectProjectionsTest {
 
   @SuppressWarnings("unchecked")
   public void queryProjectionContextArray() {
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
     try {
       List<ODocument> result = database.command(
@@ -357,7 +358,11 @@ public class SQLSelectProjectionsTest {
       for (ODocument d : result) {
         Assert.assertTrue(d.containsField("a"));
         Assert.assertTrue(d.containsField("a0"));
-        Assert.assertEquals(d.field("a0"), ((Iterable<OIdentifiable>) d.field("a")).iterator().next());
+
+        final ODocument a0doc = d.field("a0");
+        final ODocument firstADoc = (ODocument) d.<Iterable<OIdentifiable>> field("a").iterator().next();
+
+        Assert.assertTrue(ODocumentHelper.hasSameContentOf(a0doc, database, firstADoc, database, null));
       }
 
     } finally {

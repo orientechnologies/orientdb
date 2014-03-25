@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.Arrays;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
@@ -26,14 +35,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
 
 @Test(groups = { "index" })
 public class IndexCustomKeyTest {
@@ -172,7 +173,7 @@ public class IndexCustomKeyTest {
     OIndex<?> index = getIndex();
 
     if (index == null) {
-      OBinarySerializerFactory.INSTANCE.registerSerializer(new OHash256Serializer(), null);
+      OBinarySerializerFactory.getInstance().registerSerializer(new OHash256Serializer(), null);
 
       database.getMetadata().getIndexManager()
           .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null, null);

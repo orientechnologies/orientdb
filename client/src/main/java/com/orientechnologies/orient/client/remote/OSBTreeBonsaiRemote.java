@@ -69,8 +69,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       storage.endResponse(client);
 
       final byte serializerId = OByteSerializer.INSTANCE.deserialize(stream, 0);
-      final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.INSTANCE
-          .getObjectSerializer(serializerId);
+      final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+          serializerId);
       return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
     } catch (IOException e) {
       throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
@@ -118,7 +118,10 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
   }
 
   @Override
-  public void loadEntriesMajor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
+  public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
+    if (!ascSortOrder)
+      throw new IllegalStateException("Descending sort order is not supported.");
+
     List<Map.Entry<K, V>> entries = fetchEntriesMajor(key, inclusive);
 
     while (pushEntriesToListener(listener, entries)) {
@@ -195,8 +198,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       storage.endResponse(client);
 
       final byte serializerId = OByteSerializer.INSTANCE.deserialize(stream, 0);
-      final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE
-          .getObjectSerializer(serializerId);
+      final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+          serializerId);
       return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
     } catch (IOException e) {
       throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);

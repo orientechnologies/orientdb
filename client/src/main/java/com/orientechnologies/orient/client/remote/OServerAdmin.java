@@ -213,10 +213,20 @@ public class OServerAdmin {
    * Checks if a database exists in the remote server.
    * 
    * @return true if exists, otherwise false
+   */
+  public synchronized boolean existsDatabase() throws IOException {
+    return existsDatabase(null);
+  }
+
+  /**
+   * Checks if a database exists in the remote server.
+   * 
+   * @return true if exists, otherwise false
    * @throws IOException
    * @param storageType
+   *          The storage type to check between memory, local and plocal.
    */
-  public synchronized boolean existsDatabase(String storageType) throws IOException {
+  public synchronized boolean existsDatabase(final String storageType) throws IOException {
     storage.checkConnection();
 
     try {
@@ -486,6 +496,7 @@ public class OServerAdmin {
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
       network.writeString(iConfig.getKey());
+      network.endRequest();
 
       try {
         storage.beginResponse(network);

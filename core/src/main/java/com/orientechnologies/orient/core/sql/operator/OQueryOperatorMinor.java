@@ -62,7 +62,7 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      IndexResultListener resultListener, int fetchLimit) {
+																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
@@ -81,10 +81,10 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (resultListener != null) {
-        index.getValuesMinor(key, false, resultListener);
+        index.getValuesMinor(key, false, ascSortOrder, resultListener);
         result = resultListener.getResult();
       } else
-        result = index.getValuesMinor(key, false);
+        result = index.getValuesMinor(key, false, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 < 2"
       // then we fetch collection which left included boundary is the smallest composite key in the
@@ -104,10 +104,10 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, false, resultListener);
+        index.getValuesBetween(keyOne, true, keyTwo, false, ascSortOrder, resultListener);
         result = resultListener.getResult();
       } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, false);
+        result = index.getValuesBetween(keyOne, true, keyTwo, false, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);

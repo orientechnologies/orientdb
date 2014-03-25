@@ -1,5 +1,9 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -9,6 +13,7 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.CloseableIterable;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
@@ -17,10 +22,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
@@ -28,7 +29,7 @@ import java.util.List;
 public class OrientIndex<T extends OrientElement> implements Index<T> {
   protected static final String      VERTEX                 = "Vertex";
   protected static final String      EDGE                   = "Edge";
-  protected static final String      CONFIG_CLASSNAME       = "blueprintsIndexClass";
+  public static final String         CONFIG_CLASSNAME       = "blueprintsIndexClass";
   public static final String         CONFIG_RECORD_MAP_NAME = "record_map_name";
 
   protected static final String      SEPARATOR              = "!=!";
@@ -50,7 +51,12 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     this.graph = orientGraph;
     this.underlying = rawIndex instanceof OIndexTxAwareMultiValue ? rawIndex : new OIndexTxAwareMultiValue(
         orientGraph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) rawIndex);
-    load(rawIndex.getMetadata());
+
+    final ODocument metadata = rawIndex.getMetadata();
+    if (metadata == null) {
+      load(rawIndex.getConfiguration());
+    } else
+      load(metadata);
   }
 
   public String getIndexName() {
@@ -169,9 +175,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final String recordKeyValueMap = metadata.field(CONFIG_RECORD_MAP_NAME);
 
     if (VERTEX.equals(indexClassName))
-      this.indexClass = OrientVertex.class;
+      this.indexClass = Vertex.class;
     else if (EDGE.equals(indexClassName))
-      this.indexClass = OrientEdge.class;
+      this.indexClass = Edge.class;
     else
       try {
         this.indexClass = (Class<T>) Class.forName(indexClassName);
@@ -180,8 +186,32 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
             + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them");
       }
 
-    recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph.getRawGraph().getMetadata()
-        .getIndexManager().getIndex(recordKeyValueMap));
+    if (recordKeyValueMap == null)
+      recordKeyValueIndex = buildKeyValueIndex(metadata);
+    else
+      recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph.getRawGraph()
+          .getMetadata().getIndexManager().getIndex(recordKeyValueMap));
+  }
+
+  private OIndex<?> buildKeyValueIndex(ODocument metadata) {
+    OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
+        .getRawGraph()
+        .getMetadata()
+        .getIndexManager()
+        .createIndex("__@recordmap@___" + underlying.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
+            new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
+
+    final List<ODocument> entries = graph.getRawGraph().query(
+        new OSQLSynchQuery<Object>("select  from index:" + underlying.getName()));
+
+    for (ODocument entry : entries) {
+      final OIdentifiable rid = entry.field("rid");
+      if (rid != null)
+        recordKeyValueIndex.put(new OCompositeKey(rid, entry.field("key")), rid);
+    }
+
+    metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
+    return recordKeyValueIndex;
   }
 
   public void close() {

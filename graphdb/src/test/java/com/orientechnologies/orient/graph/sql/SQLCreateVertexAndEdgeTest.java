@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -54,8 +55,14 @@ public class SQLCreateVertexAndEdgeTest {
 
   @Test
   public void testCreateEdgeDefaultClass() {
+		int vclusterId = database.addCluster("vdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+		int eclusterId = database.addCluster("edefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+
     database.command(new OCommandSQL("create class V1 extends V")).execute();
+    database.command(new OCommandSQL("alter class V1 addcluster " + vclusterId)).execute();
+
     database.command(new OCommandSQL("create class E1 extends E")).execute();
+		database.command(new OCommandSQL("alter class E1 addcluster " + eclusterId)).execute();
     database.getMetadata().getSchema().reload();
 
     // VERTEXES
@@ -74,9 +81,9 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(v4.field("brand"), "fiat");
     Assert.assertEquals(v4.field("name"), "wow");
 
-    ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster default")).execute();
+    ODocument v5 = database.command(new OCommandSQL("create vertex V1 cluster vdefault")).execute();
     Assert.assertEquals(v5.getClassName(), "V1");
-    Assert.assertEquals(v5.getIdentity().getClusterId(), database.getDefaultClusterId());
+    Assert.assertEquals(v5.getIdentity().getClusterId(), vclusterId);
 
     // EDGES
     List<Object> edges = database.command(new OCommandSQL("create edge from " + v1.getIdentity() + " to " + v2.getIdentity()))
@@ -106,11 +113,11 @@ public class SQLCreateVertexAndEdgeTest {
 
     edges = database
         .command(
-            new OCommandSQL("create edge e1 cluster default from " + v3.getIdentity() + " to " + v5.getIdentity()
+            new OCommandSQL("create edge e1 cluster edefault from " + v3.getIdentity() + " to " + v5.getIdentity()
                 + " set weight = 17")).execute();
     Assert.assertFalse(edges.isEmpty());
     ODocument e5 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e5.getClassName(), "E1");
-    Assert.assertEquals(e5.getIdentity().getClusterId(), database.getDefaultClusterId());
+    Assert.assertEquals(e5.getIdentity().getClusterId(), eclusterId);
   }
 }

@@ -23,14 +23,13 @@
                 <parameter name="delay" value="4h"/>
                 <parameter name="target.directory" value="backup"/>
                 <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json"/>
-                <!--
-                                    ${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
+                <parameter name="compressionLevel" value="9"/>
+                <parameter name="bufferSize" value="1048576"/>
+                <!--${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
                 <parameter name="db.include" value=""/>
-                <!-- DEFAULT: NO ONE,
-                                    THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
+                <!-- DEFAULT: NO ONE, THAT MEANS ALL DATABASES. USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
                 <parameter name="db.exclude" value=""/>
-                <!-- USE COMMA TO SEPARATE
-                                    MULTIPLE DATABASE NAMES -->
+                <!-- USE COMMA TO SEPARATE MULTIPLE DATABASE NAMES -->
             </parameters>
         </handler>
         <!-- SERVER SIDE SCRIPT INTERPRETER. WARNING! THIS CAN BE A SECURITY HOLE:
@@ -92,11 +91,10 @@
     <properties>
         <!-- DATABASE POOL: size min/max -->
         <entry name="db.pool.min" value="1"/>
-        <entry name="db.pool.max" value="20"/>
+        <entry name="db.pool.max" value="50"/>
 
         <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
-        <entry name="cache.level1.enabled" value="false"/>
-        <entry name="cache.level1.size" value="1000"/>
+        <entry name="cache.level1.enabled" value="true"/>
         <entry name="cache.level2.enabled" value="false"/>
         <entry name="cache.level2.size" value="0"/>
 

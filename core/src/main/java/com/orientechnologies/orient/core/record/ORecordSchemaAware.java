@@ -60,15 +60,17 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 	 * Sets the value for a field forcing the type.This is useful when you want avoid automatic conversions (for example record id ->
 	 * record) or need expressly a conversion between types.
 	 * 
+	 *
+	 *
 	 * @param iFieldName
 	 *          Field name
 	 * @param iFieldValue
 	 *          Field value to set
 	 * @param iType
-	 *          Type between the values defined in the {@link OType} enum
+	 *          Type between the values defined in the {@link com.orientechnologies.orient.core.metadata.schema.OType} enum
 	 * @return
 	 */
-	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue, OType iType);
+	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue, OType... iType);
 
 	/**
 	 * Removes a field. This operation does not set the field value to null but remove the field itself.

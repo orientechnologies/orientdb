@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
@@ -48,6 +49,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   private OCommandRequest    query;
   private String             returning = "COUNT";
   private List<ORecord<?>>   allDeletedRecords;
+  private OrientGraph        graph;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -59,6 +61,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     parserRequiredKeyword("VERTEX");
 
     OClass clazz = null;
+    String where = null;
 
     String word = parseOptionalWord(true);
     while (word != null) {
@@ -71,8 +74,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           // ASSIGN DEFAULT CLASS
           clazz = database.getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME);
 
-        final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + condition, this));
+        where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
         break;
 
       } else if (word.length() > 0) {
@@ -82,14 +85,22 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           throw new OCommandSQLParsingException("Class '" + word + " was not found");
       }
 
-      if (rid == null && clazz == null)
-        // DELETE ALL VERTEXES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from V", this));
-
       word = parseOptionalWord(true);
       if (parserIsEnded())
         break;
     }
+
+    if (where == null)
+      where = "";
+    else
+      where = " WHERE " + where;
+
+    if (query == null && rid == null)
+      if (clazz == null)
+        // DELETE ALL VERTEXES
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
+      else
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
 
     return this;
   }
@@ -115,10 +126,17 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           return null;
         }
       });
-    } else if (query != null)
+    } else if (query != null) {
       // TARGET IS A CLASS + OPTIONAL CONDITION
-      query.execute(iArgs);
-    else
+      graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+      OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
+        @Override
+        public Object call(OrientBaseGraph graph) {
+          // TARGET IS A CLASS + OPTIONAL CONDITION
+          return query.execute(iArgs);
+        }
+      });
+    } else
       throw new OCommandExecutionException("Invalid target");
 
     return removed;
@@ -130,22 +148,14 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   public boolean result(final Object iRecord) {
     final OIdentifiable id = (OIdentifiable) iRecord;
     if (id.getIdentity().isValid()) {
-      return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Boolean>() {
-        @Override
-        public Boolean call(OrientBaseGraph graph) {
-          final OrientVertex v = graph.getVertex(id);
-          if (v != null) {
-            v.remove();
-            removed++;
-            return true;
-          }
-
-          return false;
-        }
-      });
+      final OrientVertex v = graph.getVertex(id);
+      if (v != null) {
+        v.remove();
+        removed++;
+      }
     }
 
-    return false;
+    return true;
   }
 
   @Override

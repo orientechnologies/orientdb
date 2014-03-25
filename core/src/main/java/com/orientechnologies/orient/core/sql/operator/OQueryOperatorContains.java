@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -66,8 +67,14 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           if (o instanceof OIdentifiable)
             id = (OIdentifiable) o;
           else if (o instanceof Map<?, ?>) {
-            final Iterator<OIdentifiable> iter = ((Map<?, OIdentifiable>) o).values().iterator();
-            id = iter.hasNext() ? iter.next() : null;
+            final Iterator<Object> iter = ((Map<?, Object>) o).values().iterator();
+            final Object v = iter.hasNext() ? iter.next() : null;
+            if (v instanceof OIdentifiable)
+              id = (OIdentifiable) v;
+            else
+              // TRANSFORM THE ENTIRE MAP IN A DOCUMENT. PROBABLY HAS BEEN IMPORTED FROM JSON
+              id = new ODocument((Map) o);
+
           } else if (o instanceof Iterable<?>) {
             final Iterator<OIdentifiable> iter = ((Iterable<OIdentifiable>) o).iterator();
             id = iter.hasNext() ? iter.next() : null;
@@ -114,7 +121,7 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
       IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
@@ -153,10 +160,10 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
       if (internalIndex.hasRangeQuerySupport()) {
         if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
+          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
           result = resultListener.getResult();
         } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {

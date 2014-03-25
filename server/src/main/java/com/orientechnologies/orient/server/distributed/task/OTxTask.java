@@ -15,26 +15,24 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Distributed create record task used for synchronization.
@@ -65,21 +63,30 @@ public class OTxTask extends OAbstractReplicatedTask {
     try {
       database.begin();
 
-      for (OAbstractRecordReplicatedTask task : tasks) {
-        task.execute(iServer, iManager, database);
-      }
+      final List<Object> results = new ArrayList<Object>();
+
+      for (OAbstractRecordReplicatedTask task : tasks)
+        results.add(task.execute(iServer, iManager, database));
 
       database.commit();
+
+      // TRANSFORM ALL RECORDS IN PLACEHOLDER TO REDUCE TRANSPORT
+      for (int i = 0; i < results.size(); ++i) {
+        final Object o = results.get(i);
+        if (o instanceof ORecord<?>)
+          results.set(i, new OPlaceholder((ORecord<?>) o));
+      }
+
+      return results;
 
     } catch (ONeedRetryException e) {
       return Boolean.FALSE;
     } catch (OTransactionException e) {
       return Boolean.FALSE;
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on distirbuted transaction commit", e);
+      OLogManager.instance().error(this, "Error on distributed transaction commit", e);
       return Boolean.FALSE;
     }
-    return Boolean.TRUE;
   }
 
   @Override
@@ -88,23 +95,39 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixTxTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
-      final ODistributedResponse iGoodResponse) {
-    final OFixTxTask fixTask = new OFixTxTask();
-
-    for (OAbstractRecordReplicatedTask t : tasks) {
-      final ORecordId rid = t.getRid();
-
-      final ORecordInternal<?> rec = rid.getRecord();
-      if (rec == null)
-        fixTask.add(new ODeleteRecordTask(rid, null));
-      else {
-        final ORecordVersion v = rec.getRecordVersion();
-        v.setRollbackMode();
-        fixTask.add(new OUpdateRecordTask(rid, rec.toStream(), v, rec.getRecordType()));
-      }
+  public OFixTxTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+    if (!(iBadResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating fix-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
+      return null;
     }
 
+    final OFixTxTask fixTask = new OFixTxTask();
+
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask t = tasks.get(i);
+      OAbstractRemoteTask task = t
+          .getFixTask(iRequest, ((List<Object>) iBadResponse).get(i), ((List<Object>) iGoodResponse).get(i));
+
+      if (task != null)
+        fixTask.add(task);
+    }
+    return fixTask;
+  }
+
+  @Override
+  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if (iBadResponse instanceof Boolean)
+      // TODO: MANAGE ERROR ON LOCAL NODE!
+      return null;
+
+    final OFixTxTask fixTask = new OFixTxTask();
+
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask t = tasks.get(i);
+      fixTask.add(t.getUndoTask(iRequest, ((List<Object>) iBadResponse).get(i)));
+    }
     return fixTask;
   }
 
@@ -130,5 +153,9 @@ public class OTxTask extends OAbstractReplicatedTask {
   @Override
   public String getPayload() {
     return null;
+  }
+
+  public List<OAbstractRecordReplicatedTask> getTasks() {
+    return tasks;
   }
 }

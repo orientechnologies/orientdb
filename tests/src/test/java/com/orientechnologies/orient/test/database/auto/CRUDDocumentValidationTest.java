@@ -196,6 +196,7 @@ public class CRUDDocumentValidationTest {
   public void dropSchemaForMandatoryNullableTest() throws ParseException {
     database.open("admin", "admin");
     database.command(new OCommandSQL("DROP CLASS MyTestClass")).execute();
+		database.getMetadata().reload();
     database.close();
   }
 

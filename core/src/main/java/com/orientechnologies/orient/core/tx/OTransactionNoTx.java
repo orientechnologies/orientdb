@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -29,9 +32,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * No operation transaction.
@@ -50,7 +50,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void commit() {
   }
 
-  public void rollback() {
+	@Override
+	public void commit(boolean force) {
+	}
+
+	public void rollback() {
   }
 
   public void close() {
@@ -75,8 +79,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iRecord.getRecordType(), true, iMode,
-          iForceCreate, iRecordCreatedCallback, null);
+      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
+          iRecordCreatedCallback, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -205,5 +209,14 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public void updateIdentityAfterCommit(ORID oldRid, ORID newRid) {
+  }
+
+  @Override
+  public int amountOfNestedTxs() {
+    return 0;
+  }
+
+  @Override
+  public void rollback(boolean force, int commitLevelDiff) {
   }
 }

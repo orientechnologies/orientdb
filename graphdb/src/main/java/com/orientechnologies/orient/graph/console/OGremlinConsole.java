@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundExcepti
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
+import com.orientechnologies.orient.graph.migration.OGraphMigration;
 
 /**
  * Gremlin specialized console.
@@ -97,5 +98,12 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       if (cause instanceof OCommandExecutorNotFoundException)
         out.printf("\nError: the GREMLIN command executor is not installed, check your configuration");
     }
+  }
+
+  @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
+  public void upgradeGraph() {
+    OGraphMigration migration = new OGraphMigration(getCurrentDatabase(), this);
+    migration.execute();
+    message("Graph has been upgraded.");
   }
 }

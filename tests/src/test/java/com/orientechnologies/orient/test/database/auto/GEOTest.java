@@ -153,8 +153,8 @@ public class GEOTest {
     final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexes.size(), 1);
 
-    final Collection<OIdentifiable> xResult = xIndexes.iterator().next().getValuesBetween(52.20472, 82.20472);
-    final Collection<OIdentifiable> yResult = yIndexes.iterator().next().getValuesBetween(0.14056, 30.14056);
+    final Collection<OIdentifiable> xResult = xIndexes.iterator().next().getValuesBetween(52.20472, 82.20472, true);
+    final Collection<OIdentifiable> yResult = yIndexes.iterator().next().getValuesBetween(0.14056, 30.14056, true);
 
     xResult.retainAll(yResult);
 

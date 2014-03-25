@@ -43,13 +43,13 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     super(NAME, 3, 4);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    Object source = iParameters[0];
+    Object source = iParams[0];
     if (OMultiValue.isMultiValue(source)) {
       if (OMultiValue.getSize(source) > 1)
         throw new IllegalArgumentException("Only one sourceVertex is allowed");
@@ -57,7 +57,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     }
     paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
 
-    Object dest = iParameters[1];
+    Object dest = iParams[1];
     if (OMultiValue.isMultiValue(dest)) {
       if (OMultiValue.getSize(dest) > 1)
         throw new IllegalArgumentException("Only one destinationVertex is allowed");
@@ -65,15 +65,15 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     }
     paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
 
-    paramWeightFieldName = (String) OSQLHelper.getValue(iParameters[2], record, iContext);
-    if (iParameters.length > 3)
-      paramDirection = Direction.valueOf(iParameters[3].toString().toUpperCase());
+    paramWeightFieldName = (String) OSQLHelper.getValue(iParams[2], record, iContext);
+    if (iParams.length > 3)
+      paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
 
-    return super.execute(iParameters, iContext);
+    return super.execute(iParams, iContext);
   }
 
   public String getSyntax() {
-    return "Syntax error: dijkstra(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<direction>])";
+    return "dijkstra(<sourceVertex>, <destinationVertex>, <weightEdgeFieldName>, [<direction>])";
   }
 
   protected float getDistance(final OrientVertex node, final OrientVertex target) {

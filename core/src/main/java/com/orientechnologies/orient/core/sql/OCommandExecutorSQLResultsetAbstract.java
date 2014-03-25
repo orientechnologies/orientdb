@@ -74,8 +74,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterator<OIdentifiable>,
-    Iterable<OIdentifiable> {
+public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterable<OIdentifiable>,
+    OIterableRecordSource {
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
   protected static final String                    KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
@@ -139,9 +139,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         searchInClasses();
       else if (parsedTarget.getTargetClusters() != null)
         searchInClusters();
-      else if (parsedTarget.getTargetRecords() != null)
-        target = parsedTarget.getTargetRecords().iterator();
-      else if (parsedTarget.getTargetVariable() != null) {
+      else if (parsedTarget.getTargetRecords() != null) {
+        if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
+          target = ((OIterableRecordSource) parsedTarget.getTargetRecords()).iterator(iArgs);
+        } else {
+          target = parsedTarget.getTargetRecords().iterator();
+        }
+      } else if (parsedTarget.getTargetVariable() != null) {
         final Object var = getContext().getVariable(parsedTarget.getTargetVariable());
         if (var == null) {
           target = Collections.EMPTY_LIST.iterator();

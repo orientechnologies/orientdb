@@ -183,7 +183,20 @@ public abstract class ODatabaseImpExpAbstract {
   }
 
   protected void parseSetting(final String option, final List<String> items) {
-    if (option.equalsIgnoreCase("-includeClass")) {
+    if (option.equalsIgnoreCase("-excludeAll")) {
+      includeClasses = new HashSet<String>();
+      excludeClasses = null;
+      includeClusters = new HashSet<String>();
+      excludeClusters = null;
+      includeInfo = false;
+      includeClusterDefinitions = false;
+      includeSchema = false;
+      includeSecurity = false;
+      includeRecords = false;
+      includeIndexDefinitions = false;
+      includeManualIndexes = false;
+
+    } else if (option.equalsIgnoreCase("-includeClass")) {
       includeClasses = new HashSet<String>();
       for (String item : items)
         includeClasses.add(item.toUpperCase());

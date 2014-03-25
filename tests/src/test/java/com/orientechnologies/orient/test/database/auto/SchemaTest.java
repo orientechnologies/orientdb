@@ -39,8 +39,8 @@ import java.util.List;
 
 @Test(groups = "schema")
 public class SchemaTest {
-  private ODatabaseFlat database;
-  private String        url;
+  private ODatabaseDocumentTx database;
+  private String              url;
 
   @Parameters(value = "url")
   public SchemaTest(String iURL) {
@@ -48,7 +48,7 @@ public class SchemaTest {
   }
 
   public void createSchema() throws IOException {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
       database.open("admin", "admin");
     else
@@ -104,7 +104,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "createSchema")
   public void checkSchema() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     OSchema schema = database.getMetadata().getSchema();
@@ -133,7 +133,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "checkSchema")
   public void checkSchemaApi() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     OSchema schema = database.getMetadata().getSchema();
@@ -148,7 +148,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "checkSchemaApi")
   public void checkClusters() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     for (OClass cls : database.getMetadata().getSchema().getClasses()) {
@@ -161,7 +161,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "createSchema")
   public void checkDatabaseSize() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     Assert.assertTrue(database.getSize() > 0);
@@ -171,7 +171,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "createSchema")
   public void checkTotalRecords() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     Assert.assertTrue(database.getStorage().countRecords() > 0);
@@ -181,7 +181,7 @@ public class SchemaTest {
 
   @Test(expectedExceptions = OValidationException.class)
   public void checkErrorOnUserNoPasswd() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     database.getMetadata().getSecurity().createUser("error", null, (String) null);
@@ -191,7 +191,7 @@ public class SchemaTest {
 
   @Test
   public void testMultiThreadSchemaCreation() throws InterruptedException {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     Thread thread = new Thread(new Runnable() {
@@ -215,7 +215,7 @@ public class SchemaTest {
 
   @Test
   public void createAndDropClassTestApi() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     final String testClassName = "dropTestClass";
     final int clusterId;
@@ -228,7 +228,7 @@ public class SchemaTest {
     Assert.assertNotNull(database.getClusterNameById(clusterId));
     database.close();
     database = null;
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNotNull(dropTestClass);
@@ -241,7 +241,7 @@ public class SchemaTest {
     Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
     database.close();
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
@@ -252,7 +252,7 @@ public class SchemaTest {
 
   @Test
   public void createAndDropClassTestCommand() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     final String testClassName = "dropTestClass";
     final int clusterId;
@@ -265,7 +265,7 @@ public class SchemaTest {
     Assert.assertNotNull(database.getClusterNameById(clusterId));
     database.close();
     database = null;
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNotNull(dropTestClass);
@@ -278,7 +278,7 @@ public class SchemaTest {
     Assert.assertEquals(database.getStorage().getClusterIdByName(testClassName), -1);
     Assert.assertNull(database.getClusterNameById(clusterId));
     database.close();
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     dropTestClass = database.getMetadata().getSchema().getClass(testClassName);
     Assert.assertNull(dropTestClass);
@@ -289,7 +289,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "createSchema")
   public void customAttributes() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     // TEST CUSTOM PROPERTY CREATION
@@ -324,7 +324,7 @@ public class SchemaTest {
 
   @Test(dependsOnMethods = "createSchema")
   public void alterAttributes() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     OClass company = database.getMetadata().getSchema().getClass("Company");
@@ -368,7 +368,7 @@ public class SchemaTest {
 
   @Test
   public void invalidClusterWrongClusterId() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
     try {
       database.command(new OCommandSQL("create class Antani cluster 212121")).execute();
@@ -384,7 +384,7 @@ public class SchemaTest {
 
   @Test
   public void invalidClusterWrongClusterName() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     try {
@@ -402,7 +402,7 @@ public class SchemaTest {
 
   @Test
   public void invalidClusterWrongKeywords() {
-    database = new ODatabaseFlat(url);
+    database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
     try {

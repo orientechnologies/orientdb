@@ -24,8 +24,8 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
 public interface OBackupable {
-  void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
-      throws IOException;
+  void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,
+      int compressionLevel, int bufferSize) throws IOException;
 
   void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener)
       throws IOException;

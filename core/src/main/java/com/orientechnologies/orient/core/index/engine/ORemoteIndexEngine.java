@@ -138,19 +138,29 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public void put(Object key, Object value) {
   }
 
-  @Override
+	@Override
+	public Object getFirstKey() {
+		return null;
+	}
+
+	@Override
+	public Object getLastKey() {
+		return null;
+	}
+
+	@Override
   public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      ValuesTransformer transformer, ValuesResultListener resultListener) {
+															 boolean ascSortOrder, ValuesTransformer transformer, ValuesResultListener resultListener) {
   }
 
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
+														 ValuesResultListener valuesResultListener) {
   }
 
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
+														 ValuesResultListener valuesResultListener) {
   }
 
   @Override

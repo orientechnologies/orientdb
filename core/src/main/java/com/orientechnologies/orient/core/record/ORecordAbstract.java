@@ -288,6 +288,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  public ODatabaseRecord getDatabaseIfDefined() {
+    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+  }
+
   public ORecordInternal<T> reload() {
     return reload(null);
   }

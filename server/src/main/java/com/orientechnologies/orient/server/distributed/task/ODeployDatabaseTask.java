@@ -15,26 +15,26 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.BufferedOutputStream;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Ask for deployment of database from a remote node.
@@ -59,40 +59,61 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
       final Lock lock = iManager.getLock(databaseName);
       if (lock.tryLock()) {
         try {
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
-              databaseName);
-
-          final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
-          if (f.exists())
-            f.delete();
-          else
-            f.getParentFile().mkdirs();
-          f.createNewFile();
-
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
-
-          FileOutputStream fileOutputStream = new FileOutputStream(f);
-          final BufferedOutputStream bOutputFile = new BufferedOutputStream(fileOutputStream, 500000);
-          try {
-            database.backup(bOutputFile, null, null, this);
-
+          // WAIT UNTIL ALL PENDING OPERATION ARE COMPLETED
+          while (database.getStorage().getLastOperationId() >= iManager.getMessageService().getLastMessageId()) {
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "sending the compressed database '%s' over the NETWORK to node '%s', size=%s...", databaseName, getNodeSource(),
-                OFileUtils.getSizeAsString(f.length()));
-
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(f, 0, CHUNK_MAX_SIZE);
-
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-                "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
-
-            return chunk;
-
-          } finally {
-            bOutputFile.close();
-            fileOutputStream.close();
+                "pausing deploy of database %s until all pending operations are completed...", databaseName);
+            Thread.sleep(300);
           }
 
+          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+          try {
+
+            ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "deploying database %s...", databaseName);
+
+            final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
+            if (f.exists())
+              f.delete();
+            else
+              f.getParentFile().mkdirs();
+            f.createNewFile();
+
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
+
+            final AtomicLong lastOperationId = new AtomicLong(-1);
+
+            FileOutputStream fileOutputStream = new FileOutputStream(f);
+            try {
+              database.backup(fileOutputStream, null, new Callable<Object>() {
+                @Override
+                public Object call() throws Exception {
+                  lastOperationId.set(database.getStorage().getLastOperationId());
+                  return null;
+                }
+              }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+              final long fileSize = f.length();
+
+              ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                  "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...",
+                  databaseName, getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
+
+              final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
+
+              ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+                  "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+
+              return chunk;
+
+            } finally {
+              fileOutputStream.close();
+            }
+
+          } finally {
+            iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+          }
         } finally {
           lock.unlock();
         }
@@ -124,7 +145,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public long getTimeout() {
-    return 60000;
+    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override
@@ -146,13 +167,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse,
-      ODistributedResponse iGoodResponse) {
-    return null;
-  }
-
-  @Override
   public void onMessage(String iText) {
+    if (iText.startsWith("\n"))
+      iText = iText.substring(1);
+
     OLogManager.instance().info(this, iText);
   }
 }

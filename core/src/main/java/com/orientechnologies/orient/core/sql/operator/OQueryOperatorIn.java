@@ -114,7 +114,7 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   @SuppressWarnings("unchecked")
   @Override
   public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      IndexResultListener resultListener, int fetchLimit) {
+																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final Object result;
 
@@ -149,10 +149,10 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         return null;
 
       if (resultListener != null) {
-        index.getValues(inKeys, resultListener);
+        index.getValues(inKeys, ascSortOrder, resultListener);
         result = resultListener.getResult();
       } else
-        result = index.getValues(inKeys);
+        result = index.getValues(inKeys, ascSortOrder);
     } else
       return null;
 
