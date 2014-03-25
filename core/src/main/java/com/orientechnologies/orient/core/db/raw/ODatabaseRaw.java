@@ -317,21 +317,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-	public OStorageOperationResult<Boolean> hide(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired,
-																								 final int iMode) {
-		try {
-			final OStorageOperationResult<Boolean> result = storage.hideRecord(iRid, iVersion, iMode, null);
-			if (!result.getResult() && iRequired)
-				throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
-			return result;
-		} catch (OException e) {
-			// PASS THROUGH
-			throw e;
-		} catch (Exception e) {
-			OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
-			return new OStorageOperationResult<Boolean>(Boolean.FALSE);
-		}
-	}
 
   public boolean cleanOutRecord(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
     try {

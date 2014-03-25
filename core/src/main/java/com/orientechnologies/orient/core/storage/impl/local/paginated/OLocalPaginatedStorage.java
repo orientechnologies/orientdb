@@ -1388,16 +1388,40 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               else
                 throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
+            RuntimeException deleteException = null;
             atomicOperationsManager.startAtomicOperation();
             try {
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
               if (context != null)
                 context.executeOperations(this);
 
-							cluster.deleteRecord(ppos.clusterPosition);
+              cluster.deleteRecord(ppos.clusterPosition);
               atomicOperationsManager.endAtomicOperation(false);
             } catch (RuntimeException e) {
               atomicOperationsManager.endAtomicOperation(true);
+              OLogManager.instance().error(this, "Error during deletion of record", e);
+
+              deleteException = e;
+            }
+
+            if (deleteException != null) {
+              if (transaction.get() == null) {
+                OLogManager.instance().error(this, "Error during deletion of record, will try to put tombstone.");
+
+                atomicOperationsManager.startAtomicOperation();
+                try {
+                  final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+                  if (context != null)
+                    context.executeOperations(this);
+
+                  cluster.hideRecord(ppos.clusterPosition);
+                  atomicOperationsManager.endAtomicOperation(false);
+                } catch (RuntimeException e) {
+                  atomicOperationsManager.endAtomicOperation(true);
+                  throw e;
+                }
+              } else
+                throw deleteException;
             }
 
             return new OStorageOperationResult<Boolean>(true);
@@ -1421,71 +1445,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return new OStorageOperationResult<Boolean>(false);
   }
 
-	@Override
-	public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final ORecordVersion version, final int mode,
-																											 ORecordCallback<Boolean> callback) {
-		checkOpeness();
-
-		final long timer = Orient.instance().getProfiler().startChrono();
-
-		final OCluster cluster = getClusterById(rid.clusterId);
-
-		cluster.getExternalModificationLock().requestModificationLock();
-		try {
-			modificationLock.requestModificationLock();
-			try {
-				lock.acquireSharedLock();
-				try {
-					lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
-					try {
-						final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
-
-						if (ppos == null)
-							// ALREADY DELETED
-							return new OStorageOperationResult<Boolean>(false);
-
-						// MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-						if (version.getCounter() > -1 && !ppos.recordVersion.equals(version))
-							if (OFastConcurrentModificationException.enabled())
-								throw OFastConcurrentModificationException.instance();
-							else
-								throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
-
-						atomicOperationsManager.startAtomicOperation();
-						try {
-							final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-							if (context != null)
-								context.executeOperations(this);
-
-							cluster.hideRecord(ppos.clusterPosition);
-							atomicOperationsManager.endAtomicOperation(false);
-						} catch (RuntimeException e) {
-							atomicOperationsManager.endAtomicOperation(true);
-						}
-
-						return new OStorageOperationResult<Boolean>(true);
-					} finally {
-						lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
-					}
-				} finally {
-					lock.releaseSharedLock();
-				}
-			} catch (IOException e) {
-				OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
-			} finally {
-				modificationLock.releaseModificationLock();
-			}
-		} finally {
-			cluster.getExternalModificationLock().releaseModificationLock();
-			Orient.instance().getProfiler()
-							.stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
-		}
-
-		return new OStorageOperationResult<Boolean>(false);
-	}
-
-
-	public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content,
+  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content,
       final ORecordVersion recordVersion, final byte recordType) throws IOException {
     throw new OStorageException("Support of hash based clusters is required.");
   }

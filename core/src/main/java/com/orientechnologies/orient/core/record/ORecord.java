@@ -199,22 +199,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    */
   public <RET extends ORecord<T>> RET delete();
 
-  /**
-   * Hides records content by putting tombstone on the records position but does not delete record itself.
-   * 
-   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
-   * method can be used only if there is no active transaction in database.
-   * 
-   * @throws java.lang.UnsupportedOperationException
-   *           In case current version of cluster does not support given operation.
-   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
-   *           if record is already deleted/hidden.
-   * @throws com.orientechnologies.orient.core.exception.OConcurrentModificationException
-   *           If record version is not latest.
-   * 
-   * @return Hidden record instance.
-   */
-  public <RET extends ORecord<T>> RET hide();
+
 
   /**
    * Fills the record parsing the content in JSON format.
