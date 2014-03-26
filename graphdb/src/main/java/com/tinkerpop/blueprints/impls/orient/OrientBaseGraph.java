@@ -10,10 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.index.OIndexManager;
 import org.apache.commons.configuration.Configuration;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -29,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -163,6 +162,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * </table>
    * 
    * @param configuration
+   *          of graph
    */
   public OrientBaseGraph(final Configuration configuration) {
     this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null),
@@ -274,8 +274,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
           saveIndexConfiguration();
 
           return (Index<T>) index;
-        }
-      };
+    }
+      }
     }, "create index '", indexName, "'");
   }
 
@@ -390,7 +390,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    *          Vertex's class name
    * @param prop
    *          Varargs of properties to set
-   * @return
+   * @return added vertex
    */
   public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
     setCurrentGraphInThreadLocal();
@@ -677,10 +677,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   public boolean isClosed() {
     final OrientGraphContext context = getContext(false);
-    if (context == null)
-      return true;
-
-    return context.rawGraph.isClosed();
+    return context == null || context.rawGraph.isClosed();
   }
 
   public void shutdown() {
@@ -1172,7 +1169,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
   }
 
-  protected <RET> RET executeOutsideTx(final OCallable<RET, OrientBaseGraph> iCallable, final String... iOperationStrings) {
+  protected <RET> RET executeOutsideTx(final OCallable<RET, OrientBaseGraph> iCallable, final String... iOperationStrings)
+      throws RuntimeException {
     final boolean committed;
     final ODatabaseDocumentTx raw = getRawGraph();
     if (raw.getTransaction().isActive()) {
@@ -1193,11 +1191,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
     try {
       return iCallable.call(this);
-    } catch (Exception e) {
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
-      else
-        throw new OException(e);
     } finally {
       if (committed)
         autoStartTransaction();
