@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -164,6 +163,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.commandDetail = "-";
       connection.data.lastCommandReceived = System.currentTimeMillis();
     } else {
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
         OLogManager.instance().debug(this, "Found unknown session %d, shutdown current connection", clientTxId);
         shutdown();
@@ -885,7 +885,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String passwd = channel.readString();
 
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd);
-    connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+    connection.rawDatabase = ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying();
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendError(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -1336,7 +1336,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (listener.isEmpty())
           try {
             sendOk(clientTxId);
-          } catch (IOException e1) {
+          } catch (IOException ignored) {
           }
         channel.writeByte((byte) 0); // NO MORE RECORDS
 
@@ -1736,7 +1736,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeByte((byte) 1);
 
         channel.writeString(current.getClass().getName());
-        channel.writeString(current != null ? current.getMessage() : null);
+        channel.writeString(current.getMessage());
 
         current = current.getCause();
       }
