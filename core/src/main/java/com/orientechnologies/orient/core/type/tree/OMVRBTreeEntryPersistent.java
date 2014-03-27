@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.type.tree;
 
 import java.io.IOException;
 
-import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;

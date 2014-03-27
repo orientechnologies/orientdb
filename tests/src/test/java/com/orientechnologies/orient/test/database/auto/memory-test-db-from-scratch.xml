@@ -48,6 +48,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.EmbeddedObjectSerializationTest"/>
         </classes>
     </test>
     <test name="PopulationObjectSchemaFull">

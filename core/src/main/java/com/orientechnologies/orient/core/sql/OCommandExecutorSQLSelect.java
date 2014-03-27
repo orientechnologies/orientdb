@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -1385,6 +1385,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (index == null)
       throw new OCommandExecutionException("Target index '" + parsedTarget.getTargetIndex() + "' not found");
 
+    boolean ascOrder = true;
+    if (!orderedFields.isEmpty()) {
+      if (orderedFields.size() != 1)
+        throw new OCommandExecutionException("Index can be ordered only by key field");
+
+      final String fieldName = orderedFields.get(0).getKey();
+      if (!fieldName.equalsIgnoreCase("key"))
+        throw new OCommandExecutionException("Index can be ordered only by key field");
+
+      final String order = orderedFields.get(0).getValue();
+      ascOrder = order.equalsIgnoreCase(KEYWORD_ASC);
+    }
+
     // nothing was added yet, so index definition for manual index was not calculated
     if (index.getDefinition() == null)
       return;
@@ -1394,37 +1407,57 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         throw new OCommandExecutionException("'Key' field is required for queries against indexes");
 
       final OQueryOperator indexOperator = compiledFilter.getRootCondition().getOperator();
+
       if (indexOperator instanceof OQueryOperatorBetween) {
         final Object[] values = (Object[]) compiledFilter.getRootCondition().getRight();
-        final Collection<ODocument> entries = index.getEntriesBetween(getIndexKey(index.getDefinition(), values[0], context),
-            getIndexKey(index.getDefinition(), values[2], context));
 
-        for (final OIdentifiable r : entries) {
-          final boolean continueResultParsing = handleResult(r, false);
-          if (!continueResultParsing)
-            break;
-        }
-
+        index.getEntriesBetween(getIndexKey(index.getDefinition(), values[0], context),
+            getIndexKey(index.getDefinition(), values[2], context), true, ascOrder, new OIndex.IndexEntriesResultListener() {
+              @Override
+              public boolean addResult(ODocument entry) {
+                return handleResult(entry, false);
+              }
+            });
       } else if (indexOperator instanceof OQueryOperatorMajor) {
         final Object value = compiledFilter.getRootCondition().getRight();
-        final Collection<ODocument> entries = index.getEntriesMajor(getIndexKey(index.getDefinition(), value, context), false);
 
-        parseIndexSearchResult(entries);
+        index.getEntriesMajor(getIndexKey(index.getDefinition(), value, context), false, ascOrder,
+            new OIndex.IndexEntriesResultListener() {
+              @Override
+              public boolean addResult(ODocument entry) {
+                return handleResult(entry, false);
+              }
+            });
       } else if (indexOperator instanceof OQueryOperatorMajorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
-        final Collection<ODocument> entries = index.getEntriesMajor(getIndexKey(index.getDefinition(), value, context), true);
+        index.getEntriesMajor(getIndexKey(index.getDefinition(), value, context), true, ascOrder,
+            new OIndex.IndexEntriesResultListener() {
+              @Override
+              public boolean addResult(ODocument entry) {
+                return handleResult(entry, false);
+              }
+            });
 
-        parseIndexSearchResult(entries);
       } else if (indexOperator instanceof OQueryOperatorMinor) {
         final Object value = compiledFilter.getRootCondition().getRight();
-        final Collection<ODocument> entries = index.getEntriesMinor(getIndexKey(index.getDefinition(), value, context), false);
 
-        parseIndexSearchResult(entries);
+        index.getEntriesMinor(getIndexKey(index.getDefinition(), value, context), false, ascOrder,
+            new OIndex.IndexEntriesResultListener() {
+              @Override
+              public boolean addResult(ODocument entry) {
+                return handleResult(entry, false);
+              }
+            });
       } else if (indexOperator instanceof OQueryOperatorMinorEquals) {
         final Object value = compiledFilter.getRootCondition().getRight();
-        final Collection<ODocument> entries = index.getEntriesMinor(getIndexKey(index.getDefinition(), value, context), true);
 
-        parseIndexSearchResult(entries);
+        index.getEntriesMinor(getIndexKey(index.getDefinition(), value, context), true, ascOrder,
+            new OIndex.IndexEntriesResultListener() {
+              @Override
+              public boolean addResult(ODocument entry) {
+                return handleResult(entry, false);
+              }
+            });
       } else if (indexOperator instanceof OQueryOperatorIn) {
         final List<Object> origValues = (List<Object>) compiledFilter.getRootCondition().getRight();
         final List<Object> values = new ArrayList<Object>(origValues.size());
@@ -1437,9 +1470,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           values.add(val);
         }
 
-        final Collection<ODocument> entries = index.getEntries(values);
+        index.getEntries(values, new OIndex.IndexEntriesResultListener() {
+          @Override
+          public boolean addResult(ODocument entry) {
+            return handleResult(entry, false);
+          }
+        });
 
-        parseIndexSearchResult(entries);
       } else {
         final Object right = compiledFilter.getRootCondition().getRight();
         Object keyValue = getIndexKey(index.getDefinition(), right, context);
@@ -1459,8 +1496,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               && ((OCompositeKey) keyValue).getKeys().size() == index.getDefinition().getParamCount()
               && ((OCompositeKey) secondKey).getKeys().size() == index.getDefinition().getParamCount())
             res = index.get(keyValue);
-          else
-            res = index.getValuesBetween(keyValue, secondKey, true);
+          else {
+            final Object key = keyValue;
+
+            index.getValuesBetween(keyValue, true, secondKey, true, true, new OIndex.IndexValuesResultListener() {
+              @Override
+              public boolean addResult(OIdentifiable value) {
+                return handleResult(createIndexEntryAsDocument(key, value.getIdentity()), false);
+              }
+            });
+
+            return;
+          }
+
         }
 
         if (res != null)
@@ -1490,15 +1538,28 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       try {
         // ADD ALL THE ITEMS AS RESULT
-        for (Iterator<Entry<Object, Object>> it = index.iterator(); it.hasNext();) {
-          final Entry<Object, Object> current = it.next();
+        if (ascOrder) {
+          final Object firstKey = index.getFirstKey();
+          if (firstKey == null)
+            return;
 
-          if (current.getValue() instanceof Collection<?>) {
-            for (OIdentifiable identifiable : ((Set<OIdentifiable>) current.getValue()))
-              if (!handleResult(createIndexEntryAsDocument(current.getKey(), identifiable.getIdentity()), true))
-                break;
-          } else if (!handleResult(createIndexEntryAsDocument(current.getKey(), (OIdentifiable) current.getValue()), true))
-            break;
+          index.getEntriesMajor(firstKey, true, true, new OIndex.IndexEntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return handleResult(entry, false);
+            }
+          });
+        } else {
+          final Object lastKey = index.getLastKey();
+          if (lastKey == null)
+            return;
+
+          index.getEntriesMinor(lastKey, true, false, new OIndex.IndexEntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return handleResult(entry, false);
+            }
+          });
         }
       } finally {
         if (indexInternal instanceof OSharedResource)

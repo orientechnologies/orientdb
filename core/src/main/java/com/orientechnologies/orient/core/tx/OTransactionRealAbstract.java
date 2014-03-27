@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;

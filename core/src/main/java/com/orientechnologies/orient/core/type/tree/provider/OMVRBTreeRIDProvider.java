@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
-import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;

@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;

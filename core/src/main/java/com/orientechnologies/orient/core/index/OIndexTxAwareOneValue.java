@@ -17,9 +17,6 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.*;
 
-import com.orientechnologies.common.collection.OAlwaysGreaterKey;
-import com.orientechnologies.common.collection.OAlwaysLessKey;
-import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;

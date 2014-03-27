@@ -65,24 +65,24 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long               serialVersionUID        = 1L;
-  private static final int                NOT_EXISTENT_CLUSTER_ID = -1;
+  private static final long              serialVersionUID        = 1L;
+  private static final int               NOT_EXISTENT_CLUSTER_ID = -1;
 
-  protected OSchemaShared                 owner;
-  protected String                        name;
-  protected Class<?>                      javaClass;
-  protected final Map<String, OProperty>  properties              = new LinkedHashMap<String, OProperty>();
+  protected OSchemaShared                owner;
+  protected String                       name;
+  protected Class<?>                     javaClass;
+  protected final Map<String, OProperty> properties              = new LinkedHashMap<String, OProperty>();
 
-  protected int[]                         clusterIds;
-  protected int                           defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
-  protected OClassImpl                    superClass;
-  protected int[]                         polymorphicClusterIds;
-  protected List<OClass>                  baseClasses;
-  protected float                         overSize                = 0f;
-  protected String                        shortName;
-  protected boolean                       strictMode              = false;                                 // @SINCE v1.0rc8
-  protected boolean                       abstractClass           = false;                                 // @SINCE v1.2.0
-  protected Map<String, String>           customFields;
+  protected int[]                        clusterIds;
+  protected int                          defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  protected OClassImpl                   superClass;
+  protected int[]                        polymorphicClusterIds;
+  protected List<OClass>                 baseClasses;
+  protected float                        overSize                = 0f;
+  protected String                       shortName;
+  protected boolean                      strictMode              = false;                                 // @SINCE v1.0rc8
+  protected boolean                      abstractClass           = false;                                 // @SINCE v1.2.0
+  protected Map<String, String>          customFields;
 
   /**
    * Constructor used in unmarshalling.
@@ -1204,7 +1204,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     for (final String fieldToIndex : fields) {
       final String fieldName = OIndexDefinitionFactory.extractFieldName(fieldToIndex);
-      if (!existingFieldNames.contains(fieldName.toLowerCase()))
+
+      if (!fieldName.equals("@rid") && !existingFieldNames.contains(fieldName.toLowerCase()))
         throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
             + "' because field: '" + fieldName + "' is absent in class definition.");
     }
@@ -1238,7 +1239,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final List<OType> types = new ArrayList<OType>(fieldNames.length);
 
     for (String fieldName : fieldNames) {
-      types.add(getProperty(OIndexDefinitionFactory.extractFieldName(fieldName).toLowerCase()).getType());
+      if (!fieldName.equals("@rid"))
+        types.add(getProperty(OIndexDefinitionFactory.extractFieldName(fieldName).toLowerCase()).getType());
+      else
+        types.add(OType.LINK);
     }
     return types;
   }

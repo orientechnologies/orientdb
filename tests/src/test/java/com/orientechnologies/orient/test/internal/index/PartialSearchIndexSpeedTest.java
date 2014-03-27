@@ -6,7 +6,7 @@ import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.ODocumentFieldsHashSet;
@@ -31,7 +31,7 @@ public class PartialSearchIndexSpeedTest extends SpeedTestMonoThread {
 
     final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-    index.getEntriesMajor(new OCompositeKey(start), true, new OIndex.IndexEntriesResultListener() {
+    index.getEntriesMajor(new OCompositeKey(start), true, true, new OIndex.IndexEntriesResultListener() {
 			@Override
 			public boolean addResult(ODocument entry) {
 				result.add(entry);
