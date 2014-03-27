@@ -42,13 +42,6 @@ Yes. OrientDB is totally written in [Java](http://en.wikipedia.org/wiki/Java_%28
 
 OrientDB is free for any use (Apache 2 license). If you are in production don't miss the [professional support service](http://orientechnologies.com/support.htm). For courses and training look at the [on-line course catalog](http://orientechnologies.com/training.htm).
 
-## Online cloud service
-
-<table>
-  <tr><td><a href="http://www.nuvolabase.com"><img src="http://www.nuvolabase.com/site/images/nuvola_small.png"></a>
-  </td><td>OrientDB is available on the cloud through <a href="http://www.nuvolabase.com">NuvolaBase.com</a>. FREE accounts are available for small sized databases.</td></tr>
-</table>
-
 ## Know more
 
 Start to learn about OrientDB from the [WiKi Main page](https://github.com/orientechnologies/orientdb/wiki). For any questions visit the [OrientDB Community Group](http://www.orientdb.org/community-group.htm). Need help? Go to the [Online support](http://chat.stackoverflow.com/rooms/6625/orientdb). Do you want to hear about OrientDB in a conference? Take a look at the [Events](https://github.com/orientechnologies/orientdb/wiki/) page.
