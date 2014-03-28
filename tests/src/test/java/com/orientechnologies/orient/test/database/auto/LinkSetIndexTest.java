@@ -10,37 +10,27 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
- * @since 1/30/14
+ * @since 3/28/14
  */
-@Test(groups = { "index" })
-public class LinkBagIndexTest extends BaseTest {
-
+public class LinkSetIndexTest extends BaseTest {
   @Parameters(value = "url")
-  public LinkBagIndexTest(@Optional final String url) {
+  public LinkSetIndexTest(@Optional String url) {
     super(url);
   }
 
   @BeforeClass
   public void setupSchema() {
-    final OClass ridBagIndexTestClass = database.getMetadata().getSchema().createClass("RidBagIndexTestClass");
+    final OClass ridBagIndexTestClass = database.getMetadata().getSchema().createClass("LinkSetIndexTestClass");
 
-    ridBagIndexTestClass.createProperty("ridBag", OType.LINKBAG);
+    ridBagIndexTestClass.createProperty("linkSet", OType.LINKSET);
 
-    ridBagIndexTestClass.createIndex("ridBagIndex", OClass.INDEX_TYPE.NOTUNIQUE, "ridBag");
+    ridBagIndexTestClass.createIndex("linkSetIndex", OClass.INDEX_TYPE.NOTUNIQUE, "linkSet");
     database.getMetadata().getSchema().save();
     database.close();
-  }
-
-  @AfterClass
-  public void destroySchema() {
-    database.open("admin", "admin");
-    database.getMetadata().getSchema().dropClass("RidBagIndexTestClass");
   }
 
   @BeforeMethod
@@ -48,35 +38,35 @@ public class LinkBagIndexTest extends BaseTest {
     database.open("admin", "admin");
   }
 
-  @AfterMethod
-  public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("DELETE FROM RidBagIndexTestClass")).execute();
+	@AfterMethod
+	public void afterMethod() throws Exception {
+		database.command(new OCommandSQL("DELETE FROM LinkSetIndexTestClass")).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select from RidBagIndexTestClass")).execute();
-    Assert.assertEquals(result.size(), 0);
+		List<ODocument> result = database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
+		Assert.assertEquals(result.size(), 0);
 
-    result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
-    Assert.assertEquals(result.size(), 0);
+		result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
+		Assert.assertEquals(result.size(), 0);
 
-    database.close();
-  }
+		database.close();
+	}
 
-  public void testIndexRidBag() {
+  public void testIndexLinkSet() {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -90,7 +80,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagInTx() throws Exception {
+  public void testIndexLinkSetInTx() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -99,12 +89,12 @@ public class LinkBagIndexTest extends BaseTest {
 
     try {
       database.begin();
-      final ODocument document = new ODocument("RidBagIndexTestClass");
-      final ORidBag ridBag = new ORidBag();
-      ridBag.add(docOne);
-      ridBag.add(docTwo);
+      final ODocument document = new ODocument("LinkSetIndexTestClass");
+      final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+      linkSet.add(docOne);
+      linkSet.add(docTwo);
 
-      document.field("ridBag", ridBag);
+      document.field("linkSet", linkSet);
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -112,7 +102,7 @@ public class LinkBagIndexTest extends BaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -126,7 +116,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdate() {
+  public void testIndexLinkSetUpdate() {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -136,22 +126,22 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docThree = new ODocument();
     docThree.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBagOne = new ORidBag();
-    ridBagOne.add(docOne);
-    ridBagOne.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSetOne = new HashSet<OIdentifiable>();
+    linkSetOne.add(docOne);
+    linkSetOne.add(docTwo);
 
-    document.field("ridBag", ridBagOne);
+    document.field("linkSet", linkSetOne);
     document.save();
 
-    final ORidBag ridBagTwo = new ORidBag();
-    ridBagTwo.add(docOne);
-    ridBagTwo.add(docThree);
+    final Set<OIdentifiable> linkSetTwo = new HashSet<OIdentifiable>();
+    linkSetTwo.add(docOne);
+    linkSetTwo.add(docThree);
 
-    document.field("ridBag", ridBagTwo);
+    document.field("linkSet", linkSetTwo);
     document.save();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -165,7 +155,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateInTx() throws Exception {
+  public void testIndexLinkSetUpdateInTx() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -175,22 +165,22 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docThree = new ODocument();
     docThree.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBagOne = new ORidBag();
-    ridBagOne.add(docOne);
-    ridBagOne.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSetOne = new HashSet<OIdentifiable>();
+    linkSetOne.add(docOne);
+    linkSetOne.add(docTwo);
 
-    document.field("ridBag", ridBagOne);
+    document.field("linkSet", linkSetOne);
     document.save();
 
     try {
       database.begin();
 
-      final ORidBag ridBagTwo = new ORidBag();
-      ridBagTwo.add(docOne);
-      ridBagTwo.add(docThree);
+      final Set<OIdentifiable> linkSetTwo = new HashSet<OIdentifiable>();
+      linkSetTwo.add(docOne);
+      linkSetTwo.add(docThree);
 
-      document.field("ridBag", ridBagTwo);
+      document.field("linkSet", linkSetTwo);
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -198,7 +188,7 @@ public class LinkBagIndexTest extends BaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -212,7 +202,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateInTxRollback() throws Exception {
+  public void testIndexLinkSetUpdateInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -222,25 +212,25 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docThree = new ODocument();
     docThree.save();
 
-    final ORidBag ridBagOne = new ORidBag();
-    ridBagOne.add(docOne);
-    ridBagOne.add(docTwo);
+    final Set<OIdentifiable> linkSetOne = new HashSet<OIdentifiable>();
+    linkSetOne.add(docOne);
+    linkSetOne.add(docTwo);
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    document.field("ridBag", ridBagOne);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    document.field("linkSet", linkSetOne);
     document.save();
 
     database.begin();
 
-    final ORidBag ridBagTwo = new ORidBag();
-    ridBagTwo.add(docOne);
-    ridBagTwo.add(docThree);
+    final Set<OIdentifiable> linkSetTwo = new HashSet<OIdentifiable>();
+    linkSetTwo.add(docOne);
+    linkSetTwo.add(docThree);
 
-    document.field("ridBag", ridBagTwo);
+    document.field("linkSet", linkSetTwo);
     document.save();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -254,7 +244,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateAddItem() {
+  public void testIndexLinkSetUpdateAddItem() {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -264,17 +254,17 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docThree = new ODocument();
     docThree.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
-    document.field("ridBag", ridBag);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
+    document.field("linkSet", linkSet);
 
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add ridBag = " + docThree.getIdentity())).execute();
+    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " add linkSet = " + docThree.getIdentity())).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 3);
@@ -289,7 +279,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateAddItemInTx() throws Exception {
+  public void testIndexLinkSetUpdateAddItemInTx() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -299,18 +289,18 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docThree = new ODocument();
     docThree.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
-      loadedDocument.<ORidBag> field("ridBag").add(docThree);
+      loadedDocument.<Set<OIdentifiable>> field("linkSet").add(docThree);
       document.save();
       database.commit();
     } catch (Exception e) {
@@ -318,7 +308,7 @@ public class LinkBagIndexTest extends BaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 3);
@@ -333,7 +323,7 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateAddItemInTxRollback() throws Exception {
+  public void testIndexLinkSetUpdateAddItemInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
@@ -343,21 +333,21 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docThree = new ODocument();
     docThree.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+		linkSet.add(docOne);
+		linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
-    loadedDocument.<ORidBag> field("ridBag").add(docThree);
+    loadedDocument.<Set<OIdentifiable>> field("linkSet").add(docThree);
     loadedDocument.save();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -371,24 +361,24 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateRemoveItemInTx() throws Exception {
+  public void testIndexLinkSetUpdateRemoveItemInTx() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
-    document.field("ridBag", ridBag);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
+    document.field("linkSet", linkSet);
     document.save();
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
-      loadedDocument.<ORidBag> field("ridBag").remove(docTwo);
+      loadedDocument.<Set<OIdentifiable>> field("linkSet").remove(docTwo);
       loadedDocument.save();
       database.commit();
     } catch (Exception e) {
@@ -396,7 +386,7 @@ public class LinkBagIndexTest extends BaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
@@ -410,27 +400,27 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateRemoveItemInTxRollback() throws Exception {
+  public void testIndexLinkSetUpdateRemoveItemInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
-    document.field("ridBag", ridBag);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+		linkSet.add(docOne);
+		linkSet.add(docTwo);
+    document.field("linkSet", linkSet);
     document.save();
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
-    loadedDocument.<ORidBag> field("ridBag").remove(docTwo);
+    loadedDocument.<Set<OIdentifiable>> field("linkSet").remove(docTwo);
     loadedDocument.save();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -444,24 +434,24 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagUpdateRemoveItem() {
+  public void testIndexLinkSetUpdateRemoveItem() {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+		linkSet.add(docOne);
+		linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
 
-    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove ridBag = " + docTwo.getIdentity())).execute();
+    database.command(new OCommandSQL("UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity())).execute();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
@@ -475,43 +465,43 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagRemove() {
+  public void testIndexLinkSetRemove() {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
 
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+		linkSet.add(docOne);
+		linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
     document.delete();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 0);
   }
 
-  public void testIndexRidBagRemoveInTx() throws Exception {
+  public void testIndexLinkSetRemoveInTx() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
 
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+		linkSet.add(docOne);
+		linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
     try {
       database.begin();
@@ -522,32 +512,32 @@ public class LinkBagIndexTest extends BaseTest {
       throw e;
     }
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 0);
   }
 
-  public void testIndexRidBagRemoveInTxRollback() throws Exception {
+  public void testIndexLinkSetRemoveInTxRollback() throws Exception {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBag = new ORidBag();
-    ridBag.add(docOne);
-    ridBag.add(docTwo);
+    final ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+    linkSet.add(docOne);
+		linkSet.add(docTwo);
 
-    document.field("ridBag", ridBag);
+    document.field("linkSet", linkSet);
     document.save();
 
     database.begin();
     document.delete();
     database.rollback();
 
-    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
+    List<ODocument> result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 2);
@@ -561,39 +551,40 @@ public class LinkBagIndexTest extends BaseTest {
     }
   }
 
-  public void testIndexRidBagSQL() {
+  public void testIndexLinkSetSQL() {
     final ODocument docOne = new ODocument();
     docOne.save();
 
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument docThree = new ODocument();
-    docThree.save();
+		final ODocument docThree = new ODocument();
+		docThree.save();
 
-    ODocument document = new ODocument("RidBagIndexTestClass");
-    final ORidBag ridBagOne = new ORidBag();
-    ridBagOne.add(docOne);
-    ridBagOne.add(docTwo);
+    ODocument document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSetOne = new HashSet<OIdentifiable>();
+		linkSetOne.add(docOne);
+		linkSetOne.add(docTwo);
 
-    document.field("ridBag", ridBagOne);
+    document.field("linkSet", linkSetOne);
     document.save();
 
-    document = new ODocument("RidBagIndexTestClass");
-    ORidBag ridBag = new ORidBag();
-    ridBag.add(docThree);
-    ridBag.add(docTwo);
 
-    document.field("ridBag", ridBag);
-    document.save();
+		document = new ODocument("LinkSetIndexTestClass");
+		final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+		linkSet.add(docThree);
+		linkSet.add(docTwo);
+
+		document.field("linkSet", linkSet);
+		document.save();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
-        "select * from RidBagIndexTestClass where ridBag contains ?"), docOne.getIdentity());
+        "select * from LinkSetIndexTestClass where linkSet contains ?"), docOne.getIdentity());
     Assert.assertNotNull(result);
     Assert.assertEquals(result.size(), 1);
 
     List<OIdentifiable> listResult = new ArrayList<OIdentifiable>();
-    for (OIdentifiable identifiable : result.get(0).<ORidBag> field("ridBag"))
+    for (OIdentifiable identifiable : result.get(0).<Set<OIdentifiable>> field("linkSet"))
       listResult.add(identifiable);
 
     Assert.assertEquals(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()), listResult);
