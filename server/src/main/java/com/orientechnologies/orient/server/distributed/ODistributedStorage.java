@@ -138,7 +138,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
   @Override
   public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
-    return null;
+    return wrapped.getCollectionManagerClass();
   }
 
   public Object command(final OCommandRequestText iCommand) {
