@@ -57,8 +57,17 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             if ($routeParams.query) {
                 $scope.queryText = $routeParams.query;
                 $scope.cm.setValue($scope.queryText);
+
                 $scope.query();
             }
+            $scope.cm.on("change", function () { /* script */
+                var wrap = $scope.cm.getWrapperElement();
+                var approp = $scope.cm.getScrollInfo().height > 300 ? "300px" : "auto";
+                if (wrap.style.height != approp) {
+                    wrap.style.height = approp;
+                    $scope.cm.refresh();
+                }
+            });
 
         }
     };
@@ -147,7 +156,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     }
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller','$ojson', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller,$ojson) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson) {
 
 
     var data = $scope.item.resultTotal;
@@ -157,7 +166,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         lineNumbers: true,
         readOnly: true,
         mode: 'javascript',
-        onLoad : function(_cm){
+        onLoad: function (_cm) {
             $scope.vcm = _cm;
             $scope.vcm.setValue($ojson.format($scope.item.rawData));
         }

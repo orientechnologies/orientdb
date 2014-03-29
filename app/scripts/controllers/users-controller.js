@@ -21,7 +21,7 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
 
     $scope.getListUsers = function () {
         $scope.functions = new Array;
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: true}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: false}, function (data) {
             if (data.result) {
                 for (i in data.result) {
                     $scope.usersResult.push(data.result[i]);
@@ -44,7 +44,7 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
     $scope.getListUsers = function () {
         $scope.functions = new Array;
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: true}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: false}, function (data) {
             if (data.result) {
                 for (i in data.result) {
                     $scope.usersResult.push(data.result[i]);

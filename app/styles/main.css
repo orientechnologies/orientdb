@@ -23,7 +23,10 @@ body div.container-studio {
     border: 1px solid #eee;
     height: auto;
     min-height: 50px;
-    max-height: 300px;
+
+}
+.console_class_functions .CodeMirror {
+    height: 300px;
 }
 
 .jsonView .CodeMirror {
@@ -31,8 +34,8 @@ body div.container-studio {
 }
 
 .CodeMirror-scroll {
-    /*overflow-y: hidden;*/
-    /*overflow-x: auto;*/
+    overflow-y: hidden;
+    overflow-x: auto;
 }
 
 .queryText {
@@ -48,9 +51,12 @@ table.pointer > tbody > tr > td input, table.pointer > tbody > tr > td select {
     width: 110px;
 }
 
+.ocontainer-body div.scroll-indexes {
+    max-height: none;
+}
+
 div.scroll-editclass, div.scroll-indexes {
     overflow: auto;
-    max-height: 300px;
     margin-top: 26px;
     /*border-top: 1px solid grey;*/
     /*border-bottom: 1px solid grey;*/
