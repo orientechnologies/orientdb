@@ -111,7 +111,7 @@ public class OIndexDefinitionFactory {
     } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
         || type.equals(OType.LINKSET)) {
       if (type.equals(OType.LINKSET))
-        throw new OIndexException("LINKSET indexing is not supported.");
+        indexType = OType.LINK;
       else if (type.equals(OType.LINKLIST)) {
         indexType = OType.LINK;
       } else {

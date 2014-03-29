@@ -211,6 +211,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       return;
 
     marshalling = true;
+		tree.setMarshalling(true);
 
     try {
       final char firstChar = buffer.charAt(0);
@@ -233,6 +234,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       }
     } finally {
       marshalling = false;
+			tree.setMarshalling(false);
     }
   }
 

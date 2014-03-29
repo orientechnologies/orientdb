@@ -61,15 +61,14 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
+      OIndex.IndexValuesResultListener resultListener) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
-      return null;
+      return false;
 
-    final Object result;
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
@@ -78,13 +77,9 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
         key = indexDefinition.createValue(keyParams);
 
       if (key == null)
-        return null;
+        return false;
 
-      if (resultListener != null) {
-        index.getValuesMajor(key, true, ascSortOrder, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesMajor(key, true, ascSortOrder);
+      index.getValuesMajor(key, true, ascSortOrder, resultListener);
     } else {
       // if we have situation like "field1 = 1 AND field2 >= 2"
       // then we fetch collection which left included boundary is the smallest composite key in the
@@ -96,22 +91,18 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
-        return null;
+        return false;
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams.subList(0, keyParams.size() - 1));
 
       if (keyTwo == null)
-        return null;
+        return false;
 
-      if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+      index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return true;
   }
 
   @Override

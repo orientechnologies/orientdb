@@ -113,21 +113,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private final class IndexResultListener implements OQueryOperator.IndexResultListener {
-    private final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-    private final int                 fetchLimit;
-    private final int                 skip;
-
-    private IndexResultListener(int fetchLimit, int skip) {
-      this.fetchLimit = fetchLimit;
-      this.skip = skip;
-    }
-
-    @Override
-    public Object getResult() {
-      return result;
-    }
-
+  private final class IndexResultListener implements OIndex.IndexValuesResultListener {
     @Override
     public boolean addResult(OIdentifiable value) {
       final ORecord record = value.getRecord();
@@ -143,10 +129,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(value.getRecord(), null, context)))
-        result.add(value);
+      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(record, null, context)))
+        return handleResult(record, true);
 
-      return fetchLimit < 0 || result.size() < fetchLimit + skip;
+      return true;
     }
   }
 
@@ -1096,12 +1082,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       for (OIndex<?> index : indexes) {
         if (canBeUsedByOrderBy(index)) {
           final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
-          final OQueryOperator.IndexResultListener resultListener = new IndexResultListener(fetchLimit, skip);
+          final OIndex.IndexValuesResultListener resultListener = new IndexResultListener();
 
           if (ascSortOrder) {
             final Object firstKey = index.getFirstKey();
             if (firstKey == null)
               return false;
+
+            fullySortedByIndex = true;
+
+            if (context.isRecordingMetrics()) {
+              context.setVariable("indexIsUsedInOrderBy", true);
+              context.setVariable("fullySortedByIndex", fullySortedByIndex);
+
+              Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+              if (idxNames == null) {
+                idxNames = new HashSet<String>();
+                context.setVariable("involvedIndexes", idxNames);
+              }
+
+              idxNames.add(index.getName());
+            }
 
             index.getValuesMajor(firstKey, true, true, resultListener);
           } else {
@@ -1109,24 +1110,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             if (lastKey == null)
               return false;
 
-            index.getValuesMinor(lastKey, true, false, resultListener);
-          }
+            fullySortedByIndex = true;
 
-          fillSearchIndexResultSet(resultListener.getResult());
+            if (context.isRecordingMetrics()) {
+              context.setVariable("indexIsUsedInOrderBy", true);
+              context.setVariable("fullySortedByIndex", fullySortedByIndex);
 
-          fullySortedByIndex = true;
+              Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+              if (idxNames == null) {
+                idxNames = new HashSet<String>();
+                context.setVariable("involvedIndexes", idxNames);
+              }
 
-          if (context.isRecordingMetrics()) {
-            context.setVariable("indexIsUsedInOrderBy", true);
-            context.setVariable("fullySortedByIndex", fullySortedByIndex);
-
-            Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-            if (idxNames == null) {
-              idxNames = new HashSet<String>();
-              context.setVariable("involvedIndexes", idxNames);
+              idxNames.add(index.getName());
             }
 
-            idxNames.add(index.getName());
+            index.getValuesMinor(lastKey, true, false, resultListener);
           }
 
           return true;
@@ -1202,7 +1201,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames.add(index.getName());
         }
 
-        Object result;
+        boolean result;
         final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(index) && !(index.getInternal() instanceof OChainedIndexProxy);
         try {
           boolean ascSortOrder;
@@ -1214,14 +1213,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (indexIsUsedInOrderBy)
             fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size();
 
-          OQueryOperator.IndexResultListener resultListener;
-          if (fetchLimit < 0 && orderedFields.isEmpty())
-            resultListener = null;
-          else
-            resultListener = new IndexResultListener(fullySortedByIndex ? fetchLimit : (orderedFields.isEmpty() ? fetchLimit : -1),
-                skip);
+          final IndexResultListener resultListener = new IndexResultListener();
 
-          result = operator.executeIndexQuery(context, index, keyParams, ascSortOrder, resultListener, fetchLimit);
+          result = operator.executeIndexQuery(context, index, keyParams, ascSortOrder, resultListener);
         } catch (Exception e) {
           OLogManager
               .instance()
@@ -1234,15 +1228,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return false;
         }
 
-        if (result == null)
+        if (!result)
           continue;
 
         if (context.isRecordingMetrics()) {
           context.setVariable("indexIsUsedInOrderBy", indexIsUsedInOrderBy);
           context.setVariable("fullySortedByIndex", fullySortedByIndex);
         }
-
-        fillSearchIndexResultSet(result);
 
         return true;
       }
@@ -1276,30 +1268,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return true;
-  }
-
-  private void fillSearchIndexResultSet(final Object indexResult) {
-    if (indexResult != null) {
-      if (indexResult instanceof Collection<?>) {
-        Collection<OIdentifiable> indexResultSet = (Collection<OIdentifiable>) indexResult;
-
-        context.updateMetric("indexReads", indexResultSet.size());
-
-        for (OIdentifiable identifiable : indexResultSet) {
-          ORecord<?> record = identifiable.getRecord();
-          // Don't throw exceptions is record is null, as indexed queries may fail when using record level security
-          if ((record != null) && filter((ORecordInternal<?>) record)) {
-            final boolean continueResultParsing = handleResult(record, false);
-            if (!continueResultParsing)
-              break;
-          }
-        }
-      } else {
-        final ORecord<?> record = ((OIdentifiable) indexResult).getRecord();
-        if (filter((ORecordInternal<?>) record))
-          handleResult(record, true);
-      }
-    }
   }
 
   private void applyOrderBy() {
