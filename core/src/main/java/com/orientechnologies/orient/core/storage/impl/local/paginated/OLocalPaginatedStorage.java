@@ -1227,13 +1227,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         switch (iLockingStrategy) {
         case DEFAULT:
         case KEEP_SHARED_LOCK:
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+          rid.lock(false);
           break;
         case NONE:
           // DO NOTHING
           break;
         case KEEP_EXCLUSIVE_LOCK:
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          rid.lock(true);
         }
 
         try {
@@ -1241,11 +1241,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         } finally {
           switch (iLockingStrategy) {
           case DEFAULT:
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+            rid.unlock();
             break;
+
           case KEEP_EXCLUSIVE_LOCK:
-            // DO NOTHING - THIS EXCLUSIVE LOCK IS RELEASED LATER IN UPPER CALLERs
-            break;
           case NONE:
           case KEEP_SHARED_LOCK:
             // DO NOTHING

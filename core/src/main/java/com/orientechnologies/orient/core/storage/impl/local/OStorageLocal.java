@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -1785,7 +1784,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       switch (iLockingStrategy) {
       case DEFAULT:
       case KEEP_SHARED_LOCK:
-        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        iRid.lock(false);
         break;
       case NONE:
         // DO NOTHING
@@ -1811,7 +1810,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       } finally {
         switch (iLockingStrategy) {
         case DEFAULT:
-          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          iRid.unlock();
           break;
         case NONE:
         case KEEP_SHARED_LOCK:

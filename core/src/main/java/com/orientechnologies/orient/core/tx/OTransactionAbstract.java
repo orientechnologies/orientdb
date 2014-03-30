@@ -74,10 +74,14 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public void close() {
     for (Map.Entry<ORID, OStorage.LOCKING_STRATEGY> lock : locks.entrySet()) {
-      if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK))
-        ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
-      else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
-        ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(lock.getKey());
+      try {
+        if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK))
+          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
+        else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
+          ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(lock.getKey());
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey());
+      }
     }
     locks.clear();
   }
@@ -89,8 +93,8 @@ public abstract class OTransactionAbstract implements OTransaction {
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = iRecord.getIdentity();
-//    if (locks.containsKey(rid))
-//      throw new IllegalStateException("Record " + rid + " is already locked");
+    // if (locks.containsKey(rid))
+    // throw new IllegalStateException("Record " + rid + " is already locked");
 
     if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
       ((OStorageEmbedded) stg).acquireWriteLock(rid);

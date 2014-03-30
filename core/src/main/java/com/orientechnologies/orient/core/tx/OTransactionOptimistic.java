@@ -229,6 +229,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }
       }
 
+      close();
+
       status = TXSTATUS.COMPLETED;
     } else if (txStartCounter > 0)
       OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was not committed.");
@@ -280,11 +282,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     for (ORecordOperation v : allEntries.values())
       v.getRecord().unload();
 
-    indexEntries.clear();
-    temp2persistent.clear();
-    allEntries.clear();
-    recordIndexOperations.clear();
-    recordEntries.clear();
+    close();
 
     status = TXSTATUS.ROLLED_BACK;
   }

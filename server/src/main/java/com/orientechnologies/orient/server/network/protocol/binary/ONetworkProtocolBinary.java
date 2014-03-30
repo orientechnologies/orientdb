@@ -1044,7 +1044,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } catch (Exception e) {
       // Error during TX initialization, possibly index constraints violation.
       tx.rollback();
-      tx.close();
       sendError(clientTxId, e);
     }
   }
@@ -1362,10 +1361,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void endResponse() throws IOException {
-    // reseting transaction state. Commands are stateless and connection should be cleared
+    // resetting transaction state. Commands are stateless and connection should be cleared
     // otherwise reused connection (connections pool) may lead to unpredicted errors
     if (connection != null && connection.database != null && connection.database.getTransaction() != null)
-      connection.database.getTransaction().close();
+      connection.database.getTransaction().rollback();
     channel.flush();
     channel.releaseWriteLock();
   }
