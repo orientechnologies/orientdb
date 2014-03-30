@@ -168,12 +168,10 @@ public class DocumentTrackingTest {
 		final ODocument docTwo = new ODocument();
 		docTwo.save();
 
-
 		final ODocument document = new ODocument();
 
 		final Set<ORID> set = new HashSet<ORID>();
 		set.add(docOne.getIdentity());
-
 
 		document.field("linkset", set, OType.LINKSET);
 		document.field("val", 1);
@@ -185,10 +183,12 @@ public class DocumentTrackingTest {
 		final Set<ORID> trackedSet = document.field("linkset");
 		trackedSet.add(docTwo.getIdentity());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
-		Assert.assertNull(timeLine);
+		Assert.assertTrue(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
+		Assert.assertNotNull(timeLine);
+
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkset"});
 	}
 
 	public void testDocumentLinkListTrackingAfterSave() {
@@ -411,10 +411,12 @@ public class DocumentTrackingTest {
 		final Set<ORID> trackedSet = document.field("linkset");
 		trackedSet.add(docTwo.getIdentity());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
-		Assert.assertNull(timeLine);
+		Assert.assertTrue(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
+		Assert.assertNotNull(timeLine);
+
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkset"});
 
 		database.getLevel1Cache().setEnable(true);
 		database.getLevel2Cache().setEnable(true);
@@ -624,9 +626,9 @@ public class DocumentTrackingTest {
 		trackedSet.add(docTwo.getIdentity());
 
 		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
-		Assert.assertNull(timeLine);
+		Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkset"});
 	}
 
 	public void testDocumentLinkListTrackingAfterSaveWithClass() {

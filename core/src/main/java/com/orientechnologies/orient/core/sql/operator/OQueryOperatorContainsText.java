@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -116,31 +115,31 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+																	 boolean ascSortOrder, OIndex.IndexValuesResultListener resultListener) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
-      return null;
+      return false;
 
     final OIndex<?> internalIndex = index.getInternal();
 
-    final Object result;
-
     if (internalIndex instanceof OIndexFullText) {
       final Object indexResult = index.get(indexDefinition.createValue(keyParams));
-      if (indexResult instanceof Collection)
-        result = indexResult;
-      else if (indexResult == null)
-        result = Collections.emptyList();
-      else
-        result = Collections.singletonList((OIdentifiable) indexResult);
+      if (indexResult instanceof Collection) {
+				for (OIdentifiable identifiable : (Collection<OIdentifiable>)indexResult) {
+					if(!resultListener.addResult(identifiable))
+						break;
+				}
+			}
+      else if (indexResult != null)
+				resultListener.addResult((OIdentifiable) indexResult);
     } else
-      return null;
+      return false;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
 
-    return result;
+    return true;
   }
 
   @Override

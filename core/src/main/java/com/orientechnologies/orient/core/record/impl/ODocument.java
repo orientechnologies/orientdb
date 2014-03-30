@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
@@ -553,7 +554,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     final OType t = fieldType(iFieldName);
 
-    if (_lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
+    if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID
+        && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
         && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
@@ -1480,7 +1482,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         fieldsToUpdate
             .put(fieldEntry.getKey(), new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null));
       else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue));
+        fieldsToUpdate.put(fieldEntry.getKey(), new OMVRBTreeRIDSet(this, (Collection<OIdentifiable>) fieldValue));
       else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST) && !(fieldValue instanceof OTrackedMultiValue))
         fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyList(this, (List<OIdentifiable>) fieldValue));
       else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP) && !(fieldValue instanceof OTrackedMultiValue))

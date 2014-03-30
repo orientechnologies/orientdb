@@ -496,11 +496,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabaseObject hide(ORID rid, ORecordVersion version) {
-    throw new UnsupportedOperationException("hide");
-  }
-
-  @Override
   public ODatabaseComplex<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
     deleteRecord(iRID, iVersion, true);
     return this;

@@ -6,6 +6,10 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.Arrays;
 
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeMemory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

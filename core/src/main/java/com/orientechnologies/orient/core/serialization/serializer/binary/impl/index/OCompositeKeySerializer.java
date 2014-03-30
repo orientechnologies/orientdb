@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.serialization.serializer.binary.impl.i
 import java.io.IOException;
 import java.util.List;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;

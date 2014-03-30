@@ -242,7 +242,7 @@ public interface OIndex<T> {
   /**
    * Returns a set of records with key between the range passed as parameter. Range bounds are included.
    * 
-   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+   * In case of {@link OCompositeKey}s partial keys can be used as values boundaries.
    * 
    * 
    * 
@@ -253,7 +253,7 @@ public interface OIndex<T> {
    * 
    * @param ascSortOrder
    * @return a set of records with key between the range passed as parameter. Range bounds are included.
-   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+   * @see OCompositeKey#compareTo(OCompositeKey)
    * @see #getValuesBetween(Object, boolean, Object, boolean, boolean)
    */
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo, boolean ascSortOrder);
@@ -261,7 +261,7 @@ public interface OIndex<T> {
   /**
    * Returns a set of records with key between the range passed as parameter.
    * 
-   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+   * In case of {@link OCompositeKey}s partial keys can be used as values boundaries.
    * 
    * 
    * @param iRangeFrom
@@ -276,7 +276,7 @@ public interface OIndex<T> {
    * @param ascSortOrder
    * @return Returns a set of records with key between the range passed as parameter.
    * 
-   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+   * @see OCompositeKey#compareTo(OCompositeKey)
    * 
    */
   public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
@@ -332,7 +332,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
+  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -347,7 +347,7 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
 
-  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
+  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents with key between the range passed as parameter.
@@ -364,7 +364,7 @@ public interface OIndex<T> {
   public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
 
   public abstract void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      IndexEntriesResultListener entriesResultListener);
+																				 boolean ascOrder, IndexEntriesResultListener entriesResultListener);
 
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
 

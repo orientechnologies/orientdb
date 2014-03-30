@@ -5,16 +5,16 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
- * 
+ *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphFactory {
-  protected final String          url;
-  protected final String          user;
-  protected final String          password;
+  protected final String url;
+  protected final String user;
+  protected final String password;
 
   protected ODatabaseDocumentPool pool;
-  protected boolean               transactional = true;
+  protected boolean transactional = true;
 
   public OrientGraphFactory(final String iURL) {
     this(iURL, "admin", "admin");
@@ -33,9 +33,8 @@ public class OrientGraphFactory {
     }
   }
 
-  @Override
-  protected void finalize() throws Throwable {
-    close();
+  public void drop() {
+    getDatabase().drop();
   }
 
   public OrientBaseGraph get() {
@@ -43,28 +42,32 @@ public class OrientGraphFactory {
   }
 
   public OrientGraph getTx() {
-    if (pool == null)
+    if (pool == null) {
       return new OrientGraph(getDatabase());
-    else
+    } else {
       return new OrientGraph(pool);
+    }
   }
 
   public OrientGraphNoTx getNoTx() {
-    if (pool == null)
+    if (pool == null) {
       return new OrientGraphNoTx(getDatabase());
-    else
+    } else {
       return new OrientGraphNoTx(pool);
+    }
   }
 
   public ODatabaseDocumentTx getDatabase() {
-    if (pool != null)
+    if (pool != null) {
       return pool.acquire();
+    }
 
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    if (!db.getURL().startsWith("remote:") && !db.exists())
+    if (!db.getURL().startsWith("remote:") && !db.exists()) {
       db.create();
-    else
+    } else {
       db.open(user, password);
+    }
     return db;
   }
 
@@ -82,8 +85,9 @@ public class OrientGraphFactory {
     final ODatabaseDocumentTx db = getDatabase();
     db.close();
 
-		if (pool != null)
-			pool.close();
+    if (pool != null) {
+      pool.close();
+    }
 
     pool = new ODatabaseDocumentPool(url, user, password);
     pool.setup(iMin, iMax);
@@ -97,6 +101,11 @@ public class OrientGraphFactory {
   public OrientGraphFactory setTransactional(boolean transactional) {
     this.transactional = transactional;
     return this;
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    close();
   }
 
 }

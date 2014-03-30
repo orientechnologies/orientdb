@@ -78,14 +78,14 @@ public interface OIndexEngine<V> {
   void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
 											ValuesResultListener valuesResultListener);
 
-  void getEntriesMajor(final Object fromKey, final boolean isInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
+  void getEntriesMajor(final Object fromKey, final boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
+											 EntriesResultListener entriesResultListener);
 
-  void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
+  void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
+											 EntriesResultListener entriesResultListener);
 
-  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
+  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
+												 EntriesResultListener entriesResultListener);
 
   long size(ValuesTransformer<V> transformer);
 

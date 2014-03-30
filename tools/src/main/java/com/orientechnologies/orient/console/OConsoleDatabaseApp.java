@@ -208,6 +208,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("debug", "false");
     properties.put("maxBinaryDisplay", "160");
     properties.put("verbose", "2");
+    properties.put("ignoreErrors", "false");
     properties.put("backupCompressionLevel", "9"); // 9 = MAX
     properties.put("backupBufferSize", "1048576"); // 1MB
 

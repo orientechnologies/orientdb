@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.collate;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 
 /**

@@ -20,7 +20,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -289,7 +288,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   /**
    * Returns a set of records with key between the range passed as parameter. Range bounds are included.
    * <p/>
-   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+   * In case of {@link OCompositeKey}s partial keys can be used as values boundaries.
    * 
    * 
    * 
@@ -299,7 +298,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    *          Ending range
    * @param ascSortOrder
    * @return a set of records with key between the range passed as parameter. Range bounds are included.
-   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+   * @see OCompositeKey#compareTo(OCompositeKey)
    * @see OIndex#getValuesBetween(Object, boolean, Object, boolean, boolean)
    */
   public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
@@ -361,7 +360,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-    getEntriesMajor(fromKey, isInclusive, new IndexEntriesResultListener() {
+    getEntriesMajor(fromKey, isInclusive, true, new IndexEntriesResultListener() {
       @Override
       public boolean addResult(ODocument entry) {
         result.add(entry);
@@ -377,7 +376,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-    getEntriesMinor(toKey, isInclusive, new IndexEntriesResultListener() {
+    getEntriesMinor(toKey, isInclusive, true, new IndexEntriesResultListener() {
       @Override
       public boolean addResult(ODocument entry) {
         result.add(entry);
@@ -391,7 +390,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   /**
    * Returns a set of records with key between the range passed as parameter.
    * <p/>
-   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
+   * In case of {@link OCompositeKey}s partial keys can be used as values boundaries.
    * 
    * 
    * @param rangeFrom
@@ -404,7 +403,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
    *          Indicates whether end range boundary is included in result.
    * @param ascSortOrder
    * @return Returns a set of records with key between the range passed as parameter.
-   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
+   * @see OCompositeKey#compareTo(OCompositeKey)
    */
   public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, final boolean fromInclusive, Object rangeTo,
       final boolean toInclusive, boolean ascSortOrder) {
@@ -434,7 +433,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     final Set<ODocument> result = new ODocumentFieldsHashSet();
 
-    getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, new IndexEntriesResultListener() {
+    getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, true, new IndexEntriesResultListener() {
       @Override
       public boolean addResult(ODocument entry) {
         result.add(entry);

@@ -2078,10 +2078,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return null;
   }
 
-	@Override
-	public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
-		throw new UnsupportedOperationException("Given operation is not supported in current version.");
-	}
 
 	protected void init() {
     componentsFactory = new OCurrentStorageComponentsFactory(configuration);

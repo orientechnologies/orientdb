@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>1.7-rc2-SNAPSHOT</version>
+        <version>1.7-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -137,7 +137,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>-ea -Xss2048k -Dstorage.makeFullCheckpointAfterCreate=false
+                    <argLine>-ea -Xss2048k -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false
                     </argLine>

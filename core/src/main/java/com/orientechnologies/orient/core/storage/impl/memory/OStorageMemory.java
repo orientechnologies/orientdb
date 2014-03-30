@@ -602,12 +602,6 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
-      ORecordCallback<Boolean> iCallback) {
-    throw new UnsupportedOperationException("Given operation is not supported in current version.");
-  }
-
-  @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     return deleteRecord(recordId, recordVersion, false, callback);
   }

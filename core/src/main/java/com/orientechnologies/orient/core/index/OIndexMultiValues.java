@@ -327,33 +327,33 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, MultiValuesTransformer.INSTANCE,
-          new OIndexEngine.EntriesResultListener() {
-            @Override
-            public boolean addResult(ODocument entry) {
-              return entriesResultListener.addResult(entry);
-            }
-          });
+      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, ascOrder,
+							MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
+								@Override
+								public boolean addResult(ODocument entry) {
+									return entriesResultListener.addResult(entry);
+								}
+							});
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getEntriesMinor(Object iRangeTo, boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object iRangeTo, boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMinor(iRangeTo, isInclusive, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesMinor(iRangeTo, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);
@@ -365,7 +365,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean inclusive,
-      final IndexEntriesResultListener indexEntriesResultListener) {
+																boolean ascOrder, final IndexEntriesResultListener indexEntriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
@@ -379,7 +379,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, MultiValuesTransformer.INSTANCE,
+      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, ascOrder, MultiValuesTransformer.INSTANCE,
           new OIndexEngine.EntriesResultListener() {
             @Override
             public boolean addResult(ODocument entry) {

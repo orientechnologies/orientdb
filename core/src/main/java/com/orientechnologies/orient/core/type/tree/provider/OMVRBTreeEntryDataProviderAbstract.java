@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.type.tree.provider;
 
 import java.lang.ref.WeakReference;
 
-import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;

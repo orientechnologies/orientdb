@@ -138,7 +138,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
   @Override
   public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
-    return null;
+    return wrapped.getCollectionManagerClass();
   }
 
   public Object command(final OCommandRequestText iCommand) {
@@ -363,11 +363,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       return null;
     }
   }
-
-	@Override
-	public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode, ORecordCallback<Boolean> iCallback) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
   public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)

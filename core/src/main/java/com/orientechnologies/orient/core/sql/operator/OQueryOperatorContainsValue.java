@@ -111,28 +111,26 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
+      OIndex.IndexValuesResultListener resultListener) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
-
-    final Object result;
+      return false;
 
     if (indexDefinition.getParamCount() == 1) {
       if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
           .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-        return null;
+        return false;
 
       final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
 
       if (key == null)
-        return null;
+        return false;
 
       final Object indexResult = index.get(key);
-      result = convertIndexResult(indexResult);
+      convertIndexResult(indexResult, resultListener);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -140,44 +138,39 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
       if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
           .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-        return null;
+        return false;
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
-        return null;
+        return false;
 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-        if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-          result = resultListener.getResult();
-        } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);
-          result = convertIndexResult(indexResult);
+          convertIndexResult(indexResult, resultListener);
         } else
-          return null;
+          return false;
       }
 
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return true;
   }
 
-  private Object convertIndexResult(Object indexResult) {
-    Object result;
+  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
     if (indexResult instanceof Collection)
-      result = (Collection<?>) indexResult;
-    else if (indexResult == null)
-      result = Collections.emptyList();
-    else
-      result = Collections.singletonList((OIdentifiable) indexResult);
-    return result;
+      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult) {
+        if (!resultListener.addResult(identifiable))
+          return;
+      }
+    else if (indexResult != null)
+      resultListener.addResult((OIdentifiable) indexResult);
   }
 
   @Override

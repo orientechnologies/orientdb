@@ -66,7 +66,6 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_COUNT                           = 40; // DEPRECATED: USE REQUEST_DATACLUSTER_COUNT
   public static final byte  REQUEST_COMMAND                         = 41;
   public static final byte  REQUEST_POSITIONS_CEILING               = 42; // since 1.3.0
-  public static final byte  REQUEST_RECORD_HIDE                     = 43; // since 1.7-rc2
 
   public static final byte  REQUEST_TX_COMMIT                       = 60;
 

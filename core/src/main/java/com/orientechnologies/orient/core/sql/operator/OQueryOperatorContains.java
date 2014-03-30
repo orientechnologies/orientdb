@@ -121,15 +121,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
-      IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
+      OIndex.IndexValuesResultListener resultListener) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
-
-    final Object result;
+      return false;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
@@ -139,13 +137,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         key = indexDefinition.createValue(keyParams);
 
       if (key == null)
-        return null;
+        return false;
 
       final Object indexResult;
 
       indexResult = index.get(key);
 
-      result = convertIndexResult(indexResult);
+      convertIndexResult(indexResult, resultListener);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -155,40 +153,34 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
-        return null;
+        return false;
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
       if (internalIndex.hasRangeQuerySupport()) {
-        if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-          result = resultListener.getResult();
-        } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
       } else {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          result = convertIndexResult(indexResult);
+          convertIndexResult(indexResult, resultListener);
         } else
-          return null;
+          return false;
       }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return true;
   }
 
-  private Object convertIndexResult(Object indexResult) {
-    Object result;
-    if (indexResult instanceof Collection)
-      result = (Collection<?>) indexResult;
-    else if (indexResult == null)
-      result = Collections.emptyList();
-    else
-      result = Collections.singletonList((OIdentifiable) indexResult);
-    return result;
+  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
+    if (indexResult instanceof Collection) {
+      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult)
+        if (!resultListener.addResult(identifiable))
+          return;
+    } else if (indexResult != null)
+      resultListener.addResult((OIdentifiable) indexResult);
   }
 
   @Override
