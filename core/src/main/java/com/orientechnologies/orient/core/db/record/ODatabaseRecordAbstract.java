@@ -891,6 +891,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
+        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          record.lock(false);
+        else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+          record.lock(true);
+
         callbackHooks(TYPE.AFTER_READ, record);
         return (RET) record;
       }
