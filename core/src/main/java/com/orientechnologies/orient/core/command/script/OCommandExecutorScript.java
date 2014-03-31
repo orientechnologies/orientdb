@@ -146,8 +146,16 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
           final String variable = lastCommand.substring("return ".length()).trim();
 
-          lastResult = getContext().getVariable(variable);
+          if (variable.equalsIgnoreCase("NULL"))
+            lastResult = null;
+          else if (variable.startsWith("$"))
+            lastResult = getContext().getVariable(variable);
+          else
+            lastResult = variable;
+
+          // END OF THE SCRIPT
           break;
+
         } else
           lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
 
