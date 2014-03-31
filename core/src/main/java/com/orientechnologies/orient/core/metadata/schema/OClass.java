@@ -36,7 +36,7 @@ public interface OClass extends Comparable<OClass> {
 
   public static enum INDEX_TYPE {
     UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(
-        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true);
+        true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false);
 
     private final boolean automaticIndexable;
 
@@ -239,30 +239,6 @@ public interface OClass extends Comparable<OClass> {
    */
   public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
       String... fields);
-
-  /**
-   * Creates database index that is based on passed in field names. Given index will be added into class instance.
-   * 
-   * 
-   * @param iName
-   *          Database index name.
-   * @param iType
-   *          Index type.
-   * @param iProgressListener
-   *          Progress listener.
-   * 
-   * @param metadata
-   *          Additional parameters which will be added in index configuration document as "metadata" field.
-   * 
-   * @param algorithm
-   *          Algorithm to use for indexing.
-   * 
-   * @param fields
-   *          Field names from which index will be created. @return Class index registered inside of given class ans associated with
-   *          database index.
-   */
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
-      String algorithm, String... fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Default OrientDB index factory for indexes based on MVRBTree.<br>
@@ -51,8 +50,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
   public static final String       NONE_VALUE_CONTAINER         = "NONE";
 
   private static final Set<String> TYPES;
-  private static final Set<String> ALGORITHMS;
-
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE.toString());
@@ -60,12 +57,6 @@ public class ODefaultIndexFactory implements OIndexFactory {
     types.add(OClass.INDEX_TYPE.FULLTEXT.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY.toString());
     TYPES = Collections.unmodifiableSet(types);
-  }
-  static {
-    final Set<String> algorithms = new HashSet<String>();
-    algorithms.add(SBTREE_ALGORITHM);
-    algorithms.add(MVRBTREE_ALGORITHM);
-    ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
   /**
@@ -81,11 +72,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public Set<String> getAlgorithms() {
-    return ALGORITHMS;
-  }
-
-  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm,ODocument metadata)
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm)
       throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
       if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)

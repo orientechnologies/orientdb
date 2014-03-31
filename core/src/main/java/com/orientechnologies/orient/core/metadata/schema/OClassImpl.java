@@ -1184,13 +1184,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return createIndex(iName, iType.name(), iProgressListener, null, fields);
   }
 
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
-      String... fields) {
-    return createIndex(iName, iType, iProgressListener, metadata, null, fields);
-  }
-
   public OIndex<?> createIndex(final String name, String type, final OProgressListener progressListener, ODocument metadata,
-      String algorithm, final String... fields) {
+      final String... fields) {
     if (type == null)
       throw new IllegalArgumentException("Index type is null");
 
@@ -1237,7 +1232,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       indexDefinition.setCollate(collate);
 
     return getDatabase().getMetadata().getIndexManager()
-        .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);
+        .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata);
   }
 
   private List<OType> extractFieldTypes(String[] fieldNames) {
