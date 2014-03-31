@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -322,8 +323,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       else if (v instanceof OCommandRequest)
         v = ((OCommandRequest) v).execute(record, null, context);
 
-      if (coll != null)
-        coll.add(v);
+      if (coll != null) {
+        if (v instanceof OIdentifiable)
+          coll.add((OIdentifiable) v);
+        else
+          OMultiValue.add(coll, v);
+      }
       else {
         if (!(v instanceof OIdentifiable))
           throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
@@ -416,6 +421,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     return true;
   }
 
+  @Override
+  public String getSyntax() {
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+  }
+
+  @Override
+  public void end() {
+  }
+
   protected void parseMerge() {
     if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
       final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
@@ -425,6 +439,18 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     if (merge == null)
       throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
+  }
+
+  protected String getBlock(String fieldValue) {
+    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+      parserSkipWhiteSpaces();
+      final StringBuilder buffer = new StringBuilder();
+      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
+          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+      fieldValue = buffer.toString();
+    }
+    return fieldValue;
   }
 
   private void parseAddFields() {
@@ -518,26 +544,5 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
-  }
-
-  @Override
-  public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
-  }
-
-  @Override
-  public void end() {
-  }
-
-  protected String getBlock(String fieldValue) {
-    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-      parserSkipWhiteSpaces();
-      final StringBuilder buffer = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
-          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
-      fieldValue = buffer.toString();
-    }
-    return fieldValue;
   }
 }
