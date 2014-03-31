@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -1003,4 +1003,9 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
       releaseSharedLock();
     }
   }
+
+	@Override
+	public boolean hideRecord(OClusterPosition position) {
+		throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+	}
 }

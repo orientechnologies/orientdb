@@ -29,13 +29,6 @@ public class OJNADirectMemory implements ODirectMemory {
 
   public static final OJNADirectMemory INSTANCE  = new OJNADirectMemory();
 
-  @Override
-  public long allocate(byte[] bytes) {
-    final long pointer = allocate(bytes.length);
-    set(pointer, bytes, 0, bytes.length);
-
-    return pointer;
-  }
 
   @Override
   public long allocate(long size) {

@@ -1,13 +1,33 @@
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OCharSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
 
 /**
+ * Abstraction of pointer which points to allocated direct memory area.
+ * All access to direct memory should be performed ONLY using this class instance.
+ *
+ * Instance of this class can not be created directly.
+ * If you need to work with direct memory use following approach.
+ *
+ * <code>
+ *   ODirectMemory directMemory = ODirectMemoryFactory.directMemory();
+ *   ODirectMemoryPointer pointer = directMemory.allocate(1024); //size in bytes
+ *   //..do something
+ *   pointer.free();
+ * </code>
+ *
+ * but usually you will work with disk based data structures which work using disk cache so you will not allocate
+ * direct memory by yourself.
+ *
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 10/19/13
  */
 public class ODirectMemoryPointer {
-  private final boolean       SAFE_MODE    = !Boolean.valueOf(System.getProperty("memory.directMemory.unsafeMode"));
+  private final boolean       SAFE_MODE    = Boolean.valueOf(System.getProperty("memory.directMemory.safeMode"));
 
   private final ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
 
@@ -26,10 +46,11 @@ public class ODirectMemoryPointer {
   public ODirectMemoryPointer(byte[] data) {
     if (data.length == 0)
       throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but 0 was provided.");
+		this.pageSize = data.length;
+		this.dataPointer = directMemory.allocate(pageSize);
 
-    this.dataPointer = directMemory.allocate(data);
-    this.pageSize = data.length;
-  }
+		set(0, data, 0, data.length);
+	}
 
   public byte[] get(long offset, int length) {
     if (SAFE_MODE)

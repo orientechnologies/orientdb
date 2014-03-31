@@ -2,16 +2,14 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
-import org.hamcrest.core.AnyOf;
-import org.hamcrest.core.IsEqual;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -21,7 +19,7 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphNoTxTest extends GraphTest {
-  private OrientGraphNoTx currentGraph;
+  private Map<String, OrientGraphNoTx> currentGraphs = new HashMap<String, OrientGraphNoTx>();
 
   // testing only those suites that are read-only
 
@@ -79,9 +77,23 @@ public class OrientGraphNoTxTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String directory = getWorkingDirectory();
-    this.currentGraph = new OrientGraphNoTx("plocal:" + directory + "/" + graphDirectoryName);
-    return this.currentGraph;
+    final String url = "plocal:" + getWorkingDirectory() + "/" + graphDirectoryName;
+
+    OrientGraphNoTx graph = currentGraphs.get(url);
+
+    if (graph != null) {
+      if (graph.isClosed())
+        currentGraphs.remove(url);
+      else
+        return graph;
+    }
+
+    graph = new OrientGraphNoTx(url);
+    graph.setWarnOnForceClosingTx(false);
+
+    currentGraphs.put(url, graph);
+
+    return graph;
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
@@ -91,19 +103,29 @@ public class OrientGraphNoTxTest extends GraphTest {
       if (method.getName().startsWith("test")) {
         System.out.println("Testing " + method.getName() + "...");
         method.invoke(testSuite);
-        try {
-          if (this.currentGraph.isClosed())
-            currentGraph = new OrientGraphNoTx("plocal:" + directory + "/graph");
-
-          this.currentGraph.drop();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+        dropGraph("graph");
       }
     }
   }
 
   private String getWorkingDirectory() {
     return this.computeTestDataRoot().getAbsolutePath();
+  }
+
+  @Override
+  public void dropGraph(String graphDirectoryName) {
+    final String graphDirectory = getWorkingDirectory() + "/" + graphDirectoryName;
+    final String url = "plocal:" + graphDirectory;
+    try {
+      OrientGraphNoTx graph = currentGraphs.remove(url);
+      if (graph == null || graph.isClosed())
+        graph = new OrientGraphNoTx(url);
+
+      graph.drop();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    deleteDirectory(new File(graphDirectory));
   }
 }

@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import java.util.List;
 
 /**
- * Wraps functions managing the binding of parameters.
+ * Wraps function managing the binding of parameters.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -162,7 +162,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
     function = OSQLEngine.getInstance().getFunction(funcName);
     if (function == null)
-      throw new OCommandSQLParsingException("Unknow function " + funcName + "()");
+      throw new OCommandSQLParsingException("Unknown function " + funcName + "()");
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];

@@ -85,14 +85,13 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
+																	 OIndex.IndexValuesResultListener resultListener) {
     final OIndexDefinition indexDefinition = index.getDefinition();
-    final Object result;
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
-      return null;
+      return false;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object[] betweenKeys = (Object[]) keyParams.get(0);
@@ -101,14 +100,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
 
       if (keyOne == null || keyTwo == null)
-        return null;
+        return false;
 
-      if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
+      index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -117,12 +111,12 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       final Object betweenKeyOne = OSQLHelper.getValue(betweenKeys[0]);
 
       if (betweenKeyOne == null)
-        return null;
+        return false;
 
       final Object betweenKeyTwo = OSQLHelper.getValue(betweenKeys[2]);
 
       if (betweenKeyTwo == null)
-        return null;
+        return false;
 
       final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
       betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
@@ -135,23 +129,18 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = compositeIndexDefinition.createSingleValue(betweenKeyOneParams);
 
       if (keyOne == null)
-        return null;
+        return false;
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(betweenKeyTwoParams);
 
       if (keyTwo == null)
-        return null;
+        return false;
 
-      if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true);
-
+      index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return true;
   }
 
   @Override

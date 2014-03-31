@@ -15,11 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -44,16 +53,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -74,8 +74,8 @@ import java.util.Set;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterator<OIdentifiable>,
-    Iterable<OIdentifiable> {
+public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterable<OIdentifiable>,
+    OIterableRecordSource {
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
   protected static final String                    KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
@@ -139,9 +139,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         searchInClasses();
       else if (parsedTarget.getTargetClusters() != null)
         searchInClusters();
-      else if (parsedTarget.getTargetRecords() != null)
-        target = parsedTarget.getTargetRecords().iterator();
-      else if (parsedTarget.getTargetVariable() != null) {
+      else if (parsedTarget.getTargetRecords() != null) {
+        if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
+          target = ((OIterableRecordSource) parsedTarget.getTargetRecords()).iterator(iArgs);
+        } else {
+          target = parsedTarget.getTargetRecords().iterator();
+        }
+      } else if (parsedTarget.getTargetVariable() != null) {
         final Object var = getContext().getVariable(parsedTarget.getTargetVariable());
         if (var == null) {
           target = Collections.EMPTY_LIST.iterator();
@@ -165,6 +169,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (!(d instanceof OIdentifiable))
             // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
             d = new ODocument().field("value", d);
+          else if (!(d instanceof ORID || d instanceof ORecord))
+            d = ((OIdentifiable) d).getRecord();
 
           if (!request.getResultListener().result(d))
             break;
@@ -183,13 +189,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
 
-      if (recordCopy != null)
-        // CALL THE LISTENER NOW
-        if (request.getResultListener() != null) {
-          final boolean result = request.getResultListener().result(recordCopy);
-          if (!result)
-            return false;
-        }
+      // CALL THE LISTENER NOW
+      if (recordCopy != null && request.getResultListener() != null) {
+        final boolean result = request.getResultListener().result(recordCopy);
+        if (!result)
+          return false;
+      }
 
       if (limit > -1 && resultCount >= limit)
         // BREAK THE EXECUTION
@@ -234,7 +239,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * 
    * @param w
    * 
-   * @return
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
    * @throws OCommandSQLParsingException
    *           if no valid limit has been found
@@ -263,7 +267,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * 
    * @param w
    * 
-   * @return
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
    * @throws OCommandSQLParsingException
    *           if no valid skip has been found
@@ -357,9 +360,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
+
+    OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
+
     final ORID[] range = getRange();
-    target = new ORecordIteratorClass<ORecordInternal<?>>(database, (ODatabaseRecordAbstract) database, cls.getName(), true,
-        request.isUseCache(), false).setRange(range[0], range[1]);
+    target = new ORecordIteratorClass<ORecordInternal<?>>(database, database, cls.getName(), true, request.isUseCache(), false,
+        locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -398,8 +405,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
 
-    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, database, clIds, request.isUseCache(), false).setRange(
-        range[0], range[1]);
+    final OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
+
+    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, database, clIds, request.isUseCache(), false, locking)
+        .setRange(range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {
@@ -422,8 +432,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Optimizes the condition tree.
-   * 
-   * @return
    */
   protected void optimize() {
     if (compiledFilter != null)

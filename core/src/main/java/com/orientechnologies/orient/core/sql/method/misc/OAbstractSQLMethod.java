@@ -110,4 +110,8 @@ public abstract class OAbstractSQLMethod implements OSQLMethod {
     return name;
   }
 
+  @Override
+  public boolean evaluateParameters() {
+    return true;
+  }
 }

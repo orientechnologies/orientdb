@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
@@ -30,6 +22,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ODefaultCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+
+import java.io.PrintStream;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -56,11 +56,11 @@ public enum OGlobalConfiguration {
       "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
       String.class, "70%"),
 
-  DIRECT_MEMORY_UNSAFE_MODE(
-      "memory.directMemory.unsafeMode",
-      "Indicates whether to do perform range check before each direct memory update, it is false by default, "
-          + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
-      Boolean.class, false),
+  DIRECT_MEMORY_SAFE_MODE(
+      "memory.directMemory.safeMode",
+      "Indicates whether to do perform range check before each direct memory update, it is true by default, "
+          + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
@@ -244,6 +244,8 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
+	INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
+
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
@@ -324,7 +326,8 @@ public enum OGlobalConfiguration {
       "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
-      "Amount of values after which LINKBAG implementation will use embedded values container", Integer.class, 60),
+      "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
+      Integer.class, -1),
 
   // COLLECTIONS
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
@@ -507,14 +510,17 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
 
   // DISTRIBUTED
-  DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
-      10000),
-
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
+      "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
+      "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
 
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
       Integer.class, 5000l),
@@ -700,6 +706,6 @@ public enum OGlobalConfiguration {
     }
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
+    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
   }
 }

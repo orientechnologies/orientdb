@@ -17,13 +17,12 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.*;
 
-import com.orientechnologies.common.collection.OAlwaysGreaterKey;
-import com.orientechnologies.common.collection.OAlwaysLessKey;
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -96,14 +95,21 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   }
 
   @Override
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-    final Collection<?> keys = new ArrayList<Object>(iKeys);
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges == null) {
-      result.addAll(super.getValues(keys));
-      return result;
-    }
+
+    if (indexChanges == null)
+      return super.getValues(iKeys, ascSortOrder);
+
+    final Comparator<Object> comparator;
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    final TreeMap<Object, OIdentifiable> result = new TreeMap<Object, OIdentifiable>(comparator);
+
+    final Collection<?> keys = new ArrayList<Object>(iKeys);
 
     final Set<Object> keysToRemove = new HashSet<Object>();
     final Map<Object, OIdentifiable> keyValueEntries = new HashMap<Object, OIdentifiable>();
@@ -116,14 +122,20 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     final Map<Object, OIdentifiable> keyResult = filterIndexChanges(indexChanges, keyValueEntries, keysToRemove);
+
+    for (Map.Entry<Object, OIdentifiable> keyResultEntry : keyResult.entrySet())
+      result.put(keyResultEntry.getKey(), keyResultEntry.getValue().getIdentity());
+
     keys.removeAll(keysToRemove);
 
-    result.addAll(keyResult.values());
+    if (!keys.isEmpty()) {
+      final Collection<ODocument> entries = super.getEntries(keys);
 
-    if (!keys.isEmpty())
-      result.addAll(super.getValues(keys));
+      for (ODocument entry : entries)
+        result.put(entry.field("key"), entry.<OIdentifiable> field("rid", OType.LINK));
+    }
 
-    return result;
+    return result.values();
   }
 
   @Override

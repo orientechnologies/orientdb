@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.*;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -50,6 +49,16 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
@@ -61,68 +70,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Long                 MIN_INT               = new Long(Integer.MIN_VALUE);
   private static final Double               MAX_FLOAT             = new Double(Float.MAX_VALUE);
   private static final Double               MIN_FLOAT             = new Double(Float.MIN_VALUE);
-
-  public class FormatSettings {
-    public boolean includeVer;
-    public boolean includeType;
-    public boolean includeId;
-    public boolean includeClazz;
-    public boolean attribSameRow;
-    public boolean alwaysFetchEmbeddedDocuments;
-    public int     indentLevel;
-    public String  fetchPlan   = null;
-    public boolean keepTypes   = true;
-    public boolean dateAsLong  = false;
-    public boolean prettyPrint = false;
-
-    public FormatSettings(final String iFormat) {
-      if (iFormat == null) {
-        includeType = true;
-        includeVer = true;
-        includeId = true;
-        includeClazz = true;
-        attribSameRow = true;
-        indentLevel = 1;
-        fetchPlan = "";
-        keepTypes = true;
-        alwaysFetchEmbeddedDocuments = true;
-      } else {
-        includeType = false;
-        includeVer = false;
-        includeId = false;
-        includeClazz = false;
-        attribSameRow = false;
-        alwaysFetchEmbeddedDocuments = false;
-        indentLevel = 1;
-        keepTypes = false;
-
-        final String[] format = iFormat.split(",");
-        for (String f : format)
-          if (f.equals("type"))
-            includeType = true;
-          else if (f.equals("rid"))
-            includeId = true;
-          else if (f.equals("version"))
-            includeVer = true;
-          else if (f.equals("class"))
-            includeClazz = true;
-          else if (f.equals("attribSameRow"))
-            attribSameRow = true;
-          else if (f.startsWith("indent"))
-            indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
-          else if (f.startsWith("fetchPlan"))
-            fetchPlan = f.substring(f.indexOf(':') + 1);
-          else if (f.startsWith("keepTypes"))
-            keepTypes = true;
-          else if (f.startsWith("alwaysFetchEmbedded"))
-            alwaysFetchEmbeddedDocuments = true;
-          else if (f.startsWith("dateAsLong"))
-            dateAsLong = true;
-          else if (f.startsWith("prettyPrint"))
-            prettyPrint = true;
-      }
-    }
-  }
 
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
@@ -199,6 +146,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           ((ODocument) iRecord).setClassNameIfExists("null".equals(fieldValueAsString) ? null : fieldValueAsString);
         }
       }
+
+      if (iRecord == null)
+        iRecord = new ODocument();
 
       try {
         int recordVersion = 0;
@@ -303,7 +253,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       } catch (Exception e) {
         e.printStackTrace();
-        throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
+        if (iRecord.getIdentity().isValid())
+          throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
+        else
+          throw new OSerializationException("Error on unmarshalling JSON content for record: " + iSource, e);
       }
     }
     return iRecord;
@@ -633,5 +586,67 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   @Override
   public String toString() {
     return NAME;
+  }
+
+  public class FormatSettings {
+    public boolean includeVer;
+    public boolean includeType;
+    public boolean includeId;
+    public boolean includeClazz;
+    public boolean attribSameRow;
+    public boolean alwaysFetchEmbeddedDocuments;
+    public int     indentLevel;
+    public String  fetchPlan   = null;
+    public boolean keepTypes   = true;
+    public boolean dateAsLong  = false;
+    public boolean prettyPrint = false;
+
+    public FormatSettings(final String iFormat) {
+      if (iFormat == null) {
+        includeType = true;
+        includeVer = true;
+        includeId = true;
+        includeClazz = true;
+        attribSameRow = true;
+        indentLevel = 1;
+        fetchPlan = "";
+        keepTypes = true;
+        alwaysFetchEmbeddedDocuments = true;
+      } else {
+        includeType = false;
+        includeVer = false;
+        includeId = false;
+        includeClazz = false;
+        attribSameRow = false;
+        alwaysFetchEmbeddedDocuments = false;
+        indentLevel = 1;
+        keepTypes = false;
+
+        final String[] format = iFormat.split(",");
+        for (String f : format)
+          if (f.equals("type"))
+            includeType = true;
+          else if (f.equals("rid"))
+            includeId = true;
+          else if (f.equals("version"))
+            includeVer = true;
+          else if (f.equals("class"))
+            includeClazz = true;
+          else if (f.equals("attribSameRow"))
+            attribSameRow = true;
+          else if (f.startsWith("indent"))
+            indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
+          else if (f.startsWith("fetchPlan"))
+            fetchPlan = f.substring(f.indexOf(':') + 1);
+          else if (f.startsWith("keepTypes"))
+            keepTypes = true;
+          else if (f.startsWith("alwaysFetchEmbedded"))
+            alwaysFetchEmbeddedDocuments = true;
+          else if (f.startsWith("dateAsLong"))
+            dateAsLong = true;
+          else if (f.startsWith("prettyPrint"))
+            prettyPrint = true;
+      }
+    }
   }
 }

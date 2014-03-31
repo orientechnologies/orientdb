@@ -15,26 +15,20 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.ByteArrayInputStream;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
 /**
- * Copy database in chunks.
+ * Ask for a database chunk.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -42,59 +36,45 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   private static final long serialVersionUID = 1L;
 
-  private String            databaseName;
-  private boolean           lastChunk        = false;
-  private byte[]            chunkContent;
+  private String            fileName;
+  private int               chunkNum;
+  private long              offset;
 
   public OCopyDatabaseChunkTask() {
   }
 
-  public OCopyDatabaseChunkTask(final byte[] chunk) {
-    chunkContent = chunk;
+  public OCopyDatabaseChunkTask(final String iFileName, final int iChunkNum, final long iOffset) {
+    fileName = iFileName;
+    chunkNum = iChunkNum;
+    offset = iOffset;
   }
 
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
+    final File f = new File(fileName);
+    if (!f.exists())
+      throw new IllegalArgumentException("File name '" + fileName + "' not found");
 
-    ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-        "writing database %s in chunk to disk size=%d...", database.getName(), chunkContent.length);
+    final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(0, f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
 
-    final File f = new File("importDatabase/" + database.getName());
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+        "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
 
-    final FileOutputStream out = new FileOutputStream(f, true);
-    try {
-      final ByteArrayInputStream in = new ByteArrayInputStream(chunkContent);
-      try {
-        OIOUtils.copyStream(in, out, chunkContent.length);
-      } finally {
-        in.close();
-      }
-    } finally {
-      out.close();
-    }
-
-    if (lastChunk)
-      try {
-        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "importing database %s...",
-            database.getName());
-
-        final ODatabaseImport importDb = new ODatabaseImport(database, f.getAbsolutePath(), null);
-        try {
-          importDb.importDatabase();
-        } finally {
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "database %s imported correctly", database.getName());
-
-          importDb.close();
-        }
-      } finally {
-        OFileUtils.deleteRecursively(new File("importDatabase"));
-      }
-
-    return Boolean.TRUE;
+    return result;
   }
 
+  @Override
+  public boolean isRequireNodeOnline() {
+    return false;
+  }
+
+  @Override
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.ANY;
+  }
+
+  @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
@@ -105,26 +85,21 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixUpdateRecordTask getFixTask(ODistributedRequest iRequest, ODistributedResponse iBadResponse, ODistributedResponse iGoodResponse) {
-    return null;
-  }
-
-  @Override
   public String getName() {
-    return "deploy_db";
+    return "copy_db_chunk";
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(databaseName);
-    out.write(chunkContent);
-    out.writeBoolean(lastChunk);
+    out.writeUTF(fileName);
+    out.writeInt(chunkNum);
+    out.writeLong(offset);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    databaseName = in.readUTF();
-    in.read(chunkContent);
-    lastChunk = in.readBoolean();
+    fileName = in.readUTF();
+    chunkNum = in.readInt();
+    offset = in.readLong();
   }
 }

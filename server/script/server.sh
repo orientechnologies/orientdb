@@ -55,6 +55,12 @@ then
   CONFIG_FILE=$ORIENTDB_HOME/config/orientdb-server-config.xml
 fi
 
+# Raspberry Pi check (Java VM does not run with -server argument on ARMv6)
+if [ `uname -m` != "armv6l" ]; then
+  JAVA_OPTS="$JAVA_OPTS -server "
+fi
+export JAVA_OPTS
+
 # Set JavaHome if it exists
 if [ -f "${JAVA_HOME}/bin/java" ]; then 
    JAVA=${JAVA_HOME}/bin/java
@@ -65,7 +71,7 @@ export JAVA
 
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 WWW_PATH=$ORIENTDB_HOME/www
-ORIENTDB_SETTINGS="-Dprofiler.enabled=true -Dcache.level1.enabled=false -Dcache.level2.enabled=false"
+ORIENTDB_SETTINGS="-Dprofiler.enabled=true"
 JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 
-$JAVA -server $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain
+$JAVA $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain

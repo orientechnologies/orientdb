@@ -327,9 +327,9 @@ public abstract class OBaseParser {
   /**
    * Parses the next word.
    * 
-   * @param iUpperCase
+   * @param iForceUpperCase
    *          True if must return UPPERCASE, otherwise false
-   * @param iSeparators
+   * @param iSeparatorChars
    *          Separator characters
    */
   protected void parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
@@ -362,43 +362,52 @@ public abstract class OBaseParser {
 
     try {
       int openParenthesis = 0;
-      int openBraket = 0;
+      int openBracket = 0;
       int openGraph = 0;
-      boolean escape = false;
+
+      int escapePos = -1;
 
       for (; parserCurrentPos < text2Use.length(); parserCurrentPos++) {
         final char c = text2Use.charAt(parserCurrentPos);
 
-        if (!escape && c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
+        if (c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
           // ESCAPE CHARS
-          final char nextChar = text2Use.charAt(parserCurrentPos + 1);
 
-          if (nextChar == 'u') {
-            parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
-          } else {
-            // parserLastWord.append(c);
-            parserLastWord.append(nextChar);
-            parserCurrentPos++;
-          }
+          if (openGraph == 0) {
+            final char nextChar = text2Use.charAt(parserCurrentPos + 1);
 
-          continue;
+            if (nextChar == 'u') {
+              parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
+            } else {
+              parserLastWord.append(nextChar);
+              parserCurrentPos++;
+            }
+
+            continue;
+          } else
+            escapePos = parserCurrentPos;
         }
 
-        if (openBraket == 0 && openGraph == 0 && openParenthesis == 0 && !escape && (c == '\'' || c == '"')) {
+        if (escapePos == -1 && (c == '\'' || c == '"')) {
           if (stringBeginChar != ' ') {
             // CLOSE THE STRING?
             if (stringBeginChar == c) {
               // SAME CHAR AS THE BEGIN OF THE STRING: CLOSE IT AND PUSH
               stringBeginChar = ' ';
-              parserLastWord.append(c);
-              parserCurrentPos++;
-              break;
+
+              if (openBracket == 0 && openGraph == 0 && openParenthesis == 0) {
+                parserCurrentPos++;
+                parserLastWord.append(c);
+                break;
+              }
             }
           } else
             // START STRING
             stringBeginChar = c;
-        } else if (stringBeginChar == ' ') {
-          if (openBraket == 0 && openGraph == 0 && openParenthesis == 0 && parserCheckSeparator(c, iSeparatorChars)) {
+        }
+
+        if (stringBeginChar == ' ') {
+          if (openBracket == 0 && openGraph == 0 && openParenthesis == 0 && parserCheckSeparator(c, iSeparatorChars)) {
             // SEPARATOR FOUND!
             break;
           } else if (c == '(')
@@ -406,25 +415,25 @@ public abstract class OBaseParser {
           else if (c == ')' && openParenthesis > 0)
             openParenthesis--;
           else if (c == '[')
-            openBraket++;
-          else if (c == ']' && openBraket > 0)
-            openBraket--;
+            openBracket++;
+          else if (c == ']' && openBracket > 0)
+            openBracket--;
           else if (c == '{')
             openGraph++;
           else if (c == '}' && openGraph > 0)
             openGraph--;
         }
 
-        parserLastWord.append(c);
+        if (escapePos != parserCurrentPos)
+          escapePos = -1;
 
-        if (escape)
-          escape = false;
+        parserLastWord.append(c);
       }
 
       // CHECK MISSING CHARACTER
       if (stringBeginChar != ' ')
         throw new IllegalStateException("Missing closed string character: '" + stringBeginChar + "', position: " + parserCurrentPos);
-      if (openBraket > 0)
+      if (openBracket > 0)
         throw new IllegalStateException("Missing closed braket character: ']', position: " + parserCurrentPos);
       if (openGraph > 0)
         throw new IllegalStateException("Missing closed graph character: '}', position: " + parserCurrentPos);

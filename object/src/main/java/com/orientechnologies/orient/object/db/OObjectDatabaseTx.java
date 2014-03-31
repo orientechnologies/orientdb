@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -279,11 +282,12 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) load(iPojo, iFetchPlan, iIgnoreCache, false);
+    return (RET) load(iPojo, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
     if (iPojo == null)
       return null;
@@ -293,7 +297,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     try {
       record.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-      record = underlying.load(record, iFetchPlan, iIgnoreCache, loadTombstone);
+      record = underlying.load(record, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
 
       return (RET) stream2pojo(record, iPojo, iFetchPlan);
     } finally {
@@ -310,17 +314,19 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) load(iRecordId, iFetchPlan, iIgnoreCache, false);
+    return (RET) load(iRecordId, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
+  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
     if (iRecordId == null)
       return null;
 
     // GET THE ASSOCIATED DOCUMENT
-    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone);
+    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
     if (record == null)
       return null;
 
@@ -564,29 +570,33 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> commit() {
-    try {
-      // BY PASS DOCUMENT DB
-      ((ODatabaseRecordTx) underlying.getUnderlying()).commit();
+    // BY PASS DOCUMENT DB
+    return (ODatabasePojoAbstract<Object>) commit(false);
+  }
 
-      if (getTransaction().getAllRecordEntries() != null) {
-        // UPDATE ID & VERSION FOR ALL THE RECORDS
-        Object pojo = null;
-        for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
-          switch (entry.type) {
-          case ORecordOperation.CREATED:
-          case ORecordOperation.UPDATED:
-            break;
+  @Override
+  public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
+    ((ODatabaseRecordTx) underlying.getUnderlying()).commit(force);
 
-          case ORecordOperation.DELETED:
-            final ORecordInternal<?> rec = entry.getRecord();
-            if (rec instanceof ODocument)
-              unregisterPojo(pojo, (ODocument) rec);
-            break;
-          }
+    if (getTransaction().isActive())
+      return this;
+
+    if (getTransaction().getAllRecordEntries() != null) {
+      // UPDATE ID & VERSION FOR ALL THE RECORDS
+      Object pojo = null;
+      for (ORecordOperation entry : getTransaction().getAllRecordEntries()) {
+        switch (entry.type) {
+        case ORecordOperation.CREATED:
+        case ORecordOperation.UPDATED:
+          break;
+
+        case ORecordOperation.DELETED:
+          final ORecordInternal<?> rec = entry.getRecord();
+          if (rec instanceof ODocument)
+            unregisterPojo(pojo, (ODocument) rec);
+          break;
         }
       }
-    } finally {
-      getTransaction().close();
     }
 
     return this;
@@ -594,7 +604,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> rollback() {
-    try {
+    return rollback(false);
+  }
+
+  @Override
+  public ODatabasePojoAbstract<Object> rollback(boolean force) throws OTransactionException {
+    // BY PASS DOCUMENT DB
+    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback(force);
+
+    if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
       final List<ORecordOperation> newEntries;
       if (getTransaction().getCurrentRecordEntries() != null) {
@@ -604,12 +622,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
             newEntries.add(entry);
       } else
         newEntries = null;
-
-      // BY PASS DOCUMENT DB
-      ((ODatabaseRecordTx) underlying.getUnderlying()).rollback();
-
-    } finally {
-      getTransaction().close();
     }
 
     return this;

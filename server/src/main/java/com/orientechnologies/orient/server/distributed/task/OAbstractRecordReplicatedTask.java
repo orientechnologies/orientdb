@@ -17,6 +17,11 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed create record task used for synchronization.
@@ -55,6 +60,22 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public void setVersion(ORecordVersion version) {
     this.version = version;
+  }
+
+  @Override
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeUTF(rid.toString());
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
+    version.getSerializer().writeTo(out, version);
+  }
+
+  @Override
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    rid = new ORecordId(in.readUTF());
+    if (version == null)
+      version = OVersionFactory.instance().createUntrackedVersion();
+    version.getSerializer().readFrom(in, version);
   }
 
   @Override

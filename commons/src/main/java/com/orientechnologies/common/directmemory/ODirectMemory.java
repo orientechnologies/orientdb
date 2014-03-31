@@ -30,15 +30,6 @@ public interface ODirectMemory {
   public long NULL_POINTER = 0;
 
   /**
-   * Allocates amount of memory that is needed to write passed in byte array and writes it.
-   * 
-   * @param bytes
-   *          Data that is needed to be written.
-   * @return Pointer to the allocated piece of memory.
-   */
-  long allocate(byte[] bytes);
-
-  /**
    * Allocates given amount of memory (in bytes) from pool and returns pointer on allocated memory or {@link #NULL_POINTER} if there
    * is no enough memory in pool.
    * 

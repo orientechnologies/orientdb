@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
@@ -32,10 +35,22 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       }
 
     try {
+      fetchRecord(iRecord, new ORemoteFetchListener() {
+        @Override
+        protected void sendRecord(ORecord<?> iLinked) {
+          try {
+            if (protocol.connection.data.protocolVersion >= 17) {
+              protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
+              protocol.writeIdentifiable(iLinked);
+            }
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Cannot write against channel", e);
+          }
+        }
+      });
+
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
       protocol.writeIdentifiable((ORecordInternal<?>) ((OIdentifiable) iRecord).getRecord());
-
-      fetchRecord(iRecord);
 
     } catch (IOException e) {
       return false;

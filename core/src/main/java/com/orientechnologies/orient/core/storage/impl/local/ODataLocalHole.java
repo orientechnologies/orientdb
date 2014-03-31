@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import com.orientechnologies.common.collection.OMVRBTreeMemory;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeMemory;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;

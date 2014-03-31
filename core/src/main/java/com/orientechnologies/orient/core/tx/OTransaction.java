@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,83 +24,101 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.util.HashMap;
+import java.util.List;
+
 public interface OTransaction {
-    public enum TXTYPE {
-        NOTX, OPTIMISTIC, PESSIMISTIC
-    }
+  public enum TXTYPE {
+    NOTX, OPTIMISTIC, PESSIMISTIC
+  }
 
-    public enum TXSTATUS {
-        INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED
-    }
+  public enum TXSTATUS {
+    INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
+  }
 
-    public void begin();
+  public void begin();
 
-    public void commit();
+  public void commit();
 
-    public void rollback();
+  public void commit(boolean force);
 
-    public ODatabaseRecordTx getDatabase();
+  public void rollback();
 
-    public void clearRecordEntries();
+  public void rollback(boolean force, int commitLevelDiff);
 
-    public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
-                                         boolean loadTombstone);
+  public ODatabaseRecordTx getDatabase();
 
-    public boolean updateReplica(ORecordInternal<?> iRecord);
+  public void clearRecordEntries();
 
-    public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
-                           ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+  public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
+      boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
-    public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
+  public boolean updateReplica(ORecordInternal<?> iRecord);
 
-    public int getId();
+  public void saveRecord(ORecordInternal<?> iContent, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
-    public TXSTATUS getStatus();
+  public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
 
-    public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
+  public int getId();
 
-    public Iterable<? extends ORecordOperation> getAllRecordEntries();
+  public TXSTATUS getStatus();
 
-    public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
+  public Iterable<? extends ORecordOperation> getCurrentRecordEntries();
 
-    public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
+  public Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-    public ORecordInternal<?> getRecord(ORID iRid);
+  public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
 
-    public ORecordOperation getRecordEntry(ORID rid);
+  public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 
-    public List<String> getInvolvedIndexes();
+  public ORecordInternal<?> getRecord(ORID iRid);
 
-    public ODocument getIndexChanges();
+  public ORecordOperation getRecordEntry(ORID rid);
 
-    public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
-                              final Object iKey, final OIdentifiable iValue);
+  public List<String> getInvolvedIndexes();
 
-    public void clearIndexEntries();
+  public ODocument getIndexChanges();
 
-    public OTransactionIndexChanges getIndexChanges(String iName);
+  public void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
+      final Object iKey, final OIdentifiable iValue);
 
-    /**
-     * Tells if the transaction is active.
-     *
-     * @return
-     */
-    public boolean isActive();
+  public void clearIndexEntries();
 
-    public boolean isUsingLog();
+  public OTransactionIndexChanges getIndexChanges(String iName);
 
-    public void setUsingLog(boolean useLog);
+  /**
+   * Tells if the transaction is active.
+   * 
+   * @return
+   */
+  public boolean isActive();
 
-    public void close();
+  public boolean isUsingLog();
 
-    /**
-     * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
-     * to fix them given method will be called for each entry. This update local transaction maps too.
-     *
-     * @param oldRid Record identity before commit.
-     * @param newRid Record identity after commit.
-     */
-    public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+  public void setUsingLog(boolean useLog);
+
+  public void close();
+
+  /**
+   * When commit in transaction is performed all new records will change their identity, but index values will contain stale links,
+   * to fix them given method will be called for each entry. This update local transaction maps too.
+   * 
+   * @param oldRid
+   *          Record identity before commit.
+   * @param newRid
+   *          Record identity after commit.
+   */
+  public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
+
+  public int amountOfNestedTxs();
+
+  public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  public OTransaction unlockRecord(OIdentifiable iRecord);
+
+  HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords();
 }

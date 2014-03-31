@@ -16,10 +16,27 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.io.*;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -583,8 +600,6 @@ public class OWriteAheadLog {
     private OLogSequenceNumber                    pendingLSNToFlush;
 
     private volatile boolean                      flushNewData   = true;
-    private WeakReference<HashMap<Long, byte[]>>  readCache      = new WeakReference<HashMap<Long, byte[]>>(
-                                                                     new HashMap<Long, byte[]>());
 
     private LogSegment(File file, int maxPagesCacheSize) throws IOException {
       this.file = file;
@@ -656,12 +671,14 @@ public class OWriteAheadLog {
     }
 
     private long extractOrder(String name) {
-      int walOrderStartIndex = name.indexOf('.') + 1;
+      final Matcher matcher = Pattern.compile("^.*\\.(\\d+)\\.wal$").matcher(name);
 
-      int walOrderEndIndex = name.indexOf('.', walOrderStartIndex);
-      String walOrder = name.substring(walOrderStartIndex, walOrderEndIndex);
+      final boolean matches = matcher.find();
+      assert matches;
+
+      final String order = matcher.group(1);
       try {
-        return Long.parseLong(walOrder);
+        return Long.parseLong(order);
       } catch (NumberFormatException e) {
         // never happen
         throw new IllegalStateException(e);
@@ -786,16 +803,12 @@ public class OWriteAheadLog {
 
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
       assert lsn.getSegment() == order;
-
       if (lsn.getPosition() >= filledUpTo)
         return null;
 
-      long pageIndex = lsn.getPosition() / OWALPage.PAGE_SIZE;
+      flush();
 
-      if (flushedLsn == null || flushedLsn.getSegment() < order
-          || (flushedLsn.getSegment() == order && flushedLsn.getPosition() / OWALPage.PAGE_SIZE <= pageIndex)) {
-        flush();
-      }
+      long pageIndex = lsn.getPosition() / OWALPage.PAGE_SIZE;
 
       byte[] record = null;
       int pageOffset = (int) (lsn.getPosition() % OWALPage.PAGE_SIZE);
@@ -803,7 +816,11 @@ public class OWriteAheadLog {
       long pageCount = (filledUpTo + OWALPage.PAGE_SIZE - 1) / OWALPage.PAGE_SIZE;
 
       while (pageIndex < pageCount) {
-        byte[] pageContent = getPageFromCache(pageIndex);
+        byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
+        synchronized (rndFile) {
+          rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+          rndFile.readFully(pageContent);
+        }
 
         if (!checkPageIntegrity(pageContent))
           throw new OWALPageBrokenException("WAL page with index " + pageIndex + " is broken.");
@@ -851,37 +868,6 @@ public class OWriteAheadLog {
       crc32.update(content, OIntegerSerializer.INT_SIZE, OWALPage.PAGE_SIZE - OIntegerSerializer.INT_SIZE);
 
       return ((int) crc32.getValue()) == OIntegerSerializer.INSTANCE.deserializeNative(content, 0);
-    }
-
-    private HashMap<Long, byte[]> readDataInCache(long pageIndex) throws IOException {
-      final long pageCount = rndFile.length() / OWALPage.PAGE_SIZE;
-      final long cacheSize = OGlobalConfiguration.WAL_READ_CACHE_SIZE.getValueAsInteger();
-
-      final long endPage = Math.min(pageCount, pageIndex + cacheSize);
-
-      final HashMap<Long, byte[]> result = new HashMap<Long, byte[]>((int) (endPage - pageIndex));
-
-      rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
-      while (pageIndex < endPage) {
-        synchronized (rndFile) {
-          byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
-          rndFile.readFully(pageContent);
-          result.put(pageIndex, pageContent);
-          pageIndex++;
-        }
-      }
-
-      return result;
-    }
-
-    private byte[] getPageFromCache(long pageIndex) throws IOException {
-      HashMap<Long, byte[]> pageCache = readCache.get();
-      if (pageCache != null && pageCache.containsKey(pageIndex))
-        return pageCache.get(pageIndex);
-
-      pageCache = readDataInCache(pageIndex);
-      readCache = new WeakReference<HashMap<Long, byte[]>>(pageCache);
-      return pageCache.get(pageIndex);
     }
 
     public OLogSequenceNumber getNextLSN(OLogSequenceNumber lsn) throws IOException {
@@ -961,10 +947,6 @@ public class OWriteAheadLog {
     }
 
     public void flush() {
-      final HashMap<Long, byte[]> pageCache = readCache.get();
-      if (pageCache != null)
-        pageCache.clear();
-
       if (!commitExecutor.isShutdown()) {
         try {
           commitExecutor.submit(new FlushTask()).get();

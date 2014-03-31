@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.common.console;
 
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
+
+import javax.imageio.spi.ServiceRegistry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -33,18 +39,8 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.imageio.spi.ServiceRegistry;
-
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
-
 public class OConsoleApplication {
-  protected enum RESULT {
-    OK, ERROR, EXIT
-  };
-
+  protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
   protected InputStream           in              = System.in;                       // System.in;
   protected PrintStream           out             = System.out;
   protected PrintStream           err             = System.err;
@@ -60,15 +56,53 @@ public class OConsoleApplication {
   protected boolean               interactiveMode;
   protected String[]              args;
 
-  protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" };
-
-  public void setReader(OConsoleReader iReader) {
-    this.reader = iReader;
-    reader.setConsole(this);
+  protected enum RESULT {
+    OK, ERROR, EXIT
   }
 
   public OConsoleApplication(String[] iArgs) {
     this.args = iArgs;
+  }
+
+  public static String getCorrectMethodName(Method m) {
+    StringBuilder buffer = new StringBuilder();
+    buffer.append(getClearName(m.getName()));
+    for (int i = 0; i < m.getParameterAnnotations().length; i++) {
+      for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
+        if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
+          buffer
+              .append(" <"
+                  + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
+                  + ">");
+        }
+      }
+    }
+    return buffer.toString();
+  }
+
+  public static String getClearName(String iJavaName) {
+    StringBuilder buffer = new StringBuilder();
+
+    char c;
+    if (iJavaName != null) {
+      buffer.append(iJavaName.charAt(0));
+      for (int i = 1; i < iJavaName.length(); ++i) {
+        c = iJavaName.charAt(i);
+
+        if (Character.isUpperCase(c)) {
+          buffer.append(' ');
+        }
+
+        buffer.append(Character.toLowerCase(c));
+      }
+
+    }
+    return buffer.toString();
+  }
+
+  public void setReader(OConsoleReader iReader) {
+    this.reader = iReader;
+    reader.setConsole(this);
   }
 
   public int run() {
@@ -84,15 +118,18 @@ public class OConsoleApplication {
       String consoleInput;
 
       while (true) {
-        out.println();
-        out.print(getPrompt());
-        consoleInput = reader.readLine();
+        try {
+          out.println();
+          out.print(getPrompt());
+          consoleInput = reader.readLine();
 
-        if (consoleInput == null || consoleInput.length() == 0)
-          continue;
+          if (consoleInput == null || consoleInput.length() == 0)
+            continue;
 
-        if (!executeCommands(new ODFACommandStream(consoleInput), false))
-          break;
+          if (!executeCommands(new ODFACommandStream(consoleInput), false))
+            break;
+        } catch (Exception e) {
+        }
       }
     } else {
       // EXECUTE IN BATCH MODE
@@ -102,6 +139,24 @@ public class OConsoleApplication {
     onAfter();
 
     return result;
+  }
+
+  public void message(final String iMessage, final Object... iArgs) {
+    final int verboseLevel = getVerboseLevel();
+    if (verboseLevel > 1)
+      out.printf(iMessage, iArgs);
+  }
+
+  public void error(final String iMessage, final Object... iArgs) {
+    final int verboseLevel = getVerboseLevel();
+    if (verboseLevel > 0)
+      out.printf(iMessage, iArgs);
+  }
+
+  public int getVerboseLevel() {
+    final String v = properties.get("verbose");
+    final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
+    return verboseLevel;
   }
 
   protected String getPrompt() {
@@ -171,7 +226,8 @@ public class OConsoleApplication {
           final RESULT status = execute(commandLine);
           commandLine = null;
 
-          if (status == RESULT.EXIT || status == RESULT.ERROR && iBatchMode)
+          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+              && iBatchMode)
             return false;
         }
       }
@@ -185,7 +241,8 @@ public class OConsoleApplication {
         }
 
         final RESULT status = execute(commandBuffer.toString());
-        if (status == RESULT.EXIT || status == RESULT.ERROR && iBatchMode)
+        if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+            && iBatchMode)
           return false;
       }
     } finally {
@@ -279,9 +336,10 @@ public class OConsoleApplication {
       if (ann != null && !ann.splitInWords()) {
         methodArgs = new String[] { iCommand.substring(iCommand.indexOf(' ') + 1) };
       } else {
-        if (m.getParameterTypes().length > commandWords.length - commandWordCount) {
+        final int actualParamCount = commandWords.length - commandWordCount;
+        if (m.getParameterTypes().length > actualParamCount) {
           // METHOD PARAMS AND USED PARAMS MISMATCH: CHECK FOR OPTIONALS
-          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > -1; paramNum--) {
+          for (int paramNum = m.getParameterAnnotations().length - 1; paramNum > actualParamCount - 1; paramNum--) {
             final Annotation[] paramAnn = m.getParameterAnnotations()[paramNum];
             if (paramAnn != null)
               for (int annNum = paramAnn.length - 1; annNum > -1; annNum--) {
@@ -438,42 +496,6 @@ public class OConsoleApplication {
 
   }
 
-  public static String getCorrectMethodName(Method m) {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(getClearName(m.getName()));
-    for (int i = 0; i < m.getParameterAnnotations().length; i++) {
-      for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
-        if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-          buffer
-              .append(" <"
-                  + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
-                  + ">");
-        }
-      }
-    }
-    return buffer.toString();
-  }
-
-  public static String getClearName(String iJavaName) {
-    StringBuilder buffer = new StringBuilder();
-
-    char c;
-    if (iJavaName != null) {
-      buffer.append(iJavaName.charAt(0));
-      for (int i = 1; i < iJavaName.length(); ++i) {
-        c = iJavaName.charAt(i);
-
-        if (Character.isUpperCase(c)) {
-          buffer.append(' ');
-        }
-
-        buffer.append(Character.toLowerCase(c));
-      }
-
-    }
-    return buffer.toString();
-  }
-
   protected String getCommandLine(String[] iArguments) {
     StringBuilder command = new StringBuilder();
     for (int i = 0; i < iArguments.length; ++i) {
@@ -493,23 +515,5 @@ public class OConsoleApplication {
 
   protected void onException(Throwable throwable) {
     throwable.printStackTrace();
-  }
-
-  public void message(final String iMessage, final Object... iArgs) {
-    final int verboseLevel = getVerboseLevel();
-    if (verboseLevel > 1)
-      out.printf(iMessage, iArgs);
-  }
-
-  public void error(final String iMessage, final Object... iArgs) {
-    final int verboseLevel = getVerboseLevel();
-    if (verboseLevel > 0)
-      out.printf(iMessage, iArgs);
-  }
-
-  public int getVerboseLevel() {
-    final String v = properties.get("verbose");
-    final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
-    return verboseLevel;
   }
 }

@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -51,8 +52,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public ODatabaseRecord begin(final TXTYPE iType) {
     setCurrentDatabaseinThreadLocal();
 
-    if (currentTx.isActive())
-      currentTx.rollback();
+    if (currentTx.isActive()) {
+      if (iType == TXTYPE.OPTIMISTIC && currentTx instanceof OTransactionOptimistic) {
+        currentTx.begin();
+        return this;
+      }
+
+      currentTx.rollback(true, 0);
+    }
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : underlying.browseListeners())
@@ -80,7 +87,12 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   public ODatabaseRecord begin(final OTransaction iTx) {
-    currentTx.rollback();
+    if (currentTx.isActive() && iTx.equals(currentTx)) {
+      currentTx.begin();
+      return this;
+    }
+
+    currentTx.rollback(true, 0);
 
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : underlying.browseListeners())
@@ -97,6 +109,19 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   public ODatabaseRecord commit() {
+    return commit(false);
+  }
+
+  @Override
+  public ODatabaseRecord commit(boolean force) throws OTransactionException {
+    if (!currentTx.isActive())
+      return this;
+
+    if (!force && currentTx.amountOfNestedTxs() > 1) {
+      currentTx.commit();
+      return this;
+    }
+
     setCurrentDatabaseinThreadLocal();
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : underlying.browseListeners())
@@ -104,15 +129,16 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         listener.onBeforeTxCommit(this);
       } catch (Throwable t) {
         try {
-          rollback();
-        } catch (Exception e) {
+          rollback(force);
+        } catch (RuntimeException e) {
+          throw e;
         }
         OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
             t, OTransactionBlockedException.class, listener.getClass());
       }
 
     try {
-      currentTx.commit();
+      currentTx.commit(force);
     } catch (RuntimeException e) {
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
@@ -122,7 +148,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
           OLogManager.instance().error(this, "Error before tx rollback", t);
         }
       // ROLLBACK TX AT DB LEVEL
-      currentTx.rollback();
+      currentTx.rollback(false, 0);
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
         try {
@@ -140,17 +166,36 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       } catch (Throwable t) {
         OLogManager
             .instance()
-            .debug(
-                this,
-                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-                t, OTransactionBlockedException.class, listener.getClass());
+            .debug(this, "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()", t, OTransactionBlockedException.class, listener.getClass());
       }
 
     return this;
   }
 
+  @Override
+  public void close() {
+    try {
+      commit(true);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Exception during commit of active transaction.", e);
+    }
+
+    super.close();
+  }
+
   public ODatabaseRecord rollback() {
+    return rollback(false);
+  }
+
+  @Override
+  public ODatabaseRecord rollback(boolean force) throws OTransactionException {
     if (currentTx.isActive()) {
+
+      if (!force && currentTx.amountOfNestedTxs() > 1) {
+        currentTx.rollback();
+        return this;
+      }
+
       // WAKE UP LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
         try {
@@ -159,7 +204,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
           OLogManager.instance().error(this, "Error before tx rollback", t);
         }
 
-      currentTx.rollback();
+      currentTx.rollback(force, -1);
 
       // WAKE UP LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
@@ -180,56 +225,59 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache,
-      boolean loadTombstone) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone);
+      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false);
+    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) currentTx.loadRecord(iRecordId, null, null, false, false);
+    return (RET) currentTx.loadRecord(iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false, false);
+    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone);
+  public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
+      final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord) {
+  public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
     return reload(iRecord, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord, String iFetchPlan) {
+  public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
     return reload(iRecord, iFetchPlan, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal<?>> RET reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
-    ORecordInternal<?> record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+  public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan,
+      final boolean iIgnoreCache) {
+    ORecordInternal<?> record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
     if (record != null && iRecord != record) {
       iRecord.fromStream(record.toStream());
       iRecord.getRecordVersion().copyFrom(record.getRecordVersion());
@@ -296,15 +344,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public void executeRollback(final OTransaction iTransaction) {
   }
 
-  protected void checkTransaction() {
-    if (currentTx == null || currentTx.getStatus() == TXSTATUS.INVALID)
-      throw new OTransactionException("Transaction not started");
-  }
-
-  private void init() {
-    currentTx = new OTransactionNoTx(this);
-  }
-
   public ORecordInternal<?> getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
     return (ORecordInternal<?>) iUserObject;
   }
@@ -330,6 +369,15 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public void setDefaultTransactionMode() {
     if (!(currentTx instanceof OTransactionNoTx))
       currentTx = new OTransactionNoTx(this);
+  }
+
+  protected void checkTransaction() {
+    if (currentTx == null || currentTx.getStatus() == TXSTATUS.INVALID)
+      throw new OTransactionException("Transaction not started");
+  }
+
+  private void init() {
+    currentTx = new OTransactionNoTx(this);
   }
 
 }

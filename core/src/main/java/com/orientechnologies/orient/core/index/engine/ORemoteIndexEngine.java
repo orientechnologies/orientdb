@@ -138,34 +138,44 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public void put(Object key, Object value) {
   }
 
-  @Override
+	@Override
+	public Object getFirstKey() {
+		return null;
+	}
+
+	@Override
+	public Object getLastKey() {
+		return null;
+	}
+
+	@Override
   public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      ValuesTransformer transformer, ValuesResultListener resultListener) {
+															 boolean ascSortOrder, ValuesTransformer transformer, ValuesResultListener resultListener) {
   }
 
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
+														 ValuesResultListener valuesResultListener) {
   }
 
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
+														 ValuesResultListener valuesResultListener) {
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
+															EntriesResultListener entriesResultListener) {
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
+															EntriesResultListener entriesResultListener) {
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, ValuesTransformer transformer,
+																EntriesResultListener entriesResultListener) {
   }
 
   @Override

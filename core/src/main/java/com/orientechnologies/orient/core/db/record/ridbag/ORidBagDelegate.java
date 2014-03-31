@@ -16,13 +16,13 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
+import java.util.Collection;
+import java.util.UUID;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.Collection;
 
 public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMultiValue,
     OTrackedMultiValue<OIdentifiable, OIdentifiable> {
@@ -38,7 +38,20 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   public int getSerializedSize(byte[] stream, int offset);
 
-  public int serialize(byte[] stream, int offset);
+  /**
+   * Writes content of bag to stream.
+   * 
+   * OwnerUuid is needed to notify db about changes of collection pointer if some happens during serialization.
+   * 
+   * @param stream
+   *          to write content
+   * @param offset
+   *          in stream where start to write content
+   * @param ownerUuid
+   *          id of delegate owner
+   * @return offset where content of stream is ended
+   */
+  public int serialize(byte[] stream, int offset, UUID ownerUuid);
 
   public int deserialize(byte[] stream, int offset);
 

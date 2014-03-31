@@ -74,6 +74,7 @@ public class SQLUpdateTest {
 
   }
 
+
   @Test
   public void updateWithWhereRid() {
 
@@ -88,7 +89,21 @@ public class SQLUpdateTest {
 
   }
 
-  @Test(dependsOnMethods = "updateWithWhereOperator")
+    @Test
+    public void updateUpsertOperator() {
+
+        List<ODocument> result = database.command(new OCommandSQL("UPDATE Profile SET surname='Merkel' RETURN AFTER where surname = 'Merkel'")).execute();
+        Assert.assertEquals(result.size(), 0);
+
+        result = database.command(new OCommandSQL("UPDATE Profile SET surname='Merkel' UPSERT RETURN AFTER  where surname = 'Merkel'")).execute();
+        Assert.assertEquals(result.size(), 1);
+
+        result = database.command(new OCommandSQL("SELECT FROM Profile  where surname = 'Merkel'")).execute();
+        Assert.assertEquals(result.size(), 1);
+    }
+
+
+    @Test(dependsOnMethods = "updateWithWhereOperator")
   public void updateCollectionsAddWithWhereOperator() {
 
     updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = #13:0")).execute();

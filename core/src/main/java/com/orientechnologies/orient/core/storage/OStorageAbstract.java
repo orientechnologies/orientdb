@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -30,22 +26,29 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
-  protected final String                          url;
-  protected final String                          mode;
-  protected OStorageConfiguration                 configuration;
-  protected String                                name;
-  protected AtomicLong                            version = new AtomicLong();
-  protected OLevel2RecordCache                    level2Cache;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
-  protected volatile STATUS                       status  = STATUS.CLOSED;
-  protected final OSharedResourceAdaptiveExternal lock;
+public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
+  protected final String                              url;
+  protected final String                              mode;
+  protected volatile OStorageConfiguration            configuration;
+  protected volatile OCurrentStorageComponentsFactory componentsFactory;
+
+  protected String                                    name;
+  protected AtomicLong                                version = new AtomicLong();
+  protected OLevel2RecordCache                        level2Cache;
+
+  protected volatile STATUS                           status  = STATUS.CLOSED;
+  protected final OSharedResourceAdaptiveExternal     lock;
 
   public OStorageAbstract(final String name, final String URL, final String mode, final int timeout,
       final OCacheLevelTwoLocator cacheLocator) {
@@ -136,7 +139,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
   }
 
-  protected boolean checkForClose(final boolean iForce) {
+  protected boolean checkForClose(final boolean force) {
     lock.acquireSharedLock();
     try {
       if (status == STATUS.CLOSED)
@@ -144,7 +147,8 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
       final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 
-      return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
+      return force
+          || (!(OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && this instanceof OStorageEmbedded) && remainingUsers == 0);
     } finally {
       lock.releaseSharedLock();
     }
@@ -221,5 +225,15 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   @Override
   public boolean isDistributed() {
     return false;
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return componentsFactory;
+  }
+
+  @Override
+  public long getLastOperationId() {
+    return 0;
   }
 }

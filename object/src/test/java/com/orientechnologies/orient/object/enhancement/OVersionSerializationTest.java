@@ -38,7 +38,7 @@ public class OVersionSerializationTest {
 
   @BeforeClass
   protected void setUp() throws Exception {
-    database = new OObjectDatabaseTx("memory:OObjectEntitySerializerTest");
+    database = new OObjectDatabaseTx("memory:OVersionSerializationTest");
     database.create();
 
     database.getEntityManager().registerEntityClass(EntityStringVersion.class);
@@ -50,7 +50,7 @@ public class OVersionSerializationTest {
 
   @AfterClass
   protected void tearDown() {
-    database.close();
+    database.drop();
   }
 
   @Test
@@ -114,7 +114,7 @@ public class OVersionSerializationTest {
 
   public static class EntityStringVersion {
     @OId
-    private ORID rid;
+    private ORID   rid;
 
     @OVersion
     private String version;
@@ -133,7 +133,7 @@ public class OVersionSerializationTest {
 
   public static class EntityObjectVersion {
     @OId
-    private ORID rid;
+    private ORID   rid;
 
     @OVersion
     private Object version;
@@ -152,7 +152,7 @@ public class OVersionSerializationTest {
 
   public static class EntityExactVersionType {
     @OId
-    private ORID rid;
+    private ORID           rid;
 
     @OVersion
     private ORecordVersion version;

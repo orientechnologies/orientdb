@@ -24,13 +24,16 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -75,11 +78,23 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
   public OClass getSchemaClass() {
     if (_clazz == null) {
-      // DESERIALIZE ONLY IF THE CLASS IS NOT SETTED: THIS PREVENT TO
-      // UNMARSHALL THE RECORD EVEN IF SETTED BY fromString()
-      checkForLoading();
-      checkForFields("@class");
+      final ODatabaseRecord database = getDatabaseIfDefined();
+      if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+        if (_recordId.clusterId < 0) {
+          checkForLoading();
+          checkForFields("@class");
+        } else {
+          final OSchema schema = database.getMetadata().getSchema();
+          if (schema != null)
+            _clazz = schema.getClassByClusterId(_recordId.clusterId);
+        }
+      } else {
+        // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+        checkForLoading();
+        checkForFields("@class");
+      }
     }
+
     return _clazz;
   }
 
@@ -87,9 +102,22 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
     if (_clazz != null)
       return _clazz.getName();
 
-    // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
-    checkForLoading();
-    checkForFields("@class");
+    final ODatabaseRecord database = getDatabaseIfDefined();
+    if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      if (_recordId.clusterId < 0) {
+        checkForLoading();
+        checkForFields("@class");
+      } else {
+        final OSchema schema = database.getMetadata().getSchema();
+        if (schema != null)
+          _clazz = schema.getClassByClusterId(_recordId.clusterId);
+      }
+    } else {
+      // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+      checkForLoading();
+      checkForFields("@class");
+    }
+
     return _clazz != null ? _clazz.getName() : null;
   }
 

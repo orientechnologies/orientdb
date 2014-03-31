@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -263,7 +264,7 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ) FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')")).execute();
+        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( outE() ) FROM V WHERE outE() TRAVERSE(1,1) (@class = 'E')")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
@@ -351,13 +352,17 @@ public class SQLSelectProjectionsTest {
 
     try {
       List<ODocument> result = database.command(
-          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = out_ where out_.size() > 0")).execute();
+          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = outE() where outE().size() > 0")).execute();
       Assert.assertFalse(result.isEmpty());
 
       for (ODocument d : result) {
         Assert.assertTrue(d.containsField("a"));
         Assert.assertTrue(d.containsField("a0"));
-        Assert.assertEquals(d.field("a0"), ((Collection<OIdentifiable>) d.field("a")).iterator().next());
+
+        final ODocument a0doc = d.field("a0");
+        final ODocument firstADoc = (ODocument) d.<Iterable<OIdentifiable>> field("a").iterator().next();
+
+        Assert.assertTrue(ODocumentHelper.hasSameContentOf(a0doc, database, firstADoc, database, null));
       }
 
     } finally {

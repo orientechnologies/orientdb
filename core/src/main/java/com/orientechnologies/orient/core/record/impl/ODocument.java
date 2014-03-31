@@ -19,6 +19,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -28,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -35,8 +38,8 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
@@ -55,23 +58,58 @@ import java.util.Map.Entry;
 @SuppressWarnings({ "unchecked" })
 public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable,
     Externalizable {
-  private static final long                                              serialVersionUID    = 1L;
-
   public static final byte                                               RECORD_TYPE         = 'd';
+  protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
+  private static final long                                              serialVersionUID    = 1L;
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
   protected Map<String, OType>                                           _fieldTypes;
   protected Map<String, OSimpleMultiValueChangeListener<Object, Object>> _fieldChangeListeners;
   protected Map<String, OMultiValueChangeTimeLine<Object, Object>>       _fieldCollectionChangeTimeLines;
-
   protected boolean                                                      _trackingChanges    = true;
   protected boolean                                                      _ordered            = true;
   protected boolean                                                      _lazyLoad           = true;
   protected boolean                                                      _allowChainedAccess = true;
-
   protected transient List<WeakReference<ORecordElement>>                _owners             = null;
 
-  protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
+  /**
+   * Perform gathering of all operations performed on tracked collection and create mapping between list of collection operations
+   * and field name that contains collection that was changed.
+   * 
+   * @param <K>
+   *          Value that uniquely identifies position of item in collection
+   * @param <V>
+   *          Item value.
+   */
+  private final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
+    private final String fieldName;
+
+    private OSimpleMultiValueChangeListener(final String fieldName) {
+      this.fieldName = fieldName;
+    }
+
+    public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
+      if (_status != STATUS.UNMARSHALLING)
+        setDirty();
+
+      if (!(_trackingChanges && _recordId.isValid()) || _status == STATUS.UNMARSHALLING)
+        return;
+
+      if (_fieldOriginalValues != null && _fieldOriginalValues.containsKey(fieldName))
+        return;
+
+      if (_fieldCollectionChangeTimeLines == null)
+        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
+
+      OMultiValueChangeTimeLine<Object, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
+      if (timeLine == null) {
+        timeLine = new OMultiValueChangeTimeLine<Object, Object>();
+        _fieldCollectionChangeTimeLines.put(fieldName, timeLine);
+      }
+
+      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
+    }
+  }
 
   /**
    * Internal constructor used on unmarshalling.
@@ -132,6 +170,16 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument(final String iClassName, final ORID iRID) {
     this(iClassName);
     _recordId = (ORecordId) iRID;
+
+    final ODatabaseRecord database = getDatabase();
+    if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      final OSchema schema = database.getMetadata().getSchema();
+      final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
+      if (cls != null && !cls.getName().equals(iClassName))
+        throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
+            + cls.getName());
+    }
+
     _dirty = false;
     _status = STATUS.NOT_LOADED;
   }
@@ -335,7 +383,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
     Object result = null;
     try {
-      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone);
+      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' was not found", e);
     }
@@ -506,7 +554,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     final OType t = fieldType(iFieldName);
 
-    if (_lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
+    if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID
+        && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
         && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
@@ -591,7 +640,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
-    return field(iFieldName, iPropertyValue, null);
+    return field(iFieldName, iPropertyValue, new OType[0]);
   }
 
   /**
@@ -624,6 +673,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Writes the field value forcing the type. This method sets the current document as dirty.
    * 
+   * 
+   * 
    * @param iFieldName
    *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
    *          {@link #setAllowChainedAccess(boolean)} to false.
@@ -635,7 +686,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    *         document is another document (using the dot (.) notation) then the document returned is the changed one or NULL if no
    *         document has been found in chain
    */
-  public ODocument field(String iFieldName, Object iPropertyValue, OType iFieldType) {
+  public ODocument field(String iFieldName, Object iPropertyValue, OType... iFieldType) {
     if ("@class".equals(iFieldName)) {
       setClassName(iPropertyValue.toString());
       return this;
@@ -712,13 +763,19 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         }
       }
 
-    setFieldType(iFieldName, iFieldType);
+    OType fieldType;
 
-    if (iFieldType == null && _clazz != null) {
+    if (iFieldType != null && iFieldType.length == 1) {
+      setFieldType(iFieldName, iFieldType[0]);
+      fieldType = iFieldType[0];
+    } else
+      fieldType = null;
+
+    if (fieldType == null && _clazz != null) {
       // SCHEMAFULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
       if (prop != null)
-        iFieldType = prop.getType();
+        fieldType = prop.getType();
     }
 
     if (oldValue instanceof ORidBag) {
@@ -731,9 +788,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     if (iPropertyValue != null) {
       // CHECK FOR CONVERSION
-      if (iFieldType != null) {
-        iPropertyValue = ODocumentHelper.convertField(this, iFieldName, iFieldType.getDefaultJavaType(), iPropertyValue);
-        if (iFieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
+      if (fieldType != null) {
+        iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
+        if (fieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
           final ODocument embeddedDocument = (ODocument) iPropertyValue;
           embeddedDocument.addOwner(this);
         }
@@ -1173,16 +1230,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return this;
   }
 
-  protected void internalReset() {
-    removeAllCollectionChangeListeners();
-
-    if (_fieldCollectionChangeTimeLines != null)
-      _fieldCollectionChangeTimeLines.clear();
-
-    if (_fieldValues != null)
-      _fieldValues.clear();
-  }
-
   /**
    * Rollbacks changes to the loaded version without reloading the document. Works only if tracking changes is enabled @see
    * {@link #isTrackingChanges()} and {@link #setTrackingChanges(boolean)} methods.
@@ -1283,27 +1330,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   public boolean isEmbedded() {
     return _owners != null && !_owners.isEmpty();
-  }
-
-  @Override
-  protected boolean checkForFields(final String... iFields) {
-    if (_fieldValues == null)
-      _fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
-
-    if (_status == ORecordElement.STATUS.LOADED && _source != null)
-      // POPULATE FIELDS LAZY
-      return deserializeFields(iFields);
-
-    return true;
-  }
-
-  /**
-   * Internal.
-   */
-  @Override
-  protected void setup() {
-    super.setup();
-    _recordFormat = ORecordSerializerFactory.instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
   }
 
   /**
@@ -1424,6 +1450,138 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return true;
   }
 
+  /**
+   * Converts all non-tracked collections implementations contained in document fields to tracked ones.
+   * 
+   * @see OTrackedMultiValue
+   */
+  public void convertAllMultiValuesToTrackedVersions() {
+    if (_fieldValues == null)
+      return;
+
+    final Map<String, Object> fieldsToUpdate = new HashMap<String, Object>();
+
+    for (Map.Entry<String, Object> fieldEntry : _fieldValues.entrySet()) {
+      final Object fieldValue = fieldEntry.getValue();
+      OType fieldType = fieldType(fieldEntry.getKey());
+      if (fieldType == null && _clazz != null) {
+        final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
+        fieldType = prop != null ? prop.getType() : null;
+      }
+
+      if (fieldType == null
+          || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
+              || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
+        continue;
+
+      if (fieldValue instanceof List && fieldType.equals(OType.EMBEDDEDLIST) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedList<Object>(this, (List<?>) fieldValue, null));
+      else if (fieldValue instanceof Set && fieldType.equals(OType.EMBEDDEDSET) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null));
+      else if (fieldValue instanceof Map && fieldType.equals(OType.EMBEDDEDMAP) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate
+            .put(fieldEntry.getKey(), new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null));
+      else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate.put(fieldEntry.getKey(), new OMVRBTreeRIDSet(this, (Collection<OIdentifiable>) fieldValue));
+      else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyList(this, (List<OIdentifiable>) fieldValue));
+      else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP) && !(fieldValue instanceof OTrackedMultiValue))
+        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue));
+    }
+
+    _fieldValues.putAll(fieldsToUpdate);
+    addAllMultiValueChangeListeners();
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput stream) throws IOException {
+    final byte[] idBuffer = _recordId.toStream();
+    stream.writeInt(idBuffer.length);
+    stream.write(idBuffer);
+
+    _recordVersion.getSerializer().writeTo(stream, _recordVersion);
+
+    final byte[] content = toStream();
+    stream.writeInt(content.length);
+    stream.write(content);
+
+    stream.writeBoolean(_dirty);
+  }
+
+  @Override
+  public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
+    final byte[] idBuffer = new byte[stream.readInt()];
+    stream.readFully(idBuffer);
+    _recordId.fromStream(idBuffer);
+
+    _recordVersion.getSerializer().readFrom(stream, _recordVersion);
+
+    final int len = stream.readInt();
+    final byte[] content = new byte[len];
+    stream.readFully(content);
+
+    fromStream(content);
+
+    _dirty = stream.readBoolean();
+  }
+
+  /**
+   * Returns the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it
+   * to false if you allow to store properties with the dot.
+   */
+  public boolean isAllowChainedAccess() {
+    return _allowChainedAccess;
+  }
+
+  /**
+   * Change the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it to
+   * false if you allow to store properties with the dot.
+   * 
+   * @param _allowChainedAccess
+   */
+  public ODocument setAllowChainedAccess(final boolean _allowChainedAccess) {
+    this._allowChainedAccess = _allowChainedAccess;
+    return this;
+  }
+
+  protected void internalReset() {
+    removeAllCollectionChangeListeners();
+
+    if (_fieldCollectionChangeTimeLines != null)
+      _fieldCollectionChangeTimeLines.clear();
+
+    if (_fieldValues != null)
+      _fieldValues.clear();
+  }
+
+  @Override
+  protected boolean checkForFields(final String... iFields) {
+    if (_fieldValues == null)
+      _fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
+
+    if (_status == ORecordElement.STATUS.LOADED && _source != null)
+      // POPULATE FIELDS LAZY
+      return deserializeFields(iFields);
+
+    return true;
+  }
+
+  /**
+   * Internal.
+   */
+  @Override
+  protected void setup() {
+    super.setup();
+
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null && db instanceof ODatabaseDocument)
+      _recordFormat = db.getSerializer();
+
+    if (_recordFormat == null)
+      // GET THE DEFAULT ONE
+      _recordFormat = ODatabaseDocumentTx.getDefaultSerializer();
+  }
+
   protected String checkFieldName(final String iFieldName) {
     final Character c = OSchemaShared.checkNameIfValid(iFieldName);
     if (c != null)
@@ -1514,138 +1672,5 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return;
 
     _fieldCollectionChangeTimeLines.remove(fieldName);
-  }
-
-  /**
-   * Converts all non-tracked collections implementations contained in document fields to tracked ones.
-   * 
-   * @see OTrackedMultiValue
-   */
-  public void convertAllMultiValuesToTrackedVersions() {
-    if (_fieldValues == null)
-      return;
-
-    final Map<String, Object> fieldsToUpdate = new HashMap<String, Object>();
-
-    for (Map.Entry<String, Object> fieldEntry : _fieldValues.entrySet()) {
-      final Object fieldValue = fieldEntry.getValue();
-      OType fieldType = fieldType(fieldEntry.getKey());
-      if (fieldType == null && _clazz != null) {
-        final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
-        fieldType = prop != null ? prop.getType() : null;
-      }
-
-      if (fieldType == null
-          || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
-              || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
-        continue;
-
-      if (fieldValue instanceof List && fieldType.equals(OType.EMBEDDEDLIST) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedList<Object>(this, (List<?>) fieldValue, null));
-      else if (fieldValue instanceof Set && fieldType.equals(OType.EMBEDDEDSET) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null));
-      else if (fieldValue instanceof Map && fieldType.equals(OType.EMBEDDEDMAP) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate
-            .put(fieldEntry.getKey(), new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null));
-      else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue));
-      else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyList(this, (List<OIdentifiable>) fieldValue));
-      else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue));
-    }
-
-    _fieldValues.putAll(fieldsToUpdate);
-    addAllMultiValueChangeListeners();
-  }
-
-  /**
-   * Perform gathering of all operations performed on tracked collection and create mapping between list of collection operations
-   * and field name that contains collection that was changed.
-   * 
-   * @param <K>
-   *          Value that uniquely identifies position of item in collection
-   * @param <V>
-   *          Item value.
-   */
-  private final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
-    private final String fieldName;
-
-    private OSimpleMultiValueChangeListener(final String fieldName) {
-      this.fieldName = fieldName;
-    }
-
-    public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
-      if (_status != STATUS.UNMARSHALLING)
-        setDirty();
-
-      if (!(_trackingChanges && _recordId.isValid()) || _status == STATUS.UNMARSHALLING)
-        return;
-
-      if (_fieldOriginalValues != null && _fieldOriginalValues.containsKey(fieldName))
-        return;
-
-      if (_fieldCollectionChangeTimeLines == null)
-        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
-
-      OMultiValueChangeTimeLine<Object, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
-      if (timeLine == null) {
-        timeLine = new OMultiValueChangeTimeLine<Object, Object>();
-        _fieldCollectionChangeTimeLines.put(fieldName, timeLine);
-      }
-
-      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
-    }
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput stream) throws IOException {
-    final byte[] idBuffer = _recordId.toStream();
-    stream.writeInt(idBuffer.length);
-    stream.write(idBuffer);
-
-    _recordVersion.getSerializer().writeTo(stream, _recordVersion);
-
-    final byte[] content = toStream();
-    stream.writeInt(content.length);
-    stream.write(content);
-
-    stream.writeBoolean(_dirty);
-  }
-
-  @Override
-  public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
-    final byte[] idBuffer = new byte[stream.readInt()];
-    stream.readFully(idBuffer);
-    _recordId.fromStream(idBuffer);
-
-    _recordVersion.getSerializer().readFrom(stream, _recordVersion);
-
-    final int len = stream.readInt();
-    final byte[] content = new byte[len];
-    stream.readFully(content);
-
-    fromStream(content);
-
-    _dirty = stream.readBoolean();
-  }
-
-  /**
-   * Returns the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it
-   * to false if you allow to store properties with the dot.
-   */
-  public boolean isAllowChainedAccess() {
-    return _allowChainedAccess;
-  }
-
-  /**
-   * Change the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it to
-   * false if you allow to store properties with the dot.
-   * 
-   * @param _allowChainedAccess
-   */
-  public ODocument setAllowChainedAccess(final boolean _allowChainedAccess) {
-    this._allowChainedAccess = _allowChainedAccess;
-    return this;
   }
 }

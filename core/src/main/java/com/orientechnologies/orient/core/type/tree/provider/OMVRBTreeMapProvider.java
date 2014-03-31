@@ -170,7 +170,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
         keySerializer = createRelatedSerializer(streamKeySerializer);
       } else {
-        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(stream.getAsByte());
+        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(stream.getAsByte());
         valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 
         final String oldKeySerializerName = stream.getAsString();

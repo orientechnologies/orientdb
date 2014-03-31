@@ -35,9 +35,9 @@ public class OSQLFunctionLast extends OSQLFunctionConfigurableAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    Object value = iParameters[0];
+    Object value = iParams[0];
 
     if (value instanceof OSQLFilterItem)
       value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext);
@@ -65,6 +65,6 @@ public class OSQLFunctionLast extends OSQLFunctionConfigurableAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: last(<field>)";
+    return "last(<field>)";
   }
 }

@@ -34,9 +34,26 @@ public abstract class BaseTest {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if (dropDb)
+    if (dropDb) {
+      if (database.isClosed())
+        database.open("admin", "admin");
+
       database.drop();
-    else
+    } else {
+      if (!database.isClosed())
+        database.close();
+    }
+  }
+
+  @BeforeMethod
+  public void beforeMethod() throws Exception {
+    if (database.isClosed())
+      database.open("admin", "admin");
+  }
+
+  @AfterMethod
+  public void afterMethod() throws Exception {
+    if (!database.isClosed())
       database.close();
   }
 

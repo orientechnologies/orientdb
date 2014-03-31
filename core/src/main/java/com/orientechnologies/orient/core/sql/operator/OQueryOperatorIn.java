@@ -113,14 +113,13 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
+      OIndex.IndexValuesResultListener resultListener) {
     final OIndexDefinition indexDefinition = index.getDefinition();
-    final Object result;
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+      return false;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object inKeyValue = keyParams.get(0);
@@ -146,18 +145,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
       }
       if (containsNotCompatibleKey)
-        return null;
+        return false;
 
-      if (resultListener != null) {
-        index.getValues(inKeys, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValues(inKeys);
+      index.getValues(inKeys, ascSortOrder, resultListener);
     } else
-      return null;
+      return false;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
-    return result;
+    return true;
   }
 
   @Override

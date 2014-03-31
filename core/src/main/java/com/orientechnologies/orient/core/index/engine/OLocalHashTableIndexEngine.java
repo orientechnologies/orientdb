@@ -71,7 +71,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
         if (indexDefinition.getTypes().length > 1) {
           keySerializer = OCompositeKeySerializer.INSTANCE;
         } else {
-          keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
+          keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
         }
       }
     } else
@@ -194,38 +194,38 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
       ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesBetween");
   }
 
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
       ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMajor");
   }
 
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
       ValuesResultListener valuesResultListener) {
     throw new UnsupportedOperationException("getValuesMinor");
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
+															EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
+															EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
+																EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesBetween");
   }
 
@@ -237,6 +237,16 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public Iterator<V> inverseValuesIterator() {
     throw new UnsupportedOperationException("inverseValuesIterator");
+  }
+
+  @Override
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("firstKey");
+  }
+
+  @Override
+  public Object getLastKey() {
+    throw new UnsupportedOperationException("lastKey");
   }
 
   @Override

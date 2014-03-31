@@ -116,23 +116,19 @@ public abstract class OQueryOperator {
    * <p/>
    * Multiple parameters are passed in to implement composite indexes support.
    * 
-   * 
-   * 
-   * 
-   * 
    * @param iContext
    *          TODO
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
    * @param keyParams
    *          Parameters of query is used to calculate query result.
+   * @param ascSortOrder
    * @param resultListener
-   * @param fetchLimit
-   * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
+   * @return <code>true</code> if index was successfully used to retrieve data.
    */
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
-      final IndexResultListener resultListener, int fetchLimit) {
-    return null;
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams, boolean ascSortOrder,
+      final OIndex.IndexValuesResultListener resultListener) {
+    return false;
   }
 
   @Override
@@ -218,9 +214,5 @@ public abstract class OQueryOperator {
             + params + " params and " + keyParams.size() + " keys", +1);
       }
     }
-  }
-
-  public interface IndexResultListener extends OIndex.IndexValuesResultListener {
-    Object getResult();
   }
 }

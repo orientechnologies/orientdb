@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -40,9 +37,9 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
@@ -68,34 +65,180 @@ import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
-  private OSBTreeCollectionManager                    sbTreeCollectionManager;
-  private OMetadataDefault                            metadata;
-  private OUser                                       user;
-  private static final String                         DEF_RECORD_FORMAT   = "csv";
-  private byte                                        recordType;
-  private String                                      recordFormat;
-  private Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks               = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-  private final Set<ORecordHook>                      unmodifiableHooks;
-  private boolean                                     retainRecords       = true;
-  private OLevel1RecordCache                          level1Cache;
-  private boolean                                     mvcc;
-  private boolean                                     validation;
-  private ODataSegmentStrategy                        dataSegmentStrategy = new ODefaultDataSegmentStrategy();
+  private static final String                               DEF_RECORD_FORMAT   = "csv";
+  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected ORecordSerializer                               serializer;
+  private OSBTreeCollectionManager                          sbTreeCollectionManager;
+  private OMetadataDefault                                  metadata;
+  private OUser                                             user;
+  private byte                                              recordType;
+  private String                                            recordFormat;
+  private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks               = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private boolean                                           retainRecords       = true;
+  private OLevel1RecordCache                                level1Cache;
+  private boolean                                           mvcc;
+  private boolean                                           validation;
+  private ODataSegmentStrategy                              dataSegmentStrategy = new ODefaultDataSegmentStrategy();
+  private OCurrentStorageComponentsFactory                  componentsFactory;
+
+  private class ExecuteReplicaUpdateCallable implements Callable<Boolean> {
+    private final ORecordId          rid;
+    private final ORecordInternal<?> record;
+
+    public ExecuteReplicaUpdateCallable(ORecordInternal<?> record) {
+      this.rid = (ORecordId) record.getIdentity();
+      this.record = record;
+    }
+
+    @Override
+    public Boolean call() throws Exception {
+      final ORecordMetadata loadedRecordMetadata = getRecordMetadata(rid);
+      final boolean result;
+
+      if (loadedRecordMetadata == null)
+        result = processReplicaAdd();
+      else if (loadedRecordMetadata.getRecordVersion().compareTo(record.getRecordVersion()) < 0)
+        result = processReplicaUpdate(loadedRecordMetadata);
+      else
+        return false;
+
+      if (!result)
+        throw new IllegalStateException("Passed in replica was not stored in DB");
+
+      return true;
+    }
+
+    private boolean processReplicaUpdate(ORecordMetadata loadedRecordMetadata) throws Exception {
+      ORecordInternal<?> replicaToUpdate = record;
+      boolean result;
+      final ORecordVersion replicaVersion = record.getRecordVersion();
+      final byte recordType = record.getRecordType();
+
+      try {
+        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          replicaToUpdate = mergeWithRecord(null);
+          callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToUpdate);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          replicaToUpdate = mergeWithRecord(rid);
+          callbackHooks(TYPE.BEFORE_REPLICA_UPDATE, replicaToUpdate);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
+          replicaToUpdate = load(rid, "*:0", false, true, OStorage.LOCKING_STRATEGY.DEFAULT);
+          replicaToUpdate.getRecordVersion().copyFrom(replicaVersion);
+
+          callbackHooks(TYPE.BEFORE_REPLICA_DELETE, replicaToUpdate);
+        }
+
+        byte[] stream = replicaToUpdate.toStream();
+        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToUpdate);
+        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, recordType);
+
+        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToUpdate);
+          replicaToUpdate.unsetDirty();
+          getLevel1Cache().updateRecord(replicaToUpdate);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.AFTER_REPLICA_UPDATE, replicaToUpdate);
+          replicaToUpdate.unsetDirty();
+          getLevel1Cache().updateRecord(replicaToUpdate);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.AFTER_REPLICA_DELETE, replicaToUpdate);
+          replicaToUpdate.unsetDirty();
+          getLevel1Cache().deleteRecord(rid);
+        }
+      } catch (Exception e) {
+        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.REPLICA_ADD_FAILED, replicaToUpdate);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.REPLICA_UPDATE_FAILED, replicaToUpdate);
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.REPLICA_DELETE_FAILED, replicaToUpdate);
+        }
+
+        throw e;
+      }
+
+      return result;
+    }
+
+    private boolean processReplicaAdd() throws Exception {
+      ORecordInternal<?> replicaToAdd = record;
+      boolean result;
+      final ORecordVersion replicaVersion = record.getRecordVersion();
+
+      try {
+        if (!replicaVersion.isTombstone()) {
+          replicaToAdd = mergeWithRecord(null);
+
+          callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToAdd);
+        } else
+          replicaToAdd = (ORecordInternal<?>) record.copy();
+
+        byte[] stream = replicaToAdd.toStream();
+
+        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToAdd);
+
+        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, replicaToAdd.getRecordType());
+
+        if (!replicaVersion.isTombstone()) {
+          callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
+          replicaToAdd.unsetDirty();
+          getLevel1Cache().updateRecord(replicaToAdd);
+        }
+
+      } catch (Exception e) {
+        if (!replicaVersion.isTombstone())
+          callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
+
+        throw e;
+      }
+
+      return result;
+    }
+
+    private ORecordInternal<?> mergeWithRecord(ORID rid) {
+      final ORecordInternal<?> replicaToAdd;
+      if (record instanceof ODocument) {
+        if (rid == null)
+          replicaToAdd = new ODocument();
+        else
+          replicaToAdd = load(rid, "*:0", false, true, OStorage.LOCKING_STRATEGY.DEFAULT);
+
+        ((ODocument) replicaToAdd).merge((ODocument) record, false, false);
+
+        replicaToAdd.getRecordVersion().copyFrom(record.getRecordVersion());
+        replicaToAdd.setIdentity(this.rid);
+      } else
+        replicaToAdd = (ORecordInternal<?>) record.copy();
+
+      return replicaToAdd;
+    }
+  }
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
@@ -103,7 +246,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     underlying.setOwner(this);
 
-    unmodifiableHooks = Collections.unmodifiableSet(hooks.keySet());
+    unmodifiableHooks = Collections.unmodifiableMap(hooks);
 
     databaseOwner = this;
 
@@ -120,11 +263,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.open(iUserName, iUserPassword);
+      componentsFactory = getStorage().getComponentsFactory();
+
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
-              return new OSBTreeCollectionManagerShared();
+              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+
+              if (managerClass == null) {
+                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+                return null;
+              } else {
+                return managerClass.newInstance();
+              }
             }
           }));
 
@@ -152,13 +304,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             }
           }
         }
-        registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
-        registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
-        registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
-        registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
-        registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
-        registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
-        registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
+        installHooks();
       } else
         // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
@@ -188,27 +334,28 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.create();
+      componentsFactory = getStorage().getComponentsFactory();
 
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
           OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
-              return new OSBTreeCollectionManagerShared();
+              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+
+              if (managerClass == null) {
+                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+                return null;
+              } else {
+                return managerClass.newInstance();
+              }
             }
           }));
       level1Cache.startup();
 
       getStorage().getConfiguration().update();
 
-      if (!(getStorage() instanceof OStorageProxy)) {
-        registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
-        registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
-        registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
-        registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
-        registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
-        registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
-        registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
-      }
+      if (!(getStorage() instanceof OStorageProxy))
+        installHooks();
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
       metadata = new OMetadataDefault();
@@ -228,13 +375,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       for (ODatabaseListener listener : underlying.browseListeners())
         try {
           listener.onCreate(underlying);
-        } catch (Throwable t) {
+        } catch (Throwable ignore) {
         }
 
     } catch (Exception e) {
       throw new ODatabaseException("Cannot create database", e);
     }
     return (DB) this;
+  }
+
+  @Override
+  public OBinarySerializerFactory getSerializerFactory() {
+    return componentsFactory.binarySerializerFactory;
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getStorageVersions() {
+    return componentsFactory;
   }
 
   @Override
@@ -305,58 +462,63 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord) {
-    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false);
+    return executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, null, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, true, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET reload(final ORecordInternal<?> iRecord, final String iFetchPlan, boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**
    * Loads a record using a fetch plan.
    */
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, false, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan,
       final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false);
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache,
-      boolean loadTombstone) {
-    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone);
+      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone,
+        iLockingStrategy);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false);
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone);
+  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   /**
    * Updates the record without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -365,21 +527,31 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          call back for record create
    * @param iRecordUpdatedCallback
+   *          call back for record update
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), iContent.getRecordType(), true, iMode,
-        iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    return (RET) executeSaveRecord(iContent, null, iContent.getRecordVersion(), true, iMode, iForceCreate, iRecordCreatedCallback,
+        iRecordUpdatedCallback);
   }
 
   /**
    * Updates the record in the requested cluster without checking the version.
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), iContent.getRecordType(), true,
-        OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), true, OPERATION_MODE.SYNCHRONOUS, false,
+        null, null);
+  }
+
+  public ORecordSerializer getSerializer() {
+    return serializer;
+  }
+
+  public void setSerializer(ORecordSerializer serializer) {
+    this.serializer = serializer;
   }
 
   @Override
@@ -391,20 +563,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * Updates the record in the requested cluster without checking the version.
    * 
    * @param iForceCreate
+   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          call back for record create
    * @param iRecordUpdatedCallback
+   *          call back for record update
    */
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iContent, final String iClusterName,
       final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), iContent.getRecordType(), true, iMode,
-        iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    return (RET) executeSaveRecord(iContent, iClusterName, iContent.getRecordVersion(), true, iMode, iForceCreate,
+        iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
    * Deletes the record without checking the version.
    */
-  public ODatabaseRecord delete(final ORID iRecord) {
+  public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRecord) {
     executeDeleteRecord(iRecord, OVersionFactory.instance().createUntrackedVersion(), true, true, OPERATION_MODE.SYNCHRONOUS, false);
     return this;
   }
@@ -412,12 +587,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * Deletes the record checking the version.
    */
-  public ODatabaseRecord delete(final ORID iRecord, final ORecordVersion iVersion) {
+  public ODatabaseComplex<ORecordInternal<?>> delete(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, false);
     return this;
   }
 
-  public ODatabaseRecord cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
+  public ODatabaseComplex<ORecordInternal<?>> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, true);
     return this;
   }
@@ -433,7 +608,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * Deletes the record without checking the version.
    */
-  public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
+  public ODatabaseComplex<ORecordInternal<?>> delete(final ORecordInternal<?> iRecord) {
     executeDeleteRecord(iRecord, OVersionFactory.instance().createUntrackedVersion(), true, true, OPERATION_MODE.SYNCHRONOUS, false);
     return this;
   }
@@ -458,27 +633,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   @Override
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
-      OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones) {
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+      final Class<REC> iRecordClass, final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition,
+      final boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     setCurrentDatabaseinThreadLocal();
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName,
-      OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones) {
+  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
+      final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     setCurrentDatabaseinThreadLocal();
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones);
+    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, true, loadTombstones,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
@@ -507,7 +685,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
-  public <RET extends List<?>> RET query(final OQuery<? extends Object> iCommand, final Object... iArgs) {
+  public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
     setCurrentDatabaseinThreadLocal();
 
     iCommand.reset();
@@ -518,7 +696,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return recordType;
   }
 
-  public <RET extends Object> RET newInstance() {
+  public <RET> RET newInstance() {
     return (RET) Orient.instance().getRecordFactoryManager().newInstance(recordType);
   }
 
@@ -676,10 +854,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
-      final String iFetchPlan, final boolean iIgnoreCache, boolean loadTombstones) {
+      final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
-
-    // setCurrentDatabaseinThreadLocal();
 
     try {
       checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
@@ -708,11 +885,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
+        if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          record.lock(false);
+        else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+          record.lock(true);
+
         callbackHooks(TYPE.AFTER_READ, record);
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones).getResult();
+      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
       if (recordBuffer == null)
         return null;
 
@@ -748,9 +930,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> record, String iClusterName,
-      final ORecordVersion iVersion, final byte iRecordType, boolean iCallTriggers, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+      final ORecordVersion iVersion, boolean iCallTriggers, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
 
     if (!record.isDirty())
@@ -764,12 +945,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
-
-		final Set<String> lockedIndexes = new HashSet<String>();
+    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
     try {
-			if(record instanceof ODocument)
-				acquireIndexModificationLock((ODocument) record, lockedIndexes);
+      if (record instanceof ODocument)
+        acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
       final boolean wasNew = iForceCreate || rid.isNew();
       if (wasNew && rid.clusterId == -1)
@@ -798,33 +978,25 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (rid.clusterId > -1 && iClusterName == null)
           iClusterName = getClusterNameById(rid.clusterId);
 
+        checkRecordClass(record, iClusterName, rid, isNew);
+
+        final int permission;
+
+        if (wasNew)
+          permission = ORole.PERMISSION_CREATE;
+        else
+          permission = ORole.PERMISSION_UPDATE;
+
+        checkSecurity(ODatabaseSecurityResources.CLUSTER, permission, iClusterName);
+
         if (stream != null && stream.length > 0) {
-          if (iCallTriggers)
-            if (wasNew) {
-              // CHECK ACCESS ON CLUSTER
-              checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-              if (callbackHooks(TYPE.BEFORE_CREATE, record) == RESULT.RECORD_CHANGED) {
-                // RECORD CHANGED IN TRIGGER, REACQUIRE IT
-                record.unsetDirty();
-                record.setDirty();
-                ORecordSerializationContext.pullContext();
-                ORecordSerializationContext.pushContext();
+          if (iCallTriggers) {
+            final TYPE triggerType = wasNew ? TYPE.BEFORE_CREATE : TYPE.BEFORE_UPDATE;
 
-                stream = record.toStream();
-              }
-            } else {
-              // CHECK ACCESS ON CLUSTER
-              checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-              if (callbackHooks(TYPE.BEFORE_UPDATE, record) == RESULT.RECORD_CHANGED) {
-                // RECORD CHANGED IN TRIGGER, REACQUIRE IT
-                record.unsetDirty();
-                record.setDirty();
-                ORecordSerializationContext.pullContext();
-                ORecordSerializationContext.pushContext();
-
-                stream = record.toStream();
-              }
+            if (callbackHooks(triggerType, record) == RESULT.RECORD_CHANGED) {
+              stream = updateStream(record);
             }
+          }
         }
 
         if (!record.isDirty())
@@ -848,11 +1020,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             // NOTIFY IDENTITY HAS CHANGED
             record.onAfterIdentityChanged(record);
             // UPDATE INFORMATION: CLUSTER ID+POSITION
-            record.fill(rid, version, stream, stream == null || stream.length == 0);
-          } else {
-            // UPDATE INFORMATION: VERSION
-            record.fill(rid, version, stream, stream == null || stream.length == 0);
           }
+
+          record.fill(rid, version, stream, stream == null || stream.length == 0);
 
           if (iCallTriggers && stream != null && stream.length > 0) {
             if (!operationResult.isMoved()) {
@@ -881,7 +1051,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
     } finally {
-			releaseIndexModificationLock(lockedIndexes);
+      releaseIndexModificationLock(lockedIndexes);
       record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
@@ -901,7 +1071,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return callInRecordLock(new ExecuteReplicaUpdateCallable(record), rid, true);
   }
 
-  public void executeDeleteRecord(final OIdentifiable record, final ORecordVersion iVersion, final boolean iRequired,
+  public void executeDeleteRecord(OIdentifiable record, final ORecordVersion iVersion, final boolean iRequired,
       boolean iCallTriggers, final OPERATION_MODE iMode, boolean prohibitTombstones) {
     checkOpeness();
     final ORecordId rid = (ORecordId) record.getIdentity();
@@ -915,14 +1085,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
-		final Set<String> lockedIndexes = new HashSet<String>();
+    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
     ORecordSerializationContext.pushContext();
     try {
-			if(record instanceof ODocument)
-				acquireIndexModificationLock((ODocument) record, lockedIndexes);
+      record = record.getRecord();
+      if (record instanceof ODocument)
+        acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
-			try {
+      try {
         // if cache is switched off record will be unreachable after delete.
         ORecord<?> rec = record.getRecord();
         if (iCallTriggers && rec != null)
@@ -965,10 +1136,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         throw new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId(), t);
       }
     } finally {
-			releaseIndexModificationLock(lockedIndexes);
+      releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
     }
   }
+
 
   @Override
   public ODatabaseComplex<?> getDatabaseOwner() {
@@ -1031,7 +1203,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
-    Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
+    final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
     hooks.clear();
     for (ORecordHook.HOOK_POSITION p : ORecordHook.HOOK_POSITION.values()) {
@@ -1061,7 +1233,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return level1Cache;
   }
 
-  public Set<ORecordHook> getHooks() {
+  public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
     return unmodifiableHooks;
   }
 
@@ -1115,20 +1287,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
-  protected ORecordSerializer resolveFormat(final Object iObject) {
-    return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
-  }
-
-  @Override
-  protected void checkOpeness() {
-    if (isClosed())
-      throw new ODatabaseException("Database '" + getURL() + "' is closed");
-  }
-
-  protected void setCurrentDatabaseinThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
-  }
-
   public boolean isValidationEnabled() {
     return !getStatus().equals(STATUS.IMPORTING) && validation;
   }
@@ -1146,174 +1304,88 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     this.dataSegmentStrategy = dataSegmentStrategy;
   }
 
-  private class ExecuteReplicaUpdateCallable implements Callable<Boolean> {
-    private final ORecordId          rid;
-    private final ORecordInternal<?> record;
+  protected ORecordSerializer resolveFormat(final Object iObject) {
+    return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
+  }
 
-    public ExecuteReplicaUpdateCallable(ORecordInternal<?> record) {
-      this.rid = (ORecordId) record.getIdentity();
-      this.record = record;
-    }
+  @Override
+  protected void checkOpeness() {
+    if (isClosed())
+      throw new ODatabaseException("Database '" + getURL() + "' is closed");
+  }
 
-    @Override
-    public Boolean call() throws Exception {
-      final ORecordMetadata loadedRecordMetadata = getRecordMetadata(rid);
-      final boolean result;
+  protected void setCurrentDatabaseinThreadLocal() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
+  }
 
-      if (loadedRecordMetadata == null)
-        result = processReplicaAdd();
-      else if (loadedRecordMetadata.getRecordVersion().compareTo(record.getRecordVersion()) < 0)
-        result = processReplicaUpdate(loadedRecordMetadata);
-      else
-        return false;
+  protected void installHooks() {
+    registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
+    registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
+    registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
+  }
 
-      if (!result)
-        throw new IllegalStateException("Passed in replica was not stored in DB");
-
-      return true;
-    }
-
-    private boolean processReplicaUpdate(ORecordMetadata loadedRecordMetadata) throws Exception {
-      ORecordInternal<?> replicaToUpdate = record;
-      boolean result;
-      final ORecordVersion replicaVersion = record.getRecordVersion();
-      final byte recordType = record.getRecordType();
-
-      try {
-        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
-          replicaToUpdate = mergeWithRecord(null);
-          callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
-          replicaToUpdate = mergeWithRecord(rid);
-          callbackHooks(TYPE.BEFORE_REPLICA_UPDATE, replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
-          replicaToUpdate = load(rid, "*:0", false, true);
-          replicaToUpdate.getRecordVersion().copyFrom(replicaVersion);
-
-          callbackHooks(TYPE.BEFORE_REPLICA_DELETE, replicaToUpdate);
-        }
-
-        byte[] stream = replicaToUpdate.toStream();
-        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToUpdate);
-        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, recordType);
-
-        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToUpdate);
-          replicaToUpdate.unsetDirty();
-          getLevel1Cache().updateRecord(replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.AFTER_REPLICA_UPDATE, replicaToUpdate);
-          replicaToUpdate.unsetDirty();
-          getLevel1Cache().updateRecord(replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.AFTER_REPLICA_DELETE, replicaToUpdate);
-          replicaToUpdate.unsetDirty();
-          getLevel1Cache().deleteRecord(rid);
-        }
-      } catch (Exception e) {
-        if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.REPLICA_ADD_FAILED, replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.REPLICA_UPDATE_FAILED, replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.REPLICA_DELETE_FAILED, replicaToUpdate);
-        }
-
-        throw e;
-      }
-
-      return result;
-    }
-
-    private boolean processReplicaAdd() throws Exception {
-      ORecordInternal<?> replicaToAdd = record;
-      boolean result;
-      final ORecordVersion replicaVersion = record.getRecordVersion();
-
-      try {
-        if (!replicaVersion.isTombstone()) {
-          replicaToAdd = mergeWithRecord(null);
-
-          callbackHooks(TYPE.BEFORE_REPLICA_ADD, replicaToAdd);
-        } else
-          replicaToAdd = (ORecordInternal<?>) record.copy();
-
-        byte[] stream = replicaToAdd.toStream();
-
-        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToAdd);
-
-        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, replicaToAdd.getRecordType());
-
-        if (!replicaVersion.isTombstone()) {
-          callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
-          replicaToAdd.unsetDirty();
-          getLevel1Cache().updateRecord(replicaToAdd);
-        }
-
-      } catch (Exception e) {
-        if (!replicaVersion.isTombstone())
-          callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
-
-        throw e;
-      }
-
-      return result;
-    }
-
-    private ORecordInternal<?> mergeWithRecord(ORID rid) {
-      final ORecordInternal<?> replicaToAdd;
-      if (record instanceof ODocument) {
-        if (rid == null)
-          replicaToAdd = new ODocument();
-        else
-          replicaToAdd = load(rid, "*:0", false, true);
-
-        ((ODocument) replicaToAdd).merge((ODocument) record, false, false);
-
-        replicaToAdd.getRecordVersion().copyFrom(record.getRecordVersion());
-        replicaToAdd.setIdentity(this.rid);
-      } else
-        replicaToAdd = (ORecordInternal<?>) record.copy();
-
-      return replicaToAdd;
+  private void checkRecordClass(ORecordInternal<?> record, String iClusterName, ORecordId rid, boolean isNew) {
+    if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew
+        && record instanceof ORecordSchemaAwareAbstract) {
+      final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) record;
+      final OClass recordClass = recordSchemaAware.getSchemaClass();
+      final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);
+      if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+          || (recordClass != null && !recordClass.equals(clusterIdClass)))
+        throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class " + clusterIdClass
+            + " but saved with class " + recordClass);
     }
   }
 
-	private void releaseIndexModificationLock(Set<String> lockedIndexes) {
-		final OMetadataDefault metadata = getMetadata();
-		if (metadata == null)
-			return;
+  private byte[] updateStream(ORecordInternal<?> record) {
+    byte[] stream;
+    record.unsetDirty();
+    record.setDirty();
+    ORecordSerializationContext.pullContext();
+    ORecordSerializationContext.pushContext();
 
-		final OIndexManager indexManager = metadata.getIndexManager();
-		if(indexManager == null)
-			return;
+    stream = record.toStream();
+    return stream;
+  }
 
-		for (String indexName : lockedIndexes) {
-			OIndex index = indexManager.getIndex(indexName);
-			index.getInternal().releaseModificationLock();
-		}
-	}
+  private void releaseIndexModificationLock(Set<OIndex<?>> lockedIndexes) {
+    final OMetadataDefault metadata = getMetadata();
+    if (metadata == null)
+      return;
 
-	private void acquireIndexModificationLock(ODocument doc, Set<String> lockedIndexes) {
-		if (getStorage() instanceof OStorageEmbedded) {
-			final OClass cls = doc.getSchemaClass();
-			if (cls != null) {
-				final Collection<OIndex<?>> indexes = cls.getIndexes();
-				if (indexes != null) {
-					final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
-						public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
-							return indexOne.getName().compareTo(indexTwo.getName());
-						}
-					});
+    final OIndexManager indexManager = metadata.getIndexManager();
+    if (indexManager == null)
+      return;
 
-					indexesToLock.addAll(indexes);
+    for (OIndex<?> index : lockedIndexes) {
+      index.getInternal().releaseModificationLock();
+    }
+  }
 
-					for (final OIndex<?> index : indexesToLock) {
-						index.getInternal().acquireModificationLock();
-						lockedIndexes.add(index.getName());
-					}
-				}
-			}
-		}
-	}
+  private void acquireIndexModificationLock(ODocument doc, Set<OIndex<?>> lockedIndexes) {
+    if (getStorage() instanceof OStorageEmbedded) {
+      final OClass cls = doc.getSchemaClass();
+      if (cls != null) {
+        final Collection<OIndex<?>> indexes = cls.getIndexes();
+        if (indexes != null) {
+          final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
+            public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
+              return indexOne.getName().compareTo(indexTwo.getName());
+            }
+          });
+
+          indexesToLock.addAll(indexes);
+
+          for (final OIndex<?> index : indexesToLock) {
+            index.getInternal().acquireModificationLock();
+            lockedIndexes.add(index);
+          }
+        }
+      }
+    }
+  }
 }

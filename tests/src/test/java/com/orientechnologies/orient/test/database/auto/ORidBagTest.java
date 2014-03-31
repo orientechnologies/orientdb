@@ -3,12 +3,24 @@ package com.orientechnologies.orient.test.database.auto;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -20,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 @Test
 public abstract class ORidBagTest extends BaseTest {
@@ -506,6 +519,31 @@ public abstract class ORidBagTest extends BaseTest {
     assertTrue(rids.isEmpty());
   }
 
+  public void testCycle() {
+    ODocument docOne = new ODocument();
+    ORidBag ridBagOne = new ORidBag();
+
+    ODocument docTwo = new ODocument();
+    ORidBag ridBagTwo = new ORidBag();
+
+    docOne.field("ridBag", ridBagOne);
+    docTwo.field("ridBag", ridBagTwo);
+
+    ridBagOne.add(docTwo);
+    ridBagTwo.add(docOne);
+
+    docOne.save();
+
+    docOne = database.load(docOne.getIdentity(), "*:-1", false);
+    ridBagOne = docOne.field("ridBag");
+
+    docTwo = database.load(docTwo.getIdentity(), "*:-1", false);
+    ridBagTwo = docTwo.field("ridBag");
+
+    Assert.assertEquals(ridBagOne.iterator().next(), docTwo);
+    Assert.assertEquals(ridBagTwo.iterator().next(), docOne);
+  }
+
   public void testAddSBTreeAddInMemoryIterateAndRemove() {
     List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
 
@@ -950,9 +988,15 @@ public abstract class ORidBagTest extends BaseTest {
     Assert.assertTrue(itemsToAdd.isEmpty());
   }
 
-  public void testFromEmbeddedToSBTreeAndBack() {
+  public void testFromEmbeddedToSBTreeAndBack() throws IOException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(4);
+
+    if (database.getStorage() instanceof OStorageProxy) {
+      OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, 4);
+    }
 
     ORidBag ridBag = new ORidBag();
     ODocument document = new ODocument();
@@ -1136,17 +1180,14 @@ public abstract class ORidBagTest extends BaseTest {
   }
 
   private void massiveInsertionIteration(Random rnd, List<OIdentifiable> rids, ORidBag bag) {
-    Iterator<OIdentifiable> ridsIterator = rids.iterator();
     Iterator<OIdentifiable> bagIterator = bag.iterator();
 
-    while (ridsIterator.hasNext()) {
-      assertTrue(bagIterator.hasNext());
-
-      OIdentifiable ridValue = ridsIterator.next();
+    while (bagIterator.hasNext()) {
       OIdentifiable bagValue = bagIterator.next();
-
-      assertEquals(bagValue, ridValue);
+      Assert.assertTrue(rids.contains(bagValue));
     }
+
+    Assert.assertEquals(bag.size(), rids.size());
 
     for (int i = 0; i < 100; i++) {
       if (rnd.nextDouble() < 0.2 & rids.size() > 5) {
@@ -1163,34 +1204,24 @@ public abstract class ORidBagTest extends BaseTest {
       }
     }
 
-    Collections.sort(rids);
-    ridsIterator = rids.iterator();
     bagIterator = bag.iterator();
 
-    while (ridsIterator.hasNext()) {
-      assertTrue(bagIterator.hasNext());
-
-      OIdentifiable ridValue = ridsIterator.next();
-      OIdentifiable bagValue = bagIterator.next();
-
-      assertEquals(bagValue, ridValue);
+    while (bagIterator.hasNext()) {
+      final OIdentifiable bagValue = bagIterator.next();
+      Assert.assertTrue(rids.contains(bagValue));
 
       if (rnd.nextDouble() < 0.05) {
-        ridsIterator.remove();
         bagIterator.remove();
+        Assert.assertTrue(rids.remove(bagValue));
       }
     }
 
-    ridsIterator = rids.iterator();
+    Assert.assertEquals(bag.size(), rids.size());
     bagIterator = bag.iterator();
 
-    while (ridsIterator.hasNext()) {
-      assertTrue(bagIterator.hasNext());
-
-      OIdentifiable ridValue = ridsIterator.next();
-      OIdentifiable bagValue = bagIterator.next();
-
-      assertEquals(bagValue, ridValue);
+    while (bagIterator.hasNext()) {
+      final OIdentifiable bagValue = bagIterator.next();
+      Assert.assertTrue(rids.contains(bagValue));
     }
   }
 
@@ -1266,6 +1297,88 @@ public abstract class ORidBagTest extends BaseTest {
     doc.<ORidBag> field("ridBag").add(remvedItem);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
+  }
+
+  public void testAddNewItemsAndRemoveThem() {
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    ORidBag ridBag = new ORidBag();
+    int size = 0;
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+
+      for (int k = 0; k < 2; k++) {
+        ridBag.add(docToAdd);
+        rids.add(docToAdd);
+        size++;
+      }
+    }
+
+    Assert.assertEquals(ridBag.size(), size);
+    ODocument document = new ODocument();
+    document.field("ridBag", ridBag);
+    document.save();
+
+    document = database.load(document.getIdentity(), "*:-1", true);
+    ridBag = document.field("ridBag");
+    Assert.assertEquals(ridBag.size(), size);
+
+    final List<OIdentifiable> newDocs = new ArrayList<OIdentifiable>();
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+
+      for (int k = 0; k < 2; k++) {
+        ridBag.add(docToAdd);
+        rids.add(docToAdd);
+        newDocs.add(docToAdd);
+        size++;
+      }
+    }
+
+    Assert.assertEquals(ridBag.size(), size);
+
+    Random rnd = new Random();
+
+    for (int i = 0; i < newDocs.size(); i++) {
+      if (rnd.nextBoolean()) {
+        OIdentifiable newDoc = newDocs.get(i);
+        rids.remove(newDoc);
+        ridBag.remove(newDoc);
+        newDocs.remove(newDoc);
+
+        size--;
+      }
+    }
+
+    for (OIdentifiable identifiable : ridBag) {
+      if (newDocs.contains(identifiable) && rnd.nextBoolean()) {
+        ridBag.remove(identifiable);
+        rids.remove(identifiable);
+
+        size--;
+      }
+    }
+
+    Assert.assertEquals(ridBag.size(), size);
+    List<OIdentifiable> ridsCopy = new ArrayList<OIdentifiable>(rids);
+
+    for (OIdentifiable identifiable : ridBag) {
+      Assert.assertTrue(rids.remove(identifiable));
+    }
+
+    Assert.assertTrue(rids.isEmpty());
+
+    document.save();
+
+    document = database.load(document.getIdentity(), "*:-1", false);
+    ridBag = document.field("ridBag");
+
+    rids.addAll(ridsCopy);
+    for (OIdentifiable identifiable : ridBag) {
+      Assert.assertTrue(rids.remove(identifiable));
+    }
+
+    Assert.assertTrue(rids.isEmpty());
+    Assert.assertEquals(ridBag.size(), size);
   }
 
   public void testJsonSerialization() {

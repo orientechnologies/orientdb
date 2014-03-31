@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -28,6 +25,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+import java.util.Collection;
+import java.util.Set;
+
 public class OIndexManagerRemote extends OIndexManagerAbstract {
   private static final String QUERY_DROP = "drop index %s";
 
@@ -35,22 +35,17 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     super(iDatabase);
   }
 
-  protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
-      OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
-    if (isMultiValueIndex)
-      return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
-
-    return new OIndexRemoteOneValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
-  }
-
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
       createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType);
     else
       createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
+
+    if (engine != null)
+      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + " " + engine;
 
     if (metadata != null)
       createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
@@ -74,6 +69,12 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
+  @Override
+  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex,
+      OProgressListener iProgressListener, ODocument metadata) {
+    return createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata, null);
+  }
+
   public OIndexManager dropIndex(final String iIndexName) {
     acquireExclusiveLock();
     try {
@@ -88,6 +89,33 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public ODocument toStream() {
+    throw new UnsupportedOperationException("Remote index cannot be streamed");
+  }
+
+  @Override
+  public void recreateIndexes() {
+    throw new UnsupportedOperationException("recreateIndexes()");
+  }
+
+  @Override
+  public void waitTillIndexRestore() {
+  }
+
+  @Override
+  public boolean autoRecreateIndexesAfterCrash() {
+    return false;
+  }
+
+  protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
+      OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
+    if (isMultiValueIndex)
+      return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
+
+    return new OIndexRemoteOneValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
   }
 
   @Override
@@ -116,24 +144,5 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  @Override
-  public ODocument toStream() {
-    throw new UnsupportedOperationException("Remote index cannot be streamed");
-  }
-
-  @Override
-  public void recreateIndexes() {
-    throw new UnsupportedOperationException("recreateIndexes()");
-  }
-
-  @Override
-  public void waitTillIndexRestore() {
-  }
-
-  @Override
-  public boolean autoRecreateIndexesAfterCrash() {
-    return false;
   }
 }

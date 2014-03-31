@@ -15,12 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
@@ -111,7 +106,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   public void getValuesBetween(Object iRangeFrom, final boolean iFromInclusive, Object iRangeTo, final boolean iToInclusive,
-      final IndexValuesResultListener resultListener) {
+															 boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     if (iRangeFrom.getClass() != iRangeTo.getClass())
@@ -122,7 +117,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, null,
+      indexEngine.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, ascSortOrder, null,
           new OIndexEngine.ValuesResultListener() {
             @Override
             public boolean addResult(OIdentifiable identifiable) {
@@ -134,14 +129,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, final IndexValuesResultListener resultListener) {
+  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMajor(iRangeFrom, isInclusive, null, new OIndexEngine.ValuesResultListener() {
+      indexEngine.getValuesMajor(iRangeFrom, isInclusive, ascSortOrder, null, new OIndexEngine.ValuesResultListener() {
         @Override
         public boolean addResult(OIdentifiable identifiable) {
           return resultListener.addResult(identifiable);
@@ -153,14 +148,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, final IndexValuesResultListener resultListener) {
+  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMinor(iRangeTo, isInclusive, null, new OIndexEngine.ValuesResultListener() {
+      indexEngine.getValuesMinor(iRangeTo, isInclusive, ascSortOrder, null, new OIndexEngine.ValuesResultListener() {
         @Override
         public boolean addResult(OIdentifiable identifiable) {
           return resultListener.addResult(identifiable);
@@ -171,11 +166,18 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValues(final Collection<?> keys, final IndexValuesResultListener resultListener) {
+  public void getValues(final Collection<?> keys, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
-    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
+		final Comparator<Object> comparator;
+
+		if (ascSortOrder)
+			comparator = ODefaultComparator.INSTANCE;
+		else
+		  comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    Collections.sort(sortedKeys, comparator);
 
     acquireSharedLock();
     try {
@@ -193,14 +195,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, null, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, ascOrder, null, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);
@@ -212,14 +214,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesMinor(Object iRangeTo, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object iRangeTo, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMinor(iRangeTo, isInclusive, null, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesMinor(iRangeTo, isInclusive, ascOrder, null, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);
@@ -231,7 +233,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean inclusive,
-      final IndexEntriesResultListener entriesResultListener) {
+																boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     if (iRangeFrom.getClass() != iRangeTo.getClass())
@@ -242,7 +244,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, null, new OIndexEngine.EntriesResultListener() {
+      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, ascOrder, null, new OIndexEngine.EntriesResultListener() {
         @Override
         public boolean addResult(ODocument entry) {
           return entriesResultListener.addResult(entry);

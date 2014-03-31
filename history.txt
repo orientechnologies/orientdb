@@ -24,6 +24,44 @@
 
 ***************************************************************************************************
 This document contains the last changes to the OrientDB project.
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7-rc2 - (March, 25th 2014)
+---------------------------------------------------------------------------------------------------
+- Core: supported retro-compatibility for databases created with OrientDB v1.5 or further (#1899)
+        improved performance on ORDER BY against indexes (#1843)
+        improved performance on RENAME CLASS (#1818)
+- Graph: added support for vertex-centric traversal by using SQL (#2079)
+-        added support for vertex-centric traversal by using SQL (#2079)
+- SQL: new UPSERT keyword to execute an INSERT or UPDATE based on a condition (#2032)
+       UPDATE now can ADD also to sub-document fields (#2031)
+- Indexes: added support for external engines (#1774)
+- Studio: new Query Timeline to the History, new Index Panel, Fixed many bugs
+- Bug fixing: 62 bugs in total
+
+Full list: https://github.com/orientechnologies/orientdb/issues?labels=&milestone=13&page=3&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7-rc1 - (February, 6th 2014)
+---------------------------------------------------------------------------------------------------
+- Engine: new LINKBag to manage LINKS by using SBTree indexes. This drastically improved performance
+- SQL: new LOCK keyword to specify locking strategy
+       new RETURNING keyword to let to UPDATE and DELETE commands to return modified records
+       new include() and exclude() to respectively include or exclude fields of documents
+       operator [] now can be used in chain, also with functions
+       projections can be reused as variables
+       support for LET also in UPDATE and DELETE commands
+- Graph API: support for ordered edge list
+             new detach() and attach() method to work with Graph Element offline
+             new OrientGraphFactory to manage pooled instances
+- HTTP: new support for ETag, If-Match and If-None-Match headers
+        new PATCH method against /document command and /documentbyclass for partial updates
+- Distributed: database deploy now is chunked to avoid RAM saturation
+- Backup and Restore: improved speed from 5x to 50x
+- Studio: new CSV download of Query result
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=15&page=1&state=closed
+
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6.4 - (January, 16th 2014)
 ---------------------------------------------------------------------------------------------------

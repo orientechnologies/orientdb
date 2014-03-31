@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
-import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -211,6 +211,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       return;
 
     marshalling = true;
+		tree.setMarshalling(true);
 
     try {
       final char firstChar = buffer.charAt(0);
@@ -233,6 +234,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       }
     } finally {
       marshalling = false;
+			tree.setMarshalling(false);
     }
   }
 

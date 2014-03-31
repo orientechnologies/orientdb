@@ -97,4 +97,6 @@ public interface OSchema {
    *          Cluster name
    */
   public Set<OClass> getClassesRelyOnCluster(String iClusterName);
+
+	public OClass getClassByClusterId(int clusterId);
 }

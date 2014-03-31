@@ -48,6 +48,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.EmbeddedObjectSerializationTest"/>
         </classes>
     </test>
     <test name="PopulationObjectSchemaFull">
@@ -92,6 +93,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.LinkMapIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
         </classes>
     </test>
     <test name="Dictionary">
@@ -141,6 +144,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLFunctionsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexTest"/>
         </classes>
     </test>
     <test name="other-commands">

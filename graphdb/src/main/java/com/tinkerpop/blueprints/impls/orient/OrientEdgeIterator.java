@@ -2,9 +2,11 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import java.util.Iterator;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 
@@ -34,6 +36,14 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       return (OrientEdge) iObject;
 
     final OIdentifiable rec = (OIdentifiable) iObject;
+
+    final ORecord<?> record = rec.getRecord();
+    if (!(record instanceof ODocument)) {
+      // SKIP IT
+      OLogManager.instance().warn(this, "Found a record that is not an edge. Record: " + record);
+      return null;
+    }
+
     final ODocument value = rec.getRecord();
 
     if (value == null || value.getSchemaClass() == null)
@@ -52,7 +62,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     } else
       throw new IllegalStateException("Invalid content found between connections:" + value);
 
-    if (this.sourceVertex.graph.isUseVertexFieldsForEdgeLabels() || edge.isLabeled(labels))
+    if (this.sourceVertex.settings.useVertexFieldsForEdgeLabels || edge.isLabeled(labels))
       return edge;
 
     return null;
@@ -62,6 +72,6 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
       return false;
 
-    return this.sourceVertex.graph.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
+    return this.sourceVertex.settings.useVertexFieldsForEdgeLabels || iObject.isLabeled(labels);
   }
 }

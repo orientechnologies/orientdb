@@ -22,18 +22,18 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
- * Serializer that is used for serialization of non {@link com.orientechnologies.common.collection.OCompositeKey} keys in index.
- *
+ * Serializer that is used for serialization of non {@link com.orientechnologies.orient.core.index.OCompositeKey} keys in index.
+ * 
  * @author Andrey Lomakin
  * @since 31.03.12
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySerializer<T> {
 
-  private OType type;
-  private OBinarySerializer binarySerializer;
+  private OType              type;
+  private OBinarySerializer  binarySerializer;
 
-  public static final byte ID = 15;
+  public static final byte   ID   = 15;
   public static final String NAME = "bsks";
 
   public OSimpleKeySerializer() {
@@ -41,7 +41,8 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
 
   public OSimpleKeySerializer(final OType iType) {
     type = iType;
-    binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
+
+    binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(iType);
   }
 
   public int getObjectSize(T key, Object... hints) {
@@ -90,13 +91,13 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
       else
         type = OType.getTypeByClass(key.getClass());
 
-      binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(type);
+      binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(type);
     }
   }
 
   protected void init(byte serializerId) {
     if (binarySerializer == null)
-      binarySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(serializerId);
+      binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(serializerId);
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {

@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -66,28 +65,26 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-      IndexResultListener resultListener, int fetchLimit) {
+  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
+																	 OIndex.IndexValuesResultListener resultListener) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
-
-    final Object result;
+      return false;
 
     if (indexDefinition.getParamCount() == 1) {
       if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
           .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        return null;
+        return false;
 
       final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
 
       if (key == null)
-        return null;
+        return false;
 
       final Object indexResult = index.get(key);
-      result = convertIndexResult(indexResult);
+      convertIndexResult(indexResult, resultListener);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -96,43 +93,37 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
 
       if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
           .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        return null;
+        return false;
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
-        return null;
+        return false;
 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
-
-        if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, resultListener);
-          result = resultListener.getResult();
-        } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);
-          result = convertIndexResult(indexResult);
+          convertIndexResult(indexResult, resultListener);
         } else
-          return null;
+          return false;
       }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return true;
   }
 
-  private Object convertIndexResult(Object indexResult) {
-    Object result;
-    if (indexResult instanceof Collection)
-      result = indexResult;
-    else if (indexResult == null)
-      result = Collections.emptyList();
-    else
-      result = Collections.singletonList((OIdentifiable) indexResult);
-    return result;
+  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
+    if (indexResult instanceof Collection) {
+      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult) {
+        if (!resultListener.addResult(identifiable))
+          return;
+      }
+    } else if (indexResult != null)
+      resultListener.addResult((OIdentifiable) indexResult);
   }
 
   @Override

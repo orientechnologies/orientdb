@@ -15,9 +15,12 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.string;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerHelper;
 
@@ -33,8 +36,39 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       // NULL VALUE
       return null;
 
-    final OSerializableStream instance = new ODocument();
+    final ODocument instance = new ODocument();
     instance.fromStream(OBinaryProtocol.string2bytes(iStream));
+
+    final String className = instance.field(ODocumentSerializable.CLASS_NAME);
+    if (className == null)
+      return instance;
+
+    Class<?> clazz = null;
+    try {
+      clazz = Class.forName(className);
+    } catch (ClassNotFoundException e) {
+      OLogManager.instance().debug(this, "Class name provided in embedded document " + className + " does not exist.");
+    }
+
+    if (clazz == null)
+      return instance;
+
+    if (ODocumentSerializable.class.isAssignableFrom(clazz)) {
+      try {
+        final ODocumentSerializable documentSerializable = (ODocumentSerializable) clazz.newInstance();
+        final ODocument docClone = new ODocument();
+        instance.copyTo(docClone);
+        docClone.removeField(ODocumentSerializable.CLASS_NAME);
+        documentSerializable.fromDocument(docClone);
+
+        return documentSerializable;
+      } catch (InstantiationException e) {
+        throw new OSerializationException("Cannot serialize the object", e);
+      } catch (IllegalAccessException e) {
+        throw new OSerializationException("Cannot serialize the object", e);
+      }
+    }
+
     return instance;
   }
 
@@ -45,6 +79,9 @@ public class OStringSerializerEmbedded implements OStringSerializer {
    */
   public StringBuilder toStream(final StringBuilder iOutput, Object iValue) {
     if (iValue != null) {
+      if (iValue instanceof ODocumentSerializable)
+        iValue = ((ODocumentSerializable) iValue).toDocument();
+
       if (!(iValue instanceof OSerializableStream))
         throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");
 
@@ -53,6 +90,7 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       iOutput.append(OStreamSerializerHelper.SEPARATOR);
       iOutput.append(OBinaryProtocol.bytes2string(stream.toStream()));
     }
+
     return iOutput;
   }
 

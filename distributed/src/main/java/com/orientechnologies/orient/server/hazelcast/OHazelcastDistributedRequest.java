@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -31,8 +30,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  * 
  */
 public class OHazelcastDistributedRequest implements ODistributedRequest, Externalizable {
-  private static AtomicLong   serialId = new AtomicLong();
-
   private long                id;
   private EXECUTION_MODE      executionMode;
   private String              senderNodeName;
@@ -55,7 +52,11 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     this.senderThreadId = Thread.currentThread().getId();
     this.task = payload;
     this.executionMode = iExecutionMode;
-    id = serialId.incrementAndGet();
+    id = -1;
+  }
+
+  public void setId(final long iReqId) {
+    id = iReqId;
   }
 
   @Override
@@ -146,6 +147,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     final StringBuilder buffer = new StringBuilder();
     buffer.append("id=");
     buffer.append(id);
+    buffer.append(" from=");
+    buffer.append(senderNodeName);
     if (task != null) {
       buffer.append(" task=");
       buffer.append(task.toString());

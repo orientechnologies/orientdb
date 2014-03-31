@@ -18,8 +18,8 @@ package com.orientechnologies.orient.test.internal.index;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.collection.OMVRBTree;
-import com.orientechnologies.common.collection.OMVRBTreeMemory;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeMemory;
 import com.orientechnologies.common.collection.ONavigableMap;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 

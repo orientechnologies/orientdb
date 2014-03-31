@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.List;
 
 /**
  * Computes the sum of field. Uses the context to save the last sum number. When different Number class are used, take the class
@@ -38,17 +38,18 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters.length == 1) {
-      if (iParameters[0] instanceof Number)
-        sum((Number) iParameters[0]);
-      else if (OMultiValue.isMultiValue(iParameters[0]))
-        for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    if (iParams.length == 1) {
+      if (iParams[0] instanceof Number)
+        sum((Number) iParams[0]);
+      else if (OMultiValue.isMultiValue(iParams[0]))
+        for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
           sum((Number) n);
     } else {
       sum = null;
-      for (int i = 0; i < iParameters.length; ++i)
-        sum((Number) iParameters[i]);
+      for (int i = 0; i < iParams.length; ++i)
+        sum((Number) iParams[i]);
     }
     return sum;
   }
@@ -69,7 +70,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: sum(<field> [,<field>*])";
+    return "sum(<field> [,<field>*])";
   }
 
   @Override

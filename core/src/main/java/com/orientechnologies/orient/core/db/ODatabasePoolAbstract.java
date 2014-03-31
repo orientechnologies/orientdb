@@ -101,6 +101,20 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     }
   }
 
+  public int getConnectionsInCurrentThread(final String url, final String userName) {
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    lock();
+    try {
+      final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        return 0;
+
+      return pool.getConnectionsInCurrentThread(url);
+    } finally {
+      unlock();
+    }
+  }
+
   public void release(final DB iDatabase) {
     final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
         + iDatabase.getURL() : iDatabase.getURL();
@@ -112,8 +126,8 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
       if (pool == null)
         throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
 
-      pool.returnResource(iDatabase);
-      this.notifyEvictor(dbPooledName, iDatabase);
+      if (pool.returnResource(iDatabase))
+        this.notifyEvictor(dbPooledName, iDatabase);
 
     } finally {
       unlock();

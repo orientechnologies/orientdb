@@ -21,7 +21,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.serialization.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -204,4 +204,10 @@ public abstract class OClusterMemory extends OSharedResourceAdaptive implements 
   }
 
   protected abstract void clear();
+
+  @Override
+  public boolean hideRecord(OClusterPosition position) {
+    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+  }
+
 }

@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -31,19 +32,35 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  */
 public interface ODistributedServerManager {
 
-  public enum STATUS {
+  public enum NODE_STATUS {
     OFFLINE, STARTING, ONLINE, SHUTDOWNING
+  };
+
+  public enum DB_STATUS {
+    OFFLINE, SYNCHRONIZING, ONLINE
   };
 
   public boolean isEnabled();
 
-  public STATUS getStatus();
+  public long getLastClusterChangeOn();
 
-  public boolean checkStatus(STATUS string);
+  public NODE_STATUS getNodeStatus();
 
-  public void setStatus(STATUS iStatus);
+  public boolean checkNodeStatus(NODE_STATUS string);
 
-  public boolean isNodeAvailable(final String iNodeName);
+  public void setNodeStatus(NODE_STATUS iStatus);
+
+  public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName);
+
+  public boolean checkDatabaseStatus(final String iNode, final String iDatabaseName, DB_STATUS iStatus);
+
+  public void setDatabaseStatus(final String iDatabaseName, DB_STATUS iStatus);
+
+  public ODistributedMessageService getMessageService();
+
+  public void updateLastClusterChange();
+
+  public boolean isNodeAvailable(final String iNodeName, String databaseName);
 
   public boolean isOffline();
 
@@ -82,7 +99,11 @@ public interface ODistributedServerManager {
 
   public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
-  public void sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask);
+  public Object sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask,
+      EXECUTION_MODE iExecutionMode);
+
+  public Object sendRequest2Nodes(String iDatabaseName, Set<String> iTargetNodeNames, OAbstractRemoteTask iTask,
+      EXECUTION_MODE iExecutionMode);
 
   public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
 

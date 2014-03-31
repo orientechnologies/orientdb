@@ -42,7 +42,7 @@ public class ClusterMetadataTest {
   }
 
   public void testMetadataStore() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:clusterMetadataTest");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:tests/target/clusterMetadataTest");
     db.create();
 
     final int clusterId = db.addCluster("clusterTest", OStorage.CLUSTER_TYPE.PHYSICAL);
@@ -67,7 +67,7 @@ public class ClusterMetadataTest {
     db.close();
     storage.close(true, false);
 
-    db = new ODatabaseDocumentTx("plocal:clusterMetadataTest");
+    db = new ODatabaseDocumentTx("plocal:tests/target/clusterMetadataTest");
     db.open("admin", "admin");
 
     cluster = db.getStorage().getClusterById(clusterId);

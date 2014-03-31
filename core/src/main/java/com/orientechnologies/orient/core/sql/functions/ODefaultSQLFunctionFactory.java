@@ -15,26 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDifference;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDocument;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionFirst;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionIntersect;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionLast;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionList;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMap;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionMultiValue;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionSet;
-import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionUnionAll;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionAsDate;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionAsDateTime;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionAsDecimal;
-import com.orientechnologies.orient.core.sql.functions.conversion.OSQLFunctionConvert;
+import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionAverage;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionEval;
@@ -46,23 +28,17 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionDecode;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionExclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
-import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionInclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionAppend;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionCharAt;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionLeft;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionLength;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionReplace;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionRight;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionSubString;
-import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionToJSON;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Default set of SQL functions.
+ * Default set of SQL function.
  * 
  * @author Johann Sorel (Geomatys)
  */
@@ -71,14 +47,8 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   private static final Map<String, Object> FUNCTIONS = new HashMap<String, Object>();
   static {
     // MISC FUNCTIONS
-    register(OSQLFunctionAppend.NAME, new OSQLFunctionAppend());
-    register(OSQLFunctionAsDate.NAME, new OSQLFunctionAsDate());
-    register(OSQLFunctionAsDateTime.NAME, new OSQLFunctionAsDateTime());
-    register(OSQLFunctionAsDecimal.NAME, new OSQLFunctionAsDecimal());
     register(OSQLFunctionAverage.NAME, OSQLFunctionAverage.class);
-    register(OSQLFunctionCharAt.NAME, new OSQLFunctionCharAt());
     register(OSQLFunctionCoalesce.NAME, new OSQLFunctionCoalesce());
-    register(OSQLFunctionConvert.NAME, new OSQLFunctionConvert());
     register(OSQLFunctionCount.NAME, OSQLFunctionCount.class);
     register(OSQLFunctionDate.NAME, OSQLFunctionDate.class);
     register(OSQLFunctionDecode.NAME, new OSQLFunctionDecode());
@@ -87,29 +57,20 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionDistinct.NAME, OSQLFunctionDistinct.class);
     register(OSQLFunctionDocument.NAME, OSQLFunctionDocument.class);
     register(OSQLFunctionEncode.NAME, new OSQLFunctionEncode());
-    register(OSQLFunctionExclude.NAME, new OSQLFunctionExclude());
     register(OSQLFunctionEval.NAME, OSQLFunctionEval.class);
     register(OSQLFunctionFirst.NAME, OSQLFunctionFirst.class);
     register(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
     register(OSQLFunctionIf.NAME, new OSQLFunctionIf());
     register(OSQLFunctionIfNull.NAME, new OSQLFunctionIfNull());
-    register(OSQLFunctionInclude.NAME, new OSQLFunctionInclude());
     register(OSQLFunctionIntersect.NAME, OSQLFunctionIntersect.class);
     register(OSQLFunctionLast.NAME, OSQLFunctionLast.class);
-    register(OSQLFunctionLeft.NAME, new OSQLFunctionLeft());
-    register(OSQLFunctionLength.NAME, new OSQLFunctionLength());
     register(OSQLFunctionList.NAME, OSQLFunctionList.class);
     register(OSQLFunctionMap.NAME, OSQLFunctionMap.class);
     register(OSQLFunctionMax.NAME, OSQLFunctionMax.class);
     register(OSQLFunctionMin.NAME, OSQLFunctionMin.class);
-    register(OSQLFunctionMultiValue.NAME, new OSQLFunctionMultiValue());
-    register(OSQLFunctionReplace.NAME, new OSQLFunctionReplace());
-    register(OSQLFunctionRight.NAME, new OSQLFunctionRight());
     register(OSQLFunctionSet.NAME, OSQLFunctionSet.class);
     register(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
-    register(OSQLFunctionSubString.NAME, new OSQLFunctionSubString());
     register(OSQLFunctionSum.NAME, OSQLFunctionSum.class);
-    register(OSQLFunctionToJSON.NAME, new OSQLFunctionToJSON());
     register(OSQLFunctionUnionAll.NAME, OSQLFunctionUnionAll.class);
   }
 

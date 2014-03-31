@@ -15,18 +15,18 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed create record task used for synchronization.
@@ -35,14 +35,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public class OFixTxTask extends OAbstractRemoteTask {
-  private static final long                   serialVersionUID = 1L;
+  private static final long         serialVersionUID = 1L;
 
-  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
+  private List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
 
   public OFixTxTask() {
   }
 
-  public void add(final OAbstractRecordReplicatedTask iTask) {
+  public void add(final OAbstractRemoteTask iTask) {
     tasks.add(iTask);
   }
 
@@ -50,12 +50,12 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "fixing conflicts found during committing transaction against db=%s...", database.getName());
+        "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     try {
 
-      for (OAbstractRecordReplicatedTask task : tasks) {
+      for (OAbstractRemoteTask task : tasks) {
         task.execute(iServer, iManager, database);
       }
 
@@ -74,7 +74,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeInt(tasks.size());
-    for (OAbstractRecordReplicatedTask task : tasks)
+    for (OAbstractRemoteTask task : tasks)
       out.writeObject(task);
   }
 
