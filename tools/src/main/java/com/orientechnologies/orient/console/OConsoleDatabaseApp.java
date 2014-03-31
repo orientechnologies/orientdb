@@ -28,7 +28,6 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -211,8 +210,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("ignoreErrors", "false");
     properties.put("backupCompressionLevel", "9"); // 9 = MAX
     properties.put("backupBufferSize", "1048576"); // 1MB
-
-    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
   }
 
   @Override

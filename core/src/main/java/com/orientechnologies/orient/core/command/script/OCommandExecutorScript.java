@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.Map;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -30,6 +22,19 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Map;
 
 /**
  * Executes Script Commands.
@@ -58,6 +63,18 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     final String language = request.getLanguage();
     parserText = request.getText();
 
+    if (language.equalsIgnoreCase("SQL"))
+      // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
+      return executeSQL();
+    else
+      return executeJsr223Script(language, iContext, iArgs);
+  }
+
+  public boolean isIdempotent() {
+    return false;
+  }
+
+  protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
     ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !(db instanceof ODatabaseRecordTx))
       db = db.getUnderlying();
@@ -98,8 +115,47 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     }
   }
 
-  public boolean isIdempotent() {
-    return false;
+  // TODO: CREATE A REGULAR JSR223 SCRIPT IMPL
+  protected Object executeSQL() {
+    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null && !(db instanceof ODatabaseRecordTx))
+      db = db.getUnderlying();
+
+    final BufferedReader reader = new BufferedReader(new StringReader(parserText));
+    String lastCommand = "";
+    Object lastResult = null;
+    try {
+      while ((lastCommand = reader.readLine()) != null) {
+        lastCommand = lastCommand.trim();
+
+        if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
+          final int equalsPos = lastCommand.indexOf('=');
+          final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
+          final String cmd = lastCommand.substring(equalsPos + 1).trim();
+
+          lastResult = db.command(new OCommandSQL(cmd).setContext(getContext())).execute();
+
+          // PUT THE RESULT INTO THE CONTEXT
+          getContext().setVariable(variable, lastResult);
+        } else if (lastCommand.equalsIgnoreCase("begin"))
+          db.begin();
+        else if (lastCommand.equalsIgnoreCase("commit"))
+          db.commit();
+        else if (lastCommand.equalsIgnoreCase("rollback"))
+          db.rollback();
+        else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
+          final String variable = lastCommand.substring("return ".length()).trim();
+
+          lastResult = getContext().getVariable(variable);
+          break;
+        } else
+          lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+
+      }
+    } catch (IOException e) {
+      throw new OCommandExecutionException("Error on executing command: " + lastCommand, e);
+    }
+    return lastResult;
   }
 
   @Override

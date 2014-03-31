@@ -51,13 +51,15 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
 
   @Override
   public void startup() {
-    if (!enabled)
+    if (!enabled) {
+      OCommandManager.instance().unregisterExecutor(OCommandScript.class);
       return;
+    }
 
     OLogManager.instance().info(this,
         "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server.");
 
-    // REGISTER THE SECURE COMMAND SCRIPT
+    // UNREGISTER THE SECURE COMMAND SCRIPT
     OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
   }
 

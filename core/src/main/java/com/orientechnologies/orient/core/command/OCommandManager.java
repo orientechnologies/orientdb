@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -26,6 +24,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class OCommandManager {
   private Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
@@ -40,6 +41,7 @@ public class OCommandManager {
     registerExecutor(OSQLSynchQuery.class, OCommandExecutorSQLDelegate.class);
     registerExecutor(OCommandSQL.class, OCommandExecutorSQLDelegate.class);
     registerExecutor(OCommandSQLResultset.class, OCommandExecutorSQLResultsetDelegate.class);
+    registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
   }
 
   public OCommandManager registerRequester(final String iType, final Class<? extends OCommandRequest> iRequest) {
