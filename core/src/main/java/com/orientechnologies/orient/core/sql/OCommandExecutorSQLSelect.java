@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -29,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
@@ -351,7 +351,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseFetchplan(w);
           else if (w.equals(KEYWORD_TIMEOUT))
             parseTimeout(w);
-          else
+          else if (w.equals(KEYWORD_LOCK)) {
+            final String lock = parseLock();
+
+            final OStorage.LOCKING_STRATEGY lockingStrategy = lock.equals("RECORD") ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+                : OStorage.LOCKING_STRATEGY.DEFAULT;
+
+            getContext().setVariable("$locking", lockingStrategy);
+          } else
             throwParsingException("Invalid keyword '" + w + "'");
         }
       }
