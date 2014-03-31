@@ -175,6 +175,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
         </classes>
     </test>
     <test name="DbTools">

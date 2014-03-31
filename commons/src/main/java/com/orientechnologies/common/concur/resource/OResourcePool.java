@@ -31,16 +31,16 @@ public class OResourcePool<K, V> {
 
   private final ThreadLocal<Map<K, ResourceHolder<V>>> activeResources = new ThreadLocal<Map<K, ResourceHolder<V>>>();
 
-  public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
-    if (iMaxResources < 1)
+  public OResourcePool(final int maxResources, final OResourcePoolListener<K, V> listener) {
+    if (maxResources < 1)
       throw new IllegalArgumentException("iMaxResource must be major than 0");
 
-    listener = iListener;
-    sem = new Semaphore(iMaxResources + 1, true);
+    this.listener = listener;
+    sem = new Semaphore(maxResources, true);
     unmodifiableresources = Collections.unmodifiableCollection(resources);
   }
 
-  public V getResource(K iKey, final long iMaxWaitMillis, Object... iAdditionalArgs) throws OLockException {
+  public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OLockException {
     Map<K, ResourceHolder<V>> resourceHolderMap = activeResources.get();
 
     if (resourceHolderMap == null) {
@@ -48,7 +48,7 @@ public class OResourcePool<K, V> {
       activeResources.set(resourceHolderMap);
     }
 
-    final ResourceHolder<V> holder = resourceHolderMap.get(iKey);
+    final ResourceHolder<V> holder = resourceHolderMap.get(key);
     if (holder != null) {
       holder.counter++;
       return holder.resource;
@@ -56,8 +56,8 @@ public class OResourcePool<K, V> {
 
     // First, get permission to take or create a resource
     try {
-      if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("Not more resources available in pool. Requested resource: " + iKey);
+      if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
+        throw new OLockException("No more resources available in pool. Requested resource: " + key);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new OInterruptedException(e);
@@ -69,7 +69,7 @@ public class OResourcePool<K, V> {
       res = resources.poll();
       if (res != null) {
         // TRY TO REUSE IT
-        if (listener.reuseResource(iKey, iAdditionalArgs, res)) {
+        if (listener.reuseResource(key, additionalArgs, res)) {
           // OK: REUSE IT
           break;
         }
@@ -81,21 +81,25 @@ public class OResourcePool<K, V> {
     // NO AVAILABLE RESOURCES: CREATE A NEW ONE
     try {
       if (res == null)
-        res = listener.createNewResource(iKey, iAdditionalArgs);
+        res = listener.createNewResource(key, additionalArgs);
 
-      resourceHolderMap.put(iKey, new ResourceHolder<V>(res));
+      resourceHolderMap.put(key, new ResourceHolder<V>(res));
       return res;
     } catch (RuntimeException e) {
       sem.release();
-      resourceHolderMap.remove(iKey);
+      resourceHolderMap.remove(key);
       // PROPAGATE IT
       throw e;
     } catch (Exception e) {
       sem.release();
-      resourceHolderMap.remove(iKey);
+      resourceHolderMap.remove(key);
 
       throw new OLockException("Error on creation of the new resource in the pool", e);
     }
+  }
+
+  public int getAvailableConnections() {
+    return sem.availablePermits();
   }
 
   public boolean returnResource(final V res) {
