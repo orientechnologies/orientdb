@@ -15,31 +15,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.concur.lock.OLock;
@@ -98,43 +73,53 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
 /**
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy, OChannelListener {
-  private static final String                    DEFAULT_HOST         = "localhost";
-  private static final int                       DEFAULT_PORT         = 2424;
-  private static final String                    ADDRESS_SEPARATOR    = ";";
-
   public static final String                     PARAM_MIN_POOL       = "minpool";
   public static final String                     PARAM_MAX_POOL       = "maxpool";
   public static final String                     PARAM_DB_TYPE        = "dbtype";
-
+  private static final String                    DEFAULT_HOST         = "localhost";
+  private static final int                       DEFAULT_PORT         = 2424;
+  private static final String                    ADDRESS_SEPARATOR    = ";";
   private static final String                    DRIVER_NAME          = "OrientDB Java";
-
+  protected final List<String>                   serverURLs           = new ArrayList<String>();
+  protected final Map<String, OCluster>          clusterMap           = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService                  asynchExecutor;
+  private final List<OChannelBinaryAsynchClient> networkPool          = new ArrayList<OChannelBinaryAsynchClient>();
+  private final OLock                            networkPoolLock      = new OAdaptiveLock();
+  private final ODocument                        clusterConfiguration = new ODocument();
+  private final String                           clientId;
+  private final int                              maxReadQueue;
   private OContextConfiguration                  clientConfiguration;
   private int                                    connectionRetry;
   private int                                    connectionRetryDelay;
-
-  private final List<OChannelBinaryAsynchClient> networkPool          = new ArrayList<OChannelBinaryAsynchClient>();
-  private final OLock                            networkPoolLock      = new OAdaptiveLock();
   private int                                    networkPoolCursor    = 0;
-
-  protected final List<String>                   serverURLs           = new ArrayList<String>();
   private OCluster[]                             clusters             = new OCluster[0];
-  protected final Map<String, OCluster>          clusterMap           = new ConcurrentHashMap<String, OCluster>();
   private int                                    defaultClusterId;
   private int                                    minPool;
   private int                                    maxPool;
-  private final ODocument                        clusterConfiguration = new ODocument();
   private ORemoteServerEventListener             asynchEventListener;
   private String                                 connectionDbType;
   private String                                 connectionUserName;
   private String                                 connectionUserPassword;
   private Map<String, Object>                    connectionOptions;
-  private final String                           clientId;
-  private final int                              maxReadQueue;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -757,23 +742,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
-  private OPhysicalPosition[] readPhysicalPositions(OChannelBinaryAsynchClient network, int positionsCount) throws IOException {
-    final OPhysicalPosition[] physicalPositions = new OPhysicalPosition[positionsCount];
-
-    for (int i = 0; i < physicalPositions.length; i++) {
-      final OPhysicalPosition position = new OPhysicalPosition();
-
-      position.clusterPosition = network.readClusterPosition();
-      position.dataSegmentId = network.readInt();
-      position.dataSegmentPos = network.readLong();
-      position.recordSize = network.readInt();
-      position.recordVersion = network.readVersion();
-
-      physicalPositions[i] = position;
-    }
-    return physicalPositions;
-  }
-
   @Override
   public OPhysicalPosition[] lowerPhysicalPositions(int iClusterId, OPhysicalPosition physicalPosition) {
     checkConnection();
@@ -1167,23 +1135,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
-  private void readCollectionChanges(OChannelBinaryAsynchClient network, OSBTreeCollectionManager collectionManager)
-      throws IOException {
-    int count = network.readInt();
-
-    for (int i = 0; i < count; i++) {
-      final long mBitsOfId = network.readLong();
-      final long lBitsOfId = network.readLong();
-
-      final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
-
-      collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
-    }
-
-    if (ORecordSerializationContext.getDepth() <= 1)
-      collectionManager.clearPendingCollections();
-  }
-
   public void rollback(OTransaction iTx) {
   }
 
@@ -1228,6 +1179,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public int getDefaultClusterId() {
     return defaultClusterId;
+  }
+
+  public void setDefaultClusterId(int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
   }
 
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
@@ -1464,6 +1419,134 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   /**
+   * Ends the request and unlock the write lock
+   */
+  public void endRequest(final OChannelBinaryAsynchClient iNetwork) throws IOException {
+    if (iNetwork == null)
+      return;
+
+    try {
+      iNetwork.flush();
+    } catch (IOException e) {
+      try {
+        iNetwork.close();
+      } catch (Exception ignored) {
+      } finally {
+        networkPoolLock.lock();
+        try {
+          networkPool.remove(iNetwork);
+        } finally {
+          networkPoolLock.unlock();
+        }
+      }
+      throw e;
+    } finally {
+
+      iNetwork.releaseWriteLock();
+
+      networkPoolLock.lock();
+      try {
+        synchronized (networkPool) {
+          networkPool.notifyAll();
+        }
+      } finally {
+        networkPoolLock.unlock();
+      }
+    }
+  }
+
+  /**
+   * End response reached: release the channel in the pool to being reused
+   */
+  public void endResponse(final OChannelBinaryAsynchClient iNetwork) {
+    iNetwork.endResponse();
+  }
+
+  public boolean isPermanentRequester() {
+    return false;
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateClusterConfiguration(final byte[] obj) {
+    if (obj == null)
+      return;
+
+    // UPDATE IT
+    synchronized (clusterConfiguration) {
+      clusterConfiguration.fromStream(obj);
+
+      final List<ODocument> members = clusterConfiguration.field("members");
+      if (members != null) {
+        serverURLs.clear();
+
+        parseServerURLs();
+
+        for (ODocument m : members)
+          if (m != null && !serverURLs.contains((String) m.field("name"))) {
+            for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
+              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                String url = (String) listener.get("listen");
+                if (!serverURLs.contains(url))
+                  addHost(url);
+              }
+            }
+          }
+      }
+    }
+  }
+
+  @Override
+  public String getURL() {
+    return OEngineRemote.NAME + ":" + url;
+  }
+
+  public String getClientId() {
+    return clientId;
+  }
+
+  public int getDataSegmentIdByName(final String iName) {
+    if (iName == null)
+      return 0;
+
+    throw new UnsupportedOperationException("getDataSegmentIdByName()");
+  }
+
+  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
+    throw new UnsupportedOperationException("getDataSegmentById()");
+  }
+
+  public int getClusters() {
+    lock.acquireSharedLock();
+    try {
+      return clusterMap.size();
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public String getType() {
+    return OEngineRemote.NAME;
+  }
+
+  @Override
+  public Class<OSBTreeCollectionManagerRemote> getCollectionManagerClass() {
+    return OSBTreeCollectionManagerRemote.class;
+  }
+
+  @Override
+  public void onChannelClose(final OChannel iChannel) {
+    networkPoolLock.lock();
+    try {
+
+      networkPool.remove(iChannel);
+
+    } finally {
+      networkPoolLock.unlock();
+    }
+  }
+
+  /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
    * 
    * @param message
@@ -1693,7 +1776,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       host = "127.0.0.1" + host.substring("localhost".length());
 
     // REGISTER THE REMOTE SERVER+PORT
-   if (!host.contains(":"))
+    if (!host.contains(":"))
       host += ":" + getDefaultPort();
 
     if (!serverURLs.contains(host))
@@ -1889,6 +1972,75 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return network;
   }
 
+  /**
+   * Starts listening the response.
+   */
+  protected void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
+    iNetwork.beginResponse(getSessionId());
+  }
+
+  protected void getResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
+    try {
+      beginResponse(iNetwork);
+    } finally {
+      endResponse(iNetwork);
+    }
+  }
+
+  protected int createConnectionPool() throws IOException {
+    networkPoolLock.lock();
+    try {
+
+      if (networkPool.isEmpty())
+        // ALWAYS CREATE THE FIRST CONNECTION
+        createNetworkConnection();
+
+      // CREATE THE MINIMUM POOL
+      for (int i = networkPool.size(); i < minPool; ++i)
+        createNetworkConnection();
+
+      return networkPool.size();
+
+    } finally {
+      networkPoolLock.unlock();
+    }
+  }
+
+  private OPhysicalPosition[] readPhysicalPositions(OChannelBinaryAsynchClient network, int positionsCount) throws IOException {
+    final OPhysicalPosition[] physicalPositions = new OPhysicalPosition[positionsCount];
+
+    for (int i = 0; i < physicalPositions.length; i++) {
+      final OPhysicalPosition position = new OPhysicalPosition();
+
+      position.clusterPosition = network.readClusterPosition();
+      position.dataSegmentId = network.readInt();
+      position.dataSegmentPos = network.readLong();
+      position.recordSize = network.readInt();
+      position.recordVersion = network.readVersion();
+
+      physicalPositions[i] = position;
+    }
+    return physicalPositions;
+  }
+
+  private void readCollectionChanges(OChannelBinaryAsynchClient network, OSBTreeCollectionManager collectionManager)
+      throws IOException {
+    int count = network.readInt();
+
+    for (int i = 0; i < count; i++) {
+      final long mBitsOfId = network.readLong();
+      final long lBitsOfId = network.readLong();
+
+      final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
+
+      if (collectionManager != null)
+        collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
+    }
+
+    if (ORecordSerializationContext.getDepth() <= 1 && collectionManager != null)
+      collectionManager.clearPendingCollections();
+  }
+
   private void removeDeadConnections() {
     // FREE DEAD CONNECTIONS
     int removedDeadConnections = 0;
@@ -1905,98 +2057,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
 
     OLogManager.instance().debug(this, "Found and removed %d dead connections from the network pool", removedDeadConnections);
-  }
-
-  /**
-   * Ends the request and unlock the write lock
-   */
-  public void endRequest(final OChannelBinaryAsynchClient iNetwork) throws IOException {
-    if (iNetwork == null)
-      return;
-
-    try {
-      iNetwork.flush();
-    } catch (IOException e) {
-      try {
-        iNetwork.close();
-      } catch (Exception ignored) {
-      } finally {
-        networkPoolLock.lock();
-        try {
-          networkPool.remove(iNetwork);
-        } finally {
-          networkPoolLock.unlock();
-        }
-      }
-      throw e;
-    } finally {
-
-      iNetwork.releaseWriteLock();
-
-      networkPoolLock.lock();
-      try {
-        synchronized (networkPool) {
-          networkPool.notifyAll();
-        }
-      } finally {
-        networkPoolLock.unlock();
-      }
-    }
-  }
-
-  /**
-   * Starts listening the response.
-   */
-  protected void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
-    iNetwork.beginResponse(getSessionId());
-  }
-
-  /**
-   * End response reached: release the channel in the pool to being reused
-   */
-  public void endResponse(final OChannelBinaryAsynchClient iNetwork) {
-    iNetwork.endResponse();
-  }
-
-  public boolean isPermanentRequester() {
-    return false;
-  }
-
-  protected void getResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
-    try {
-      beginResponse(iNetwork);
-    } finally {
-      endResponse(iNetwork);
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  public void updateClusterConfiguration(final byte[] obj) {
-    if (obj == null)
-      return;
-
-    // UPDATE IT
-    synchronized (clusterConfiguration) {
-      clusterConfiguration.fromStream(obj);
-
-      final List<ODocument> members = clusterConfiguration.field("members");
-      if (members != null) {
-        serverURLs.clear();
-
-        parseServerURLs();
-
-        for (ODocument m : members)
-          if (m != null && !serverURLs.contains((String) m.field("name"))) {
-            for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
-              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                String url = (String) listener.get("listen");
-                if (!serverURLs.contains(url))
-                  addHost(url);
-              }
-            }
-          }
-      }
-    }
   }
 
   private void commitEntry(final OChannelBinaryAsynchClient iNetwork, final ORecordOperation txEntry) throws IOException {
@@ -2041,25 +2101,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
   }
 
-  protected int createConnectionPool() throws IOException {
-    networkPoolLock.lock();
-    try {
-
-      if (networkPool.isEmpty())
-        // ALWAYS CREATE THE FIRST CONNECTION
-        createNetworkConnection();
-
-      // CREATE THE MINIMUM POOL
-      for (int i = networkPool.size(); i < minPool; ++i)
-        createNetworkConnection();
-
-      return networkPool.size();
-
-    } finally {
-      networkPoolLock.unlock();
-    }
-  }
-
   private boolean handleDBFreeze() {
     boolean retry;
     OLogManager.instance().warn(this,
@@ -2101,61 +2142,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
 
     defaultClusterId = clusterMap.get(CLUSTER_DEFAULT_NAME).getId();
-  }
-
-  @Override
-  public String getURL() {
-    return OEngineRemote.NAME + ":" + url;
-  }
-
-  public String getClientId() {
-    return clientId;
-  }
-
-  public int getDataSegmentIdByName(final String iName) {
-    if (iName == null)
-      return 0;
-
-    throw new UnsupportedOperationException("getDataSegmentIdByName()");
-  }
-
-  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-    throw new UnsupportedOperationException("getDataSegmentById()");
-  }
-
-  public int getClusters() {
-    lock.acquireSharedLock();
-    try {
-      return clusterMap.size();
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
-  public void setDefaultClusterId(int defaultClusterId) {
-    this.defaultClusterId = defaultClusterId;
-  }
-
-  @Override
-  public String getType() {
-    return OEngineRemote.NAME;
-  }
-
-  @Override
-  public Class<OSBTreeCollectionManagerRemote> getCollectionManagerClass() {
-    return OSBTreeCollectionManagerRemote.class;
-  }
-
-  @Override
-  public void onChannelClose(final OChannel iChannel) {
-    networkPoolLock.lock();
-    try {
-
-      networkPool.remove(iChannel);
-
-    } finally {
-      networkPoolLock.unlock();
-    }
   }
 
   private boolean deleteRecord(final ORecordId iRid, ORecordVersion iVersion, int iMode, final ORecordCallback<Boolean> iCallback,

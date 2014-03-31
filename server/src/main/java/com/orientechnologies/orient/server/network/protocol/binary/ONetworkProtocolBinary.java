@@ -1881,19 +1881,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
   private void sendCollectionChanges() throws IOException {
     OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+    if (collectionManager != null) {
+      Map<UUID, OBonsaiCollectionPointer> changedIds = collectionManager.changedIds();
 
-    Map<UUID, OBonsaiCollectionPointer> changedIds = collectionManager.changedIds();
+      channel.writeInt(changedIds.size());
 
-    channel.writeInt(changedIds.size());
+      for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
+        UUID id = entry.getKey();
+        channel.writeLong(id.getMostSignificantBits());
+        channel.writeLong(id.getLeastSignificantBits());
 
-    for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
-      UUID id = entry.getKey();
-      channel.writeLong(id.getMostSignificantBits());
-      channel.writeLong(id.getLeastSignificantBits());
-
-      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, entry.getValue());
+        OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, entry.getValue());
+      }
     }
-
     collectionManager.clearChangedIds();
   }
 

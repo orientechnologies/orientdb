@@ -265,8 +265,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       super.open(iUserName, iUserPassword);
       componentsFactory = getStorage().getComponentsFactory();
 
-      sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
-          OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
+      final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
+          new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
               Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
@@ -278,7 +278,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
                 return managerClass.newInstance();
               }
             }
-          }));
+          });
+
+      sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
 
       level1Cache.startup();
 
@@ -1140,7 +1142,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       ORecordSerializationContext.pullContext();
     }
   }
-
 
   @Override
   public ODatabaseComplex<?> getDatabaseOwner() {
