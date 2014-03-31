@@ -20,6 +20,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
 import java.io.IOException;
 
@@ -41,7 +42,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 
     if (iRequest.sessionId != null) {
       OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
-      iRequest.sessionId = "!";
+      iRequest.sessionId = OServerCommandAuthenticatedDbAbstract.SESSIONID_UNAUTHORIZED;
       iResponse.setSessionId(iRequest.sessionId);
     }
 
