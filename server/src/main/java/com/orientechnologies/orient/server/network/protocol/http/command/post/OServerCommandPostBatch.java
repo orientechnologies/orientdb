@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.util.Collection;
-import java.util.Map;
-
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -27,6 +25,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Executes a batch of operations in a single call. This is useful to reduce network latency issuing multiple commands as multiple
@@ -138,9 +139,23 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
-          final String script = (String) operation.get("script");
+          final Object script = operation.get("script");
 
-          db.command(new OCommandScript(language, script)).execute();
+          StringBuilder text = new StringBuilder();
+          if (OMultiValue.isMultiValue(script)) {
+            // ENSEMBLE ALL THE SCRIPT LINES IN JUST ONE SEPARATED BY LINEFEED
+            int i = 0;
+            for (Object o : OMultiValue.getMultiValueIterable(script)) {
+              if (o != null) {
+                if (i > 0)
+                  text.append("\n");
+                text.append(o.toString());
+              }
+            }
+          } else
+            text.append(script);
+
+          db.command(new OCommandScript(language, text.toString())).execute();
           executed++;
         }
       }
