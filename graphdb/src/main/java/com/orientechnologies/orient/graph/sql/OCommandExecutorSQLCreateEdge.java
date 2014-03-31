@@ -18,9 +18,9 @@ package com.orientechnologies.orient.graph.sql;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
@@ -119,17 +119,17 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
       @Override
       public List<Object> call(OrientBaseGraph graph) {
-        final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
-        final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
+        final Set<OIdentifiable> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from, context);
+        final Set<OIdentifiable> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to, context);
 
         // CREATE EDGES
         final List<Object> edges = new ArrayList<Object>();
-        for (ORID from : fromIds) {
+        for (OIdentifiable from : fromIds) {
           final OrientVertex fromVertex = graph.getVertex(from);
           if (fromVertex == null)
             throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
 
-          for (ORID to : toIds) {
+          for (OIdentifiable to : toIds) {
             final OrientVertex toVertex;
             if (from.equals(to)) {
               toVertex = fromVertex;
