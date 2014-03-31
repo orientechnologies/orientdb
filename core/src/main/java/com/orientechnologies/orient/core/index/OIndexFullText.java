@@ -72,7 +72,7 @@ public class OIndexFullText extends OIndexMultiValues {
     modificationLock.requestModificationLock();
 
     try {
-      final List<String> words = splitIntoWords(key.toString());
+      final Set<String> words = splitIntoWords(key.toString());
 
       // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
       for (final String word : words) {
@@ -117,7 +117,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    final List<String> words = splitIntoWords(key.toString());
+    final Set<String> words = splitIntoWords(key.toString());
 
     // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
     for (final String word : words) {
@@ -166,7 +166,7 @@ public class OIndexFullText extends OIndexMultiValues {
     modificationLock.requestModificationLock();
 
     try {
-      final List<String> words = splitIntoWords(key.toString());
+      final Set<String> words = splitIntoWords(key.toString());
       boolean removed = false;
 
       for (final String word : words) {
@@ -198,7 +198,7 @@ public class OIndexFullText extends OIndexMultiValues {
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
     key = getCollatingValue(key);
 
-    final List<String> words = splitIntoWords(key.toString());
+    final Set<String> words = splitIntoWords(key.toString());
     for (final String word : words) {
       final Set<OIdentifiable> recs;
       final Object snapshotValue = snapshot.get(word);
@@ -256,8 +256,8 @@ public class OIndexFullText extends OIndexMultiValues {
     return configuration;
   }
 
-  private List<String> splitIntoWords(final String iKey) {
-    final List<String> result = new ArrayList<String>();
+  private Set<String> splitIntoWords(final String iKey) {
+    final Set<String> result = new HashSet<String>();
 
     final List<String> words = (List<String>) OStringSerializerHelper.split(new ArrayList<String>(), iKey, 0, -1, separatorChars);
 
@@ -282,13 +282,19 @@ public class OIndexFullText extends OIndexMultiValues {
           buffer.append(c);
       }
 
-      word = buffer.toString();
+      int length = buffer.length();
 
-      // CHECK IF IT'S A STOP WORD
-      if (stopWords.contains(word))
-        continue;
+      while (length > 0) {
+        buffer.setLength(length);
+        word = buffer.toString();
 
-      result.add(word);
+        // CHECK IF IT'S A STOP WORD
+        if (!stopWords.contains(word)) {
+          result.add(word);
+        }
+
+        length--;
+      }
     }
 
     return result;
