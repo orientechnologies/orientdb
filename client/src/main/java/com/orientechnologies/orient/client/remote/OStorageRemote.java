@@ -597,6 +597,76 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
+    checkConnection();
+
+    if (mode == 1 && callback == null)
+      // ASYNCHRONOUS MODE NO ANSWER
+      mode = 2;
+
+    OChannelBinaryAsynchClient network = null;
+    do {
+      try {
+        network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_HIDE);
+        return new OStorageOperationResult<Boolean>(hideRecord(recordId, mode, callback, network));
+      } catch (OModificationOperationProhibitedException mope) {
+        handleDBFreeze();
+      } catch (Exception e) {
+        handleException(network, "Error on delete record " + recordId, e);
+
+      }
+    } while (true);
+  }
+
+  private boolean hideRecord(final ORecordId rid, int mode, final ORecordCallback<Boolean> callback,
+      final OChannelBinaryAsynchClient network) throws IOException {
+    try {
+
+      network.writeRID(rid);
+      network.writeByte((byte) mode);
+
+    } finally {
+      endRequest(network);
+    }
+
+    switch (mode) {
+    case 0:
+      // SYNCHRONOUS
+      try {
+        beginResponse(network);
+        return network.readByte() == 1;
+      } finally {
+        endResponse(network);
+      }
+
+    case 1:
+      // ASYNCHRONOUS
+      if (callback != null) {
+        final int sessionId = getSessionId();
+        Callable<Object> response = new Callable<Object>() {
+          public Object call() throws Exception {
+            Boolean result;
+
+            try {
+              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+              beginResponse(network);
+              result = network.readByte() == 1;
+            } finally {
+              endResponse(network);
+              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+            }
+
+            callback.call(rid, result);
+            return null;
+          }
+        };
+        asynchExecutor.submit(new FutureTask<Object>(response));
+      }
+    }
+    return false;
+  }
+
+  @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     checkConnection();
 

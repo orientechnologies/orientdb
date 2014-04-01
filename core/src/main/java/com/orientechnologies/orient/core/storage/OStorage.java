@@ -281,4 +281,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OCurrentStorageComponentsFactory getComponentsFactory();
 
   public long getLastOperationId();
+
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
 }
