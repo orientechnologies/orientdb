@@ -72,7 +72,8 @@ public class OResourcePool<K, V> {
         if (listener.reuseResource(key, additionalArgs, res)) {
           // OK: REUSE IT
           break;
-        }
+        } else
+          res = null;
 
         // UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
       }
@@ -124,6 +125,7 @@ public class OResourcePool<K, V> {
 
     resources.add(res);
     sem.release();
+
     return true;
   }
 
