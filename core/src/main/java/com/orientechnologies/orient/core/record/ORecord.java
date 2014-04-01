@@ -199,9 +199,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    */
   public <RET extends ORecord<T>> RET delete();
 
-
-
-  /**
+	/**
    * Fills the record parsing the content in JSON format.
    * 
    * @param iJson

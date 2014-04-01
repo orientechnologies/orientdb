@@ -594,6 +594,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return this;
   }
 
+  @Override
+  public boolean hide(ORID rid) {
+    return executeHideRecord(rid, OPERATION_MODE.SYNCHRONOUS);
+  }
+
   public ODatabaseComplex<ORecordInternal<?>> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, true);
     return this;
@@ -1139,6 +1144,36 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
     } finally {
       releaseIndexModificationLock(lockedIndexes);
+      ORecordSerializationContext.pullContext();
+    }
+  }
+
+  public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
+    checkOpeness();
+    final ORecordId rid = (ORecordId) record.getIdentity();
+
+    if (rid == null)
+      throw new ODatabaseException(
+          "Cannot hide record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
+
+    if (!rid.isValid())
+      return false;
+
+    checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
+
+    setCurrentDatabaseinThreadLocal();
+    ORecordSerializationContext.pushContext();
+    try {
+
+      final OStorageOperationResult<Boolean> operationResult;
+      operationResult = underlying.hide(rid, (byte) iMode.ordinal());
+
+      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+      if (!operationResult.isMoved())
+        getLevel1Cache().deleteRecord(rid);
+
+			return operationResult.getResult();
+    } finally {
       ORecordSerializationContext.pullContext();
     }
   }

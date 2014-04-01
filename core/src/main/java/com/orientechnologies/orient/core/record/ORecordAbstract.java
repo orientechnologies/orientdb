@@ -341,6 +341,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
+
   public int getSize() {
     return _size;
   }

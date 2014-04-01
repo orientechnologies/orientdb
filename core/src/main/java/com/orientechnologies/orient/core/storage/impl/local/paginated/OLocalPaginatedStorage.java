@@ -1387,7 +1387,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               else
                 throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
 
-            RuntimeException deleteException = null;
             atomicOperationsManager.startAtomicOperation();
             try {
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
@@ -1398,29 +1397,61 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               atomicOperationsManager.endAtomicOperation(false);
             } catch (RuntimeException e) {
               atomicOperationsManager.endAtomicOperation(true);
-              OLogManager.instance().error(this, "Error during deletion of record", e);
-
-              deleteException = e;
             }
 
-            if (deleteException != null) {
-              if (transaction.get() == null) {
-                OLogManager.instance().error(this, "Error during deletion of record, will try to put tombstone.");
+            return new OStorageOperationResult<Boolean>(true);
+          } finally {
+            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          }
+        } finally {
+          lock.releaseSharedLock();
+        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+    } finally {
+      cluster.getExternalModificationLock().releaseModificationLock();
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
+    }
 
-                atomicOperationsManager.startAtomicOperation();
-                try {
-                  final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-                  if (context != null)
-                    context.executeOperations(this);
+    return new OStorageOperationResult<Boolean>(false);
+  }
 
-                  cluster.hideRecord(ppos.clusterPosition);
-                  atomicOperationsManager.endAtomicOperation(false);
-                } catch (RuntimeException e) {
-                  atomicOperationsManager.endAtomicOperation(true);
-                  throw e;
-                }
-              } else
-                throw deleteException;
+  @Override
+  public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
+    checkOpeness();
+
+    final long timer = Orient.instance().getProfiler().startChrono();
+
+    final OCluster cluster = getClusterById(rid.clusterId);
+
+    cluster.getExternalModificationLock().requestModificationLock();
+    try {
+      modificationLock.requestModificationLock();
+      try {
+        lock.acquireSharedLock();
+        try {
+          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          try {
+            final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
+
+            if (ppos == null)
+              // ALREADY HIDDEN
+              return new OStorageOperationResult<Boolean>(false);
+
+            atomicOperationsManager.startAtomicOperation();
+            try {
+              final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+              if (context != null)
+                context.executeOperations(this);
+
+              cluster.hideRecord(ppos.clusterPosition);
+              atomicOperationsManager.endAtomicOperation(false);
+            } catch (RuntimeException e) {
+              atomicOperationsManager.endAtomicOperation(true);
             }
 
             return new OStorageOperationResult<Boolean>(true);

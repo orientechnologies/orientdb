@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -335,7 +336,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return this;
   }
 
-  @Override
+	@Override
+	public boolean hide(ORID rid) {
+		if (currentTx.isActive())
+			throw new ODatabaseException("This operation can be executed only in non tx mode");
+		return super.hide(rid);
+	}
+
+	@Override
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
     currentTx.deleteRecord(iRecord, iMode);
     return this;
