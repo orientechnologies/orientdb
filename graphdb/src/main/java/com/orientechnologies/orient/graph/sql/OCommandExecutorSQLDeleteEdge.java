@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -152,26 +151,26 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware i
         OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
           @Override
           public Object call(OrientBaseGraph graph) {
-            Set<ORID> fromIds = null;
+            Set<OIdentifiable> fromIds = null;
             if (fromExpr != null)
-              fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr);
-            Set<ORID> toIds = null;
+              fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr, context);
+            Set<OIdentifiable> toIds = null;
             if (toExpr != null)
-              toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr);
+              toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context);
 
             if (fromIds != null && toIds != null) {
               // REMOVE ALL THE EDGES BETWEEN VERTICES
-              for (ORID fromId : fromIds)
+              for (OIdentifiable fromId : fromIds)
                 for (Edge e : graph.getVertex(fromId).getEdges(Direction.OUT))
                   if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
                     edges.add((OrientEdge) e);
             } else if (fromIds != null)
               // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
-              for (ORID fromId : fromIds)
+              for (OIdentifiable fromId : fromIds)
                 edges.add((OrientEdge) graph.getVertex(fromId).getEdges(Direction.OUT));
             else if (toIds != null)
               // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
-              for (ORID toId : toIds)
+              for (OIdentifiable toId : toIds)
                 edges.add((OrientEdge) graph.getVertex(toId).getEdges(Direction.IN));
             else
               throw new OCommandExecutionException("Invalid target");

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -1621,7 +1622,122 @@ public class IndexTest {
     }
   }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
+  public void testIndexPaginationTest() {
+    ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestClass");
+    indexPaginationTest.createProperty("prop", OType.INTEGER);
+    indexPaginationTest.createIndex("IndexPaginationTest", INDEX_TYPE.UNIQUE, "prop", "@rid");
+
+    List<ORID> rids = new ArrayList<ORID>();
+
+    for (int i = 99; i >= 0; i--) {
+      final ODocument document = new ODocument("IndexPaginationTestClass");
+      document.field("prop", i / 2);
+      document.save();
+
+      rids.add(document.getIdentity());
+    }
+
+    List<ODocument> result = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select from index:IndexPaginationTest limit 5 order by key"));
+
+    Assert.assertEquals(result.size(), 5);
+
+    int lastKey = -1;
+    ORID lastRid = null;
+    for (ODocument document : result) {
+      if (lastKey > -1)
+        Assert.assertTrue(lastKey <= (Integer)document.<OCompositeKey> field("key").getKeys().get(0));
+
+      lastKey = (Integer)document.<OCompositeKey> field("key").getKeys().get(0);
+      lastRid = document.field("rid", OType.LINK);
+
+      Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
+    }
+
+    while (true) {
+      result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+          "select from index:IndexPaginationTest where key > ? limit 5  order by key"), new OCompositeKey(lastKey, lastRid));
+      if (result.isEmpty())
+        break;
+
+			Assert.assertEquals(result.size(), 5);
+
+      for (ODocument document : result) {
+        if (lastKey > -1)
+          Assert.assertTrue(lastKey <= (Integer)document.<OCompositeKey> field("key").getKeys().get(0));
+
+        lastKey = (Integer)document.<OCompositeKey> field("key").getKeys().get(0);
+        lastRid = document.field("rid", OType.LINK);
+
+        Assert.assertTrue(rids.remove(document.<ORID> field("rid", OType.LINK)));
+      }
+    }
+
+    Assert.assertTrue(rids.isEmpty());
+  }
+
+	public void testIndexPaginationTestDescOrder() {
+		ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+		final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+		final OClass indexPaginationTest = schema.createClass("IndexPaginationTestDescOrderClass");
+		indexPaginationTest.createProperty("prop", OType.INTEGER);
+		indexPaginationTest.createIndex("IndexPaginationTestDescOrder", INDEX_TYPE.UNIQUE, "prop", "@rid");
+
+		List<ORID> rids = new ArrayList<ORID>();
+
+		for (int i = 99; i >= 0; i--) {
+			final ODocument document = new ODocument("IndexPaginationTestDescOrderClass");
+			document.field("prop", i / 2);
+			document.save();
+
+			rids.add(document.getIdentity());
+		}
+
+		List<ODocument> result = databaseDocumentTx
+						.query(new OSQLSynchQuery<ODocument>("select from index:IndexPaginationTestDescOrder limit 5 order by key desc"));
+
+		Assert.assertEquals(result.size(), 5);
+
+		int lastKey = -1;
+		ORID lastRid = null;
+		for (ODocument document : result) {
+			if (lastKey > -1)
+				Assert.assertTrue(lastKey >= (Integer)document.<OCompositeKey> field("key").getKeys().get(0));
+
+			lastKey = (Integer)document.<OCompositeKey> field("key").getKeys().get(0);
+			lastRid = document.field("rid", OType.LINK);
+
+			Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
+		}
+
+		while (true) {
+			result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+							"select from index:IndexPaginationTestDescOrder where key < ? limit 5  order by key desc"), new OCompositeKey(lastKey, lastRid));
+			if (result.isEmpty())
+				break;
+
+			Assert.assertEquals(result.size(), 5);
+
+			for (ODocument document : result) {
+				if (lastKey > -1)
+					Assert.assertTrue(lastKey >= (Integer)document.<OCompositeKey> field("key").getKeys().get(0));
+
+				lastKey = (Integer)document.<OCompositeKey> field("key").getKeys().get(0);
+				lastRid = document.field("rid", OType.LINK);
+
+				Assert.assertTrue(rids.remove(document.<ORID> field("rid", OType.LINK)));
+			}
+		}
+
+		Assert.assertTrue(rids.isEmpty());
+	}
+
+
+	private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
     final ORecordIteratorCluster<?> iteratorCluster = database.getUnderlying()

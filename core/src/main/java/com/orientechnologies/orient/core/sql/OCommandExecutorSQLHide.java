@@ -57,17 +57,9 @@ public class OCommandExecutorSQLHide extends OCommandExecutorSQLAbstract {
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     final ODatabaseRecord database = getDatabase();
-    final ORecord record = database.load(recordIdToHide);
+    if (database.hide(recordIdToHide))
+      return 1;
 
-    if (record == null)
-      return 0;
-
-    try {
-      record.hide();
-    } catch (ORecordNotFoundException e) {
-      return 0;
-    }
-
-    return 1;
+    return 0;
   }
 }

@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -62,6 +48,19 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -387,13 +386,13 @@ public class OStorageMemory extends OStorageEmbedded {
       switch (iLockingStrategy) {
       case DEFAULT:
       case KEEP_SHARED_LOCK:
-        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        iRid.lock(false);
         break;
       case NONE:
         // DO NOTHING
         break;
       case KEEP_EXCLUSIVE_LOCK:
-        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+        iRid.lock(true);
       }
 
       try {
@@ -418,7 +417,7 @@ public class OStorageMemory extends OStorageEmbedded {
       } finally {
         switch (iLockingStrategy) {
         case DEFAULT:
-          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          iRid.unlock();
           break;
         case NONE:
         case KEEP_SHARED_LOCK:
@@ -602,8 +601,8 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
-      ORecordCallback<Boolean> iCallback) {
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode,
+																										 ORecordCallback<Boolean> callback) {
     throw new UnsupportedOperationException("Given operation is not supported in current version.");
   }
 

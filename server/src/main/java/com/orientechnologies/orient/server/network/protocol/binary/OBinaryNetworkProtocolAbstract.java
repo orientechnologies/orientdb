@@ -319,9 +319,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  protected int hideRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+  protected int hideRecord(final ODatabaseRecord iDatabase, final ORID rid) {
     try {
-      iDatabase.hide(rid, version);
+      iDatabase.hide(rid);
       return 1;
     } catch (ORecordNotFoundException e) {
       return 0;

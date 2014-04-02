@@ -273,21 +273,19 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
    * 
+   * 
+   * 
    * @param rid
    *          record id.
-   * @param version
-   *          record version.
    * @throws java.lang.UnsupportedOperationException
    *           In case current version of cluster does not support given operation.
    * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
    *           if record is already deleted/hidden.
-   * @throws com.orientechnologies.orient.core.exception.OConcurrentModificationException
-   *           If provided record version is not latest.
-   * 
-   * @return Current db instance.
+	 *
+   * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
    */
 
-  public ODatabaseComplex<T> hide(ORID rid, ORecordVersion version);
+  public boolean hide(ORID rid);
 
   public ODatabaseComplex<T> cleanOutRecord(ORID rid, ORecordVersion version);
 

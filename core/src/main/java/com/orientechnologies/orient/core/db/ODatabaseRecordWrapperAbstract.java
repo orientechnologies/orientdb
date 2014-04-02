@@ -208,9 +208,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> hide(ORID rid, ORecordVersion version) {
-    underlying.hide(rid, version);
-    return this;
+  public boolean hide(ORID rid) {
+    return underlying.hide(rid);
   }
 
   @Override

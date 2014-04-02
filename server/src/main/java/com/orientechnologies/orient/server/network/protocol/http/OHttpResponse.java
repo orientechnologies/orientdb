@@ -47,14 +47,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 public class OHttpResponse {
   public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final char[] URL_SEPARATOR = { '/' };
-
-  private final OutputStream out;
   public final String        httpVersion;
+  private final OutputStream out;
   public String              headers;
   public String[]            additionalHeaders;
   public String              characterSet;
   public String              contentType;
   public String              serverInfo;
+
   public String              sessionId;
   public String              callbackFunction;
   public String              contentEncoding;
@@ -470,4 +470,9 @@ public class OHttpResponse {
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
   }
+
+  public void setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+  }
+
 }

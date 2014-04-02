@@ -435,11 +435,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, final ValuesTransformer<V> transformer,
-      final EntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, final ValuesTransformer<V> transformer,
+															final EntriesResultListener entriesResultListener) {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesMajor(fromKey, isInclusive, true, new OTreeInternal.RangeResultListener<Object, V>() {
+      sbTree.loadEntriesMajor(fromKey, isInclusive, ascOrder, new OTreeInternal.RangeResultListener<Object, V>() {
         @Override
         public boolean addResult(Map.Entry<Object, V> entry) {
           final Object key = entry.getKey();
@@ -454,11 +454,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, final ValuesTransformer<V> transformer,
-      final EntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, final ValuesTransformer<V> transformer,
+															final EntriesResultListener entriesResultListener) {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesMinor(toKey, isInclusive, true, new OTreeInternal.RangeResultListener<Object, V>() {
+      sbTree.loadEntriesMinor(toKey, isInclusive, ascOrder, new OTreeInternal.RangeResultListener<Object, V>() {
         @Override
         public boolean addResult(Map.Entry<Object, V> entry) {
           final Object key = entry.getKey();
@@ -474,13 +474,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void getEntriesBetween(Object rangeFrom, Object rangeTo, boolean inclusive, final ValuesTransformer<V> transformer,
-      final EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object rangeFrom, Object rangeTo, boolean inclusive, boolean ascOrder, final ValuesTransformer<V> transformer,
+																final EntriesResultListener entriesResultListener) {
     acquireSharedLock();
     try {
-      final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-      sbTree.loadEntriesBetween(rangeFrom, inclusive, rangeTo, inclusive, true, new OTreeInternal.RangeResultListener<Object, V>() {
+      sbTree.loadEntriesBetween(rangeFrom, inclusive, rangeTo, inclusive, ascOrder, new OTreeInternal.RangeResultListener<Object, V>() {
         @Override
         public boolean addResult(Map.Entry<Object, V> entry) {
           final Object key = entry.getKey();

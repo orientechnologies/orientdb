@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.java.lang;
 
 import java.util.TreeMap;
 
-import com.orientechnologies.common.collection.OMVRBTreeMemory;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeMemory;
 
 public class TreeMapsSpeedTest {
 	private static final long		MAX		= 1000000;

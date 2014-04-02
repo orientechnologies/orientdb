@@ -122,6 +122,19 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   }
 
   /**
+   * Returns amount of available connections which you can acquire for given source and user name.
+	 * Source id is consist of "source name" and "source user name".
+   * 
+   * @param name      Source name.
+   * @param userName  User name which is used to acquire source.
+   * @return  amount of available connections which you can acquire for given source and user name.
+   */
+  public int getAvailableConnections(final String name, final String userName) {
+    setup();
+    return dbPool.getAvailableConnections(name, userName);
+  }
+
+  /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.
    * 
    * @param iName

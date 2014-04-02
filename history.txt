@@ -26,6 +26,22 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7-rc2 - (March, 25th 2014)
+---------------------------------------------------------------------------------------------------
+- Core: supported retro-compatibility for databases created with OrientDB v1.5 or further (#1899)
+        improved performance on ORDER BY against indexes (#1843)
+        improved performance on RENAME CLASS (#1818)
+- Graph: added support for vertex-centric traversal by using SQL (#2079)
+-        added support for vertex-centric traversal by using SQL (#2079)
+- SQL: new UPSERT keyword to execute an INSERT or UPDATE based on a condition (#2032)
+       UPDATE now can ADD also to sub-document fields (#2031)
+- Indexes: added support for external engines (#1774)
+- Studio: new Query Timeline to the History, new Index Panel, Fixed many bugs
+- Bug fixing: 62 bugs in total
+
+Full list: https://github.com/orientechnologies/orientdb/issues?labels=&milestone=13&page=3&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.7-rc1 - (February, 6th 2014)
 ---------------------------------------------------------------------------------------------------
 - Engine: new LINKBag to manage LINKS by using SBTree indexes. This drastically improved performance

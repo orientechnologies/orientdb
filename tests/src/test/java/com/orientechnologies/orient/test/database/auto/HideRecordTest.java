@@ -43,8 +43,7 @@ public class HideRecordTest extends BaseTest {
 
     List<ORID> ridsToRemove = new ArrayList<ORID>();
     for (int i = 0; i < 100; i += 2) {
-      final ODocument document = database.load(docs.get(i));
-      document.hide();
+      database.hide(docs.get(i));
 
       ridsToRemove.add(docs.get(i));
     }
@@ -97,29 +96,5 @@ public class HideRecordTest extends BaseTest {
     }
 
     Assert.assertTrue(docs.isEmpty());
-  }
-
-  public void testCMEInCaseOfHide() {
-    final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("CMEInCaseOfHide")) {
-      schema.createClass("CMEInCaseOfHide");
-    }
-
-    ODocument document = new ODocument("CMEInCaseOfHide");
-    document.field("index", 1);
-    document.save();
-
-    ODocument brokenDoc = database.load(document.getIdentity(), "*:-1", true);
-
-    document.field("val", "val");
-    document.save();
-
-    try {
-      brokenDoc.hide();
-      Assert.fail();
-    } catch (OConcurrentModificationException e) {
-    } catch (OResponseProcessingException e) {
-      Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-    }
   }
 }

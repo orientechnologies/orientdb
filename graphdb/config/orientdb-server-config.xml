@@ -38,7 +38,8 @@
         <handler
                 class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
             <parameters>
-                <parameter name="enabled" value="false"/>
+                <parameter name="enabled" value="true"/>
+                <parameter name="allowedLanguages" value="SQL"/>
             </parameters>
         </handler>
 
@@ -91,11 +92,10 @@
     <properties>
         <!-- DATABASE POOL: size min/max -->
         <entry name="db.pool.min" value="1"/>
-        <entry name="db.pool.max" value="20"/>
+        <entry name="db.pool.max" value="50"/>
 
         <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
-        <entry name="cache.level1.enabled" value="false"/>
-        <entry name="cache.level1.size" value="1000"/>
+        <entry name="cache.level1.enabled" value="true"/>
         <entry name="cache.level2.enabled" value="false"/>
         <entry name="cache.level2.size" value="0"/>
 

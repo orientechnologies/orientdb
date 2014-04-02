@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
@@ -41,6 +38,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -353,6 +353,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
       readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
       readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
+      readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
       readerRole.save();
       createUser("reader", "reader", new String[] { readerRole.getName() });
 
@@ -367,6 +368,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
       writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
       writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
+      readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
       writerRole.save();
       createUser("writer", "writer", new String[] { writerRole.getName() });
 

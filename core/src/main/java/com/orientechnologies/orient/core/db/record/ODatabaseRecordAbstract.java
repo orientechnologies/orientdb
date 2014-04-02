@@ -265,8 +265,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       super.open(iUserName, iUserPassword);
       componentsFactory = getStorage().getComponentsFactory();
 
-      sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
-          OSBTreeCollectionManager.class.getSimpleName(), new Callable<OSBTreeCollectionManager>() {
+      final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
+          new Callable<OSBTreeCollectionManager>() {
             @Override
             public OSBTreeCollectionManager call() throws Exception {
               Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
@@ -278,7 +278,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
                 return managerClass.newInstance();
               }
             }
-          }));
+          });
+
+      sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
 
       level1Cache.startup();
 
@@ -593,9 +595,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> hide(ORID rid, ORecordVersion version) {
-    executeHideRecord(rid, version, true, true, OPERATION_MODE.SYNCHRONOUS);
-    return this;
+  public boolean hide(ORID rid) {
+    return executeHideRecord(rid, OPERATION_MODE.SYNCHRONOUS);
   }
 
   public ODatabaseComplex<ORecordInternal<?>> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
@@ -892,9 +893,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           record.reload();
 
         if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          ((OStorageEmbedded) getStorage()).acquireReadLock(iRid);
+          record.lock(false);
         else if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-          ((OStorageEmbedded) getStorage()).acquireWriteLock(iRid);
+          record.lock(true);
 
         callbackHooks(TYPE.AFTER_READ, record);
         return (RET) record;
@@ -1147,8 +1148,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
-  public void executeHideRecord(OIdentifiable record, final ORecordVersion iVersion, final boolean iRequired,
-      boolean iCallTriggers, final OPERATION_MODE iMode) {
+  public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
     checkOpeness();
     final ORecordId rid = (ORecordId) record.getIdentity();
 
@@ -1157,58 +1157,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           "Cannot hide record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
     if (!rid.isValid())
-      return;
+      return false;
 
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
-    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
     ORecordSerializationContext.pushContext();
     try {
-      record = record.getRecord();
-      if (record instanceof ODocument)
-        acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
-      try {
-        // if cache is switched off record will be unreachable after delete.
-        ORecord<?> rec = record.getRecord();
-        if (iCallTriggers && rec != null)
-          callbackHooks(TYPE.BEFORE_DELETE, rec);
+      final OStorageOperationResult<Boolean> operationResult;
+      operationResult = underlying.hide(rid, (byte) iMode.ordinal());
 
-        // CHECK IF ENABLE THE MVCC OR BYPASS IT
-        final ORecordVersion realVersion = mvcc ? iVersion : OVersionFactory.instance().createUntrackedVersion();
+      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+      if (!operationResult.isMoved())
+        getLevel1Cache().deleteRecord(rid);
 
-        final OStorageOperationResult<Boolean> operationResult;
-        try {
-          operationResult = underlying.hide(rid, realVersion, iRequired, (byte) iMode.ordinal());
-
-          if (iCallTriggers) {
-            if (!operationResult.isMoved() && rec != null)
-              callbackHooks(TYPE.AFTER_DELETE, rec);
-            else if (rec != null)
-              callbackHooks(TYPE.DELETE_REPLICATED, rec);
-          }
-        } catch (Throwable t) {
-          if (iCallTriggers)
-            callbackHooks(TYPE.DELETE_FAILED, rec);
-          throw t;
-        }
-
-        // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-        if (!operationResult.isMoved()) {
-          getLevel1Cache().deleteRecord(rid);
-        }
-
-      } catch (OException e) {
-        // RE-THROW THE EXCEPTION
-        throw e;
-
-      } catch (Throwable t) {
-        // WRAP IT AS ODATABASE EXCEPTION
-        throw new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId(), t);
-      }
+			return operationResult.getResult();
     } finally {
-      releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
     }
   }

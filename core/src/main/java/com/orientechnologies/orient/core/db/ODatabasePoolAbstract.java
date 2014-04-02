@@ -101,6 +101,20 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     }
   }
 
+  public int getAvailableConnections(final String url, final String userName) {
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    lock();
+    try {
+      final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        return maxSize;
+
+      return pool.getAvailableConnections();
+    } finally {
+      unlock();
+    }
+  }
+
   public int getConnectionsInCurrentThread(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
     lock();

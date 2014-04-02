@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -79,6 +80,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   /**
    * Create a new index with default algorithm.
+   * 
    * @param iName
    * @param iType
    * @param indexDefinition
@@ -134,12 +136,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
     }
 
+    final OIndexInternal<?> index;
     acquireExclusiveLock();
     try {
       if (indexes.containsKey(iName.toLowerCase()))
         throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
 
-      final OIndexInternal<?> index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm);
+      index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
@@ -170,11 +173,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
       setDirty();
       save();
-
-      return index;
     } finally {
       releaseExclusiveLock();
     }
+
+    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
+      storage.synch();
+
+    return index;
   }
 
   public OIndexManager dropIndex(final String iIndexName) {
@@ -192,10 +198,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         setDirty();
         save();
       }
-      return this;
+
     } finally {
       releaseExclusiveLock();
     }
+
+    final OStorage storage = getDatabase().getStorage();
+    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
+      storage.synch();
+
+    return this;
   }
 
   /**
@@ -312,7 +324,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                   if (index.loadFromConfiguration(idx)) {
                     addIndexInternal(index);
                     setDirty();
-                    save();
 
                     ok++;
                   } else {
@@ -346,7 +357,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
                     index.flush();
 
                     setDirty();
-                    save();
 
                     ok++;
 
@@ -367,9 +377,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
               }
             }
 
-            rebuildCompleted = true;
+            save();
 
-            // newDb.close();
+            final OStorage storage = newDb.getStorage();
+            if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
+              storage.synch();
+
+            rebuildCompleted = true;
 
             OLogManager.instance().info(this, "%d indexes were restored successfully, %d errors", ok, errors);
           } catch (Exception e) {

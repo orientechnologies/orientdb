@@ -502,7 +502,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener resultListener) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -512,7 +512,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener resultListener) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -522,7 +522,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, IndexEntriesResultListener resultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

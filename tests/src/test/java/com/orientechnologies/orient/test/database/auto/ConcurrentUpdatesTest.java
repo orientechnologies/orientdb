@@ -39,15 +39,13 @@ public class ConcurrentUpdatesTest {
   private final static int PESSIMISTIC_CYCLES = 100;
   private final static int THREADS            = 10;
   private final static int MAX_RETRIES        = 100;
-
+  private final AtomicLong counter            = new AtomicLong();
+  private final AtomicLong totalRetries       = new AtomicLong();
   protected String         url;
   private boolean          level1CacheEnabled;
   private boolean          level2CacheEnabled;
   private boolean          mvccEnabled;
   private long             startedOn;
-
-  private final AtomicLong counter            = new AtomicLong();
-  private final AtomicLong totalRetries       = new AtomicLong();
 
   class OptimisticUpdateField implements Runnable {
 
@@ -89,10 +87,10 @@ public class ConcurrentUpdatesTest {
             } catch (OResponseProcessingException e) {
               Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
 
-              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
+//              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
               Thread.sleep(retry * 10);
             } catch (ONeedRetryException e) {
-              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
+//              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
               Thread.sleep(retry * 10);
             }
           }
@@ -137,14 +135,19 @@ public class ConcurrentUpdatesTest {
               break;
 
             } catch (OResponseProcessingException e) {
-              Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
+              if (e.getCause() instanceof ONeedRetryException) {
+                Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
 
-              System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
-                  + MAX_RETRIES + "...");
-              // Thread.sleep(retry * 10);
+//                System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
+//                    + MAX_RETRIES + "...");
+                // Thread.sleep(retry * 10);
+              } else {
+                e.printStackTrace();
+                Assert.assertTrue(false);
+              }
             } catch (ONeedRetryException e) {
-              System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
-                  + MAX_RETRIES + "...");
+//              System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
+//                  + MAX_RETRIES + "...");
               // Thread.sleep(retry * 10);
             }
             // System.out.println("thread " + threadName + " counter " + counter.get());

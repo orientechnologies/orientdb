@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.collate.OCollateFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
@@ -60,6 +59,40 @@ public class OSQLEngine {
   private static List<OCollateFactory>            COLLATE_FACTORIES  = null;
   private static OQueryOperator[]                 SORTED_OPERATORS   = null;
   private static ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
+
+  /**
+   * internal use only, to sort operators.
+   */
+  private static final class Pair {
+
+    final OQueryOperator before;
+    final OQueryOperator after;
+
+    public Pair(final OQueryOperator before, final OQueryOperator after) {
+      this.before = before;
+      this.after = after;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+      if (obj instanceof Pair) {
+        final Pair that = (Pair) obj;
+        return before == that.before && after == that.after;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(before) + 31 * System.identityHashCode(after);
+    }
+
+    @Override
+    public String toString() {
+      return before + " > " + after;
+    }
+
+  }
 
   protected OSQLEngine() {
   }
@@ -263,6 +296,20 @@ public class OSQLEngine {
     return null;
   }
 
+  public static OSQLMethod getMethod(String iMethodName) {
+    iMethodName = iMethodName.toLowerCase(Locale.ENGLISH);
+
+    final Iterator<OSQLMethodFactory> ite = getMethodFactories();
+    while (ite.hasNext()) {
+      final OSQLMethodFactory factory = ite.next();
+      if (factory.hasMethod(iMethodName)) {
+        return factory.createMethod(iMethodName);
+      }
+    }
+
+    return null;
+  }
+
   public synchronized OQueryOperator[] getRecordOperators() {
     if (SORTED_OPERATORS != null) {
       return SORTED_OPERATORS;
@@ -396,75 +443,48 @@ public class OSQLEngine {
     return new OSQLTarget(iText, iContext, iFilterKeyword);
   }
 
-  public Set<ORID> parseRIDTarget(final ODatabaseRecord database, final String iTarget) {
-    final Set<ORID> ids;
+  public Set<OIdentifiable> parseRIDTarget(final ODatabaseRecord database, String iTarget, final OCommandContext iContext) {
+    final Set<OIdentifiable> ids;
     if (iTarget.startsWith("(")) {
       // SUB-QUERY
-      final List<OIdentifiable> result = database.query(new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1)));
+      final OSQLSynchQuery<Object> query = new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1));
+      query.setContext(iContext);
+
+      final List<OIdentifiable> result = database.query(query);
       if (result == null || result.isEmpty())
         ids = Collections.emptySet();
       else {
-        ids = new HashSet<ORID>((int) (result.size() * 1.3));
+        ids = new HashSet<OIdentifiable>((int) (result.size() * 1.3));
         for (OIdentifiable aResult : result)
           ids.add(aResult.getIdentity());
       }
     } else if (iTarget.startsWith("[")) {
       // COLLECTION OF RIDS
       final String[] idsAsStrings = iTarget.substring(1, iTarget.length() - 1).split(",");
-      ids = new HashSet<ORID>((int) (idsAsStrings.length * 1.3));
-      for (String idsAsString : idsAsStrings)
-        ids.add(new ORecordId(idsAsString));
-    } else
+      ids = new HashSet<OIdentifiable>((int) (idsAsStrings.length * 1.3));
+      for (String idsAsString : idsAsStrings) {
+        if (idsAsString.startsWith("$")) {
+          Object r = iContext.getVariable(idsAsString);
+          if (r instanceof OIdentifiable)
+            ids.add((OIdentifiable) r);
+          else
+            OMultiValue.add(ids, r);
+        } else
+          ids.add(new ORecordId(idsAsString));
+      }
+    } else {
       // SINGLE RID
-      ids = Collections.<ORID> singleton(new ORecordId(iTarget));
+      if (iTarget.startsWith("$")) {
+        Object r = iContext.getVariable(iTarget);
+        if (r instanceof OIdentifiable)
+          ids = Collections.<OIdentifiable> singleton((OIdentifiable) r);
+        else
+          ids = (Set<OIdentifiable>) OMultiValue.add(new HashSet<OIdentifiable>(OMultiValue.getSize(r)), r);
+
+      } else
+        ids = Collections.<OIdentifiable> singleton(new ORecordId(iTarget));
+
+    }
     return ids;
-  }
-
-  public static OSQLMethod getMethod(String iMethodName) {
-    iMethodName = iMethodName.toLowerCase(Locale.ENGLISH);
-
-    final Iterator<OSQLMethodFactory> ite = getMethodFactories();
-    while (ite.hasNext()) {
-      final OSQLMethodFactory factory = ite.next();
-      if (factory.hasMethod(iMethodName)) {
-        return factory.createMethod(iMethodName);
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * internal use only, to sort operators.
-   */
-  private static final class Pair {
-
-    final OQueryOperator before;
-    final OQueryOperator after;
-
-    public Pair(final OQueryOperator before, final OQueryOperator after) {
-      this.before = before;
-      this.after = after;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-      if (obj instanceof Pair) {
-        final Pair that = (Pair) obj;
-        return before == that.before && after == that.after;
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return System.identityHashCode(before) + 31 * System.identityHashCode(after);
-    }
-
-    @Override
-    public String toString() {
-      return before + " > " + after;
-    }
-
   }
 }

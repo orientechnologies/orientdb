@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
@@ -148,8 +149,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         // REMOVE BEGIN & END EMBEDDED CHARACTERS
         final String value = iValue.substring(1, iValue.length() - 1);
 
+        final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream(value);
+        if (embeddedObject instanceof ODocument)
+          ((ODocument) embeddedObject).addOwner(iSourceRecord);
+
         // RECORD
-        return ((ODocument) OStringSerializerEmbedded.INSTANCE.fromStream(value)).addOwner(iSourceRecord);
+        return embeddedObject;
       } else
         return null;
     case LINKBAG:
@@ -423,6 +428,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
         toString((ORecordInternal<?>) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
+      } else if (iValue instanceof ODocumentSerializable) {
+        final ODocument doc = ((ODocumentSerializable) iValue).toDocument();
+        doc.field(ODocumentSerializable.CLASS_NAME, iValue.getClass().getName());
+
+        iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
+        toString(doc, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+        iOutput.append(OStringSerializerHelper.EMBEDDED_END);
+
       } else if (iValue != null)
         iOutput.append(iValue.toString());
       PROFILER
@@ -478,11 +491,14 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           fieldTypeToString(iOutput, OType.STRING, o.getKey());
           iOutput.append(OStringSerializerHelper.ENTRY_SEPARATOR);
 
-          if (o.getValue() instanceof ORecord<?>) {
+          if (o.getValue() instanceof ORecord<?> || o.getValue() instanceof ODocumentSerializable) {
             final ODocument record;
             if (o.getValue() instanceof ODocument)
               record = (ODocument) o.getValue();
-            else {
+            else if (o.getValue() instanceof ODocumentSerializable) {
+              record = ((ODocumentSerializable) o.getValue()).toDocument();
+              record.field(ODocumentSerializable.CLASS_NAME, o.getValue().getClass().getName());
+            } else {
               if (iDatabase == null && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
                 iDatabase = ODatabaseRecordThreadLocal.INSTANCE.get();
 

@@ -122,10 +122,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     case EMBEDDED: {
       // EMBEDED RECORD
-      final ODocument doc = ((ODocument) OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue));
-      if (doc != null)
-        return doc.addOwner(iDocument);
-      return null;
+      final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue);
+      if (embeddedObject instanceof ODocument)
+        ((ODocument) embeddedObject).addOwner(iDocument);
+
+      // EMBEDDED OBJECT
+      return embeddedObject;
     }
 
     case CUSTOM:

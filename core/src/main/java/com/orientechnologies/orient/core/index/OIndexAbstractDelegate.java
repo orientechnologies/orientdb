@@ -224,17 +224,17 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     delegate.getValuesMinor(toKey, isInclusive, ascSortOrder, valuesResultListener);
   }
 
-  public void getEntriesMajor(final Object fromKey, final boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
-    delegate.getEntriesMajor(fromKey, isInclusive, entriesResultListener);
+  public void getEntriesMajor(final Object fromKey, final boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesMajor(fromKey, isInclusive, ascOrder, entriesResultListener);
   }
 
-  public void getEntriesMinor(final Object toKey, final boolean isInclusive, final IndexEntriesResultListener entriesResultListener) {
-    delegate.getEntriesMinor(toKey, isInclusive, entriesResultListener);
+  public void getEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesMinor(toKey, isInclusive, ascOrder, entriesResultListener);
   }
 
   public void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      final IndexEntriesResultListener entriesResultListener) {
-    delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, entriesResultListener);
+																boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+    delegate.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, ascOrder, entriesResultListener);
   }
 
   public void getValues(final Collection<?> iKeys, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
