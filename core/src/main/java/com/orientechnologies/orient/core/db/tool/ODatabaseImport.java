@@ -728,7 +728,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     for (final String indexName : indexesToRebuild)
       database.getMetadata().getIndexManager().getIndex(indexName).rebuild(new OProgressListener() {
         @Override
-        public void onBegin(Object iTask, long iTotal) {
+        public void onBegin(Object iTask, long iTotal, Object metadata) {
           listener.onMessage("\nCluster content was truncated and index " + indexName + " will be rebuilt");
         }
 

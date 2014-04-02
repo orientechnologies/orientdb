@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -48,19 +61,6 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -146,11 +146,13 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public void close(final boolean iForce, boolean onDelete) {
+    if (!checkForClose(iForce))
+      return;
+
+    final long timer = Orient.instance().getProfiler().startChrono();
+
     lock.acquireExclusiveLock();
     try {
-
-      if (!checkForClose(iForce))
-        return;
 
       status = STATUS.CLOSING;
 
@@ -176,6 +178,8 @@ public class OStorageMemory extends OStorageEmbedded {
 
     } finally {
       lock.releaseExclusiveLock();
+
+      Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");
     }
   }
 
@@ -376,66 +380,6 @@ public class OStorageMemory extends OStorageEmbedded {
         iLockingStrategy));
   }
 
-  @Override
-  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
-      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    lock.acquireSharedLock();
-    try {
-      switch (iLockingStrategy) {
-      case DEFAULT:
-      case KEEP_SHARED_LOCK:
-        iRid.lock(false);
-        break;
-      case NONE:
-        // DO NOTHING
-        break;
-      case KEEP_EXCLUSIVE_LOCK:
-        iRid.lock(true);
-      }
-
-      try {
-        final OClusterPosition lastPos = iClusterSegment.getLastPosition();
-
-        if (!iClusterSegment.isHashBased()) {
-          if (iRid.clusterPosition.compareTo(lastPos) > 0)
-            return null;
-        }
-
-        final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-        if (ppos != null && loadTombstones && ppos.recordVersion.isTombstone())
-          return new ORawBuffer(null, ppos.recordVersion, ppos.recordType);
-
-        if (ppos == null || ppos.recordVersion.isTombstone())
-          return null;
-
-        final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
-
-        return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
-
-      } finally {
-        switch (iLockingStrategy) {
-        case DEFAULT:
-          iRid.unlock();
-          break;
-        case NONE:
-        case KEEP_SHARED_LOCK:
-        case KEEP_EXCLUSIVE_LOCK:
-          // DO NOTHING
-          break;
-        }
-      }
-    } catch (IOException e) {
-      throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
-
-    } finally {
-      lock.releaseSharedLock();
-
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
-    }
-  }
-
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     final long timer = Orient.instance().getProfiler().startChrono();
@@ -601,69 +545,13 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode,
-																										 ORecordCallback<Boolean> callback) {
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
     throw new UnsupportedOperationException("Given operation is not supported in current version.");
   }
 
   @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     return deleteRecord(recordId, recordVersion, false, callback);
-  }
-
-  private boolean deleteRecord(ORecordId iRid, ORecordVersion iVersion, boolean useTombstones, ORecordCallback<Boolean> iCallback) {
-    final long timer = Orient.instance().getProfiler().startChrono();
-
-    final OCluster cluster = getClusterById(iRid.clusterId);
-
-    lock.acquireSharedLock();
-    try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-      try {
-
-        final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
-
-        if (ppos == null || (ppos.recordVersion.isTombstone() && useTombstones)) {
-          if (iCallback != null)
-            iCallback.call(iRid, false);
-          return false;
-        }
-
-        // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-        if (iVersion.getCounter() > -1 && !ppos.recordVersion.equals(iVersion))
-          if (OFastConcurrentModificationException.enabled())
-            throw OFastConcurrentModificationException.instance();
-          else
-            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
-
-        if (!ppos.recordVersion.isTombstone()) {
-          final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
-          dataSegment.deleteRecord(ppos.dataSegmentPos);
-          ppos.dataSegmentPos = -1;
-        }
-
-        if (useTombstones && cluster.hasTombstonesSupport())
-          cluster.convertToTombstone(iRid.clusterPosition);
-        else
-          cluster.removePhysicalPosition(iRid.clusterPosition);
-
-        if (iCallback != null)
-          iCallback.call(null, true);
-
-        return true;
-
-      } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-      }
-    } catch (IOException e) {
-      throw new OStorageException("Error on delete record " + iRid, e);
-
-    } finally {
-      lock.releaseSharedLock();
-
-      Orient.instance().getProfiler()
-          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
-    }
   }
 
   public long count(final int iClusterId) {
@@ -779,7 +667,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public void commit(final OTransaction iTx, Runnable callback) {
-    lock.acquireExclusiveLock();
+    lock.acquireSharedLock();
     try {
 
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
@@ -803,7 +691,7 @@ public class OStorageMemory extends OStorageEmbedded {
       rollback(iTx);
 
     } finally {
-      lock.releaseExclusiveLock();
+      lock.releaseSharedLock();
     }
   }
 
@@ -899,6 +787,10 @@ public class OStorageMemory extends OStorageEmbedded {
     return defaultClusterId;
   }
 
+  public void setDefaultClusterId(int defaultClusterId) {
+    this.defaultClusterId = defaultClusterId;
+  }
+
   public long getSize() {
     long size = 0;
 
@@ -929,6 +821,149 @@ public class OStorageMemory extends OStorageEmbedded {
       lock.releaseSharedLock();
     }
     return true;
+  }
+
+  @Override
+  public String getURL() {
+    return OEngineMemory.NAME + ":" + url;
+  }
+
+  public OStorageConfigurationSegment getConfigurationSegment() {
+    return null;
+  }
+
+  public void renameCluster(final String iOldName, final String iNewName) {
+    final OClusterMemory cluster = (OClusterMemory) getClusterByName(iOldName);
+    if (cluster != null)
+      try {
+        cluster.set(com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES.NAME, iNewName);
+      } catch (IOException e) {
+      }
+  }
+
+  @Override
+  public String getType() {
+    return OEngineMemory.NAME;
+  }
+
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return null;
+  }
+
+  @Override
+  protected ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, final boolean iAtomicLock,
+      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
+    final long timer = Orient.instance().getProfiler().startChrono();
+
+    lock.acquireSharedLock();
+    try {
+      switch (iLockingStrategy) {
+      case DEFAULT:
+      case KEEP_SHARED_LOCK:
+        iRid.lock(false);
+        break;
+      case NONE:
+        // DO NOTHING
+        break;
+      case KEEP_EXCLUSIVE_LOCK:
+        iRid.lock(true);
+      }
+
+      try {
+        final OClusterPosition lastPos = iClusterSegment.getLastPosition();
+
+        if (!iClusterSegment.isHashBased()) {
+          if (iRid.clusterPosition.compareTo(lastPos) > 0)
+            return null;
+        }
+
+        final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
+        if (ppos != null && loadTombstones && ppos.recordVersion.isTombstone())
+          return new ORawBuffer(null, ppos.recordVersion, ppos.recordType);
+
+        if (ppos == null || ppos.recordVersion.isTombstone())
+          return null;
+
+        final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+
+        return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
+
+      } finally {
+        switch (iLockingStrategy) {
+        case DEFAULT:
+          iRid.unlock();
+          break;
+        case NONE:
+        case KEEP_SHARED_LOCK:
+        case KEEP_EXCLUSIVE_LOCK:
+          // DO NOTHING
+          break;
+        }
+      }
+    } catch (IOException e) {
+      throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
+
+    } finally {
+      lock.releaseSharedLock();
+
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
+    }
+  }
+
+  private boolean deleteRecord(ORecordId iRid, ORecordVersion iVersion, boolean useTombstones, ORecordCallback<Boolean> iCallback) {
+    final long timer = Orient.instance().getProfiler().startChrono();
+
+    final OCluster cluster = getClusterById(iRid.clusterId);
+
+    lock.acquireSharedLock();
+    try {
+      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      try {
+
+        final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
+
+        if (ppos == null || (ppos.recordVersion.isTombstone() && useTombstones)) {
+          if (iCallback != null)
+            iCallback.call(iRid, false);
+          return false;
+        }
+
+        // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+        if (iVersion.getCounter() > -1 && !ppos.recordVersion.equals(iVersion))
+          if (OFastConcurrentModificationException.enabled())
+            throw OFastConcurrentModificationException.instance();
+          else
+            throw new OConcurrentModificationException(iRid, ppos.recordVersion, iVersion, ORecordOperation.DELETED);
+
+        if (!ppos.recordVersion.isTombstone()) {
+          final ODataSegmentMemory dataSegment = getDataSegmentById(ppos.dataSegmentId);
+          dataSegment.deleteRecord(ppos.dataSegmentPos);
+          ppos.dataSegmentPos = -1;
+        }
+
+        if (useTombstones && cluster.hasTombstonesSupport())
+          cluster.convertToTombstone(iRid.clusterPosition);
+        else
+          cluster.removePhysicalPosition(iRid.clusterPosition);
+
+        if (iCallback != null)
+          iCallback.call(null, true);
+
+        return true;
+
+      } finally {
+        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      }
+    } catch (IOException e) {
+      throw new OStorageException("Error on delete record " + iRid, e);
+
+    } finally {
+      lock.releaseSharedLock();
+
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
+    }
   }
 
   private void commitEntry(final OTransaction iTx, final ORecordOperation txEntry) throws IOException {
@@ -1000,38 +1035,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
     if (txEntry.getRecord() instanceof OTxListener)
       ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
-  }
-
-  @Override
-  public String getURL() {
-    return OEngineMemory.NAME + ":" + url;
-  }
-
-  public OStorageConfigurationSegment getConfigurationSegment() {
-    return null;
-  }
-
-  public void renameCluster(final String iOldName, final String iNewName) {
-    final OClusterMemory cluster = (OClusterMemory) getClusterByName(iOldName);
-    if (cluster != null)
-      try {
-        cluster.set(com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES.NAME, iNewName);
-      } catch (IOException e) {
-      }
-  }
-
-  public void setDefaultClusterId(int defaultClusterId) {
-    this.defaultClusterId = defaultClusterId;
-  }
-
-  @Override
-  public String getType() {
-    return OEngineMemory.NAME;
-  }
-
-  @Override
-  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
-    return null;
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {

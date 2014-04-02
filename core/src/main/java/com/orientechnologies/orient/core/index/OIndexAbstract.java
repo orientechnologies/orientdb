@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -49,6 +44,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Handles indexing when records change.
@@ -553,7 +553,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
           documentTotal += getDatabase().countClusterElements(cluster);
 
         if (iProgressListener != null)
-          iProgressListener.onBegin(this, documentTotal);
+          iProgressListener.onBegin(this, documentTotal, true);
 
         for (final String clusterName : clustersToIndex)
           try {

@@ -16,13 +16,13 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * 
@@ -38,13 +38,19 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+  public Object execute(final Object iThis, final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult,
+      final Object[] iParams) {
 
-    final Object v = getParameterValue(iRecord, iParams[0].toString());
+    // TRY TO RESOLVE AS DYNAMIC VALUE
+    Object v = getParameterValue(iRecord, iParams[0].toString());
+    if (v == null)
+      // USE STATIC ONE
+      v = iParams[0].toString();
+
     if (v != null) {
       if (ioResult instanceof Date) {
         final SimpleDateFormat format = new SimpleDateFormat(v.toString());
-        if (iParams.length>1) {
+        if (iParams.length > 1) {
           format.setTimeZone(TimeZone.getTimeZone(iParams[1].toString()));
         } else {
           format.setTimeZone(ODateHelper.getDatabaseTimeZone());

@@ -183,41 +183,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return p.exitValue();
   }
 
-  @Override
-  protected boolean isCollectingCommands(final String iLine) {
-    return iLine.startsWith("js");
-  }
-
-  @Override
-  protected void onBefore() {
-    super.onBefore();
-
-    setResultset(new ArrayList<OIdentifiable>());
-
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
-    // DISABLE THE NETWORK AND STORAGE TIMEOUTS
-    OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);
-    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
-    OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.setValue(1);
-    OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
-
-    properties.put("limit", "20");
-    properties.put("width", "132");
-    properties.put("debug", "false");
-    properties.put("maxBinaryDisplay", "160");
-    properties.put("verbose", "2");
-    properties.put("ignoreErrors", "false");
-    properties.put("backupCompressionLevel", "9"); // 9 = MAX
-    properties.put("backupBufferSize", "1048576"); // 1MB
-  }
-
-  @Override
-  protected void onAfter() {
-    super.onAfter();
-    Orient.instance().shutdown();
-  }
-
   @ConsoleCommand(aliases = { "use database" }, description = "Connect to a database or a remote Server instance")
   public void connect(
       @ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect to in the format '<mode>:<path>'") String iURL,
@@ -852,6 +817,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @SuppressWarnings("unchecked")
+  @ConsoleCommand(splitInWords = false, description = "Execute sql commands in batch")
+  public void batch(@ConsoleParameter(name = "text", description = "The SQL commands to execute, one per line") final String iText) {
+    executeServerSideScript("SQL", iText);
+  }
+
+  @SuppressWarnings("unchecked")
   @ConsoleCommand(splitInWords = false, description = "Execute javascript commands in the console")
   public void js(
       @ConsoleParameter(name = "text", description = "The javascript to execute. Use 'db' to reference to a document database, 'gdb' for a graph database") final String iText) {
@@ -883,9 +854,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       setResultset(currentResultSet);
 
       dumpResultSet(-1);
-      message("Client side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
+      message("\nClient side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
     } else
-      message("Client side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
+      message("\nClient side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
   }
 
   @SuppressWarnings("unchecked")
@@ -894,32 +865,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "text", description = "The javascript to execute. Use 'db' to reference to a document database, 'gdb' for a graph database") final String iText) {
     checkForRemoteServer();
 
-    if (iText == null)
-      return;
+    executeServerSideScript("javascript", iText);
 
-    resetResultSet();
-
-    long start = System.currentTimeMillis();
-    Object result = currentDatabase.command(new OCommandScript("Javascript", iText)).execute();
-    float elapsedSeconds = getElapsedSecs(start);
-
-    if (OMultiValue.isMultiValue(result)) {
-      if (result instanceof List<?>)
-        currentResultSet = (List<OIdentifiable>) result;
-      else if (result instanceof Collection<?>) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
-      } else if (result.getClass().isArray()) {
-        currentResultSet = new ArrayList<OIdentifiable>();
-        Collections.addAll(currentResultSet, (OIdentifiable[]) result);
-      }
-
-      setResultset(currentResultSet);
-
-      dumpResultSet(-1);
-      message("Server side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
-    } else
-      message("Server side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Create an index against a property")
@@ -1863,15 +1810,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return currentRecord;
   }
 
-  protected OIdentifiable setCurrentRecord(final int iIndex) {
-    currentRecordIdx = iIndex;
-    if (iIndex < currentResultSet.size())
-      currentRecord = (ORecordInternal<?>) currentResultSet.get(iIndex);
-    else
-      currentRecord = null;
-    return currentRecord;
-  }
-
   /** Should be used only by console commands */
   public List<OIdentifiable> getCurrentResultSet() {
     return currentResultSet;
@@ -1920,57 +1858,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throw new OException("The is no current object selected: create a new one or load it");
   }
 
-  private void dumpRecordDetails() {
-    if (currentRecord == null)
-      return;
-    else if (currentRecord instanceof ODocument) {
-      ODocument rec = (ODocument) currentRecord;
-      message("\n--------------------------------------------------");
-      message("\nODocument - Class: %s   id: %s   v.%s", rec.getClassName(), rec.getIdentity().toString(), rec.getRecordVersion()
-          .toString());
-      message("\n--------------------------------------------------");
-      Object value;
-      for (String fieldName : rec.fieldNames()) {
-        value = rec.field(fieldName);
-        if (value instanceof byte[])
-          value = "byte[" + ((byte[]) value).length + "]";
-        else if (value instanceof Iterator<?>) {
-          final List<Object> coll = new ArrayList<Object>();
-          while (((Iterator<?>) value).hasNext())
-            coll.add(((Iterator<?>) value).next());
-          value = coll;
-        }
-
-        message("\n%20s : %-20s", fieldName, value);
-      }
-
-    } else if (currentRecord instanceof ORecordFlat) {
-      ORecordFlat rec = (ORecordFlat) currentRecord;
-      message("\n--------------------------------------------------");
-      message("\nFlat - record id: %s   v.%s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
-      message("\n--------------------------------------------------");
-      message(rec.value());
-
-    } else if (currentRecord instanceof ORecordBytes) {
-      ORecordBytes rec = (ORecordBytes) currentRecord;
-      message("\n--------------------------------------------------");
-      message("\nBytes - record id: %s   v.%s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
-      message("\n--------------------------------------------------");
-
-      final byte[] value = rec.toStream();
-      final int max = Math.min(Integer.parseInt(properties.get("maxBinaryDisplay")), Array.getLength(value));
-      for (int i = 0; i < max; ++i) {
-        message("%03d", Array.getByte(value, i));
-      }
-
-    } else {
-      message("\n--------------------------------------------------");
-      message("\n%s - record id: %s   v.%s", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
-          currentRecord.getRecordVersion().toString());
-    }
-    out.println();
-  }
-
   public String ask(final String iText) {
     out.print(iText);
     final Scanner scanner = new Scanner(in);
@@ -1983,52 +1870,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message(iText);
   }
 
-  private void printSupportedSerializerFormat() {
-    message("\nSupported formats are:");
-
-    for (ORecordSerializer s : ORecordSerializerFactory.instance().getFormats()) {
-      if (s instanceof ORecordSerializerStringAbstract)
-        message("\n- " + s.toString());
-    }
-  }
-
-  private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
-    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(Integer.parseInt(properties.get("width")));
-
-    currentResultSet.clear();
-    while (it.hasNext() && currentResultSet.size() <= limit)
-      currentResultSet.add(it.next());
-    setResultset(currentResultSet);
-
-    tableFormatter.writeRecords(currentResultSet, limit);
-  }
-
-  private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage,
-      final boolean iIncludeResult) {
-    checkForDatabase();
-
-    if (iReceivedCommand == null)
-      return null;
-
-    iReceivedCommand = iExpectedCommand + " " + iReceivedCommand.trim();
-
-    resetResultSet();
-
-    final long start = System.currentTimeMillis();
-
-    final Object result = new OCommandSQL(iReceivedCommand).setProgressListener(this).execute();
-
-    float elapsedSeconds = getElapsedSecs(start);
-
-    if (iIncludeResult)
-      message(iMessage, result, elapsedSeconds);
-    else
-      message(iMessage, elapsedSeconds);
-
-    return result;
-  }
-
-  public void onBegin(final Object iTask, final long iTotal) {
+  @Override
+  public void onBegin(final Object iTask, final long iTotal, Object metadata) {
     lastPercentStep = 0;
 
     message("[");
@@ -2078,6 +1921,50 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message(" Error!");
     else
       message(iSucceed ? "] Done." : " Error!");
+  }
+
+  @Override
+  protected boolean isCollectingCommands(final String iLine) {
+    return iLine.startsWith("js") || iLine.startsWith("batch");
+  }
+
+  @Override
+  protected void onBefore() {
+    super.onBefore();
+
+    setResultset(new ArrayList<OIdentifiable>());
+
+    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+
+    // DISABLE THE NETWORK AND STORAGE TIMEOUTS
+    OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);
+    OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
+    OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL.setValue(1);
+    OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
+
+    properties.put("limit", "20");
+    properties.put("width", "132");
+    properties.put("debug", "false");
+    properties.put("maxBinaryDisplay", "160");
+    properties.put("verbose", "2");
+    properties.put("ignoreErrors", "false");
+    properties.put("backupCompressionLevel", "9"); // 9 = MAX
+    properties.put("backupBufferSize", "1048576"); // 1MB
+  }
+
+  @Override
+  protected void onAfter() {
+    super.onAfter();
+    Orient.instance().shutdown();
+  }
+
+  protected OIdentifiable setCurrentRecord(final int iIndex) {
+    currentRecordIdx = iIndex;
+    if (iIndex < currentResultSet.size())
+      currentRecord = (ORecordInternal<?>) currentResultSet.get(iIndex);
+    else
+      currentRecord = null;
+    return currentRecord;
   }
 
   protected void printApplicationInfo() {
@@ -2140,5 +2027,130 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void resetResultSet() {
     currentResultSet.clear();
     currentRecord = null;
+  }
+
+  protected void executeServerSideScript(final String iLanguage, final String iText) {
+    if (iText == null)
+      return;
+
+    resetResultSet();
+
+    long start = System.currentTimeMillis();
+    Object result = currentDatabase.command(new OCommandScript(iLanguage, iText)).execute();
+    float elapsedSeconds = getElapsedSecs(start);
+
+    if (OMultiValue.isMultiValue(result)) {
+      if (result instanceof List<?>)
+        currentResultSet = (List<OIdentifiable>) result;
+      else if (result instanceof Collection<?>) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        currentResultSet.addAll((Collection<? extends OIdentifiable>) result);
+      } else if (result.getClass().isArray()) {
+        currentResultSet = new ArrayList<OIdentifiable>();
+        Collections.addAll(currentResultSet, (OIdentifiable[]) result);
+      }
+
+      setResultset(currentResultSet);
+
+      dumpResultSet(-1);
+      message("\nServer side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
+    } else
+      message("\nServer side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
+  }
+
+  private void dumpRecordDetails() {
+    if (currentRecord == null)
+      return;
+    else if (currentRecord instanceof ODocument) {
+      ODocument rec = (ODocument) currentRecord;
+      message("\n--------------------------------------------------");
+      message("\nODocument - Class: %s   id: %s   v.%s", rec.getClassName(), rec.getIdentity().toString(), rec.getRecordVersion()
+          .toString());
+      message("\n--------------------------------------------------");
+      Object value;
+      for (String fieldName : rec.fieldNames()) {
+        value = rec.field(fieldName);
+        if (value instanceof byte[])
+          value = "byte[" + ((byte[]) value).length + "]";
+        else if (value instanceof Iterator<?>) {
+          final List<Object> coll = new ArrayList<Object>();
+          while (((Iterator<?>) value).hasNext())
+            coll.add(((Iterator<?>) value).next());
+          value = coll;
+        }
+
+        message("\n%20s : %-20s", fieldName, value);
+      }
+
+    } else if (currentRecord instanceof ORecordFlat) {
+      ORecordFlat rec = (ORecordFlat) currentRecord;
+      message("\n--------------------------------------------------");
+      message("\nFlat - record id: %s   v.%s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
+      message("\n--------------------------------------------------");
+      message(rec.value());
+
+    } else if (currentRecord instanceof ORecordBytes) {
+      ORecordBytes rec = (ORecordBytes) currentRecord;
+      message("\n--------------------------------------------------");
+      message("\nBytes - record id: %s   v.%s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
+      message("\n--------------------------------------------------");
+
+      final byte[] value = rec.toStream();
+      final int max = Math.min(Integer.parseInt(properties.get("maxBinaryDisplay")), Array.getLength(value));
+      for (int i = 0; i < max; ++i) {
+        message("%03d", Array.getByte(value, i));
+      }
+
+    } else {
+      message("\n--------------------------------------------------");
+      message("\n%s - record id: %s   v.%s", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
+          currentRecord.getRecordVersion().toString());
+    }
+    out.println();
+  }
+
+  private void printSupportedSerializerFormat() {
+    message("\nSupported formats are:");
+
+    for (ORecordSerializer s : ORecordSerializerFactory.instance().getFormats()) {
+      if (s instanceof ORecordSerializerStringAbstract)
+        message("\n- " + s.toString());
+    }
+  }
+
+  private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
+    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(Integer.parseInt(properties.get("width")));
+
+    currentResultSet.clear();
+    while (it.hasNext() && currentResultSet.size() <= limit)
+      currentResultSet.add(it.next());
+    setResultset(currentResultSet);
+
+    tableFormatter.writeRecords(currentResultSet, limit);
+  }
+
+  private Object sqlCommand(final String iExpectedCommand, String iReceivedCommand, final String iMessage,
+      final boolean iIncludeResult) {
+    checkForDatabase();
+
+    if (iReceivedCommand == null)
+      return null;
+
+    iReceivedCommand = iExpectedCommand + " " + iReceivedCommand.trim();
+
+    resetResultSet();
+
+    final long start = System.currentTimeMillis();
+
+    final Object result = new OCommandSQL(iReceivedCommand).setProgressListener(this).execute();
+
+    float elapsedSeconds = getElapsedSecs(start);
+
+    if (iIncludeResult)
+      message(iMessage, result, elapsedSeconds);
+    else
+      message(iMessage, elapsedSeconds);
+
+    return result;
   }
 }
