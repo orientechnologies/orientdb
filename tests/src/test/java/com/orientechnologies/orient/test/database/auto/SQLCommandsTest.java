@@ -90,12 +90,12 @@ public class SQLCommandsTest {
     database.open("admin", "admin");
 
     String cmd = "";
-    cmd += "begin";
-    cmd += "\nlet a = create vertex set script = true";
-    cmd += "\nlet b = select from v limit 1";
-    cmd += "\ncreate edge from $a to $b";
-    cmd += "\ncommit";
-    cmd += "\nreturn $a";
+    cmd += "select from ouser limit 1;begin;";
+    cmd += "let a = create vertex set script = true\n";
+    cmd += "let b = select from v limit 1;";
+    cmd += "create edge from $a to $b;";
+    cmd += "commit;";
+    cmd += "return $a;";
 
     Object result = database.command(new OCommandScript("sql", cmd)).execute();
     

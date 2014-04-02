@@ -23,8 +23,10 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -34,6 +36,7 @@ import javax.script.ScriptException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -121,53 +124,132 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     if (db != null && !(db instanceof ODatabaseRecordTx))
       db = db.getUnderlying();
 
-    final BufferedReader reader = new BufferedReader(new StringReader(parserText));
-    String lastCommand = "";
-    Object lastResult = null;
     try {
-      while ((lastCommand = reader.readLine()) != null) {
-        lastCommand = lastCommand.trim();
 
-        if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
-          final int equalsPos = lastCommand.indexOf('=');
-          final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
-          final String cmd = lastCommand.substring(equalsPos + 1).trim();
+      return executeSQLScript(db, parserText);
 
-          lastResult = db.command(new OCommandSQL(cmd).setContext(getContext())).execute();
-
-          // PUT THE RESULT INTO THE CONTEXT
-          getContext().setVariable(variable, lastResult);
-        } else if (lastCommand.equalsIgnoreCase("begin"))
-          db.begin();
-        else if (lastCommand.equalsIgnoreCase("commit"))
-          db.commit();
-        else if (lastCommand.equalsIgnoreCase("rollback"))
-          db.rollback();
-        else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
-          final String variable = lastCommand.substring("return ".length()).trim();
-
-          if (variable.equalsIgnoreCase("NULL"))
-            lastResult = null;
-          else if (variable.startsWith("$"))
-            lastResult = getContext().getVariable(variable);
-          else
-            lastResult = variable;
-
-          // END OF THE SCRIPT
-          break;
-
-        } else
-          lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
-
-      }
     } catch (IOException e) {
-      throw new OCommandExecutionException("Error on executing command: " + lastCommand, e);
+      throw new OCommandExecutionException("Error on executing command: " + parserText, e);
     }
-    return lastResult;
   }
 
   @Override
   protected void throwSyntaxErrorException(String iText) {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
+  }
+
+  protected Object executeSQLScript(ODatabaseRecord db, final String iText) throws IOException {
+    Object lastResult = null;
+    int txBegunAtLine = -1;
+    int txBegunAtPart = -1;
+    int maxRetry = 1;
+
+    for (int retry = 0; retry < maxRetry; retry++) {
+
+      final BufferedReader reader = new BufferedReader(new StringReader(iText));
+
+      int line = 0;
+      int linePart = 0;
+      String lastLine;
+      boolean txBegun = false;
+
+      for (; line < txBegunAtLine; ++line)
+        // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
+        lastLine = reader.readLine();
+
+      for (; (lastLine = reader.readLine()) != null; ++line) {
+        lastLine = lastLine.trim();
+
+        final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';');
+
+        if (line == txBegunAtLine)
+          // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
+          linePart = txBegunAtPart;
+
+        for (; linePart < lineParts.size(); ++linePart) {
+          final String lastCommand = lineParts.get(linePart);
+
+          if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
+            final int equalsPos = lastCommand.indexOf('=');
+            final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
+            final String cmd = lastCommand.substring(equalsPos + 1).trim();
+
+            lastResult = db.command(new OCommandSQL(cmd).setContext(getContext())).execute();
+
+            // PUT THE RESULT INTO THE CONTEXT
+            getContext().setVariable(variable, lastResult);
+          } else if (lastCommand.equalsIgnoreCase("begin")) {
+
+            if (txBegun)
+              throw new OCommandSQLParsingException("Transaction already begun");
+
+            txBegun = true;
+            txBegunAtLine = line;
+            txBegunAtPart = linePart;
+
+            db.begin();
+
+          } else if (lastCommand.equalsIgnoreCase("rollback")) {
+
+            if (!txBegun)
+              throw new OCommandSQLParsingException("Transaction not begun");
+
+            db.rollback();
+
+            txBegun = false;
+            txBegunAtLine = -1;
+            txBegunAtPart = -1;
+
+          } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "commit")) {
+            if (txBegunAtLine < 0)
+              throw new OCommandSQLParsingException("Transaction not begun");
+
+            if (lastCommand.length() > "commit ".length()) {
+              String next = lastCommand.substring("commit ".length()).trim();
+              if (OStringSerializerHelper.startsWithIgnoreCase(next, "retry ")) {
+                next = next.substring("retry ".length()).trim();
+                maxRetry = Integer.parseInt(next) + 1;
+              }
+            }
+
+            try {
+              db.commit();
+            } catch (OConcurrentModificationException e) {
+              break;
+            }
+
+            txBegun = false;
+            txBegunAtLine = -1;
+            txBegunAtPart = -1;
+
+          } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "sleep ")) {
+
+            final String sleepTimeInMs = lastCommand.substring("sleep ".length()).trim();
+            try {
+              Thread.sleep(Integer.parseInt(sleepTimeInMs));
+            } catch (InterruptedException e) {
+            }
+
+          } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
+
+            final String variable = lastCommand.substring("return ".length()).trim();
+
+            if (variable.equalsIgnoreCase("NULL"))
+              lastResult = null;
+            else if (variable.startsWith("$"))
+              lastResult = getContext().getVariable(variable);
+            else
+              lastResult = variable;
+
+            // END OF THE SCRIPT
+            return lastResult;
+
+          } else
+            lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+        }
+      }
+    }
+
+    return lastResult;
   }
 }
