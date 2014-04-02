@@ -44,8 +44,7 @@ public class OIndexUnique extends OIndexOneValue {
     modificationLock.requestModificationLock();
     try {
       checkForKeyType(key);
-
-      acquireSharedLock();
+      acquireExclusiveLock();
       try {
         final OIdentifiable value = indexEngine.get(key);
 
@@ -66,7 +65,7 @@ public class OIndexUnique extends OIndexOneValue {
         return this;
 
       } finally {
-        releaseSharedLock();
+        releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();

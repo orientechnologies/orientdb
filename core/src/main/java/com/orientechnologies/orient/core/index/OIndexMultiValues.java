@@ -100,7 +100,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     modificationLock.requestModificationLock();
     try {
       checkForKeyType(key);
-      acquireSharedLock();
+      acquireExclusiveLock();
       try {
         Set<OIdentifiable> values = indexEngine.get(key);
 
@@ -116,15 +116,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         if (!iSingleValue.getIdentity().isValid())
           ((ORecord<?>) iSingleValue).save();
 
-        synchronized ( values ) {
-          values.add(iSingleValue.getIdentity());
-          indexEngine.put(key, values);
-        }
+        values.add(iSingleValue.getIdentity());
+        indexEngine.put(key, values);
 
         return this;
 
       } finally {
-        releaseSharedLock();
+        releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -169,7 +167,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     modificationLock.requestModificationLock();
 
     try {
-      acquireSharedLock();
+      acquireExclusiveLock();
       try {
 
         Set<OIdentifiable> values = indexEngine.get(key);
@@ -177,20 +175,18 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         if (values == null)
           return false;
 
-        synchronized ( values ) {
-          if (values.remove(value)) {
-            if (values.isEmpty())
-              indexEngine.remove(key);
-            else
-              indexEngine.put(key, values);
-            return true;
-          }
+        if (values.remove(value)) {
+          if (values.isEmpty())
+            indexEngine.remove(key);
+          else
+            indexEngine.put(key, values);
+          return true;
         }
 
         return false;
 
       } finally {
-        releaseSharedLock();
+        releaseExclusiveLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
