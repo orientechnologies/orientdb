@@ -127,17 +127,17 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
+    addUser();
+
+    if (status != STATUS.CLOSED)
+      // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+      // REUSED
+      return;
+
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
-
-      addUser();
-
-      if (status != STATUS.CLOSED)
-        // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
-        // REUSED
-        return;
 
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
