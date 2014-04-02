@@ -38,8 +38,8 @@ import java.util.Set;
  * 
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
-  protected boolean     enabled = false;
-  protected Set<String> allowedLanguages;
+  protected boolean     enabled          = false;
+  protected Set<String> allowedLanguages = new HashSet<String>();
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
