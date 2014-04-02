@@ -79,7 +79,7 @@ public class HideRecordTest extends BaseTest {
     List<ORID> ridsToRemove = new ArrayList<ORID>();
     for (int i = 0; i < 100; i += 2) {
       final ODocument document = database.load(docs.get(i));
-      int result = database.command(new OCommandSQL("hide from " + document.getIdentity())).execute();
+      int result = (Integer) database.command(new OCommandSQL("hide from " + document.getIdentity())).execute();
       Assert.assertEquals(result, 1);
 
       ridsToRemove.add(docs.get(i));
