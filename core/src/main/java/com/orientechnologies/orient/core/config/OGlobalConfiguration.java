@@ -135,6 +135,9 @@ public enum OGlobalConfiguration {
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
 
+  STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
+      "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
+
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
@@ -244,7 +247,7 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
-	INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
+  INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
 
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
