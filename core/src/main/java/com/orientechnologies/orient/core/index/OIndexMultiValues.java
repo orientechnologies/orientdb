@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
@@ -31,6 +29,16 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -91,9 +99,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     modificationLock.requestModificationLock();
     try {
-      acquireExclusiveLock();
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
         Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null) {
@@ -108,13 +116,15 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         if (!iSingleValue.getIdentity().isValid())
           ((ORecord<?>) iSingleValue).save();
 
-        values.add(iSingleValue.getIdentity());
+        synchronized ( values ) {
+          values.add(iSingleValue.getIdentity());
+          indexEngine.put(key, values);
+        }
 
-        indexEngine.put(key, values);
         return this;
 
       } finally {
-        releaseExclusiveLock();
+        releaseSharedLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -159,25 +169,28 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     modificationLock.requestModificationLock();
 
     try {
-      acquireExclusiveLock();
+      acquireSharedLock();
       try {
 
-        Set<OIdentifiable> recs = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-        if (recs == null)
+        if (values == null)
           return false;
 
-        if (recs.remove(value)) {
-          if (recs.isEmpty())
-            indexEngine.remove(key);
-          else
-            indexEngine.put(key, recs);
-          return true;
+        synchronized ( values ) {
+          if (values.remove(value)) {
+            if (values.isEmpty())
+              indexEngine.remove(key);
+            else
+              indexEngine.put(key, values);
+            return true;
+          }
         }
+
         return false;
 
       } finally {
-        releaseExclusiveLock();
+        releaseSharedLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -244,13 +257,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesBetween(iRangeFrom, fromInclusive, iRangeTo, toInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE,
-          new OIndexEngine.ValuesResultListener() {
-            @Override
-            public boolean addResult(OIdentifiable identifiable) {
-              return resultListener.addResult(identifiable);
-            }
-          });
+      indexEngine.getValuesBetween(iRangeFrom, fromInclusive, iRangeTo, toInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
+          @Override
+          public boolean addResult(OIdentifiable identifiable) {
+            return resultListener.addResult(identifiable);
+          }
+        }
+      );
     } finally {
       releaseSharedLock();
     }

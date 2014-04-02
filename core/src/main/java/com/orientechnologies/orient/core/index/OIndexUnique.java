@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 /**
  * Index implementation that allows only one value for a key.
@@ -43,9 +43,10 @@ public class OIndexUnique extends OIndexOneValue {
 
     modificationLock.requestModificationLock();
     try {
-      acquireExclusiveLock();
+      checkForKeyType(key);
+
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
         final OIdentifiable value = indexEngine.get(key);
 
         if (value != null) {
@@ -65,7 +66,7 @@ public class OIndexUnique extends OIndexOneValue {
         return this;
 
       } finally {
-        releaseExclusiveLock();
+        releaseSharedLock();
       }
     } finally {
       modificationLock.releaseModificationLock();

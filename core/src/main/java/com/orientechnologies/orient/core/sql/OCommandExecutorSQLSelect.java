@@ -49,7 +49,14 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -117,6 +124,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     public boolean addResult(OIdentifiable value) {
       final ORecord record = value.getRecord();
 
+      if (record == null) {
+        OLogManager.instance().warn(this, "The index has an invalid record, maybe deleted: %s", value);
+        return true;
+      }
+
       if (record instanceof ORecordSchemaAware<?>) {
         final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
         final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
@@ -133,16 +145,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       return true;
     }
-  }
-
-  protected static OSQLFilterCondition getConditionForRidPosRange(long fromId, long toId) {
-
-    final OSQLFilterCondition fromCondition = new OSQLFilterCondition(new OSQLFilterItemField(null,
-        ODocumentHelper.ATTRIBUTE_RID_POS), new OQueryOperatorMajor(), fromId);
-    final OSQLFilterCondition toCondition = new OSQLFilterCondition(
-        new OSQLFilterItemField(null, ODocumentHelper.ATTRIBUTE_RID_POS), new OQueryOperatorMinorEquals(), toId);
-
-    return new OSQLFilterCondition(fromCondition, new OQueryOperatorAnd(), toCondition);
   }
 
   private static List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
@@ -396,41 +398,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // TODO indexes??
     }
     return clusters;
-  }
-
-  /**
-   * Add condition so that query will be executed only on the given id range. That is used to verify that query will be executed on
-   * the single node
-   * 
-   * @param fromId
-   * @param toId
-   * @return this
-   */
-  public OCommandExecutorSQLSelect boundToLocalNode(long fromId, long toId) {
-    if (fromId == toId) {
-      // single node in dht
-      return this;
-    }
-
-    final OSQLFilterCondition nodeCondition;
-    if (fromId < toId) {
-      nodeCondition = getConditionForRidPosRange(fromId, toId);
-    } else {
-      nodeCondition = new OSQLFilterCondition(getConditionForRidPosRange(fromId, Long.MAX_VALUE), new OQueryOperatorOr(),
-          getConditionForRidPosRange(-1L, toId));
-    }
-
-    if (compiledFilter == null) {
-      compiledFilter = OSQLEngine.getInstance().parseCondition("", getContext(), KEYWORD_WHERE);
-    }
-
-    final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-    if (rootCondition != null) {
-      compiledFilter.setRootCondition(new OSQLFilterCondition(nodeCondition, new OQueryOperatorAnd(), rootCondition));
-    } else {
-      compiledFilter.setRootCondition(nodeCondition);
-    }
-    return this;
   }
 
   /**
