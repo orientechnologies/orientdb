@@ -53,7 +53,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
       if (iProgressListener != null)
-        iProgressListener.onBegin(this, 0);
+        iProgressListener.onBegin(this, 0, false);
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 

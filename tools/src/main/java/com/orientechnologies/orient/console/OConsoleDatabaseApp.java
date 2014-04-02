@@ -1870,7 +1870,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message(iText);
   }
 
-  public void onBegin(final Object iTask, final long iTotal) {
+  @Override
+  public void onBegin(final Object iTask, final long iTotal, Object metadata) {
     lastPercentStep = 0;
 
     message("[");

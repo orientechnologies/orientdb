@@ -198,7 +198,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     long currRecord = 0;
 
     if (progressListener != null)
-      progressListener.onBegin(this, totRecords);
+      progressListener.onBegin(this, totRecords, false);
 
     database.declareIntent(new OIntentMassiveInsert());
     try {
