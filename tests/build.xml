@@ -19,13 +19,13 @@
         <path location="."/>
         </pathconvert>
         <pathconvert property="test.path" targetos="unix">
-        <path location="../${orient.path}/databases/demo"/>
+            <path location="${orient.path}/databases/demo"/>
         </pathconvert>
         <pathconvert property="project.root.dir" targetos="windows" dirsep="/">
         <path location="."/>
         </pathconvert>
         <pathconvert property="test.path" targetos="windows" dirsep="/">
-            <path location="../${orient.path}/databases/demo"/>
+            <path location="${orient.path}/databases/demo"/>
         </pathconvert>
         <echo>Normalized paths</echo>
         <echo>project.root.dir=${project.root.dir}</echo>
