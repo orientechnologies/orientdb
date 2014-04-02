@@ -673,14 +673,13 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void doClose(boolean force, boolean onDelete) {
+    if (!checkForClose(force))
+      return;
+
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
-
-      if (!checkForClose(force))
-        return;
-
       status = STATUS.CLOSING;
 
       if (!onDelete)
