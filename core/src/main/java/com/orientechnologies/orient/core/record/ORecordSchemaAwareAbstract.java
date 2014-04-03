@@ -15,19 +15,10 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -36,6 +27,14 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
@@ -48,7 +47,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   /**
    * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
    * the schema is not defined for the current class or there are not constraints then the validation is ignored.
-   * 
+   *
    * @see OProperty
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
@@ -79,7 +78,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   public OClass getSchemaClass() {
     if (_clazz == null) {
       final ODatabaseRecord database = getDatabaseIfDefined();
-      if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
         if (_recordId.clusterId < 0) {
           checkForLoading();
           checkForFields("@class");

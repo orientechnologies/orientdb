@@ -97,9 +97,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     // throw new IllegalStateException("Record " + rid + " is already locked");
 
     if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-      ((OStorageEmbedded) stg).acquireWriteLock(rid);
+      ((OStorageEmbedded) stg.getUnderlying()).acquireWriteLock(rid);
     else
-      ((OStorageEmbedded) stg).acquireReadLock(rid);
+      ((OStorageEmbedded) stg.getUnderlying()).acquireReadLock(rid);
 
     locks.put(rid, iLockingStrategy);
     return this;
@@ -118,9 +118,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     if (lock == null)
       throw new OLockException("Cannot unlock a never acquired lock");
     else if (lock == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-      ((OStorageEmbedded) stg).releaseWriteLock(rid);
+      ((OStorageEmbedded) stg.getUnderlying()).releaseWriteLock(rid);
     else
-      ((OStorageEmbedded) stg).releaseReadLock(rid);
+      ((OStorageEmbedded) stg.getUnderlying()).releaseReadLock(rid);
 
     return this;
   }
