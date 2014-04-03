@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -106,7 +107,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        OZIPCompressionUtil.compressDirectory(getStoragePath(), bo, new String[] { ".wal" }, iOutput, compressionLevel);
+        OZIPCompressionUtil.compressDirectory(new File( getStoragePath() ).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput, compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
