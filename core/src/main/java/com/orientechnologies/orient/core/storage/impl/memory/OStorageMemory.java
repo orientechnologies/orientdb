@@ -153,7 +153,6 @@ public class OStorageMemory extends OStorageEmbedded {
 
     lock.acquireExclusiveLock();
     try {
-
       status = STATUS.CLOSING;
 
       super.close(iForce, onDelete);
@@ -667,7 +666,7 @@ public class OStorageMemory extends OStorageEmbedded {
   }
 
   public void commit(final OTransaction iTx, Runnable callback) {
-    lock.acquireSharedLock();
+    lock.acquireExclusiveLock();
     try {
 
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
@@ -691,7 +690,7 @@ public class OStorageMemory extends OStorageEmbedded {
       rollback(iTx);
 
     } finally {
-      lock.releaseSharedLock();
+      lock.releaseExclusiveLock();
     }
   }
 
@@ -828,16 +827,12 @@ public class OStorageMemory extends OStorageEmbedded {
     return OEngineMemory.NAME + ":" + url;
   }
 
-  public OStorageConfigurationSegment getConfigurationSegment() {
-    return null;
-  }
-
   public void renameCluster(final String iOldName, final String iNewName) {
     final OClusterMemory cluster = (OClusterMemory) getClusterByName(iOldName);
     if (cluster != null)
       try {
         cluster.set(com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES.NAME, iNewName);
-      } catch (IOException e) {
+      } catch (IOException ignored) {
       }
   }
 

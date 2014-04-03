@@ -314,13 +314,13 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
   @Override
   public void close(final boolean iForce, boolean onDelete) {
-    if (!checkForClose(iForce))
-      return;
-
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
+
+      if (!checkForClose(iForce))
+        return;
 
       status = STATUS.CLOSING;
 

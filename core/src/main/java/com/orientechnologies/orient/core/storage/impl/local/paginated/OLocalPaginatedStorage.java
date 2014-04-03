@@ -918,12 +918,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     if (iExclusiveLock) {
       modificationLock.requestModificationLock();
       try {
-        return super.callInLock(iCallable, iExclusiveLock);
+        return super.callInLock(iCallable, true);
       } finally {
         modificationLock.releaseModificationLock();
       }
     } else {
-      return super.callInLock(iCallable, iExclusiveLock);
+      return super.callInLock(iCallable, false);
     }
   }
 

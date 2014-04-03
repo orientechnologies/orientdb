@@ -211,7 +211,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
                 callback.run();
                 return null;
               }
-            }, false);
+            }, true);
           }
 
         } finally {
