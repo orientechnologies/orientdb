@@ -94,6 +94,9 @@ public class OSharedResourceAdaptive {
     if (concurrent)
       if (timeout > 0) {
         try {
+          // CHECK IF HAVE TO SCALE UP FROM SHARED TO EXCLUSIVE
+          checkToScaleUp();
+
           if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
             // OK
             return;
