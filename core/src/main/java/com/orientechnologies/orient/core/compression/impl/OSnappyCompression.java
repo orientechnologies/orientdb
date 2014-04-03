@@ -16,9 +16,12 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
-import org.iq80.snappy.Snappy;
 
 import com.orientechnologies.orient.core.compression.OCompression;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import org.xerial.snappy.Snappy;
+
+import java.io.IOException;
 
 /**
  * @author Andrey Lomakin
@@ -31,13 +34,21 @@ public class OSnappyCompression implements OCompression {
 
   @Override
   public byte[] compress(byte[] content) {
-    return Snappy.compress(content);
-  }
+		try {
+			return Snappy.compress(content);
+		} catch (IOException e) {
+			throw new ODatabaseException("Error during data compression.", e);
+		}
+	}
 
   @Override
   public byte[] uncompress(byte[] content) {
-    return Snappy.uncompress(content, 0, content.length);
-  }
+		try {
+			return Snappy.uncompress(content);
+		} catch (IOException e) {
+			throw new ODatabaseException("Error during data decompression.", e);
+		}
+	}
 
   @Override
   public String name() {

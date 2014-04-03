@@ -31,7 +31,6 @@
             com.orientechnologies.orient.graph.gremlin;resolution:=optional,
             com.orientechnologies.orient.graph.handler;resolution:=optional,
             com.orientechnologies.orient.graph.sql.functions;resolution:=optional,
-            org.iq80.snappy;resolution:=optional,
             javax.imageio.spi,sun.misc;resolution:=optional,
             com.orientechnologies.nio;resolution:=optional,
             com.orientechnologies.orient.client.remote;resolution:=optional,
@@ -75,11 +74,10 @@
 
 
         <dependency>
-            <groupId>org.iq80.snappy</groupId>
-            <artifactId>snappy</artifactId>
-            <version>0.3</version>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+            <version>1.1.0</version>
         </dependency>
-
         <dependency>
             <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
             <artifactId>concurrentlinkedhashmap-lru</artifactId>
