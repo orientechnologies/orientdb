@@ -10,9 +10,16 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.keepLimit = 10;
         localStorageService.add("keepLimit", $scope.keepLimit);
     }
+    $scope.shallow = localStorageService.get("shallowCollection");
+
+    if ($scope.shallow == null) {
+        $scope.shallow = true;
+        localStorageService.add("shallowCollection", $scope.shallow);
+
+    }
     $scope.countPageOptions = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000];
     var dbTime = localStorageService.get("Timeline");
-    if (!dbTime) {
+    if (!dbTime || dbTime instanceof  Array) {
         dbTime = new Object;
         localStorageService.add("Timeline", dbTime);
     }
@@ -32,7 +39,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
     $scope.table = true;
     $scope.contentType = ['JSON', 'CSV'];
-    $scope.shallow = true;
     $scope.selectedContentType = $scope.contentType[0];
     $scope.editorOptions = {
         lineWrapping: true,
@@ -180,11 +186,10 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         total: data.length, // length of data
         getData: function ($defer, params) {
             // use build-in angular filter
-            console.log($scope);
-            var orderedData = params.sorting() ?
-                $filter('orderBy')(data, params.orderBy()) :
-                data;
-            $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+//            var orderedData = params.sorting() ?
+//                $filter('orderBy')(data, params.orderBy()) :
+//                data;
+            $defer.resolve(data.slice((params.page() - 1) * params.count(), params.page() * params.count()));
         }
     });
 

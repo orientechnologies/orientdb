@@ -1,4 +1,4 @@
-angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$routeParams', '$http', '$location', 'Database', function ($scope, $routeParams, $http, $location, Database) {
+angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', function ($scope, $routeParams, $http, $location, $modal, $q, Database) {
     $scope.database = Database;
     $scope.selectedMenu = null;
     $scope.menus = [];
@@ -51,6 +51,16 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
 
         });
     };
+    $scope.showAbout = function () {
+
+        var modalScope = $scope.$new(true);
+        modalScope.oVersion = Database.getMetadata()["server"].version;
+        modalScope.version = STUDIO_VERSION;
+        var modalPromise = $modal({template: 'views/server/about.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+        $q.when(modalPromise).then(function (modalEl) {
+            modalEl.modal('show');
+        });
+    }
     $scope.logout = function () {
         Database.disconnect(function () {
             $scope.menus = [];

@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window','Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window,Spinner) {
 
     //for pagination
     $scope.countPage = 10;
@@ -88,11 +88,15 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     }
     $scope.rebuildAllIndexes = function () {
         var sql = 'REBUILD INDEX *';
+        Spinner.start();
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+            Spinner.stopSpinner();
+        }, function (err) {
+            Spinner.stopSpinner();
         });
     }
 }]);
-schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi) {
+schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi, Spinner) {
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Class");
     var clazz = $routeParams.clazz;
     $scope.class2show = clazz;
@@ -313,7 +317,11 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     }
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
+        Spinner.start();
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+            Spinner.stopSpinner();
+        }, function (err) {
+            Spinner.stopSpinner();
         });
     }
 }]);
@@ -523,13 +531,17 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
         });
     }
 }]);
-schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route) {
+schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Spinner) {
 
     $scope.indexes = Database.getMetadata()["indexes"];
 
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
+        Spinner.start();
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+            Spinner.stopSpinner();
+        }, function (err) {
+            Spinner.stopSpinner();
         });
     }
 

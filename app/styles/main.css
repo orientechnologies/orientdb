@@ -25,6 +25,9 @@ body div.container-studio {
     min-height: 50px;
 
 }
+
+
+
 .console_class_functions .CodeMirror {
     height: 300px;
 }
@@ -190,7 +193,6 @@ div.edge form.bs-docs-example:after {
 .odoc .query-header a {
     display: inline;
 }
-
 .query-header a {
     text-overflow: ellipsis;
     overflow: hidden;
@@ -763,4 +765,11 @@ ul.arrayrid > li {
 .class-body .btn-toolbar {
     margin-bottom: 0px;
     margin-top: 0px;
+}
+
+.ng-table th {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
