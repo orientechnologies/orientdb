@@ -54,14 +54,14 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_METADATA = "METADATA";
   public static final String KEYWORD_ENGINE   = "ENGINE";
 
-  private String            indexName;
-  private OClass            oClass;
-  private String[]          fields;
-  private OClass.INDEX_TYPE indexType;
-  private OType[]           keyTypes;
-  private byte              serializerKeyId;
-  private String            engine;
-  private ODocument metadataDoc = null;
+  private String             indexName;
+  private OClass             oClass;
+  private String[]           fields;
+  private OClass.INDEX_TYPE  indexType;
+  private OType[]            keyTypes;
+  private byte               serializerKeyId;
+  private String             engine;
+  private ODocument          metadataDoc      = null;
 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -145,7 +145,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (word.toString().equals(KEYWORD_ENGINE)) {
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-
+      oldPos = pos;
       engine = word.toString().toUpperCase();
     } else
       parserGoBack();

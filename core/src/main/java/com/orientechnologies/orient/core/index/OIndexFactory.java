@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface OIndexFactory {
 
@@ -26,6 +27,11 @@ public interface OIndexFactory {
    * @return List of supported indexes of this factory
    */
   Set<String> getTypes();
+
+  /**
+   * @return List of supported algorithms of this factory
+   */
+  Set<String> getAlgorithms();
 
   /**
    * 
@@ -42,7 +48,7 @@ public interface OIndexFactory {
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm)
-      throws OConfigurationException;
+  OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm,
+      ODocument metadata) throws OConfigurationException;
 
 }

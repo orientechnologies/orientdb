@@ -25,6 +25,7 @@ import java.util.Set;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Utility class to create indexes. New OIndexFactory can be registered
@@ -113,12 +114,12 @@ public final class OIndexes {
    *           if index type does not exist
    */
   public static OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
-      String valueContainerAlgorithm) throws OConfigurationException, OIndexException {
+      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException, OIndexException {
     final Iterator<OIndexFactory> ite = getAllFactories();
     while (ite.hasNext()) {
       final OIndexFactory factory = ite.next();
-      if (factory.getTypes().contains(indexType)) {
-        return factory.createIndex(database, indexType, algorithm, valueContainerAlgorithm);
+      if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
+        return factory.createIndex(database, indexType, algorithm, valueContainerAlgorithm, metadata);
       }
     }
 
