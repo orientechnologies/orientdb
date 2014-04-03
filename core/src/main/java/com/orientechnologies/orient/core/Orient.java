@@ -56,14 +56,12 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners   = new HashSet<ODatabaseLifecycleListener>();
   protected final ODatabaseFactory                databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                  scriptManager          = new OScriptManager();
-  protected OClusterFactory                       clusterFactory         = new ODefaultClusterFactory();
-  protected ORecordFactoryManager                 recordFactoryManager   = new ORecordFactoryManager();
-
-  protected OrientShutdownHook                    shutdownHook;
   protected final Timer                           timer                  = new Timer(true);
   protected final ThreadGroup                     threadGroup            = new ThreadGroup("OrientDB");
   protected final AtomicInteger                   serialId               = new AtomicInteger();
-
+  protected OClusterFactory                       clusterFactory         = new ODefaultClusterFactory();
+  protected ORecordFactoryManager                 recordFactoryManager   = new ORecordFactoryManager();
+  protected OrientShutdownHook                    shutdownHook;
   protected OMemoryWatchDog                       memoryWatchDog;
   protected OProfilerMBean                        profiler               = new OProfiler();                                            ;
 
@@ -74,6 +72,45 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected Orient() {
     super(new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean()));
     startup();
+  }
+
+  public static Orient instance() {
+    return instance;
+  }
+
+  public static String getHomePath() {
+    String v = System.getProperty("orient.home");
+    if (v == null)
+      v = System.getProperty(ORIENTDB_HOME);
+    if (v == null)
+      v = System.getenv(ORIENTDB_HOME);
+
+    return OFileUtils.getPath(v);
+  }
+
+  public static String getTempPath() {
+    return OFileUtils.getPath(System.getProperty("java.io.tmpdir") + "/orientdb/");
+  }
+
+  /**
+   * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
+   * with the same name.
+   * 
+   * @see #setRegisterDatabaseByPath(boolean)
+   * @return
+   */
+  public static boolean isRegisterDatabaseByPath() {
+    return registerDatabaseByPath;
+  }
+
+  /**
+   * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
+   * name.
+   * 
+   * @param iValue
+   */
+  public static void setRegisterDatabaseByPath(final boolean iValue) {
+    registerDatabaseByPath = iValue;
   }
 
   public Orient startup() {
@@ -116,20 +153,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       active = false;
 
-      if (memoryWatchDog != null) {
-        // SHUTDOWN IT AND WAIT FOR COMPLETITION
-        memoryWatchDog.interrupt();
-        try {
-          memoryWatchDog.join();
-        } catch (InterruptedException e) {
-        }
-      }
-
-      if (shutdownHook != null) {
-        shutdownHook.cancel();
-        shutdownHook = null;
-      }
-
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
@@ -137,6 +160,8 @@ public class Orient extends OListenerManger<OOrientListener> {
         if (l != null)
           l.onShutdown();
       }
+
+      closeAllStorages();
 
       // SHUTDOWN ENGINES
       for (OEngine engine : engines.values())
@@ -147,13 +172,9 @@ public class Orient extends OListenerManger<OOrientListener> {
         // CLOSE ALL DATABASES
         databaseFactory.shutdown();
 
-      if (storages != null) {
-        // CLOSE ALL THE STORAGES
-        final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-        for (OStorage stg : storagesCopy) {
-          OLogManager.instance().info(this, "Shutting down storage: " + stg.getName() + "...");
-          stg.close(true, false);
-        }
+      if (shutdownHook != null) {
+        shutdownHook.cancel();
+        shutdownHook = null;
       }
 
       if (OMMapManagerLocator.getInstance() != null)
@@ -169,12 +190,40 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       profiler.shutdown();
 
-      OLogManager.instance().info(this, "Orient Engine shutdown complete\n");
+      if (memoryWatchDog != null) {
+        // SHUTDOWN IT AND WAIT FOR COMPLETITION
+        memoryWatchDog.interrupt();
+        try {
+          memoryWatchDog.join();
+        } catch (InterruptedException e) {
+        } finally {
+          memoryWatchDog = null;
+        }
+      }
+
+      OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
+      OLogManager.instance().flush();
 
     } finally {
       getLock().unlock();
     }
     return this;
+  }
+
+  public void closeAllStorages() {
+    if (storages != null) {
+      // CLOSE ALL THE STORAGES
+      final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
+      for (OStorage stg : storagesCopy) {
+        try {
+          OLogManager.instance().info(this, "- storage: " + stg.getName() + "...");
+          stg.close(true, false);
+        } catch (Throwable e) {
+          OLogManager.instance().warn(this, "Error on closing storage");
+        }
+      }
+      storages.clear();
+    }
   }
 
   public OStorage loadStorage(String iURL) {
@@ -284,14 +333,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  private void registerEngine(final String iClassName) {
-    try {
-      final Class<?> cls = Class.forName(iClassName);
-      registerEngine((OEngine) cls.newInstance());
-    } catch (Exception e) {
-    }
-  }
-
   /**
    * Returns the engine by its name.
    * 
@@ -341,15 +382,15 @@ public class Orient extends OListenerManger<OOrientListener> {
         l.onStorageUnregistered(iStorage);
       }
 
-			final List<String> storagesToRemove = new ArrayList<String>();
+      final List<String> storagesToRemove = new ArrayList<String>();
 
       for (Entry<String, OStorage> s : storages.entrySet()) {
         if (s.getValue().equals(iStorage))
           storagesToRemove.add(s.getKey());
       }
 
-			for (String dbName : storagesToRemove)
-				storages.remove(dbName);
+      for (String dbName : storagesToRemove)
+        storages.remove(dbName);
 
     } finally {
       getLock().unlock();
@@ -388,10 +429,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     dbLifecycleListeners.remove(iListener);
   }
 
-  public static Orient instance() {
-    return instance;
-  }
-
   public ThreadGroup getThreadGroup() {
     return threadGroup;
   }
@@ -408,38 +445,28 @@ public class Orient extends OListenerManger<OOrientListener> {
     return recordFactoryManager;
   }
 
-  public OClusterFactory getClusterFactory() {
-    return clusterFactory;
-  }
-
-  public ODatabaseFactory getDatabaseFactory() {
-    return databaseFactory;
-  }
-
   public void setRecordFactoryManager(final ORecordFactoryManager iRecordFactoryManager) {
     recordFactoryManager = iRecordFactoryManager;
   }
 
-  public static String getHomePath() {
-    String v = System.getProperty("orient.home");
-    if (v == null)
-      v = System.getProperty(ORIENTDB_HOME);
-    if (v == null)
-      v = System.getenv(ORIENTDB_HOME);
-
-    return OFileUtils.getPath(v);
-  }
-
-  public static String getTempPath() {
-    return OFileUtils.getPath(System.getProperty("java.io.tmpdir") + "/orientdb/");
+  public OClusterFactory getClusterFactory() {
+    return clusterFactory;
   }
 
   public void setClusterFactory(final OClusterFactory clusterFactory) {
     this.clusterFactory = clusterFactory;
   }
 
+  public ODatabaseFactory getDatabaseFactory() {
+    return databaseFactory;
+  }
+
   public OProfilerMBean getProfiler() {
     return profiler;
+  }
+
+  public void setProfiler(final OProfilerMBean iProfiler) {
+    profiler = iProfiler;
   }
 
   public void registerThreadDatabaseFactory(final ODatabaseThreadLocalFactory iDatabaseFactory) {
@@ -450,28 +477,11 @@ public class Orient extends OListenerManger<OOrientListener> {
     return scriptManager;
   }
 
-  /**
-   * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
-   * with the same name.
-   * 
-   * @see #setRegisterDatabaseByPath(boolean)
-   * @return
-   */
-  public static boolean isRegisterDatabaseByPath() {
-    return registerDatabaseByPath;
-  }
-
-  /**
-   * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
-   * name.
-   * 
-   * @param iValue
-   */
-  public static void setRegisterDatabaseByPath(final boolean iValue) {
-    registerDatabaseByPath = iValue;
-  }
-
-  public void setProfiler(final OProfilerMBean iProfiler) {
-    profiler = iProfiler;
+  private void registerEngine(final String iClassName) {
+    try {
+      final Class<?> cls = Class.forName(iClassName);
+      registerEngine((OEngine) cls.newInstance());
+    } catch (Exception e) {
+    }
   }
 }

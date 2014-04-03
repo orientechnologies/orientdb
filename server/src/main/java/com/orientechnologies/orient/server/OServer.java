@@ -243,15 +243,24 @@ public class OServer {
     return this;
   }
 
-  public void shutdown() {
+  public boolean shutdown() {
     if (!running)
-      return;
-
-    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
+      return false;
 
     running = false;
 
-    shutdownHook.cancel();
+    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
+
+    if (!Orient.isRegisterDatabaseByPath())
+      try {
+        OLogManager.instance().info(this, "Shutting down databases:");
+        Orient.instance().shutdown();
+      } catch (Throwable e) {
+        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
+      }
+
+    if (shutdownHook != null)
+      shutdownHook.cancel();
 
     Orient.instance().getProfiler().unregisterHookValue("system.databases");
 
@@ -260,15 +269,6 @@ public class OServer {
 
     lock.lock();
     try {
-      if (pluginManager != null)
-        pluginManager.shutdown();
-
-      if (networkProtocols.size() > 0) {
-        // PROTOCOL SHUTDOWN
-        OLogManager.instance().info(this, "Shutting down protocols");
-        networkProtocols.clear();
-      }
-
       if (networkListeners.size() > 0) {
         // SHUTDOWN LISTENERS
         OLogManager.instance().info(this, "Shutting down listeners:");
@@ -283,27 +283,30 @@ public class OServer {
         }
       }
 
+      if (networkProtocols.size() > 0) {
+        // PROTOCOL SHUTDOWN
+        OLogManager.instance().info(this, "Shutting down protocols");
+        networkProtocols.clear();
+      }
+
+      for (OServerLifecycleListener l : lifecycleListeners)
+        try {
+          l.onAfterDeactivate();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
+        }
+
+      if (pluginManager != null)
+        pluginManager.shutdown();
+
     } finally {
       lock.unlock();
     }
 
-    if (!Orient.isRegisterDatabaseByPath())
-      try {
-        OLogManager.instance().info(this, "Shutting down databases...");
-        Orient.instance().shutdown();
-      } catch (Throwable e) {
-        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
-      }
-
-    for (OServerLifecycleListener l : lifecycleListeners)
-      try {
-        l.onAfterDeactivate();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
-      }
-
     OLogManager.instance().info(this, "OrientDB Server shutdown complete");
     System.out.println();
+    OLogManager.instance().flush();
+    return true;
   }
 
   public String getStoragePath(final String iName) {
