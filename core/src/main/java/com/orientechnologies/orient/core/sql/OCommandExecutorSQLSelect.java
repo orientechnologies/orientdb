@@ -140,7 +140,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(record, null, context)))
+      if (compiledFilter == null || evaluateRecord(record))
         return handleResult(record, true);
 
       return true;
@@ -610,7 +610,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         Object fieldValue = null;
         if (groupByFields != null && !groupByFields.isEmpty()) {
           if (groupByFields.size() > 1) {
-            // MULTI-FIELD FROUP BY
+            // MULTI-FIELD GROUP BY
             final Object[] fields = new Object[groupByFields.size()];
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
