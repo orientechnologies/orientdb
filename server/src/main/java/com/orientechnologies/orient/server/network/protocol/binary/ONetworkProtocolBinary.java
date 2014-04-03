@@ -323,7 +323,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         break;
 
       case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
-				hideRecord();
+        hideRecord();
         break;
 
       case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
@@ -1040,14 +1040,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           endResponse();
         }
       } catch (Exception e) {
-        connection.database.rollback();
+        if (connection.database != null) {
+          if (connection.database.getTransaction().isActive())
+            connection.database.rollback(true);
+        }
         sendError(clientTxId, e);
       }
     } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
     } catch (Exception e) {
       // Error during TX initialization, possibly index constraints violation.
-      tx.rollback();
+      if (tx.isActive())
+        tx.rollback(true, -1);
+
       sendError(clientTxId, e);
     }
   }
