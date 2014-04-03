@@ -618,54 +618,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } while (true);
   }
 
-  private boolean hideRecord(final ORecordId rid, int mode, final ORecordCallback<Boolean> callback,
-      final OChannelBinaryAsynchClient network) throws IOException {
-    try {
-
-      network.writeRID(rid);
-      network.writeByte((byte) mode);
-
-    } finally {
-      endRequest(network);
-    }
-
-    switch (mode) {
-    case 0:
-      // SYNCHRONOUS
-      try {
-        beginResponse(network);
-        return network.readByte() == 1;
-      } finally {
-        endResponse(network);
-      }
-
-    case 1:
-      // ASYNCHRONOUS
-      if (callback != null) {
-        final int sessionId = getSessionId();
-        Callable<Object> response = new Callable<Object>() {
-          public Object call() throws Exception {
-            Boolean result;
-
-            try {
-              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
-              beginResponse(network);
-              result = network.readByte() == 1;
-            } finally {
-              endResponse(network);
-              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
-            }
-
-            callback.call(rid, result);
-            return null;
-          }
-        };
-        asynchExecutor.submit(new FutureTask<Object>(response));
-      }
-    }
-    return false;
-  }
-
   @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     checkConnection();
@@ -1962,23 +1914,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OChannelBinaryAsynchClient network = null;
 
+    boolean modeForCheckFreeChannel = true;
+
     int beginCursor = networkPoolCursor;
     while (network == null) {
       networkPoolLock.lock();
       try {
-        if (networkPoolCursor < 0)
-          networkPoolCursor = 0;
-        else if (networkPoolCursor >= networkPool.size())
-          // RESTART FROM THE BEGINNING
-          networkPoolCursor = 0;
-
-        if (networkPool.size() == 0) {
-          createConnectionPool();
-          networkPoolCursor = 0;
-        }
-
-        if (networkPool.size() == 0)
-          throw new ONetworkProtocolException("Connection pool closed");
+        checkPoolBounds();
 
         network = networkPool.get(networkPoolCursor);
         networkPoolCursor++;
@@ -1986,26 +1928,34 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         final String serverURL = getServerURL();
 
         if (serverURL == null || network.getServerURL().equals(serverURL)) {
-          if (network.getLockWrite().tryAcquireLock())
-            // WAS UNLOCKED! USE THIS
-            break;
+          if (!modeForCheckFreeChannel || !network.isWaitingForResponse())
+            if (network.tryLock()) {
+              // TAKEN!
+              break;
+            }
         }
 
         network = null;
 
         if (beginCursor >= networkPool.size())
-          // THE POOL HAS BEEN REDUCED: RSTART FROM CURRENT POSITION
+          // THE POOL HAS BEEN REDUCED: RESTART FROM CURRENT POSITION
           beginCursor = networkPoolCursor;
 
         if (networkPoolCursor == beginCursor) {
           // COMPLETE ROUND AND NOT FREE CONNECTIONS FOUND
-
           if (networkPool.size() < maxPool) {
             // CREATE NEW CONNECTION
             network = createNetworkConnection();
-            network.getLockWrite().lock();
+            if (network.tryLock())
+              break;
 
           } else {
+            if (modeForCheckFreeChannel) {
+              // EXECUTE A FULL CHECK OF POOL, NOTHING FREE, SWITCH MODE TO GET AT LEAST THE FIRST NOT LOCKED
+              modeForCheckFreeChannel = false;
+              continue;
+            }
+
             OLogManager.instance().info(this,
                 "Network connection pool is full (max=%d): increase max size to avoid such bottleneck on connections", maxPool);
 
@@ -2043,6 +1993,28 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   /**
+   * Move the cursor to the next valid position in network pool.
+   * 
+   * @return
+   * @throws IOException
+   */
+  protected void checkPoolBounds() throws IOException {
+    if (networkPoolCursor < 0)
+      networkPoolCursor = 0;
+    else if (networkPoolCursor >= networkPool.size())
+      // RESTART FROM THE BEGINNING
+      networkPoolCursor = 0;
+
+    if (networkPool.size() == 0) {
+      createConnectionPool();
+      networkPoolCursor = 0;
+    }
+
+    if (networkPool.size() == 0)
+      throw new ONetworkProtocolException("Connection pool closed");
+  }
+
+  /**
    * Starts listening the response.
    */
   protected void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
@@ -2074,6 +2046,54 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     } finally {
       networkPoolLock.unlock();
     }
+  }
+
+  private boolean hideRecord(final ORecordId rid, int mode, final ORecordCallback<Boolean> callback,
+      final OChannelBinaryAsynchClient network) throws IOException {
+    try {
+
+      network.writeRID(rid);
+      network.writeByte((byte) mode);
+
+    } finally {
+      endRequest(network);
+    }
+
+    switch (mode) {
+    case 0:
+      // SYNCHRONOUS
+      try {
+        beginResponse(network);
+        return network.readByte() == 1;
+      } finally {
+        endResponse(network);
+      }
+
+    case 1:
+      // ASYNCHRONOUS
+      if (callback != null) {
+        final int sessionId = getSessionId();
+        Callable<Object> response = new Callable<Object>() {
+          public Object call() throws Exception {
+            Boolean result;
+
+            try {
+              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+              beginResponse(network);
+              result = network.readByte() == 1;
+            } finally {
+              endResponse(network);
+              OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+            }
+
+            callback.call(rid, result);
+            return null;
+          }
+        };
+        asynchExecutor.submit(new FutureTask<Object>(response));
+      }
+    }
+    return false;
   }
 
   private OPhysicalPosition[] readPhysicalPositions(OChannelBinaryAsynchClient network, int positionsCount) throws IOException {

@@ -82,7 +82,7 @@ public class OZIPCompressionUtil {
   private static void extractFile(final ZipInputStream in, final File outdir, final String name,
       final OCommandOutputListener iListener) throws IOException {
     if (iListener != null)
-      iListener.onMessage("- Uncompressing file " + name + "...");
+      iListener.onMessage("\n- Uncompressing file " + name + "...");
 
     final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
     try {

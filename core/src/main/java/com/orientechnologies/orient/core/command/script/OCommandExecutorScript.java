@@ -144,6 +144,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     int txBegunAtPart = -1;
     int maxRetry = 1;
 
+    context.setVariable("transactionRetries", 0);
+
     for (int retry = 0; retry < maxRetry; retry++) {
 
       final BufferedReader reader = new BufferedReader(new StringReader(iText));
@@ -215,6 +217,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
             try {
               db.commit();
             } catch (OConcurrentModificationException e) {
+              context.setVariable("transactionRetries", retry);
               break;
             }
 
@@ -244,7 +247,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
             // END OF THE SCRIPT
             return lastResult;
 
-          } else
+          } else if (lastCommand != null && lastCommand.length() > 0)
             lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
         }
       }

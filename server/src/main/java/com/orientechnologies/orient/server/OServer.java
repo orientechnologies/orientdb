@@ -114,6 +114,14 @@ public class OServer {
     shutdownHook = new OServerShutdownHook(this);
   }
 
+  public static OServer getInstance(final String iServerId) {
+    return distributedServers.get(iServerId);
+  }
+
+  public static void registerServerInstance(final String iServerId, final OServer iServer) {
+    distributedServers.put(iServerId, iServer);
+  }
+
   public OServer startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
       SecurityException, InvocationTargetException, NoSuchMethodException {
     String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
@@ -248,19 +256,10 @@ public class OServer {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onBeforeDeactivate();
 
-    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
-
-    if (!Orient.isRegisterDatabaseByPath())
-      try {
-        Orient.instance().shutdown();
-      } catch (Throwable e) {
-        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
-      }
-
     lock.lock();
     try {
-      if( pluginManager!=null)
-			  pluginManager.shutdown();
+      if (pluginManager != null)
+        pluginManager.shutdown();
 
       if (networkProtocols.size() > 0) {
         // PROTOCOL SHUTDOWN
@@ -285,6 +284,15 @@ public class OServer {
     } finally {
       lock.unlock();
     }
+
+    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
+
+    if (!Orient.isRegisterDatabaseByPath())
+      try {
+        Orient.instance().shutdown();
+      } catch (Throwable e) {
+        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
+      }
 
     for (OServerLifecycleListener l : lifecycleListeners)
       try {
@@ -379,7 +387,7 @@ public class OServer {
 
   /**
    * Authenticate a server user.
-   *
+   * 
    * @param iUserName
    *          Username to authenticate
    * @param iPassword
@@ -487,6 +495,73 @@ public class OServer {
     return this;
   }
 
+  public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
+    if (iName == null || iName.length() == 0)
+      throw new IllegalArgumentException("User name null or empty");
+
+    if (iPermissions == null || iPermissions.length() == 0)
+      throw new IllegalArgumentException("User permissions null or empty");
+
+    if (configuration.users == null)
+      configuration.users = new OServerUserConfiguration[1];
+    else
+      configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
+
+    if (iPassword == null)
+      // AUTO GENERATE PASSWORD
+      iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
+
+    configuration.users[configuration.users.length - 1] = new OServerUserConfiguration(iName, iPassword, iPermissions);
+
+    saveConfiguration();
+  }
+
+  public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
+    lifecycleListeners.add(iListener);
+    return this;
+  }
+
+  public OServer unregisterLifecycleListener(final OServerLifecycleListener iListener) {
+    lifecycleListeners.remove(iListener);
+    return this;
+  }
+
+  public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
+    final String path = getStoragePath(iDbUrl);
+
+    final ODatabaseComplex<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+
+    if (database.isClosed())
+      if (database.getStorage() instanceof OStorageMemory)
+        database.create();
+      else {
+        try {
+          database.open(iUser, iPassword);
+        } catch (OSecurityException e) {
+          // TRY WITH SERVER'S USER
+          try {
+            serverLogin(iUser, iPassword, "database.passthrough");
+          } catch (OSecurityException ex) {
+            throw e;
+          }
+
+          // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+          database.open(iUser, iPassword);
+        }
+      }
+
+    return database;
+  }
+
+  public ODistributedServerManager getDistributedManager() {
+    return distributedManager;
+  }
+
+  public ODatabaseDocumentPool getDatabasePool() {
+    return dbPool;
+  }
+
   protected void loadConfiguration(final OServerConfiguration iConfiguration) {
     configuration = iConfiguration;
 
@@ -578,37 +653,6 @@ public class OServer {
       }
   }
 
-  public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
-    if (iName == null || iName.length() == 0)
-      throw new IllegalArgumentException("User name null or empty");
-
-    if (iPermissions == null || iPermissions.length() == 0)
-      throw new IllegalArgumentException("User permissions null or empty");
-
-    if (configuration.users == null)
-      configuration.users = new OServerUserConfiguration[1];
-    else
-      configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
-
-    if (iPassword == null)
-      // AUTO GENERATE PASSWORD
-      iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
-
-    configuration.users[configuration.users.length - 1] = new OServerUserConfiguration(iName, iPassword, iPermissions);
-
-    saveConfiguration();
-  }
-
-  public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
-    lifecycleListeners.add(iListener);
-    return this;
-  }
-
-  public OServer unregisterLifecycleListener(final OServerLifecycleListener iListener) {
-    lifecycleListeners.remove(iListener);
-    return this;
-  }
-
   protected void createAdminAndDbListerUsers() throws IOException {
     addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
     addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases,server.dblist");
@@ -680,49 +724,5 @@ public class OServer {
         }
       }
     }
-  }
-
-  public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
-    final String path = getStoragePath(iDbUrl);
-
-    final ODatabaseComplex<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
-
-    if (database.isClosed())
-      if (database.getStorage() instanceof OStorageMemory)
-        database.create();
-      else {
-        try {
-          database.open(iUser, iPassword);
-        } catch (OSecurityException e) {
-          // TRY WITH SERVER'S USER
-          try {
-            serverLogin(iUser, iPassword, "database.passthrough");
-          } catch (OSecurityException ex) {
-            throw e;
-          }
-
-          // SERVER AUTHENTICATED, BYPASS SECURITY
-          database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
-          database.open(iUser, iPassword);
-        }
-      }
-
-    return database;
-  }
-
-  public ODistributedServerManager getDistributedManager() {
-    return distributedManager;
-  }
-
-  public ODatabaseDocumentPool getDatabasePool() {
-    return dbPool;
-  }
-
-  public static OServer getInstance(final String iServerId) {
-    return distributedServers.get(iServerId);
-  }
-
-  public static void registerServerInstance(final String iServerId, final OServer iServer) {
-    distributedServers.put(iServerId, iServer);
   }
 }

@@ -47,13 +47,15 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 public class LocalPaginatedClusterTest {
   private static final int           RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
                                                                    + OLongSerializer.LONG_SIZE;
-  public OPaginatedCluster           paginatedCluster          = new OPaginatedCluster();
+  public OPaginatedCluster           paginatedCluster;
   protected String                   buildDirectory;
   protected ODiskCache               diskCache;
   protected OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass
   public void beforeClass() throws IOException {
+		paginatedCluster = new OPaginatedCluster();
+
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
@@ -1200,6 +1202,7 @@ public class LocalPaginatedClusterTest {
     diskCache.release(cacheEntry);
   }
 
+	@Test(enabled = false)
   public void testRecordGrowFactor() throws Exception {
     paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, ONothingCompression.NAME);
     paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 1.5);
@@ -1233,6 +1236,7 @@ public class LocalPaginatedClusterTest {
     diskCache.release(cacheEntry);
   }
 
+	@Test(enabled = false)
   public void testRecordOverflowGrowFactor() throws Exception {
     paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, ONothingCompression.NAME);
     paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 1.5);

@@ -49,10 +49,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -76,10 +82,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private static final String         KEYWORD_AS           = " AS ";
   private Map<String, String>         projectionDefinition = null;
   private Map<String, Object>         projections          = null;                                  // THIS HAS BEEN KEPT FOR
-                                                                                                     // COMPATIBILITY; BUT
-  // IT'S
-  // USED THE
-  // PROJECTIONS IN GROUPED-RESULTS
+                                                                                                     // COMPATIBILITY; BUT IT'S USED
+                                                                                                     // THE PROJECTIONS IN
+                                                                                                     // GROUPED-RESULTS
   private List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
@@ -90,6 +95,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private String                      fetchPlan;
 
   private boolean                     fullySortedByIndex   = false;
+  private OStorage.LOCKING_STRATEGY   lockingStrategy      = OStorage.LOCKING_STRATEGY.DEFAULT;
 
   private final class IndexComparator implements Comparator<OIndex<?>> {
     public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
@@ -118,6 +124,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     public boolean addResult(OIdentifiable value) {
       final ORecord record = value.getRecord();
 
+      if (record == null) {
+        OLogManager.instance().warn(this, "The index has an invalid record, maybe deleted: %s", value);
+        return true;
+      }
+
       if (record instanceof ORecordSchemaAware<?>) {
         final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
         final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
@@ -129,21 +140,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      if (compiledFilter == null || Boolean.TRUE.equals(compiledFilter.evaluate(record, null, context)))
+      if (compiledFilter == null || evaluateRecord(record))
         return handleResult(record, true);
 
       return true;
     }
-  }
-
-  protected static OSQLFilterCondition getConditionForRidPosRange(long fromId, long toId) {
-
-    final OSQLFilterCondition fromCondition = new OSQLFilterCondition(new OSQLFilterItemField(null,
-        ODocumentHelper.ATTRIBUTE_RID_POS), new OQueryOperatorMajor(), fromId);
-    final OSQLFilterCondition toCondition = new OSQLFilterCondition(
-        new OSQLFilterItemField(null, ODocumentHelper.ATTRIBUTE_RID_POS), new OQueryOperatorMinorEquals(), toId);
-
-    return new OSQLFilterCondition(fromCondition, new OQueryOperatorAnd(), toCondition);
   }
 
   private static List<OIndex<?>> getInvolvedIndexes(OClass iSchemaClass, OIndexSearchResult searchResultFields) {
@@ -354,10 +355,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           else if (w.equals(KEYWORD_LOCK)) {
             final String lock = parseLock();
 
-            final OStorage.LOCKING_STRATEGY lockingStrategy = lock.equals("RECORD") ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+            lockingStrategy = lock.equals("RECORD") ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
                 : OStorage.LOCKING_STRATEGY.DEFAULT;
-
-            getContext().setVariable("$locking", lockingStrategy);
           } else
             throwParsingException("Invalid keyword '" + w + "'");
         }
@@ -399,41 +398,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       // TODO indexes??
     }
     return clusters;
-  }
-
-  /**
-   * Add condition so that query will be executed only on the given id range. That is used to verify that query will be executed on
-   * the single node
-   * 
-   * @param fromId
-   * @param toId
-   * @return this
-   */
-  public OCommandExecutorSQLSelect boundToLocalNode(long fromId, long toId) {
-    if (fromId == toId) {
-      // single node in dht
-      return this;
-    }
-
-    final OSQLFilterCondition nodeCondition;
-    if (fromId < toId) {
-      nodeCondition = getConditionForRidPosRange(fromId, toId);
-    } else {
-      nodeCondition = new OSQLFilterCondition(getConditionForRidPosRange(fromId, Long.MAX_VALUE), new OQueryOperatorOr(),
-          getConditionForRidPosRange(-1L, toId));
-    }
-
-    if (compiledFilter == null) {
-      compiledFilter = OSQLEngine.getInstance().parseCondition("", getContext(), KEYWORD_WHERE);
-    }
-
-    final OSQLFilterCondition rootCondition = compiledFilter.getRootCondition();
-    if (rootCondition != null) {
-      compiledFilter.setRootCondition(new OSQLFilterCondition(nodeCondition, new OQueryOperatorAnd(), rootCondition));
-    } else {
-      compiledFilter.setRootCondition(nodeCondition);
-    }
-    return this;
   }
 
   /**
@@ -560,21 +524,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!context.checkTimeout())
       return false;
 
-    final OStorage.LOCKING_STRATEGY lockingStrategy = context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
-        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
+    final OStorage.LOCKING_STRATEGY contextLockingStrategy = context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+        .getVariable("$locking") : null;
+
+    final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
+        : lockingStrategy;
+
     ORecordInternal<?> record = null;
     try {
       if (id instanceof ORecordInternal<?>) {
         record = (ORecordInternal<?>) id;
 
         // LOCK THE RECORD IF NEEDED
-        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-          ((OStorageEmbedded) getDatabase().getStorage()).acquireWriteLock(record.getIdentity());
-        else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          ((OStorageEmbedded) getDatabase().getStorage()).acquireReadLock(record.getIdentity());
+        if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+          record.lock(true);
+        else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          record.lock(false);
 
       } else
-        record = getDatabase().load(id.getIdentity(), null, false, false, lockingStrategy);
+        record = getDatabase().load(id.getIdentity(), null, false, false, localLockingStrategy);
 
       context.updateMetric("recordReads", +1);
 
@@ -589,12 +557,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           // END OF EXECUTION
           return false;
     } finally {
-      // lock must be released (no matter if filtered or not)
       if (record != null)
-        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
-        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(record.getIdentity());
+        if (contextLockingStrategy != null)
+          // CONTEXT LOCK: lock must be released (no matter if filtered or not)
+          if (contextLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+              || contextLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+            record.unlock();
     }
     return true;
   }
@@ -642,7 +610,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         Object fieldValue = null;
         if (groupByFields != null && !groupByFields.isEmpty()) {
           if (groupByFields.size() > 1) {
-            // MULTI-FIELD FROUP BY
+            // MULTI-FIELD GROUP BY
             final Object[] fields = new Object[groupByFields.size()];
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);

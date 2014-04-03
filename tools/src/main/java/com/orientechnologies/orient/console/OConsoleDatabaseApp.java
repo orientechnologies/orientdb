@@ -1503,8 +1503,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
     final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+
+    if (items.size() < 2)
+      try {
+        syntaxError("backupDatabase", getClass().getMethod("backupDatabase", String.class));
+        return;
+      } catch (NoSuchMethodException e) {
+      }
+
+    out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
+
     final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
     // final String options = fileName != null ? iText.substring(
     // ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
@@ -1554,6 +1563,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nRestoring database %s...", text);
 
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+
+    if (items.size() < 2)
+      try {
+        syntaxError("restoreDatabase", getClass().getMethod("restoreDatabase", String.class));
+        return;
+      } catch (NoSuchMethodException e) {
+      }
+
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
     // final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() :
     // text;
@@ -1870,7 +1887,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message(iText);
   }
 
-  public void onBegin(final Object iTask, final long iTotal) {
+  @Override
+  public void onBegin(final Object iTask, final long iTotal, Object metadata) {
     lastPercentStep = 0;
 
     message("[");

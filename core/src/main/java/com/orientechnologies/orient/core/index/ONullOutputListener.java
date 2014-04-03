@@ -27,7 +27,7 @@ public class ONullOutputListener implements OProgressListener {
   public final static ONullOutputListener INSTANCE = new ONullOutputListener();
 
   @Override
-  public void onBegin(Object iTask, long iTotal) {
+  public void onBegin(Object iTask, long iTotal, Object metadata) {
   }
 
   @Override

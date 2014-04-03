@@ -38,18 +38,33 @@ public class OIndexDictionary extends OIndexOneValue {
     key = getCollatingValue(key);
 
     try {
-      acquireExclusiveLock();
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
         indexEngine.put(key, value);
         return this;
 
       } finally {
-        releaseExclusiveLock();
+        releaseSharedLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
     }
+  }
+
+  /**
+   * Disables check of entries.
+   */
+  @Override
+  public void checkEntry(final OIdentifiable iRecord, final Object key) {
+  }
+
+  public boolean canBeUsedInEqualityOperators() {
+    return true;
+  }
+
+  public boolean supportsOrderedIterations() {
+    return false;
   }
 
   @Override
@@ -76,20 +91,5 @@ public class OIndexDictionary extends OIndexOneValue {
       else
         indexEngine.put(key, (OIdentifiable) snapshotValue);
     }
-  }
-
-  /**
-   * Disables check of entries.
-   */
-  @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object key) {
-  }
-
-  public boolean canBeUsedInEqualityOperators() {
-    return true;
-  }
-
-  public boolean supportsOrderedIterations() {
-    return false;
   }
 }
