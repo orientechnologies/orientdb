@@ -80,6 +80,8 @@
             <jvmarg value="-Xmx2G"/>
             <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
+            <!-- debug mode -->
+            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
 
             <classpath>
                 <pathelement location="${project.build}"/>

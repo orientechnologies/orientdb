@@ -268,16 +268,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     destination._trackingChanges = _trackingChanges;
     if (_owners != null)
       destination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
+    else
+      destination._owners = null;
 
     if (_fieldValues != null) {
       destination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
           : new HashMap<String, Object>();
       for (Entry<String, Object> entry : _fieldValues.entrySet())
         ODocumentHelper.copyFieldValue(destination, entry);
-    }
+    } else
+      destination._fieldValues = null;
 
     if (_fieldTypes != null)
       destination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
+    else
+      destination._fieldTypes = null;
 
     destination._fieldChangeListeners = null;
     destination._fieldCollectionChangeTimeLines = null;
@@ -1054,7 +1059,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Internal.
    * 
-   * @return
+   * @return this
    */
   public ODocument addOwner(final ORecordElement iOwner) {
     if (_owners == null)
@@ -1552,6 +1557,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     if (_fieldValues != null)
       _fieldValues.clear();
+
+    if (_fieldTypes != null)
+      _fieldTypes.clear();
   }
 
   @Override
