@@ -247,6 +247,8 @@ public class OServer {
     if (!running)
       return;
 
+    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
+
     running = false;
 
     shutdownHook.cancel();
@@ -285,10 +287,9 @@ public class OServer {
       lock.unlock();
     }
 
-    OLogManager.instance().info(this, "OrientDB Server is shutting down...");
-
     if (!Orient.isRegisterDatabaseByPath())
       try {
+        OLogManager.instance().info(this, "Shutting down databases...");
         Orient.instance().shutdown();
       } catch (Throwable e) {
         OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
