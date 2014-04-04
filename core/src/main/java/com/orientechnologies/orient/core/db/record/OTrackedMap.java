@@ -135,8 +135,10 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   }
 
   @Override
-  public void putAll(Map<? extends Object, ? extends T> m) {
-    super.putAll(m);
+  public void putAll(Map<?, ? extends T> m) {
+    for (Map.Entry<?, ? extends T> entry : m.entrySet()) {
+      put(entry.getKey(), entry.getValue());
+    }
   }
 
   @SuppressWarnings({ "unchecked" })
