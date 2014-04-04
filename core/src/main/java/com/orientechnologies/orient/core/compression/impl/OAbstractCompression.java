@@ -16,33 +16,22 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
+import com.orientechnologies.orient.core.compression.OCompression;
+
 /**
- * @author Andrey Lomakin
+ * Base class for the compression implementations.
+ * 
+ * @author Luca Garulli
  * @since 05.06.13
  */
-public class ONothingCompression extends OAbstractCompression {
-  public static final String              NAME     = "nothing";
-
-  public static final ONothingCompression INSTANCE = new ONothingCompression();
-
+public abstract class OAbstractCompression implements OCompression {
   @Override
-  public byte[] compress(final byte[] content, final int offset, final int length) {
-    byte[] result = new byte[length - offset];
-    System.arraycopy(content, offset, result, 0, length);
-
-    return result;
+  public byte[] compress(final byte[] content) {
+    return compress(content, 0, content.length);
   }
 
   @Override
-  public byte[] uncompress(final byte[] content, final int offset, final int length) {
-    byte[] result = new byte[length - offset];
-    System.arraycopy(content, offset, result, 0, length);
-
-    return result;
-  }
-
-  @Override
-  public String name() {
-    return NAME;
+  public byte[] uncompress(final byte[] content) {
+    return uncompress(content, 0, content.length);
   }
 }

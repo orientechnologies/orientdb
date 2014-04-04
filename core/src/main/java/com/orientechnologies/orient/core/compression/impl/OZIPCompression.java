@@ -21,30 +21,35 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
- * @author Andrey Lomakin
- * @since 05.06.13
+ * @author Luca Garulli
  */
-public class OGZIPCompression extends OAbstractCompression {
-  public static final String           NAME     = "gzip";
-
-  public static final OGZIPCompression INSTANCE = new OGZIPCompression();
-
+public abstract class OZIPCompression extends OAbstractCompression {
   @Override
   public byte[] compress(final byte[] content, final int offset, final int length) {
     try {
       final byte[] result;
       final OMemoryStream memoryOutputStream = new OMemoryStream();
-      final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream, 16384); // 16KB
+      final ZipOutputStream zipOutputStream = new ZipOutputStream(memoryOutputStream);
+      setLevel(zipOutputStream);
+
       try {
-        gzipOutputStream.write(content, offset, length);
-        gzipOutputStream.finish();
+        ZipEntry ze = new ZipEntry("content");
+        zipOutputStream.putNextEntry(ze);
+        try {
+          zipOutputStream.write(content, offset, length);
+        } finally {
+          zipOutputStream.closeEntry();
+        }
+
+        zipOutputStream.finish();
         result = memoryOutputStream.toByteArray();
       } finally {
-        gzipOutputStream.close();
+        zipOutputStream.close();
       }
 
       return result;
@@ -54,16 +59,18 @@ public class OGZIPCompression extends OAbstractCompression {
   }
 
   @Override
-  public byte[] uncompress(byte[] content, final int offset, final int length) {
+  public byte[] uncompress(final byte[] content, final int offset, final int length) {
     try {
       final OMemoryInputStream memoryInputStream = new OMemoryInputStream(content, offset, length);
-      final GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream, 16384); // 16KB
+      final ZipInputStream gzipInputStream = new ZipInputStream(memoryInputStream); // 16KB
 
       try {
         final byte[] buffer = new byte[1024];
         byte[] result = new byte[1024];
 
         int bytesRead;
+
+        ZipEntry entry = gzipInputStream.getNextEntry();
 
         int len = 0;
         while ((bytesRead = gzipInputStream.read(buffer, 0, buffer.length)) > -1) {
@@ -92,8 +99,5 @@ public class OGZIPCompression extends OAbstractCompression {
     }
   }
 
-  @Override
-  public String name() {
-    return NAME;
-  }
+  protected abstract void setLevel(ZipOutputStream zipOutputStream);
 }

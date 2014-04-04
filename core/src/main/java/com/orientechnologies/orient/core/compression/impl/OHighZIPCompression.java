@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.orient.core.compression;
+package com.orientechnologies.orient.core.compression.impl;
+
+import java.util.zip.ZipOutputStream;
 
 /**
- * @author Andrey Lomakin
- * @since 05.06.13
+ * Compression implementation that use ZIP algorithm to the maximum level of compression
+ * 
+ * @author Luca Garulli
  */
-public interface OCompression {
-  byte[] compress(byte[] content);
+public class OHighZIPCompression extends OZIPCompression {
+  public static final OHighZIPCompression INSTANCE = new OHighZIPCompression();
+  public static final String              NAME     = "high-zip";
 
-  byte[] compress(byte[] content, final int offset, final int length);
+  @Override
+  public String name() {
+    return NAME;
+  }
 
-  byte[] uncompress(byte[] content);
+  protected void setLevel(ZipOutputStream zipOutputStream) {
+    zipOutputStream.setLevel(9);
+  }
 
-  byte[] uncompress(byte[] content, final int offset, final int length);
-
-  String name();
 }
