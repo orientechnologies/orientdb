@@ -74,7 +74,7 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest {
           cmd += "return $transactionRetries;";
 
           final OCommandRequest command = graph.command(new OCommandScript("sql", cmd));
-          int retries = command.execute();
+          int retries = (Integer) command.execute();
 
           counter.incrementAndGet();
 
