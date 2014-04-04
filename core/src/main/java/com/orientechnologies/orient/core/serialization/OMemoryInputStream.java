@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
+import com.orientechnologies.common.util.OArrays;
+
 import java.io.IOException;
 import java.io.InputStream;
-
-import com.orientechnologies.common.util.OArrays;
 
 /**
  * Class to parse and write buffers in very fast way.
@@ -28,7 +28,9 @@ import com.orientechnologies.common.util.OArrays;
  */
 public class OMemoryInputStream extends InputStream {
   private byte[] buffer;
-  private int    position = 0;
+  private int    offset = 0;
+  private int    length;
+  private int    position;
 
   public OMemoryInputStream() {
   }
@@ -37,8 +39,12 @@ public class OMemoryInputStream extends InputStream {
     setSource(iBuffer);
   }
 
+  public OMemoryInputStream(final byte[] iBuffer, final int iOffset, final int iLength) {
+    setSource(iBuffer, iOffset, iLength);
+  }
+
   public byte[] getAsByteArrayFixed(final int iSize) throws IOException {
-    if (position >= buffer.length)
+    if (position >= length)
       return null;
 
     final byte[] portion = OArrays.copyOfRange(buffer, position, position + iSize);
@@ -52,7 +58,7 @@ public class OMemoryInputStream extends InputStream {
    * 
    */
   public int getAsByteArrayOffset() {
-    if (position >= buffer.length)
+    if (position >= length)
       return -1;
 
     final int begin = position;
@@ -65,7 +71,7 @@ public class OMemoryInputStream extends InputStream {
 
   @Override
   public int read() throws IOException {
-    if (position >= buffer.length)
+    if (position >= length)
       return -1;
 
     return buffer[position++] & 0xFF;
@@ -78,12 +84,12 @@ public class OMemoryInputStream extends InputStream {
 
   @Override
   public int read(final byte[] b, final int off, final int len) throws IOException {
-    if (position >= buffer.length)
+    if (position >= length)
       return -1;
 
     int newLen;
-    if (position + len >= buffer.length)
-      newLen = buffer.length - position;
+    if (position + len >= length)
+      newLen = length - position;
     else
       newLen = len;
 
@@ -100,7 +106,7 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public byte[] getAsByteArray(int iOffset) throws IOException {
-    if (buffer == null || iOffset >= buffer.length)
+    if (buffer == null || iOffset >= length)
       return null;
 
     final int size = OBinaryProtocol.bytes2int(buffer, iOffset);
@@ -114,7 +120,7 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public byte[] getAsByteArray() throws IOException {
-    if (position >= buffer.length)
+    if (position >= length)
       return null;
 
     final int size = OBinaryProtocol.bytes2int(buffer, position);
@@ -169,17 +175,20 @@ public class OMemoryInputStream extends InputStream {
   public void setSource(final byte[] iBuffer) {
     buffer = iBuffer;
     position = 0;
+    offset = 0;
+    length = iBuffer.length;
+  }
+
+  public void setSource(final byte[] iBuffer, final int iOffset, final int iLength) {
+    buffer = iBuffer;
+    position = iOffset;
+    offset = iOffset;
+    length = iLength;
   }
 
   public OMemoryInputStream jump(final int iOffset) {
     position += iOffset;
     return this;
-  }
-
-  public byte[] move(final int iOffset, final int iCopyToOffset) {
-    final byte[] copy = new byte[buffer.length - iOffset + iCopyToOffset];
-    System.arraycopy(buffer, iOffset, copy, iCopyToOffset, copy.length);
-    return copy;
   }
 
   public byte[] copy() {
@@ -194,7 +203,7 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public int getVariableSize() throws IOException {
-    if (position >= buffer.length)
+    if (position >= length)
       return -1;
 
     final int size = OBinaryProtocol.bytes2int(buffer, position);
@@ -209,5 +218,10 @@ public class OMemoryInputStream extends InputStream {
 
   public int getPosition() {
     return position;
+  }
+
+  @Override
+  public synchronized void reset() throws IOException {
+    position = offset;
   }
 }
