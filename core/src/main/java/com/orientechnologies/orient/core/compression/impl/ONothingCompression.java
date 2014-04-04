@@ -27,7 +27,7 @@ public class ONothingCompression extends OAbstractCompression {
 
   @Override
   public byte[] compress(final byte[] content, final int offset, final int length) {
-    byte[] result = new byte[length - offset];
+    byte[] result = new byte[length];
     System.arraycopy(content, offset, result, 0, length);
 
     return result;
@@ -35,7 +35,7 @@ public class ONothingCompression extends OAbstractCompression {
 
   @Override
   public byte[] uncompress(final byte[] content, final int offset, final int length) {
-    byte[] result = new byte[length - offset];
+    byte[] result = new byte[length];
     System.arraycopy(content, offset, result, 0, length);
 
     return result;
