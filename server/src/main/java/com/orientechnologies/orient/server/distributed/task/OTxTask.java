@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -73,8 +72,9 @@ public class OTxTask extends OAbstractReplicatedTask {
       // TRANSFORM ALL RECORDS IN PLACEHOLDER TO REDUCE TRANSPORT
       for (int i = 0; i < results.size(); ++i) {
         final Object o = results.get(i);
-        if (o instanceof ORecord<?>)
-          results.set(i, new OPlaceholder((ORecord<?>) o));
+
+        final OAbstractRecordReplicatedTask task = tasks.get(i);
+        results.set(i, new OPlaceholder(task.getRid(), task.getVersion()));
       }
 
       return results;

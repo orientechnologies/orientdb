@@ -16,18 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import junit.framework.Assert;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,6 +26,17 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import junit.framework.Assert;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test distributed TX
@@ -48,87 +47,6 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
   protected static final int writerCount = 5;
   protected int              count       = 1000;
   protected long             beginInstances;
-
-  public String getDatabaseName() {
-    return "distributed";
-  }
-
-  protected abstract String getDatabaseURL(ServerRun server);
-
-  /**
-   * Event called right after the database has been created and right before to be replicated to the X servers
-   * 
-   * @param db
-   *          Current database
-   */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
-    System.out.println("Creating database schema...");
-
-    // CREATE BASIC SCHEMA
-    OClass personClass = db.getMetadata().getSchema().createClass("Person");
-    personClass.createProperty("id", OType.STRING);
-    personClass.createProperty("name", OType.STRING);
-    personClass.createProperty("birthday", OType.DATE);
-    personClass.createProperty("children", OType.INTEGER);
-
-    final OSchema schema = db.getMetadata().getSchema();
-    OClass person = schema.getClass("Person");
-    person.createIndex("Person.name", INDEX_TYPE.UNIQUE, "name");
-
-    OClass customer = schema.createClass("Customer", person);
-    customer.createProperty("totalSold", OType.DECIMAL);
-
-    OClass provider = schema.createClass("Provider", person);
-    provider.createProperty("totalPurchased", OType.DECIMAL);
-
-    new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
-    new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
-    new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
-  }
-
-  public void executeTest() throws Exception {
-
-    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
-    try {
-      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-      beginInstances = result.get(0).field("count");
-    } finally {
-      database.close();
-    }
-
-    System.out.println("Creating Writers and Readers threads...");
-
-    final ExecutorService executor = Executors.newCachedThreadPool();
-
-    int i = 0;
-    List<Callable<Void>> workers = new ArrayList<Callable<Void>>();
-    for (ServerRun server : serverInstance) {
-      for (int j = 0; j < writerCount; j++) {
-        Writer writer = new Writer(i++, getDatabaseURL(server));
-        workers.add(writer);
-      }
-
-      Reader reader = new Reader(getDatabaseURL(server));
-      workers.add(reader);
-    }
-
-    List<Future<Void>> futures = executor.invokeAll(workers);
-
-    System.out.println("Threads started, waiting for the end");
-
-    executor.shutdown();
-    Assert.assertTrue(executor.awaitTermination(10, TimeUnit.MINUTES));
-
-    for (Future<Void> future : futures) {
-      future.get();
-    }
-
-    System.out.println("All threads have finished, shutting down server instances");
-
-    for (ServerRun server : serverInstance) {
-      printStats(getDatabaseURL(server));
-    }
-  }
 
   class Writer implements Callable<Void> {
     private final String databaseUrl;
@@ -155,6 +73,8 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
             checkRecord(database, doc);
 
             database.commit();
+
+            Assert.assertTrue(doc.getIdentity().isPersistent());
           } catch (Exception e) {
             database.rollback();
             throw e;
@@ -224,6 +144,87 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
       }
       return null;
     }
+  }
+
+  public String getDatabaseName() {
+    return "distributed";
+  }
+
+  public void executeTest() throws Exception {
+
+    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
+    try {
+      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      beginInstances = result.get(0).field("count");
+    } finally {
+      database.close();
+    }
+
+    System.out.println("Creating Writers and Readers threads...");
+
+    final ExecutorService executor = Executors.newCachedThreadPool();
+
+    int i = 0;
+    List<Callable<Void>> workers = new ArrayList<Callable<Void>>();
+    for (ServerRun server : serverInstance) {
+      for (int j = 0; j < writerCount; j++) {
+        Writer writer = new Writer(i++, getDatabaseURL(server));
+        workers.add(writer);
+      }
+
+      Reader reader = new Reader(getDatabaseURL(server));
+      workers.add(reader);
+    }
+
+    List<Future<Void>> futures = executor.invokeAll(workers);
+
+    System.out.println("Threads started, waiting for the end");
+
+    executor.shutdown();
+    Assert.assertTrue(executor.awaitTermination(10, TimeUnit.MINUTES));
+
+    for (Future<Void> future : futures) {
+      future.get();
+    }
+
+    System.out.println("All threads have finished, shutting down server instances");
+
+    for (ServerRun server : serverInstance) {
+      printStats(getDatabaseURL(server));
+    }
+  }
+
+  protected abstract String getDatabaseURL(ServerRun server);
+
+  /**
+   * Event called right after the database has been created and right before to be replicated to the X servers
+   * 
+   * @param db
+   *          Current database
+   */
+  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+    System.out.println("Creating database schema...");
+
+    // CREATE BASIC SCHEMA
+    OClass personClass = db.getMetadata().getSchema().createClass("Person");
+    personClass.createProperty("id", OType.STRING);
+    personClass.createProperty("name", OType.STRING);
+    personClass.createProperty("birthday", OType.DATE);
+    personClass.createProperty("children", OType.INTEGER);
+
+    final OSchema schema = db.getMetadata().getSchema();
+    OClass person = schema.getClass("Person");
+    person.createIndex("Person.name", INDEX_TYPE.UNIQUE, "name");
+
+    OClass customer = schema.createClass("Customer", person);
+    customer.createProperty("totalSold", OType.DECIMAL);
+
+    OClass provider = schema.createClass("Provider", person);
+    provider.createProperty("totalPurchased", OType.DECIMAL);
+
+    new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
+    new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
+    new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
   }
 
   private void printStats(final String databaseUrl) {

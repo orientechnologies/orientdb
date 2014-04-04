@@ -21,6 +21,6 @@ package com.orientechnologies.orient.server.distributed;
 public class ServerClusterLocalTxTest extends AbstractServerClusterTxTest {
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "local:" + server.getDatabasePath(getDatabaseName());
+    return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
 }

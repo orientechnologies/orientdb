@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Running server instance.
@@ -47,7 +47,7 @@ public class ServerRun {
 
     new File(dbPath).mkdirs();
 
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:" + dbPath);
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("plocal:" + dbPath);
     if (database.exists()) {
       System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
       OFileUtils.deleteRecursively(new File(dbPath));
