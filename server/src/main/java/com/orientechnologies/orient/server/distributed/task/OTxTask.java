@@ -69,12 +69,25 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       database.commit();
 
-      // TRANSFORM ALL RECORDS IN PLACEHOLDER TO REDUCE TRANSPORT
+      // SEND BACK CHANGED VALUE TO UPDATE
       for (int i = 0; i < results.size(); ++i) {
         final Object o = results.get(i);
 
         final OAbstractRecordReplicatedTask task = tasks.get(i);
-        results.set(i, new OPlaceholder(task.getRid(), task.getVersion()));
+
+        if (task instanceof OCreateRecordTask) {
+          // SEND RID + VERSION
+          final OCreateRecordTask t = (OCreateRecordTask) task;
+          results.set(i, new OPlaceholder(task.getRid(), task.getVersion()));
+
+        } else if (task instanceof OUpdateRecordTask) {
+          // SEND VERSION ONLY
+          final OUpdateRecordTask t = (OUpdateRecordTask) task;
+          results.set(i, task.getVersion());
+
+        } else if (task instanceof ODeleteRecordTask) {
+
+        }
       }
 
       return results;
