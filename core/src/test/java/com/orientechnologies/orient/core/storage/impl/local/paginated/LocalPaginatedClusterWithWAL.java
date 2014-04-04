@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -338,15 +339,9 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   @Override
-  @Test(enabled = false)
-  public void testCompressionNothing() throws Exception {
-    super.testCompressionNothing();
-  }
-
-  @Override
-  @Test(enabled = false)
-  public void testCompressionSnappy() throws Exception {
-    super.testCompressionSnappy();
+  @Test(enabled = false, dataProvider = "compressions")
+  public void testCompression(OCompression compressionMethod) throws IOException {
+    super.testCompression(compressionMethod);
   }
 
   @Override
