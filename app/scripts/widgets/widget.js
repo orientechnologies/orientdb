@@ -129,14 +129,21 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
                 type = "INTEGER";
             } else if (typeof value === 'boolean') {
                 type = "BOOLEAN";
+            } else if (value instanceof  Array) {
+                return "EMBEDDED";
+            } else if (value instanceof  Object) {
+                return "EMBEDDED";
             }
             return type;
         }
         if (!property) {
             var fieldTypes = scope.doc['@fieldTypes'];
             var type = Database.findTypeFromFieldTipes(scope.doc, name);
-            if (!type)
+            if (!type) {
                 type = guessType(scope.doc[name])
+                //console.log(type);
+
+            }
             property = new Object;
             property.name = name;
         } else {
@@ -240,8 +247,10 @@ Widget.directive('jsontext', function () {
         require: 'ngModel',
         link: function (scope, element, attr, ngModel) {
             function into(input) {
-                if (input) return JSON.parse(input);
-
+                if (input) {
+                    var obj = JSON.parse(input);
+                    return obj;
+                }
                 return input;
             }
 
@@ -511,14 +520,14 @@ Widget.provider("$ojson", function () {
 
     return $jsonProvider;
 });
-Widget.directive('autofill', function($timeout) {
+Widget.directive('autofill', function ($timeout) {
     return {
         require: 'ngModel',
-        link: function(scope, elem, attrs, ngModel) {
+        link: function (scope, elem, attrs, ngModel) {
             var origVal = elem.val();
             $timeout(function () {
                 var newVal = elem.val();
-                if(ngModel.$pristine && origVal !== newVal) {
+                if (ngModel.$pristine && origVal !== newVal) {
                     ngModel.$setViewValue(newVal);
                 }
             }, 500);

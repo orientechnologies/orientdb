@@ -62,7 +62,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             $scope.cm = _cm;
             if ($routeParams.query) {
                 $scope.queryText = $routeParams.query;
-                $scope.cm.setValue($scope.queryText);
+                //$scope.cm.setValue($scope.queryText);
 
                 $scope.query();
             }
@@ -174,7 +174,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         mode: 'javascript',
         onLoad: function (_cm) {
             $scope.vcm = _cm;
-            $scope.vcm.setValue($ojson.format($scope.item.rawData));
+            //$scope.vcm.setValue($ojson.format($scope.item.rawData));
         }
 
     };

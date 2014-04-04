@@ -163,7 +163,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.selectedLanguage = selectedFunction['language'];
         $scope.functionToExecute = selectedFunction;
         $scope.inParams = $scope.functionToExecute['parameters'];
-        $scope.vcm.setValue($scope.consoleValue != null ? $scope.consoleValue : "");
+        //$scope.vcm.setValue($scope.consoleValue != null ? $scope.consoleValue : "");
 
     }
 

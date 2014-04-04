@@ -330,7 +330,6 @@ DocController.controller("EmbeddedController", ['$scope', '$ojson', function ($s
         mode: 'javascript',
         onLoad: function (_cm) {
             $scope.vcm = _cm;
-            $scope.vcm.setValue(JSON.stringify($scope.doc[$scope.header]));
         }
 
     };
