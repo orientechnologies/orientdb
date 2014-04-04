@@ -129,8 +129,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
         for (ODocument d : idxs) {
           try {
             OIndexInternal<?> newIndex = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                document.<String> field(OIndexInternal.ALGORITHM),
-                document.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+                d.<String> field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM), (ODocument) d.field(OIndexInternal.METADATA));
             OIndexInternal.IndexMetadata newIndexMetadata = newIndex.loadMetadata(d);
 
             addIndexInternal(getRemoteIndexInstance(newIndex instanceof OIndexMultiValues, newIndexMetadata.getType(),
