@@ -103,6 +103,13 @@ public class OTxTask extends OAbstractReplicatedTask {
       return null;
     }
 
+    if (!(iGoodResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating fix-task for request: '%s' because good response is not expected type: %s", iRequest, iBadResponse);
+      return null;
+    }
+
     final OFixTxTask fixTask = new OFixTxTask();
 
     for (int i = 0; i < tasks.size(); ++i) {
@@ -118,9 +125,12 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    if (iBadResponse instanceof Boolean)
+    if (!(iBadResponse instanceof List)) {
       // TODO: MANAGE ERROR ON LOCAL NODE!
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating undo-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
       return null;
+    }
 
     final OFixTxTask fixTask = new OFixTxTask();
 
