@@ -249,6 +249,12 @@ public class OClassAbstractDelegate implements OClass {
 
   @Override
   public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+      String algorithm, String... fields) {
+    return delegate.createIndex(iName, iType, iProgressListener, metadata, algorithm, fields);
+  }
+
+  @Override
+  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
       String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, metadata, fields);
   }

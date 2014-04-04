@@ -54,14 +54,14 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_METADATA = "METADATA";
   public static final String KEYWORD_ENGINE   = "ENGINE";
 
-  private String            indexName;
-  private OClass            oClass;
-  private String[]          fields;
-  private OClass.INDEX_TYPE indexType;
-  private OType[]           keyTypes;
-  private byte              serializerKeyId;
-  private String            engine;
-  private ODocument metadataDoc = null;
+  private String             indexName;
+  private OClass             oClass;
+  private String[]           fields;
+  private OClass.INDEX_TYPE  indexType;
+  private OType[]            keyTypes;
+  private byte               serializerKeyId;
+  private String             engine;
+  private ODocument          metadataDoc      = null;
 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -145,7 +145,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (word.toString().equals(KEYWORD_ENGINE)) {
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-
+      oldPos = pos;
       engine = word.toString().toUpperCase();
     } else
       parserGoBack();
@@ -202,15 +202,19 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (fields == null || fields.length == 0) {
       if (keyTypes != null)
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null, metadataDoc);
+            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc);
+        idx = database
+            .getMetadata()
+            .getIndexManager()
+            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc,
+                engine);
       } else
-        idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null, metadataDoc);
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(indexName, indexType.toString(), null, null, null, metadataDoc, engine);
     } else {
       if (keyTypes == null || keyTypes.length == 0) {
-        idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, fields);
+        idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, engine, fields);
       } else {
         final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields),
             Arrays.asList(keyTypes));
