@@ -38,6 +38,7 @@ public interface OIndexInternal<T> extends OIndex<T>, Iterable<Entry<Object, T>>
   public static final String CONFIG_NAME               = "name";
   public static final String INDEX_DEFINITION          = "indexDefinition";
   public static final String INDEX_DEFINITION_CLASS    = "indexDefinitionClass";
+  public static final String METADATA                  = "metadata";
 
   /**
    * Loads the index giving the configuration.
