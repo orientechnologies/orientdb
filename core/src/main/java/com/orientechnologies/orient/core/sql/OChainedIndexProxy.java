@@ -62,11 +62,10 @@ import java.util.TreeSet;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class OChainedIndexProxy<T> implements OIndex<T> {
-  private final OIndex<T>       index;
+  private final OIndex<T>       firstIndex;
 
   private final List<OIndex<?>> indexChain;
   private final OIndex<?>       lastIndex;
-  private final boolean         isOneValue;
 
   /**
    * Create proxies that support maximum number of different operations. In case when several different indexes which support
@@ -92,12 +91,10 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return proxies;
   }
 
-  private OChainedIndexProxy(OIndex<T> index, List<OIndex<?>> indexChain) {
-    this.index = index;
+  private OChainedIndexProxy(OIndex<T> firstIndex, List<OIndex<?>> indexChain) {
+    this.firstIndex = firstIndex;
     this.indexChain = Collections.unmodifiableList(indexChain);
     lastIndex = indexChain.get(indexChain.size() - 1);
-
-    isOneValue = isAllOneValue(indexChain);
   }
 
   private boolean isAllOneValue(List<OIndex<?>> indexChain) {
@@ -109,7 +106,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public String getDatabaseName() {
-    return index.getDatabaseName();
+    return firstIndex.getDatabaseName();
   }
 
   public List<String> getIndexNames() {
@@ -154,9 +151,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
         return true;
       }
     });
-
-    if (isOneValue)
-      return (T) (result.isEmpty() ? null : result.iterator().next());
 
     return (T) result;
   }
@@ -324,7 +318,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
       final OIndex<?> currentIndex = indexChain.get(j);
       for (Comparable currentKey : currentKeys) {
-        final Object currentResult = currentIndex.get(currentKey);
+        final Object currentResult = currentIndex.getValuesBetween(currentKey, true, currentKey, true, true);
 
         final Set<Comparable> preparedKeys;
         preparedKeys = prepareKeys(indexChain.get(j - 1), currentResult);
@@ -369,19 +363,17 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private void applyMainIndex(Iterable<Comparable> currentKeys, IndexValuesResultListener resultListener) {
     keysLoop: for (Comparable key : currentKeys) {
-      final T result = index.get(index.getDefinition().createValue(key));
-      if (result instanceof Collection) {
-        for (T o : (Collection<T>) result) {
-          if (!resultListener.addResult((OIdentifiable) o))
+      Object preparedKey = firstIndex.getDefinition().createValue(key);
+      final Collection<OIdentifiable> result = firstIndex.getValuesBetween(preparedKey, true, preparedKey, true, true);
+      if (result != null) {
+        for (OIdentifiable o : result) {
+          if (!resultListener.addResult(o))
             break keysLoop;
         }
-      } else {
-        if (!resultListener.addResult((OIdentifiable) result))
-          break;
       }
     }
 
-    updateStatistic(index);
+    updateStatistic(firstIndex);
   }
 
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
@@ -483,7 +475,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
-    index.checkEntry(iRecord, iKey);
+    firstIndex.checkEntry(iRecord, iKey);
   }
 
   //
@@ -522,7 +514,8 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, IndexEntriesResultListener resultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
+      IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -564,10 +557,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public Iterator<OIdentifiable> valuesInverseIterator() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
   public OIndex<T> put(Object iKey, OIdentifiable iValue) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -577,10 +566,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public boolean remove(Object iKey, OIdentifiable iRID) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public int remove(OIdentifiable iRID) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

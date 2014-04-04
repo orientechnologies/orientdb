@@ -16,13 +16,13 @@
 
     <target name="test-init">
         <pathconvert property="project.root.dir" targetos="unix">
-        <path location="."/>
+            <path location="."/>
         </pathconvert>
         <pathconvert property="test.path" targetos="unix">
             <path location="${orient.path}/databases/demo"/>
         </pathconvert>
         <pathconvert property="project.root.dir" targetos="windows" dirsep="/">
-        <path location="."/>
+            <path location="."/>
         </pathconvert>
         <pathconvert property="test.path" targetos="windows" dirsep="/">
             <path location="${orient.path}/databases/demo"/>
@@ -105,6 +105,8 @@
             <jvmarg value="-Dstorage.wal.syncOnPageFlush=false"/>
             <jvmarg value="-Dstorage.configuration.syncOnUpdate=false"/>
             <jvmarg value="-Dindex.flushAfterCreate=false"/>
+            <!-- debug -->
+            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
 
             <classpath>
                 <pathelement location="${project.build}"/>

@@ -582,8 +582,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     resultCount++;
 
-    boolean result = addResult(lastRecord);
-    if (!result)
+    if (!addResult(lastRecord))
       return false;
 
     if ((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1

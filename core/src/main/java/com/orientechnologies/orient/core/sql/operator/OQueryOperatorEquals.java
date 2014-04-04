@@ -160,7 +160,6 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
-    Object result;
     if (indexResult instanceof Collection) {
       for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult) {
         if (!resultListener.addResult(identifiable))
