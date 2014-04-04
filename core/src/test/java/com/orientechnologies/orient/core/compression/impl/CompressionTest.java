@@ -17,16 +17,24 @@ public class CompressionTest {
     Random random = new Random(seed);
     final int iterationsCount = 1000;
     byte[][] contents = new byte[iterationsCount][];
+
+    long compressedSize = 0;
+
     for (int i = 0; i < iterationsCount; i++) {
       int contentSize = random.nextInt(10 * 1024 - 100) + 100;
       byte[] content = new byte[contentSize];
       random.nextBytes(content);
 
+      compressedSize += contentSize;
+
       contents[i] = content;
     }
 
+    System.out.println("Starting benchmark against " + iterationsCount + " iterations where total of buffer size = "
+        + compressedSize);
+
     for (String name : OCompressionFactory.INSTANCE.getCompressions()) {
-      long compressedSize = 0;
+      compressedSize = 0;
       long startTime = System.currentTimeMillis();
       for (int i = 0; i < iterationsCount; i++) {
         final OCompression compression = OCompressionFactory.INSTANCE.getCompression(name);
