@@ -202,7 +202,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (iURL.contains("/")) {
       // OPEN DB
-      message("Connecting to database [" + iURL + "] with user '" + iUserName + "'...");
+      message("\nConnecting to database [" + iURL + "] with user '" + iUserName + "'...");
 
       currentDatabase = new ODatabaseDocumentTx(iURL);
 
@@ -212,7 +212,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabaseName = currentDatabase.getName();
     } else {
       // CONNECT TO REMOTE SERVER
-      message("Connecting to remote Server instance [" + iURL + "] with user '" + iUserName + "'...");
+      message("\nConnecting to remote Server instance [" + iURL + "] with user '" + iUserName + "'...");
 
       serverAdmin = new OServerAdmin(iURL).connect(iUserName, iUserPassword);
       currentDatabase = null;
@@ -246,19 +246,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       currentDatabaseName = null;
       currentRecord = null;
 
-      message("\nOK");
+      message("OK");
     }
   }
 
   @ConsoleCommand(description = "Create a new database")
   public void createDatabase(
       @ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
-      @ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
-      @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
-      @ConsoleParameter(name = "storage-type", description = "The type of the storage. 'local' and 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
+      @ConsoleParameter(name = "user", optional = true, description = "Server administrator name") String iUserName,
+      @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String iUserPassword,
+      @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage. 'local' and 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
       @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String iDatabaseType)
       throws IOException {
 
+    if (iUserName == null)
+      iUserName = OUser.ADMIN;
+    if (iUserPassword == null)
+      iUserPassword = OUser.ADMIN;
+    if (iStorageType == null) {
+      if (iDatabaseURL.startsWith(OEngineRemote.NAME + ":"))
+        throw new IllegalArgumentException("Missing storage type for remote database");
+
+      int pos = iDatabaseURL.indexOf(":");
+      if (pos == -1)
+        throw new IllegalArgumentException("Invalid URL");
+      iStorageType = iDatabaseURL.substring(0, pos);
+    }
     if (iDatabaseType == null)
       iDatabaseType = "graph";
 
