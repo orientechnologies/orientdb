@@ -1,10 +1,7 @@
 package com.orientechnologies.lucene.manager;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -12,18 +9,27 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.queries.function.ValueSource;
+import org.apache.lucene.search.*;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+import org.apache.lucene.spatial.query.SpatialArgs;
+import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.distance.DistanceUtils;
+import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Shape;
 
 /**
@@ -123,7 +129,88 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public Object get(Object key) {
+    if (key instanceof OSpatialCompositeKey) {
+
+      OSpatialCompositeKey newKey = (OSpatialCompositeKey) key;
+
+      SpatialOperation strategy = newKey.getOperation() != null ? newKey.getOperation() : SpatialOperation.Intersects;
+
+      if (SpatialOperation.Intersects.equals(strategy)) {
+        try {
+          return searchIntersect(newKey, newKey.getMaxDistance());
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      } else if (SpatialOperation.IsWithin.equals(strategy)) {
+        try {
+          return searchBBox(newKey);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+    } else if (key instanceof OCompositeKey) {
+      try {
+        return searchIntersect((OCompositeKey) key, 0);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
     return null;
+  }
+
+  public Object searchIntersect(OCompositeKey key, double distance) throws IOException {
+
+    double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
+    double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    SpatialOperation operation = SpatialOperation.Intersects;
+    Point p = ctx.makePoint(lng, lat);
+    SpatialArgs args = new SpatialArgs(operation, ctx.makeCircle(lng, lat,
+        DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
+    Filter filter = strategy.makeFilter(args);
+
+    IndexSearcher searcher = getSearcher();
+    ValueSource valueSource = strategy.makeDistanceValueSource(p);
+    Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
+
+    int limit = 1000;
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limit, distSort);
+    ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+
+    for (ScoreDoc s : scoreDocs) {
+
+      Document doc = searcher.doc(s.doc);
+      result.add(new ORecordId(doc.get(RID)));
+
+    }
+    return result;
+  }
+
+  public Object searchBBox(OCompositeKey key) throws IOException {
+
+    Double minLat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
+    Double minLng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
+    Double maxLat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(2), Double.class)).doubleValue();
+    Double maxLng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(3), Double.class)).doubleValue();
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+
+    SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeRectangle(minLat, maxLat, minLng, maxLng));
+    IndexSearcher searcher = getSearcher();
+
+    Filter filter = strategy.makeFilter(args);
+    int limit = 1000;
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limit);
+
+    ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+    for (ScoreDoc s : scoreDocs) {
+      Document doc = searcher.doc(s.doc);
+      result.add(new ORecordId(doc.get(RID)));
+
+    }
+    return result;
   }
 
   @Override
@@ -135,7 +222,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     for (OIdentifiable oIdentifiable : container) {
       Number x = (Number) numbers.get(0);
       Number y = (Number) numbers.get(1);
-      addDocument(newGeoDocument(oIdentifiable.getIdentity().toString(), ctx.makePoint(x.doubleValue(), y.doubleValue())));
+      addDocument(newGeoDocument(oIdentifiable.getIdentity().toString(), ctx.makePoint(y.doubleValue(), x.doubleValue())));
     }
   }
 
@@ -168,20 +255,20 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
       EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
       EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
+      ValuesTransformer transformer, EntriesResultListener entriesResultListener) {
 
   }
 

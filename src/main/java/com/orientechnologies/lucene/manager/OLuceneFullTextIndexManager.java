@@ -172,20 +172,20 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, OIndexEngine.ValuesTransformer transformer,
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      OIndexEngine.ValuesTransformer transformer, OIndexEngine.EntriesResultListener entriesResultListener) {
+
+  }
+
+  @Override
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer,
       OIndexEngine.EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, OIndexEngine.ValuesTransformer transformer,
-      OIndexEngine.EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, OIndexEngine.ValuesTransformer transformer,
-      OIndexEngine.EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
+      OIndexEngine.ValuesTransformer transformer, OIndexEngine.EntriesResultListener entriesResultListener) {
 
   }
 

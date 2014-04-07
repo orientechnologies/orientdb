@@ -17,6 +17,7 @@ public class OLuceneOperatorFactory implements OQueryOperatorFactory {
   static {
     final Set<OQueryOperator> operators = new HashSet<OQueryOperator>();
     operators.add(new OLuceneNearOperator());
+    operators.add(new OLuceneWithinOperator());
     OPERATORS = Collections.unmodifiableSet(operators);
   }
 

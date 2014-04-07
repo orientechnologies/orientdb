@@ -199,20 +199,20 @@ public class OLuceneUniqueIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
       EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
       EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer, EntriesResultListener entriesResultListener) {
 
   }
 

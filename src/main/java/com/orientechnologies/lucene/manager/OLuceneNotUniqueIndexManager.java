@@ -201,19 +201,19 @@ public class OLuceneNotUniqueIndexManager extends OLuceneIndexManagerAbstract<Se
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<Set<OIdentifiable>> transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<Set<OIdentifiable>> transformer, EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<Set<OIdentifiable>> transformer,
-      EntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<Set<OIdentifiable>> transformer, EntriesResultListener entriesResultListener) {
 
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive,
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
       ValuesTransformer<Set<OIdentifiable>> transformer, EntriesResultListener entriesResultListener) {
 
     Query query = OLuceneIndexType.createRangeQuery(index, iRangeFrom, iRangeTo, iInclusive, iInclusive);

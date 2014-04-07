@@ -201,22 +201,22 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
       EntriesResultListener entriesResultListener) {
 
-    lucene.getEntriesMajor(fromKey, isInclusive, transformer, entriesResultListener);
+    lucene.getEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer, entriesResultListener);
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
+  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
       EntriesResultListener entriesResultListener) {
-    lucene.getEntriesMajor(toKey, isInclusive, transformer, entriesResultListener);
+    lucene.getEntriesMajor(toKey, isInclusive, ascSortOrder, transformer, entriesResultListener);
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
-    lucene.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, transformer, entriesResultListener);
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener) {
+    lucene.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, ascSortOrder, transformer, entriesResultListener);
   }
 
   @Override

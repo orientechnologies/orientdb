@@ -1,11 +1,10 @@
-package main.java.com.orientechnologies.lucene.hook;
+package com.orientechnologies.lucene.hook;
 
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
 
 import java.util.*;
 
-import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;

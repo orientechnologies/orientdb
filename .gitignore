@@ -6,3 +6,4 @@
 *.ear
 databases/
 target/
+.idea
