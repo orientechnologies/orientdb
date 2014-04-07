@@ -1090,13 +1090,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     if (!rid.isValid())
       return;
 
+    record = record.getRecord();
+    if( record == null )
+      return;
+
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
     ORecordSerializationContext.pushContext();
     try {
-      record = record.getRecord();
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
