@@ -605,11 +605,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return true;
       } else {
         // AGGREGATION/GROUP BY
-        final ODocument doc = (ODocument) iRecord.getRecord();
         Object fieldValue = null;
         if (groupByFields != null && !groupByFields.isEmpty()) {
           if (groupByFields.size() > 1) {
             // MULTI-FIELD GROUP BY
+            final ODocument doc = (ODocument) iRecord.getRecord();
             final Object[] fields = new Object[groupByFields.size()];
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
@@ -625,7 +625,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               if (field.startsWith("$"))
                 fieldValue = context.getVariable(field);
               else
-                fieldValue = doc.field(field);
+                fieldValue = ((ODocument) iRecord.getRecord()).field(field);
             }
           }
         }
