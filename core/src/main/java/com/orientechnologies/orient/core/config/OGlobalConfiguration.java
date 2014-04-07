@@ -440,6 +440,13 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
 
+  // SECURITY
+  SECURITY_MAX_CACHED_USERS("security.maxCachedUsers",
+      "Maximum users cached in RAM. This speeds up authentication for the most used users", Integer.class, 100),
+
+  SECURITY_MAX_CACHED_ROLES("security.maxCachedRoles",
+      "Maximum roles cached in RAM. This speeds up authentication for the most used roles", Integer.class, 100),
+
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
@@ -560,65 +567,6 @@ public enum OGlobalConfiguration {
     type = iType;
   }
 
-  public void setValue(final Object iValue) {
-    Object oldValue = value;
-
-    if (iValue != null)
-      if (type == Boolean.class)
-        value = Boolean.parseBoolean(iValue.toString());
-      else if (type == Integer.class)
-        value = Integer.parseInt(iValue.toString());
-      else if (type == Float.class)
-        value = Float.parseFloat(iValue.toString());
-      else if (type == String.class)
-        value = iValue.toString();
-      else
-        value = iValue;
-
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
-  }
-
-  public Object getValue() {
-    return value != null ? value : defValue;
-  }
-
-  public boolean getValueAsBoolean() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
-  }
-
-  public String getValueAsString() {
-    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
-  }
-
-  public int getValueAsInteger() {
-    final Object v = value != null ? value : defValue;
-    return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
-  }
-
-  public long getValueAsLong() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
-  }
-
-  public float getValueAsFloat() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
-  }
-
-  public String getKey() {
-    return key;
-  }
-
-  public Class<?> getType() {
-    return type;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
   public static void dumpConfiguration(final PrintStream out) {
     out.print("OrientDB ");
     out.print(OConstants.getVersion());
@@ -710,5 +658,64 @@ public enum OGlobalConfiguration {
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
     System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+  }
+
+  public Object getValue() {
+    return value != null ? value : defValue;
+  }
+
+  public void setValue(final Object iValue) {
+    Object oldValue = value;
+
+    if (iValue != null)
+      if (type == Boolean.class)
+        value = Boolean.parseBoolean(iValue.toString());
+      else if (type == Integer.class)
+        value = Integer.parseInt(iValue.toString());
+      else if (type == Float.class)
+        value = Float.parseFloat(iValue.toString());
+      else if (type == String.class)
+        value = iValue.toString();
+      else
+        value = iValue;
+
+    if (changeCallback != null)
+      changeCallback.change(oldValue, value);
+  }
+
+  public boolean getValueAsBoolean() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
+  }
+
+  public String getValueAsString() {
+    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
+  }
+
+  public int getValueAsInteger() {
+    final Object v = value != null ? value : defValue;
+    return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
+  }
+
+  public long getValueAsLong() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
+  }
+
+  public float getValueAsFloat() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  public Class<?> getType() {
+    return type;
+  }
+
+  public String getDescription() {
+    return description;
   }
 }

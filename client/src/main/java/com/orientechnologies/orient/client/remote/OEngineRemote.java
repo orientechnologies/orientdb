@@ -15,14 +15,15 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OEngineRemote extends OEngineAbstract {
   public static final String                       NAME           = "remote";
@@ -32,6 +33,9 @@ public class OEngineRemote extends OEngineAbstract {
   }
 
   public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
+    OGlobalConfiguration.SECURITY_MAX_CACHED_ROLES.setValue(0);
+    OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.setValue(0);
+
     try {
       synchronized (sharedStorages) {
         OStorageRemote sharedStorage = sharedStorages.get(iURL);

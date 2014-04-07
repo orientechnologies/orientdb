@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
  */
 public class OUserTrigger extends ODocumentHookAbstract {
   public OUserTrigger() {
-    setIncludeClasses("OUser");
+    setIncludeClasses("OUser", "ORole");
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -36,12 +37,29 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-    return encodePassword(iDocument);
+    if ("OUser".equalsIgnoreCase(iDocument.getClassName()))
+      return encodePassword(iDocument);
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-    return encodePassword(iDocument);
+
+    if ("OUser".equalsIgnoreCase(iDocument.getClassName())) {
+      // REMOVE THE USER FROM THE CACHE
+      final OSecurity sec = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUnderlying();
+      if (sec instanceof OSecurityShared)
+        ((OSecurityShared) sec).uncacheUser((String) iDocument.field("name"));
+
+      return encodePassword(iDocument);
+
+    } else if ("ORole".equalsIgnoreCase(iDocument.getClassName())) {
+      final OSecurity sec = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUnderlying();
+      if (sec instanceof OSecurityShared)
+        ((OSecurityShared) sec).uncacheRole((String) iDocument.field("name"));
+    }
+
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   private RESULT encodePassword(final ODocument iDocument) {

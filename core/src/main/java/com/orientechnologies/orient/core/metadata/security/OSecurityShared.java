@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
@@ -39,7 +40,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,18 +52,32 @@ import java.util.Set;
  * 
  */
 public class OSecurityShared extends OSharedResourceAdaptive implements OSecurity, OCloseable {
-  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
-  public static final String IDENTITY_CLASSNAME     = "OIdentity";
-  public static final String ALLOW_ALL_FIELD        = "_allow";
-  public static final String ALLOW_READ_FIELD       = "_allowRead";
-  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
-  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
-  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String ONCREATE_FIELD         = "onCreate.fields";
+  public static final String                             RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String                             IDENTITY_CLASSNAME     = "OIdentity";
+  public static final String                             ALLOW_ALL_FIELD        = "_allow";
+  public static final String                             ALLOW_READ_FIELD       = "_allowRead";
+  public static final String                             ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String                             ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String                             ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String                             ONCREATE_FIELD         = "onCreate.fields";
+
+  protected final ConcurrentLinkedHashMap<String, OUser> cachedUsers;
+  protected final ConcurrentLinkedHashMap<String, ORole> cachedRoles;
 
   public OSecurityShared() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
         .getValueAsInteger(), true);
+    final int maxCachedUsers = OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.getValueAsInteger();
+    if (maxCachedUsers > 0)
+      cachedUsers = new ConcurrentLinkedHashMap.Builder<String, OUser>().maximumWeightedCapacity(maxCachedUsers).build();
+    else
+      cachedUsers = null;
+
+    final int maxCachedRoles = OGlobalConfiguration.SECURITY_MAX_CACHED_ROLES.getValueAsInteger();
+    if (maxCachedRoles > 0)
+      cachedRoles = new ConcurrentLinkedHashMap.Builder<String, ORole>().maximumWeightedCapacity(maxCachedRoles).build();
+    else
+      cachedRoles = null;
   }
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
@@ -86,6 +103,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       iDocument.field(iAllowFieldName, field);
     }
     field.add(iId);
+
     return iId;
   }
 
@@ -132,13 +150,16 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
           if (iAllowOperation != null && iAllowOperation.contains(r.getDocument().getIdentity()))
             return true;
-		  // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's inheritance
-		  ORole parentRole = r.getParentRole();
-		  while (parentRole!=null){
-		   if (iAllowAll.contains(parentRole.getDocument().getIdentity())) return true;
-		   if (iAllowOperation != null && iAllowOperation.contains(parentRole.getDocument().getIdentity())) return true;
-		   parentRole=parentRole.getParentRole();
-		  }
+          // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's
+          // inheritance
+          ORole parentRole = r.getParentRole();
+          while (parentRole != null) {
+            if (iAllowAll.contains(parentRole.getDocument().getIdentity()))
+              return true;
+            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getDocument().getIdentity()))
+              return true;
+            parentRole = parentRole.getParentRole();
+          }
         }
         return false;
       }
@@ -180,6 +201,13 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public OUser getUser(final String iUserName) {
+
+    if (cachedUsers != null) {
+      final OUser user = cachedUsers.get(iUserName);
+      if (user != null)
+        return user;
+    }
+
     acquireExclusiveLock();
     try {
 
@@ -188,7 +216,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           .execute();
 
       if (result != null && !result.isEmpty())
-        return new OUser(result.get(0));
+        return cacheUser(new OUser(result.get(0)));
 
       return null;
 
@@ -208,6 +236,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           user.addRole(r);
         }
 
+      cacheUser(user);
+
       return user.save();
 
     } finally {
@@ -226,6 +256,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           user.addRole(r);
         }
 
+      cacheUser(user);
+
       return user.save();
 
     } finally {
@@ -236,6 +268,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public boolean dropUser(final String iUserName) {
     acquireExclusiveLock();
     try {
+
+      uncacheUser(iUserName);
 
       final Number removed = getDatabase().<OCommandRequest> command(
           new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
@@ -263,6 +297,13 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public ORole getRole(final String iRoleName) {
+
+    if (cachedRoles != null) {
+      final ORole role = cachedRoles.get(iRoleName);
+      if (role != null)
+        return role;
+    }
+
     acquireExclusiveLock();
     try {
 
@@ -270,7 +311,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
           new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1")).execute();
 
       if (result != null && !result.isEmpty())
-        return new ORole(result.get(0));
+        return cacheRole(new ORole(result.get(0)));
 
       return null;
 
@@ -291,6 +332,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     try {
 
       final ORole role = new ORole(iRoleName, iParent, iAllowMode);
+      cacheRole(role);
       return role.save();
 
     } finally {
@@ -301,6 +343,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public boolean dropRole(final String iRoleName) {
     acquireExclusiveLock();
     try {
+      uncacheRole(iRoleName);
 
       final Number removed = getDatabase().<OCommandRequest> command(
           new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
@@ -509,14 +552,52 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     }
   }
 
-  private ODatabaseRecord getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
   public void createClassTrigger() {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
     if (classTrigger == null)
       classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
+  }
+
+  @Override
+  public OSecurity getUnderlying() {
+    return this;
+  }
+
+  protected OUser cacheUser(final OUser user) {
+    if (cachedUsers != null)
+      cachedUsers.put(user.getName(), user);
+    return user;
+  }
+
+  protected void uncacheUser(final String iName) {
+    if (cachedUsers != null)
+      cachedUsers.remove(iName);
+  }
+
+  protected void uncacheUsersOfRole(final String iName) {
+    if (cachedUsers != null) {
+      for (final Iterator<Map.Entry<String, OUser>> it = cachedUsers.entrySet().iterator(); it.hasNext();) {
+        if (it.next().getValue().hasRole(iName, true))
+          it.remove();
+      }
+    }
+  }
+
+  protected ORole cacheRole(final ORole iRole) {
+    if (cachedRoles != null)
+      cachedRoles.put(iRole.getName(), iRole);
+    return iRole;
+  }
+
+  protected void uncacheRole(final String iName) {
+    if (cachedRoles != null) {
+      cachedRoles.remove(iName);
+      uncacheUsersOfRole(iName);
+    }
+  }
+
+  private ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }
