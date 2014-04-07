@@ -1,5 +1,5 @@
 #!/bin/sh
 #
-# Copyright (c) 1999-2010 Luca Garulli
+# Copyright (c) 1999-2014 Luca Garulli
 #
-ab -n100000 -A admin:admin -k -c10 http://127.0.0.1:2480/document/demo/15:0
+ab -n1000 -A admin:admin -k -v -c10 http://127.0.0.1:2480/document/GratefulDeadConcerts/9:1
