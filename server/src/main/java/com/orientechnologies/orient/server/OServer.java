@@ -44,11 +44,13 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -85,6 +87,7 @@ public class OServer {
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
   protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols   = new HashMap<String, Class<? extends ONetworkProtocol>>();
+  protected Map<String, OServerSocketFactory> networkSocketFactories   = new HashMap<String, OServerSocketFactory>();  
   protected List<OServerNetworkListener>                   networkListeners   = new ArrayList<OServerNetworkListener>();
   protected List<OServerLifecycleListener>                 lifecycleListeners = new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager                           pluginManager;
@@ -215,6 +218,21 @@ public class OServer {
   public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onBeforeActivate();
+    
+    // REGISTER/CREATE SOCKET FACTORIES  
+    if (configuration.network.sockets != null) {
+	    for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+	        Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
+	        OServerSocketFactory factory = fClass.newInstance();
+	        try {
+	                factory.config(f.name, f.parameters);
+	                networkSocketFactories.put(f.name, factory);
+	        }
+	        catch (OConfigurationException e) {
+	                OLogManager.instance().error(this, "Error creating socket factory", e);
+	        }
+	    }    
+    }
 
     // REGISTER PROTOCOLS
     for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
@@ -222,7 +240,7 @@ public class OServer {
 
     // STARTUP LISTENERS
     for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-      networkListeners.add(new OServerNetworkListener(this, l.ipAddress, l.portRange, l.protocol, networkProtocols.get(l.protocol),
+      networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange, l.protocol, networkProtocols.get(l.protocol),
           l.parameters, l.commands));
 
     registerPlugins();

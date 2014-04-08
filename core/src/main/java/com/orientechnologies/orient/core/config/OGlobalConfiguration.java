@@ -499,6 +499,9 @@ public enum OGlobalConfiguration {
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
+      
+  CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
+      
 
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,

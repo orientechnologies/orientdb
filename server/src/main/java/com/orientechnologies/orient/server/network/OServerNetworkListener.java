@@ -27,6 +27,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -41,6 +44,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 public class OServerNetworkListener extends Thread {
+  private OServerSocketFactory 				socketFactory;
   private ServerSocket                      serverSocket;
   private InetSocketAddress                 inboundAddr;
   private Class<? extends ONetworkProtocol> protocolType;
@@ -53,12 +57,14 @@ public class OServerNetworkListener extends Thread {
   private ONetworkProtocol                  protocol;
   private int                               protocolVersion   = -1;
 
-  public OServerNetworkListener(final OServer iServer, final String iHostName, final String iHostPortRange,
+  public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName, final String iHostPortRange,
       final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
     super(Orient.instance().getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":"
         + iHostPortRange);
     server = iServer;
+    
+    socketFactory = iSocketFactory == null ? OServerSocketFactory.getDefault() : iSocketFactory;
 
     // DETERMINE THE PROTOCOL VERSION BY CREATING A NEW ONE AND THEN THROW IT AWAY
     // TODO: CREATE PROTOCOL FACTORIES INSTEAD
@@ -140,13 +146,13 @@ public class OServerNetworkListener extends Thread {
     for (int port : ports) {
       inboundAddr = new InetSocketAddress(iHostName, port);
       try {
-        serverSocket = new java.net.ServerSocket(port, 0, InetAddress.getByName(iHostName));
+    	serverSocket = socketFactory.createServerSocket(port, 0, InetAddress.getByName(iHostName));
 
         if (serverSocket.isBound()) {
           OLogManager.instance().info(
               this,
               "Listening " + iProtocolName + " connections on " + inboundAddr.getAddress().getHostAddress() + ":"
-                  + inboundAddr.getPort() + " (protocol v." + protocolVersion + ")");
+                  + inboundAddr.getPort() + " (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
           return;
         }
       } catch (BindException be) {
