@@ -16,9 +16,11 @@
 package com.orientechnologies.orient.core.index.engine;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -235,6 +237,49 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    acquireExclusiveLock();
+    try {
+      if (ascSortOrder)
+        return new OMBRBTreeIndexCursor(map.subMap(rangeFrom, fromInclusive, rangeTo, toInclusive).entrySet().iterator(),
+            transformer);
+
+      return new OMBRBTreeIndexCursor(map.subMap(rangeFrom, fromInclusive, rangeTo, toInclusive).descendingMap().entrySet()
+          .iterator(), transformer);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
+    acquireExclusiveLock();
+    try {
+      if (ascSortOrder)
+        return new OMBRBTreeIndexCursor(map.tailMap(fromKey, isInclusive).entrySet().iterator(), transformer);
+
+      return new OMBRBTreeIndexCursor(map.tailMap(fromKey, isInclusive).descendingMap().entrySet().iterator(), transformer);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    acquireExclusiveLock();
+    try {
+      if (ascSortOrder)
+        return new OMBRBTreeIndexCursor(map.headMap(toKey, isInclusive).entrySet().iterator(), transformer);
+
+      return new OMBRBTreeIndexCursor(map.headMap(toKey, isInclusive).descendingMap().entrySet().iterator(), transformer);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  @Override
   public Iterable<Object> keys() {
     acquireExclusiveLock();
     try {
@@ -346,8 +391,8 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   public Object getFirstKey() {
     acquireExclusiveLock();
     try {
-			if(map.getFirstEntry() == null)
-				return null;
+      if (map.getFirstEntry() == null)
+        return null;
 
       return map.getFirstEntry().getFirstKey();
     } finally {
@@ -935,5 +980,57 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   private int lazyUpdates(boolean isAutomatic) {
     return isAutomatic ? OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.getValueAsInteger()
         : OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
+  }
+
+  private final class OMBRBTreeIndexCursor implements OIndexCursor {
+    private final Iterator<Map.Entry<Object, V>> treeIterator;
+    private final ValuesTransformer<V>           valuesTransformer;
+
+    private Iterator<OIdentifiable>              currentIterator = Collections.emptyIterator();
+    private Object                               currentKey      = null;
+
+    private OMBRBTreeIndexCursor(Iterator<Map.Entry<Object, V>> treeIterator, ValuesTransformer<V> valuesTransformer) {
+      this.treeIterator = treeIterator;
+      this.valuesTransformer = valuesTransformer;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      if (!treeIterator.hasNext())
+        return null;
+
+      if (valuesTransformer == null)
+        return (Map.Entry<Object, OIdentifiable>) treeIterator.next();
+
+      while (!currentIterator.hasNext() && treeIterator.hasNext()) {
+        final Map.Entry<Object, V> entry = treeIterator.next();
+        currentKey = entry.getKey();
+        currentIterator = valuesTransformer.transformFromValue(entry.getValue()).iterator();
+      }
+
+      if (!currentIterator.hasNext())
+        return null;
+
+      final OIdentifiable value = currentIterator.next();
+
+      return new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          return currentKey;
+        }
+
+        @Override
+        public OIdentifiable getValue() {
+          return value;
+        }
+
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          throw new UnsupportedOperationException("setValue");
+        }
+      };
+
+    }
+
   }
 }

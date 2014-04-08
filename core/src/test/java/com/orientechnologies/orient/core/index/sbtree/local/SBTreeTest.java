@@ -267,6 +267,27 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  public void testIterateEntriesMajor() {
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    MersenneTwisterFast random = new MersenneTwisterFast();
+
+    while (keyValues.size() < KEYS_COUNT) {
+      int key = random.nextInt(Integer.MAX_VALUE);
+
+      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+    }
+
+    assertIterateMajorEntries(keyValues, random, true, true);
+    assertIterateMajorEntries(keyValues, random, false, true);
+
+    assertIterateMajorEntries(keyValues, random, true, false);
+    assertIterateMajorEntries(keyValues, random, false, false);
+
+    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
+  }
+
   public void testValuesMinor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     MersenneTwisterFast random = new MersenneTwisterFast();
@@ -283,6 +304,27 @@ public class SBTreeTest {
 
     assertMinorValues(keyValues, random, true, false);
     assertMinorValues(keyValues, random, false, false);
+
+    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
+  }
+
+  public void testIterateEntriesMinor() {
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    MersenneTwisterFast random = new MersenneTwisterFast();
+
+    while (keyValues.size() < KEYS_COUNT) {
+      int key = random.nextInt(Integer.MAX_VALUE);
+
+      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+    }
+
+    assertIterateMinorEntries(keyValues, random, true, true);
+    assertIterateMinorEntries(keyValues, random, false, true);
+
+    assertIterateMinorEntries(keyValues, random, true, false);
+    assertIterateMinorEntries(keyValues, random, false, false);
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
@@ -308,6 +350,31 @@ public class SBTreeTest {
     assertBetweenValues(keyValues, random, true, false, false);
     assertBetweenValues(keyValues, random, false, true, false);
     assertBetweenValues(keyValues, random, false, false, false);
+
+    Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
+  }
+
+  public void testIterateEntriesBetween() {
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    MersenneTwisterFast random = new MersenneTwisterFast();
+
+    while (keyValues.size() < KEYS_COUNT) {
+      int key = random.nextInt(Integer.MAX_VALUE);
+
+      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+    }
+
+    assertIterateBetweenEntries(keyValues, random, true, true, true);
+    assertIterateBetweenEntries(keyValues, random, true, false, true);
+    assertIterateBetweenEntries(keyValues, random, false, true, true);
+    assertIterateBetweenEntries(keyValues, random, false, false, true);
+
+    assertIterateBetweenEntries(keyValues, random, true, true, false);
+    assertIterateBetweenEntries(keyValues, random, true, false, false);
+    assertIterateBetweenEntries(keyValues, random, false, true, false);
+    assertIterateBetweenEntries(keyValues, random, false, false, false);
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
@@ -498,6 +565,45 @@ public class SBTreeTest {
     }
   }
 
+  private void assertIterateMajorEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
+																				 boolean ascSortOrder) {
+    for (int i = 0; i < 100; i++) {
+      int upperBorder = keyValues.lastKey() + 5000;
+      int fromKey;
+      if (upperBorder > 0)
+        fromKey = random.nextInt(upperBorder);
+      else
+        fromKey = random.nextInt(Integer.MAX_VALUE);
+
+      if (random.nextBoolean()) {
+        Integer includedKey = keyValues.ceilingKey(fromKey);
+        if (includedKey != null)
+          fromKey = includedKey;
+        else
+          fromKey = keyValues.floorKey(fromKey);
+      }
+
+      final OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
+
+      Iterator<Map.Entry<Integer, ORID>> iterator;
+      if (ascSortOrder)
+        iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
+      else
+        iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+
+      while (iterator.hasNext()) {
+        final Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
+        final Map.Entry<Integer, ORID> entry = iterator.next();
+
+        Assert.assertEquals(indexEntry.getKey(), entry.getKey());
+        Assert.assertEquals(indexEntry.getValue(), entry.getValue());
+      }
+
+      Assert.assertFalse(iterator.hasNext());
+      Assert.assertNull(cursor.next(-1));
+    }
+  }
+
   private void assertMinorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
       boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
@@ -543,8 +649,50 @@ public class SBTreeTest {
     }
   }
 
+  private void assertIterateMinorEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
+																				 boolean ascSortOrder) {
+    for (int i = 0; i < 100; i++) {
+      int upperBorder = keyValues.lastKey() + 5000;
+      int toKey;
+      if (upperBorder > 0)
+        toKey = random.nextInt(upperBorder) - 5000;
+      else
+        toKey = random.nextInt(Integer.MAX_VALUE) - 5000;
+
+      if (random.nextBoolean()) {
+        Integer includedKey = keyValues.ceilingKey(toKey);
+        if (includedKey != null)
+          toKey = includedKey;
+        else
+          toKey = keyValues.floorKey(toKey);
+      }
+
+      final OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
+
+      Iterator<Map.Entry<Integer, ORID>> iterator;
+      if (ascSortOrder)
+        iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
+      else
+        iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
+
+      while (iterator.hasNext()) {
+        Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
+        Map.Entry<Integer, ORID> entry = iterator.next();
+
+        Assert.assertEquals(indexEntry.getKey(), entry.getKey());
+        Assert.assertEquals(indexEntry.getValue(), entry.getValue());
+      }
+
+      Assert.assertFalse(iterator.hasNext());
+      Assert.assertNull(cursor.next(-1));
+    }
+  }
+
   private void assertBetweenValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean fromInclusive,
       boolean toInclusive, boolean ascSortOrder) {
+    long totalTime = 0;
+    long totalIterations = 0;
+
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
@@ -589,6 +737,8 @@ public class SBTreeTest {
 
       Iterator<OIdentifiable> resultIterator = orids.iterator();
 
+      long startTime = System.currentTimeMillis();
+
       int fetchedValues = 0;
       while (valuesIterator.hasNext() && fetchedValues < maxValuesToFetch) {
         ORID value = valuesIterator.next();
@@ -597,11 +747,90 @@ public class SBTreeTest {
 
         fetchedValues++;
       }
+      long endTime = System.currentTimeMillis();
+
+      totalIterations += fetchedValues;
+      totalTime += (endTime - startTime);
 
       if (valuesIterator.hasNext())
         Assert.assertEquals(fetchedValues, maxValuesToFetch);
 
       Assert.assertFalse(resultIterator.hasNext());
     }
+
+    if (totalTime != 0)
+      System.out.println("Iterations per second : " + (totalIterations * 1000) / totalTime);
   }
+
+  private void assertIterateBetweenEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean fromInclusive,
+																					 boolean toInclusive, boolean ascSortOrder) {
+    long totalTime = 0;
+    long totalIterations = 0;
+
+    for (int i = 0; i < 100; i++) {
+      int upperBorder = keyValues.lastKey() + 5000;
+      int fromKey;
+      if (upperBorder > 0)
+        fromKey = random.nextInt(upperBorder);
+      else
+        fromKey = random.nextInt(Integer.MAX_VALUE - 1);
+
+      if (random.nextBoolean()) {
+        Integer includedKey = keyValues.ceilingKey(fromKey);
+        if (includedKey != null)
+          fromKey = includedKey;
+        else
+          fromKey = keyValues.floorKey(fromKey);
+      }
+
+      int toKey = random.nextInt() + fromKey + 1;
+      if (toKey < 0)
+        toKey = Integer.MAX_VALUE;
+
+      if (random.nextBoolean()) {
+        Integer includedKey = keyValues.ceilingKey(toKey);
+        if (includedKey != null)
+          toKey = includedKey;
+        else
+          toKey = keyValues.floorKey(toKey);
+      }
+
+      if (fromKey > toKey)
+        toKey = fromKey;
+
+      OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesBetween(fromKey, fromInclusive, toKey,
+          toInclusive, ascSortOrder);
+
+      Iterator<Map.Entry<Integer, ORID>> iterator;
+      if (ascSortOrder)
+        iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
+      else
+        iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
+
+      long startTime = System.currentTimeMillis();
+      int iteration = 0;
+      while (iterator.hasNext()) {
+        iteration++;
+
+        Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
+        Assert.assertNotNull(indexEntry);
+
+        Map.Entry<Integer, ORID> mapEntry = iterator.next();
+        Assert.assertEquals(indexEntry.getKey(), mapEntry.getKey());
+        Assert.assertEquals(indexEntry.getValue(), mapEntry.getValue());
+      }
+
+      long endTime = System.currentTimeMillis();
+
+      totalIterations += iteration;
+      totalTime += (endTime - startTime);
+
+      Assert.assertFalse(iterator.hasNext());
+      Assert.assertNull(cursor.next(-1));
+    }
+
+    if (totalTime != 0)
+      System.out.println("Iterations per second : " + (totalIterations * 1000) / totalTime);
+  }
+
 }

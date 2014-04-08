@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +23,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
@@ -121,13 +116,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
-      OIndex.IndexValuesResultListener resultListener) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
+    OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
-      return false;
+      return null;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
@@ -137,13 +132,16 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         key = indexDefinition.createValue(keyParams);
 
       if (key == null)
-        return false;
+        return null;
 
       final Object indexResult;
 
       indexResult = index.get(key);
 
-      convertIndexResult(indexResult, resultListener);
+      if (indexResult == null || indexResult instanceof OIdentifiable)
+        cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      else
+        cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -153,34 +151,28 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (keyOne == null)
-        return false;
+        return null;
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
       if (internalIndex.hasRangeQuerySupport()) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
+        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          convertIndexResult(indexResult, resultListener);
+          if (indexResult == null || indexResult instanceof OIdentifiable)
+            cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          else
+            cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
         } else
-          return false;
+          return null;
       }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return true;
-  }
-
-  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
-    if (indexResult instanceof Collection) {
-      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult)
-        if (!resultListener.addResult(identifiable))
-          return;
-    } else if (indexResult != null)
-      resultListener.addResult((OIdentifiable) indexResult);
+    return cursor;
   }
 
   @Override

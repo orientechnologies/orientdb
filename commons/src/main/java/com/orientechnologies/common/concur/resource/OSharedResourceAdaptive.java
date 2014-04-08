@@ -94,8 +94,6 @@ public class OSharedResourceAdaptive {
     if (concurrent)
       if (timeout > 0) {
         try {
-          // CHECK IF HAVE TO SCALE UP FROM SHARED TO EXCLUSIVE
-          checkToScaleUp();
 
           if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
             // OK
@@ -120,9 +118,6 @@ public class OSharedResourceAdaptive {
         throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass()
             + " with timeout=" + timeout);
       } else {
-        // CHECK IF HAVE TO SCALE UP FROM SHARED TO EXCLUSIVE
-        checkToScaleUp();
-
         lock.writeLock().lock();
       }
   }
@@ -166,7 +161,6 @@ public class OSharedResourceAdaptive {
 
   protected void releaseExclusiveLock() {
     if (concurrent) {
-      checkForScaleDown();
       lock.writeLock().unlock();
     }
   }
@@ -176,22 +170,4 @@ public class OSharedResourceAdaptive {
       lock.readLock().unlock();
   }
 
-  private void checkForScaleDown() {
-    if (scaledUpCount > 0) {
-      // DOWN SCALE: RE-ACQUIRE SHARED LOCKS
-      for (int i = 0; i < scaledUpCount; i++)
-        lock.readLock().lock();
-      scaledUpCount = 0;
-    }
-  }
-
-  private void checkToScaleUp() {
-    scaledUpCount = lock.getReadHoldCount();
-
-    if (scaledUpCount > 0) {
-      // SCALE UP LOCK
-      for (int i = 0; i < scaledUpCount; i++)
-        lock.readLock().unlock();
-    }
-  }
 }

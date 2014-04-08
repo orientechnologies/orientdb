@@ -106,7 +106,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   public void getValuesBetween(Object iRangeFrom, final boolean iFromInclusive, Object iRangeTo, final boolean iToInclusive,
-															 boolean ascSortOrder, final IndexValuesResultListener resultListener) {
+      boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     if (iRangeFrom.getClass() != iRangeTo.getClass())
@@ -129,7 +129,8 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
+  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder,
+      final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
@@ -148,7 +149,8 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
+  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder,
+      final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
@@ -170,12 +172,12 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
-		final Comparator<Object> comparator;
+    final Comparator<Object> comparator;
 
-		if (ascSortOrder)
-			comparator = ODefaultComparator.INSTANCE;
-		else
-		  comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
 
     Collections.sort(sortedKeys, comparator);
 
@@ -195,7 +197,67 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    checkForRebuild();
+
+    final List<Object> sortedKeys = new ArrayList<Object>(keys);
+    final Comparator<Object> comparator;
+
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    Collections.sort(sortedKeys, comparator);
+
+    return new OIndexCursor() {
+      private Iterator<?> keysIterator = sortedKeys.iterator();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+        OIdentifiable result = null;
+        Object key = null;
+        while (keysIterator.hasNext() && result == null) {
+          key = keysIterator.next();
+          key = getCollatingValue(key);
+
+          acquireSharedLock();
+          try {
+            result = indexEngine.get(key);
+          } finally {
+            releaseSharedLock();
+          }
+        }
+
+        if (result == null)
+          return null;
+
+        final Object resultKey = key;
+        final OIdentifiable resultValue = result;
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return resultKey;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return resultValue;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        };
+      }
+    };
+  }
+
+  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
@@ -214,7 +276,8 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesMinor(Object iRangeTo, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object iRangeTo, final boolean isInclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
@@ -232,8 +295,50 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean inclusive,
-																boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    checkForRebuild();
+
+    fromKey = getCollatingValue(fromKey);
+    toKey = getCollatingValue(toKey);
+
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    checkForRebuild();
+
+    fromKey = getCollatingValue(fromKey);
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesMajor(fromKey, fromInclusive, ascOrder, null);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    checkForRebuild();
+
+    toKey = getCollatingValue(toKey);
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesMinor(toKey, toInclusive, ascOrder, null);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean inclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     if (iRangeFrom.getClass() != iRangeTo.getClass())

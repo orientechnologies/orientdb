@@ -65,27 +65,35 @@ public interface OIndexEngine<V> {
 
   void put(Object key, V value);
 
-	public Object getFirstKey();
+  public Object getFirstKey();
 
-	public Object getLastKey();
+  public Object getLastKey();
 
-  void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-												boolean ascSortOrder, ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
+  void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
 
   void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-											ValuesResultListener valuesResultListener);
+      ValuesResultListener valuesResultListener);
 
   void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-											ValuesResultListener valuesResultListener);
+      ValuesResultListener valuesResultListener);
 
   void getEntriesMajor(final Object fromKey, final boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-											 EntriesResultListener entriesResultListener);
+      EntriesResultListener entriesResultListener);
 
   void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-											 EntriesResultListener entriesResultListener);
+      EntriesResultListener entriesResultListener);
 
-  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-												 EntriesResultListener entriesResultListener);
+  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
+      ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener);
+
+  OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer);
+
+  OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer);
+
+  OIndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer);
 
   long size(ValuesTransformer<V> transformer);
 

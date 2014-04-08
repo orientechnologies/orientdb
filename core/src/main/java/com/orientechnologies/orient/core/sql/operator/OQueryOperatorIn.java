@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -113,13 +114,13 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
-      OIndex.IndexValuesResultListener resultListener) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
+    OIndexCursor cursor;
     if (!internalIndex.canBeUsedInEqualityOperators())
-      return false;
+      return null;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object inKeyValue = keyParams.get(0);
@@ -145,14 +146,14 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
       }
       if (containsNotCompatibleKey)
-        return false;
+        return null;
 
-      index.getValues(inKeys, ascSortOrder, resultListener);
+      cursor = index.iterateEntries(inKeys, ascSortOrder);
     } else
-      return false;
+      return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
-    return true;
+    return cursor;
   }
 
   @Override
