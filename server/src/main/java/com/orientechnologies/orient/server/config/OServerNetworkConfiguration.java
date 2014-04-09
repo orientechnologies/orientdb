@@ -29,6 +29,11 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 public class OServerNetworkConfiguration {
   @XmlElementWrapper
   @XmlAnyElement
+  @XmlElementRef(type = OServerSocketFactoryConfiguration.class)
+  public List<OServerSocketFactoryConfiguration> sockets;	
+	
+  @XmlElementWrapper
+  @XmlAnyElement
   @XmlElementRef(type = OServerNetworkProtocolConfiguration.class)
   public List<OServerNetworkProtocolConfiguration> protocols;
 

@@ -97,6 +97,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public static final String                     PARAM_DB_TYPE        = "dbtype";
   private static final String                    DEFAULT_HOST         = "localhost";
   private static final int                       DEFAULT_PORT         = 2424;
+  private static final int                       DEFAULT_SSL_PORT     = 2434;  
   private static final String                    ADDRESS_SEPARATOR    = ";";
   private static final String                    DRIVER_NAME          = "OrientDB Java";
   protected final List<String>                   serverURLs           = new ArrayList<String>();
@@ -1798,8 +1799,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       host = "127.0.0.1" + host.substring("localhost".length());
 
     // REGISTER THE REMOTE SERVER+PORT
-    if (!host.contains(":"))
-      host += ":" + getDefaultPort();
+    if (!host.contains(":"))   
+      host += ":" + (clientConfiguration.getValueAsBoolean(
+    		  OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+    
 
     if (!serverURLs.contains(host))
       serverURLs.add(host);
@@ -1814,7 +1817,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   protected int getDefaultPort() {
     return DEFAULT_PORT;
   }
-
+  
+  protected int getDefaultSSLPort() {
+	return DEFAULT_SSL_PORT;
+  }  
+  
   protected OChannelBinaryAsynchClient createNetworkConnection() throws IOException {
     final String currentServerURL = getServerURL();
 
