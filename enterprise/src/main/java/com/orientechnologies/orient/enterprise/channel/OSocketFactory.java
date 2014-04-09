@@ -51,7 +51,7 @@ public class OSocketFactory {
 			SSLContext context) {
 
 		OSocketFactory sFactory = instance(iConfig);
-		sFactory.setSSLContent(context);
+		sFactory.setSSLContext(context);
 		return sFactory;
 	}
 
@@ -66,7 +66,7 @@ public class OSocketFactory {
 		return socketFactory;
 	}
 
-	public void setSSLContent(SSLContext context) {
+	public void setSSLContext(SSLContext context) {
 		this.context = context;
 		synchronized(socketFactory) {
 			socketFactory = null;

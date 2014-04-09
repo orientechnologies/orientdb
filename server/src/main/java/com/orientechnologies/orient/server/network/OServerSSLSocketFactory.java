@@ -91,12 +91,6 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 		} else if (keyStorePassword == null) {
 			throw new OConfigurationException("Missing parameter "
 					+ PARAM_NETWORK_SSL_KEYSTORE_PASSWORD);
-		} else if (trustStorePath == null) {
-			throw new OConfigurationException("Missing parameter "
-					+ PARAM_NETWORK_SSL_TRUSTSTORE);
-		} else if (trustStorePassword == null) {
-			throw new OConfigurationException("Missing parameter "
-					+ PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD);
 		}
 
 		keyStoreFile = new File(keyStorePath);
@@ -107,12 +101,14 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 					keyStorePath);
 		}
 
-		trustStoreFile = new File(trustStorePath);
-		if (!trustStoreFile.isAbsolute()) {
-			trustStoreFile = new File(
-					OSystemVariableResolver
-							.resolveSystemVariables("${ORIENTDB_HOME}"),
-					trustStorePath);
+		if (trustStorePath != null) {
+			trustStoreFile = new File(trustStorePath);
+			if (!trustStoreFile.isAbsolute()) {
+				trustStoreFile = new File(
+						OSystemVariableResolver
+								.resolveSystemVariables("${ORIENTDB_HOME}"),
+						trustStorePath);
+			}
 		}
 	}
 
@@ -138,22 +134,26 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
 			KeyManagerFactory kmf = KeyManagerFactory
 					.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			TrustManagerFactory tmf = TrustManagerFactory
-					.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
 			KeyStore keyStore = KeyStore.getInstance(keyStoreType);
 			char[] keyStorePass = keyStorePassword.toCharArray();
 			keyStore.load(new FileInputStream(keyStoreFile), keyStorePass);
 
-			KeyStore trustStore = KeyStore.getInstance(trustStoreType);
-			char[] trustStorePass = trustStorePassword.toCharArray();
-			trustStore
-					.load(new FileInputStream(trustStoreFile), trustStorePass);
-
 			kmf.init(keyStore, keyStorePass);
-			tmf.init(trustStore);
 
-			context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+			TrustManagerFactory tmf = null;
+			if (trustStoreFile != null) {
+				tmf = TrustManagerFactory.getInstance(TrustManagerFactory
+						.getDefaultAlgorithm());
+				KeyStore trustStore = KeyStore.getInstance(trustStoreType);
+				char[] trustStorePass = trustStorePassword.toCharArray();
+				trustStore.load(new FileInputStream(trustStoreFile),
+						trustStorePass);
+				tmf.init(trustStore);
+			}
+
+			context.init(kmf.getKeyManagers(),
+					(tmf == null ? null : tmf.getTrustManagers()), null);
 
 			return context;
 		} catch (Exception e) {

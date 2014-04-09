@@ -139,6 +139,10 @@
             <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../server/config/cert</directory>
+            <outputDirectory>config/cert</outputDirectory>
+        </fileSet>        
 
         <!--
          | Plugins
