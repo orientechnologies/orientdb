@@ -250,10 +250,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @param iFieldMap
    *          Map of Object/Object
    */
-  public ODocument(final Map<? extends Object, Object> iFieldMap) {
+  public ODocument(final Map<?, Object> iFieldMap) {
     setup();
     if (iFieldMap != null && !iFieldMap.isEmpty())
-      for (Entry<? extends Object, Object> entry : iFieldMap.entrySet()) {
+      for (Entry<?, Object> entry : iFieldMap.entrySet()) {
         field(entry.getKey().toString(), entry.getValue());
       }
   }
@@ -331,7 +331,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Returns an empty record as place-holder of the current. Used when a record is requested, but only the identity is needed.
    * 
-   * @return
+   * @return placeholder of this document
    */
   public ORecord<?> placeholder() {
     final ODocument cloned = new ODocument();
@@ -395,7 +395,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    *          Ignore the cache or use it
    */
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache) {
-    Object result = null;
+    Object result;
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache);
     } catch (Exception e) {
