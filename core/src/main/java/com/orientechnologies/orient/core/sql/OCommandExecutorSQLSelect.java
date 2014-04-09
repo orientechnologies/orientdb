@@ -27,7 +27,12 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -1224,7 +1229,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           }
 
-          if (compiledFilter == null || evaluateRecord(record)) {
+
+          final List<String> indexInvolvedFields = searchResult.getInvolvedFields();
+          final List<String> whereInvolvedFields = compiledFilter.getInvolvedFields();
+          boolean evaluateRecords = true;
+
+          if (indexInvolvedFields.size() == whereInvolvedFields.size()) {
+            evaluateRecords = false;
+            for (String f : indexInvolvedFields)
+              if (!whereInvolvedFields.contains(f)) {
+                // NOT THE SAME,
+                evaluateRecords = true;
+                break;
+              }
+          }
+
+
+          if (compiledFilter == null || !evaluateRecords  || evaluateRecord(record)) {
             if (!handleResult(record, true))
               break;
           }

@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -132,77 +133,68 @@ public class OSQLFilterCondition {
     return operator.getEndRidRange(left, right);
   }
 
-  private Object[] checkForConversion(final OIdentifiable o, Object l, Object r, final OCollate collate) {
-    Object[] result = null;
+  public List<String> getInvolvedFields(final List<String> list) {
+    final Object left = getLeft();
 
-    if (collate != null) {
-      final Object oldL = l;
-      final Object oldR = r;
+    if (left != null)
+      if (left instanceof OSQLFilterItemField) {
+        if (((OSQLFilterItemField) left).isFieldChain())
+          list.add(((OSQLFilterItemField) left).getFieldChain().getItemName(
+              ((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
+      } else if (left instanceof OSQLFilterCondition)
+        ((OSQLFilterCondition) left).getInvolvedFields(list);
 
-      l = collate.transform(l);
-      r = collate.transform(r);
+    final Object right = getRight();
+    if (right != null)
+      if (right instanceof OSQLFilterItemField) {
+        if (((OSQLFilterItemField) right).isFieldChain())
+          list.add(((OSQLFilterItemField) right).getFieldChain().getItemName(
+              ((OSQLFilterItemField) right).getFieldChain().getItemCount() - 1));
+      } else if (right instanceof OSQLFilterCondition)
+        ((OSQLFilterCondition) right).getInvolvedFields(list);
 
-      if (l != oldL || r != oldR)
-        // CHANGED
-        result = new Object[] { l, r };
+    return list;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder buffer = new StringBuilder();
+
+    buffer.append('(');
+    buffer.append(left);
+    if (operator != null) {
+      buffer.append(' ');
+      buffer.append(operator);
+      buffer.append(' ');
+      if (right instanceof String)
+        buffer.append('\'');
+      buffer.append(right);
+      if (right instanceof String)
+        buffer.append('\'');
+      buffer.append(')');
     }
 
-    try {
-      // DEFINED OPERATOR
-      if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
-        result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
-      }
+    return buffer.toString();
+  }
 
-      // NOT_NULL OPERATOR
-      else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
-        result = null;
-      }
+  public Object getLeft() {
+    return left;
+  }
 
-      else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
-          && !r.getClass().isAssignableFrom(l.getClass()))
-        // INTEGERS
-        if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
-          if (l instanceof String && ((String) l).indexOf('.') > -1)
-            result = new Object[] { new Float((String) l).intValue(), r };
-          else if (l instanceof Date)
-            result = new Object[] { ((Date) l).getTime(), r };
-          else if (!(l instanceof OQueryRuntimeValueMulti) && !(l instanceof Collection<?>) && !l.getClass().isArray()
-              && !(l instanceof Map))
-            result = new Object[] { getInteger(l), r };
-        } else if (l instanceof Integer && !(r instanceof Number || r instanceof Collection)) {
-          if (r instanceof String && ((String) r).indexOf('.') > -1)
-            result = new Object[] { l, new Float((String) r).intValue() };
-          else if (r instanceof Date)
-            result = new Object[] { l, ((Date) r).getTime() };
-          else if (!(r instanceof OQueryRuntimeValueMulti) && !(r instanceof Collection<?>) && !r.getClass().isArray()
-              && !(r instanceof Map))
-            result = new Object[] { l, getInteger(r) };
-        }
+  public void setLeft(final Object iValue) {
+    left = iValue;
+  }
 
-        // DATES
-        else if (r instanceof Date && !(l instanceof Collection || l instanceof Date)) {
-          result = new Object[] { getDate(l), r };
-        } else if (l instanceof Date && !(r instanceof Collection || r instanceof Date)) {
-          result = new Object[] { l, getDate(r) };
-        }
+  public Object getRight() {
+    return right;
+  }
 
-        // FLOATS
-        else if (r instanceof Float && !(l instanceof Float || l instanceof Collection))
-          result = new Object[] { getFloat(l), r };
-        else if (l instanceof Float && !(r instanceof Float || r instanceof Collection))
-          result = new Object[] { l, getFloat(r) };
+  public void setRight(final Object iValue) {
+    right = iValue;
+  }
 
-        // RIDS
-        else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
-          result = new Object[] { new ORecordId((String) l), r };
-        } else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
-          result = new Object[] { l, new ORecordId((String) r) };
-        }
-    } catch (Exception e) {
-      // JUST IGNORE CONVERSION ERRORS
-    }
-
-    return result;
+  public OQueryOperator getOperator() {
+    return operator;
   }
 
   protected Integer getInteger(Object iValue) {
@@ -324,44 +316,76 @@ public class OSQLFilterCondition {
     return iValue;
   }
 
-  @Override
-  public String toString() {
-    StringBuilder buffer = new StringBuilder();
+  private Object[] checkForConversion(final OIdentifiable o, Object l, Object r, final OCollate collate) {
+    Object[] result = null;
 
-    buffer.append('(');
-    buffer.append(left);
-    if (operator != null) {
-      buffer.append(' ');
-      buffer.append(operator);
-      buffer.append(' ');
-      if (right instanceof String)
-        buffer.append('\'');
-      buffer.append(right);
-      if (right instanceof String)
-        buffer.append('\'');
-      buffer.append(')');
+    if (collate != null) {
+      final Object oldL = l;
+      final Object oldR = r;
+
+      l = collate.transform(l);
+      r = collate.transform(r);
+
+      if (l != oldL || r != oldR)
+        // CHANGED
+        result = new Object[] { l, r };
     }
 
-    return buffer.toString();
-  }
+    try {
+      // DEFINED OPERATOR
+      if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
+        result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
+      }
 
-  public Object getLeft() {
-    return left;
-  }
+      // NOT_NULL OPERATOR
+      else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
+        result = null;
+      }
 
-  public Object getRight() {
-    return right;
-  }
+      else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
+          && !r.getClass().isAssignableFrom(l.getClass()))
+        // INTEGERS
+        if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
+          if (l instanceof String && ((String) l).indexOf('.') > -1)
+            result = new Object[] { new Float((String) l).intValue(), r };
+          else if (l instanceof Date)
+            result = new Object[] { ((Date) l).getTime(), r };
+          else if (!(l instanceof OQueryRuntimeValueMulti) && !(l instanceof Collection<?>) && !l.getClass().isArray()
+              && !(l instanceof Map))
+            result = new Object[] { getInteger(l), r };
+        } else if (l instanceof Integer && !(r instanceof Number || r instanceof Collection)) {
+          if (r instanceof String && ((String) r).indexOf('.') > -1)
+            result = new Object[] { l, new Float((String) r).intValue() };
+          else if (r instanceof Date)
+            result = new Object[] { l, ((Date) r).getTime() };
+          else if (!(r instanceof OQueryRuntimeValueMulti) && !(r instanceof Collection<?>) && !r.getClass().isArray()
+              && !(r instanceof Map))
+            result = new Object[] { l, getInteger(r) };
+        }
 
-  public OQueryOperator getOperator() {
-    return operator;
-  }
+        // DATES
+        else if (r instanceof Date && !(l instanceof Collection || l instanceof Date)) {
+          result = new Object[] { getDate(l), r };
+        } else if (l instanceof Date && !(r instanceof Collection || r instanceof Date)) {
+          result = new Object[] { l, getDate(r) };
+        }
 
-  public void setLeft(final Object iValue) {
-    left = iValue;
-  }
+        // FLOATS
+        else if (r instanceof Float && !(l instanceof Float || l instanceof Collection))
+          result = new Object[] { getFloat(l), r };
+        else if (l instanceof Float && !(r instanceof Float || r instanceof Collection))
+          result = new Object[] { l, getFloat(r) };
 
-  public void setRight(final Object iValue) {
-    right = iValue;
+        // RIDS
+        else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
+          result = new Object[] { new ORecordId((String) l), r };
+        } else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
+          result = new Object[] { l, new ORecordId((String) r) };
+        }
+    } catch (Exception e) {
+      // JUST IGNORE CONVERSION ERRORS
+    }
+
+    return result;
   }
 }

@@ -315,6 +315,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   protected boolean evaluateRecord(final ORecord<?> iRecord) {
     context.setVariable("current", iRecord);
+    context.updateMetric("evaluated", +1);
 
     assignLetClauses(iRecord);
     if (compiledFilter == null)

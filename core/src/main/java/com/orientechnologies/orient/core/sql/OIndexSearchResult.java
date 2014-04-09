@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND fieldN anyOpetator "fieldN value"
@@ -33,6 +33,11 @@ public class OIndexSearchResult {
     this.lastOperator = lastOperator;
     lastField = field;
     lastValue = value;
+  }
+
+  public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
+    return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
+        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
   }
 
   /**
@@ -85,8 +90,11 @@ public class OIndexSearchResult {
     return fieldValuePairs.size() + 1;
   }
 
-  public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
-    return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
-        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
+  public List<String> getInvolvedFields() {
+    final List<String> list = new ArrayList<String>();
+    list.add(lastField.getItemName(lastField.getItemCount() - 1));
+    for (String f : fieldValuePairs.keySet())
+      list.add(f);
+    return list;
   }
 }
