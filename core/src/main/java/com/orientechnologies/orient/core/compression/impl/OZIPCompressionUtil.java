@@ -143,7 +143,7 @@ public class OZIPCompressionUtil {
         }
 
         if (iOutput != null) {
-          final long ratio = 100 - (ze.getCompressedSize() * 100 / ze.getSize());
+          final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
 
           iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
               + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
