@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketP
 /**
  * The pointer to a bonsai collection.
  * 
- * Determines where the collection is stored. Contains file id and position of root bucket of tree representation.
+ * Determines where the collection is stored. Contains file id and pointer to the root bucket. Is immutable.
  * 
  * @see ORidBag
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>

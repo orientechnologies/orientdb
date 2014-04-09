@@ -349,6 +349,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     close(true);
   }
 
+  /**
+   * Removes all entries from bonsai tree. Put all but the root page to free list for further reuse.
+   */
   @Override
   public void clear() {
     acquireExclusiveLock();
@@ -470,6 +473,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
+  /**
+   * Deletes a whole tree. Puts all its pages to free list for further reusage.
+   */
   @Override
   public void delete() {
     acquireExclusiveLock();
