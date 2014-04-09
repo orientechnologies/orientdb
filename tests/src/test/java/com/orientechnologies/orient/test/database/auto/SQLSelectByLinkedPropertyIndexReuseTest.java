@@ -121,7 +121,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 5);
   }
 
   @Test
@@ -139,7 +139,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       assertTrue(expectedNames.contains(aResult.field("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 5);
   }
 
   @Test
@@ -153,7 +153,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
   @Test
@@ -209,7 +209,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
   @Test
@@ -240,7 +240,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
   @Test

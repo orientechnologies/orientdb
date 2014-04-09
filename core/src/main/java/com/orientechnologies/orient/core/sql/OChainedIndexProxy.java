@@ -22,27 +22,13 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexOneValue;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * <p>
@@ -651,7 +637,93 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    final OIndexCursor internalCursor = lastIndex.iterateEntries(keys, ascSortOrder);
+    return new ExternalIndexCursor(internalCursor);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    final OIndexCursor internalCursor = lastIndex.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+    return new ExternalIndexCursor(internalCursor);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    final OIndexCursor internalCursor = lastIndex.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+    return new ExternalIndexCursor(internalCursor);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    final OIndexCursor internalCursor = lastIndex.iterateEntriesMinor(toKey, toInclusive, ascOrder);
+    return new ExternalIndexCursor(internalCursor);
+  }
+
+  @Override
   public boolean isRebuiding() {
     return false;
+  }
+
+  private final class ExternalIndexCursor implements OIndexCursor {
+    private final OIndexCursor        internalCursor;
+
+    private final List<OIdentifiable> queryResult     = new ArrayList<OIdentifiable>();
+    private Iterator<OIdentifiable>   currentIterator = Collections.emptyIterator();
+
+    private ExternalIndexCursor(OIndexCursor internalCursor) {
+      this.internalCursor = internalCursor;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      if (currentIterator == null)
+        return null;
+
+      while (!currentIterator.hasNext()) {
+        final Map.Entry<Object, OIdentifiable> entry = internalCursor.next(prefetchSize);
+
+        if (entry == null) {
+          currentIterator = null;
+          return null;
+        }
+
+        queryResult.clear();
+        applyTailIndexes(entry.getValue(), new IndexValuesResultListener() {
+          @Override
+          public boolean addResult(OIdentifiable value) {
+            queryResult.add(value);
+            return true;
+          }
+        });
+
+        currentIterator = queryResult.iterator();
+      }
+
+      if (!currentIterator.hasNext()) {
+        currentIterator = null;
+        return null;
+      }
+
+      final OIdentifiable result = currentIterator.next();
+
+      return new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          throw new UnsupportedOperationException("getKey");
+        }
+
+        @Override
+        public OIdentifiable getValue() {
+          return result;
+        }
+
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          throw new UnsupportedOperationException("setValue");
+        }
+      };
+    }
   }
 }

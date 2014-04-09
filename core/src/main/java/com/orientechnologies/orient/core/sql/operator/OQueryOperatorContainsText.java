@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -115,31 +116,30 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	 boolean ascSortOrder, OIndex.IndexValuesResultListener resultListener) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
+																	 boolean ascSortOrder) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
-      return false;
+      return null;
 
     final OIndex<?> internalIndex = index.getInternal();
 
+		OIndexCursor cursor;
     if (internalIndex instanceof OIndexFullText) {
-      final Object indexResult = index.get(indexDefinition.createValue(keyParams));
-      if (indexResult instanceof Collection) {
-				for (OIdentifiable identifiable : (Collection<OIdentifiable>)indexResult) {
-					if(!resultListener.addResult(identifiable))
-						break;
-				}
-			}
-      else if (indexResult != null)
-				resultListener.addResult((OIdentifiable) indexResult);
-    } else
-      return false;
+			final Object key = indexDefinition.createValue(keyParams);
+      final Object indexResult = index.get(key);
+
+			if (indexResult == null || indexResult instanceof OIdentifiable)
+				cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+			else
+				cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+		} else
+      return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
 
-    return true;
+    return cursor;
   }
 
   @Override

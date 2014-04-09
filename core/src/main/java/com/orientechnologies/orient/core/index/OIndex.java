@@ -206,6 +206,17 @@ public interface OIndex<T> {
   void getValues(Collection<?> iKeys, boolean ascSortOrder, IndexValuesResultListener resultListener);
 
   /**
+   * Returns cursor which presents data associated with passed in keys.
+   * 
+   * @param keys
+   *          Keys data of which should be returned.
+   * @param ascSortOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return cursor which presents data associated with passed in keys.
+   */
+  OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
+
+  /**
    * Returns a set of documents with keys in specific set
    * 
    * @param iKeys
@@ -332,7 +343,8 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
 
-  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener);
+  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder,
+      IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
@@ -347,7 +359,8 @@ public interface OIndex<T> {
    */
   public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
 
-  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener);
+  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder,
+      IndexEntriesResultListener entriesResultListener);
 
   /**
    * Returns a set of documents with key between the range passed as parameter.
@@ -364,9 +377,53 @@ public interface OIndex<T> {
   public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
 
   public abstract void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-																				 boolean ascOrder, IndexEntriesResultListener entriesResultListener);
+      boolean ascOrder, IndexEntriesResultListener entriesResultListener);
 
   public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
+
+  /**
+   * Returns cursor which presents subset of index data between passed in keys.
+   * 
+   * @param fromKey
+   *          Lower border of index data.
+   * @param fromInclusive
+   *          Indicates whether lower border should be inclusive or exclusive.
+   * @param toKey
+   *          Upper border of index data.
+   * @param toInclusive
+   *          Indicates whether upper border should be inclusive or exclusive.
+   * @param ascOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return Cursor which presents subset of index data between passed in keys.
+   */
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder);
+
+  /**
+   * Returns cursor which presents subset of data which associated with key which is greater than passed in key.
+   * 
+   * @param fromKey
+   *          Lower border of index data.
+   * @param fromInclusive
+   *          Indicates whether lower border should be inclusive or exclusive.
+   * @param ascOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return cursor which presents subset of data which associated with key which is greater than passed in key.
+   */
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
+
+  /**
+   * Returns cursor which presents subset of data which associated with key which is less than passed in key.
+   * 
+   * @param toKey
+   *          Upper border of index data.
+   * @param toInclusive
+   *          Indicates Indicates whether upper border should be inclusive or exclusive.
+   * @param ascOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return cursor which presents subset of data which associated with key which is less than passed in key.
+   */
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
    * Returns the Record Identity of the index if persistent.

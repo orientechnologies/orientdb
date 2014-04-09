@@ -267,6 +267,8 @@ public enum OGlobalConfiguration {
   INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
       "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
 
+	INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
+
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 

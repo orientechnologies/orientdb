@@ -268,7 +268,25 @@ public class SBTreeWAL extends SBTreeTest {
     super.testValuesBetween();
   }
 
-  private void assertFileRestoreFromWAL() throws IOException {
+	@Test(enabled = false)
+	@Override
+	public void testIterateEntriesMajor() {
+		super.testIterateEntriesMajor();
+	}
+
+	@Test(enabled = false)
+	@Override
+	public void testIterateEntriesMinor() {
+		super.testIterateEntriesMinor();
+	}
+
+	@Test(enabled = false)
+	@Override
+	public void testIterateEntriesBetween() {
+		super.testIterateEntriesBetween();
+	}
+
+	private void assertFileRestoreFromWAL() throws IOException {
     sbTree.close();
     writeAheadLog.close();
     expectedSBTree.close();

@@ -23,6 +23,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
@@ -213,20 +214,38 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-															EntriesResultListener entriesResultListener) {
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMajor");
   }
 
   @Override
   public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-															EntriesResultListener entriesResultListener) {
+      EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesMinor");
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-																EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
+      ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener) {
     throw new UnsupportedOperationException("getEntriesBetween");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    throw new UnsupportedOperationException("iterateEntriesBetween");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
+    throw new UnsupportedOperationException("iterateEntriesMajor");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
+    throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
   @Override

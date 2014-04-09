@@ -4,6 +4,8 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 /**
+ * A pointer to bucket in disk page. Defines the page and the offset in page where the bucket is placed. Is immutable.
+ * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OBonsaiBucketPointer {

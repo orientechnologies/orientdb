@@ -245,7 +245,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public void getValuesBetween(Object iRangeFrom, final boolean fromInclusive, Object iRangeTo, final boolean toInclusive,
-															 boolean ascSortOrder, final IndexValuesResultListener resultListener) {
+      boolean ascSortOrder, final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
@@ -253,49 +253,99 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesBetween(iRangeFrom, fromInclusive, iRangeTo, toInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
-          @Override
-          public boolean addResult(OIdentifiable identifiable) {
-            return resultListener.addResult(identifiable);
-          }
-        }
-      );
+      indexEngine.getValuesBetween(iRangeFrom, fromInclusive, iRangeTo, toInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.ValuesResultListener() {
+            @Override
+            public boolean addResult(OIdentifiable identifiable) {
+              return resultListener.addResult(identifiable);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener valuesResultListener) {
+  public void getValuesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascSortOrder,
+      final IndexValuesResultListener valuesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMajor(iRangeFrom, isInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
-        @Override
-        public boolean addResult(OIdentifiable identifiable) {
-          return valuesResultListener.addResult(identifiable);
-        }
-      });
+      indexEngine.getValuesMajor(iRangeFrom, isInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.ValuesResultListener() {
+            @Override
+            public boolean addResult(OIdentifiable identifiable) {
+              return valuesResultListener.addResult(identifiable);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder, final IndexValuesResultListener resultListener) {
+  public void getValuesMinor(Object iRangeTo, final boolean isInclusive, boolean ascSortOrder,
+      final IndexValuesResultListener resultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getValuesMinor(iRangeTo, isInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.ValuesResultListener() {
-        @Override
-        public boolean addResult(OIdentifiable identifiable) {
-          return resultListener.addResult(identifiable);
-        }
-      });
+      indexEngine.getValuesMinor(iRangeTo, isInclusive, ascSortOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.ValuesResultListener() {
+            @Override
+            public boolean addResult(OIdentifiable identifiable) {
+              return resultListener.addResult(identifiable);
+            }
+          });
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    checkForRebuild();
+
+    fromKey = getCollatingValue(fromKey);
+    toKey = getCollatingValue(toKey);
+
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder,
+          MultiValuesTransformer.INSTANCE);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    checkForRebuild();
+
+    fromKey = getCollatingValue(fromKey);
+
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesMajor(fromKey, fromInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
+
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    checkForRebuild();
+
+    toKey = getCollatingValue(toKey);
+
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesMinor(toKey, toInclusive, ascOrder, MultiValuesTransformer.INSTANCE);
     } finally {
       releaseSharedLock();
     }
@@ -305,11 +355,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
-		final Comparator<Object> comparator;
-		if (ascSortOrder)
-			comparator = ODefaultComparator.INSTANCE;
-		else
-		  comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    final Comparator<Object> comparator;
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
 
     Collections.sort(sortedKeys, comparator);
 
@@ -336,45 +386,118 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    checkForRebuild();
+
+    final List<Object> sortedKeys = new ArrayList<Object>(keys);
+    final Comparator<Object> comparator;
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+
+    Collections.sort(sortedKeys, comparator);
+
+    return new OIndexCursor() {
+      private Iterator<?>             keysIterator    = sortedKeys.iterator();
+
+      private Iterator<OIdentifiable> currentIterator = Collections.emptyIterator();
+      private Object                  currentKey;
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+        if (currentIterator == null)
+          return null;
+
+        Object key = null;
+        if (!currentIterator.hasNext()) {
+          Collection<OIdentifiable> result = null;
+          while (keysIterator.hasNext() && (result == null || result.isEmpty())) {
+            key = keysIterator.next();
+            key = getCollatingValue(key);
+
+            acquireSharedLock();
+            try {
+              result = indexEngine.get(key);
+            } finally {
+              releaseSharedLock();
+            }
+          }
+
+          if (result == null) {
+            currentIterator = null;
+            return null;
+          }
+
+          currentKey = key;
+          currentIterator = result.iterator();
+        }
+
+        final OIdentifiable resultValue = currentIterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return currentKey;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return resultValue;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        };
+      }
+    };
+  }
+
+  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, ascOrder,
-							MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
-								@Override
-								public boolean addResult(ODocument entry) {
-									return entriesResultListener.addResult(entry);
-								}
-							});
+      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.EntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return entriesResultListener.addResult(entry);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getEntriesMinor(Object iRangeTo, boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object iRangeTo, boolean isInclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMinor(iRangeTo, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
-        @Override
-        public boolean addResult(ODocument entry) {
-          return entriesResultListener.addResult(entry);
-        }
-      });
+      indexEngine.getEntriesMinor(iRangeTo, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.EntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return entriesResultListener.addResult(entry);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean inclusive,
-																boolean ascOrder, final IndexEntriesResultListener indexEntriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean inclusive, boolean ascOrder,
+      final IndexEntriesResultListener indexEntriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);

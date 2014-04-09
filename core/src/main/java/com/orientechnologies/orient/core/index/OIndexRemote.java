@@ -452,9 +452,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener) {
-		if(!ascOrder)
-			throw new OIndexException("Only ascending order of records is supported in remote index.");
+  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder,
+      IndexEntriesResultListener entriesResultListener) {
+    if (!ascOrder)
+      throw new OIndexException("Only ascending order of records is supported in remote index.");
 
     Collection<ODocument> result = getEntriesMajor(fromKey, isInclusive);
 
@@ -469,21 +470,21 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener entriesResultListener) {
-		if(!ascOrder)
-			throw new OIndexException("Only ascending order of records is supported in remote index.");
+    if (!ascOrder)
+      throw new OIndexException("Only ascending order of records is supported in remote index.");
 
-		Collection<ODocument> result = getEntriesMinor(toKey, isInclusive);
+    Collection<ODocument> result = getEntriesMinor(toKey, isInclusive);
 
     addEntries(entriesResultListener, result);
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive,
-																boolean ascOrder, IndexEntriesResultListener entriesResultListener) {
-		if(!ascOrder)
-			throw new OIndexException("Only ascending order of records is supported in remote index.");
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
+      IndexEntriesResultListener entriesResultListener) {
+    if (!ascOrder)
+      throw new OIndexException("Only ascending order of records is supported in remote index.");
 
-		Collection<ODocument> result = getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
+    Collection<ODocument> result = getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
 
     addEntries(entriesResultListener, result);
   }
@@ -645,5 +646,26 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("getLastKey");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    throw new UnsupportedOperationException("iterateEntriesBetween");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    throw new UnsupportedOperationException("iterateEntriesMajor");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    throw new UnsupportedOperationException("iterateEntriesMinor");
+  }
+
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    throw new UnsupportedOperationException("iterateEntries");
   }
 }

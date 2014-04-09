@@ -37,16 +37,34 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
    */
   long getFileId();
 
+  /**
+   * @return the pointer to the root bucket in tree.
+   */
   OBonsaiBucketPointer getRootBucketPointer();
 
+  /**
+   * @return pointer to a collection.
+   */
   OBonsaiCollectionPointer getCollectionPointer();
 
+  /**
+   * Search for entry with specific key and return its value.
+   * 
+   * @param key
+   * @return value associated with given key, NULL if no value is associated.
+   */
   V get(K key);
 
   boolean put(K key, V value);
 
+  /**
+   * Deletes all entries from tree.
+   */
   void clear();
 
+  /**
+   * Deletes whole tree. After this operation tree is no longer usable.
+   */
   void delete();
 
   long size();

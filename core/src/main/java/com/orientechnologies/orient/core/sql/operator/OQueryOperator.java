@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -106,7 +107,9 @@ public abstract class OQueryOperator {
   public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
 
   /**
-   * Performs index query to calculate result of execution of given operator.
+   * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of
+   * given operator.
+   * 
    * <p/>
    * Query that should be executed can be presented like: [[property0 = keyParam0] and [property1 = keyParam1] and] propertyN
    * operator keyParamN.
@@ -116,19 +119,19 @@ public abstract class OQueryOperator {
    * <p/>
    * Multiple parameters are passed in to implement composite indexes support.
    * 
+   * 
    * @param iContext
-   *          TODO
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
    * @param keyParams
    *          Parameters of query is used to calculate query result.
    * @param ascSortOrder
-   * @param resultListener
-   * @return <code>true</code> if index was successfully used to retrieve data.
+   *          Data returned by cursors should be sorted in ascending or descending order.
+   * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams, boolean ascSortOrder,
-      final OIndex.IndexValuesResultListener resultListener) {
-    return false;
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+      boolean ascSortOrder) {
+    return null;
   }
 
   @Override

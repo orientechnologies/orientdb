@@ -27,11 +27,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -1175,7 +1171,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             idxNames.add(index.getName());
         }
 
-        boolean result;
+        OIndexCursor cursor;
         final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(index) && !(index.getInternal() instanceof OChainedIndexProxy);
         try {
           boolean ascSortOrder;
@@ -1187,9 +1183,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (indexIsUsedInOrderBy)
             fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size();
 
-          final IndexResultListener resultListener = new IndexResultListener();
-
-          result = operator.executeIndexQuery(context, index, keyParams, ascSortOrder, resultListener);
+          cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
         } catch (Exception e) {
           OLogManager
               .instance()
@@ -1202,8 +1196,44 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           return false;
         }
 
-        if (!result)
+        if (cursor == null)
           continue;
+
+        int needsToFetch;
+        if (fetchLimit > 0)
+          needsToFetch = fetchLimit + skip;
+        else
+          needsToFetch = -1;
+
+        Map.Entry<Object, OIdentifiable> entryRecord = cursor.next(needsToFetch);
+        if (needsToFetch > 0)
+          needsToFetch--;
+
+        while (entryRecord != null) {
+          final OIdentifiable identifiable = entryRecord.getValue();
+          final ORecord record = identifiable.getRecord();
+
+          if (record instanceof ORecordSchemaAware<?>) {
+            final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
+            final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
+            if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+              for (OClass targetClass : targetClasses.keySet()) {
+                if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+                  return true;
+              }
+            }
+          }
+
+          if (compiledFilter == null || evaluateRecord(record)) {
+            if (!handleResult(record, true))
+              break;
+          }
+
+          entryRecord = cursor.next(needsToFetch);
+
+          if (needsToFetch > 0)
+            needsToFetch--;
+        }
 
         if (context.isRecordingMetrics()) {
           context.setVariable("indexIsUsedInOrderBy", indexIsUsedInOrderBy);

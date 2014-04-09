@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -138,44 +139,75 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public void put(Object key, Object value) {
   }
 
-	@Override
-	public Object getFirstKey() {
-		return null;
-	}
+  @Override
+  public Object getFirstKey() {
+    return null;
+  }
 
-	@Override
-	public Object getLastKey() {
-		return null;
-	}
+  @Override
+  public Object getLastKey() {
+    return null;
+  }
 
-	@Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-															 boolean ascSortOrder, ValuesTransformer transformer, ValuesResultListener resultListener) {
+  @Override
+  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
+      ValuesTransformer transformer, ValuesResultListener resultListener) {
   }
 
   @Override
   public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
-														 ValuesResultListener valuesResultListener) {
+      ValuesResultListener valuesResultListener) {
   }
 
   @Override
   public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
-														 ValuesResultListener valuesResultListener) {
+      ValuesResultListener valuesResultListener) {
   }
 
   @Override
   public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
-															EntriesResultListener entriesResultListener) {
+      EntriesResultListener entriesResultListener) {
   }
 
   @Override
   public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
-															EntriesResultListener entriesResultListener) {
+      EntriesResultListener entriesResultListener) {
   }
 
   @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder, ValuesTransformer transformer,
-																EntriesResultListener entriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
+      ValuesTransformer transformer, EntriesResultListener entriesResultListener) {
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer transformer) {
+    return new OIndexCursor() {
+      @Override
+      public Map.Entry next(int prefetchSize) {
+        return null;
+      }
+    };
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return new OIndexCursor() {
+      @Override
+      public Map.Entry next(int prefetchSize) {
+        return null;
+      }
+    };
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return new OIndexCursor() {
+      @Override
+      public Map.Entry next(int prefetchSize) {
+        return null;
+      }
+    };
   }
 
   @Override
