@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -35,7 +36,6 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -60,8 +60,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
       final int protocolVersion, final ORemoteServerEventListener asynchEventListener) throws IOException {
-    super(new Socket(), iConfig);
-
+	super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
+        
     maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
     serverURL = remoteHost + ":" + remotePort;
     socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
