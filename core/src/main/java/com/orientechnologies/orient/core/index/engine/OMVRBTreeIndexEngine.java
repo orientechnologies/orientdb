@@ -241,9 +241,21 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       boolean ascSortOrder, ValuesTransformer<V> transformer) {
     acquireExclusiveLock();
     try {
-      if (ascSortOrder)
+
+      if (fromInclusive)
+        rangeFrom = map.enhanceCompositeKey(rangeFrom, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        rangeFrom = map.enhanceCompositeKey(rangeFrom, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+
+      if (toInclusive)
+        rangeTo = map.enhanceCompositeKey(rangeTo, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+      else
+        rangeTo = map.enhanceCompositeKey(rangeTo, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
+      if (ascSortOrder) {
         return new OMBRBTreeIndexCursor(map.subMap(rangeFrom, fromInclusive, rangeTo, toInclusive).entrySet().iterator(),
             transformer);
+      }
 
       return new OMBRBTreeIndexCursor(map.subMap(rangeFrom, fromInclusive, rangeTo, toInclusive).descendingMap().entrySet()
           .iterator(), transformer);
@@ -257,6 +269,11 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       ValuesTransformer<V> transformer) {
     acquireExclusiveLock();
     try {
+      if (isInclusive)
+        fromKey = map.enhanceCompositeKey(fromKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+      else
+        fromKey = map.enhanceCompositeKey(fromKey, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+
       if (ascSortOrder)
         return new OMBRBTreeIndexCursor(map.tailMap(fromKey, isInclusive).entrySet().iterator(), transformer);
 
@@ -270,6 +287,11 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
     acquireExclusiveLock();
     try {
+      if (isInclusive)
+        toKey = map.enhanceCompositeKey(toKey, OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY);
+      else
+        toKey = map.enhanceCompositeKey(toKey, OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY);
+
       if (ascSortOrder)
         return new OMBRBTreeIndexCursor(map.headMap(toKey, isInclusive).entrySet().iterator(), transformer);
 
@@ -996,21 +1018,32 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
 
     @Override
     public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      if (currentIterator.hasNext())
+        return nextCollectionEntry();
+
       if (!treeIterator.hasNext())
         return null;
 
-      if (valuesTransformer == null)
-        return (Map.Entry<Object, OIdentifiable>) treeIterator.next();
-
-      while (!currentIterator.hasNext() && treeIterator.hasNext()) {
+      if (valuesTransformer == null) {
         final Map.Entry<Object, V> entry = treeIterator.next();
         currentKey = entry.getKey();
-        currentIterator = valuesTransformer.transformFromValue(entry.getValue()).iterator();
+        currentIterator = Collections.singletonList((OIdentifiable)entry.getValue()).iterator();
+      } else {
+        while (!currentIterator.hasNext() && treeIterator.hasNext()) {
+          final Map.Entry<Object, V> entry = treeIterator.next();
+          currentKey = entry.getKey();
+          currentIterator = valuesTransformer.transformFromValue(entry.getValue()).iterator();
+        }
       }
 
       if (!currentIterator.hasNext())
         return null;
 
+      return nextCollectionEntry();
+
+    }
+
+    private Map.Entry<Object, OIdentifiable> nextCollectionEntry() {
       final OIdentifiable value = currentIterator.next();
 
       return new Map.Entry<Object, OIdentifiable>() {
@@ -1029,7 +1062,6 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
           throw new UnsupportedOperationException("setValue");
         }
       };
-
     }
 
   }

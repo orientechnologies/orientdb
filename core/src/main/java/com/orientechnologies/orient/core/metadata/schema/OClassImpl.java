@@ -18,8 +18,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -1065,25 +1063,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-        extractFieldTypes(fields));
-
-    // BROWSE ALL THE FIELDS TO DETERMINE THE COLLATE TO USE ON INDEX
-    OCollate collate = null;
-    for (String field : fields) {
-      final OProperty p = getProperty(field);
-      if (p != null) {
-        if (collate == null)
-          collate = p.getCollate();
-        else if (!collate.equals(p.getCollate())) {
-          collate = null;
-          break;
-        }
-      }
-    }
-
-    if (collate != null && !(collate instanceof ODefaultCollate))
-      // INHERIT THE PROPERTIES COLLATE
-      indexDefinition.setCollate(collate);
+        extractFieldTypes(fields), null);
 
     return getDatabase().getMetadata().getIndexManager()
         .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);

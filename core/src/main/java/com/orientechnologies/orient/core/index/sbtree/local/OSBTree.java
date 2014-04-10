@@ -162,7 +162,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
+      BucketSearchResult bucketSearchResult = findBucket(key);
       if (bucketSearchResult.itemIndex < 0)
         return null;
 
@@ -212,7 +212,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
         valueLink = createLinkToTheValue(value);
 
       final OSBTreeValue<V> treeValue = new OSBTreeValue<V>(createLinkToTheValue, valueLink, createLinkToTheValue ? null : value);
-      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
+      BucketSearchResult bucketSearchResult = findBucket(key);
 
       OCacheEntry keyBucketCacheEntry = diskCache.load(fileId, bucketSearchResult.getLastPathItem(), false);
       OCachePointer keyBucketPointer = keyBucketCacheEntry.getCachePointer();
@@ -638,7 +638,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-      BucketSearchResult bucketSearchResult = findBucket(key, PartialSearchMode.NONE);
+      BucketSearchResult bucketSearchResult = findBucket(key);
       if (bucketSearchResult.itemIndex < 0)
         return null;
 
@@ -765,14 +765,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   private OSBTreeCursor<K, V> iterateEntriesMinorDesc(K key, boolean inclusive) throws IOException {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
+    key = enhanceCompositeKeyMinorDesc(key, inclusive);
 
-    final PartialSearchMode partialSearchMode;
-    if (inclusive)
-      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+    BucketSearchResult bucketSearchResult = findBucket(key);
 
     long pageIndex = bucketSearchResult.getLastPathItem();
     int index;
@@ -787,6 +782,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   private OSBTreeCursor<K, V> iterateEntriesMinorAsc(K key, boolean inclusive) throws IOException {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
+    key = enhanceCompositeKeyMinorAsc(key, inclusive);
 
     final BucketSearchResult searchResult;
     acquireSharedLock();
@@ -812,13 +808,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   private void loadEntriesMinorDescOrder(K key, boolean inclusive, RangeResultListener<K, V> listener) throws IOException {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-    final PartialSearchMode partialSearchMode;
-    if (inclusive)
-      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+    key = enhanceCompositeKeyMinorDesc(key, inclusive);
+    BucketSearchResult bucketSearchResult = findBucket(key);
 
     long pageIndex = bucketSearchResult.getLastPathItem();
     int index;
@@ -858,6 +849,17 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     }
   }
 
+  private K enhanceCompositeKeyMinorDesc(K key, boolean inclusive) {
+    final PartialSearchMode partialSearchMode;
+    if (inclusive)
+      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+    else
+      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
+
+    key = enhanceCompositeKey(key, partialSearchMode);
+    return key;
+  }
+
   private void loadEntriesMinorAscOrder(K key, boolean inclusive, RangeResultListener<K, V> listener) throws IOException {
     final BucketSearchResult firstItem = firstItem();
     if (firstItem == null)
@@ -865,13 +867,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-    final PartialSearchMode partialSearchMode;
-    if (inclusive)
-      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+    key = enhanceCompositeKeyMinorAsc(key, inclusive);
+    BucketSearchResult bucketSearchResult = findBucket(key);
 
     long endPageIndex = bucketSearchResult.getLastPathItem();
     int endIndex;
@@ -917,6 +914,17 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       pageIndex = nextPageIndex;
     }
+  }
+
+  private K enhanceCompositeKeyMinorAsc(K key, boolean inclusive) {
+    final PartialSearchMode partialSearchMode;
+    if (inclusive)
+      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+    else
+      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
+
+    key = enhanceCompositeKey(key, partialSearchMode);
+    return key;
   }
 
   public Collection<V> getValuesMajor(K key, boolean inclusive, final int maxValuesToFetch, boolean ascSortOrder) {
@@ -967,14 +975,10 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   private OSBTreeCursor<K, V> iterateEntriesMajorAsc(K key, boolean inclusive) throws IOException {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
+    key = enhanceCompositeKeyMajorAsc(key, inclusive);
 
-    final PartialSearchMode partialSearchMode;
-    if (inclusive)
-      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+    BucketSearchResult bucketSearchResult = findBucket(key);
 
-    BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
     long pageIndex = bucketSearchResult.getLastPathItem();
     int index;
     if (bucketSearchResult.itemIndex >= 0) {
@@ -988,6 +992,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
   private OSBTreeCursor<K, V> iterateEntriesMajorDesc(K key, boolean inclusive) throws IOException {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
+    key = enhanceCompositeKeyMajorDesc(key, inclusive);
 
     final BucketSearchResult searchResult;
     acquireSharedLock();
@@ -1013,13 +1018,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   private void loadEntriesMajorAscOrder(K key, boolean inclusive, RangeResultListener<K, V> listener) throws IOException {
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-    final PartialSearchMode partialSearchMode;
-    if (inclusive)
-      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+    key = enhanceCompositeKeyMajorAsc(key, inclusive);
+    BucketSearchResult bucketSearchResult = findBucket(key);
     long pageIndex = bucketSearchResult.getLastPathItem();
     int index;
     if (bucketSearchResult.itemIndex >= 0) {
@@ -1054,6 +1054,17 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     }
   }
 
+  private K enhanceCompositeKeyMajorAsc(K key, boolean inclusive) {
+    final PartialSearchMode partialSearchMode;
+    if (inclusive)
+      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
+    else
+      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+
+    key = enhanceCompositeKey(key, partialSearchMode);
+    return key;
+  }
+
   private void loadEntriesMajorDescOrder(K key, boolean inclusive, RangeResultListener<K, V> listener) throws IOException {
     final BucketSearchResult lastItem = lastItem();
     if (lastItem == null)
@@ -1061,13 +1072,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
     key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-    final PartialSearchMode partialSearchMode;
-    if (inclusive)
-      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResult = findBucket(key, partialSearchMode);
+    key = enhanceCompositeKeyMajorDesc(key, inclusive);
+    BucketSearchResult bucketSearchResult = findBucket(key);
     final long endPageIndex = bucketSearchResult.getLastPathItem();
     final int endIndex;
 
@@ -1112,6 +1118,17 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       pageIndex = prevPageIndex;
     }
+  }
+
+  private K enhanceCompositeKeyMajorDesc(K key, boolean inclusive) {
+    final PartialSearchMode partialSearchMode;
+    if (inclusive)
+      partialSearchMode = PartialSearchMode.LOWEST_BOUNDARY;
+    else
+      partialSearchMode = PartialSearchMode.HIGHEST_BOUNDARY;
+
+    key = enhanceCompositeKey(key, partialSearchMode);
+    return key;
   }
 
   public Collection<V> getValuesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive, final int maxValuesToFetch,
@@ -1350,13 +1367,10 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
-    PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive)
-      partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+    keyFrom = enhanceFromCompositeKeyBetweenAsc(keyFrom, fromInclusive);
+    keyTo = enhanceToCompositeKeyBetweenAsc(keyTo, toInclusive);
 
-    BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, partialSearchModeFrom);
+    BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
 
     long pageIndexFrom = bucketSearchResultFrom.getLastPathItem();
 
@@ -1375,13 +1389,11 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
-    PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+    keyFrom = enhanceFromCompositeKeyBetweenDesc(keyFrom, fromInclusive);
+    keyTo = enhanceToCompositeKeyBetweenDesc(keyTo, toInclusive);
 
-    BucketSearchResult bucketSearchResultTo = findBucket(keyTo, partialSearchModeTo);
+    BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
+
     long pageIndexTo = bucketSearchResultTo.getLastPathItem();
 
     int indexTo;
@@ -1399,13 +1411,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
     keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
 
-    PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive)
-      partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, partialSearchModeFrom);
+    keyFrom = enhanceFromCompositeKeyBetweenAsc(keyFrom, fromInclusive);
+    BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
 
     long pageIndexFrom = bucketSearchResultFrom.getLastPathItem();
 
@@ -1416,13 +1423,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       indexFrom = -bucketSearchResultFrom.itemIndex - 1;
     }
 
-    PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResultTo = findBucket(keyTo, partialSearchModeTo);
+    keyTo = enhanceToCompositeKeyBetweenAsc(keyTo, toInclusive);
+    BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
     long pageIndexTo = bucketSearchResultTo.getLastPathItem();
 
     int indexTo;
@@ -1471,19 +1473,36 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     }
   }
 
-  private void loadEntriesBetweenDescOrder(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
-      RangeResultListener<K, V> listener) throws IOException {
+  private K enhanceToCompositeKeyBetweenAsc(K keyTo, boolean toInclusive) {
+    PartialSearchMode partialSearchModeTo;
+    if (toInclusive)
+      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else
+      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
 
-    keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
-    keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
+    return keyTo;
+  }
 
+  private K enhanceFromCompositeKeyBetweenAsc(K keyFrom, boolean fromInclusive) {
     PartialSearchMode partialSearchModeFrom;
     if (fromInclusive)
       partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
     else
       partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
 
-    BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom, partialSearchModeFrom);
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
+    return keyFrom;
+  }
+
+  private void loadEntriesBetweenDescOrder(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
+      RangeResultListener<K, V> listener) throws IOException {
+
+    keyFrom = keySerializer.preprocess(keyFrom, (Object[]) keyTypes);
+    keyTo = keySerializer.preprocess(keyTo, (Object[]) keyTypes);
+
+    keyFrom = enhanceFromCompositeKeyBetweenDesc(keyFrom, fromInclusive);
+    BucketSearchResult bucketSearchResultFrom = findBucket(keyFrom);
 
     long pageIndexFrom = bucketSearchResultFrom.getLastPathItem();
 
@@ -1494,13 +1513,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       indexFrom = -bucketSearchResultFrom.itemIndex - 1;
     }
 
-    PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
-
-    BucketSearchResult bucketSearchResultTo = findBucket(keyTo, partialSearchModeTo);
+    keyTo = enhanceToCompositeKeyBetweenDesc(keyTo, toInclusive);
+    BucketSearchResult bucketSearchResultTo = findBucket(keyTo);
     long pageIndexTo = bucketSearchResultTo.getLastPathItem();
 
     int indexTo;
@@ -1554,6 +1568,28 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       pageIndex = prevPageIndex;
     }
+  }
+
+  private K enhanceToCompositeKeyBetweenDesc(K keyTo, boolean toInclusive) {
+    PartialSearchMode partialSearchModeTo;
+    if (toInclusive)
+      partialSearchModeTo = PartialSearchMode.HIGHEST_BOUNDARY;
+    else
+      partialSearchModeTo = PartialSearchMode.LOWEST_BOUNDARY;
+
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
+    return keyTo;
+  }
+
+  private K enhanceFromCompositeKeyBetweenDesc(K keyFrom, boolean fromInclusive) {
+    PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive)
+      partialSearchModeFrom = PartialSearchMode.LOWEST_BOUNDARY;
+    else
+      partialSearchModeFrom = PartialSearchMode.HIGHEST_BOUNDARY;
+
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
+    return keyFrom;
   }
 
   public void flush() {
@@ -1779,25 +1815,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     }
   }
 
-  private BucketSearchResult findBucket(K key, PartialSearchMode partialSearchMode) throws IOException {
+  private BucketSearchResult findBucket(K key) throws IOException {
     long pageIndex = ROOT_INDEX;
     final ArrayList<Long> path = new ArrayList<Long>();
-
-    if (!(keySize == 1 || ((OCompositeKey) key).getKeys().size() == keySize || partialSearchMode.equals(PartialSearchMode.NONE))) {
-      final OCompositeKey fullKey = new OCompositeKey((Comparable<? super K>) key);
-      int itemsToAdd = keySize - fullKey.getKeys().size();
-
-      final Comparable<?> keyItem;
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
-        keyItem = ALWAYS_GREATER_KEY;
-      else
-        keyItem = ALWAYS_LESS_KEY;
-
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
-
-      key = (K) fullKey;
-    }
 
     while (true) {
       path.add(pageIndex);
@@ -1832,6 +1852,31 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       else
         pageIndex = entry.leftChild;
     }
+  }
+
+  private K enhanceCompositeKey(K key, PartialSearchMode partialSearchMode) {
+    if (!(key instanceof OCompositeKey))
+      return key;
+
+    final OCompositeKey compositeKey = (OCompositeKey) key;
+
+    if (!(keySize == 1 || compositeKey.getKeys().size() == keySize || partialSearchMode.equals(PartialSearchMode.NONE))) {
+      final OCompositeKey fullKey = new OCompositeKey(compositeKey);
+      int itemsToAdd = keySize - fullKey.getKeys().size();
+
+      final Comparable<?> keyItem;
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
+        keyItem = ALWAYS_GREATER_KEY;
+      else
+        keyItem = ALWAYS_LESS_KEY;
+
+      for (int i = 0; i < itemsToAdd; i++)
+        fullKey.addKey(keyItem);
+
+      return (K) fullKey;
+    }
+
+    return key;
   }
 
   private V readValue(OSBTreeValue<V> sbTreeValue) throws IOException {

@@ -50,4 +50,24 @@ public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass i
 
     setCollate(OSQLEngine.getCollate(iCollate));
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OAbstractIndexDefinition that = (OAbstractIndexDefinition) o;
+
+    if (!collate.equals(that.collate))
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return collate.hashCode();
+  }
 }

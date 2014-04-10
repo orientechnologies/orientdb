@@ -371,29 +371,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     final K k;
 
-    if (keySize == 1)
-      k = (K) key;
-    else if (((OCompositeKey) key).getKeys().size() == keySize)
-      k = (K) key;
-    else if (partialSearchMode.equals(PartialSearchMode.NONE))
-      k = (K) key;
-    else {
-      final OCompositeKey fullKey = new OCompositeKey((Comparable<? super K>) key);
-      int itemsToAdd = keySize - fullKey.getKeys().size();
+		k = enhanceCompositeKey(key, partialSearchMode);
 
-      final Comparable<?> keyItem;
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
-        keyItem = ALWAYS_GREATER_KEY;
-      else
-        keyItem = ALWAYS_LESS_KEY;
-
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
-
-      k = (K) fullKey;
-    }
-
-    OMVRBTreeEntry<K, V> p = getBestEntryPoint(k);
+		OMVRBTreeEntry<K, V> p = getBestEntryPoint(k);
 
     checkTreeStructure(p);
 
@@ -492,7 +472,33 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     return setLastSearchNode(key, null);
   }
 
-  private OMVRBTreeEntry<K, V> adjustHighestPartialSearchResult(final boolean iGetContainer, final OMVRBTreeEntry<K, V> lastNode,
+	public K enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {
+		K k;
+		if (keySize == 1)
+			k = (K) key;
+		else if (((OCompositeKey) key).getKeys().size() == keySize)
+			k = (K) key;
+		else if (partialSearchMode.equals(PartialSearchMode.NONE))
+			k = (K) key;
+		else {
+			final OCompositeKey fullKey = new OCompositeKey((Comparable<? super K>) key);
+			int itemsToAdd = keySize - fullKey.getKeys().size();
+
+			final Comparable<?> keyItem;
+			if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
+				keyItem = ALWAYS_GREATER_KEY;
+			else
+				keyItem = ALWAYS_LESS_KEY;
+
+			for (int i = 0; i < itemsToAdd; i++)
+				fullKey.addKey(keyItem);
+
+			k = (K) fullKey;
+		}
+		return k;
+	}
+
+	private OMVRBTreeEntry<K, V> adjustHighestPartialSearchResult(final boolean iGetContainer, final OMVRBTreeEntry<K, V> lastNode,
       final OCompositeKey compositeKey) {
     final int oldPageIndex = pageIndex;
 

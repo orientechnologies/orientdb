@@ -54,7 +54,10 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public List<String> getFieldsToIndex() {
-    return Collections.singletonList(field);
+    if (collate == null || collate.getName().equals(ODefaultCollate.NAME))
+      return Collections.singletonList(field);
+
+    return Collections.singletonList(field + " collate " + collate.getName());
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
@@ -75,7 +78,10 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
+		if (!super.equals(o))
+			return false;
+
+		final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
 
     if (!className.equals(that.className))
       return false;
@@ -89,7 +95,8 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public int hashCode() {
-    int result = className.hashCode();
+    int result = super.hashCode();
+    result = 31 * result + className.hashCode();
     result = 31 * result + field.hashCode();
     result = 31 * result + keyType.hashCode();
     return result;
@@ -98,7 +105,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   @Override
   public String toString() {
     return "OPropertyIndexDefinition{" + "className='" + className + '\'' + ", field='" + field + '\'' + ", keyType=" + keyType
-        + '}';
+        + ", collate=" + collate + '}';
   }
 
   public Object createValue(final List<?> params) {
@@ -180,8 +187,10 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     } else {
       ddl.append(indexName).append(" on ");
       ddl.append(className).append(" ( ").append(field);
+
       if (!collate.getName().equals(ODefaultCollate.NAME))
-        ddl.append(" COLLATE ").append(collate.getName());
+        ddl.append(" collate ").append(collate.getName());
+
       ddl.append(" ) ");
     }
     ddl.append(indexType);
