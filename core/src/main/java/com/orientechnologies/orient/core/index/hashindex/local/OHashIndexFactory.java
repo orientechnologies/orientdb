@@ -122,7 +122,7 @@ public class OHashIndexFactory implements OIndexFactory {
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
       return new OIndexNotUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm);
+      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
       return new OIndexDictionary(indexType, algorithm, indexEngine, valueContainerAlgorithm);
 
