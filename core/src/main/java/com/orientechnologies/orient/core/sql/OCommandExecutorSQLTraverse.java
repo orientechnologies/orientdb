@@ -66,17 +66,18 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     final int pos = parseFields();
     if (pos == -1)
       throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
+    parserSetCurrentPosition(pos);
 
     int endPosition = parserText.length();
-    int endP = parserTextUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, parserGetCurrentPosition());
-    if (endP > -1 && endP < endPosition)
-      endPosition = endP;
 
     parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
 
-    if (!parsedTarget.parserIsEnded()) {
-      parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + pos);
+    if (parsedTarget.parserIsEnded())
+      parserSetCurrentPosition(endPosition);
+    else
+      parserMoveCurrentPosition(parsedTarget.parserGetCurrentPosition());
 
+    if (!parserIsEnded()) {
       parserNextWord(true);
 
       if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
@@ -94,9 +95,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
             + parserGetCurrentPosition());
       } else
         parserGoBack();
-
-    } else
-      parserSetCurrentPosition(-1);
+    }
 
     parserSkipWhiteSpaces();
 
