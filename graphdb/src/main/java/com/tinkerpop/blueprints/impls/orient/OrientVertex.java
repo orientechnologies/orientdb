@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * OrientDB Vertex implementation of TinkerPop Blueprints standard.
+ * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
@@ -52,6 +54,16 @@ public class OrientVertex extends OrientElement implements Vertex {
     super(graph, record);
   }
 
+  /**
+   * (Blueprints Extension) Returns the field name used for the relationship.
+   * 
+   * @param iDirection
+   *          Direction between IN, OUT or BOTH
+   * @param iClassName
+   *          Class name if any
+   * @param useVertexFieldsForEdgeLabels
+   *          Graph setting about using the edge label as vertex's field
+   */
   public static String getConnectionFieldName(final Direction iDirection, final String iClassName,
       final boolean useVertexFieldsForEdgeLabels) {
     if (iDirection == null || iDirection == Direction.BOTH)
@@ -69,6 +81,13 @@ public class OrientVertex extends OrientElement implements Vertex {
       return iDirection == Direction.OUT ? OrientBaseGraph.CONNECTION_OUT : OrientBaseGraph.CONNECTION_IN;
   }
 
+  /**
+   * (Internal only) Creates a link between a vertices and a Graph Element.
+   * @param iFromVertex
+   * @param iTo
+   * @param iFieldName
+   * @return
+   */
   public static Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
     final Object out;
     Object found = iFromVertex.field(iFieldName);
@@ -701,6 +720,11 @@ public class OrientVertex extends OrientElement implements Vertex {
     return iterable;
   }
 
+  /**
+   * (Blueprints Extension) Returns the Vertex's label. By default OrientDB binds the Blueprints Label concept to Vertex Class. To
+   * disable this feature execute this at database level <code>alter database custom useClassForVertexLabel=false
+   </code>
+   */
   public String getLabel() {
     setCurrentGraphInThreadLocal();
 
@@ -713,16 +737,25 @@ public class OrientVertex extends OrientElement implements Vertex {
     return getRecord().field(OrientElement.LABEL_FIELD_NAME);
   }
 
+  /**
+   * (Blueprints Extension) Returns "V" as base class name all the vertex sub-classes extend.
+   */
   @Override
   public String getBaseClassName() {
     return OrientVertexType.CLASS_NAME;
   }
 
+  /**
+   * (Blueprints Extension) Returns "Vertex".
+   */
   @Override
   public String getElementType() {
     return "Vertex";
   }
 
+  /**
+   * Returns a string representation of the vertex.
+   */
   public String toString() {
     if (graph != null)
       graph.setCurrentGraphInThreadLocal();
