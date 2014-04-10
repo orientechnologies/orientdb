@@ -84,8 +84,8 @@ public class ODefaultIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm,ODocument metadata)
-      throws OConfigurationException {
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
       if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)
           || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)
@@ -110,15 +110,15 @@ public class ODefaultIndexFactory implements OIndexFactory {
     }
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(indexType, valueContainerAlgorithm);
+      return createSBTreeIndex(indexType, valueContainerAlgorithm,metadata);
 
     if (MVRBTREE_ALGORITHM.equals(algorithm) || algorithm == null)
-      return createMRBTreeIndex(indexType, valueContainerAlgorithm);
+      return createMVRBTreeIndex(indexType, valueContainerAlgorithm,metadata);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
-  private OIndexInternal<?> createMRBTreeIndex(String indexType, String valueContainerAlgorithm) {
+  private OIndexInternal<?> createMVRBTreeIndex(String indexType, String valueContainerAlgorithm, ODocument metadata) {
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
       return new OIndexUnique(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<OIdentifiable>(), valueContainerAlgorithm);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
@@ -126,7 +126,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
           valueContainerAlgorithm);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OIndexFullText(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<Set<OIdentifiable>>(),
-          valueContainerAlgorithm);
+          valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(indexType, MVRBTREE_ALGORITHM, new OMVRBTreeIndexEngine<OIdentifiable>(), valueContainerAlgorithm);
     }
@@ -134,13 +134,14 @@ public class ODefaultIndexFactory implements OIndexFactory {
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
 
-  private OIndexInternal<?> createSBTreeIndex(String indexType, String valueContainerAlgorithm) {
+  private OIndexInternal<?> createSBTreeIndex(String indexType, String valueContainerAlgorithm, ODocument metadata) {
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
       return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(), valueContainerAlgorithm);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
       return new OIndexNotUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(), valueContainerAlgorithm);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(), valueContainerAlgorithm);
+      return new OIndexFullText(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<Set<OIdentifiable>>(), valueContainerAlgorithm,
+          metadata);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(), valueContainerAlgorithm);
     }

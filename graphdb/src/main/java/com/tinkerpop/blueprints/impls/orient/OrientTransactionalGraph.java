@@ -1,8 +1,8 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
@@ -35,7 +35,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       getContext(false).rawGraph.begin();
   }
 
-  protected OrientTransactionalGraph(ODatabaseDocumentPool pool) {
+  protected OrientTransactionalGraph(final ODatabaseDocumentPool pool) {
     super(pool);
     setCurrentGraphInThreadLocal();
 
@@ -113,18 +113,6 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       getContext(false).rawGraph.begin();
   }
 
-  @Override
-  protected void autoStartTransaction() {
-    if (!autoStartTx)
-      return;
-
-    final OrientGraphContext context = getContext(true);
-    if (context.rawGraph.getTransaction() instanceof OTransactionNoTx
-        && context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN) {
-      context.rawGraph.begin();
-    }
-  }
-
   /**
    * Tells if a transaction is started automatically when the graph is changed. This affects only when a transaction hasn't been
    * started. Default is true.
@@ -143,5 +131,17 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    */
   public void setAutoStartTx(final boolean autoStartTx) {
     this.autoStartTx = autoStartTx;
+  }
+
+  @Override
+  protected void autoStartTransaction() {
+    if (!autoStartTx)
+      return;
+
+    final OrientGraphContext context = getContext(true);
+    if (context.rawGraph.getTransaction() instanceof OTransactionNoTx
+        && context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN) {
+      context.rawGraph.begin();
+    }
   }
 }

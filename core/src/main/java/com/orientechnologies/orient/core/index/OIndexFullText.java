@@ -24,11 +24,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Fast index for full-text searches.
@@ -42,20 +38,51 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final String  CONFIG_SEPARATOR_CHARS = "separatorChars";
   private static final String  CONFIG_IGNORE_CHARS    = "ignoreChars";
   private static final boolean DEF_INDEX_RADIX        = true;
-  private boolean              indexRadix             = DEF_INDEX_RADIX;
+  private boolean              indexRadix;
   private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
-  private String               separatorChars         = DEF_SEPARATOR_CHARS;
+  private String               separatorChars;
   private static final String  DEF_IGNORE_CHARS       = "'\"";
-  private String               ignoreChars            = DEF_IGNORE_CHARS;
+  private String               ignoreChars;
   private static final String  DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
                                                           + "up with be was were is";
   private static int           DEF_MIN_WORD_LENGTH    = 3;
-  private int                  minWordLength          = DEF_MIN_WORD_LENGTH;
-  private final Set<String>    stopWords;
+  private int                  minWordLength;
+  private Set<String>          stopWords;
 
   public OIndexFullText(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
-      String valueContainerAlgorithm) {
+      String valueContainerAlgorithm, ODocument metadata) {
     super(typeId, algorithm, indexEngine, valueContainerAlgorithm);
+    config();
+    configWithMetadata(metadata);
+
+  }
+
+  protected void configWithMetadata(ODocument metadata) {
+    if (metadata != null) {
+      if (metadata.containsField("ignoreChars"))
+        ignoreChars = metadata.field("ignoreChars");
+
+      if (metadata.containsField("indexRadix"))
+        indexRadix = metadata.field("indexRadix");
+
+      if (metadata.containsField("separatorChars"))
+        separatorChars = metadata.field("separatorChars");
+
+      if (metadata.containsField("minWordLength"))
+        minWordLength = metadata.field("minWordLength");
+
+      if (metadata.containsField("stopWords"))
+        stopWords = new HashSet<String>((Collection<? extends String>) metadata.field("stopWords"));
+
+    }
+
+  }
+
+  protected void config() {
+    ignoreChars = DEF_IGNORE_CHARS;
+    indexRadix = DEF_INDEX_RADIX;
+    separatorChars = DEF_SEPARATOR_CHARS;
+    minWordLength = DEF_MIN_WORD_LENGTH;
     stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
   }
 
