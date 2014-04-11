@@ -55,7 +55,7 @@ public class OrientVertex extends OrientElement implements Vertex {
   }
 
   /**
-   * (Blueprints Extension) Returns the field name used for the relationship.
+   * (Internal only) Returns the field name used for the relationship.
    * 
    * @param iDirection
    *          Direction between IN, OUT or BOTH
@@ -83,10 +83,6 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   /**
    * (Internal only) Creates a link between a vertices and a Graph Element.
-   * @param iFromVertex
-   * @param iTo
-   * @param iFieldName
-   * @return
    */
   public static Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
     final Object out;
@@ -163,6 +159,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     throw new IllegalArgumentException("Cannot return direction of connection " + iConnectionField);
   }
 
+  /**
+   * (Internal only)
+   */
   public static String getInverseConnectionFieldName(final String iFieldName, final boolean useVertexFieldsForEdgeLabels) {
     if (useVertexFieldsForEdgeLabels) {
       if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
@@ -191,6 +190,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     throw new IllegalArgumentException("Cannot find reverse connection name for field " + iFieldName);
   }
 
+  /**
+   * (Internal only)
+   */
   public static void removeEdges(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
       final boolean iAlsoInverse, final boolean useVertexFieldsForEdgeLabels) {
     if (iVertex == null)
@@ -329,6 +331,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     iVertex.save();
   }
 
+  /**
+   * (Internal only)
+   */
   private static void deleteEdgeIfAny(final OIdentifiable iRecord) {
     if (iRecord != null) {
       final ODocument doc = iRecord.getRecord();
@@ -338,6 +343,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     }
   }
 
+  /**
+   * (Internal only)
+   */
   private static void removeInverseEdge(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
       final Object iFieldValue, final boolean useVertexFieldsForEdgeLabels) {
     final ODocument r = ((OIdentifiable) iFieldValue).getRecord();
@@ -366,6 +374,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     }
   }
 
+  /**
+   * (Internal only)
+   */
   protected static OrientEdge getEdge(final OrientBaseGraph graph, final ODocument doc, String fieldName,
       final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
     final OrientEdge toAdd;
@@ -401,7 +412,9 @@ public class OrientVertex extends OrientElement implements Vertex {
   }
 
   /**
-   * Executes the execute against current vertex. Use OSQLPredicate to execute SQL
+   * (Blueprints Extension) Executes the command predicate against current vertex. Use OSQLPredicate to execute SQL. Example: <code>
+   *       Iterable<OrientVertex> friendsOfFriends = (Iterable<OrientVertex>) luca.execute(new OSQLPredicate("out().out('Friend').out('Friend')"));
+   * </code>
    * 
    * @param iPredicate
    *          Predicate to evaluate. Use OSQLPredicate to use SQL
@@ -410,6 +423,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     return iPredicate.evaluate(rawElement.getRecord(), null, null);
   }
 
+  /**
+   * Returns all the Property names as Set of String. out, in and label are not returned as properties even if are part of the
+   * underlying document because are considered internal properties.
+   */
   @Override
   public Set<String> getPropertyKeys() {
     setCurrentGraphInThreadLocal();
@@ -429,6 +446,11 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   /**
    * Returns a lazy iterable instance against vertices.
+   * 
+   * @param iDirection
+   *          The direction between OUT, IN or BOTH
+   * @param iLabels
+   *          Optional varargs of Strings representing edge label to consider
    */
   @Override
   public Iterable<Vertex> getVertices(final Direction iDirection, final String... iLabels) {
@@ -477,6 +499,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     return iterable;
   }
 
+  /**
+   * Executes a query against the current vertex. The returning type is a OrientVertexQuery.
+   * 
+   */
   @Override
   public OrientVertexQuery query() {
     setCurrentGraphInThreadLocal();
@@ -491,6 +517,9 @@ public class OrientVertex extends OrientElement implements Vertex {
     return new OTraverse().target(getRecord());
   }
 
+  /**
+   * Removes the current Vertex from the Graph. all the incoming and outgoing edges are automatically removed too.
+   */
   @Override
   public void remove() {
     checkClass();
@@ -538,6 +567,15 @@ public class OrientVertex extends OrientElement implements Vertex {
     super.remove();
   }
 
+  /**
+   * Creates an edge between current Vertex and a target Vertex setting label as Edge's label.
+   * 
+   * @param label
+   *          Edge's label or class
+   * @param inVertex
+   *          Outgoing target vertex
+   * @return The new Edge created
+   */
   @Override
   public Edge addEdge(final String label, Vertex inVertex) {
     if (inVertex instanceof PartitionVertex)
@@ -547,14 +585,56 @@ public class OrientVertex extends OrientElement implements Vertex {
     return addEdge(label, (OrientVertex) inVertex, null, null, (Object[]) null);
   }
 
+  /**
+   * Creates an edge between current Vertex and a target Vertex setting label as Edge's label. iClassName is the Edge's class used
+   * if different by label.
+   * 
+   * @param label
+   *          Edge's label or class
+   * @param inVertex
+   *          Outgoing target vertex
+   * @param iClassName
+   *          Edge's class name
+   * @return The new Edge created
+   */
   public OrientEdge addEdge(final String label, final OrientVertex inVertex, final String iClassName) {
     return addEdge(label, inVertex, iClassName, null, (Object[]) null);
   }
 
+  /**
+   * Creates an edge between current Vertex and a target Vertex setting label as Edge's label. The fields parameter is an Array of
+   * fields to set on Edge upon creation. Fields must be a odd pairs of key/value or a single object as Map containing entries as
+   * key/value pairs.
+   * 
+   * @param label
+   *          Edge's label or class
+   * @param inVertex
+   *          Outgoing target vertex
+   * @param fields
+   *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
+   * @return The new Edge created
+   */
   public OrientEdge addEdge(final String label, final OrientVertex inVertex, final Object[] fields) {
     return addEdge(label, inVertex, null, null, fields);
   }
 
+  /**
+   * Creates an edge between current Vertex and a target Vertex setting label as Edge's label. The fields parameter is an Array of
+   * fields to set on Edge upon creation. Fields must be a odd pairs of key/value or a single object as Map containing entries as
+   * key/value pairs. iClusterName is the name of the cluster where to store the new Edge.
+   * 
+   * @param label
+   *          Edge's label or class
+   * @param inVertex
+   *          Outgoing target vertex
+   * @param fields
+   *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
+   * @param iClassName
+   *          Edge's class name
+   * @param iClusterName
+   *          The cluster name where to store the edge record
+   * @return The new Edge created
+   */
   public OrientEdge addEdge(String label, final OrientVertex inVertex, final String iClassName, final String iClusterName,
       final Object... fields) {
     if (inVertex == null)
@@ -627,6 +707,15 @@ public class OrientVertex extends OrientElement implements Vertex {
 
   }
 
+  /**
+   * (Blueprints Extension) Returns the number of edges connected to the current Vertex.
+   * 
+   * @param iDirection
+   *          The direction between OUT, IN or BOTH
+   * @param iLabels
+   *          Optional labels as Strings to consider
+   * @return A long with the total edges found
+   */
   public long countEdges(final Direction iDirection, final String... iLabels) {
     checkIfAttached();
 
@@ -664,10 +753,32 @@ public class OrientVertex extends OrientElement implements Vertex {
     return counter;
   }
 
+  /**
+   * Returns the edges connected to the current Vertex. If you are interested on just counting the edges use @countEdges that it's
+   * more efficient for this use case.
+   * 
+   * @param iDirection
+   *          The direction between OUT, IN or BOTH
+   * @param iLabels
+   *          Optional labels as Strings to consider
+   * @return
+   */
+  @Override
   public Iterable<Edge> getEdges(final Direction iDirection, final String... iLabels) {
     return getEdges(null, iDirection, iLabels);
   }
 
+  /**
+   * (Blueprints Entension) Returns all the edges from the current Vertex to another one.
+   * 
+   * @param iDestination
+   *          The target vertex
+   * @param iDirection
+   *          The direction between OUT, IN or BOTH
+   * @param iLabels
+   *          Optional labels as Strings to consider
+   * @return
+   */
   public Iterable<Edge> getEdges(final OrientVertex iDestination, final Direction iDirection, final String... iLabels) {
 
     setCurrentGraphInThreadLocal();
