@@ -17,15 +17,22 @@ import java.util.Set;
  */
 public class ODFACommandStream implements OCommandStream {
   public static final int      BUFFER_SIZE = 1024;
-
+  private final Set<Character> separators  = new HashSet<Character>(Arrays.asList(';', '\n'));
   private Reader               reader;
   private CharBuffer           buffer;
-  private final Set<Character> separators  = new HashSet<Character>(Arrays.asList(';', '\n'));
   private int                  position;
   private int                  start;
   private int                  end;
   private StringBuilder        partialResult;
   private State                state;
+
+  private enum State {
+    S, A, B, C, D, E, F
+  }
+
+  private enum Symbol {
+    LATTER, WS, QT, AP, SEP, EOF
+  }
 
   public ODFACommandStream(String commands) {
     reader = new StringReader(commands);
@@ -37,11 +44,6 @@ public class ODFACommandStream implements OCommandStream {
     init();
   }
 
-  private void init() {
-    buffer = CharBuffer.allocate(BUFFER_SIZE);
-    buffer.flip();
-  }
-
   @Override
   public boolean hasNext() {
     try {
@@ -50,14 +52,6 @@ public class ODFACommandStream implements OCommandStream {
       return buffer.hasRemaining();
     } catch (IOException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private void fillBuffer() throws IOException {
-    if (!buffer.hasRemaining()) {
-      buffer.clear();
-      reader.read(buffer);
-      buffer.flip();
     }
   }
 
@@ -118,6 +112,41 @@ public class ODFACommandStream implements OCommandStream {
 
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void close(boolean onDelete) {
+    try {
+      reader.close();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public Symbol symbol(Character c) {
+    if (c.equals('\''))
+      return Symbol.AP;
+    if (c.equals('"'))
+      return Symbol.QT;
+    if (separators.contains(c))
+      return Symbol.SEP;
+    if (Character.isWhitespace(c))
+      return Symbol.WS;
+
+    return Symbol.LATTER;
+  }
+
+  private void init() {
+    buffer = CharBuffer.allocate(BUFFER_SIZE);
+    buffer.flip();
+  }
+
+  private void fillBuffer() throws IOException {
+    if (!buffer.hasRemaining()) {
+      buffer.clear();
+      reader.read(buffer);
+      buffer.flip();
     }
   }
 
@@ -226,35 +255,5 @@ public class ODFACommandStream implements OCommandStream {
     }
 
     throw new IllegalStateException();
-  }
-
-  @Override
-  public void close(boolean onDelete) {
-    try {
-      reader.close();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Symbol symbol(Character c) {
-    if (c.equals('\''))
-      return Symbol.AP;
-    if (c.equals('"'))
-      return Symbol.QT;
-    if (separators.contains(c))
-      return Symbol.SEP;
-    if (Character.isWhitespace(c))
-      return Symbol.WS;
-
-    return Symbol.LATTER;
-  }
-
-  private enum State {
-    S, A, B, C, D, E, F
-  }
-
-  private enum Symbol {
-    LATTER, WS, QT, AP, SEP, EOF
   }
 }

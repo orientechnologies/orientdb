@@ -41,16 +41,14 @@ import java.util.logging.Logger;
 
 public class OConsoleApplication {
   protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
+  protected final StringBuilder   commandBuffer   = new StringBuilder();
   protected InputStream           in              = System.in;                       // System.in;
   protected PrintStream           out             = System.out;
   protected PrintStream           err             = System.err;
-
   protected String                wordSeparator   = " ";
   protected String[]              helpCommands    = { "help", "?" };
   protected String[]              exitCommands    = { "exit", "bye", "quit" };
-
   protected Map<String, String>   properties      = new HashMap<String, String>();
-
   // protected OConsoleReader reader = new TTYConsoleReader();
   protected OConsoleReader        reader          = new DefaultConsoleReader();
   protected boolean               interactiveMode;
@@ -119,8 +117,11 @@ public class OConsoleApplication {
 
       while (true) {
         try {
-          out.println();
-          out.print(getPrompt());
+          if (commandBuffer.length() == 0) {
+            out.println();
+            out.print(getPrompt());
+          }
+
           consoleInput = reader.readLine();
 
           if (consoleInput == null || consoleInput.length() == 0)
@@ -185,8 +186,6 @@ public class OConsoleApplication {
   }
 
   protected boolean executeCommands(final OCommandStream commandStream, final boolean iBatchMode) {
-    final StringBuilder commandBuffer = new StringBuilder();
-
     try {
       while (commandStream.hasNext()) {
         String commandLine = commandStream.nextCommand();
@@ -201,6 +200,7 @@ public class OConsoleApplication {
         // SCRIPT CASE: MANAGE ENSEMBLING ALL TOGETHER
         if (isCollectingCommands(commandLine)) {
           // BEGIN: START TO COLLECT
+          out.println("[Started multi-line command. Type just 'end' to finish and execute]");
           commandBuffer.append(commandLine);
           commandLine = null;
         } else if (commandLine.startsWith("end") && commandBuffer.length() > 0) {
@@ -232,18 +232,20 @@ public class OConsoleApplication {
         }
       }
 
-      if (commandBuffer.length() > 0) {
-        if (iBatchMode) {
-          out.println();
-          out.print(getPrompt());
-          out.print(commandBuffer);
-          out.println();
-        }
+      if (commandBuffer.length() == 0) {
+        if (commandBuffer.length() > 0) {
+          if (iBatchMode) {
+            out.println();
+            out.print(getPrompt());
+            out.print(commandBuffer);
+            out.println();
+          }
 
-        final RESULT status = execute(commandBuffer.toString());
-        if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-            && iBatchMode)
-          return false;
+          final RESULT status = execute(commandBuffer.toString());
+          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
+              && iBatchMode)
+            return false;
+        }
       }
     } finally {
       commandStream.close(false);

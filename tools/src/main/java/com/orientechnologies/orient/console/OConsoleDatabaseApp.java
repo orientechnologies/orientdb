@@ -830,9 +830,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   @SuppressWarnings("unchecked")
-  @ConsoleCommand(splitInWords = false, description = "Execute sql commands in batch")
-  public void batch(@ConsoleParameter(name = "text", description = "The SQL commands to execute, one per line") final String iText) {
-    executeServerSideScript("SQL", iText);
+  @ConsoleCommand(splitInWords = false, description = "Execute a script containing multiple commands separated by ; or new line")
+  public void script(@ConsoleParameter(name = "text", description = "Commands to execute, one per line") String iText) {
+    final String language;
+    final int languageEndPos = iText.indexOf(";");
+    if (languageEndPos > -1) {
+      // EXTRACT THE SCRIPT LANGUAGE
+      language = iText.substring(0, languageEndPos);
+      iText = iText.substring(languageEndPos + 1);
+    } else
+      throw new IllegalArgumentException("Missing language in script (sql, js, gremlin, etc.) as first argument");
+
+    executeServerSideScript(language, iText);
   }
 
   @SuppressWarnings("unchecked")
@@ -1955,7 +1964,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @Override
   protected boolean isCollectingCommands(final String iLine) {
-    return iLine.startsWith("js") || iLine.startsWith("batch");
+    return iLine.startsWith("js") || iLine.startsWith("script");
   }
 
   @Override
