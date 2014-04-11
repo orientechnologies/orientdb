@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -23,8 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.util.*;
 
 /**
  * Fast index for full-text searches.
@@ -37,16 +42,19 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final String  CONFIG_STOP_WORDS      = "stopWords";
   private static final String  CONFIG_SEPARATOR_CHARS = "separatorChars";
   private static final String  CONFIG_IGNORE_CHARS    = "ignoreChars";
+  private static final String  CONFIG_INDEX_RADIX     = "indexRadix";
+  private static final String  CONFIG_MIN_WORD_LEN    = "minWordLength";
   private static final boolean DEF_INDEX_RADIX        = true;
-  private boolean              indexRadix;
   private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
-  private String               separatorChars;
   private static final String  DEF_IGNORE_CHARS       = "'\"";
-  private String               ignoreChars;
   private static final String  DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
                                                           + "up with be was were is";
   private static int           DEF_MIN_WORD_LENGTH    = 3;
+  private boolean              indexRadix;
+  private String               separatorChars;
+  private String               ignoreChars;
   private int                  minWordLength;
+
   private Set<String>          stopWords;
 
   public OIndexFullText(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
@@ -55,35 +63,6 @@ public class OIndexFullText extends OIndexMultiValues {
     config();
     configWithMetadata(metadata);
 
-  }
-
-  protected void configWithMetadata(ODocument metadata) {
-    if (metadata != null) {
-      if (metadata.containsField("ignoreChars"))
-        ignoreChars = metadata.field("ignoreChars");
-
-      if (metadata.containsField("indexRadix"))
-        indexRadix = metadata.field("indexRadix");
-
-      if (metadata.containsField("separatorChars"))
-        separatorChars = metadata.field("separatorChars");
-
-      if (metadata.containsField("minWordLength"))
-        minWordLength = metadata.field("minWordLength");
-
-      if (metadata.containsField("stopWords"))
-        stopWords = new HashSet<String>((Collection<? extends String>) metadata.field("stopWords"));
-
-    }
-
-  }
-
-  protected void config() {
-    ignoreChars = DEF_IGNORE_CHARS;
-    indexRadix = DEF_INDEX_RADIX;
-    separatorChars = DEF_SEPARATOR_CHARS;
-    minWordLength = DEF_MIN_WORD_LENGTH;
-    stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
   }
 
   /**
@@ -216,6 +195,8 @@ public class OIndexFullText extends OIndexMultiValues {
       configuration.field(CONFIG_SEPARATOR_CHARS, separatorChars);
       configuration.field(CONFIG_IGNORE_CHARS, ignoreChars);
       configuration.field(CONFIG_STOP_WORDS, stopWords);
+      configuration.field(CONFIG_MIN_WORD_LEN, minWordLength);
+      configuration.field(CONFIG_INDEX_RADIX, indexRadix);
 
     } finally {
       configuration.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -229,6 +210,34 @@ public class OIndexFullText extends OIndexMultiValues {
 
   public boolean supportsOrderedIterations() {
     return false;
+  }
+
+  protected void configWithMetadata(ODocument metadata) {
+    if (metadata != null) {
+      if (metadata.containsField(CONFIG_IGNORE_CHARS))
+        ignoreChars = metadata.field(CONFIG_IGNORE_CHARS);
+
+      if (metadata.containsField(CONFIG_INDEX_RADIX))
+        indexRadix = metadata.field(CONFIG_INDEX_RADIX);
+
+      if (metadata.containsField(CONFIG_SEPARATOR_CHARS))
+        separatorChars = metadata.field(CONFIG_SEPARATOR_CHARS);
+
+      if (metadata.containsField(CONFIG_MIN_WORD_LEN))
+        minWordLength = metadata.field(CONFIG_MIN_WORD_LEN);
+
+      if (metadata.containsField(CONFIG_STOP_WORDS))
+        stopWords = new HashSet<String>((Collection<? extends String>) metadata.field(CONFIG_STOP_WORDS));
+    }
+
+  }
+
+  protected void config() {
+    ignoreChars = DEF_IGNORE_CHARS;
+    indexRadix = DEF_INDEX_RADIX;
+    separatorChars = DEF_SEPARATOR_CHARS;
+    minWordLength = DEF_MIN_WORD_LENGTH;
+    stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
   }
 
   @Override
@@ -327,9 +336,9 @@ public class OIndexFullText extends OIndexMultiValues {
         word = buffer.toString();
 
         // CHECK IF IT'S A STOP WORD
-        if (!stopWords.contains(word)) {
+        if (!stopWords.contains(word))
+          // ADD THE WORD TO THE RESULT SET
           result.add(word);
-        }
 
         if (indexRadix)
           length--;
