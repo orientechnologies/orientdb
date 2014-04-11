@@ -88,7 +88,6 @@
             <scope>test</scope>
         </dependency>
 
-
         <dependency>
             <groupId>com.tinkerpop.blueprints</groupId>
             <artifactId>blueprints-core</artifactId>
@@ -123,7 +122,6 @@
             <artifactId>gremlin-groovy</artifactId>
             <version>${blueprints.version}</version>
         </dependency>
-
 
     </dependencies>
     <build>
