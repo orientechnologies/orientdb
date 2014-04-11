@@ -11,7 +11,7 @@
 
 
     <target name="test"
-            depends="test-memory, test-local, test-plocal, test-remote">
+            depends="test-memory,test-plocal, test-remote">
     </target>
 
     <target name="test-init">
