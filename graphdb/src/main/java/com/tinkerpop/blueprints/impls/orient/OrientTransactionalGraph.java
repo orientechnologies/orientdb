@@ -22,11 +22,11 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
+  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
     this(iDatabase, true);
   }
 
-  public OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
+  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
     super(iDatabase);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
@@ -42,11 +42,11 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     getContext(false).rawGraph.begin();
   }
 
-  public OrientTransactionalGraph(final String url) {
+  protected OrientTransactionalGraph(final String url) {
     this(url, true);
   }
 
-  public OrientTransactionalGraph(final String url, final boolean iAutoStartTx) {
+  protected OrientTransactionalGraph(final String url, final boolean iAutoStartTx) {
     super(url, ADMIN, ADMIN);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
@@ -55,11 +55,11 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       getContext(false).rawGraph.begin();
   }
 
-  public OrientTransactionalGraph(final String url, final String username, final String password) {
+  protected OrientTransactionalGraph(final String url, final String username, final String password) {
     this(url, username, password, true);
   }
 
-  public OrientTransactionalGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
+  protected OrientTransactionalGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
     super(url, username, password);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
@@ -68,7 +68,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       getContext(false).rawGraph.begin();
   }
 
-  public OrientTransactionalGraph(final Configuration configuration) {
+  protected OrientTransactionalGraph(final Configuration configuration) {
     super(configuration);
 
     final Boolean autoStartTx = configuration.getBoolean("blueprints.orientdb.autoStartTx", null);
@@ -76,6 +76,12 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       setAutoStartTx(autoStartTx);
   }
 
+  /**
+   * Closes a transaction.
+   * 
+   * @param conclusion
+   *          Can be SUCCESS for commit and FAILURE to rollback.
+   */
   @SuppressWarnings("deprecation")
   @Override
   public void stopTransaction(final Conclusion conclusion) {
@@ -93,6 +99,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       rollback();
   }
 
+  /**
+   * Commits the current active transaction.
+   */
   public void commit() {
     final OrientGraphContext context = getContext(false);
     if (context == null)
@@ -103,6 +112,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       getContext(false).rawGraph.begin();
   }
 
+  /**
+   * Rollbacks the current active transaction. All the pending changes are rollbacked.
+   */
   public void rollback() {
     final OrientGraphContext context = getContext(false);
     if (context == null)
