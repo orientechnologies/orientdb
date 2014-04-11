@@ -359,7 +359,7 @@ public abstract class OAbstractFile implements OFile {
     try {
       for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
         try {
-          fileLock = channel.tryLock(0, 1, true);
+          fileLock = channel.tryLock();
           if (fileLock != null)
             break;
         } catch (OverlappingFileLockException e) {
