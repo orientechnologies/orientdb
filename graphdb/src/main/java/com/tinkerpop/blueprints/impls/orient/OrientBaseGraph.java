@@ -220,6 +220,9 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       setUseLightweightEdges(lightweightEdges);
   }
 
+  /**
+   * (Internal)
+   */
   public static void encodeClassNames(final String... iLabels) {
     if (iLabels != null)
       // ENCODE LABELS
@@ -227,6 +230,9 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         iLabels[i] = encodeClassName(iLabels[i]);
   }
 
+  /**
+   * (Internal)
+   */
   public static String encodeClassName(String iClassName) {
     if (iClassName == null)
       return null;
@@ -242,6 +248,9 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }
   }
 
+  /**
+   * (Internal)
+   */
   public static String decodeClassName(String iClassName) {
     if (iClassName == null)
       return null;
@@ -258,7 +267,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   /**
-   * Drops the database
+   * (Blueprints Extension) Drops the database
    */
   public void drop() {
     getRawGraph().drop();
@@ -289,7 +298,17 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "create index '", indexName, "'");
   }
 
+  /**
+   * Returns an index by name and class
+   * 
+   * @param indexName
+   *          Index name
+   * @param indexClass
+   *          Class as one or subclass of Vertex.class and Edge.class
+   * @return Index instance
+   */
   @SuppressWarnings("unchecked")
+  @Override
   public <T extends Element> Index<T> getIndex(final String indexName, final Class<T> indexClass) {
     final OrientGraphContext context = getContext(true);
     final ODatabaseDocumentTx database = context.rawGraph;
@@ -306,11 +325,22 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       throw ExceptionFactory.indexDoesNotSupportClass(indexName, indexClass);
   }
 
+  /**
+   * Returns all the indices.
+   * 
+   * @return Iterable of Index instances
+   */
   public Iterable<Index<? extends Element>> getIndices() {
     final OrientGraphContext context = getContext(true);
     return loadManualIndexes(context);
   }
 
+  /**
+   * Drops an index by name.
+   * 
+   * @param indexName
+   *          Index name
+   */
   public void dropIndex(final String indexName) {
     executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
@@ -337,10 +367,27 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop index '", indexName, "'");
   }
 
+  /**
+   * Creates a new unconnected vertex with no fields in the Graph.
+   * 
+   * @param id
+   *          Optional, can contains the Edge's class name by prefixing with "class:"
+   * @return The new OrientVertex created
+   */
+  @Override
   public OrientVertex addVertex(final Object id) {
     return addVertex(id, (Object[]) null);
   }
 
+  /**
+   * (Blueprints Extension) Creates a new unconnected vertex in the Graph setting the initial field values.
+   * 
+   * @param id
+   *          Optional, can contains the Edge's class name by prefixing with "class:"
+   * @param prop
+   *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
+   * @return The new OrientVertex created
+   */
   public OrientVertex addVertex(final Object id, final Object... prop) {
     String className = null;
     String clusterName = null;
@@ -379,6 +426,15 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return vertex;
   }
 
+  /**
+   * (Blueprints Extension) Creates a new unconnected vertex with no fields of specific class in a cluster in the Graph.
+   * 
+   * @param iClassName
+   *          Vertex class name
+   * @param iClusterName
+   *          Vertex cluster name
+   * @return New vertex created
+   */
   public OrientVertex addVertex(final String iClassName, final String iClusterName) {
     setCurrentGraphInThreadLocal();
     autoStartTransaction();
@@ -394,12 +450,13 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   /**
-   * (Blueprints Extension) Creates a temporary vertex. The vertex is not saved and the transaction is not started.
+   * (Blueprints Extension) Creates a temporary vertex setting the initial field values. The vertex is not saved and the transaction
+   * is not started.
    * 
    * @param iClassName
    *          Vertex's class name
    * @param prop
-   *          Varargs of properties to set
+   *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return added vertex
    */
   public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
